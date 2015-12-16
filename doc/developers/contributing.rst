@@ -7,7 +7,7 @@ Contributing
 This project is a community effort, and everyone is welcome to
 contribute.
 
-The project is hosted on http://github.com/scikit-learn/scikit-learn
+The project is hosted on https://github.com/scikit-learn/scikit-learn
 
 Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
 adding new algorithms, and the best way to contribute and to help the project
@@ -19,7 +19,7 @@ Submitting a bug report
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_. You are
+`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
 
@@ -29,7 +29,7 @@ Retrieving the latest code
 ==========================
 
 We use `Git <http://git-scm.com/>`_ for version control and
-`GitHub <http://github.com/>`_ for hosting our main repository.
+`GitHub <https://github.com/>`_ for hosting our main repository.
 
 You can check out the latest sources with the command::
 
@@ -82,14 +82,14 @@ How to contribute
 -----------------
 
 The preferred way to contribute to scikit-learn is to fork the `main
-repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
 then submit a "pull request" (PR):
 
- 1. `Create an account <https://github.com/signup/free>`_ on
+ 1. `Create an account <https://github.com/join>`_ on
     GitHub if you do not already have one.
 
  2. Fork the `project repository
-    <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
+    <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
     account on the GitHub server.
 
@@ -237,8 +237,8 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx.pocoo.org/>`_,
-`matplotlib <http://matplotlib.sourceforge.net/>`_ and
+<http://sphinx-doc.org/>`_,
+`matplotlib <http://matplotlib.org>`_ and
 `pillow <http://pillow.readthedocs.org/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
@@ -297,7 +297,7 @@ Finally, follow the formatting rules below to make it consistently good:
 Testing and improving test coverage
 ------------------------------------
 
-High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
+High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
 purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
@@ -313,7 +313,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <http://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+   <https://pypi.python.org/pypi/coverage>`_ package in addition to nose.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -392,7 +392,7 @@ the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
 scikit-learn project tries to closely follow the official Python guidelines
-detailed in `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ that
+detailed in `PEP8 <https://www.python.org/dev/peps/pep-0008>`_ that
 detail how code should be formatted and indented. Please read it and
 follow it.
 
@@ -414,7 +414,7 @@ In addition, we add the following guidelines:
 
     * **Please don't use** ``import *`` **in any case**. It is considered harmful
       by the `official Python recommendations
-      <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
+      <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
       longer explicitly referenced, but most important, it prevents
       using a static analysis tool like `pyflakes

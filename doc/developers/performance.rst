@@ -40,7 +40,7 @@ this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
 model. It's generally a good idea to consider NumPy and SciPy performance tips:
-http://wiki.scipy.org/PerformanceTips
+http://scipy.github.io/old-wiki/pages/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -304,7 +304,7 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <http://pypi.python.org/pypi/memory_profiler>`_. First,
+`memory_profiler <https://pypi.python.org/pypi/memory_profiler>`_. First,
 install the latest version::
 
     $ pip install -U memory_profiler
@@ -401,7 +401,7 @@ project.
 TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignment, direct blas calls...
 
-- http://www.euroscipy.org/file/3696?vid=download
+- https://www.youtube.com/watch?v=gMvkiQ-gOW8
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
@@ -421,8 +421,8 @@ Using yep and google-perftools
 
 Easy profiling without special compilation options use yep:
 
-- http://pypi.python.org/pypi/yep
-- http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
+- https://pypi.python.org/pypi/yep
+- http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 .. note::
 
@@ -430,7 +430,7 @@ Easy profiling without special compilation options use yep:
   can be triggered with the ``--lines`` option. However this
   does not seem to work correctly at the time of writing. This
   issue can be tracked on the `project issue tracker
-  <https://code.google.com/p/google-perftools/issues/detail?id=326>`_.
+  <https://github.com/gperftools/gperftools>`_.
 
 
 
@@ -460,7 +460,7 @@ TODO: give a simple teaser example here.
 
 Checkout the official joblib documentation:
 
-- http://packages.python.org/joblib/
+- https://pythonhosted.org/joblib
 
 
 .. _warm-restarts:

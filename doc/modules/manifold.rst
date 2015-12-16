@@ -343,7 +343,7 @@ The overall complexity of spectral embedding is
 
    * `"Laplacian Eigenmaps for Dimensionality Reduction
      and Data Representation" 
-     <http://www.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     <http://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
 
@@ -397,7 +397,7 @@ The overall complexity of standard LTSA is
 Multi-dimensional Scaling (MDS)
 ===============================
 
-`Multidimensional scaling <http://en.wikipedia.org/wiki/Multidimensional_scaling>`_
+`Multidimensional scaling <https://en.wikipedia.org/wiki/Multidimensional_scaling>`_
 (:class:`MDS`) seeks a low-dimensional
 representation of the data in which the distances respect well the
 distances in the original high-dimensional space.
@@ -461,15 +461,15 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 .. topic:: References:
 
   * `"Modern Multidimensional Scaling - Theory and Applications"
-    <http://www.springer.com/statistics/social+sciences+%26+law/book/978-0-387-25150-9>`_
+    <http://www.springer.com/fr/book/9780387251509>`_
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <http://www.springerlink.com/content/tj18655313945114/>`_
+    <http://link.springer.com/article/10.1007%2FBF02289694>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <http://www.springerlink.com/content/010q1x323915712x/>`_
+    <http://link.springer.com/article/10.1007%2FBF02289565>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:
@@ -604,7 +604,7 @@ the internal structure of the data.
     van der Maaten, L.J.P.
 
   * `"Accelerating t-SNE using Tree-Based Algorithms."
-    <http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
+    <https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf>`_
     L.J.P. van der Maaten.  Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
 
 Tips on practical use

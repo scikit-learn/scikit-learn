@@ -150,7 +150,7 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/wiki/Average_precision>`_
+           <https://en.wikipedia.org/wiki/Average_precision>`_
 
     See also
     --------
@@ -221,7 +221,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
     See also
     --------
@@ -475,7 +475,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
 
     Examples

@@ -22,7 +22,7 @@ technique for distance based method.
 .. topic:: References:
 
  * Sanjoy Dasgupta. 2000.
-   `Experiments with random projection. <http://cseweb.ucsd.edu/users/dasgupta/papers/randomf.pdf>`_
+   `Experiments with random projection. <http://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
    In Proceedings of the Sixteenth conference on Uncertainty in artificial
    intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
    Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
@@ -41,7 +41,7 @@ The Johnson-Lindenstrauss lemma
 
 The main theoretical result behind the efficiency of random projection is the
 `Johnson-Lindenstrauss lemma (quoting Wikipedia)
-<http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
+<https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
 
   In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional

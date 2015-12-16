@@ -13,7 +13,7 @@ The rows being the samples and the columns being:
 Sepal Length, Sepal Width, Petal Length	and Petal Width.
 
 The below plot uses the first two features.
-See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
+See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
 """
 print(__doc__)

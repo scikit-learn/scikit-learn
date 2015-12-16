@@ -314,7 +314,7 @@ Accuracy score
 --------------
 
 The :func:`accuracy_score` function computes the
-`accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, either the fraction
+`accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, either the fraction
 (default) or the count (normalize=False) of correct predictions.
 
 
@@ -332,7 +332,7 @@ defined as
    \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
-<http://en.wikipedia.org/wiki/Indicator_function>`_.
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
 
   >>> import numpy as np
   >>> from sklearn.metrics import accuracy_score
@@ -378,7 +378,7 @@ Confusion matrix
 
 The :func:`confusion_matrix` function evaluates
 classification accuracy by computing the `confusion matrix
-<http://en.wikipedia.org/wiki/Confusion_matrix>`_.
+<https://en.wikipedia.org/wiki/Confusion_matrix>`_.
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -457,7 +457,7 @@ Hamming loss
 -------------
 
 The :func:`hamming_loss` computes the average Hamming loss or `Hamming
-distance <http://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
+distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
 If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th label of
@@ -470,7 +470,7 @@ Hamming loss :math:`L_{Hamming}` between two samples is defined as:
    L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
 
 where :math:`1(x)` is the `indicator function
-<http://en.wikipedia.org/wiki/Indicator_function>`_. ::
+<https://en.wikipedia.org/wiki/Indicator_function>`_. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
@@ -501,7 +501,7 @@ Jaccard similarity coefficient score
 
 The :func:`jaccard_similarity_score` function computes the average (default)
 or sum of `Jaccard similarity coefficients
-<http://en.wikipedia.org/wiki/Jaccard_index>`_, also called the Jaccard index,
+<https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the Jaccard index,
 between pairs of label sets.
 
 The Jaccard similarity coefficient of the :math:`i`-th samples,
@@ -537,12 +537,12 @@ Precision, recall and F-measures
 ---------------------------------
 
 Intuitively, `precision
-<http://en.wikipedia.org/wiki/Precision_and_recall#Precision>`_ is the ability
+<https://en.wikipedia.org/wiki/Precision_and_recall#Precision>`_ is the ability
 of the classifier not to label as positive a sample that is negative, and
-`recall <http://en.wikipedia.org/wiki/Precision_and_recall#Recall>`_ is the
+`recall <https://en.wikipedia.org/wiki/Precision_and_recall#Recall>`_ is the
 ability of the classifier to find all the positive samples.
 
-The  `F-measure <http://en.wikipedia.org/wiki/F1_score>`_
+The  `F-measure <https://en.wikipedia.org/wiki/F1_score>`_
 (:math:`F_\beta` and :math:`F_1` measures) can be interpreted as a weighted
 harmonic mean of the precision and recall. A
 :math:`F_\beta` measure reaches its best value at 1 and its worst score at 0.
@@ -747,7 +747,7 @@ Hinge loss
 
 The :func:`hinge_loss` function computes the average distance between
 the model and the data using
-`hinge loss <http://en.wikipedia.org/wiki/Hinge_loss>`_, a one-sided metric
+`hinge loss <https://en.wikipedia.org/wiki/Hinge_loss>`_, a one-sided metric
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
@@ -868,7 +868,7 @@ Matthews correlation coefficient
 ---------------------------------
 
 The :func:`matthews_corrcoef` function computes the
-`Matthew's correlation coefficient (MCC) <http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
+`Matthew's correlation coefficient (MCC) <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 for binary classes.  Quoting Wikipedia:
 
 
@@ -904,7 +904,7 @@ Receiver operating characteristic (ROC)
 ---------------------------------------
 
 The function :func:`roc_curve` computes the
-`receiver operating characteristic curve, or ROC curve <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_.
+`receiver operating characteristic curve, or ROC curve <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_.
 Quoting Wikipedia :
 
   "A receiver operating characteristic (ROC), or simply ROC curve, is a
@@ -944,7 +944,7 @@ operating characteristic (ROC) curve, which is also denoted by
 AUC or AUROC.  By computing the
 area under the roc curve, the curve information is summarized in one number.
 For more information see the `Wikipedia article on AUC
-<http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve>`_.
+<https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
 
   >>> import numpy as np
   >>> from sklearn.metrics import roc_auc_score
@@ -1006,7 +1006,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
    L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<http://en.wikipedia.org/wiki/Indicator_function>`_.
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -1094,7 +1094,7 @@ score. This metric will yield better scores if you are able to give better rank
 to the labels associated with each sample. The obtained score is always strictly
 greater than 0, and the best value is 1. If there is exactly one relevant
 label per sample, label ranking average precision is equivalent to the `mean
-reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_.
+reciprocal rank <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_.
 
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
@@ -1198,11 +1198,11 @@ Explained variance score
 -------------------------
 
 The :func:`explained_variance_score` computes the `explained variance
-regression score <http://en.wikipedia.org/wiki/Explained_variation>`_.
+regression score <https://en.wikipedia.org/wiki/Explained_variation>`_.
 
 If :math:`\hat{y}` is the estimated target output, :math:`y` the corresponding
 (correct) target output, and :math:`Var` is `Variance
-<http://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
+<https://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
 then the explained variance is estimated as follow:
 
 .. math::
@@ -1234,7 +1234,7 @@ Mean absolute error
 -------------------
 
 The :func:`mean_absolute_error` function computes `mean absolute
-error <http://en.wikipedia.org/wiki/Mean_absolute_error>`_, a risk
+error <https://en.wikipedia.org/wiki/Mean_absolute_error>`_, a risk
 metric corresponding to the expected value of the absolute error loss or
 :math:`l1`-norm loss.
 
@@ -1269,7 +1269,7 @@ Mean squared error
 -------------------
 
 The :func:`mean_squared_error` function computes `mean square
-error <http://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
+error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
 metric corresponding to the expected value of the squared (quadratic) error loss or
 loss.
 
@@ -1334,7 +1334,7 @@ R² score, the coefficient of determination
 -------------------------------------------
 
 The :func:`r2_score` function computes R², the `coefficient of
-determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
+determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
 It provides a measure of how well future samples are likely to
 be predicted by the model. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
