@@ -9,7 +9,7 @@ from ..decomposition import KernelPCA
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..preprocessing import KernelCenterer
 from ..utils import check_array, check_random_state
-from ..utils.graph import graph_shortest_path
+from ..utils.graph import shortest_path
 
 
 class Isomap(BaseEstimator, TransformerMixin):
@@ -202,10 +202,10 @@ class Isomap(BaseEstimator, TransformerMixin):
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance', n_jobs=self.n_jobs)
 
-        self.dist_matrix_ = graph_shortest_path(kng,
-                                                method=self.path_method,
-                                                directed=False,
-                                                only_vertices=landmarks).T
+        self.dist_matrix_ = shortest_path(kng,
+                                          method=self.path_method,
+                                          directed=False,
+                                          indices=landmarks).T
 
         G = self.dist_matrix_[landmarks] ** 2
         G *= -.5

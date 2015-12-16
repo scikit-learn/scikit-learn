@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 
 from .validation import check_array
-from .graph_shortest_path import graph_shortest_path
+from .graph_shortest_path import shortest_path
 
 
 ###############################################################################

@@ -8,6 +8,7 @@ data set with both Isomap and Landmark Isomap (L-Isomap) methods.
 """
 
 # Author: Lucas David -- <lucasdavid@comp.ufscar.br>
+# License: BSD 3 clause, (C) 2015
 
 print(__doc__)
 
@@ -28,7 +29,7 @@ comparisons = [
         n_samples,
         (manifold.Isomap, isomap_params),
         (manifold.Isomap, l_isomap_params),
-    ) for n_samples in range(1000, 20000, 5000)]
+    ) for n_samples in range(1000, 20001, 5000)]
 
 n_comparisons = len(comparisons)
 

@@ -39,7 +39,7 @@ def csgraph_from_masked(graph):
     Returns
     -------
     csgraph : csr_matrix
-        Compressed sparse representation of graph, 
+        Compressed sparse representation of graph,
     """
     # check that graph is a square matrix
     graph = np.ma.asarray(graph)
@@ -51,12 +51,8 @@ def csgraph_from_masked(graph):
         raise ValueError("graph should be a square array")
 
     # construct the csr matrix using graph and mask
-    if np.ma.is_masked(graph):
-        data = graph.compressed()
-        mask = ~graph.mask
-    else:
-        data = graph.data
-        mask = np.ones(graph.shape, dtype='bool')
+    data = graph.compressed()
+    mask = ~graph.mask
 
     data = np.asarray(data, dtype=DTYPE, order='c')
 
@@ -111,14 +107,14 @@ def csgraph_masked_from_dense(graph,
 
     # check whether null_value is infinity or NaN
     if null_value is not None:
-        null_value = DTYPE(null_value)        
+        null_value = DTYPE(null_value)
         if np.isnan(null_value):
             nan_null = True
             null_value = None
         elif np.isinf(null_value):
             infinity_null = True
             null_value = None
-    
+
     # flag all the null edges
     if null_value is None:
         mask = np.zeros(graph.shape, dtype='bool')
@@ -161,7 +157,7 @@ def csgraph_from_dense(graph,
     Returns
     -------
     csgraph : csr_matrix
-        Compressed sparse representation of graph, 
+        Compressed sparse representation of graph,
     """
     return csgraph_from_masked(csgraph_masked_from_dense(graph,
                                                          null_value,
@@ -202,7 +198,7 @@ def csgraph_to_dense(csgraph, null_value=0):
     graph with multiple edges from node 0 to node 1, of weights 2 and 3.
     This illustrates the difference in behavior:
 
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_matrix, csgraph
     >>> data = np.array([2, 3])
     >>> indices = np.array([1, 1])
     >>> indptr = np.array([0, 2, 2])
@@ -210,9 +206,9 @@ def csgraph_to_dense(csgraph, null_value=0):
     >>> M.toarray()
     array([[0, 5],
            [0, 0]])
-    >>> csgraph_to_dense(M)
-    array([[0, 2],
-           [0, 0]])
+    >>> csgraph.csgraph_to_dense(M)
+    array([[0., 2.],
+           [0., 0.]])
 
     The reason for this difference is to allow a compressed sparse graph to
     represent multiple edges between any two nodes.  As most sparse graph
@@ -224,17 +220,17 @@ def csgraph_to_dense(csgraph, null_value=0):
     zero-weight edges.  Let's look at the example of a two-node directed
     graph, connected by an edge of weight zero:
 
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_matrix, csgraph
     >>> data = np.array([0.0])
     >>> indices = np.array([1])
-    >>> indptr = np.array([0, 2, 2])
+    >>> indptr = np.array([0, 1, 1])
     >>> M = csr_matrix((data, indices, indptr), shape=(2, 2))
     >>> M.toarray()
     array([[0, 0],
            [0, 0]])
-    >>> csgraph_to_dense(M, np.inf)
-    array([[ Inf,   0.],
-           [ Inf,  Inf]])
+    >>> csgraph.csgraph_to_dense(M, np.inf)
+    array([[ inf,   0.],
+           [ inf,  inf]])
 
     In the first case, the zero-weight edge gets lost in the dense
     representation.  In the second case, we can choose a different null value
@@ -337,7 +333,7 @@ def reconstruct_path(csgraph, predecessors, directed=True):
         The N x N directed compressed-sparse representation of the tree drawn
         from csgraph which is encoded by the predecessor list.
     """
-    from _validation import validate_graph
+    from ._graph_validation import validate_graph
     csgraph = validate_graph(csgraph, directed, dense_output=False)
 
     N = csgraph.shape[0]
@@ -348,16 +344,23 @@ def reconstruct_path(csgraph, predecessors, directed=True):
     pind = predecessors[indices]
     indptr = pind.searchsorted(np.arange(N + 1)).astype(ITYPE)
 
-    if directed == True:
-        data = csgraph[pind, indices]
-    else:
-        data1 = csgraph[pind, indices]
-        data2 = csgraph[indices, pind]
-        data1[data1 == 0] = np.inf
-        data2[data2 == 0] = np.inf
-        data = np.minimum(data1, data2)
+    data = csgraph[pind, indices]
 
-    data = np.asarray(data).ravel()
+    # Fix issue #4018:
+    # If `pind` and `indices` are empty arrays, `data` is a sparse matrix
+    # (it is a numpy.matrix otherwise); handle this case separately.
+    if isspmatrix(data):
+        data = data.todense()
+    data = data.getA1()
+
+    if not directed:
+        data2 = csgraph[indices, pind]
+        if isspmatrix(data2):
+            data2 = data2.todense()
+        data2 = data2.getA1()
+        data[data == 0] = np.inf
+        data2[data2 == 0] = np.inf
+        data = np.minimum(data, data2)
 
     return csr_matrix((data, indices, indptr), shape=(N, N))
 
@@ -404,7 +407,7 @@ def construct_dist_matrix(graph,
     point i to point j.  If no path exists between point i and j, then
     predecessors[i, j] = -9999
     """
-    from _validation import validate_graph
+    from ._graph_validation import validate_graph
     graph = validate_graph(graph, directed, dtype=DTYPE,
                            csr_output=False,
                            copy_if_dense=not directed)
@@ -416,7 +419,7 @@ def construct_dist_matrix(graph,
     dist_matrix = np.zeros(graph.shape, dtype=DTYPE)
     _construct_dist_matrix(graph, predecessors, dist_matrix,
                            directed, null_value)
-    
+
     return dist_matrix
 
 

@@ -693,12 +693,13 @@ def _check_transformer(name, Transformer, X, y):
         # cause such unstable behaviors.
         msg = name + ' is non deterministic on 32bit Python'
         raise SkipTest(msg)
-
     n_samples, n_features = np.asarray(X).shape
     # catch deprecation warnings
     transformer = Transformer()
     set_random_state(transformer)
     set_testing_parameters(transformer)
+
+    # fit
 
     if name in CROSS_DECOMPOSITION:
         y_ = np.c_[y, y]
