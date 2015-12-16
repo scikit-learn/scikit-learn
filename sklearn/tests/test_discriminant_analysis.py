@@ -176,11 +176,14 @@ def test_lda_explained_variance_ratio():
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
 
+    tested_length = min(clf_lda_svd.explained_variance_ratio_.shape[0],
+                        clf_lda_eigen.explained_variance_ratio_.shape[0])
+
     # NOTE: clf_lda_eigen.explained_variance_ratio_ is not of n_components
     # length. Make it the same length as clf_lda_svd.explained_variance_ratio_
     # before comparison.
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
-            clf_lda_eigen.explained_variance_ratio_[:3])
+            clf_lda_eigen.explained_variance_ratio_[:tested_length])
 
 
 def test_lda_orthogonality():
