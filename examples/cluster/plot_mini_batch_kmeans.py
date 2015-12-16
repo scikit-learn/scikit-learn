@@ -103,7 +103,7 @@ plt.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
 different = (mbk_means_labels == 4)
 ax = fig.add_subplot(1, 3, 3)
 
-for l in range(n_clusters):
+for k in range(n_clusters):
     different += ((k_means_labels == k) != (mbk_means_labels == order[k]))
 
 identic = np.logical_not(different)
