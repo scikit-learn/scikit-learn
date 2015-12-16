@@ -37,7 +37,6 @@ import tarfile
 import time
 
 import numpy as np
-import matplotlib as mlp
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
@@ -321,8 +320,6 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 # Plot results
 ###############################################################################
 
-#Get matplotlib version
-ver = mlp.__version__
 
 
 def plot_accuracy(x, y, x_legend):
@@ -366,10 +363,7 @@ for cls_name, stats in sorted(cls_stats.items()):
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
-if ver<'1.5.1':
-    bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
-else:
-    bar_colors = rcParams['axes.prop_cycle'][:len(cls_names)]
+bar_colors = ['b','r','g','c','m','y']
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
@@ -405,10 +399,6 @@ cls_runtime.append(parsing_time)
 cls_names.append('Read/Parse\n+Feat.Extr.')
 cls_runtime.append(vectorizing_time)
 cls_names.append('Hashing\n+Vect.')
-if ver<'1.5.1':
-    bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
-else:
-    bar_colors = rcParams['axes.prop_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
