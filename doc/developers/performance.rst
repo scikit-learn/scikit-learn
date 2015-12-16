@@ -209,7 +209,7 @@ trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
-Python code: it takes around 100% of the cumulated time of the module. In
+Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
