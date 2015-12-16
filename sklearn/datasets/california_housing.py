@@ -21,16 +21,17 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from io import BytesIO
+import os
 from os.path import exists
 from os import makedirs
-from zipfile import ZipFile
+import tarfile
+
 try:
     # Python 2
-    from urllib2 import urlopen
+    import urllib.request as urllib
 except ImportError:
     # Python 3+
-    from urllib.request import urlopen
+    import urllib
 
 import numpy as np
 
@@ -39,8 +40,8 @@ from .base import _pkl_filepath
 from ..externals import joblib
 
 
-DATA_URL = "http://lib.stat.cmu.edu/modules.php?op=modload&name=Downloads&"\
-           "file=index&req=getit&lid=83"
+DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
+ARCHIVE_NAME = "cal_housing.tgz"
 TARGET_FILENAME = "cal_housing.pkz"
 
 # Grab the module-level docstring to use as a description of the
@@ -89,18 +90,20 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
-        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
-        fhandle = urlopen(DATA_URL)
-        buf = BytesIO(fhandle.read())
-        zip_file = ZipFile(buf)
-        try:
-            cadata_fd = zip_file.open('cadata.txt', 'r')
-            cadata = BytesIO(cadata_fd.read())
-            # skip the first 27 lines (documentation)
-            cal_housing = np.loadtxt(cadata, skiprows=27)
-            joblib.dump(cal_housing, filepath, compress=6)
-        finally:
-            zip_file.close()
+        archive_path = os.path.join(data_home, ARCHIVE_NAME)
+        print('downloading Cal. housing from %s to %s' % (DATA_URL, archive_path))
+        urllib.urlretrieve(DATA_URL, archive_path)
+        tarfile.open(archive_path, "r:gz").extractall(path=data_home)
+        os.remove(archive_path)
+
+        data_path = os.path.join(data_home, 'CaliforniaHousing',
+                                 'cal_housing.data')
+        cal_housing = np.loadtxt(data_path, delimiter=',')
+        # Columns are not in the same order compared to the previous
+        # URL resource on lib.stat.cmu.edu
+        columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
+        cal_housing = cal_housing[:, columns_index]
+        joblib.dump(cal_housing, filepath, compress=6)
     else:
         cal_housing = joblib.load(filepath)
 
