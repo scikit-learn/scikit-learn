@@ -363,7 +363,7 @@ for cls_name, stats in sorted(cls_stats.items()):
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
-bar_colors = ['b','r','g','c','m','y']
+bar_colors = ['b','g','r','c','m','y']
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
