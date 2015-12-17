@@ -362,7 +362,11 @@ for cls_name, stats in sorted(cls_stats.items()):
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+if 'axes.prop_cycle' in rcParams:
+    bar_colors_cycler = rcParams['axes.prop_cycle'][:len(cls_names)]
+    bar_colors = list(map(lambda x: x['color'], list(bar_colors_cycler)))
+else:
+    bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
@@ -398,12 +402,15 @@ cls_runtime.append(parsing_time)
 cls_names.append('Read/Parse\n+Feat.Extr.')
 cls_runtime.append(vectorizing_time)
 cls_names.append('Hashing\n+Vect.')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+if 'axes.prop_cycle' in rcParams:
+    bar_colors_cycler = rcParams['axes.prop_cycle'][:len(cls_names)]
+    bar_colors = list(map(lambda x: x['color'], list(bar_colors_cycler)))
+else:
+    bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
                      color=bar_colors)
-
 ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=8)
 plt.setp(plt.xticks()[1], rotation=30)
