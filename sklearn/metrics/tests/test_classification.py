@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -52,6 +53,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 ###############################################################################
 # Utilities for testing
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -1273,6 +1275,23 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_log_loss_pandas_input():
+    # case when input is a pandas series and dataframe gh-5715
+    y_tr = np.array(["ham", "spam", "spam", "ham"])
+    y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TrueInputType, PredInputType in types:
+        # y_pred dataframe, y_true series
+        y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
+        loss = log_loss(y_true, y_pred)
+        assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
 def test_brier_score_loss():

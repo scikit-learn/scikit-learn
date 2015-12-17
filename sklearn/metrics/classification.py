@@ -1550,6 +1550,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
 
+    y_pred = check_array(y_pred, ensure_2d=False)
     # Clipping
     Y = np.clip(y_pred, eps, 1 - eps)
 
