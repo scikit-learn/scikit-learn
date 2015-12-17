@@ -588,7 +588,7 @@ def _update_gain(gain, code, gain_rate, verbose=False):
     return gain
 
 def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10, alpha=None, n_iter=100, 
-                       gain_rate=0.001, alpha_homeo=0.02,
+                       gain_rate=0.01, alpha_homeo=0.02,
                        return_code=True, dict_init=None, callback=None,
                        batch_size=100, verbose=False, shuffle=True, n_jobs=1,
                        method='omp', iter_offset=0, random_state=None,
@@ -621,11 +621,13 @@ def dict_learning_grad(X, eta=0.02, n_components=2, transform_n_nonzero_coefs=10
     n_iter : int,
         Number of iterations to perform.
 
-    gain_rate: float
-        Gives the learning parameter for the gain.
+    gain_rate : float
+        Gives the learning parameter for the homeostatic gain.
 
-    alpha_homeo: float
-        Gives the smoothing exponent for the gain.
+    alpha_homeo : float
+        Gives the smoothing exponent  for the homeostatic gain
+        If equal to 1 the homeostatic learning rule learns a linear relation to
+        variance.
 
     return_code : boolean,
         Whether to also return the code U or just the dictionary V.
@@ -1326,8 +1328,13 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
     n_iter : int,
         total number of iterations to perform
 
-    gain_rate: float
-        Gives the learning parameter for the gain.
+    gain_rate : float
+        Gives the learning parameter for the homeostatic gain.
+
+    alpha_homeo : float
+        Gives the smoothing exponent  for the homeostatic gain
+        If equal to 1 the homeostatic learning rule learns a linear relation to
+        variance.
 
     fit_algorithm : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
