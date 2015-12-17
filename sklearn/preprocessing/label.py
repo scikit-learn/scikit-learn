@@ -298,7 +298,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.classes_ = unique_labels(y)
         if len(self.classes_) == 1:
                 warnings.warn("Only one label in y and this label will be "
-                              "regarded as negitive one.")
+                              "regarded as negative one.")
         return self
 
     def transform(self, y):

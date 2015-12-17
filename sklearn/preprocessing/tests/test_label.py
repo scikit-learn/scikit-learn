@@ -44,7 +44,7 @@ def test_label_binarizer():
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
-    w = "Only one label in y and this label will be regarded as negitive one."
+    w = "Only one label in y and this label will be regarded as negative one."
     assert_warns_message(UserWarning, w, lb.fit, inp)
 
     # two-class case
