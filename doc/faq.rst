@@ -244,3 +244,11 @@ program: Insert the following instructions in your main script::
 
 You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
+
+
+Why is there no support for deep learning / Will there be support for deep learning in scikit-learn?
+----------------------------------------------------------------------------------------------------
+Deep learning requires a rich vocabulary to define an architecture and the
+use of GPUs for efficient computing. However, neither of these fit within
+the design constraints of scikit-learn. As a result, deep learning is
+currently out of scope for what scikit-learn seeks to achieve.
