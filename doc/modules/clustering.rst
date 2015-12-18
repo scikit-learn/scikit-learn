@@ -1422,6 +1422,54 @@ not know how many clusters he wants, there exists algorithm to find the most
 relevant number of clusters for its data, given the data and the clustering
 algorithm used.
 
+.. _calinski_harabaz_index:
+
+Calinski-Harabaz index
+----------------------
+
+The goal of the Calinski-Harabaz index is to maximize dispersion between clusters 
+and minimize dispersion within clusters. Let 
+
+- :math:`N` be the number of points in our data, 
+- :math:`C_q` be the set of points in cluster :math:`q`, 
+- :math:`c_q` be the center of cluster :math:`q`, 
+- :math:`c` be the center of :math:`E`, 
+- :math:`n_q` be the number of points in cluster :math:`q`:
+
+The Calinski-Harabaz index for data in :math:`k` cluster, noted
+:math:`CH(k)`, is defined as:
+
+.. math::
+
+  CH(k) = \frac{trace(B_k)}{trace(W_k)} \times \frac{N - k}{k - 1}
+
+with  
+
+.. math::
+  W_k  = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T \\
+  B_k = \sum_q n_q (c_q - c) (c_q -c)^T \\
+
+Advantages
+~~~~~~~~~~
+
+- The score is higher when clusters are dense and well separated, which relates
+  to a standard concept of a cluster.
+
+- Fast computation
+
+
+Drawbacks
+~~~~~~~~~
+
+- The Calinski-Harabaz index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
+
+.. topic:: References
+
+ *  "A dendrite method for cluster analysis"
+    Caliński, T., & Harabasz, J., *Communications in Statistics-theory and Methods*, (1974)
+
 .. _stability:
 
 Stability
@@ -1444,20 +1492,6 @@ times:
 - Compute similarity :math:`s(C_1, C_2)`
 
 The chosen number of clusters is the one that has maximum average similarity
-
-Usage
-~~~~~
-
-Given a dataset and a clustering algorithm (a :class:`ClusterMixin`),
-stability returns the most stable number of clusters
-
-  >>> from sklearn.datasets import make_blobs
-  >>> from sklearn.cluster import KMeans
-  >>> from sklearn.metrics.cluster.stability import stability
-  >>> data, labels = make_blobs(n_samples=1000, centers=2, random_state=0)
-  >>> kmeans_model = KMeans()
-  >>> stability(data, kmeans_model, k_max=10, verbose=False)
-  2
 
 Advantages
 ~~~~~~~~~~
@@ -1534,54 +1568,6 @@ gap_statistic returns the estimated number of clusters
  * `"Estimating the number of clusters in a data set via the gap statistic"
    <http://web.stanford.edu/~hastie/Papers/gap.pdf>`_
    Tibshirani, R., Walther, G., & Hastie, T., *Journal of the Royal Statistical Society: Series B* (Statistical Methodology), (2001)
-
-.. _calinski_harabaz_index:
-
-Calinski-Harabaz index
-----------------------
-
-The goal of the Calinski-Harabaz index is to maximize dispersion between clusters 
-and minimize dispersion within clusters. Let 
-
-- :math:`N` be the number of points in our data, 
-- :math:`C_q` be the set of points in cluster :math:`q`, 
-- :math:`c_q` be the center of cluster :math:`q`, 
-- :math:`c` be the center of :math:`E`, 
-- :math:`n_q` be the number of points in cluster :math:`q`:
-
-The Calinski-Harabaz index for data in :math:`k` cluster, noted
-:math:`CH(k)`, is defined as:
-
-.. math::
-
-  CH(k) = \frac{trace(B_k)}{trace(W_k)} \times \frac{N - k}{k - 1}
-
-with  
-
-.. math::
-  W_k  = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T \\
-  B_k = \sum_q n_q (c_q - c) (c_q -c)^T \\
-
-Advantages
-~~~~~~~~~~
-
-- The score is higher when clusters are dense and well separated, which relates
-  to a standard concept of a cluster.
-
-- Fast computation
-
-
-Drawbacks
-~~~~~~~~~
-
-- The Calinski-Harabaz index is generally higher for convex clusters than other
-  concepts of clusters, such as density based clusters like those obtained
-  through DBSCAN.
-
-.. topic:: References
-
- *  "A dendrite method for cluster analysis"
-    Caliński, T., & Harabasz, J., *Communications in Statistics-theory and Methods*, (1974)
 
 .. _distortion_jump:
 
