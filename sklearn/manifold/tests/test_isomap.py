@@ -116,7 +116,7 @@ def test_pipeline():
 
 def test_isomap_clone_bug():
     # regression test for bug reported in #6062
-    model = Isomap()
+    model = manifold.Isomap()
     for n_neighbors in [10, 15, 20]:
         model.set_params(n_neighbors=n_neighbors)
         model.fit(np.random.rand(50, 2))
