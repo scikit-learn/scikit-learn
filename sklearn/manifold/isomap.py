@@ -3,6 +3,7 @@
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) 2011
 import numpy as np
+from scipy.spatial import distance
 
 from ..base import BaseEstimator, TransformerMixin
 from ..decomposition import KernelPCA
@@ -45,38 +46,63 @@ class Isomap(BaseEstimator, TransformerMixin):
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
 
-    path_method : string ['auto'|'FW'|'D']
-        Method to use in finding shortest path.
+    path_method : string ['auto'|'FW'|'D'], optional
+        Algorithm to use for shortest paths.  Options are:
 
-        'auto' : attempt to choose the best algorithm automatically.
+           'auto' -- (default) select the best among 'FW', 'D', 'BF', or 'J'
+                     based on the input data.
 
-        'FW' : Floyd-Warshall algorithm.
+           'FW'   -- Floyd-Warshall algorithm.  Computational cost is
+                     approximately ``O[N^3]``.  The input csgraph will be
+                     converted to a dense representation.
 
-        'D' : Dijkstra's algorithm.
+           'D'    -- Dijkstra's algorithm with Fibonacci heaps.  Computational
+                     cost is approximately ``O[N(N*k + N*log(N))]``, where
+                     ``k`` is the average number of connected edges per node.
+                     The input csgraph will be converted to a csr
+                     representation.
+
+           'BF'   -- Bellman-Ford algorithm.  This algorithm can be used when
+                     weights are negative.  If a negative cycle is encountered,
+                     an error will be raised.  Computational cost is
+                     approximately ``O[N(N^2 k)]``, where ``k`` is the average
+                     number of connected edges per node. The input csgraph will
+                     be converted to a csr representation.
+
+           'J'    -- Johnson's algorithm.  Like the Bellman-Ford algorithm,
+                     Johnson's algorithm is designed for use when the weights
+                     are negative.  It combines the Bellman-Ford algorithm
+                     with Dijkstra's algorithm for faster computation.
 
     neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
-    n_landmarks : [None|int|'auto'] (default = None)
-        The number of landmarks. If this parameter was set,
-        L-Isomap (Landmark Isomap) will execute instead of the
-        original algorithm.
+    landmarks : [None|int|'auto'|array-like] (default = None)
+        The number or list of landmarks to use.
+        If this parameter was set, L-Isomap (Landmark Isomap) will execute
+        instead of the original algorithm.
 
-        Should be a number sufficiently greater than n_components + 1, for
-        stability [2].
+        Options are:
 
-        None : all samples will be used. The original Isomap algorithm will be
-        executed.
+            None       -- All samples will be used.
+                          The original Isomap algorithm will be executed.
 
-        'auto' : automatically computes the number of landmarks to use and
-        randomly-selects them.
+            'auto'     -- Automatically computes the number of landmarks to use.
 
-        int :  use exactly n_landmarks randomly-selected landmarks.
+            int        -- Use exactly landmarks randomly-selected landmarks.
+                          Should be a number sufficiently greater than
+                          n_components + 1, for stability [2].
 
-    landmarks : array-like, optional (default = None)
-        The list of landmarks to use. If none was passed,
-        infers it from n_landmarks.
+            array-like -- Use the landmarks passed in the list.
+
+    landmarks_method : ['min-max'|'random'] (default = 'min-max')
+        Algorithm used to select the landmarks.
+
+        'random' : randomly selects landmarks.
+
+        'min-max' : use greedy optimization to find well-distributed
+        landmarks.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
@@ -84,7 +110,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     random_state : int, optional (default = None)
         The seed for the random landmark selector.
-        This will be ignored if n_landmarks=None or the landmarks
+        This will be ignored if landmarks=None or the landmarks
         parameter was passed.
 
 
@@ -103,12 +129,12 @@ class Isomap(BaseEstimator, TransformerMixin):
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
-    dist_matrix_ : array-like, shape (n_samples, n_landmarks)
+    dist_matrix_ : array-like, shape (n_samples, landmarks)
         Stores the geodesic distance matrix of training data.
-        If the original Isomap algorithm was executed (n_landmarks=None),
+        If the original Isomap algorithm was executed (landmarks=None),
         dist_matrix_ has shape (n_samples, n_samples).
 
-    landmarks_ : array-like, shape (n_landmarks,)
+    landmarks_ : array-like, shape (landmarks,)
         Stores the indices of the selected landmarks.
 
     References
@@ -116,14 +142,18 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
-    .. [2] Silva, V. D., & Tenenbaum, J. B. (2002). Global versus local
+    .. [2] Silva, V. D.; & Tenenbaum, J. B. (2002). Global versus local
            methods in nonlinear dimensionality reduction. In Advances
            in neural information processing systems (pp. 705-712).
+    .. [3] De Silva, V. D.; & Tenenbaum, J. B. Sparse multidimensional
+           scaling using landmark points. Technical report,
+           Stanford University, 2004.
     """
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto', n_landmarks=None, landmarks=None,
+                 neighbors_algorithm='auto',
+                 landmarks=None, landmarks_method='min-max',
                  n_jobs=1, random_state=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -132,67 +162,78 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
-        self.n_landmarks = n_landmarks
-        self.landmarks_ = landmarks
+        self.landmarks = landmarks
+        self.landmarks_method = landmarks_method
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-    def _compute_landmarks(self, X):
-        """Computes the landmarks from a data set X.
+        self.landmarks_ = None
 
-        If n_landmarks and landmarks parameters were passed,
-        all samples are used as landmarks (original Isomap algorithm).
-        If the landmarks were passed in the constructor or they were
-        already computed, returns them.
-        Otherwise, randomly selects n_landmarks (contained in the
-        interval [0, |X|)).
-
-        If n_landmarks is 'auto', selects n_components + 1 (the necessary
-        landmarks required to triangulate a samples' position in the
-        n_components-dimensional embedding plus a security margin.
-
-        Parameters
-        ----------
-        X
-            The data set containing the samples from where the landmarks
-            should be inferred.
+    def _compute_landmarks(self):
+        """Computes the landmarks in the training data that will be used.
 
         Returns
         -------
-        landmarks: array-like, shape (n_landmarks,)
+        landmarks_: array-like, shape (landmarks,)
+            The array of landmarks to use, or None, if all samples should
+            be used.
         """
-        if self.landmarks_ is None:
-            n_samples = X.shape[0]
-            n_landmarks = self.n_landmarks
+        if self.landmarks is not None:
+            n_samples = self.training_data_.shape[0]
 
-            if n_landmarks is None:
-                self.landmarks_ = np.arange(X.shape[0])
+            if isinstance(self.landmarks, np.ndarray):
+                self.landmarks_ = self.landmarks
             else:
+                n_landmarks = self.landmarks
+
                 if n_landmarks == 'auto':
-                    # To guarantee some stability, the number of landmarks
-                    # should be strictly superior to the number of dimensions
-                    # of the reduced data set added by some safety margin.
-                    n_landmarks = (self.n_components + 1 +
-                                   min(self.n_components // 2, 100))
+                    n_landmarks = min(self.n_components + 10, n_samples)
 
-                    # Limit number of landmarks by the number of samples.
-                    n_landmarks = min(n_landmarks, n_samples)
+                random_state = check_random_state(self.random_state)
 
-                self.landmarks_ = np.arange(n_samples)
-                check_random_state(self.random_state).shuffle(self.landmarks_)
-                self.landmarks_ = self.landmarks_[:n_landmarks]
+                if isinstance(n_landmarks, int):
+                    if self.landmarks_method == 'random':
+                        self.landmarks_ = np.arange(n_samples)
+                        random_state.shuffle(self.landmarks_)
+                        self.landmarks_ = self.landmarks_[:n_landmarks]
+
+                    elif self.landmarks_method == 'min-max':
+                        seed = random_state.randint(n_landmarks)
+                        landmarks = [seed]
+
+                        m = distance.cdist(self.training_data_[landmarks],
+                                           self.training_data_).flatten()
+
+                        for i in range(1, n_landmarks):
+                            landmarks.append(np.argmax(m))
+                            e = distance.cdist(
+                                    self.training_data_[landmarks[i], None],
+                                    self.training_data_).flatten()
+                            m = np.minimum(m, e)
+
+                        self.landmarks_ = np.array(landmarks)
+                    else:
+                        raise ValueError(
+                            "unrecognized landmark selection method '%s'"
+                            % self.landmarks_method)
+                else:
+                    raise ValueError("unrecognized landmarks '%s'"
+                                     % n_landmarks)
 
         return self.landmarks_
 >>>>>>> Merge Isomap and LandmarkIsomap classes.
 
     def _fit_transform(self, X):
         X = check_array(X)
+
         landmarks = self._compute_landmarks(X)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
-        self.training_data_ = self.nbrs_._fit_X[landmarks, :]
+
+        self.training_data_ = self.nbrs_._fit_X
+
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
@@ -202,20 +243,28 @@ class Isomap(BaseEstimator, TransformerMixin):
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance', n_jobs=self.n_jobs)
 
+        landmarks = self._compute_landmarks()
+
         self.dist_matrix_ = shortest_path(kng,
                                           method=self.path_method,
                                           directed=False,
                                           indices=landmarks).T
 
-        G = self.dist_matrix_[landmarks] ** 2
+        self.dist_matrix_[np.isinf(self.dist_matrix_)] = 0
+
+        G = (self.dist_matrix_ if landmarks is None
+             else self.dist_matrix_[landmarks])
+        G = G ** 2
         G *= -.5
 
-        # Selectively replaces embedding_ rows.
-        # This preserves the order of the samples in X.
-        self.embedding_ = np.zeros((X.shape[0], self.n_components))
-        self.embedding_[landmarks] = self.kernel_pca_.fit_transform(G)
+        if landmarks is None or landmarks.shape[0] == X.shape[0]:
+            self.embedding_ = self.kernel_pca_.fit_transform(G)
+        else:
+            # Selectively replaces embedding_ rows.
+            # This preserves the order of the samples in X.
+            self.embedding_ = np.zeros((X.shape[0], self.n_components))
+            self.embedding_[landmarks] = self.kernel_pca_.fit_transform(G)
 
-        if landmarks.shape[0] < X.shape[0]:
             # Embed the samples that are not landmarks.
             others = np.ones(X.shape[0], dtype=bool)
             others[landmarks] = 0
@@ -240,7 +289,10 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
-        G = -0.5 * self.dist_matrix_[self.landmarks_] ** 2
+
+        G = (self.dist_matrix_ if self.landmarks_ is None
+             else self.dist_matrix_[self.landmarks_])
+        G = -0.5 * G ** 2
         G_center = KernelCenterer().fit_transform(G)
         evals = self.kernel_pca_.lambdas_
         return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
@@ -301,10 +353,14 @@ class Isomap(BaseEstimator, TransformerMixin):
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to self.training_data_
-        # via the nearest neighbors of X.
+        # (or to the landmarks, when executing L-Isomap) via the nearest
+        # neighbors of X.
         # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
-        G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
+        columns = (self.training_data_.shape[0] if self.landmarks_ is None
+                   else self.landmarks_.shape[0])
+
+        G_X = np.zeros((X.shape[0], columns))
         for i in range(X.shape[0]):
             G_X[i] = np.min((self.dist_matrix_[indices[i]] +
                              distances[i][:, None]), axis=0)

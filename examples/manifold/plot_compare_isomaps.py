@@ -22,19 +22,19 @@ from sklearn import manifold, datasets
 Axes3D
 
 isomap_params = {'n_neighbors': 10, 'n_components': 2}
-l_isomap_params = {'n_neighbors': 10, 'n_components': 2, 'n_landmarks': 15}
+l_isomap_params = {'n_neighbors': 10, 'n_components': 2, 'landmarks': 'auto'}
 
 comparisons = [
     (
         n_samples,
         (manifold.Isomap, isomap_params),
         (manifold.Isomap, l_isomap_params),
-    ) for n_samples in range(1000, 20001, 5000)]
+    ) for n_samples in range(1000, 6001, 5000)]
 
 n_comparisons = len(comparisons)
 
 fig = plt.figure(figsize=(15, 8))
-plt.suptitle("Isomap and L-Isomap Comparison", fontsize=14)
+plt.suptitle('Isomap and L-Isomap Comparison', fontsize=14)
 
 for i, comparison in enumerate(comparisons):
     n_samples = comparison[0]
@@ -42,7 +42,7 @@ for i, comparison in enumerate(comparisons):
 
     X, color = datasets.make_swiss_roll(n_samples, random_state=0)
 
-    print('\nComparison %i: %i samples' % (i, n_samples))
+    print('Comparison %i: %i samples' % (i, n_samples))
 
     try:
         # compatibility matplotlib < 1.0
@@ -53,26 +53,29 @@ for i, comparison in enumerate(comparisons):
         ax = fig.add_subplot(251, projection='3d')
         plt.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
 
-    plt.title("%i samples." % n_samples)
+    plt.title('%i samples.' % n_samples)
 
     for j, (method, params) in enumerate(methods):
         try:
+            print('#%i' % j)
+
             t0, t1 = time(), None
-            Y = method(**params).fit_transform(X)
+            transformer = method(**params)
+            Y = transformer.fit_transform(X)
             t1 = time()
 
-            print("%s(%s): %.6g sec." % (method.__name__,
-                                         str(params), (t1 - t0)))
+            print('params: %s' % str(params))
+            print('time elapsed: %.6g sec.\n' % (t1 - t0))
 
             ax = fig.add_subplot(n_comparisons, 3, i * 3 + 2 + j)
             plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
-            plt.title("%s (%.6g sec)" % (method.__name__, (t1 - t0)))
+            plt.title('#%i: (%.6g sec)' % (j, (t1 - t0)))
 
             ax.xaxis.set_major_formatter(NullFormatter())
             ax.yaxis.set_major_formatter(NullFormatter())
             plt.axis('tight')
 
         except MemoryError as e:
-            print("%s: failed." % method.__name__)
+            print('Failed.\n' % j)
 
 plt.show()

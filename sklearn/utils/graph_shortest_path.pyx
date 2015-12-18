@@ -59,8 +59,6 @@ def shortest_path(csgraph, method='auto',
     Perform a shortest-path graph search on a positive directed or
     undirected graph.
 
-    .. versionadded:: 0.11.0
-
     Parameters
     ----------
     csgraph : array, matrix, or sparse matrix, 2 dimensions
@@ -213,8 +211,6 @@ def floyd_warshall(csgraph, directed=True,
                    overwrite=False)
 
     Compute the shortest path lengths using the Floyd-Warshall algorithm
-
-    .. versionadded:: 0.11.0
 
     Parameters
     ----------

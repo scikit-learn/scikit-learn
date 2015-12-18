@@ -16,10 +16,11 @@ from sklearn.pipeline import Pipeline
 
 n_samples = 1000
 n_components = 2
-n_landmarks = 10
+landmarks = 10
 manifold_noise = .8
 test_size = .2
 n_jobs = -1
+random_state = 0
 
 classification_data_sets = (
     ('iris', datasets.load_iris()),
@@ -35,10 +36,10 @@ regression_data_sets = (
 manifold_data_sets = (
     ('s-curve', datasets.make_s_curve(n_samples)),
     ('swiss-roll', datasets.make_swiss_roll(n_samples)),
-    ('noisy-swiss-roll', datasets.make_s_curve(n_samples, manifold_noise,
-                                               random_state=0)),
+    ('noisy-s-curve', datasets.make_s_curve(n_samples, manifold_noise,
+                                            random_state=random_state)),
     ('noisy-swiss-roll', datasets.make_swiss_roll(n_samples, manifold_noise,
-                                                  random_state=0)),
+                                                  random_state=random_state)),
 )
 
 
@@ -49,7 +50,7 @@ def train_and_test_many(learner, data_sets, score_function):
 
         isomap = manifold.Isomap(n_components=n_components)
         l_isomap = manifold.Isomap(n_components=n_components,
-                                   n_landmarks=10)
+                                   landmarks=landmarks)
 
         i_pipe = Pipeline([('isomap', isomap), ('knn', learner)])
         l_pipe = Pipeline([('l_isomap', l_isomap), ('knn', learner)])
