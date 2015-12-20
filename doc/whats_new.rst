@@ -66,6 +66,10 @@ Enhancements
    - Added ``n_jobs`` parameter to :class:`feature_selection.RFECV` to compute
      the score on the test folds in parallel. By `Manoj Kumar`_
 
+   - Keyword arguments can now be supplied to ``func`` in
+     :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
+     parameter. By `Brian McFee`_.
+
 Bug fixes
 .........
 
