@@ -39,9 +39,6 @@ k_means = KMeans(init='k-means++', n_clusters=3, n_init=10)
 t0 = time.time()
 k_means.fit(X)
 t_batch = time.time() - t0
-k_means_labels = k_means.labels_
-k_means_cluster_centers = k_means.cluster_centers_
-k_means_labels_unique = np.unique(k_means_labels)
 
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
@@ -51,9 +48,6 @@ mbk = MiniBatchKMeans(init='k-means++', n_clusters=3, batch_size=batch_size,
 t0 = time.time()
 mbk.fit(X)
 t_mini_batch = time.time() - t0
-mbk_means_labels = mbk.labels_
-mbk_means_cluster_centers = mbk.cluster_centers_
-mbk_means_labels_unique = np.unique(mbk_means_labels)
 
 ##############################################################################
 # Plot result
@@ -65,7 +59,10 @@ colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 # We want to have the same colors for the same cluster from the
 # MiniBatchKMeans and the KMeans algorithm. Let's pair the cluster centers per
 # closest one.
-
+k_means_cluster_centers = np.sort(k_means.cluster_centers_, axis=0)
+mbk_means_cluster_centers = np.sort(mbk.cluster_centers_, axis=0)
+k_means_labels = pairwise_distances_argmin(X, k_means_cluster_centers)
+mbk_means_labels = pairwise_distances_argmin(X, mbk_means_cluster_centers)
 order = pairwise_distances_argmin(k_means_cluster_centers,
                                   mbk_means_cluster_centers)
 
