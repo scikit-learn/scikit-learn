@@ -17,10 +17,11 @@ import numpy as np
 from scipy import linalg
 from ..utils import arpack
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+import scipy
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
-import scipy
+
 pinv2_args = {}
 if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     # check_finite=False is an optimization available only in scipy >=0.12
@@ -41,7 +42,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     ite = 1
     X_pinv = Y_pinv = None
     eps = np.finfo(X.dtype).eps
-    # Inner loop of the Wold algo.
+    # Inner loop of the Wold algo. Very similar to chemometrics::pls2_nipals
+    # in R.  Tolarence looks at changes in the X matrix rather than Y
     while True:
         # 1.1 Update u: the X weights
         if mode == "B":
@@ -52,7 +54,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
-            x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
+            x_weights = np.dot(X.T, y_score)
         # 1.2 Normalize u
         x_weights /= np.sqrt(np.dot(x_weights.T, x_weights)) + eps
         # 1.3 Update x_score: the X latent scores
@@ -64,15 +66,14 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
-            y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
+            y_weights = np.dot(Y.T, x_score)
         # 2.2 Normalize y_weights
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights.T, y_weights)) + eps
         # 2.3 Update y_score: the Y latent scores
-        y_score = np.dot(Y, y_weights) / (np.dot(y_weights.T, y_weights) + eps)
-        # y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
+        y_score = np.dot(Y, y_weights)
         x_weights_diff = x_weights - x_weights_old
-        if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
+        if np.sqrt(np.dot(x_weights_diff.T, x_weights_diff)) < tol or Y.shape[1] == 1:
             break
         if ite == max_iter:
             warnings.warn('Maximum number of iterations reached')
@@ -93,6 +94,14 @@ def _svd_cross_product(X, Y):
 def _center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
 
+    This function always performs centering.
+    Centering substracks column means from all columns of X and Y.
+    Scaling divides X and Y by their respective column standard deviations.
+    The resulting data set is centered around the origin and varies between -1
+    and 1.
+
+    For more general case, use sklearn.preprocessing.scale()
+
     Returns
     -------
         X, Y, x_mean, y_mean, x_std, y_std
@@ -104,7 +113,7 @@ def _center_scale_xy(X, Y, scale=True):
     Y -= y_mean
     # scale
     if scale:
-        x_std = X.std(axis=0, ddof=1)
+        x_std = X.std(axis=0, ddof=1)  # calculate variance (n-1)
         x_std[x_std == 0.0] = 1.0
         X /= x_std
         y_std = Y.std(axis=0, ddof=1)
@@ -142,7 +151,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     n_components : int, number of components to keep. (default 2).
 
-    scale : boolean, scale data? (default True)
+    scale : boolean, scale data? (default True).  Data is always centered
 
     deflation_mode : str, "canonical" or "regression". See notes.
 
@@ -191,7 +200,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Y block to latents rotations.
 
     coef_: array, [p, q]
-        The coefficients of the linear model: ``Y = X coef_ + Err``
+        The coefficients of the linear model: ``Y = X coef_ + Err``, often B
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -358,8 +367,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         else:
             self.y_rotations_ = np.ones(1)
 
-        if True or self.deflation_mode == "regression":
-            # FIXME what's with the if?
+        if self.deflation_mode is "regression":
             # Estimate regression coefficient
             # Regress Y on T
             # Y = TQ' + Err,
@@ -367,8 +375,12 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
-                          self.y_std_)
+            # self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
+            #               self.y_std_)
+
+        if self.deflation_mode is "canonical":
+            self.coef_ = np.dot(self.x_rotations_, self.y_weights_.T)
+
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -393,9 +405,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
-        # Normalize
+        # Center
         X -= self.x_mean_
-        X /= self.x_std_
+        # Normalize
+        if self.scale is True:
+            X /= self.x_std_
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
@@ -403,7 +417,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self.y_mean_
-            Y /= self.y_std_
+            if self.scale is True:
+                Y /= self.y_std_
             y_scores = np.dot(Y, self.y_rotations_)
             return x_scores, y_scores
 
@@ -428,11 +443,16 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
-        # Normalize
+        # Center
         X -= self.x_mean_
-        X /= self.x_std_
+        # Scale
+        if self.scale is True:
+            X /= self.x_std_
         Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
+        if self.scale is True:
+            return(Ypred * self.y_std_) + self.y_mean_
+        else:
+            return(Ypred + self.y_mean_)
 
     def fit_transform(self, X, y=None, **fit_params):
         """Learn and apply the dimension reduction on the train data.
@@ -473,7 +493,8 @@ class PLSRegression(_PLS):
         Number of components to keep.
 
     scale : boolean, (default True)
-        whether to scale the data
+        whether to scale the data by its variance
+        Note:  data is always centered by this function
 
     max_iter : an integer, (default 500)
         the maximum number of iterations of the NIPALS inner loop (used
@@ -822,12 +843,20 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         """Apply the dimension reduction learned on the train data."""
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
-        Xr = (X - self.x_mean_) / self.x_std_
+        # Center Xr
+        Xr = X - self.x_mean_
+        # Scale Xr
+        if self.scale is True:
+            Xr /= self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
-            Yr = (Y - self.y_mean_) / self.y_std_
+            # Center Yr
+            Yr = Y - self.y_mean_
+            # Scale Yr
+            if self.scale is True:
+                Yr /= self.y_std_
             y_scores = np.dot(Yr, self.y_weights_)
             return x_scores, y_scores
         return x_scores
