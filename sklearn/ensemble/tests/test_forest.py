@@ -5,7 +5,8 @@ Testing for the forest module (sklearn.ensemble.forest).
 # Authors: Gilles Louppe,
 #          Brian Holt,
 #          Andreas Mueller,
-#          Arnaud Joly
+#          Arnaud Joly,
+#          Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 import pickle
@@ -49,8 +50,17 @@ from sklearn.tree.tree import SPARSE_SPLITTERS
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
+
+# toy sample with missing data
+X_missing = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
+             [-2, np.nan], [-1, np.nan], [2, np.nan], [1, np.nan]]
+y_missing = [-1, -1, -1, 1, 1, 1, 1, 1, -1, -1]
+
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
+
+T_missing = [[-1, -1], [2, 2], [3, 2], [-3, np.nan], [3, np.nan]]
+true_result_missing = [-1, 1, 1, 1, -1]
 
 # also load the iris dataset
 # and randomly permute it
@@ -109,10 +119,48 @@ def check_classification_toy(name):
     leaf_indices = clf.apply(X)
     assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
 
+    # Check if missing_values are correctly set
+    assert_true(np.all(list(clf.estimators_[i].missing_values is None
+                            for i in range(10))))
+
+
+def check_classification_toy_missing_data(name):
+    # Check classification on a toy dataset with missing values
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(n_estimators=10, missing_values="NaN",
+                           random_state=1)
+    clf.fit(X_missing, y_missing)
+    assert_array_equal(clf.predict(T_missing), true_result_missing)
+    assert_equal(10, len(clf))
+
+    # Check if missing_values are correctly set
+    assert_true(np.all(list(np.isnan(clf.estimators_[i].missing_values)
+                            for i in range(10))))
+
+    clf = ForestClassifier(n_estimators=10, max_features=1,
+                           missing_values="NaN", random_state=1)
+    clf.fit(X_missing, y_missing)
+    assert_array_equal(clf.predict(T_missing), true_result_missing)
+    assert_equal(10, len(clf))
+
+    # also test apply
+    leaf_indices = clf.apply(X_missing)
+    assert_equal(leaf_indices.shape, (len(X_missing), clf.n_estimators))
+
+    # Enabling missing value support should not mess with the classification
+    # for data without missing values
+    clf = ForestClassifier(n_estimators=10, missing_values="NaN",
+                           random_state=1)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
+
 
 def test_classification_toy():
     for name in FOREST_CLASSIFIERS:
         yield check_classification_toy, name
+        yield check_classification_toy_missing_data, name
 
 
 def check_iris_criterion(name, criterion):
@@ -121,6 +169,13 @@ def check_iris_criterion(name, criterion):
 
     clf = ForestClassifier(n_estimators=10, criterion=criterion,
                            random_state=1)
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert_greater(score, 0.9, "Failed with criterion %s and score = %f"
+                               % (criterion, score))
+
+    clf = ForestClassifier(n_estimators=10, criterion=criterion,
+                           missing_values="NaN", random_state=1)
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
     assert_greater(score, 0.9, "Failed with criterion %s and score = %f"
@@ -227,6 +282,7 @@ def check_importances(name, criterion, X, y):
     importances = est.feature_importances_
     assert_true(np.all(importances >= 0.0))
 
+    # Check scale invariance
     for scale in [0.5, 10, 100]:
         est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
@@ -505,9 +561,44 @@ def check_multioutput(name):
             assert_equal(log_proba[1].shape, (4, 4))
 
 
+def check_multioutput_missing_value(name):
+    # Check estimators on multi-output problems with missing data.
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2],
+               [np.nan, -3], [np.nan, -2], [np.nan, -1],
+               [1, np.nan], [2, np.nan], [3, np.nan]]
+    y_train = [[-1, 0], [-1, 0], [-1, 0], [1, 1], [1, 1], [1, 1], [-1, 2],
+               [-1, 2], [-1, 2], [1, 3], [1, 3], [1, 3],
+               [1, 3], [1, 3], [1, 3],
+               # If the 2nd feature is nan 1/3 chance that its class 3
+               # for 2nd output and 2/3 chance that its class 1 for 2nd output
+               [1, 3], [1, 1], [1, 1]]
+
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1], [3, np.nan], [np.nan, -5]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3], [1, 1], [1, 3]]
+
+    est = FOREST_CLASSIFIERS[name](random_state=0, missing_values="NaN",
+                                   bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_almost_equal(y_pred, y_test)
+
+    with np.errstate(divide="ignore"):
+        proba = est.predict_proba(X_test)
+        assert_equal(len(proba), 2)
+        assert_equal(proba[0].shape, (6, 2))
+        assert_equal(proba[1].shape, (6, 4))
+
+        log_proba = est.predict_log_proba(X_test)
+        assert_equal(len(log_proba), 2)
+        assert_equal(log_proba[0].shape, (6, 2))
+        assert_equal(log_proba[1].shape, (6, 4))
+
+
 def test_multioutput():
     for name in FOREST_CLASSIFIERS:
         yield check_multioutput, name
+        yield check_multioutput_missing_value, name
 
     for name in FOREST_REGRESSORS:
         yield check_multioutput, name
@@ -1161,6 +1252,28 @@ def check_decision_path(name):
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
                           random_state=1)
+    est.fit(X, y)
+    indicator, n_nodes_ptr = est.decision_path(X)
+
+    assert_equal(indicator.shape[1], n_nodes_ptr[-1])
+    assert_equal(indicator.shape[0], n_samples)
+    assert_array_equal(np.diff(n_nodes_ptr),
+                       [e.tree_.node_count for e in est.estimators_])
+
+    # Assert that leaves index are correct
+    leaves = est.apply(X)
+    for est_id in range(leaves.shape[1]):
+        leave_indicator = [indicator[i, n_nodes_ptr[est_id] + j]
+                           for i, j in enumerate(leaves[:, est_id])]
+        assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
+
+
+def check_decision_path_missing_values(name):
+    X, y = X_missing, y_missing
+    n_samples = X.shape[0]
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
+                          missing_values="NaN", random_state=1)
     est.fit(X, y)
     indicator, n_nodes_ptr = est.decision_path(X)
 

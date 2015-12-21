@@ -43,13 +43,21 @@ cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 # in SparseSplitter
 cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
-cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
+# Constants to handle missing values
+cdef SIZE_t MISSING_DIR_LEFT = 0
+cdef SIZE_t MISSING_DIR_RIGHT = 1
+
+cdef inline void _init_split(SplitRecord* self,
+                             SIZE_t start_pos) nogil:
     self.impurity_left = INFINITY
     self.impurity_right = INFINITY
     self.pos = start_pos
     self.feature = 0
     self.threshold = 0.
     self.improvement = -INFINITY
+    # SELFNOTE changed def. dir UNDEF --> RIGHT
+    self.missing_direction = MISSING_DIR_RIGHT
+    self.n_missing = 0
 
 cdef class Splitter:
     """Abstract splitter class.
@@ -60,7 +68,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint allow_missing):
         """
         Parameters
         ----------
@@ -102,6 +110,11 @@ cdef class Splitter:
         self.random_state = random_state
         self.presort = presort
 
+        self.allow_missing = allow_missing
+        self.missing_mask = NULL
+        self.missing_mask_stride = 0
+        self.n_missing = 0
+
     def __dealloc__(self):
         """Destructor."""
 
@@ -120,7 +133,8 @@ cdef class Splitter:
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None,
+                   np.ndarray missing_mask=None) except*:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -180,6 +194,11 @@ cdef class Splitter:
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
 
         self.sample_weight = sample_weight
+
+        if self.allow_missing:
+            self.missing_mask = <BOOL_t*> missing_mask.data
+            self.missing_mask_stride = <SIZE_t> missing_mask.strides[1] / missing_mask.itemsize
+            self.n_missing = 0
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil:
@@ -242,7 +261,7 @@ cdef class BaseDenseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint allow_missing):
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -250,6 +269,7 @@ cdef class BaseDenseSplitter(Splitter):
         self.X_idx_sorted_ptr = NULL
         self.X_idx_sorted_stride = 0
         self.sample_mask = NULL
+        # SELFNOTE Why doesn't the parent cinit take care of this?
         self.presort = presort
 
     def __dealloc__(self):
@@ -261,11 +281,13 @@ cdef class BaseDenseSplitter(Splitter):
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None,
+                   np.ndarray missing_mask=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X=X, y=y, sample_weight=sample_weight,
+                      X_idx_sorted=X_idx_sorted, missing_mask=missing_mask)
 
         # Initialize X
         cdef np.ndarray X_ndarray = X
@@ -293,7 +315,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.min_samples_leaf,
                                self.min_weight_leaf,
                                self.random_state,
-                               self.presort), self.__getstate__())
+                               self.presort,
+                               self.allow_missing), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -324,13 +347,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef double best_proxy_improvement = -INFINITY
 
         cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j
-        cdef SIZE_t tmp
-        cdef SIZE_t p
-        cdef SIZE_t feature_idx_offset
-        cdef SIZE_t feature_offset
-        cdef SIZE_t i
-        cdef SIZE_t j
+        cdef SIZE_t f_j, tmp, p, feature_idx_offset, feature_offset, i, j
 
         cdef SIZE_t n_visited_features = 0
         # Number of features discovered to be constant during the split search
@@ -343,10 +360,19 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
+        # To handle missing
+        cdef SIZE_t missing_direction, end_available = end, start_available
+        cdef SIZE_t q, miss_mask_feat_offset, directions_to_check
+        cdef SIZE_t n_missing = 0
+        cdef BOOL_t* missing_mask = self.missing_mask
+        cdef SIZE_t pos_missing_offset = 0  # missing offset based on missing direction to help compute the stopping criteria correctly
+
         _init_split(&best, end)
 
         if self.presort == 1:
             for p in range(start, end):
+                # To denote which ones are the samples from the current split
+                # that must be extracted from the sorted_idx_mask
                 sample_mask[samples[p]] = 1
 
         # Sample up to max_features without replacement using a
@@ -400,23 +426,46 @@ cdef class BestSplitter(BaseDenseSplitter):
                 # presorting, or by copying the values into an array and
                 # sorting the array in a manner which utilizes the cache more
                 # effectively.
+                n_missing = 0
+                end_available = end
+                miss_mask_feat_offset = self.missing_mask_stride * current.feature
+
                 if self.presort == 1:
                     p = start
                     feature_idx_offset = self.X_idx_sorted_stride * current.feature
 
-                    for i in range(self.n_total_samples): 
+                    # Filter the samples based on the samples_mask and move the
+                    # missing, if any to the end
+                    for i in range(self.n_total_samples):
                         j = X_idx_sorted[i + feature_idx_offset]
                         if sample_mask[j] == 1:
                             samples[p] = j
                             Xf[p] = X[self.X_sample_stride * j + feature_offset]
                             p += 1
+
+                    if self.allow_missing:
+                        end_available = move_missing_to_end(
+                            samples, missing_mask, start, end, miss_mask_feat_offset)
+                        n_missing = end - end_available
+
                 else:
-                    for i in range(start, end):
+                    # Move the missing to the end, extract available values
+                    # and sort them.
+                    if self.allow_missing:
+                        end_available = move_missing_to_end(
+                            samples, missing_mask, start, end, miss_mask_feat_offset)
+                        n_missing = end - end_available
+
+                    for i in range(start, end_available):
                         Xf[i] = X[self.X_sample_stride * samples[i] + feature_offset]
 
-                    sort(Xf + start, samples + start, end - start)
+                    sort(Xf + start, samples + start, end_available - start)
 
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                # If there are no missing values and all the available values are constant,
+                # in the current feature
+                if (((Xf[end_available - 1] <= Xf[start] + FEATURE_THRESHOLD) and (n_missing == 0)) or
+                        # or if all the values are missing
+                        (n_missing == (end - start))):
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
@@ -427,64 +476,156 @@ cdef class BestSplitter(BaseDenseSplitter):
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # Evaluate all splits
+
+                    self.criterion.init_missing(n_missing)
+                    current.n_missing = n_missing
+
+                    # SELFNOTE changed for n_missing == 0 : UNDEF --> RIGHT
+                    current.missing_direction = MISSING_DIR_RIGHT
+                    if n_missing > 0:
+                        # Search for the best split by sending the missing values
+                        # both sides
+                        directions_to_check = 2
+                    else:
+                        directions_to_check = 1
+
+                    pos_missing_offset = 0
                     self.criterion.reset()
-                    p = start
 
-                    while p < end:
-                        while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                    while directions_to_check > 0:
+                        p = start
+                        while p < end_available:
+                            while (p + 1 < end_available and
+                                   Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                                p += 1
+
+                            # (p + 1 >= end_available) or (X[samples[p + 1], current.feature] >
+                            #                    X[samples[p], current.feature])
                             p += 1
+                            # (p >= end_available) or (X[samples[p], current.feature] >
+                            #                X[samples[p - 1], current.feature])
 
-                        # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                        #                    X[samples[p], current.feature])
-                        p += 1
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p - 1], current.feature])
+                            if p < end_available:
+                                current.pos = p
 
-                        if p < end:
-                            current.pos = p
+                                if ((((p + pos_missing_offset) - start) < min_samples_leaf) or
+                                        ((end - (p + pos_missing_offset)) < min_samples_leaf)):
+                                    continue
 
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
+                                # The criterion is updated with the split position w.r.t
+                                # start always as the missing sample indices
+                                # remain at the end of the `samples` array,
+                                # irrespective of the missing_direction
+                                self.criterion.update(current.pos)
 
-                            self.criterion.update(current.pos)
+                                # Reject if min_weight_leaf is not satisfied
+                                if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                        (self.criterion.weighted_n_right < min_weight_leaf)):
+                                    continue
 
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
+                                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
+                                if current_proxy_improvement > best_proxy_improvement:
+                                    best_proxy_improvement = current_proxy_improvement
+                                    current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                                    if current.threshold == Xf[p]:
+                                        current.threshold = Xf[p - 1]
+
+                                    best = current  # copy
+
+                        directions_to_check -= 1
+                        if directions_to_check == 1:
+                            # Check if sending missing values alone to the right gives the best split
+                            # (where all the available values remain at the left partition)
+                            # (We need to reverse reset to get this partition
+                            # as criterion does not update beyond the last sample)
+                            self.criterion.reverse_reset()
+                            self.criterion.move_missing(MISSING_DIR_RIGHT)
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                            if current_proxy_improvement > best_proxy_improvement:
+                            # Now check if it satisfies the stopping criterion
+                            # and is better than current best
+                            if ((n_missing >= min_samples_leaf) and
+                                    ((end_available - start) >= min_samples_leaf) and
+                                    (self.criterion.weighted_n_left >= min_weight_leaf) and
+                                    (self.criterion.weighted_n_right >= min_weight_leaf) and
+                                    (current_proxy_improvement > best_proxy_improvement)):
                                 best_proxy_improvement = current_proxy_improvement
-                                current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p - 1]
+                                # If yes, retain the missing at right, and the available at the left
+                                # and set the threshold to infinity, so all values, which are not missing,
+                                # are sent to the left
+                                current.threshold = INFINITY
+                                # Don't move the missing samples, just
+                                # set pos to end_available, to denote that all
+                                # the available samples must be moved left
+                                current.pos = end_available
+                                best = current
 
-                                best = current  # copy
+                            # Now compute all the other splits with the missing kept at the left
+                            # NOTE do not offset the criterion's position, as the missing sample
+                            # indices are stored at the end in the `samples`, irrespective of the
+                            # missing_direction
+                            pos_missing_offset = n_missing
+                            self.criterion.reset()
+                            self.criterion.move_missing(MISSING_DIR_LEFT)
+                            current.missing_direction = MISSING_DIR_LEFT
 
-        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
+
+        # Update n_missing/end_available for the best's feature
+        # XXX Not doing this is what screwed up the implementation :@
+        n_missing = best.n_missing
+        start_available = start
+        end_available = end - n_missing
+
+        # The samples array is now organized based on the last feature searched for split
+        # Reorganize this samples array based on the best split's feature.
+
+        # If missing_direction is UNDEF (n_missing is 0)
+        #   {Right partition available vals}  | {Left partition available vals}
+
+        # If missing_direction is LEFT
+        #   {Missing vals     +  left partition available vals}   | {Right partition available vals}
+
+        # If missing_direction is RIGHT
+        # {left partition available vals} | {Right partition available vals +     Missing vals}
+
+        # If best pos is invalid (at the end) don't allow
+        # except when the right split contains all the missing values
+        if (best.pos < end_available or
+                (best.pos == end_available and
+                    best.missing_direction == MISSING_DIR_RIGHT)):
             feature_offset = X_feature_stride * best.feature
-            partition_end = end
-            p = start
+            miss_mask_feat_offset = self.missing_mask_stride * best.feature
 
-            while p < partition_end:
+            if n_missing > 0:
+                if best.missing_direction == MISSING_DIR_RIGHT:
+                    move_missing_to_end(samples, missing_mask, start, end,
+                                        miss_mask_feat_offset)
+
+                elif best.missing_direction == MISSING_DIR_LEFT:
+                    move_missing_to_start(samples, missing_mask, start, end,
+                                          miss_mask_feat_offset)
+
+                    # Missing vals were assumed to be in right parition, correct that assumption
+                    best.pos += n_missing
+                    start_available += n_missing
+                    end_available += n_missing
+
+            p = start_available
+            q = end_available
+            # Now repartition the samples based on the available values.
+            while p < q:
                 if X[X_sample_stride * samples[p] + feature_offset] <= best.threshold:
                     p += 1
-
                 else:
-                    partition_end -= 1
+                    q -= 1
+                    samples[q], samples[p] = samples[p], samples[q]
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
-
+            # Now that we have sent the missing values to start/end of `samples`,
+            # forget that they exist and update the criterion based on the
+            # adjusted best.pos
+            self.criterion.init_missing(0)
             self.criterion.reset()
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
@@ -621,6 +762,110 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
         end = end - 1
 
 
+cdef inline SIZE_t move_missing_to_end(SIZE_t* samples, BOOL_t* missing_mask,
+                                       SIZE_t start, SIZE_t end,
+                                       SIZE_t miss_mask_feat_offset) nogil:
+    """Move the indices with missing values to the end of the current split.
+
+    Returns
+    -------
+    end_available : SIZE_t
+        The position next to the last available value.
+   """
+    cdef SIZE_t p = start, q = end, j
+
+    while p < q:
+        j = samples[p]
+        if missing_mask[j + miss_mask_feat_offset] == 1:
+            q -= 1
+            samples[p] = samples[q]
+            samples[q] = j
+        else:
+            p += 1
+
+    # end_available is q (as q - 1 was the posn. of the last avail. sample.)
+    return q
+
+
+cdef inline SIZE_t move_missing_to_start(SIZE_t* samples, BOOL_t* missing_mask,
+                                         SIZE_t start, SIZE_t end,
+                                         SIZE_t miss_mask_feat_offset) nogil:
+    """Move the indices with missing values to the start of the current split.
+
+    Returns
+    -------
+    end_available : SIZE_t
+        The position next to the last available value.
+    """
+    cdef SIZE_t p = start, q = end - 1, j
+
+    while q > p:
+        j = samples[q]
+        if missing_mask[j + miss_mask_feat_offset] == 1:
+            samples[q] = samples[p]
+            samples[p] = j
+            p += 1
+        else:
+            q -= 1
+
+    # end_available is q + 1 (as q is the posn. of the last available sample)
+    return q + 1
+
+
+cdef inline SIZE_t move_missing_to_end_sparse(SIZE_t* samples,
+                                              INT32_t* X_indices,
+                                              SIZE_t* index_to_samples,
+                                              BOOL_t* missing_mask,
+                                              SIZE_t samples_start,
+                                              SIZE_t samples_end,
+                                              SIZE_t indptr_start,
+                                              SIZE_t indptr_end) nogil:
+    """Move missing to the end in a sparse CSC matrix and return n_missing"""
+    cdef SIZE_t i, samples_i
+
+    cdef SIZE_t n_missing = 0
+
+    for i in range(indptr_start, indptr_end):
+        samples_i = index_to_samples[X_indices[i]]
+        if samples_start <= samples_i <= samples_end:
+            if missing_mask[i] == 1:
+                n_missing += 1
+                # If X_data[X_i] is missing, move the corresponding sample,
+                # samples[samples_i] (or samples[index_to_samples[X_i]])
+                # to the end
+                sparse_swap(index_to_samples, samples,
+                            samples_i, samples_end - n_missing)
+
+    return n_missing
+
+
+cdef inline SIZE_t move_missing_to_start_sparse(SIZE_t* samples,
+                                                INT32_t* X_indices,
+                                                SIZE_t* index_to_samples,
+                                                BOOL_t* missing_mask,
+                                                SIZE_t samples_start,
+                                                SIZE_t samples_end,
+                                                SIZE_t indptr_start,
+                                                SIZE_t indptr_end) nogil:
+    """Move missing to the start in a sparse CSC matrix and return n_missing"""
+    cdef SIZE_t i, samples_i
+
+    cdef SIZE_t n_missing = 0
+
+    for i in range(indptr_start, indptr_end):
+        samples_i = index_to_samples[X_indices[i]]
+        if samples_start <= samples_i <= samples_end:
+            if missing_mask[i] == 1:
+                # If X_data[X_i] is missing, move the corresponding sample,
+                # samples[samples_i] (or samples[index_to_samples[X_i]])
+                # to the start
+                sparse_swap(index_to_samples, samples,
+                            samples_i, samples_start + n_missing)
+                n_missing += 1
+
+    return n_missing
+
+
 cdef class RandomSplitter(BaseDenseSplitter):
     """Splitter for finding the best random split."""
     def __reduce__(self):
@@ -629,7 +874,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                                  self.min_samples_leaf,
                                  self.min_weight_leaf,
                                  self.random_state,
-                                 self.presort), self.__getstate__())
+                                 self.presort,
+                                 self.allow_missing), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -660,7 +906,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_j
         cdef SIZE_t p
         cdef SIZE_t tmp
-        cdef SIZE_t feature_stride
+        cdef SIZE_t feature_offset
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
         # Number of features known to be constant and drawn without replacement
@@ -673,6 +919,13 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
+
+        # To handle missing
+        cdef SIZE_t missing_direction, end_available = end, start_available
+        cdef SIZE_t q, miss_mask_feat_offset, directions_to_check
+        cdef SIZE_t n_missing = 0
+        cdef BOOL_t* missing_mask = self.missing_mask
+        cdef SIZE_t pos_missing_offset = 0  # missing offset based on missing direction to help compute the stopping criteria correctly
 
         _init_split(&best, end)
 
@@ -721,15 +974,27 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current.feature = features[f_j]
-                feature_stride = X_feature_stride * current.feature
+                feature_offset = X_feature_stride * current.feature
+
+                p = start
+                n_missing = 0
+                end_available = end
+                miss_mask_feat_offset = self.missing_mask_stride * current.feature
+
+                # First move any missing values to the end
+                if self.allow_missing:
+                    end_available = move_missing_to_end(
+                        samples, missing_mask, start, end, miss_mask_feat_offset)
+                    n_missing = end - end_available
 
                 # Find min, max
-                min_feature_value = X[X_sample_stride * samples[start] + feature_stride]
+                # NOTE Do this after moving the missing values to the end
+                min_feature_value = X[X_sample_stride * samples[start] + feature_offset]
                 max_feature_value = min_feature_value
                 Xf[start] = min_feature_value
 
-                for p in range(start + 1, end):
-                    current_feature_value = X[X_sample_stride * samples[p] + feature_stride]
+                for p in range(start + 1, end_available):
+                    current_feature_value = X[X_sample_stride * samples[p] + feature_offset]
                     Xf[p] = current_feature_value
 
                     if current_feature_value < min_feature_value:
@@ -737,7 +1002,14 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                # If all the feature values are missing, max_feature_value and
+                # min_feature_value could be nan, so we first check that
+                if ((n_missing == end - start) or
+                        # Now check for the case when all the features values
+                        # are constant and there is no missing
+                        ((max_feature_value <= min_feature_value + FEATURE_THRESHOLD) and
+                         (n_missing == 0))):
+
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
@@ -752,12 +1024,12 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     current.threshold = rand_uniform(min_feature_value,
                                                      max_feature_value,
                                                      random_state)
-
                     if current.threshold == max_feature_value:
                         current.threshold = min_feature_value
 
-                    # Partition
-                    partition_end = end
+                    # Partition the available values based on the randomly
+                    # chosen threshold
+                    partition_end = end_available
                     p = start
                     while p < partition_end:
                         current_feature_value = Xf[p]
@@ -775,17 +1047,38 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
                     current.pos = partition_end
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current.pos - start) < min_samples_leaf) or
-                            ((end - current.pos) < min_samples_leaf)):
-                        continue
+                    self.criterion.init_missing(n_missing)
+                    current.n_missing = n_missing
+                    pos_missing_offset = 0
+                    if n_missing > 0:
+                        # When the randomly chosen threshold (before or after
+                        # correction for the case of max_feature_value) is
+                        # min_feature_value, set the threshold to INFINITY
+                        # and send all the missing values to the right.
+                        if current.threshold == min_feature_value:
+                            current.threshold = INFINITY
+                            current.missing_direction = MISSING_DIR_RIGHT
+                        else:
+                            # If not choose the missing direction randomly
+                            current.missing_direction = <SIZE_t>rand_int(0, 2, random_state)
+                    else:
+                        # SELFNOTE undef --> right
+                        current.missing_direction = MISSING_DIR_RIGHT
 
                     # Evaluate split
-                    self.criterion.reset()
+                    if current.missing_direction == MISSING_DIR_LEFT:
+                        self.criterion.reset()
+                        self.criterion.move_missing(MISSING_DIR_LEFT)
+                        pos_missing_offset = n_missing
+                    else:
+                        self.criterion.reset()
                     self.criterion.update(current.pos)
 
-                    # Reject if min_weight_leaf is not satisfied
-                    if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                    # min_samples_leaf should be guaranteed
+                    if (((current.pos + pos_missing_offset - start) < min_samples_leaf) or
+                            ((end - (current.pos + pos_missing_offset)) < min_samples_leaf) or
+                            # min_weight_leaf should be satisfied
+                            (self.criterion.weighted_n_left < min_weight_leaf) or
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
@@ -795,25 +1088,46 @@ cdef class RandomSplitter(BaseDenseSplitter):
                         best_proxy_improvement = current_proxy_improvement
                         best = current  # copy
 
+        # Update n_missing for the best's feature
+        n_missing = best.n_missing
+        start_available = start
+        end_available = end - n_missing
+
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        feature_stride = X_feature_stride * best.feature
-        if best.pos < end:
-            if current.feature != best.feature:
-                partition_end = end
-                p = start
+        if (best.pos < end_available or
+                (best.pos == end_available and
+                    best.missing_direction == MISSING_DIR_RIGHT)):
+            feature_offset = X_feature_stride * best.feature
+            miss_mask_feat_offset = self.missing_mask_stride * best.feature
 
-                while p < partition_end:
-                    if X[X_sample_stride * samples[p] + feature_stride] <= best.threshold:
-                        p += 1
+            # The missing values should be moved to the right partition
+            if n_missing > 0:
+                if best.missing_direction == MISSING_DIR_RIGHT:
+                    move_missing_to_end(samples, missing_mask, start, end,
+                                        miss_mask_feat_offset)
+                elif best.missing_direction == MISSING_DIR_LEFT:
+                    move_missing_to_start(samples, missing_mask, start, end,
+                                          miss_mask_feat_offset)
 
-                    else:
-                        partition_end -= 1
+                    # Adjust best.pos to include the missing values which is at start now
+                    best.pos += n_missing
+                    start_available += n_missing
+                    end_available += n_missing
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
+            p = start_available
+            q = end_available
 
+            while p < q:
+                if X[X_sample_stride * samples[p] + feature_offset] <= best.threshold:
+                    p += 1
+                else:
+                    q -= 1
+                    samples[q], samples[p] = samples[p], samples[q]
 
+            # Now that we have sent the missing values to start/end of `samples`,
+            # forget that they exist and update the criterion based on the
+            # adjusted best.pos
+            self.criterion.init_missing(0)
             self.criterion.reset()
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
@@ -848,7 +1162,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint allow_missing):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL
@@ -869,11 +1183,13 @@ cdef class BaseSparseSplitter(Splitter):
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=None) except *:
+                   np.ndarray X_idx_sorted=None,
+                   np.ndarray missing_mask=None) except *:
         """Initialize the splitter."""
 
         # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+        Splitter.init(self, X=X, y=y, sample_weight=sample_weight,
+                      X_idx_sorted=None, missing_mask=missing_mask)
 
         if not isinstance(X, csc_matrix):
             raise ValueError("X should be in csc format")
@@ -905,9 +1221,10 @@ cdef class BaseSparseSplitter(Splitter):
             index_to_samples[samples[p]] = p
 
     cdef inline SIZE_t _partition(self, double threshold,
+                                  SIZE_t start_available, SIZE_t end_available,
                                   SIZE_t end_negative, SIZE_t start_positive,
                                   SIZE_t zero_pos) nogil:
-        """Partition samples[start:end] based on threshold."""
+        """Partition samples[start_available:end_available] based on threshold."""
 
         cdef double value
         cdef SIZE_t partition_end
@@ -918,11 +1235,11 @@ cdef class BaseSparseSplitter(Splitter):
         cdef SIZE_t* index_to_samples = self.index_to_samples
 
         if threshold < 0.:
-            p = self.start
+            p = start_available
             partition_end = end_negative
         elif threshold > 0.:
             p = start_positive
-            partition_end = self.end
+            partition_end = end_available
         else:
             # Data are already split
             return zero_pos
@@ -942,18 +1259,20 @@ cdef class BaseSparseSplitter(Splitter):
 
         return partition_end
 
-    cdef inline void extract_nnz(self, SIZE_t feature,
+    cdef inline void extract_nnz(self, SIZE_t feature, SIZE_t missing_direction,
+                                 SIZE_t* start_available, SIZE_t* end_available,
                                  SIZE_t* end_negative, SIZE_t* start_positive,
                                  bint* is_samples_sorted) nogil:
         """Extract and partition values for a given feature.
 
         The extracted values are partitioned between negative values
-        Xf[start:end_negative[0]] and positive values Xf[start_positive[0]:end].
-        The samples and index_to_samples are modified according to this
-        partition.
+        Xf[start:end_negative[0]] and positive values
+        Xf[start_positive[0]:end-n_missing]. Missing values if any are stored
+        at the end. The samples and index_to_samples are modified according to
+        this partition.
 
         The extraction corresponds to the intersection between the arrays
-        X_indices[indptr_start:indptr_end] and samples[start:end].
+        X_indices[indptr_start:indptr_end] and samples[start:end-n_missing].
         This is done efficiently using either an index_to_samples based approach
         or binary search based approach.
 
@@ -962,6 +1281,8 @@ cdef class BaseSparseSplitter(Splitter):
         feature : SIZE_t,
             Index of the feature we want to extract non zero value.
 
+        missing_direction : SIZE_t
+            The direction for sending the missing values.
 
         end_negative, start_positive : SIZE_t*, SIZE_t*,
             Return extracted non zero values in self.samples[start:end] where
@@ -974,11 +1295,41 @@ cdef class BaseSparseSplitter(Splitter):
             the sorted version of self.samples[start:end].
 
         """
-        cdef SIZE_t indptr_start = self.X_indptr[feature],
-        cdef SIZE_t indptr_end = self.X_indptr[feature + 1]
-        cdef SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
-        cdef SIZE_t n_samples = self.end - self.start
+        cdef:
+            SIZE_t indptr_start = self.X_indptr[feature],
+            SIZE_t indptr_end = self.X_indptr[feature + 1]
+            SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
+            SIZE_t start, end, start_available_, end_available_, i
+            SIZE_t n_samples = self.end - self.start, n_missing = 0
+            BOOL_t* missing_mask = self.missing_mask
+            SIZE_t* index_to_samples = self.index_to_samples
 
+        start = start_available_ = self.start
+        end = end_available_ = self.end
+
+        if self.allow_missing:
+            # Move those missing values to the end
+            if missing_direction == MISSING_DIR_RIGHT:
+                n_missing = move_missing_to_end_sparse(self.samples,
+                                                       self.X_indices,
+                                                       index_to_samples,
+                                                       missing_mask,
+                                                       self.start,
+                                                       self.end,
+                                                       indptr_start,
+                                                       indptr_end)
+                end_available_ -= n_missing
+
+            elif missing_direction == MISSING_DIR_LEFT:
+                n_missing = move_missing_to_start_sparse(self.samples,
+                                                         self.X_indices,
+                                                         index_to_samples,
+                                                         missing_mask,
+                                                         self.start,
+                                                         self.end,
+                                                         indptr_start,
+                                                         indptr_end)
+                start_available_ += n_missing
         # Use binary search if n_samples * log(n_indices) <
         # n_indices and index_to_samples approach otherwise.
         # O(n_samples * log(n_indices)) is the running time of binary
@@ -988,7 +1339,8 @@ cdef class BaseSparseSplitter(Splitter):
                 n_samples * log(n_indices) < EXTRACT_NNZ_SWITCH * n_indices):
             extract_nnz_binary_search(self.X_indices, self.X_data,
                                       indptr_start, indptr_end,
-                                      self.samples, self.start, self.end,
+                                      self.samples,
+                                      start_available_, end_available_,
                                       self.index_to_samples,
                                       self.feature_values,
                                       end_negative, start_positive,
@@ -999,11 +1351,14 @@ cdef class BaseSparseSplitter(Splitter):
         else:
             extract_nnz_index_to_samples(self.X_indices, self.X_data,
                                          indptr_start, indptr_end,
-                                         self.samples, self.start, self.end,
+                                         self.samples,
+                                         start_available_, end_available_,
                                          self.index_to_samples,
                                          self.feature_values,
                                          end_negative, start_positive)
 
+        start_available[0] = start_available_
+        end_available[0] = end_available_
 
 cdef int compare_SIZE_t(const void* a, const void* b) nogil:
     """Comparison function for sort."""
@@ -1040,8 +1395,8 @@ cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
                                               INT32_t indptr_start,
                                               INT32_t indptr_end,
                                               SIZE_t* samples,
-                                              SIZE_t start,
-                                              SIZE_t end,
+                                              SIZE_t start_available,
+                                              SIZE_t end_available,
                                               SIZE_t* index_to_samples,
                                               DTYPE_t* Xf,
                                               SIZE_t* end_negative,
@@ -1052,11 +1407,11 @@ cdef inline void extract_nnz_index_to_samples(INT32_t* X_indices,
     """
     cdef INT32_t k
     cdef SIZE_t index
-    cdef SIZE_t end_negative_ = start
-    cdef SIZE_t start_positive_ = end
+    cdef SIZE_t end_negative_ = start_available
+    cdef SIZE_t start_positive_ = end_available
 
     for k in range(indptr_start, indptr_end):
-        if start <= index_to_samples[X_indices[k]] < end:
+        if start_available <= index_to_samples[X_indices[k]] < end_available:
             if X_data[k] > 0:
                 start_positive_ -= 1
                 Xf[start_positive_] = X_data[k]
@@ -1080,8 +1435,8 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
                                            INT32_t indptr_start,
                                            INT32_t indptr_end,
                                            SIZE_t* samples,
-                                           SIZE_t start,
-                                           SIZE_t end,
+                                           SIZE_t start_available,
+                                           SIZE_t end_available,
                                            SIZE_t* index_to_samples,
                                            DTYPE_t* Xf,
                                            SIZE_t* end_negative,
@@ -1090,8 +1445,8 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
                                            bint* is_samples_sorted) nogil:
     """Extract and partition values for a given feature using binary search.
 
-    If n_samples = end - start and n_indices = indptr_end - indptr_start,
-    the complexity is
+    If n_samples = end_available - start_available and
+    n_indices = indptr_end - indptr_start, the complexity is
 
         O((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
           n_samples * log(n_indices)).
@@ -1099,28 +1454,28 @@ cdef inline void extract_nnz_binary_search(INT32_t* X_indices,
     cdef SIZE_t n_samples
 
     if not is_samples_sorted[0]:
-        n_samples = end - start
-        memcpy(sorted_samples + start, samples + start,
+        n_samples = end_available - start_available
+        memcpy(sorted_samples + start_available, samples + start_available,
                n_samples * sizeof(SIZE_t))
-        qsort(sorted_samples + start, n_samples, sizeof(SIZE_t),
+        qsort(sorted_samples + start_available, n_samples, sizeof(SIZE_t),
               compare_SIZE_t)
         is_samples_sorted[0] = 1
 
     while (indptr_start < indptr_end and
-           sorted_samples[start] > X_indices[indptr_start]):
+           sorted_samples[start_available] > X_indices[indptr_start]):
         indptr_start += 1
 
     while (indptr_start < indptr_end and
-           sorted_samples[end - 1] < X_indices[indptr_end - 1]):
+           sorted_samples[end_available - 1] < X_indices[indptr_end - 1]):
         indptr_end -= 1
 
-    cdef SIZE_t p = start
+    cdef SIZE_t p = start_available
     cdef SIZE_t index
     cdef SIZE_t k
-    cdef SIZE_t end_negative_ = start
-    cdef SIZE_t start_positive_ = end
+    cdef SIZE_t end_negative_ = start_available
+    cdef SIZE_t start_positive_ = end_available
 
-    while (p < end and indptr_start < indptr_end):
+    while (p < end_available and indptr_start < indptr_end):
         # Find index of sorted_samples[p] in X_indices
         binary_search(X_indices, indptr_start, indptr_end,
                       sorted_samples[p], &k, &indptr_start)
@@ -1164,7 +1519,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                      self.min_samples_leaf,
                                      self.min_weight_leaf,
                                      self.random_state,
-                                     self.presort), self.__getstate__())
+                                     self.presort,
+                                     self.allow_missing), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -1213,8 +1569,14 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t p_prev
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
+        # To handle missing
+        cdef SIZE_t missing_direction, end_available = end, start_available
+        cdef SIZE_t q, directions_to_check
+        cdef SIZE_t n_missing = 0
+        cdef BOOL_t* missing_mask = self.missing_mask
+        cdef SIZE_t pos_missing_offset = 0  # missing offset based on missing direction to help compute the stopping criteria correctly
 
-        # We assume implicitely that end_positive = end and
+        # We assume implicitely that end_positive = end_available and
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
@@ -1265,19 +1627,29 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current.feature = features[f_j]
-                self.extract_nnz(current.feature,
+                p = start
+                n_missing = 0
+                missing_direction = MISSING_DIR_RIGHT
+                start_available = start
+                end_available = end
+
+                # Now partition the available samples into
+                # [+ves, zeros, -ves, MVs] or [MVs, -ves, zeros, +ves]
+                self.extract_nnz(current.feature, missing_direction,
+                                 &start_available, &end_available,
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
+                n_missing = end - end_available
 
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
                 sort(Xf + start_positive, samples + start_positive,
-                     end - start_positive)
+                     end_available - start_positive)
 
                 # Update index_to_samples to take into account the sort
                 for p in range(start, end_negative):
                     index_to_samples[samples[p]] = p
-                for p in range(start_positive, end):
+                for p in range(start_positive, end_available):
                     index_to_samples[samples[p]] = p
 
                 # Add one or two zeros in Xf, if there is any
@@ -1289,7 +1661,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                         Xf[end_negative] = 0.
                         end_negative += 1
 
-                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                if Xf[end_available - 1] <= Xf[start] + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
@@ -1300,69 +1672,123 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # Evaluate all splits
+                    self.criterion.init_missing(n_missing)
+                    current.n_missing = n_missing
+
+                    if n_missing > 0:
+                        directions_to_check = 2
+                        current.missing_direction = MISSING_DIR_RIGHT
+                    else:
+                        directions_to_check = 1
+                        # SELFNOTE: changed default direction from UNDEF to RIGHT
+                        current.missing_direction = MISSING_DIR_RIGHT
+
+                    pos_missing_offset = 0
                     self.criterion.reset()
-                    p = start
 
-                    while p < end:
-                        if p + 1 != end_negative:
-                            p_next = p + 1
-                        else:
-                            p_next = start_positive
-
-                        while (p_next < end and
-                               Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
-                            p = p_next
+                    while directions_to_check > 0:
+                        p = start
+                        while p < end_available:
                             if p + 1 != end_negative:
                                 p_next = p + 1
                             else:
                                 p_next = start_positive
 
+                            while (p_next < end_available and
+                                   Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
+                                p = p_next
+                                if p + 1 != end_negative:
+                                    p_next = p + 1
+                                else:
+                                    p_next = start_positive
 
-                        # (p_next >= end) or (X[samples[p_next], current.feature] >
-                        #                     X[samples[p], current.feature])
-                        p_prev = p
-                        p = p_next
-                        # (p >= end) or (X[samples[p], current.feature] >
-                        #                X[samples[p_prev], current.feature])
+
+                            # (p_next >= end) or (X[samples[p_next], current.feature] >
+                            #                     X[samples[p], current.feature])
+                            p_prev =p 
+                            p = p_next
+                            # (p >= end) or (X[samples[p], current.feature] >
+                            #                X[samples[p_prev], current.feature])
 
 
-                        if p < end:
-                            current.pos = p
+                            if p < end_available:
+                                current.pos = p
 
-                            # Reject if min_samples_leaf is not guaranteed
-                            if (((current.pos - start) < min_samples_leaf) or
-                                    ((end - current.pos) < min_samples_leaf)):
-                                continue
+                                # Reject if min_samples_leaf is not guaranteed
+                                if ((((current.pos + pos_missing_offset) - start) < min_samples_leaf) or
+                                        ((end_available - (current.pos + pos_missing_offset)) < min_samples_leaf)):
+                                    continue
 
-                            self.criterion.update(current.pos)
+                                self.criterion.update(current.pos)
 
-                            # Reject if min_weight_leaf is not satisfied
-                            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                                continue
+                                # Reject if min_weight_leaf is not satisfied
+                                if ((self.criterion.weighted_n_left < min_weight_leaf) or
+                                        (self.criterion.weighted_n_right < min_weight_leaf)):
+                                    continue
 
+                                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+
+                                if current_proxy_improvement > best_proxy_improvement:
+                                    best_proxy_improvement = current_proxy_improvement
+                                    current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
+                                    if current.threshold == Xf[p]:
+                                        current.threshold = Xf[p_prev]
+
+                                    best = current
+                        directions_to_check -= 1
+                        if directions_to_check == 1:
+                            # Send all missing alone to the right
+                            self.criterion.reverse_reset()
+                            self.criterion.move_missing(direction=MISSING_DIR_RIGHT)
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
-                            if current_proxy_improvement > best_proxy_improvement:
+                            # Check stopping criterion and if sending all missing alone right is the best split
+                            if ((n_missing >= min_samples_leaf) and
+                                    ((end_available - start) >= min_samples_leaf) and
+                                    (self.criterion.weighted_n_left >= min_weight_leaf) and
+                                    (self.criterion.weighted_n_right >= min_weight_leaf) and
+                                    (current_proxy_improvement > best_proxy_improvement)):
                                 best_proxy_improvement = current_proxy_improvement
 
-                                current.threshold = (Xf[p_prev] + Xf[p]) / 2.0
-                                if current.threshold == Xf[p]:
-                                    current.threshold = Xf[p_prev]
-
+                                # If yes, retain the missing at right, and the available at the left
+                                # and set the threshold to infinity, so all values, which are not missing,
+                                # are sent to the left
+                                current.threshold = INFINITY
+                                current.pos = end_available
                                 best = current
 
+                            # Now compute all the other splits with the missing kept at the left
+                            pos_missing_offset = n_missing
+                            self.criterion.reset()
+                            self.criterion.move_missing(direction=MISSING_DIR_LEFT)
+                            current.missing_direction = MISSING_DIR_LEFT
+
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            self.extract_nnz(best.feature, &end_negative, &start_positive,
+        n_missing = best.n_missing
+        if (best.pos < end_available or
+                (best.pos == end_available and
+                    best.missing_direction == MISSING_DIR_RIGHT)):
+            # This will also move the MVs to the start/end
+            self.extract_nnz(best.feature, best.missing_direction,
+                             &start_available, &end_available,
+                             &end_negative, &start_positive,
                              &is_samples_sorted)
 
-            self._partition(best.threshold, end_negative, start_positive,
+            self._partition(best.threshold,
+                            start_available, end_available,
+                            end_negative, start_positive,
                             best.pos)
 
+            # as the MVs are moved to the right partition, forget they exist
+            # and split at (best.pos + n_missing) if MISSING_DIR_LEFT or
+            # at best.pos if MISSING_DIR_RIGHT
+            self.criterion.init_missing(0)
             self.criterion.reset()
-            self.criterion.update(best.pos)
+            if best.missing_direction == MISSING_DIR_LEFT:
+                pos_missing_offset = n_missing
+            else:
+                pos_missing_offset = 0
+            self.criterion.update(best.pos + pos_missing_offset)
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
@@ -1391,7 +1817,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                        self.min_samples_leaf,
                                        self.min_weight_leaf,
                                        self.random_state,
-                                       self.presort), self.__getstate__())
+                                       self.presort,
+                                       self.allow_missing), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
@@ -1438,6 +1865,13 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t partition_end
 
+        # To handle missing
+        cdef SIZE_t missing_direction, end_available = end, start_available
+        cdef SIZE_t q, miss_mask_feat_offset, directions_to_check
+        cdef SIZE_t n_missing = 0
+        cdef BOOL_t* missing_mask = self.missing_mask
+
+        cdef SIZE_t pos_missing_offset = 0  # missing offset based on missing direction to help compute the stopping criteria correctly
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
 
@@ -1495,10 +1929,19 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current.feature = features[f_j]
+                p = start
+                n_missing = 0
+                start_available = start
+                end_available = end
+                missing_direction = MISSING_DIR_RIGHT
 
-                self.extract_nnz(current.feature,
+                # Move the missing value to the end and repartition the
+                # samples[start:end_available] into Negative...Zeros...Positive
+                self.extract_nnz(current.feature, missing_direction,
+                                 &start_available, &end_available,
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
+                n_missing = end - end_available
 
                 # Add one or two zeros in Xf, if there is any
                 if end_negative < start_positive:
@@ -1521,8 +1964,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                # Update min, max given Xf[start_positive:end]
-                for p in range(start_positive, end):
+                # Update min, max given Xf[start_positive:end_available]
+                for p in range(start_positive, end_available):
                     current_feature_value = Xf[p]
 
                     if current_feature_value < min_feature_value:
@@ -1530,7 +1973,10 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                if ((n_missing == end - start) or
+                        ((max_feature_value <= min_feature_value + FEATURE_THRESHOLD) and
+                         (n_missing == 0))):
+
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current.feature
 
@@ -1549,21 +1995,46 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     if current.threshold == max_feature_value:
                         current.threshold = min_feature_value
 
-                    # Partition
-                    current.pos = self._partition(current.threshold,
-                                                  end_negative,
-                                                  start_positive,
-                                                  start_positive +
-                                                  (Xf[start_positive] == 0.))
+                    current.n_missing = n_missing
+                    if n_missing > 0:
+                        if current.threshold == min_feature_value:
+                            # Move missing alone to the right
+                            current.threshold = INFINITY
+                            current.missing_direction = MISSING_DIR_RIGHT
+                            current.pos = end_available
+                        else:
+                            current.missing_direction = <SIZE_t>rand_int(0, 2, random_state)
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current.pos - start) < min_samples_leaf) or
-                            ((end - current.pos) < min_samples_leaf)):
-                        continue
+                    else:
+                        # SELFNOTE default dir. changed from UNDEF --> RIGHT
+                        current.missing_direction = MISSING_DIR_RIGHT
 
+                    # We need to move the missing to the correct partition
+                    self.extract_nnz(current.feature, current.missing_direction,
+                                     &start_available, &end_available,
+                                     &end_negative, &start_positive,
+                                     &is_samples_sorted)
+
+                    # Partition the available values
+                    p = self._partition(current.threshold, start_available,
+                                        end_available, end_negative,
+                                        start_positive, start_positive +
+                                        (Xf[start_positive] == 0.))
+
+                    if current.threshold != INFINITY:
+                        current.pos = p
+
+                    # We have already sent all the missing to the correct partition
+                    self.criterion.init_missing(0)
                     # Evaluate split
                     self.criterion.reset()
+                    # This is corrected by _partition to include missing values
                     self.criterion.update(current.pos)
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if ((((current.pos) - start) < min_samples_leaf) or
+                            ((end - (current.pos)) < min_samples_leaf)):
+                        continue
 
                     # Reject if min_weight_leaf is not satisfied
                     if ((self.criterion.weighted_n_left < min_weight_leaf) or
@@ -1581,20 +2052,27 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                         best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            if current.feature != best.feature:
-                self.extract_nnz(best.feature, &end_negative, &start_positive,
-                                 &is_samples_sorted)
+        if (best.pos < end_available or
+                (best.pos == end_available and
+                    best.missing_direction == MISSING_DIR_RIGHT)):
 
-                self._partition(best.threshold, end_negative, start_positive,
-                                best.pos)
+            # This will recount the n_missing and move the missing to correct
+            # partition + extract the non zeros into -ves, 0s, +ves
+            self.extract_nnz(best.feature, best.missing_direction,
+                             &start_available, &end_available,
+                             &end_negative, &start_positive,
+                             &is_samples_sorted)
 
+            self._partition(best.threshold,
+                            start_available, end_available,
+                            end_negative, start_positive,
+                            best.pos)
+            self.criterion.init_missing(0)
             self.criterion.reset()
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
                                              &best.impurity_right)
-
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
         # and child nodes

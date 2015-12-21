@@ -4,6 +4,7 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Raghav R V <rvraghav93@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -19,6 +20,7 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint8 BOOL_t             # 8 bit boolean (np.bool8)
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -30,6 +32,9 @@ cdef struct SplitRecord:
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
+    # The child/partition to which the missing values should be sent to
+    SIZE_t missing_direction
+    SIZE_t n_missing       # The number of missing samples at this split
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -64,6 +69,11 @@ cdef class Splitter:
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
 
+    cdef BOOL_t* missing_mask
+    cdef SIZE_t missing_mask_stride
+    cdef bint allow_missing
+    cdef SIZE_t n_missing
+
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # `node_split` reorganizes the node samples `samples[start:end]` in two
@@ -83,7 +93,8 @@ cdef class Splitter:
     # Methods
     cdef void init(self, object X, np.ndarray y,
                    DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=*) except *
+                   np.ndarray X_idx_sorted=*,
+                   np.ndarray missing_mask=*) except *
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil

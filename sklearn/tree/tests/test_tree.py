@@ -28,11 +28,13 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.validation import assert_all_finite
 
 from sklearn.exceptions import NotFittedError
 
@@ -49,6 +51,11 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
+
+MISSING_DIR_LEFT = 0
+MISSING_DIR_RIGHT = 1
+TREE_UNDEFINED = -2
+
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
@@ -56,6 +63,11 @@ CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
     "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
                                               presort=True),
+    "MV-DecisionTreeClassifier": partial(DecisionTreeClassifier,
+                                         missing_values="NaN"),
+    "MV-Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
+                                                 missing_values="NaN",
+                                                 presort=True),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
@@ -602,7 +614,6 @@ def test_min_samples_split():
                        "Failed with {0}".format(name))
 
 
-
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
     X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
@@ -617,8 +628,10 @@ def test_min_samples_leaf():
         est = TreeEstimator(min_samples_leaf=5,
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
+        # Get the missing mask
+        missing_mask = est._validate_missing_mask(X)
         est.fit(X, y)
-        out = est.tree_.apply(X)
+        out = est.tree_.apply(X, missing_mask=missing_mask)
         node_counts = np.bincount(out)
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
@@ -630,7 +643,7 @@ def test_min_samples_leaf():
                             max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
         est.fit(X, y)
-        out = est.tree_.apply(X)
+        out = est.tree_.apply(X, missing_mask=missing_mask)
         node_counts = np.bincount(out)
         # drop inner nodes
         leaf_count = node_counts[node_counts != 0]
@@ -661,10 +674,13 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         est.fit(X, y, sample_weight=weights)
 
         if sparse:
-            out = est.tree_.apply(X.tocsr())
+            # Get the missing mask
+            missing_mask = est._validate_missing_mask(X.tocsr())
+            out = est.tree_.apply(X.tocsr(), missing_mask=missing_mask)
 
         else:
-            out = est.tree_.apply(X)
+            missing_mask = est._validate_missing_mask(X)
+            out = est.tree_.apply(X, missing_mask=missing_mask)
 
         node_weights = np.bincount(out, weights=weights)
         # drop inner nodes
@@ -686,9 +702,13 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
         est.fit(X, y)
 
         if sparse:
-            out = est.tree_.apply(X.tocsr())
+            # Get the missing mask
+            missing_mask = est._validate_missing_mask(X.tocsr())
+            out = est.tree_.apply(X.tocsr(), missing_mask=missing_mask)
+
         else:
-            out = est.tree_.apply(X)
+            missing_mask = est._validate_missing_mask(X)
+            out = est.tree_.apply(X, missing_mask=missing_mask)
 
         node_weights = np.bincount(out)
         # drop inner nodes
@@ -732,9 +752,13 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
         est.fit(X, y)
 
         if sparse:
-            out = est.tree_.apply(X.tocsr())
+            # Get the missing mask
+            missing_mask = est._validate_missing_mask(X.tocsr())
+            out = est.tree_.apply(X.tocsr(), missing_mask=missing_mask)
+
         else:
-            out = est.tree_.apply(X)
+            missing_mask = est._validate_missing_mask(X)
+            out = est.tree_.apply(X, missing_mask=missing_mask)
 
         node_weights = np.bincount(out)
         # drop inner nodes
@@ -757,9 +781,13 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
         est.fit(X, y)
 
         if sparse:
-            out = est.tree_.apply(X.tocsr())
+            # Get the missing mask
+            missing_mask = est._validate_missing_mask(X.tocsr())
+            out = est.tree_.apply(X.tocsr(), missing_mask=missing_mask)
+
         else:
-            out = est.tree_.apply(X)
+            missing_mask = est._validate_missing_mask(X)
+            out = est.tree_.apply(X, missing_mask=missing_mask)
 
         node_weights = np.bincount(out)
         # drop inner nodes
@@ -1430,16 +1458,29 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
 
     Xs = (X_test, X_sparse_test)
     for X1, X2 in product(Xs, Xs):
-        assert_array_almost_equal(s.tree_.apply(X1), d.tree_.apply(X2))
-        assert_array_almost_equal(s.apply(X1), d.apply(X2))
-        assert_array_almost_equal(s.apply(X1), s.tree_.apply(X1))
+        # Get the missing masks
+        missing_mask1 = s._validate_missing_mask(X1)
+        missing_mask2 = d._validate_missing_mask(X2)
+        assert_array_almost_equal(
+            s.tree_.apply(X1, missing_mask=missing_mask1),
+            d.tree_.apply(X2, missing_mask=missing_mask2))
 
-        assert_array_almost_equal(s.tree_.decision_path(X1).toarray(),
-                                  d.tree_.decision_path(X2).toarray())
+        assert_array_almost_equal(s.apply(X1), d.apply(X2))
+
+        assert_array_almost_equal(
+            s.apply(X1),
+            s.tree_.apply(X1, missing_mask=missing_mask1))
+
+        assert_array_almost_equal(
+            s.tree_.decision_path(X1, missing_mask=missing_mask1).toarray(),
+            d.tree_.decision_path(X2, missing_mask=missing_mask2).toarray())
+
         assert_array_almost_equal(s.decision_path(X1).toarray(),
                                   d.decision_path(X2).toarray())
-        assert_array_almost_equal(s.decision_path(X1).toarray(),
-                                  s.tree_.decision_path(X1).toarray())
+
+        assert_array_almost_equal(
+            s.decision_path(X1).toarray(),
+            s.tree_.decision_path(X1, missing_mask=missing_mask1).toarray())
 
         assert_array_almost_equal(s.predict(X1), d.predict(X2))
 
@@ -1507,18 +1548,24 @@ def check_public_apply(name):
     X_small32 = X_small.astype(tree._tree.DTYPE)
 
     est = ALL_TREES[name]()
+
+    # Get the missing mask
+    missing_mask = est._validate_missing_mask(X_small32)
     est.fit(X_small, y_small)
     assert_array_equal(est.apply(X_small),
-                       est.tree_.apply(X_small32))
+                       est.tree_.apply(X_small32, missing_mask=missing_mask))
 
 
 def check_public_apply_sparse(name):
     X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE))
 
     est = ALL_TREES[name]()
+
+    # Get the missing mask
+    missing_mask = est._validate_missing_mask(X_small32)
     est.fit(X_small, y_small)
     assert_array_equal(est.apply(X_small),
-                       est.tree_.apply(X_small32))
+                       est.tree_.apply(X_small32, missing_mask=missing_mask))
 
 
 def test_public_apply():
@@ -1640,3 +1687,213 @@ def test_criterion_copy():
             assert_equal(typename, typename_)
             assert_equal(n_outputs, n_outputs_)
             assert_equal(n_samples, n_samples_)
+
+
+def test_tree_missing_value_handling_corner_cases_best_splitter():
+    # All the missing values should be sent to a separate child in one of the
+    # nodes
+
+    rng = np.random.RandomState(42)
+
+    X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
+                    [0], [1], [2], [3], [4], [5],
+                    [10], [11], [12], [13], [15]])
+    X_sp = coo_matrix(X_de)
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+
+    # Test both the dense and sparse splitters
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     random_state=42).fit(X, y)
+
+        # The 2nd partition of this tree splits the missing values to one side,
+        # for the given random_state
+        assert_equal(dtc.tree_.threshold[2], np.inf)
+        assert_equal(dtc.tree_.missing_direction[2],
+                     MISSING_DIR_RIGHT)
+        assert_equal(dtc.tree_.missing_direction[0],
+                     MISSING_DIR_RIGHT)
+        # The leaf should have missing direction undefined
+        assert_equal(dtc.tree_.missing_direction[1], TREE_UNDEFINED)
+        # assert_all_finite cannot be used as one node will have a inf thres.
+        assert_false(np.any(np.isnan(dtc.tree_.threshold)))
+        assert_array_equal(dtc.predict(X), y)
+
+    # The missing should be sent along with available to left child
+    X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
+                     [0], [1], [2], [3], [4], [5]])
+    X_sp = coo_matrix(X_de)
+    y = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     random_state=42).fit(X, y)
+
+        assert_equal(dtc.tree_.threshold[0], 0.5)
+        # Send the missing along with the sample [0,] to the left
+        assert_equal(dtc.tree_.missing_direction[0],
+                     MISSING_DIR_LEFT)
+        # The leaf should have missing direction undefined
+        assert_equal(dtc.tree_.missing_direction[1], TREE_UNDEFINED)
+        assert_equal(dtc.tree_.missing_direction[2], TREE_UNDEFINED)
+        assert_all_finite(dtc.tree_.threshold)
+        assert_array_equal(dtc.predict(X), y)
+
+    # The missing should be sent along with available to right child
+    y = np.array([2, 2, 2, 2, 1, 1, 1, 1, 2, 2])
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     random_state=42).fit(X, y)
+
+        assert_equal(dtc.tree_.threshold[0], 3.5)
+        # Send the missing along with the samples [4,] and [5,] to the right
+        assert_equal(dtc.tree_.missing_direction[0],
+                     MISSING_DIR_RIGHT)
+        # The leaf should have missing direction undefined
+        assert_equal(dtc.tree_.missing_direction[1], TREE_UNDEFINED)
+        assert_equal(dtc.tree_.missing_direction[2], TREE_UNDEFINED)
+        assert_all_finite(dtc.tree_.threshold)
+        assert_array_equal(dtc.predict(X), y)
+
+    # When no missing exist, none of the thresholds should be NaN/Inf
+    # And missing direction should either be the default RIGHT / TREE_UNDEFINED
+    X_de = rng.random_sample((10, 2))
+    X_sp = coo_matrix(X_de)
+    y = rng.randint(0, 10, (10,))
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     random_state=42).fit(X, y)
+        # All the missing_direction for non-leaf nodes should be the default of
+        # MISSING_DIR_RIGHT and for leaves it should be TREE_UNDEFINED
+        assert_true(
+            np.all((dtc.tree_.missing_direction == MISSING_DIR_RIGHT) ^
+                   (dtc.tree_.children_left == TREE_LEAF)))
+        assert_true(
+            np.all((dtc.tree_.missing_direction == TREE_UNDEFINED) ^
+                   (dtc.tree_.children_left != TREE_LEAF)))
+        assert_all_finite(dtc.tree_.threshold)
+
+    # When the missing values are equally from all the classes
+    # the tree building should split it into separate node
+    X_de = np.array([[110], [100], [1], [2], [0], [np.nan], [500],
+                    [600], [np.nan], [5]])
+    X_sp = coo_matrix(X_de)
+    y = np.array([1, 1, 0, 0, 0, 0, 1, 1, 1, 0])
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     random_state=42).fit(X, y)
+
+        assert_equal(dtc.tree_.threshold[0], 52.5)
+        assert_equal(dtc.tree_.missing_direction[0], MISSING_DIR_RIGHT)
+        # The right child should partition the missing samples to the right
+        assert_equal(dtc.tree_.missing_direction[2],
+                     MISSING_DIR_RIGHT)
+        assert_equal(dtc.tree_.threshold[2], np.inf)
+        # All other non-leaf nodes should have the default missing_direction as
+        # RIGHT
+        assert_true(
+            np.all((dtc.tree_.missing_direction == MISSING_DIR_RIGHT) ^
+                   (dtc.tree_.children_left == TREE_LEAF)))
+        # No nan thresholds
+        assert_false(np.any(np.isnan(dtc.tree_.threshold)))
+        try:
+            # This should not pass as both the missing values are grouped to
+            # single class
+            assert_array_equal(dtc.predict(X), y)
+        except AssertionError:
+            pass
+
+
+def test_tree_missing_value_handling_corner_cases_random_splitter():
+    # Using test cases as in the best splitter tests.
+    # Testing for actual thresholds or missing directions at each node does not
+    # Make sense. However in all of the corner cases the tree should capture
+    # the structure of the data exactly.
+
+    # All the missing values belong to a single class
+    rng = np.random.RandomState(42)
+    X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
+                    [0], [1], [2], [3], [4], [5],
+                    [10], [11], [12], [13], [15]])
+    X_sp = coo_matrix(X_de)
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+
+    # Test both the dense and sparse splitters
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     splitter="random",
+                                     random_state=42).fit(X, y)
+        # No nan thresholds (INF can be a threshold however)
+        assert_false(np.any(np.isnan(dtc.tree_.threshold)))
+        assert_array_equal(dtc.predict(X), y)
+
+    # The missing values and some available values in one class
+    X_de = np.array([[np.nan], [np.nan], [np.nan], [np.nan],
+                     [0], [1], [2], [3], [4], [5]])
+    X_sp = coo_matrix(X_de)
+    y = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2])
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     splitter="random",
+                                     random_state=42).fit(X, y)
+        # No nan thresholds (INF can be a threshold however)
+        assert_false(np.any(np.isnan(dtc.tree_.threshold)))
+        assert_array_equal(dtc.predict(X), y)
+
+    # The missing should be sent along with available to right child
+    y = np.array([2, 2, 2, 2, 1, 1, 1, 1, 2, 2])
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     splitter="random",
+                                     random_state=42).fit(X, y)
+        # No nan thresholds (INF can be a threshold however)
+        assert_false(np.any(np.isnan(dtc.tree_.threshold)))
+        assert_array_equal(dtc.predict(X), y)
+
+    # When no missing exist, none of the thresholds should be NaN/Inf
+    # And missing direction should either be the default RIGHT / TREE_UNDEFINED
+    X_de = rng.random_sample((10, 2))
+    X_sp = coo_matrix(X_de)
+    y = rng.randint(0, 10, (10,))
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     splitter="random",
+                                     random_state=42).fit(X, y)
+        # All the missing_direction for non-leaf nodes should be the default of
+        # MISSING_DIR_RIGHT and for leaves it should be TREE_UNDEFINED
+        assert_true(
+            np.all((dtc.tree_.missing_direction == MISSING_DIR_RIGHT) ^
+                   (dtc.tree_.children_left == TREE_LEAF)))
+        assert_true(
+            np.all((dtc.tree_.missing_direction == TREE_UNDEFINED) ^
+                   (dtc.tree_.children_left != TREE_LEAF)))
+        assert_all_finite(dtc.tree_.threshold)
+        assert_all_finite(dtc.tree_.threshold)
+        assert_array_equal(dtc.predict(X), y)
+
+    # When the missing values are equally from all the classes
+    # the tree building should split it into separate node
+    X_de = np.array([[110], [100], [1], [2], [0], [np.nan], [500],
+                    [600], [np.nan], [5]])
+    X_sp = coo_matrix(X_de)
+    y = np.array([1, 1, 0, 0, 0, 0, 1, 1, 1, 0])
+
+    for X in (X_de, X_sp):
+        dtc = DecisionTreeClassifier(missing_values="NaN",
+                                     splitter="random",
+                                     random_state=42).fit(X, y)
+
+        # No nan thresholds (INF can be a threshold however)
+        assert_false(np.any(np.isnan(dtc.tree_.threshold)))
+        try:
+            # This should not pass as both the missing values are grouped to
+            # single class
+            assert_array_equal(dtc.predict(X), y)
+        except AssertionError:
+            pass
