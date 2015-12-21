@@ -1,6 +1,7 @@
 __author__ = "Henry Lin <hlin117@gmail.com>"
 
 import scipy.sparse as sp
+import numpy as np
 from sklearn.preprocessing.discretization import Discretizer
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -8,6 +9,27 @@ from sklearn.utils.testing import assert_equal
 X = [[0, 0, 1],
      [1, 1, 2],
      [2, 0, 3]]
+
+def test_discretizer_negative():
+    X_neg = [[-10, -2, 4],
+             [-5,  8,  14]]
+
+    dis = Discretizer(n_bins=5)
+    discretized = dis.fit_transform(X_neg)
+
+    expected_cut_points = [[-9, 0, 6],
+                           [-8, 2, 8],
+                           [-7, 4, 10],
+                           [-6, 6, 12]]
+
+    expected_zero_intervals = [(-6, np.inf), (0, 2), (-np.inf, 6)]
+    assert_equal(expected_zero_intervals, dis.zero_intervals_)
+
+    assert_array_equal(expected_cut_points, dis.cut_points_)
+
+
+def test_discretizer_1d():
+    pass # TODO
 
 def test_discretizer_bad_n_bins():
     try:
@@ -85,3 +107,6 @@ def test_discretizer_bad_cat_features():
             raise ValueError("Discretizer should have failed to fit with bad "
                              "input categories. Failed to fail on {0}" \
                              .format(cats))
+
+if __name__ == "__main__":
+    test_discretizer_negative()

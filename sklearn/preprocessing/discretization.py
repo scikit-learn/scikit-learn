@@ -49,7 +49,8 @@ class Discretizer(BaseEstimator, TransformerMixin):
         would be discretized to zero.
 
     searched_points_ : array, shape [numBins - 2, n_continuous_features]
-        An array of cut points used for discretization.
+        An array of cut points used for discretization. This array is empty
+        if n_bins = 2.
 
     n_features_ : int
         The number of features from the original dataset.
@@ -173,18 +174,25 @@ class Discretizer(BaseEstimator, TransformerMixin):
             # Get index of where zero goes. Omit this index in
             # the rebuilt array
             # TODO: Watch out for when there is only two intervals
-            zero_index = np.searchsorted(points, 0)
+            zero_index = np.searchsorted(points, 0, side='right')
 
+            # Case when all values are positive
             if zero_index == 0:
                 zero_int = (-np.inf, points[zero_index])
+                searched = points[1:]
+
+            # Case when all values are negative
+            elif zero_index == len(points):
+                zero_int = (points[zero_index - 1], np.inf)
+                searched = points[:-1]
+
             else:
-                zero_int = (points[zero_index], points[zero_index + 1])
+                zero_int = (points[zero_index - 1], points[zero_index])
+                searched = np.hstack((points[:zero_index - 1], points[zero_index:]))
             zero_intervals.append(zero_int)
 
-            searched = np.hstack((points[:zero_index], points[zero_index + 1:]))
             searched_points.append(searched.reshape(-1, 1))
 
-            ## TODO: CHANGE HERE
         self.searched_points_ = np.hstack(searched_points)
         self.zero_intervals_ = zero_intervals
         return self
@@ -204,12 +212,13 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         cut_points = list()
         for (lower, upper), col in zip(zero_intervals, searched_points.T):
-            zero_index = np.searchsorted(col, lower)
 
-            # Case when lower == -np.inf
-            if zero_index == 0:
+            if lower == -np.inf:
                 cut_column = np.insert(col, 0, upper)
+            elif upper == np.inf:
+                cut_column = np.append(col, lower)
             else:
+                zero_index = np.searchsorted(col, lower)
                 cut_column = np.insert(col, zero_index, lower)
             cut_points.append(cut_column.reshape(-1, 1))
         cut_points = np.hstack(cut_points)
