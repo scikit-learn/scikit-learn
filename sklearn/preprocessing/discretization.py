@@ -37,12 +37,25 @@ class Discretizer(BaseEstimator, TransformerMixin):
     max_ : float
         The maximum value of the input data.
 
-    cut_points_ : array, shape [numBins - 1]
+    cut_points_ : array, shape [numBins - 1, n_continuous_features]
         Contains the boundaries for which the data lies. Each interval
         has an open left boundary, and a closed right boundary.
 
+        Given a feature, the width of each interval is given by
+        (max - min) / n_bins.
+
+    zero_intervals_ : list of tuples of length n_continuous_features
+        A list of 2-tuples that represents the intervals for which a number
+        would be discretized to zero.
+
+    searched_points_ : array, shape [numBins - 2, n_continuous_features]
+        An array of cut points used for discretization.
+
     n_features_ : int
         The number of features from the original dataset.
+
+    n_continuous_features_ : int
+        The number of continuous features.
 
     continuous_features_ : list
         Contains the indices of continuous columns in the dataset.
@@ -50,20 +63,33 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
     Example
     -------
-    >>> # X has two examples, with X[:, 2] as categorical
-    >>> X = [[0, 1, 0, 4], \
-             [6, 7, 1, 5]]
+    X has two examples, with X[:, 2] as categorical
+
+    >>> X = [[-3, 1, 0, 5  ], \
+             [-2, 7, 8, 4.5], \
+             [3,  3, 1, 4  ]]
     >>> from sklearn.preprocessing import Discretizer
-    >>> discretizer = Discretizer(n_bins=3, categorical_features=[2])
+    >>> discretizer = Discretizer(n_bins=4, categorical_features=[2])
     >>> discretizer.fit(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Discretizer(...)
     >>> discretizer.cut_points_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 2. , 3. , 4.3333...],
-           [ 4. , 5. , 4.6666...]])
-    >>> # Transforming X will move the categorical features to the last indices
-    >>> discretizer.transform(X)
-    array([[0, 0, 0, 0],
-           [2, 2, 2, 1]])
+    array([[-1.5 ,  2.5 ,  4.25],
+           [ 0.  ,  4.  ,  4.5 ],
+           [ 1.5 ,  5.5 ,  4.75]])
+
+    >>> discretizer.zero_intervals_
+    [(0.0, 1.5), (-inf, 2.5), (-inf, 4.25)]
+
+    >>> discretizer.searched_points_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([[-1.5 ,  4.  ,  4.5 ],
+           [ 1.5 ,  5.5 ,  4.75]])
+
+    Transforming X will move the categorical features to the last indices
+
+    >>> discretizer.transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([[ 0.,  0.,  3.,  0.],
+           [ 0.,  3.,  1.,  8.],
+           [ 3.,  1.,  0.,  1.]])
     """
     sparse_formats = ['csr', 'csc']
 
@@ -74,16 +100,16 @@ class Discretizer(BaseEstimator, TransformerMixin):
         # Attributes
         self.min_ = None
         self.max_ = None
-        self.cut_points_ = None
         self.n_features_ = None
         self.continuous_features_ = categorical_features
+        self.searched_points_ = None
+        self.zero_intervals_ = None
 
     def _set_continuous_features(self):
         """Sets a boolean array that determines which columns are
         continuous features.
         """
         if self.categorical_features is None:
-            self.n_continuous_features_ = self.n_features_
             self.continuous_features_ = range(self.n_features_)
             return
 
@@ -101,8 +127,6 @@ class Discretizer(BaseEstimator, TransformerMixin):
             raise ValueError("Duplicate indices detected from input "
                              "categorical indices. Input was: {0}" \
                              .format(self.continuous_features_))
-
-        self.n_continuous_features_ = len(self.continuous_features_)
 
     def fit(self, X, y=None):
         """Finds the intervals of interest from the input data.
@@ -138,12 +162,58 @@ class Discretizer(BaseEstimator, TransformerMixin):
         else:
             self.min_ = continuous.min(axis=0)
             self.max_ = continuous.max(axis=0)
-        cut_points = list()
+
+        searched_points = list()
+        zero_intervals = list()
+
         for min_, max_ in zip(self.min_, self.max_):
+
             points = np.linspace(min_, max_, num=self.n_bins, endpoint=False)[1:]
-            cut_points.append(points.reshape(-1, 1))
-        self.cut_points_ = np.hstack(cut_points)
+
+            # Get index of where zero goes. Omit this index in
+            # the rebuilt array
+            # TODO: Watch out for when there is only two intervals
+            zero_index = np.searchsorted(points, 0)
+
+            if zero_index == 0:
+                zero_int = (-np.inf, points[zero_index])
+            else:
+                zero_int = (points[zero_index], points[zero_index + 1])
+            zero_intervals.append(zero_int)
+
+            searched = np.hstack((points[:zero_index], points[zero_index + 1:]))
+            searched_points.append(searched.reshape(-1, 1))
+
+            ## TODO: CHANGE HERE
+        self.searched_points_ = np.hstack(searched_points)
+        self.zero_intervals_ = zero_intervals
         return self
+
+    @property
+    def n_continuous_features_(self):
+        if not self.continuous_features_:
+            return None
+        return len(self.continuous_features_)
+
+    @property
+    def cut_points_(self):
+        if not self.zero_intervals_:
+            return None
+        zero_intervals = self.zero_intervals_
+        searched_points = self.searched_points_
+
+        cut_points = list()
+        for (lower, upper), col in zip(zero_intervals, searched_points.T):
+            zero_index = np.searchsorted(col, lower)
+
+            # Case when lower == -np.inf
+            if zero_index == 0:
+                cut_column = np.insert(col, 0, upper)
+            else:
+                cut_column = np.insert(col, zero_index, lower)
+            cut_points.append(cut_column.reshape(-1, 1))
+        cut_points = np.hstack(cut_points)
+        return cut_points
 
     def _check_sparse(self, X, ravel=True):
         if ravel:
@@ -177,6 +247,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         continuous = X[:, self.continuous_features_]
         discretized = list()
+
         for cut_points, cont in zip(self.cut_points_.T, continuous.T):
             cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
             dis_features = np.searchsorted(cut_points, cont)
