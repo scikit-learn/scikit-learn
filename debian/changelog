@@ -1,10 +1,13 @@
-scikit-learn (0.17.0-3) UNRELEASED; urgency=medium
+scikit-learn (0.17.0-3) unstable; urgency=medium
 
   * debian/control
     - recommend python3- versions of packages for python3-sklearn. Thanks
       Christopher Baines
+  * debian/rules
+    - boost minimal Cython version for recythonization to 0.23.1.
+      Should enable back bakckports on older Debian/Ubuntus
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 06 Dec 2015 20:18:45 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 21 Dec 2015 20:38:42 -0500
 
 scikit-learn (0.17.0-2) unstable; urgency=medium
 

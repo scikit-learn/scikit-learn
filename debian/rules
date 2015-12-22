@@ -16,7 +16,7 @@ NODOC = $(shell dpkg --compare-versions $(SPHINX_VER) lt 1.1.3 && echo "nodoc" |
 export DEB_BUILD_OPTIONS += $(NODOC)
 
 CYTHON_VER := $(shell dpkg -l cython 2>/dev/null | awk '/^ii/{print $$3;}' || echo 0)
-RECONF = $(shell dpkg --compare-versions $(CYTHON_VER) ge 0.20.1 && echo ",autoreconf" || echo "")
+RECONF = $(shell dpkg --compare-versions $(CYTHON_VER) ge 0.23.1 && echo ",autoreconf" || echo "")
 
 # Some tests are known to fail randomly so need to be excluded ATM
 NOSEARGS := 
