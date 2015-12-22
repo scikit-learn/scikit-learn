@@ -261,13 +261,22 @@ class Discretizer(BaseEstimator, TransformerMixin):
         z_intervals = self.zero_intervals_
         searched = self.searched_points_
 
-        for cont, z_int, points in zip(continuous, z_intervals, searched):
-            dis = binsearch(cont, z_int, points)
-            discretized.append(dis)
+        if searched.size == 0:
+            for cont, (lower, upper) in zip(continuous.T, z_intervals):
+                dis = np.zeros(len(cont))
+                zero_mask = np.logical_and(lower <= cont, cont < upper)
+                dis[~zero_mask] = 1
+                discretized.append(dis.reshape(-1, 1))
+        else:
 
-#            cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
-#            dis_features = np.searchsorted(cut_points, cont)
-#            discretized.append(dis_features.reshape(-1, 1))
+            # Discretize column by column. Might change this later.
+            for cont, z_int, points in zip(continuous.T, z_intervals, searched.T):
+                dis = binsearch(cont, z_int, points)
+                discretized.append(dis.reshape(-1, 1))
+
+    #            cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
+    #            dis_features = np.searchsorted(cut_points, cont)
+    #            discretized.append(dis_features.reshape(-1, 1))
 
         discretized = np.hstack(discretized)
         if self.n_continuous_features_ == self.n_features_:

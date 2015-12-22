@@ -61,7 +61,7 @@ def test_discretizer_fit_transform():
     expected_cut_points = [[1.0, 0.5, 2.0]]
     assert_array_equal(expected_cut_points, dis.cut_points_)
     expected = [[0, 0, 0],
-                [0, 1, 0],
+                [1, 1, 1],
                 [1, 0, 1]]
     assert_array_equal(expected, discretized)
     assert_equal(0, dis.searched_points_.size)  # Only when 2 bins
@@ -79,7 +79,7 @@ def test_discretizer_fit_transform_sparse():
                            "format {0}".format(format.__name__))
 
         expected = [[0, 0, 0],
-                    [0, 1, 0],
+                    [1, 1, 1],
                     [1, 0, 1]]
         assert_array_equal(expected, discretized, "Failing with format {0}"\
                            .format(format.__name__))
@@ -87,6 +87,11 @@ def test_discretizer_fit_transform_sparse():
 def test_discretizer_fit_transform_cat():
     dis = Discretizer(n_bins=3, categorical_features=[0])
     discretized = dis.fit_transform(X)
+
+    expected_cut_points = [[0.333333, 1.666666],
+                           [0.666666, 2.333333]]
+
+    assert_array_almost_equal(expected_cut_points, dis.cut_points_)
 
     expected = [[0, 0, 0],
                 [2, 1, 1],
@@ -100,10 +105,10 @@ def test_discretizer_fit():
     expected = [0, 2]
     assert_equal(expected, dis.continuous_features_)
 
-    expected = [[0.666666, 1.666666],
-                [1.333333, 2.333333]]
+    expected_cut_points = [[0.666666, 1.666666],
+                           [1.333333, 2.333333]]
 
-    assert_array_almost_equal(expected, dis.cut_points_)
+    assert_array_almost_equal(expected_cut_points, dis.cut_points_)
 
     expected = [0.0, 1.0]
     assert_array_almost_equal(expected, dis.min_)
@@ -124,4 +129,4 @@ def test_discretizer_bad_cat_features():
                              .format(cats))
 
 if __name__ == "__main__":
-    test_binary_search()
+    test_discretizer_fit_transform_cat()

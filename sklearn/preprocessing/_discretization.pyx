@@ -15,18 +15,18 @@ def binsearch(contcolumn, zero_interval, search_points):
     _search_points = np.append(_search_points, np.inf)
 
     cdef:
-        np.ndarray[DOUBLE, ndim=1, mode='c'] values = contcolumn.astype(float)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] values = contcolumn.astype(float)
         np.ndarray[DOUBLE, ndim=1, mode="c"] output = np.zeros(contcolumn.shape[0])
         DOUBLE lower = <DOUBLE> zero_interval[0]
         DOUBLE upper = <DOUBLE> zero_interval[1]
         unsigned int i = 0, keyindex
-        long[::1] keys = np.arange(1, search_points.shape[0])
+
+        # Should have at least (len(search_points) + 1) keys
+        long[::1] keys = np.arange(1, search_points.shape[0] + 2)
         DOUBLE value
-    print _search_points
 
     #with nogil:
     for value_index in range(values.shape[0]):
-        print "hello world"
         value = values[value_index]
         if lower <= value < upper:
             output[i] = 0
@@ -34,7 +34,6 @@ def binsearch(contcolumn, zero_interval, search_points):
             keyindex = binary_search(value, _search_points)
             output[i] = keys[keyindex]
         i += 1
-    print output
     return output
 
 @cython.boundscheck(False)
@@ -43,7 +42,6 @@ cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points): # except -1: #n
     cdef:
         int lower = 0, upper = search_points.shape[0]
         int mid
-    print search_points
 
     while lower < upper:
         mid = (lower + upper) / 2
