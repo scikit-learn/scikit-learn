@@ -26,20 +26,20 @@ def binsearch(contcolumn, zero_interval, search_points):
         long[::1] keys = np.arange(1, _search_points.shape[0])
         DOUBLE value
 
-    #with nogil:
-    for value_index in range(values.shape[0]):
-        value = values[value_index]
-        if lower <= value < upper:
-            output[i] = 0
-        else:
-            keyindex = binary_search(value, _search_points)
-            output[i] = keys[keyindex]
-        i += 1
+    with nogil:
+        for value_index in range(values.shape[0]):
+            value = values[value_index]
+            if lower <= value < upper:
+                output[i] = 0
+            else:
+                keyindex = binary_search(value, _search_points)
+                output[i] = keys[keyindex]
+            i += 1
     return output
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points): # except -1: #nogil except -1:
+cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points) nogil except -1:
     cdef:
         int lower = 0, upper = search_points.shape[0]
         int mid

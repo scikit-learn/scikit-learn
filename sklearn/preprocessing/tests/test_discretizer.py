@@ -18,10 +18,6 @@ def test_binary_search():
     output = binsearch(continuous, zero_interval, search_points)
     # TODO: More test cases
 
-
-def test_discretizer_sparse_mixed_signs():
-    pass
-
 def test_discretizer_mixed_signs():
     X_neg = [[-10, -2, 4],
              [-5,  8,  14]]
@@ -45,6 +41,7 @@ def test_discretizer_mixed_signs():
     assert_array_equal(expected_cut_points, dis.cut_points_)
 
 def test_discretizer_sparse_with_categorical():
+    # Also tests whether it can discretize with mixed signs.
 
     dis = Discretizer(n_bins=3, categorical_features=[2, 4])
 
@@ -75,6 +72,7 @@ def test_discretizer_sparse_with_categorical():
                            [1, 2, 0, 0, 0, 14, 0],
                            [2, 2, 0, 1, 2, 15, 6]]
 
+        # The toarray() ensures that the output is sparse
         assert_array_equal(expected_output, discretized.toarray())
 
         # Checking to preserve sparsity
@@ -174,5 +172,3 @@ def test_discretizer_bad_cat_features():
             raise ValueError("Discretizer should have failed to fit with bad "
                              "input categories. Failed to fail on {0}" \
                              .format(cats))
-
-test_discretizer_sparse_with_categorical()

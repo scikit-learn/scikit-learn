@@ -1936,8 +1936,9 @@ static PyObject *__pyx_pf_7sklearn_13preprocessing_15_discretization_binsearch(C
   int __pyx_t_16;
   int __pyx_t_17;
   size_t __pyx_t_18;
-  size_t __pyx_t_19;
+  int __pyx_t_19;
   size_t __pyx_t_20;
+  size_t __pyx_t_21;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -2294,97 +2295,137 @@ static PyObject *__pyx_pf_7sklearn_13preprocessing_15_discretization_binsearch(C
   __pyx_t_12.memview = NULL;
   __pyx_t_12.data = NULL;
 
-  /* "sklearn/preprocessing/_discretization.pyx":30
+  /* "sklearn/preprocessing/_discretization.pyx":29
+ *         DOUBLE value
  * 
- *     #with nogil:
- *     for value_index in range(values.shape[0]):             # <<<<<<<<<<<<<<
- *         value = values[value_index]
- *         if lower <= value < upper:
+ *     with nogil:             # <<<<<<<<<<<<<<
+ *         for value_index in range(values.shape[0]):
+ *             value = values[value_index]
  */
-  __pyx_t_13 = (__pyx_v_values->dimensions[0]);
-  for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
-    __pyx_v_value_index = __pyx_t_14;
+  {
+      #ifdef WITH_THREAD
+      PyThreadState *_save;
+      Py_UNBLOCK_THREADS
+      #endif
+      /*try:*/ {
 
-    /* "sklearn/preprocessing/_discretization.pyx":31
- *     #with nogil:
- *     for value_index in range(values.shape[0]):
- *         value = values[value_index]             # <<<<<<<<<<<<<<
- *         if lower <= value < upper:
- *             output[i] = 0
+        /* "sklearn/preprocessing/_discretization.pyx":30
+ * 
+ *     with nogil:
+ *         for value_index in range(values.shape[0]):             # <<<<<<<<<<<<<<
+ *             value = values[value_index]
+ *             if lower <= value < upper:
  */
-    __pyx_t_15 = __pyx_v_value_index;
-    __pyx_v_value = (*__Pyx_BufPtrCContig1d(__pyx_t_7sklearn_13preprocessing_15_discretization_DOUBLE *, __pyx_pybuffernd_values.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_values.diminfo[0].strides));
+        __pyx_t_13 = (__pyx_v_values->dimensions[0]);
+        for (__pyx_t_14 = 0; __pyx_t_14 < __pyx_t_13; __pyx_t_14+=1) {
+          __pyx_v_value_index = __pyx_t_14;
 
-    /* "sklearn/preprocessing/_discretization.pyx":32
- *     for value_index in range(values.shape[0]):
- *         value = values[value_index]
- *         if lower <= value < upper:             # <<<<<<<<<<<<<<
- *             output[i] = 0
- *         else:
+          /* "sklearn/preprocessing/_discretization.pyx":31
+ *     with nogil:
+ *         for value_index in range(values.shape[0]):
+ *             value = values[value_index]             # <<<<<<<<<<<<<<
+ *             if lower <= value < upper:
+ *                 output[i] = 0
  */
-    __pyx_t_16 = (__pyx_v_lower <= __pyx_v_value);
-    if (__pyx_t_16) {
-      __pyx_t_16 = (__pyx_v_value < __pyx_v_upper);
-    }
-    __pyx_t_17 = (__pyx_t_16 != 0);
-    if (__pyx_t_17) {
+          __pyx_t_15 = __pyx_v_value_index;
+          __pyx_v_value = (*__Pyx_BufPtrCContig1d(__pyx_t_7sklearn_13preprocessing_15_discretization_DOUBLE *, __pyx_pybuffernd_values.rcbuffer->pybuffer.buf, __pyx_t_15, __pyx_pybuffernd_values.diminfo[0].strides));
 
-      /* "sklearn/preprocessing/_discretization.pyx":33
- *         value = values[value_index]
- *         if lower <= value < upper:
- *             output[i] = 0             # <<<<<<<<<<<<<<
- *         else:
- *             keyindex = binary_search(value, _search_points)
+          /* "sklearn/preprocessing/_discretization.pyx":32
+ *         for value_index in range(values.shape[0]):
+ *             value = values[value_index]
+ *             if lower <= value < upper:             # <<<<<<<<<<<<<<
+ *                 output[i] = 0
+ *             else:
  */
-      __pyx_t_18 = __pyx_v_i;
-      *__Pyx_BufPtrCContig1d(__pyx_t_7sklearn_13preprocessing_15_discretization_DOUBLE *, __pyx_pybuffernd_output.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_output.diminfo[0].strides) = 0.0;
+          __pyx_t_16 = (__pyx_v_lower <= __pyx_v_value);
+          if (__pyx_t_16) {
+            __pyx_t_16 = (__pyx_v_value < __pyx_v_upper);
+          }
+          __pyx_t_17 = (__pyx_t_16 != 0);
+          if (__pyx_t_17) {
 
-      /* "sklearn/preprocessing/_discretization.pyx":32
- *     for value_index in range(values.shape[0]):
- *         value = values[value_index]
- *         if lower <= value < upper:             # <<<<<<<<<<<<<<
- *             output[i] = 0
- *         else:
+            /* "sklearn/preprocessing/_discretization.pyx":33
+ *             value = values[value_index]
+ *             if lower <= value < upper:
+ *                 output[i] = 0             # <<<<<<<<<<<<<<
+ *             else:
+ *                 keyindex = binary_search(value, _search_points)
  */
-      goto __pyx_L5;
-    }
+            __pyx_t_18 = __pyx_v_i;
+            *__Pyx_BufPtrCContig1d(__pyx_t_7sklearn_13preprocessing_15_discretization_DOUBLE *, __pyx_pybuffernd_output.rcbuffer->pybuffer.buf, __pyx_t_18, __pyx_pybuffernd_output.diminfo[0].strides) = 0.0;
 
-    /* "sklearn/preprocessing/_discretization.pyx":35
- *             output[i] = 0
- *         else:
- *             keyindex = binary_search(value, _search_points)             # <<<<<<<<<<<<<<
- *             output[i] = keys[keyindex]
- *         i += 1
+            /* "sklearn/preprocessing/_discretization.pyx":32
+ *         for value_index in range(values.shape[0]):
+ *             value = values[value_index]
+ *             if lower <= value < upper:             # <<<<<<<<<<<<<<
+ *                 output[i] = 0
+ *             else:
  */
-    /*else*/ {
-      __pyx_v_keyindex = __pyx_f_7sklearn_13preprocessing_15_discretization_binary_search(__pyx_v_value, __pyx_v__search_points);
+            goto __pyx_L8;
+          }
 
-      /* "sklearn/preprocessing/_discretization.pyx":36
- *         else:
- *             keyindex = binary_search(value, _search_points)
- *             output[i] = keys[keyindex]             # <<<<<<<<<<<<<<
- *         i += 1
+          /* "sklearn/preprocessing/_discretization.pyx":35
+ *                 output[i] = 0
+ *             else:
+ *                 keyindex = binary_search(value, _search_points)             # <<<<<<<<<<<<<<
+ *                 output[i] = keys[keyindex]
+ *             i += 1
+ */
+          /*else*/ {
+            __pyx_t_19 = __pyx_f_7sklearn_13preprocessing_15_discretization_binary_search(__pyx_v_value, __pyx_v__search_points); if (unlikely(__pyx_t_19 == -1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 35; __pyx_clineno = __LINE__; goto __pyx_L4_error;}
+            __pyx_v_keyindex = __pyx_t_19;
+
+            /* "sklearn/preprocessing/_discretization.pyx":36
+ *             else:
+ *                 keyindex = binary_search(value, _search_points)
+ *                 output[i] = keys[keyindex]             # <<<<<<<<<<<<<<
+ *             i += 1
  *     return output
  */
-      __pyx_t_19 = __pyx_v_keyindex;
-      __pyx_t_20 = __pyx_v_i;
-      *__Pyx_BufPtrCContig1d(__pyx_t_7sklearn_13preprocessing_15_discretization_DOUBLE *, __pyx_pybuffernd_output.rcbuffer->pybuffer.buf, __pyx_t_20, __pyx_pybuffernd_output.diminfo[0].strides) = (*((long *) ( /* dim=0 */ ((char *) (((long *) __pyx_v_keys.data) + __pyx_t_19)) )));
-    }
-    __pyx_L5:;
+            __pyx_t_20 = __pyx_v_keyindex;
+            __pyx_t_21 = __pyx_v_i;
+            *__Pyx_BufPtrCContig1d(__pyx_t_7sklearn_13preprocessing_15_discretization_DOUBLE *, __pyx_pybuffernd_output.rcbuffer->pybuffer.buf, __pyx_t_21, __pyx_pybuffernd_output.diminfo[0].strides) = (*((long *) ( /* dim=0 */ ((char *) (((long *) __pyx_v_keys.data) + __pyx_t_20)) )));
+          }
+          __pyx_L8:;
 
-    /* "sklearn/preprocessing/_discretization.pyx":37
- *             keyindex = binary_search(value, _search_points)
- *             output[i] = keys[keyindex]
- *         i += 1             # <<<<<<<<<<<<<<
+          /* "sklearn/preprocessing/_discretization.pyx":37
+ *                 keyindex = binary_search(value, _search_points)
+ *                 output[i] = keys[keyindex]
+ *             i += 1             # <<<<<<<<<<<<<<
  *     return output
  * 
  */
-    __pyx_v_i = (__pyx_v_i + 1);
+          __pyx_v_i = (__pyx_v_i + 1);
+        }
+      }
+
+      /* "sklearn/preprocessing/_discretization.pyx":29
+ *         DOUBLE value
+ * 
+ *     with nogil:             # <<<<<<<<<<<<<<
+ *         for value_index in range(values.shape[0]):
+ *             value = values[value_index]
+ */
+      /*finally:*/ {
+        /*normal exit:*/{
+          #ifdef WITH_THREAD
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L5;
+        }
+        __pyx_L4_error: {
+          #ifdef WITH_THREAD
+          Py_BLOCK_THREADS
+          #endif
+          goto __pyx_L1_error;
+        }
+        __pyx_L5:;
+      }
   }
 
   /* "sklearn/preprocessing/_discretization.pyx":38
- *             output[i] = keys[keyindex]
- *         i += 1
+ *                 output[i] = keys[keyindex]
+ *             i += 1
  *     return output             # <<<<<<<<<<<<<<
  * 
  * @cython.boundscheck(False)
@@ -2436,7 +2477,7 @@ static PyObject *__pyx_pf_7sklearn_13preprocessing_15_discretization_binsearch(C
 /* "sklearn/preprocessing/_discretization.pyx":42
  * @cython.boundscheck(False)
  * @cython.wraparound(False)
- * cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points): # except -1: #nogil except -1:             # <<<<<<<<<<<<<<
+ * cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points) nogil except -1:             # <<<<<<<<<<<<<<
  *     cdef:
  *         int lower = 0, upper = search_points.shape[0]
  */
@@ -2446,16 +2487,14 @@ static int __pyx_f_7sklearn_13preprocessing_15_discretization_binary_search(__py
   int __pyx_v_upper;
   int __pyx_v_mid;
   int __pyx_r;
-  __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   Py_ssize_t __pyx_t_2;
   Py_ssize_t __pyx_t_3;
   int __pyx_t_4;
   Py_ssize_t __pyx_t_5;
-  __Pyx_RefNannySetupContext("binary_search", 0);
 
   /* "sklearn/preprocessing/_discretization.pyx":44
- * cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points): # except -1: #nogil except -1:
+ * cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points) nogil except -1:
  *     cdef:
  *         int lower = 0, upper = search_points.shape[0]             # <<<<<<<<<<<<<<
  *         int mid
@@ -2572,14 +2611,13 @@ static int __pyx_f_7sklearn_13preprocessing_15_discretization_binary_search(__py
   /* "sklearn/preprocessing/_discretization.pyx":42
  * @cython.boundscheck(False)
  * @cython.wraparound(False)
- * cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points): # except -1: #nogil except -1:             # <<<<<<<<<<<<<<
+ * cdef int binary_search(DOUBLE value, DOUBLE[::1] search_points) nogil except -1:             # <<<<<<<<<<<<<<
  *     cdef:
  *         int lower = 0, upper = search_points.shape[0]
  */
 
   /* function exit code */
   __pyx_L0:;
-  __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
