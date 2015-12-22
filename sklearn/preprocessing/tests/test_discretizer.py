@@ -45,7 +45,44 @@ def test_discretizer_mixed_signs():
     assert_array_equal(expected_cut_points, dis.cut_points_)
 
 def test_discretizer_sparse_with_categorical():
-    pass # TODO
+
+    dis = Discretizer(n_bins=3, categorical_features=[2, 4])
+
+    sparse_formats = [sp.bsr_matrix, sp.coo_matrix, sp.csc_matrix,
+                      sp.csr_matrix, sp.dia_matrix, sp.dok_matrix, sp.lil_matrix]
+
+    X = [[0, 2, 10, -20, 10, 0, 0],
+         [0, 3, 11, -18, 11, 0, -8],
+         [1, 5, 12, -16, 0, 3, 0],
+         [9, 7, 13, -14, 0, 0, 0],
+         [5, 9, 14, -12, 0, 0, 0],
+         [7, 11, 15, -11, 6, -3, -4]]
+
+    for format in sparse_formats:
+        sparse_X = format(X)
+
+        discretized = dis.fit_transform(sparse_X)
+
+        expected_cut_points = [[3, 5, -17, -1, -5.333333],
+                               [6, 8, -14, 1, -2.666666]]
+
+        assert_array_almost_equal(expected_cut_points, dis.cut_points_)
+
+        expected_output = [[0, 0, 1, 0, 0, 10, 10],
+                           [0, 0, 1, 0, 1, 11, 11],
+                           [0, 1, 2, 2, 0, 12, 0],
+                           [2, 1, 0, 0, 0, 13, 0],
+                           [1, 2, 0, 0, 0, 14, 0],
+                           [2, 2, 0, 1, 2, 15, 6]]
+
+        assert_array_equal(expected_output, discretized.toarray())
+
+        # Checking to preserve sparsity
+        if format is not sp.dia_matrix:
+            assert_equal(sparse_X.size, discretized.size, "Failing with format {2},"
+                                                          "sizes {0} and {1} differ" \
+                         .format(sparse_X.size, discretized.size, format.__name__))
+
 
 def test_discretizer_1d():
     pass # TODO
@@ -88,6 +125,11 @@ def test_discretizer_fit_transform_sparse():
                     [1, 0, 1]]
         assert_array_equal(expected, discretized.toarray(), "Failing with format {0}"\
                            .format(format.__name__))
+
+        # Checking to preserve sparsity
+        if format is not sp.dia_matrix:
+            assert_equal(sparse_X.size, discretized.size, "Failing with format {0}"\
+                         .format(format.__name__))
 
 def test_discretizer_fit_transform_cat():
     dis = Discretizer(n_bins=3, categorical_features=[0])
@@ -133,5 +175,4 @@ def test_discretizer_bad_cat_features():
                              "input categories. Failed to fail on {0}" \
                              .format(cats))
 
-if __name__ == "__main__":
-    test_discretizer_fit_transform_sparse()
+test_discretizer_sparse_with_categorical()
