@@ -9,3 +9,4 @@ deb_git_revision_cmd
 deb_no_plot_gallery
 deb_optional_linkcode
 deb_nopaypal
+deb_tests_lower_precision

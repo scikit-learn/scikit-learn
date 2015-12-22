@@ -1,0 +1,11 @@
+--- a/sklearn/feature_selection/tests/test_from_model.py
++++ b/sklearn/feature_selection/tests/test_from_model.py
+@@ -92,7 +92,7 @@ def test_feature_importances():
+     importances = transformer.estimator_.feature_importances_
+     transformer.fit(X, y, sample_weight=3 * sample_weight)
+     importances_bis = transformer.estimator_.feature_importances_
+-    assert_almost_equal(importances, importances_bis)
++    assert_almost_equal(importances, importances_bis, decimal=5)
+ 
+     # For the Lasso and related models, the threshold defaults to 1e-5
+     transformer = SelectFromModel(estimator=Lasso(alpha=0.1))

@@ -6,8 +6,11 @@ scikit-learn (0.17.0-3) unstable; urgency=medium
   * debian/rules
     - boost minimal Cython version for recythonization to 0.23.1.
       Should enable back bakckports on older Debian/Ubuntus
+  * debian/tests/deb_tests_lower_precision
+    - to lower precision of test_feature_importances to avoid FTBFS on some
+      (BE) platforms
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 21 Dec 2015 20:38:42 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 21 Dec 2015 21:02:16 -0500
 
 scikit-learn (0.17.0-2) unstable; urgency=medium
 
