@@ -8,6 +8,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.sparsefuncs import csr_csc_min_axis0, csr_csc_max_axis0
+from _discretization import binsearch
 
 __all__ = [
     "Discretizer"
@@ -92,7 +93,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
            [ 0.,  3.,  1.,  8.],
            [ 3.,  1.,  0.,  1.]])
     """
-    sparse_formats = ['csr', 'csc']
+    sparse_formats = ['csc'] #['csr', 'csc']
 
     def __init__(self, n_bins=2, categorical_features=None):
         self.n_bins = n_bins
@@ -257,10 +258,16 @@ class Discretizer(BaseEstimator, TransformerMixin):
         continuous = X[:, self.continuous_features_]
         discretized = list()
 
-        for cut_points, cont in zip(self.cut_points_.T, continuous.T):
-            cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
-            dis_features = np.searchsorted(cut_points, cont)
-            discretized.append(dis_features.reshape(-1, 1))
+        z_intervals = self.zero_intervals_
+        searched = self.searched_points_
+
+        for cont, z_int, points in zip(continuous, z_intervals, searched):
+            dis = binsearch(cont, z_int, points)
+            discretized.append(dis)
+
+#            cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
+#            dis_features = np.searchsorted(cut_points, cont)
+#            discretized.append(dis_features.reshape(-1, 1))
 
         discretized = np.hstack(discretized)
         if self.n_continuous_features_ == self.n_features_:

@@ -3,12 +3,19 @@ __author__ = "Henry Lin <hlin117@gmail.com>"
 import scipy.sparse as sp
 import numpy as np
 from sklearn.preprocessing.discretization import Discretizer
+from sklearn.preprocessing._discretization import binsearch
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal
 
 X = [[0, 0, 1],
      [1, 1, 2],
      [2, 0, 3]]
+
+def test_binary_search():
+    continuous = np.array([-10, -5])
+    zero_interval = (-6, np.inf)
+    search_points = np.array([-9, -8, -7])
+    output = binsearch(continuous, zero_interval, search_points)
 
 def test_discretizer_negative():
     X_neg = [[-10, -2, 4],
@@ -25,8 +32,15 @@ def test_discretizer_negative():
     expected_zero_intervals = [(-6, np.inf), (0, 2), (-np.inf, 6)]
     assert_equal(expected_zero_intervals, dis.zero_intervals_)
 
+    expected_searched_points = [[-9, 2, 8 ],
+                                [-8, 4, 10],
+                                [-7, 6, 12]]
+
+    assert_array_equal(expected_searched_points, dis.searched_points_)
     assert_array_equal(expected_cut_points, dis.cut_points_)
 
+def test_discretizer_sparse_with_categorical():
+    pass # TODO
 
 def test_discretizer_1d():
     pass # TODO
@@ -50,6 +64,7 @@ def test_discretizer_fit_transform():
                 [0, 1, 0],
                 [1, 0, 1]]
     assert_array_equal(expected, discretized)
+    assert_equal(0, dis.searched_points_.size)  # Only when 2 bins
 
 def test_discretizer_fit_transform_sparse():
     sparse_formats = [sp.bsr_matrix, sp.coo_matrix, sp.csc_matrix,
@@ -109,4 +124,4 @@ def test_discretizer_bad_cat_features():
                              .format(cats))
 
 if __name__ == "__main__":
-    test_discretizer_negative()
+    test_binary_search()
