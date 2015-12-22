@@ -225,10 +225,42 @@ class Discretizer(BaseEstimator, TransformerMixin):
         cut_points = np.hstack(cut_points)
         return cut_points
 
-    def _check_sparse(self, X, ravel=True):
-        if ravel:
-            return X.toarray().ravel() if sp.issparse(X) else X
-        return X.toarray() if sp.issparse(X) else X
+    def _transform_sparse(self, X):
+        """Helper function to transform sp.csc_matrices.
+        """
+
+        def get_csc_columns(X):
+            n_features = X.shape[1]
+            col_ptr = X.indptr
+            for i in xrange(n_features):
+                start = col_ptr[i]
+                end = col_ptr[i + 1]
+                yield start, end, X.data[start:end]
+
+        continuous = X[:, self.continuous_features_]
+        continuous.sort_indices()
+        searched = self.searched_points_
+        z_intervals = self.zero_intervals_
+        output = continuous.copy()
+
+        if searched.size == 0:
+            col_groups = zip(get_csc_columns(continuous), z_intervals)
+            for (start, end, cont), (lower, upper) in col_groups:
+                zero_mask = np.logical_and(lower <= cont, cont < upper)
+                view = output.data[start:end]
+                view[zero_mask] = 0
+                view[~zero_mask] = 1
+        else:
+            col_groups = zip(get_csc_columns(continuous), z_intervals, searched.T)
+            for (start, end, cont), z_int, points in col_groups:
+                dis = binsearch(cont, z_int, points)
+                output.data[start:end] = dis
+
+        if self.n_continuous_features_ == self.n_features_:
+            return output
+        cat_features = sorted(self.categorical_features)
+        categorical = X[:, cat_features]
+        return sp.hstack((output, categorical))
 
     def transform(self, X, y=None):
         """Discretizes the input data.
@@ -255,12 +287,15 @@ class Discretizer(BaseEstimator, TransformerMixin):
                              "of features. Expecting {0}, received {1}"
                              .format(self.n_features_, X.shape[1]))
 
+        if isinstance(X, sp.csc_matrix):
+            return self._transform_sparse(X)
+
         continuous = X[:, self.continuous_features_]
         discretized = list()
-
         z_intervals = self.zero_intervals_
         searched = self.searched_points_
 
+        # Case when n_bins == 2
         if searched.size == 0:
             for cont, (lower, upper) in zip(continuous.T, z_intervals):
                 dis = np.zeros(len(cont))
@@ -268,21 +303,16 @@ class Discretizer(BaseEstimator, TransformerMixin):
                 dis[~zero_mask] = 1
                 discretized.append(dis.reshape(-1, 1))
         else:
-
             # Discretize column by column. Might change this later.
             for cont, z_int, points in zip(continuous.T, z_intervals, searched.T):
                 dis = binsearch(cont, z_int, points)
                 discretized.append(dis.reshape(-1, 1))
 
-    #            cont = self._check_sparse(cont)  # np.searchsorted can't handle sparse
-    #            dis_features = np.searchsorted(cut_points, cont)
-    #            discretized.append(dis_features.reshape(-1, 1))
-
         discretized = np.hstack(discretized)
         if self.n_continuous_features_ == self.n_features_:
             return discretized
-        else:
-            cat_features = sorted(self.categorical_features)
-            categorical = self._check_sparse(X[:, cat_features], ravel=False)
-            return np.hstack((discretized, categorical))
+
+        cat_features = sorted(self.categorical_features)
+        categorical = X[:, cat_features]
+        return np.hstack((discretized, categorical))
 

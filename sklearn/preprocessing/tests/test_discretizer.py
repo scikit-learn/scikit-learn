@@ -16,8 +16,13 @@ def test_binary_search():
     zero_interval = (-6, np.inf)
     search_points = np.array([-9, -8, -7])
     output = binsearch(continuous, zero_interval, search_points)
+    # TODO: More test cases
 
-def test_discretizer_negative():
+
+def test_discretizer_sparse_mixed_signs():
+    pass
+
+def test_discretizer_mixed_signs():
     X_neg = [[-10, -2, 4],
              [-5,  8,  14]]
 
@@ -81,7 +86,7 @@ def test_discretizer_fit_transform_sparse():
         expected = [[0, 0, 0],
                     [1, 1, 1],
                     [1, 0, 1]]
-        assert_array_equal(expected, discretized, "Failing with format {0}"\
+        assert_array_equal(expected, discretized.toarray(), "Failing with format {0}"\
                            .format(format.__name__))
 
 def test_discretizer_fit_transform_cat():
@@ -129,4 +134,4 @@ def test_discretizer_bad_cat_features():
                              .format(cats))
 
 if __name__ == "__main__":
-    test_discretizer_fit_transform_cat()
+    test_discretizer_fit_transform_sparse()

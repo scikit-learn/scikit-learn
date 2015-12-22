@@ -21,8 +21,9 @@ def binsearch(contcolumn, zero_interval, search_points):
         DOUBLE upper = <DOUBLE> zero_interval[1]
         unsigned int i = 0, keyindex
 
-        # Should have at least (len(search_points) + 1) keys
-        long[::1] keys = np.arange(1, search_points.shape[0] + 2)
+        # Need to have as many keys as search points, minus 1 to leave
+        # out np.inf, but plus 1 because our original offset is 1
+        long[::1] keys = np.arange(1, _search_points.shape[0])
         DOUBLE value
 
     #with nogil:
