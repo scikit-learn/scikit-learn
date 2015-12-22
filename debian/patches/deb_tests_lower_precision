@@ -5,7 +5,7 @@
      transformer.fit(X, y, sample_weight=3 * sample_weight)
      importances_bis = transformer.estimator_.feature_importances_
 -    assert_almost_equal(importances, importances_bis)
-+    assert_almost_equal(importances, importances_bis, decimal=5)
++    assert_almost_equal(importances, importances_bis, decimal=4)
  
      # For the Lasso and related models, the threshold defaults to 1e-5
      transformer = SelectFromModel(estimator=Lasso(alpha=0.1))

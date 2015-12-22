@@ -1,3 +1,10 @@
+scikit-learn (0.17.0-4) unstable; urgency=medium
+
+  * debian/tests/deb_tests_lower_precision
+    - lowering further to 4 decimals
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 22 Dec 2015 08:51:29 -0500
+
 scikit-learn (0.17.0-3) unstable; urgency=medium
 
   * debian/control
