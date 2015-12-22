@@ -9,6 +9,7 @@ from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.sparsefuncs import csr_csc_min_axis0, csr_csc_max_axis0
 from _discretization import binsearch
+from six.moves import xrange
 
 __all__ = [
     "Discretizer"
@@ -25,7 +26,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
         determined by the minimum and maximum of the input data.
         Raises ValueError if n_bins < 2.
 
-    categorical_features : array-like or None (default=None)
+    categorical_features : int, array-like, or None (default=None)
         Specifies the indices of categorical columns which are not to
         be discretized. If None, assumes that all columns are continuous
         features.
@@ -40,14 +41,15 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
     cut_points_ : array, shape [numBins - 1, n_continuous_features]
         Contains the boundaries for which the data lies. Each interval
-        has an open left boundary, and a closed right boundary.
+        has a closed left boundary, and an open right boundary.
 
         Given a feature, the width of each interval is given by
         (max - min) / n_bins.
 
     zero_intervals_ : list of tuples of length n_continuous_features
         A list of 2-tuples that represents the intervals for which a number
-        would be discretized to zero.
+        would be discretized to zero. If an interval is given by (a, b),
+        then a value between [a, b) will be discretized to zero.
 
     searched_points_ : array, shape [numBins - 2, n_continuous_features]
         An array of cut points used for discretization. This array is empty
@@ -89,8 +91,8 @@ class Discretizer(BaseEstimator, TransformerMixin):
     Transforming X will move the categorical features to the last indices
 
     >>> discretizer.transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 0.,  0.,  3.,  0.],
-           [ 0.,  3.,  1.,  8.],
+    array([[ 1.,  0.,  3.,  0.],
+           [ 1.,  3.,  2.,  8.],
            [ 3.,  1.,  0.,  1.]])
     """
     sparse_formats = ['csc'] #['csr', 'csc']
@@ -111,20 +113,27 @@ class Discretizer(BaseEstimator, TransformerMixin):
         """Sets a boolean array that determines which columns are
         continuous features.
         """
+
+        # Case when all features are continuous
         if self.categorical_features is None:
             self.continuous_features_ = range(self.n_features_)
             return
 
-        if len(self.categorical_features) > self.n_features_:
+        if type(self.categorical_features) is int:
+            categorical_features = [self.categorical_features]
+        else:
+            categorical_features = self.categorical_features
+
+        if len(categorical_features) > self.n_features_:
             raise ValueError("The number of categorical indices is more than "
                              "the number of features in the dataset.")
 
-        self.continuous_features_ = [i for i in range(self.n_features_)
-                                     if i not in set(self.categorical_features)]
+        self.continuous_features_ = [i for i in xrange(self.n_features_)
+                                     if i not in set(categorical_features)]
 
         # Checks if there are duplicate columns from self.categorical_features,
         # such as [-1, 0, 0, self.n_features - 1]
-        if self.n_features_ - len(self.categorical_features) \
+        if self.n_features_ - len(categorical_features) \
                 != len(self.continuous_features_):
             raise ValueError("Duplicate indices detected from input "
                              "categorical indices. Input was: {0}" \
@@ -225,6 +234,16 @@ class Discretizer(BaseEstimator, TransformerMixin):
         cut_points = np.hstack(cut_points)
         return cut_points
 
+    @property
+    def cat_features_(self):
+        """Returns a list of categorical features, in sorted order.
+        """
+        if type(self.categorical_features) is int:
+            return [self.categorical_features]
+        else:
+            return sorted(self.categorical_features)
+
+
     def _transform_sparse(self, X):
         """Helper function to transform sp.csc_matrices.
         """
@@ -237,10 +256,14 @@ class Discretizer(BaseEstimator, TransformerMixin):
                 end = col_ptr[i + 1]
                 yield start, end, X.data[start:end]
 
-        continuous = X[:, self.continuous_features_]
-        continuous.sort_indices()
         searched = self.searched_points_
         z_intervals = self.zero_intervals_
+
+        continuous = X[:, self.continuous_features_]
+
+        # Indices get mixed up using the selector above; the data needs
+        # to be sorted for sparse discretization.
+        continuous.sort_indices()
         output = continuous.copy()
 
         if searched.size == 0:
@@ -258,7 +281,8 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
         if self.n_continuous_features_ == self.n_features_:
             return output
-        cat_features = sorted(self.categorical_features)
+
+        cat_features = self.cat_features_
         categorical = X[:, cat_features]
         return sp.hstack((output, categorical))
 
@@ -303,7 +327,6 @@ class Discretizer(BaseEstimator, TransformerMixin):
                 dis[~zero_mask] = 1
                 discretized.append(dis.reshape(-1, 1))
         else:
-            # Discretize column by column. Might change this later.
             for cont, z_int, points in zip(continuous.T, z_intervals, searched.T):
                 dis = binsearch(cont, z_int, points)
                 discretized.append(dis.reshape(-1, 1))
@@ -312,7 +335,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
         if self.n_continuous_features_ == self.n_features_:
             return discretized
 
-        cat_features = sorted(self.categorical_features)
+        cat_features = self.cat_features_
         categorical = X[:, cat_features]
         return np.hstack((discretized, categorical))
 

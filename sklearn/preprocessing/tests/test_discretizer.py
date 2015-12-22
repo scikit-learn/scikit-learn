@@ -129,10 +129,24 @@ def test_discretizer_fit_transform_sparse():
             assert_equal(sparse_X.size, discretized.size, "Failing with format {0}"\
                          .format(format.__name__))
 
+def test_discretizer_fit_transform_single_cat_sparse():
+    dis = Discretizer(n_bins=3, categorical_features=0)
+    _categorical_helper(dis, sparse=True)
+
+def test_discretizer_fit_transform_single_cat():
+    dis = Discretizer(n_bins=3, categorical_features=0)
+    _categorical_helper(dis)
+
 def test_discretizer_fit_transform_cat():
     dis = Discretizer(n_bins=3, categorical_features=[0])
-    discretized = dis.fit_transform(X)
+    _categorical_helper(dis)
 
+def _categorical_helper(dis, sparse=False):
+    if sparse:
+        X_sparse = sp.csc_matrix(X)
+        discretized = dis.fit_transform(X_sparse)
+    else:
+        discretized = dis.fit_transform(X)
     expected_cut_points = [[0.333333, 1.666666],
                            [0.666666, 2.333333]]
 
@@ -142,6 +156,10 @@ def test_discretizer_fit_transform_cat():
                 [2, 1, 1],
                 [0, 2, 2]]
 
+    if sparse:
+        assert_array_equal(expected, discretized.toarray())
+        assert_equal(X_sparse.size, discretized.size)
+        return
     assert_array_equal(expected, discretized)
 
 def test_discretizer_fit():
