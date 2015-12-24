@@ -893,13 +893,13 @@ def test_label_kfold():
         assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
 
     # Construct the test data
-    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
-              'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
-              'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
-              'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
-              'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
-              'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
-              'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+    labels = np.array(['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+                       'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+                       'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+                       'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+                       'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+                       'Madmood', 'Cary', 'Mary', 'Alexandre', 'David',
+                       'Francis', 'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia'])
 
     n_labels = len(np.unique(labels))
     n_samples = len(labels)
