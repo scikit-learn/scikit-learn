@@ -265,10 +265,64 @@ def randomized_range_finder(A, size, n_iter=2,
     return Q
 
 
+def randomized_block_krylov_svd(M, n_components, block_size=18, n_iter=8,
+                                transpose='auto', flip_sign=True,
+                                random_state=0):
+    """Computes a truncated randomized SVD via Block Krylov Iteration
+
+    Parameters
+    ----------
+    M: ndarray or sparse matrix
+        Matrix to decompose.
+
+    n_components: int
+        Number of singular values and vectors to extract.
+    """
+    random_state = check_random_state(random_state)
+    n_samples, n_features = M.shape
+
+    if transpose == 'auto':
+        transpose = n_samples < n_features
+    if transpose:
+        # this implementation is a bit faster with smaller shape[1]
+        M = M.T
+
+    # Allocate space for Krylov subspace
+    K =  np.zeros((M.shape[0], block_size*n_iter))
+
+    # Random block initialization
+    G = random_state.normal(size=(M.shape[1], block_size))
+
+    # Construct and orthonormalize Krlov Subspace
+    # Orthogonalize at each step using economy size QR decomposition
+    block, _ = linalg.qr(safe_sparse_dot(M, G), mode='economic')
+    K[:,0:block_size] = block
+    for it in range(1, n_iter):
+        block, _ = linalg.qr(safe_sparse_dot(M, safe_sparse_dot(M.T, block)),
+                             mode='economic')
+        K[:,(it-1)*block_size:it*block_size] = block
+    Q, _ = linalg.qr(K, mode='economic')
+
+    # Rayleigh-Ritz postprocessing
+    B = safe_sparse_dot(Q.T, M)
+    Uhat, s, V = linalg.svd(B, full_matrices=False)
+    del B
+    U = np.dot(Q, Uhat)
+
+    if flip_sign:
+        U, V = svd_flip(U, V)
+
+    if transpose:
+        # transpose back the results according to the input convention
+        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
+    else:
+        return U[:, :n_components], s[:n_components], V[:n_components, :]
+
+
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
-    """Computes a truncated randomized SVD
+    """Computes a truncated randomized SVD via Simultaneous Iteration
 
     Parameters
     ----------
