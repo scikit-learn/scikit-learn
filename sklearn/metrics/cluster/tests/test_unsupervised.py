@@ -10,6 +10,8 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
+from sklearn.metrics.cluster import silhouette_samples
+from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics import pairwise_distances
 
@@ -66,6 +68,8 @@ def test_no_nan():
     D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
+    ss = silhouette_samples(D, labels, metric='precomputed')
+    assert_false(np.isnan(ss).any())
 
 
 def test_correct_labelsize():
