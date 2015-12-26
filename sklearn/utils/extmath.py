@@ -303,10 +303,11 @@ def randomized_block_krylov_svd(M, n_components, block_size=18, n_iter=8,
     References
     ----------
 
-    Randomized Block Krylov Methods for Stronger and Faster Approximate
-    Singular Value Decomposition by Musco and Musco 2015.
+    * Randomized Block Krylov Methods for Stronger and Faster Approximate
+      Singular Value Decomposition
+      Musco and Musco, 2015, http://arxiv.org/abs/1504.05477
     """
-    
+
     random_state = check_random_state(random_state)
     n_samples, n_features = M.shape
 
