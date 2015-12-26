@@ -436,6 +436,54 @@ def test_randomized_block_krylov_svd_infinite_rank():
     assert_almost_equal(s[:k], sap, decimal=3)
 
 
+def test_randomized_block_krylov_svd_transpose_consistency():
+    # Check that transposing the design matrix has limited impact
+    n_samples = 100
+    n_features = 500
+    rank = 4
+    k = 10
+
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.5,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    U1, s1, V1 = randomized_block_krylov_svd(X, k, block_size=k+10, n_iter=3,
+                                             transpose=False, random_state=0)
+    U2, s2, V2 = randomized_block_krylov_svd(X, k, block_size=k+10, n_iter=3,
+                                             transpose=True, random_state=0)
+    U3, s3, V3 = randomized_block_krylov_svd(X, k, block_size=k+10, n_iter=3,
+                                             transpose='auto', random_state=0)
+    U4, s4, V4 = linalg.svd(X, full_matrices=False)
+
+    assert_almost_equal(s1, s4[:k], decimal=3)
+    assert_almost_equal(s2, s4[:k], decimal=3)
+    assert_almost_equal(s3, s4[:k], decimal=3)
+
+    assert_almost_equal(np.dot(U1, V1), np.dot(U4[:, :k], V4[:k, :]),
+                        decimal=2)
+    assert_almost_equal(np.dot(U2, V2), np.dot(U4[:, :k], V4[:k, :]),
+                        decimal=2)
+
+    # in this case 'auto' is equivalent to transpose
+    assert_almost_equal(s2, s3)
+
+
+def test_randomized_block_krylov_svd_sign_flip():
+    a = np.array([[2.0, 0.0], [0.0, 1.0]])
+    u1, s1, v1 = randomized_block_krylov_svd(a, 2, block_size=2,
+                                            flip_sign=True, random_state=41)
+    for seed in range(10):
+        u2, s2, v2 = randomized_block_krylov_svd(a, 2, block_size=2,
+                                                 flip_sign=True,
+                                                 random_state=seed)
+        assert_almost_equal(u1, u2)
+        assert_almost_equal(v1, v2)
+        assert_almost_equal(np.dot(u2 * s2, v2), a)
+        assert_almost_equal(np.dot(u2.T, u2), np.eye(2))
+        assert_almost_equal(np.dot(v2.T, v2), np.eye(2))
+
+
 def test_cartesian():
     # Check if cartesian product delivers the right results
 
