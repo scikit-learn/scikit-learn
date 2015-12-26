@@ -277,7 +277,36 @@ def randomized_block_krylov_svd(M, n_components, block_size=18, n_iter=8,
 
     n_components: int
         Number of singular values and vectors to extract.
+
+    block_size: int (default is n_components+10)
+        Number of block size, which must be >= n_components.
+
+    n_iter: int (default is 8)
+        Number of iterations.
+
+    transpose: True, False or 'auto' (default)
+        Whether the algorithm should be applied to M.T instead of M. The
+        result should approximately be the same. The 'auto' mode will
+        trigger the transposition if M.shape[1] > M.shape[0] since this
+        implementation of randomized SVD tend to be a little faster in that
+        case.
+
+    flip_sign: boolean, (True by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
+
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance to make behavior
+
+    References
+    ----------
+
+    Randomized Block Krylov Methods for Stronger and Faster Approximate
+    Singular Value Decomposition by Musco and Musco 2015.
     """
+    
     random_state = check_random_state(random_state)
     n_samples, n_features = M.shape
 
