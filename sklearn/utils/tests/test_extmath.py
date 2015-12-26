@@ -22,6 +22,7 @@ from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import norm, squared_norm
 from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_block_krylov_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
@@ -328,6 +329,47 @@ def test_randomized_svd_sign_flip():
         assert_almost_equal(np.dot(u2 * s2, v2), a)
         assert_almost_equal(np.dot(u2.T, u2), np.eye(2))
         assert_almost_equal(np.dot(v2.T, v2), np.eye(2))
+
+
+def test_randomized_block_krylov_svd_low_rank():
+    # Check that extmath.randomized_block_krylov_svd is consistent with linalg.svd
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # generate a matrix X of approximate effective rank `rank` and no noise
+    # component (very structured signal):
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.0,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    U, s, V = linalg.svd(X, full_matrices=False)
+
+    for normalizer in ['auto', 'none', 'LU', 'QR']:
+        # compute the singular values of X using the fast approximate method
+        Ua, sa, Va = \
+            randomized_block_krylov_svd(X, k, block_size=k+10)
+        assert_equal(Ua.shape, (n_samples, k))
+        assert_equal(sa.shape, (k,))
+        assert_equal(Va.shape, (k, n_features))
+
+        # ensure that the singular values of both methods are equal up to the
+        # real rank of the matrix
+        assert_almost_equal(s[:k], sa)
+
+        # check the singular vectors too (while not checking the sign)
+        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va))
+
+        # check the sparse matrix representation
+        X = sparse.csr_matrix(X)
+
+        # compute the singular values of X using the fast approximate method
+        Ua, sa, Va = \
+            randomized_block_krylov_svd(X, k, block_size=k+10)
+        assert_almost_equal(s[:rank], sa[:rank])
 
 
 def test_cartesian():
