@@ -265,7 +265,7 @@ def randomized_range_finder(A, size, n_iter=2,
     return Q
 
 
-def randomized_block_krylov_svd(M, n_components, block_size=18, n_iter=8,
+def randomized_block_krylov_svd(M, n_components, block_size=None, n_iter=8,
                                 transpose='auto', flip_sign=True,
                                 random_state=0):
     """Computes a truncated randomized SVD via Block Krylov Iteration
@@ -298,11 +298,10 @@ def randomized_block_krylov_svd(M, n_components, block_size=18, n_iter=8,
         loadings for each component in the left singular vectors positive.
 
     random_state: RandomState or an int seed (0 by default)
-        A random number generator instance to make behavior
+        A random number generator instance to make behavior.
 
     References
     ----------
-
     * Randomized Block Krylov Methods for Stronger and Faster Approximate
       Singular Value Decomposition
       Musco and Musco, 2015, http://arxiv.org/abs/1504.05477
@@ -316,6 +315,9 @@ def randomized_block_krylov_svd(M, n_components, block_size=18, n_iter=8,
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
+
+    if block_size == None:
+        block_size = n_components+10
 
     # Allocate space for Krylov subspace
     K =  np.zeros((M.shape[0], block_size*n_iter))
