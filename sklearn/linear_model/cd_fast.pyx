@@ -6,7 +6,7 @@
 #
 # Licence: BSD 3 clause
 
-from libc.math cimport fabs, sqrt
+from libc.math cimport fabs
 cimport numpy as np
 import numpy as np
 import numpy.linalg as linalg
@@ -125,8 +125,9 @@ cdef extern from "cblas.h":
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
-                            np.ndarray[DOUBLE, ndim=2] X,
-                            np.ndarray[DOUBLE, ndim=1] y,
+                            np.ndarray[DOUBLE, ndim=1] l1_weights,
+                            np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
+                            np.ndarray[DOUBLE, ndim=1, mode='c'] y,
                             int max_iter, double tol,
                             object rng, bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
@@ -167,17 +168,18 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double l1_norm
     cdef unsigned int ii
     cdef unsigned int i
-    cdef unsigned int n_iter
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef double w_alpha = alpha
+    cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
     with nogil:
-
         # R = y - np.dot(X, w)
         for i in range(n_samples):
             R[i] = y[i] - ddot(n_features,
@@ -192,6 +194,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
+                if use_l1_weight:
+                    w_alpha = l1_weights[f_iter]
+
                 if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
@@ -216,7 +221,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - w_alpha, 0)
                              / (norm_cols_X[ii] + beta))
 
                 if w[ii] != 0.0:
@@ -260,8 +265,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
                                <DOUBLE*>w.data, 1)
 
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
+                if (dual_norm_XtA > w_alpha):
+                    const = w_alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * (const ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
@@ -271,7 +276,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
 
                 # np.dot(R.T, y)
-                gap += (alpha * l1_norm - const * ddot(
+                gap += (w_alpha * l1_norm - const * ddot(
                             n_samples,
                             <DOUBLE*>R.data, 1,
                             <DOUBLE*>y.data, n_tasks)
@@ -289,8 +294,10 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 @cython.cdivision(True)
 def sparse_enet_coordinate_descent(double[:] w,
                             double alpha, double beta,
-                            double[:] X_data, int[:] X_indices,
-                            int[:] X_indptr, double[:] y,
+                            np.ndarray[double, ndim=1, mode='c'] X_data,
+                            np.ndarray[int, ndim=1, mode='c'] X_indices,
+                            np.ndarray[int, ndim=1, mode='c'] X_indptr,
+                            np.ndarray[double, ndim=1] y,
                             double[:] X_mean, int max_iter,
                             double tol, object rng, bint random=0,
                             bint positive=0):
@@ -330,12 +337,12 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef double w_max
     cdef double d_w_ii
     cdef double X_mean_ii
-    cdef double R_sum
+    cdef double R_sum = 0.0
     cdef double normalize_sum
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef unsigned int jj
-    cdef unsigned int n_iter
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -487,7 +494,9 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
-                                 double[:, :] Q, double[:] q, double[:] y,
+                                 np.ndarray[double, ndim=2, mode='c'] Q,
+                                 np.ndarray[double, ndim=1, mode='c'] q,
+                                 np.ndarray[double, ndim=1] y,
                                  int max_iter, double tol, object rng,
                                  bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
@@ -507,7 +516,6 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     # get the data information into easy vars
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = Q.shape[0]
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
 
     # initial value "Q w" which will be kept of up to date in the iterations
     cdef double[:] H = np.dot(Q, w)
@@ -522,13 +530,15 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef double d_w_tol = tol
     cdef double dual_norm_XtA
     cdef unsigned int ii
-    cdef unsigned int n_iter
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     cdef double y_norm2 = np.dot(y, y)
+    cdef double* w_ptr = <double*>&w[0]
     cdef double* Q_ptr = &Q[0, 0]
+    cdef double* q_ptr = <double*>q.data
     cdef double* H_ptr = &H[0]
     cdef double* XtA_ptr = &XtA[0]
     tol = tol * y_norm2
@@ -584,9 +594,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 # criterion
 
                 # q_dot_w = np.dot(w, q)
-                # Note that increment in q is not 1 because the strides
-                # vary if q is sliced from a 2-D array.
-                q_dot_w = ddot(n_features, &w[0], 1, &q[0], n_tasks)
+                q_dot_w = ddot(n_features, w_ptr, 1, q_ptr, 1)
 
                 for ii in range(n_features):
                     XtA[ii] = q[ii] - H[ii] - beta * w[ii]
@@ -628,9 +636,10 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
-                                       double l2_reg, double[::1, :] X,
-                                       double[:, :] Y, int max_iter,
-                                       double tol, object rng,
+                                       double l2_reg,
+                                       np.ndarray[double, ndim=2, mode='fortran'] X,
+                                       np.ndarray[double, ndim=2] Y,
+                                       int max_iter, double tol, object rng,
                                        bint random=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net mult-task regression
@@ -669,7 +678,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
     cdef double l21_norm
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef unsigned int n_iter
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -736,7 +745,8 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
                 if dnrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
-                    # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :]) # Update residual : rank 1 update
+                    # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
+                    # Update residual : rank 1 update
                     dger(CblasRowMajor, n_samples, n_tasks, -1.0,
                          X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
                          &R[0, 0], n_tasks)

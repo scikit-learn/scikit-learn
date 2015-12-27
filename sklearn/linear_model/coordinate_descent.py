@@ -17,13 +17,14 @@ from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import check_array, check_X_y, deprecated
 from ..utils.validation import check_random_state
-from ..cross_validation import _check_cv as check_cv
+from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..utils import ConvergenceWarning
+from ..utils.validation import column_or_1d
+from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 
@@ -131,6 +132,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
     ----------
@@ -251,7 +254,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
-              verbose=False, return_n_iter=False, positive=False, **params):
+              verbose=False, return_n_iter=False, positive=False,
+              check_input=True, l1_weights=None, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -259,13 +263,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     For mono-output tasks it is::
 
         1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * l1_ratio * ||w||_1
+        + alpha * l1_ratio * l1_weights * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     For multi-output tasks it is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
-        + alpha * l1_ratio * ||W||_21
+        + alpha * l1_ratio * l1_weights * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
     Where::
@@ -273,6 +277,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <elastic_net>`.
 
     Parameters
     ----------
@@ -326,6 +332,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     positive : bool, default False
         If set to True, forces coefficients to be positive.
 
+    check_input : bool, default True
+        Skip input validation checks, including the Gram matrix when provided
+        assuming there are handled by the caller when check_input=False.
+
+    l1_weights : array, shape (n_features, ) | None
+        weight to apply on the penalty of each feature
+        If None no weighting is used.
+
     Returns
     -------
     alphas : array, shape (n_alphas,)
@@ -354,10 +368,16 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-    if Xy is not None:
-        Xy = check_array(Xy, 'csc', dtype=np.float64, order='F', copy=False,
-                         ensure_2d=False)
+    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # checks
+    if check_input:
+        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+                        ensure_2d=False)
+        if Xy is not None:
+            # Xy should be a 1d contiguous array or a 2D C ordered array
+            Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
+                             ensure_2d=False)
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -374,10 +394,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             X_sparse_scaling = np.zeros(n_features)
 
-    # X should be normalized and fit already.
-    X, y, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X, y, Xy, precompute, normalize=False, fit_intercept=False,
-                 copy=False)
+    # X should be normalized and fit already if function is called
+    # from ElasticNet.fit
+    if check_input:
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, Xy, precompute, normalize=False,
+                     fit_intercept=False, copy=False)
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -413,6 +435,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
+        if (l1_weights is not None):
+            l1_weights_ = np.asfortranarray(l1_weights * l1_reg)
+        else:
+            l1_weights_ = np.asfortranarray(np.zeros(1))
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
@@ -422,13 +448,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
         elif isinstance(precompute, np.ndarray):
-            precompute = check_array(precompute, 'csc', dtype=np.float64, order='F')
+            # We expect precompute to be already Fortran ordered when bypassing
+            # checks
+            if check_input:
+                precompute = check_array(precompute, dtype=np.float64,
+                                         order='C')
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                coef_, l1_reg, l2_reg, l1_weights_, X, y, max_iter, tol, rng, random,
                 positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
@@ -483,6 +513,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     = 1 is the lasso penalty. Currently, l1_ratio <= 0.01 is not reliable,
     unless you supply your own sequence of alpha.
 
+    Read more in the :ref:`User Guide <elastic_net>`.
+
     Parameters
     ----------
     alpha : float
@@ -507,13 +539,11 @@ class ElasticNet(LinearModel, RegressorMixin):
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -593,7 +623,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    def fit(self, X, y):
+    def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
 
         Parameters
@@ -614,25 +644,25 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if self.precompute == 'auto':
-            warnings.warn("Setting precompute to 'auto', was found to be "
-                          "slower even when n_samples > n_features. Hence "
-                          "it will be removed in 0.18.",
-                          DeprecationWarning, stacklevel=2)
-
-        X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                         order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True, y_numeric=True)
-
+        # We expect X and y to be already float64 Fortran ordered arrays
+        # when bypassing checks
+        if check_input:
+            y = np.asarray(y, dtype=np.float64)
+            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                             order='F',
+                             copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
+            y = check_array(y, dtype=np.float64, order='F', copy=False,
+                            ensure_2d=False)
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
-                     self.fit_intercept, copy=True)
-
+                     self.fit_intercept, copy=False)
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -670,7 +700,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           X_mean=X_mean, X_std=X_std, return_n_iter=True,
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
-                          selection=self.selection)
+                          selection=self.selection,
+                          check_input=False)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -737,6 +768,8 @@ class Lasso(ElasticNet):
     Technically the Lasso model is optimizing the same objective function as
     the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
 
+    Read more in the :ref:`User Guide <lasso>`.
+
     Parameters
     ----------
     alpha : float, optional
@@ -757,13 +790,11 @@ class Lasso(ElasticNet):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like, default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -1012,9 +1043,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 model = ElasticNet()
             else:
                 model = Lasso()
-            if y.ndim > 1:
+            if y.ndim > 1 and y.shape[1] > 1:
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
+            y = column_or_1d(y, warn=True)
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"
@@ -1044,7 +1076,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             # by the model fitting itself
             X = check_array(X, 'csc', copy=False)
             if sparse.isspmatrix(X):
-                if not np.may_share_memory(reference_to_old_X.data, X.data):
+                if (hasattr(reference_to_old_X, "data") and
+                        not np.may_share_memory(reference_to_old_X.data, X.data)):
                     # X is a sparse matrix and has been copied
                     copy_X = False
             elif not np.may_share_memory(reference_to_old_X, X):
@@ -1095,10 +1128,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             path_params['copy_X'] = False
 
         # init cross-validation generator
-        cv = check_cv(self.cv, X)
+        cv = check_cv(self.cv)
 
         # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv)
+        folds = list(cv.split(X))
         best_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
@@ -1161,6 +1194,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
+    Read more in the :ref:`User Guide <lasso>`.
+
     Parameters
     ----------
     eps : float, optional
@@ -1188,11 +1223,19 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
-        objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     verbose : bool or integer
         Amount of verbosity.
@@ -1286,9 +1329,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     The best model is selected by cross-validation.
 
+    Read more in the :ref:`User Guide <elastic_net>`.
+
     Parameters
     ----------
-    l1_ratio : float, optional
+    l1_ratio : float or array of floats, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0``
         the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
@@ -1325,11 +1370,19 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
-        objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     verbose : bool or integer
         Amount of verbosity.
@@ -1426,7 +1479,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', l1_weights=None):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1443,6 +1496,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.l1_weights = l1_weights
 
 
 ###############################################################################
@@ -1463,6 +1517,8 @@ class MultiTaskElasticNet(Lasso):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of each row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------
@@ -1587,7 +1643,7 @@ class MultiTaskElasticNet(Lasso):
         # X and y must be of type float64
         X = check_array(X, dtype=np.float64, order='F',
                         copy=self.copy_X and self.fit_intercept)
-        y = np.asarray(y, dtype=np.float64)
+        y = check_array(y, dtype=np.float64, ensure_2d=False)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1646,6 +1702,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
     i.e. the sum of norm of earch row.
+
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
 
     Parameters
     ----------
@@ -1755,6 +1813,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     i.e. the sum of norm of each row.
 
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
+
     Parameters
     ----------
     eps : float, optional
@@ -1773,6 +1833,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
         is an L1 penalty.
         For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
+        This parameter can be a list, in which case the different
+        values are tested by cross-validation and the one giving the best
+        prediction score is used. Note that a good choice of list of
+        values for l1_ratio is often to put more values close to 1
+        (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
+        .9, .95, .99, 1]``
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1794,11 +1860,19 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
-        objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     verbose : bool or integer
         Amount of verbosity.
@@ -1909,6 +1983,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     i.e. the sum of norm of each row.
 
+    Read more in the :ref:`User Guide <multi_task_lasso>`.
+
     Parameters
     ----------
     eps : float, optional
@@ -1942,11 +2018,19 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific cross-validation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible
-        objects.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     verbose : bool or integer
         Amount of verbosity.
