@@ -255,7 +255,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
-              check_input=True, **params):
+              check_input=True, l1_weights=None, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -263,13 +263,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     For mono-output tasks it is::
 
         1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * l1_ratio * ||w||_1
+        + alpha * l1_ratio * l1_weights * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
     For multi-output tasks it is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
-        + alpha * l1_ratio * ||W||_21
+        + alpha * l1_ratio * l1_weights * ||W||_21
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
 
     Where::
@@ -335,6 +335,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     check_input : bool, default True
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
+
+    l1_weights : array, shape (n_features, ) | None
+        weight to apply on the penalty of each feature
+        If None no weighting is used.
 
     Returns
     -------
@@ -431,6 +435,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
+        if (l1_weights is not None):
+            l1_weights_ = np.asfortranarray(l1_weights * l1_reg)
+        else:
+            l1_weights_ = np.asfortranarray(np.zeros(1))
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
@@ -450,7 +458,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 tol, rng, random, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
+                coef_, l1_reg, l2_reg, l1_weights_, X, y, max_iter, tol, rng, random,
                 positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
@@ -1471,7 +1479,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', l1_weights=None):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1488,6 +1496,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.l1_weights = l1_weights
 
 
 ###############################################################################
