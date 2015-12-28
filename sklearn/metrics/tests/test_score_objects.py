@@ -84,7 +84,7 @@ class DummyScorer(object):
 
 def test_all_scorers_repr():
     # Test that all scorers have a working repr
-    for name, scorer in SCORERS.iteritems():
+    for name, scorer in SCORERS.items():
         repr(scorer)
 
 
