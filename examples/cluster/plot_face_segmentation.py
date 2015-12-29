@@ -31,7 +31,11 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
 
+# load the raccoon face as a numpy array
 face = sp.misc.face(gray=True)
+
+# Resize it to 10% of the original size to speed up the processing
+face = sp.misc.imresize(face, 0.10) / 255.
 
 # Convert the image into a graph with the value of the gradient on the
 # edges.
@@ -42,18 +46,19 @@ graph = image.img_to_graph(face)
 # actual image. For beta=1, the segmentation is close to a voronoi
 beta = 5
 eps = 1e-6
-graph.data = np.exp(-beta * graph.data / face.std()) + eps
+graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 
 # Apply spectral clustering (this step goes much faster if you have pyamg
 # installed)
-N_REGIONS = 11
+N_REGIONS = 25
 
-###############################################################################
+#############################################################################
 # Visualize the resulting regions
 
 for assign_labels in ('kmeans', 'discretize'):
     t0 = time.time()
-    labels = spectral_clustering(graph, n_clusters=N_REGIONS, assign_labels=assign_labels, random_state=1)
+    labels = spectral_clustering(graph, n_clusters=N_REGIONS,
+                                 assign_labels=assign_labels, random_state=1)
     t1 = time.time()
     labels = labels.reshape(face.shape)
 
@@ -64,6 +69,7 @@ for assign_labels in ('kmeans', 'discretize'):
                     colors=[plt.cm.spectral(l / float(N_REGIONS)), ])
     plt.xticks(())
     plt.yticks(())
-    plt.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
-
+    title = 'Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0))
+    print(title)
+    plt.title(title)
 plt.show()
