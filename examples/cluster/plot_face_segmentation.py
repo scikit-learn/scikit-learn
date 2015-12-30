@@ -31,12 +31,20 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.fixes import sp_version
 
-if sp.__version__ < '0.12.0':
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the scipy.misc.face() image.")
+if sp_version < (0, 12):
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and"
+                   "thus does not include the scipy.misc.face() image.")
+
 
 # load the raccoon face as a numpy array
-face = sp.misc.face(gray=True)
+try:
+    face = sp.face(gray=True)
+except AttributeError:
+    # Newer versions of scipy have face in misc
+    from scipy import misc
+    face = misc.face(gray=True)
 
 # Resize it to 10% of the original size to speed up the processing
 face = sp.misc.imresize(face, 0.10) / 255.

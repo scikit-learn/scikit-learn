@@ -15,9 +15,11 @@ from sklearn.feature_extraction.image import (
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
 from sklearn.utils.graph import connected_components
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.fixes import sp_version
 
-if sp.__version__ < '0.12.0':
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the misc.face() image.")
+if sp_version < (0, 12):
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
+                   "thus does not include the scipy.misc.face() image.")
 
 def test_img_to_graph():
     x, y = np.mgrid[:4, :4] - 10
@@ -60,7 +62,12 @@ def test_grid_to_graph():
 
 
 def test_connect_regions():
-    face = misc.face(gray=True)
+    try:
+        face = sp.face(gray=True)
+    except AttributeError:
+        # Newer versions of scipy have face in misc
+        from scipy import misc
+        face = misc.face(gray=True)
     for thr in (50, 150):
         mask = face > thr
         graph = img_to_graph(face, mask)
@@ -68,7 +75,12 @@ def test_connect_regions():
 
 
 def test_connect_regions_with_grid():
-    face = misc.face(gray=True)
+    try:
+        face = sp.face(gray=True)
+    except AttributeError:
+        # Newer versions of scipy have face in misc
+        from scipy import misc
+        face = misc.face(gray=True)
     mask = face > 50
     graph = grid_to_graph(*face.shape, mask=mask)
     assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
@@ -79,7 +91,13 @@ def test_connect_regions_with_grid():
 
 
 def _downsampled_face():
-    face = misc.face(gray=True).astype(np.float32)
+    try:
+        face = sp.face(gray=True)
+    except AttributeError:
+        # Newer versions of scipy have face in misc
+        from scipy import misc
+        face = misc.face(gray=True)
+    face = face.astype(np.float32)
     face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
             + face[1::2, 1::2])
     face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]

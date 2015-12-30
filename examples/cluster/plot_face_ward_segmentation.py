@@ -24,12 +24,21 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.fixes import sp_version
 
-if sp.__version__ < '0.12.0':
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the scipy.misc.face() image.")
+if sp_version < (0, 12):
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and"
+                   "thus does not include the scipy.misc.face() image.")
+
+
 ###############################################################################
 # Generate data
-face = sp.misc.face(gray=True)
+try:
+    face = sp.face(gray=True)
+except AttributeError:
+    # Newer versions of scipy have face in misc
+    from scipy import misc
+    face = misc.face(gray=True)
 # Downsample the image by a factor of 4
 face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
 X = np.reshape(face, (-1, 1))

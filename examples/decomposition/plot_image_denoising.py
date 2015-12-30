@@ -37,14 +37,17 @@ from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sp
 
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.fixes import sp_version
 
-if sp.__version__ < '0.12.0':
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the misc.face() image.")
+if sp_version < (0, 12):
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and"
+                   "thus does not include the scipy.misc.face() image.")
 
 ###############################################################################
 try:
