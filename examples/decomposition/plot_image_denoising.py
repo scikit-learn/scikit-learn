@@ -38,15 +38,24 @@ from time import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scipy.misc import face
-
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
+from sklearn.utils.testing import SkipTest
+
+if sp.__version__ < '0.12.0':
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the misc.face() image.")
 
 ###############################################################################
-# Load face image and extract patches
-face = face(gray=True) / 256.0
+try:
+    face = sp.face(gray=True)
+except AttributeError:
+    # Newer versions of scipy have face in misc
+    from scipy import misc
+    face = misc.face(gray=True)
+    
+# Extract patches from face image
+face /= 256.0
 
 # downsample for higher speed
 face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]

@@ -15,12 +15,18 @@ for each segmented region to be in one piece.
 print(__doc__)
 
 import time as time
+
 import numpy as np
 import scipy as sp
+
 import matplotlib.pyplot as plt
+
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.utils.testing import SkipTest
 
+if sp.__version__ < '0.12.0':
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the scipy.misc.face() image.")
 ###############################################################################
 # Generate data
 face = sp.misc.face(gray=True)

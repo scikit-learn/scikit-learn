@@ -14,7 +14,10 @@ from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
 from sklearn.utils.graph import connected_components
+from sklearn.utils.testing import SkipTest
 
+if sp.__version__ < '0.12.0':
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the misc.face() image.")
 
 def test_img_to_graph():
     x, y = np.mgrid[:4, :4] - 10

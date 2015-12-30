@@ -23,7 +23,6 @@ print(__doc__)
 # License: BSD 3 clause
 
 import time
-import os
 
 import numpy as np
 import scipy as sp
@@ -33,8 +32,8 @@ from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
 from sklearn.utils.testing import SkipTest
 
-if os.environ.get('TRAVIS') == "true" and sp.__version__ < '0.12.0':
-    raise SkipTest("Skipping this test on Travis CI with SciPy version earlier than 0.12.0.")
+if sp.__version__ < '0.12.0':
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the scipy.misc.face() image.")
 
 # load the raccoon face as a numpy array
 face = sp.misc.face(gray=True)

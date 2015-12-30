@@ -23,6 +23,10 @@ import scipy as sp
 import matplotlib.pyplot as plt
 
 from sklearn import cluster
+from sklearn.utils.testing import SkipTest
+
+if sp.__version__ < '0.12.0':
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and thus does not include the scipy.misc.face() image.")
 
 n_clusters = 5
 np.random.seed(0)
