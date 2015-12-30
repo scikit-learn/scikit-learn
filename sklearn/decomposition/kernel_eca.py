@@ -99,7 +99,7 @@ class KernelECA(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self._centerer = KernelCenterer()
 		self.random_state = random_state
-        
+
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
