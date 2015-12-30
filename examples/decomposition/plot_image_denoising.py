@@ -144,10 +144,6 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     code = dico.transform(data)
     patches = np.dot(code, V)
 
-    if transform_algorithm == 'threshold':
-        patches -= patches.min()
-        patches /= patches.max()
-
     patches += intercept
     patches = patches.reshape(len(data), *patch_size)
     if transform_algorithm == 'threshold':
