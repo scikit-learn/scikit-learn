@@ -30,6 +30,10 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.utils.testing
+
+if os.environ.get('TRAVIS') == "true" and sp.__version__ < '0.12.0':
+    "Skipping this test on Travis CI with SciPy version earlier than 0.12.0.")
 
 # load the raccoon face as a numpy array
 face = sp.misc.face(gray=True)
