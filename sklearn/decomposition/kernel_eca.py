@@ -6,11 +6,12 @@
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils.arpack import eigsh
-from sklearn.utils.validation import check_is_fitted
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.preprocessing import KernelCenterer
-from sklearn.metrics.pairwise import pairwise_kernels
+from ..utils import check_random_state
+from ..utils.arpack import eigsh
+from ..utils.validation import check_is_fitted
+from ..base import BaseEstimator, TransformerMixin
+from ..preprocessing import KernelCenterer
+from ..metrics.pairwise import pairwise_kernels
 
 class KernelECA(BaseEstimator, TransformerMixin):
     """Kernel Entropy component analysis (KECA)
@@ -55,6 +56,10 @@ class KernelECA(BaseEstimator, TransformerMixin):
     max_iter : int
         maximum number of iterations for arpack
         Default: None (optimal value will be chosen by arpack)
+		    
+	random_state : int seed, RandomState instance, or None, default : None
+        A pseudo random number generator used for the initialization of the
+        residuals when eigen_solver == 'arpack'.
 
     Attributes
     ----------
@@ -82,7 +87,7 @@ class KernelECA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None, eigen_solver='auto',
-                 tol=0, max_iter=None):
+                 tol=0, max_iter=None, random_state=None):
         self.n_components = n_components
         self.kernel = kernel
         self.kernel_params = kernel_params
@@ -93,6 +98,7 @@ class KernelECA(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.max_iter = max_iter
         self._centerer = KernelCenterer()
+		self.random_state = random_state
         
     @property
     def _pairwise(self):
@@ -131,10 +137,14 @@ class KernelECA(BaseEstimator, TransformerMixin):
             self.lambdas_, self.alphas_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
+            random_state = check_random_state(self.random_state)
+            # initialize with [-1,1] as in ARPACK
+            v0 = random_state.uniform(-1, 1, K.shape[0])
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
-                                                maxiter=self.max_iter)
+                                                maxiter=self.max_iter,
+                                                v0=v0)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
