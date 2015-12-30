@@ -18,8 +18,6 @@ class KernelECA(BaseEstimator, TransformerMixin):
     Non-linear dimensionality reduction through the use of kernels (see
     :ref:`metrics`).
 
-    Read more in the :ref:`User Guide <kernel_ECA>`.
-
     Parameters
     ----------
     n_components: int or None
@@ -152,7 +150,6 @@ class KernelECA(BaseEstimator, TransformerMixin):
         
         self.sorted_entropy_index = self.entropy.argsort()[::-1]
         self.entropy = self.entropy[self.sorted_entropy_index]
-        #print(self.sorted_entropy_index)
         
         # Rearrange descending entropy components
         self.alphas_ = self.alphas_[:, self.sorted_entropy_index]
@@ -196,9 +193,6 @@ class KernelECA(BaseEstimator, TransformerMixin):
         self.fit(X, **params)
 
         X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
-
-        if self.fit_inverse_transform:
-            self._fit_inverse_transform(X_transformed, X)
 
         return X_transformed
 
