@@ -213,4 +213,4 @@ class KernelECA(BaseEstimator, TransformerMixin):
         return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
 
     def inverse_transform(self, X):
-        raise ValueError("Function inverse_transform is not implemented.")
+        raise NotImplementedError("Function inverse_transform is not implemented.")
