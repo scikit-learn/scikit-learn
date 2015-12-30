@@ -76,7 +76,8 @@ import os.path
 
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import (randomized_svd,
+                                   randomized_block_krylov_svd)
 from sklearn.datasets.samples_generator import (make_low_rank_matrix,
                                                 make_sparse_uncorrelated)
 from sklearn.datasets import (fetch_lfw_people,
@@ -92,7 +93,7 @@ except ImportError:
     fbpca_available = False
 
 # If this is enabled, tests are much slower and will crash with the large data
-enable_spectral_norm = False
+enable_spectral_norm = True
 
 # TODO: compute approximate spectral norms with the power method as in
 # Estimating the largest eigenvalues by the power and Lanczos methods with
@@ -182,8 +183,10 @@ def plot_time_vs_s(time, norm, point_labels, title):
     plt.figure()
     colors = ['g', 'b', 'y']
     for i, l in enumerate(sorted(norm.keys())):
-        if l is not "fbpca":
-            plt.plot(time[l], norm[l], label=l, marker='o', c=colors.pop())
+        if l == "fbpca":
+            plt.plot(time[l], norm[l], label=l, marker='o', c='black')
+        elif l == 'krylov':
+            plt.plot(time[l], norm[l], label=l, marker='+', c=colors.pop())
         else:
             plt.plot(time[l], norm[l], label=l, marker='^', c='red')
 
@@ -200,8 +203,16 @@ def scatter_time_vs_s(time, norm, point_labels, title):
     plt.figure()
     size = 100
     for i, l in enumerate(sorted(norm.keys())):
-        if l is not "fbpca":
+        if l == "fbpca":
             plt.scatter(time[l], norm[l], label=l, marker='o', c='b', s=size)
+            for label, x, y in zip(point_labels, list(time[l]), list(norm[l])):
+                plt.annotate(label, xy=(x, y), xytext=(0, -80),
+                             textcoords='offset points', ha='right',
+                             arrowprops=dict(arrowstyle="->",
+                                             connectionstyle="arc3"),
+                             va='bottom', size=11, rotation=90)
+        elif l == "krylov":
+            plt.scatter(time[l], norm[l], label=l, marker='o', c='g', s=size)
             for label, x, y in zip(point_labels, list(time[l]), list(norm[l])):
                 plt.annotate(label, xy=(x, y), xytext=(0, -80),
                              textcoords='offset points', ha='right',
@@ -239,19 +250,27 @@ def svd_timing(X, n_comps, n_iter, n_oversamples,
     Measure time for decomposition
     """
     print("... running SVD ...")
-    if method is not 'fbpca':
+    if method == 'krylov':
         gc.collect()
         t0 = time()
-        U, mu, V = randomized_svd(X, n_comps, n_oversamples, n_iter,
-                                  power_iteration_normalizer,
-                                  random_state=random_state, transpose=False)
+        U, mu, V = randomized_block_krylov_svd(X, n_comps, n_iter=n_iter,
+                                               block_size=n_comps,
+                                               random_state=random_state,
+                                               transpose=False)
         call_time = time() - t0
-    else:
+    elif method == 'fbpca':
         gc.collect()
         t0 = time()
         # There is a different convention for l here
         U, mu, V = fbpca.pca(X, n_comps, raw=True, n_iter=n_iter,
                              l=n_oversamples+n_comps)
+        call_time = time() - t0
+    else:
+        gc.collect()
+        t0 = time()
+        U, mu, V = randomized_svd(X, n_comps, n_oversamples, n_iter,
+                                  power_iteration_normalizer,
+                                  random_state=random_state, transpose=False)
         call_time = time() - t0
 
     return U, mu, V, call_time
@@ -268,8 +287,8 @@ def norm_diff(A, norm=2, msg=True):
     if msg:
         print("... computing %s norm ..." % norm)
     if norm == 2:
-        # s = sp.linalg.norm(A, ord=2)  # slow
-        value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False)
+        value = sp.linalg.norm(A, ord=2)  # slow
+        #value = sp.sparse.linalg.svds(A, k=1, return_singular_vectors=False)
     else:
         if sp.sparse.issparse(A):
             value = sp.sparse.linalg.norm(A, ord=norm)
@@ -318,10 +337,23 @@ def bench_a(X, dataset_name, power_iter, n_oversamples, n_comps):
             f = scalable_frobenius_norm_discrepancy(X, U, s, V)
             all_frobenius[label].append(f / X_fro_norm)
 
+        print("n_iter = %d on sklearn block krylov" % (pi))
+        U, s, V, time = svd_timing(X, n_comps, n_iter=pi+1,
+                                   power_iteration_normalizer='none',
+                                   n_oversamples=n_oversamples,
+                                   method='krylov')
+        label = "krylov"
+        all_time[label].append(time)
+        if enable_spectral_norm:
+            A = U.dot(np.diag(s).dot(V))
+            all_spectral[label].append(norm_diff(X - A, norm=2) /
+                                       X_spectral_norm)
+        f = scalable_frobenius_norm_discrepancy(X, U, s, V)
+        all_frobenius[label].append(f / X_fro_norm)
         if fbpca_available:
             print("n_iter = %d on fbca" % (pi))
             U, s, V, time = svd_timing(X, n_comps, n_iter=pi,
-                                       power_iteration_normalizer=pm,
+                                       power_iteration_normalizer='none',
                                        n_oversamples=n_oversamples,
                                        method='fbpca')
             label = "fbpca"
@@ -361,8 +393,9 @@ def bench_b(power_list):
             label = "rank=%d, n_comp=%d" % (rank, n_comp)
             print(label)
             for pi in power_list:
-                U, s, V, _ = svd_timing(X, n_comp, n_iter=pi, n_oversamples=2,
-                                        power_iteration_normalizer='LU')
+                U, s, V, _ = svd_timing(X, n_comp, n_iter=pi+1, n_oversamples=2,
+                                        power_iteration_normalizer='none',
+                                        method='krylov')
                 if enable_spectral_norm:
                     A = U.dot(np.diag(s).dot(V))
                     all_spectral[label].append(norm_diff(X - A, norm=2) /
@@ -371,9 +404,9 @@ def bench_b(power_list):
                 all_frobenius[label].append(f / X_fro_norm)
 
     if enable_spectral_norm:
-        title = "%s: spectral norm diff vs n power iteration" % (dataset_name)
+        title = "%s: spectral norm diff vs n iteration" % (dataset_name)
         plot_power_iter_vs_s(power_iter, all_spectral, title)
-    title = "%s: frobenius norm diff vs n power iteration" % (dataset_name)
+    title = "%s: frobenius norm diff vs n iteration" % (dataset_name)
     plot_power_iter_vs_s(power_iter, all_frobenius, title)
 
 
@@ -394,6 +427,20 @@ def bench_c(datasets, n_comps):
         n_comps = np.minimum(n_comps, np.min(X.shape))
 
         label = "sklearn"
+        print("%s %d x %d - %s" %
+              (dataset_name, X.shape[0], X.shape[1], label))
+        U, s, V, time = svd_timing(X, n_comps, n_iter=2, n_oversamples=10,
+                                   method=label)
+
+        all_time[label].append(time)
+        if enable_spectral_norm:
+            A = U.dot(np.diag(s).dot(V))
+            all_spectral[label].append(norm_diff(X - A, norm=2) /
+                                       X_spectral_norm)
+        f = scalable_frobenius_norm_discrepancy(X, U, s, V)
+        all_frobenius[label].append(f / X_fro_norm)
+
+        label = "krylov"
         print("%s %d x %d - %s" %
               (dataset_name, X.shape[0], X.shape[1], label))
         U, s, V, time = svd_timing(X, n_comps, n_iter=2, n_oversamples=10,
