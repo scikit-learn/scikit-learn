@@ -27,7 +27,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.fixes import sp_version
 
 if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and"
+    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
                    "thus does not include the scipy.misc.face() image.")
 
 try:
