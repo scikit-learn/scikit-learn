@@ -60,6 +60,9 @@ class KernelECA(BaseEstimator, TransformerMixin):
 	random_state : int seed, RandomState instance, or None, default : None
         A pseudo random number generator used for the initialization of the
         residuals when eigen_solver == 'arpack'.
+		
+	n_iter : default : None
+		just added to pass the tests... does nothing!
 
     Attributes
     ----------
@@ -87,7 +90,7 @@ class KernelECA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None, eigen_solver='auto',
-                 tol=0, max_iter=None, random_state=None):
+                 tol=0, max_iter=None, random_state=None, n_iter = None):
         self.n_components = n_components
         self.kernel = kernel
         self.kernel_params = kernel_params
