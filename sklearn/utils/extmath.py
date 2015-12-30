@@ -328,12 +328,14 @@ def randomized_block_krylov_svd(M, n_components, block_size=None, n_iter=8,
     # Construct and orthonormalize Krlov Subspace
     # Orthogonalize at each step using economy size QR decomposition
     block, _ = linalg.qr(safe_sparse_dot(M, G), mode='economic')
+    del G
     K[:,0:block_size] = block
     for it in range(1, n_iter):
         block, _ = linalg.qr(safe_sparse_dot(M, safe_sparse_dot(M.T, block)),
                              mode='economic')
         K[:,(it-1)*block_size:it*block_size] = block
     Q, _ = linalg.qr(K, mode='economic')
+    del K
 
     # Rayleigh-Ritz postprocessing
     B = safe_sparse_dot(Q.T, M)
