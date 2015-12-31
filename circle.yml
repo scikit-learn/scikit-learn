@@ -7,9 +7,7 @@ dependencies:
     - "~/scikit_learn_data"
     - "~/scikit-learn.github.io"
     - "$HOME/download"
-  override: 
-    - "python setup.py install --user"
-    - "set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt"
+  # Various dependencies
   pre: 
     - |
         # deactivate circleci virtualenv and setup miniconda env.
@@ -41,24 +39,32 @@ dependencies:
         source activate testenv
         # install MKL
         conda install --yes mkl
-    - "sudo apt-get update"
-    - "sudo apt-get install libatlas-dev libatlas3gf-base"
-    - "sudo apt-get install build-essential python-dev python-setuptools"
-    - "sudo apt-get install python-dev python-matplotlib"
-    - "conda install --yes numpy scipy"
-    - "sudo apt-get install python-nose python-coverage"
-    - "sudo apt-get install python-sphinx"
-    - "pip install cython"
-general: 
-  artifacts: 
-    - doc/_build/html
-    - ~/log.txt
-  branches: 
-    only: 
-      - master
-machine: 
-  environment: 
-    PYTHONPATH: /usr/lib/python2.7/dist-packages
-test: 
+    - sudo apt-get update
+    - sudo apt-get install libatlas-dev libatlas3gf-base
+    - sudo apt-get install build-essential python-dev python-setuptools
+    - sudo apt-get install python-dev python-matplotlib
+    - conda install --yes numpy scipy
+    - sudo apt-get install python-nose python-coverage
+    - sudo apt-get install python-sphinx
+    - pip install cython
+  override: 
+    - "python setup.py install --user"
+    - "set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt"
+test:
+  # Grep error on documentation
   override: 
     - "cat ~/log.txt && if grep -q \"Traceback (most recent call last):\" ~/log.txt; then false; else true; fi"
+deployment:
+  push:
+    branch: master
+    commands:
+      - bash continuous_integration/push_doc.sh
+general:
+  # Open the doc to the API
+  artifacts:
+    - "doc/_build/html"
+    - "~/log.txt"
+  # Restric the build to the branch master only
+  branches:
+    only:
+       - master
