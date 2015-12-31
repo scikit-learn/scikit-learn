@@ -97,8 +97,8 @@ class KernelECA(BaseEstimator, TransformerMixin):
         self.eigen_solver = eigen_solver
         self.tol = tol
         self.max_iter = max_iter
+        self.random_state = random_state
         self._centerer = KernelCenterer()
-		self.random_state = random_state
 
     @property
     def _pairwise(self):
