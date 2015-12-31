@@ -1,7 +1,7 @@
 machine:
   environment:
     # We need to set this variable to let python see the package installed through apt-get
-    PYTHONPATH: "/usr/lib/python2.7/dist-packages"
+    # PYTHONPATH: "/usr//usr/lib/python2.7/dist-packages"
     PYTHON_VERSION: "2.6"
     NUMPY_VERSION: "1.6.2"
     SCIPY_VERSION: "0.12.0"
@@ -30,7 +30,7 @@ dependencies:
            wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
            -O miniconda.sh
         fi
-        chmod +x miniconda.sh && ./miniconda.sh -b
+        chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
         cd ..
         export PATH=$HOME/miniconda/bin:$PATH
         conda update --yes conda
@@ -44,10 +44,7 @@ dependencies:
     - sudo apt-get update
     - sudo apt-get install libatlas-dev libatlas3gf-base
     - sudo apt-get install build-essential python-dev python-setuptools
-    - sudo apt=get install python-matplotlib
-    - conda install --yes numpy scipy
-    - sudo apt-get install python-nose python-coverage
-    - sudo apt-get install python-sphinx
+    - conda install --yes numpy scipy matplotlib nose coverage sphinx
     - pip install cython
   # The --user is needed to let sphinx see the source and the binaries
   # The pipefail is requested to propagate exit code
