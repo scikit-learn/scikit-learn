@@ -2,9 +2,6 @@ machine:
   environment:
     # We need to set this variable to let python see the package installed through apt-get
     # PYTHONPATH: "/usr//usr/lib/python2.7/dist-packages"
-    PYTHON_VERSION: "2.6"
-    NUMPY_VERSION: "1.6.2"
-    SCIPY_VERSION: "0.12.0"
     CYTHON_VERSION: "0.21"
 dependencies: 
   cache_directories: 
@@ -12,10 +9,12 @@ dependencies:
     - "~/scikit-learn.github.io"
     - "~/download"
   # Various dependencies
-  pre: 
+  pre:
     - |
         # deactivate circleci virtualenv and setup miniconda env.
         deactivate
+        - sudo apt-get update
+        - sudo apt-get install libatlas-dev libatlas3gf-base build-essential
         # Use the miniconda installer for faster download / install of conda
         # itself
         pushd .
@@ -38,26 +37,20 @@ dependencies:
         
         # Configure the conda environment and put it in the path using the
         # provided versions
-        conda create -n testenv --yes python=$PYTHON_VERSION \
-        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-        nose coverage matplotlib sphinx
+        conda create -n testenv --yes python numpy scipy \
+          cython=$CYTHON_VERSION nose coverage matplotlib sphinx
         source /home/ubuntu/miniconda/envs/testenv/bin/activate testenv
+        # Install scikit-learn in development mode.
+        # The pipefail is requested to propagate exit code
+        python setup.py develop
+        set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt
     - echo $PATH
     - |
         binList="$(ls /home/ubuntu/miniconda/envs/testenv/bin)"
         echo "${binList}"
-    - sudo apt-get update
-    - sudo apt-get install libatlas-dev libatlas3gf-base
-    - sudo apt-get install build-essential python-dev python-setuptools
-    - pip install cython
-  # The --user is needed to let sphinx see the source and the binaries
-  # The pipefail is requested to propagate exit code
-  override: 
-    - python setup.py install --user
-    - set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt
 test:
   # Grep error on the documentation
-  override: 
+  override:
     - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
 deployment:
   push:
