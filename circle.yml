@@ -32,19 +32,19 @@ dependencies:
         fi
         chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
         cd ..
-        export PATH=$HOME/miniconda/bin:$PATH
+        export PATH="$HOME/miniconda/bin:$PATH"
         conda update --yes conda
         popd
         
         # Configure the conda environment and put it in the path using the
         # provided versions
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION
+        conda create -n testenv --yes python=$PYTHON_VERSION \
+        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
+        pip nose coverage matplotlib sphinx
         source activate testenv
     - sudo apt-get update
     - sudo apt-get install libatlas-dev libatlas3gf-base
     - sudo apt-get install build-essential python-dev python-setuptools
-    - conda install --yes numpy scipy matplotlib nose coverage sphinx
     - pip install cython
   # The --user is needed to let sphinx see the source and the binaries
   # The pipefail is requested to propagate exit code
