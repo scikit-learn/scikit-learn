@@ -42,7 +42,7 @@ dependencies:
         source /home/ubuntu/miniconda/envs/testenv/bin/activate testenv
         # Install scikit-learn in development mode.
         # The pipefail is requested to propagate exit code
-        python setup.py develop
+        python setup.py install --user
         set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt
     - echo $PATH
     - |
