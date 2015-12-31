@@ -5,12 +5,45 @@ machine:
 dependencies:
   cache_directories:
     - "~/scikit_learn_data"
+    - "$HOME/download"
+    
   # Various dependencies
-  pre:
+  pre: 
+    - |
+	# deactivate circleci virtualenv and setup miniconda env.
+	deactivate
+    	# Use the miniconda installer for faster download / install of conda
+    	# itself
+    	pushd .
+    	cd
+    	mkdir -p download
+    	cd download
+    	echo "Cached in $HOME/download :"
+    	ls -l
+    	echo
+    	if [[ ! -f miniconda.sh ]]
+           then
+           wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
+	   -O miniconda.sh
+        fi
+    	chmod +x miniconda.sh && ./miniconda.sh -b
+    	cd ..
+    	export PATH=$HOME/miniconda/bin:$PATH
+    	conda update --yes conda
+    	popd
+
+    	# Configure the conda environment and put it in the path using the
+    	# provided versions
+    	conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION
+    	source activate testenv
+	# install MKL
+	conda install --yes mkl
     - sudo apt-get update
     - sudo apt-get install libatlas-dev libatlas3gf-base
     - sudo apt-get install build-essential python-dev python-setuptools
-    - sudo apt-get install python-numpy python-scipy python-dev python-matplotlib
+    - sudo apt-get install python-dev python-matplotlib
+    - conda install --yes numpy scipy
     - sudo apt-get install python-nose python-coverage
     - sudo apt-get install python-sphinx
     - pip install cython
