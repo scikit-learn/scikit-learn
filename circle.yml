@@ -2,6 +2,10 @@ machine:
   environment:
     # We need to set this variable to let python see the package installed through apt-get
     PYTHONPATH: "/usr/lib/python2.7/dist-packages"
+    PYTHON_VERSION: "2.6"
+    NUMPY_VERSION: "1.6.2"
+    SCIPY_VERSION: "0.12.0"
+    CYTHON_VERSION: "0.21"
 dependencies: 
   cache_directories: 
     - "~/scikit_learn_data"
