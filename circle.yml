@@ -13,8 +13,8 @@ dependencies:
     - |
         # deactivate circleci virtualenv and setup miniconda env.
         deactivate
-        - sudo apt-get update
-        - sudo apt-get install libatlas-dev libatlas3gf-base build-essential
+        sudo apt-get update
+        sudo apt-get install libatlas-dev libatlas3gf-base build-essential
         # Use the miniconda installer for faster download / install of conda
         # itself
         pushd .
