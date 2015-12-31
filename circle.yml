@@ -43,8 +43,9 @@ dependencies:
         nose coverage matplotlib sphinx
         source activate testenv
     - echo $PATH
-    - binList="$(ls /home/ubuntu/miniconda/envs/testenv/bin)"
-    - echo "${binList}"
+    - |
+        binList="$(ls /home/ubuntu/miniconda/envs/testenv/bin)"
+        echo "${binList}"
     - sudo apt-get update
     - sudo apt-get install libatlas-dev libatlas3gf-base
     - sudo apt-get install build-essential python-dev python-setuptools
