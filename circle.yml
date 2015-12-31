@@ -41,7 +41,7 @@ dependencies:
         conda create -n testenv --yes python=$PYTHON_VERSION \
         numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
         nose coverage matplotlib sphinx
-        source activate testenv
+        source /home/ubuntu/miniconda/envs/testenv/bin/activate testenv
     - echo $PATH
     - |
         binList="$(ls /home/ubuntu/miniconda/envs/testenv/bin)"
