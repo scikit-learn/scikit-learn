@@ -288,3 +288,20 @@ def test_number_of_subsets_of_features():
                      formula1(n_features, n_features_to_select, step))
         assert_equal(rfecv.grid_scores_.shape[0],
                      formula2(n_features, n_features_to_select, step))
+
+
+def test_rfe_cv_n_jobs():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    rfecv = RFECV(estimator=SVC(kernel='linear'))
+    rfecv.fit(X, y)
+    rfecv_ranking = rfecv.ranking_
+    rfecv_grid_scores = rfecv.grid_scores_
+
+    rfecv.set_params(n_jobs=2)
+    rfecv.fit(X, y)
+    assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
+    assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)

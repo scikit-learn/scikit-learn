@@ -30,6 +30,7 @@ from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import bincount
+from ..utils.fixes import signature
 from ..base import _pprint
 from ..gaussian_process.kernels import Kernel as GPKernel
 
@@ -1509,13 +1510,13 @@ def _build_repr(self):
     cls = self.__class__
     init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
     # Ignore varargs, kw and default values and pop self
+    init_signature = signature(init)
+    # Consider the constructor parameters excluding 'self'
     if init is object.__init__:
-        # No explicit constructor to introspect
         args = []
     else:
-        args = sorted(inspect.getargspec(init)[0])
-    if 'self' in args:
-        args.remove('self')
+        args = sorted([p.name for p in init_signature.parameters.values()
+                       if p.name != 'self' and p.kind != p.VAR_KEYWORD])
     class_name = self.__class__.__name__
     params = dict()
     for key in args:

@@ -83,17 +83,14 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage coveralls
 fi
 
-GIT_TRAVIS_REPO=$(pwd)
-echo $GIT_TRAVIS_REPO
-
-cd $HOME
-if [ ! -d "sklearn_build_$NAME" ]; then
-    mkdir sklearn_build_$NAME
+if [ ! -d "$CACHED_BUILD_DIR" ]; then
+    mkdir -p $CACHED_BUILD_DIR
 fi
 
-rsync -av --exclude='.git/' --exclude='testvenv/' $GIT_TRAVIS_REPO \
-    sklearn_build_${NAME}
-cd sklearn_build_${NAME}/scikit-learn
+rsync -av --exclude '.git/' --exclude='testvenv/' \
+      $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
+
+cd $CACHED_BUILD_DIR/scikit-learn
 
 # Build scikit-learn in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.

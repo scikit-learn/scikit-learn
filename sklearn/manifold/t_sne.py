@@ -607,6 +607,9 @@ class TSNE(BaseEstimator):
     embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
+    kl_divergence_ : float
+        Kullback-Leibler divergence after optimization.
+
     Examples
     --------
 
@@ -713,6 +716,7 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
+
             if self.metric == "euclidean":
                 distances = pairwise_distances(X, metric=self.metric,
                                                squared=True)
@@ -825,14 +829,17 @@ class TSNE(BaseEstimator):
 
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         opt_args['n_iter'] = 100
         opt_args['momentum'] = 0.8
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         if self.verbose:
-            print("[t-SNE] Error after %d iterations with early "
-                  "exaggeration: %f" % (it + 1, error))
+            print("[t-SNE] KL divergence after %d iterations with early "
+                  "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
         self.n_iter_final = it
 
@@ -841,10 +848,13 @@ class TSNE(BaseEstimator):
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
         params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
+            print("[t-SNE] Error after %d iterations: %f"
+                  % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)
+        self.kl_divergence_ = kl_divergence
 
         return X_embedded
 

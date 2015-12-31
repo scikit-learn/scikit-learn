@@ -19,9 +19,9 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from .sag_fast import get_max_squared_sum
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import row_norms
 from ..utils import check_X_y
 from ..utils import check_array
 from ..utils import check_consistent_length
@@ -256,6 +256,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         All last four solvers support both dense and sparse data. However,
         only 'sag' supports sparse input when `fit_intercept` is True.
 
+        .. versionadded:: 0.17
+           Stochastic Average Gradient descent solver.
+
     tol : float
         Precision of the solution.
 
@@ -265,17 +268,21 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
-        shuffling the data. Used in 'sag' solver.
+        shuffling the data. Used only in 'sag' solver.
 
     return_n_iter : boolean, default False
         If True, the method also returns `n_iter`, the actual number of
         iteration performed by the solver.
+
+        .. versionadded:: 0.17
 
     return_intercept : boolean, default False
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
         data, use sklearn.linear_model.center_data before your regression.
+
+        .. versionadded:: 0.17
 
     Returns
     -------
@@ -391,17 +398,17 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     elif solver == 'sag':
         # precompute max_squared_sum for all targets
-        max_squared_sum = get_max_squared_sum(X)
+        max_squared_sum = row_norms(X, squared=True).max()
 
         coef = np.empty((y.shape[1], n_features))
         n_iter = np.empty(y.shape[1], dtype=np.int32)
         intercept = np.zeros((y.shape[1], ))
         for i, (alpha_i, target) in enumerate(zip(alpha, y.T)):
-            start = {'coef': np.zeros(n_features + int(return_intercept))}
+            init = {'coef': np.zeros((n_features + int(return_intercept), 1))}
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
-                start)
+                init)
             if return_intercept:
                 coef[i] = coef_[:-1]
                 intercept[i] = coef_[-1]
@@ -554,7 +561,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
-        shuffling the data. Used in 'sag' solver.
+        shuffling the data. Used only in 'sag' solver.
 
         .. versionadded:: 0.17
            *random_state* to support Stochastic Average Gradient.
@@ -571,6 +578,8 @@ class Ridge(_BaseRidge, RegressorMixin):
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
+
+        .. versionadded:: 0.17
 
     See also
     --------

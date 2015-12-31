@@ -40,24 +40,35 @@ Enhancements
 
    - The random forest, extra trees and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
-     the tree. By `Arnaud Joly`_
-
+     the tree. By `Arnaud Joly`_.
 
    - The random forest, extra tree and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
-     the tree. By `Arnaud Joly`_
+     the tree. By `Arnaud Joly`_.
 
    - A new example has been added unveling the decision tree structure.
-     By `Arnaud Joly`_
+     By `Arnaud Joly`_.
 
    - Random forest, extra trees, decision trees and gradient boosting estimator
      accept the parameter ``min_samples_split`` and ``min_samples_leaf``
      provided as a percentage of the training samples. By
-     `yelite`_ and `Arnaud Joly`_
+     `yelite`_ and `Arnaud Joly`_.
 
-    - Codebase does not contain C/C++ cython generated files: they are
-    generated during build. Distribution packages will still contain generated
-    C/C++ files. By `Arthur Mensch`_
+   - Codebase does not contain C/C++ cython generated files: they are
+     generated during build. Distribution packages will still contain generated
+     C/C++ files. By `Arthur Mensch`_.
+
+   - In :class:`linear_model.LogisticRegression`, the SAG solver is now
+     available in the multinomial case.
+     (`#5251 <https://github.com/scikit-learn/scikit-learn/pull/5251>`_)
+     By `Tom Dupre la Tour`_.
+
+   - Added ``n_jobs`` parameter to :class:`feature_selection.RFECV` to compute
+     the score on the test folds in parallel. By `Manoj Kumar`_
+
+   - Keyword arguments can now be supplied to ``func`` in
+     :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
+     parameter. By `Brian McFee`_.
 
 Bug fixes
 .........
@@ -154,10 +165,6 @@ New features
      ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
      shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
-
-   - **IndexError** bug `#5495
-     <https://github.com/scikit-learn/scikit-learn/issues/5495>`_ when
-     doing OVR(SVC(decision_function_shape="ovr")). Fixed by `Elvis Dohmatob`_.
 
 Enhancements
 ............
@@ -434,6 +441,10 @@ Bug fixes
       :class:`linear_model.LogisticRegressionCV` when using
       ``class_weight='balanced'```or ``class_weight='auto'``.
       By `Tom Dupre la Tour`_.
+
+    - Fixed bug `#5495 <https://github.com/scikit-learn/scikit-learn/issues/5495>`_ when
+      doing OVR(SVC(decision_function_shape="ovr")). Fixed by `Elvis Dohmatob`_.
+
 
 API changes summary
 -------------------
@@ -3785,7 +3796,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Peter Prettenhofer: http://sites.google.com/site/peterprettenhofer/
 
-.. _Alexandre Passos: <http://atpassos.posterous.com>
+.. _Alexandre Passos: http://atpassos.me
 
 .. _Nicolas Pinto: http://pinto.scripts.mit.edu/
 

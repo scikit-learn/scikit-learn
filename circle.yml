@@ -4,8 +4,9 @@ machine:
     PYTHONPATH: "/usr/lib/python2.7/dist-packages"
 dependencies: 
   cache_directories: 
-    - ~/scikit_learn_data
-    - $HOME/download
+    - "~/scikit_learn_data"
+    - "~/scikit-learn.github.io"
+    - "$HOME/download"
   override: 
     - "python setup.py install --user"
     - "set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt"
@@ -61,4 +62,3 @@ machine:
 test: 
   override: 
     - "cat ~/log.txt && if grep -q \"Traceback (most recent call last):\" ~/log.txt; then false; else true; fi"
-

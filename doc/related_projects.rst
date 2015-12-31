@@ -98,7 +98,9 @@ and tasks.
 - `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms 
   for robust variable density clustering. 
 
-- `lasagne <https://github.com/Lasagne/Lasagne>`_  a lightweight library to build and train neural networks in Theano.
+- `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to build and train neural networks in Theano.
+
+- `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic regression on multidimensional features.
 
 
 Statistical learning with Python
@@ -111,7 +113,7 @@ Other packages useful for data analysis and machine learning.
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+- `statsmodels <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
