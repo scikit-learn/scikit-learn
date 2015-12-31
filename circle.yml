@@ -46,12 +46,12 @@ dependencies:
     - sudo apt-get install python-sphinx
     - pip install cython
   override: 
-    - "python setup.py install --user"
-    - "set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt"
+    - python setup.py install --user
+    - set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt
 test:
-  # Grep error on documentation
+  # Grep error on the documentation
   override: 
-    - "cat ~/log.txt && if grep -q \"Traceback (most recent call last):\" ~/log.txt; then false; else true; fi"
+    - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
 deployment:
   push:
     branch: master
