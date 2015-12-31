@@ -68,7 +68,7 @@ general:
   artifacts:
     - "doc/_build/html"
     - "~/log.txt"
-  # Restric the build to the branch master only
+  # Restrict the build to the branch master only
   branches:
     only:
        - master
