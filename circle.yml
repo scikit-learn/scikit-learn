@@ -44,7 +44,7 @@ dependencies:
     - sudo apt-get update
     - sudo apt-get install libatlas-dev libatlas3gf-base
     - sudo apt-get install build-essential python-dev python-setuptools
-    - sudo apt-get install python-dev python-matplotlib
+    - sudo apt=get install python-matplotlib
     - conda install --yes numpy scipy
     - sudo apt-get install python-nose python-coverage
     - sudo apt-get install python-sphinx
