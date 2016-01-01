@@ -67,21 +67,30 @@ writing data in that format.
 
 What are the inclusion criteria for new algorithms ?
 -----------------------------------------------------
-Generally we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 200+ citations and wide use and usefullness. A
-technique that provides a clear-cut improvement (e.g. an enhanced data
-structure or efficient approximation or both) on a widely-used method will 
-also be considered for inclusion. In general we only accept algorithms that
-fit well within the current API of scikit-learn, that is a ``fit``,
-``predict/transform`` interface. On top of this it is suggested that the
-contributor demonstrate the usefulness of the proposed addition with research
-papers and common use-cases to support the importance of the algorithm. The 
-proposed algorithm should outperform the methods that are already implemented
-in scikit-learn in at least some areas.
-Your implementation doesn't need to be in scikit-learn to be used together
-with scikit-learn tools, though. Implement your favorite algorithm
-in a scikit-learn compatible way, upload it to github and we will list
-it under :ref:`related_projects`.
+In general, only well-established algorithms are added. A rule of thumb is at
+least 3 years since publication(s), 200+ citations and wide use and
+usefulness. A technique that provides a clear-cut improvement (e.g. an
+enhanced data structure or a more efficient approximation technique) on a
+widely-used method will also be considered for inclusion.
+
+From the algorithms or techniques that meet the above criteria, only those
+which fit well within the current API of scikit-learn, that is a ``fit``,
+``predict/transform`` interface and ordinarily having input/output that is a
+numpy array or sparse matrix, are accepted.
+
+The contributor should support the algorithm's importance by providing the
+importance of the proposed addition with research papers and/or
+implementations in other similar packages, demonstrate it's usefulness via
+common use-cases/applications and corroborate performance improvements, if
+any, with benchmarks and/or plots. It is expected that the proposed algorithm
+should outperform the methods that are already implemented in scikit-learn at
+least in some areas.
+
+Also note that your implementation need not be in scikit-learn to be used
+together with scikit-learn tools. You can implement your favorite algorithm in
+a scikit-learn compatible way, upload it to github and let us know. We will
+list it under :ref:related_projects.
+
 Also see selectiveness_.
 
 Why are you so selective on what algorithms you include in scikit-learn?
