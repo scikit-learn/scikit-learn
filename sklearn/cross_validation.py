@@ -1089,7 +1089,7 @@ class PredefinedSplit(_PartitionIterator):
 
 
 class LabelShuffleSplit(ShuffleSplit):
-    '''Shuffle-Labels-Out cross-validation iterator
+    """Shuffle-Labels-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
     third-party provided label. This label information can be used to encode
@@ -1118,7 +1118,7 @@ class LabelShuffleSplit(ShuffleSplit):
         Labels of samples
 
     n_iter : int (default 5)
-        Number of re-shuffling & splitting iterations.
+        Number of re-shuffling and splitting iterations.
 
     test_size : float (default 0.2), int, or None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1134,7 +1134,8 @@ class LabelShuffleSplit(ShuffleSplit):
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
-    '''
+
+    """
     def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
                  random_state=None):
 
@@ -1208,10 +1209,11 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1382,10 +1384,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1643,10 +1646,11 @@ def check_cv(cv, X=None, y=None, classifier=False):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier
@@ -1716,10 +1720,11 @@ def permutation_test_score(estimator, X, y, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`StratifiedKFold` used. If the estimator is a classifier

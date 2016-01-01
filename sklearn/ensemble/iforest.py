@@ -10,6 +10,7 @@ from warnings import warn
 
 from scipy.sparse import issparse
 
+from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
@@ -47,10 +48,11 @@ class IsolationForest(BaseBagging):
     n_estimators : int, optional (default=100)
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, optional (default=256)
+    max_samples : int or float, optional (default="auto")
         The number of samples to draw from X to train each base estimator.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
+            - If "auto", then `max_samples=min(256, n_samples)`.
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
@@ -99,7 +101,7 @@ class IsolationForest(BaseBagging):
 
     def __init__(self,
                  n_estimators=100,
-                 max_samples=256,
+                 max_samples="auto",
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=1,
@@ -107,7 +109,6 @@ class IsolationForest(BaseBagging):
                  verbose=0):
         super(IsolationForest, self).__init__(
             base_estimator=ExtraTreeRegressor(
-                max_depth=int(np.ceil(np.log2(max(max_samples, 2)))),
                 max_features=1,
                 splitter='random',
                 random_state=random_state),
@@ -151,16 +152,34 @@ class IsolationForest(BaseBagging):
         y = rnd.uniform(size=X.shape[0])
 
         # ensure that max_sample is in [1, n_samples]:
-        max_samples = self.max_samples
         n_samples = X.shape[0]
-        if max_samples > n_samples:
-            warn("max_samples (%s) is greater than the "
-                 "total number of samples (%s). max_samples "
-                 "will be set to n_samples for estimation."
-                 % (self.max_samples, n_samples))
-            max_samples = n_samples
 
+        if isinstance(self.max_samples, six.string_types):
+            if self.max_samples == 'auto':
+                max_samples = min(256, n_samples)
+            else:
+                raise ValueError('max_samples (%s) is not supported.'
+                                 'Valid choices are: "auto", int or'
+                                 'float' % self.max_samples)
+
+        elif isinstance(self.max_samples, six.integer_types):
+            if self.max_samples > n_samples:
+                warn("max_samples (%s) is greater than the "
+                     "total number of samples (%s). max_samples "
+                     "will be set to n_samples for estimation."
+                     % (self.max_samples, n_samples))
+                max_samples = n_samples
+            else:
+                max_samples = self.max_samples
+        else: # float
+            if not (0. < self.max_samples <= 1.):
+                raise ValueError("max_samples must be in (0, 1]")
+            max_samples = int(self.max_samples * X.shape[0])
+
+        self.max_samples_ = max_samples
+        max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
         super(IsolationForest, self)._fit(X, y, max_samples,
+                                          max_depth=max_depth,
                                           sample_weight=sample_weight)
         return self
 
@@ -206,12 +225,7 @@ class IsolationForest(BaseBagging):
 
         depths += _average_path_length(n_samples_leaf)
 
-        if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
-            max_samples = int(self.max_samples * X.shape[0])
-        else:
-            max_samples = self.max_samples
-
-        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(max_samples))
+        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
 
         return scores
 
@@ -249,7 +263,7 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, int):
+    if isinstance(n_samples_leaf, six.integer_types):
         if n_samples_leaf <= 1:
             return 1.
         else:

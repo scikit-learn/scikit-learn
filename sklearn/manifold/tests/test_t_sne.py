@@ -2,7 +2,9 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
+
 from sklearn.neighbors import BallTree
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -18,6 +20,7 @@ from sklearn.manifold.t_sne import trustworthiness
 from sklearn.manifold.t_sne import TSNE
 from sklearn.manifold import _barnes_hut_tsne
 from sklearn.manifold._utils import _binary_search_perplexity
+from sklearn.datasets import make_blobs
 from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
@@ -239,6 +242,20 @@ def test_preserve_trustworthiness_approximately():
             X_embedded = tsne.fit_transform(X)
             T = trustworthiness(X, X_embedded, n_neighbors=1)
             assert_almost_equal(T, 1.0, decimal=1)
+
+
+def test_optimization_minimizes_kl_divergence():
+    """t-SNE should give a lower KL divergence with more iterations."""
+    random_state = check_random_state(0)
+    X, _ = make_blobs(n_features=3, random_state=random_state)
+    kl_divergences = []
+    for n_iter in [200, 250, 300]:
+        tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
+                    n_iter=n_iter, random_state=0)
+        tsne.fit_transform(X)
+        kl_divergences.append(tsne.kl_divergence_)
+    assert_less_equal(kl_divergences[1], kl_divergences[0])
+    assert_less_equal(kl_divergences[2], kl_divergences[1])
 
 
 def test_fit_csr_matrix():

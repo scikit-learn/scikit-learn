@@ -27,6 +27,11 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
   Serialization of (some) scikit-learn estimators into PMML.
 
+- `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
+  Serialization of a wide variety of scikit-learn estimators and transformers
+  into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
+  library.
+
 Other estimators and tasks
 --------------------------
 
@@ -89,6 +94,14 @@ and tasks.
 
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
   several of its variations.
+  
+- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms 
+  for robust variable density clustering. 
+
+- `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to build and train neural networks in Theano.
+
+- `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic regression on multidimensional features.
+
 
 Statistical learning with Python
 --------------------------------
@@ -100,7 +113,7 @@ Other packages useful for data analysis and machine learning.
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `Statsmodel <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+- `statsmodels <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 

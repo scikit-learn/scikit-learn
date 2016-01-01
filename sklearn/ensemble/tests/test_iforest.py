@@ -13,6 +13,9 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -95,9 +98,37 @@ def test_iforest_error():
                   IsolationForest(max_samples=0.0).fit, X)
     assert_raises(ValueError,
                   IsolationForest(max_samples=2.0).fit, X)
-    assert_warns(UserWarning,
-                 IsolationForest(max_samples=1000).fit, X)
-    # cannot check for string values
+    # The dataset has less than 256 samples, explicitly setting max_samples > n_samples
+    # should result in a warning. If not set explicitly there should be no warning
+    assert_warns_message(UserWarning,
+                         "max_samples will be set to n_samples for estimation",
+                         IsolationForest(max_samples=1000).fit, X)
+    assert_no_warnings(IsolationForest(max_samples='auto').fit, X)
+    assert_raises(ValueError,
+                  IsolationForest(max_samples='foobar').fit, X)
+
+
+def test_recalculate_max_depth():
+    """Check that max_depth is recalculated when max_samples is reset to n_samples"""
+    X = iris.data
+    clf = IsolationForest().fit(X)
+    for est in clf.estimators_:
+        assert_equal(est.max_depth, int(np.ceil(np.log2(X.shape[0]))))
+
+
+def test_max_samples_attribute():
+    X = iris.data
+    clf = IsolationForest().fit(X)
+    assert_equal(clf.max_samples_, X.shape[0])
+
+    clf = IsolationForest(max_samples=500)
+    assert_warns_message(UserWarning,
+                         "max_samples will be set to n_samples for estimation",
+                         clf.fit, X)
+    assert_equal(clf.max_samples_, X.shape[0])
+
+    clf = IsolationForest(max_samples=0.4).fit(X)
+    assert_equal(clf.max_samples_, 0.4*X.shape[0])
 
 
 def test_iforest_parallel_regression():

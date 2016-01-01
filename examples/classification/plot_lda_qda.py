@@ -67,8 +67,6 @@ def plot_data(lda, X, y, y_pred, fig_index):
     X0, X1 = X[y == 0], X[y == 1]
     X0_tp, X0_fp = X0[tp0], X0[~tp0]
     X1_tp, X1_fp = X1[tp1], X1[~tp1]
-    xmin, xmax = X[:, 0].min(), X[:, 0].max()
-    ymin, ymax = X[:, 1].min(), X[:, 1].max()
 
     # class 0: dots
     plt.plot(X0_tp[:, 0], X0_tp[:, 1], 'o', color='red')
@@ -133,8 +131,8 @@ for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     plt.axis('tight')
 
     # Quadratic Discriminant Analysis
-    qda = QuadraticDiscriminantAnalysis()
-    y_pred = qda.fit(X, y, store_covariances=True).predict(X)
+    qda = QuadraticDiscriminantAnalysis(store_covariances=True)
+    y_pred = qda.fit(X, y).predict(X)
     splot = plot_data(qda, X, y, y_pred, fig_index=2 * i + 2)
     plot_qda_cov(qda, splot)
     plt.axis('tight')
