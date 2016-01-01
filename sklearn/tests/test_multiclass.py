@@ -14,6 +14,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -21,7 +22,8 @@ from sklearn.metrics import recall_score
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron, LogisticRegression)
+                                  Perceptron, LogisticRegression,
+                                  SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -71,6 +73,21 @@ def test_ovr_fit_predict():
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_partial_fit():
+    # Test if partial_fit is working as intented
+    X, y = shuffle(iris.data, iris.target, random_state=0)
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:100], y[:100], np.unique(y))
+    ovr.partial_fit(X[100:], y[100:])
+    pred = ovr.predict(X)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(X, y).predict(X)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred), 0.65)
 
 
 def test_ovr_ovo_regressor():
@@ -424,6 +441,21 @@ def test_ovo_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
+
+
+def test_ovo_partial_fit_predict():
+    X, y = shuffle(iris.data, iris.target)
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(X[:100], y[:100], np.unique(y))
+    ovo1.partial_fit(X[100:], y[100:])
+    pred1 = ovo1.predict(X)
+
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    ovo2.fit(X, y)
+    pred2 = ovo2.predict(X)
+    assert_equal(len(ovo1.estimators_), n_classes * (n_classes - 1) / 2)
+    assert_greater(np.mean(y == pred1), 0.65)
+    assert_almost_equal(pred1, pred2)
 
 
 def test_ovo_decision_function():
