@@ -1,7 +1,7 @@
 machine:
   environment:
     # We need to set this variable to let python see the package installed through apt-get
-    PYTHONPATH: /usr/lib/python2.7/dist-packages
+    # PYTHONPATH: /usr/lib/python2.7/dist-packages
 dependencies: 
   cache_directories: 
     - "~/scikit_learn_data"
@@ -13,33 +13,32 @@ dependencies:
         # deactivate circleci virtualenv and setup miniconda env.
         deactivate
         sudo apt-get update
-        sudo apt-get install libatlas-dev libatlas3gf-base build-essential python-dev python-setuptools
-        pip install numpy scipy cython nose coverage matplotlib sphinx pillow
+        sudo apt-get install libatlas-dev libatlas3gf-base build-essential
         # Use the miniconda installer for faster download / install of conda
         # itself
-        # pushd .
-        # cd
-        # mkdir -p download
-        # cd download
-        # echo "Cached in $HOME/download :"
-        # ls -l
-        # echo
-        # if [[ ! -f miniconda.sh ]]
-        #    then
-        #    wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
-        #    -O miniconda.sh
-        # fi
-        # chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
-        # cd ..
-        # export PATH="$HOME/miniconda/bin:$PATH"
-        # conda update --yes conda
-        # popd
+        pushd .
+        cd
+        mkdir -p download
+        cd download
+        echo "Cached in $HOME/download :"
+        ls -l
+        echo
+        if [[ ! -f miniconda.sh ]]
+           then
+           wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
+           -O miniconda.sh
+        fi
+        chmod +x miniconda.sh && ./miniconda.sh -b -p $HOME/miniconda
+        cd ..
+        export PATH="$HOME/miniconda/bin:$PATH"
+        conda update --yes conda
+        popd
         
-        # # Configure the conda environment and put it in the path using the
-        # # provided versions
-        # conda create -n testenv --yes python numpy scipy \
-        #   cython nose coverage matplotlib=1.4.0 sphinx pillow
-        # source /home/ubuntu/miniconda/envs/testenv/bin/activate testenv
+        # Configure the conda environment and put it in the path using the
+        # provided versions
+        conda create -n testenv --yes python numpy scipy \
+          cython nose coverage matplotlib=1.4.0 sphinx pillow
+        source /home/ubuntu/miniconda/envs/testenv/bin/activate testenv
         # The --user is needed to let sphinx see the source and the binaries
         # The pipefail is requested to propagate exit code
         python setup.py develop
