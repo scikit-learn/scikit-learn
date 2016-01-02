@@ -23,7 +23,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     .. versionadded:: 0.17
 
-    Read more in the :ref:`User Guide <preprocessing>`.
+    Read more in the :ref:`User Guide <function_transformer>`.
 
     Parameters
     ----------
