@@ -38,6 +38,7 @@ import numpy as np
 import warnings
 import scipy.sparse as sp
 
+from itertools import izip, product
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
@@ -46,6 +47,7 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
+from .utils.multiclass import _check_partial_fit_first_call
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -77,7 +79,8 @@ def _fit_binary(estimator, X, y, classes=None):
 def _partial_fit_binary(estimator, X, y, classes=None):
     """Partially fit a single binary estimator."""
     if (not hasattr(estimator, "partial_fit")):
-            raise ValueError("Estimator must have partial_fit method")
+            raise ValueError("Base estimator {0}, doesn't have partial_fit"
+                             "method".format(estimator))
     estimator.partial_fit(X, y, np.array((0, 1)))
     return estimator
 
@@ -175,7 +178,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self._first_partial_run = True
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -217,8 +219,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """Partially fit underlying estimators
         
         Should be used when memory is inefficient to train all data.
-        Chunks of data can be passed in several iteration, where the
-        first call should have an array of all target variables.
+        Chunks of data can be passed in several iteration.
         
         Parameters
         ----------
@@ -227,24 +228,31 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : (sparse) array-like, shape = [n_samples] or [n_samples, n_classes]
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
+        classes : array, shape (n_classes,)
+            Classes across all calls to partial_fit.
+            Can be obtained via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is only required in the first call of partial_fit
+            and can be omitted in the subsequent calls.
         Returns
         -------
         self
         """
-        if self._first_partial_run:
-            if classes is None:
-                raise ValueError("array of all classes of target varialble"
-                                  "must be provided")
-            self.classes_ = np.unique(classes)
-            self._first_partial_run = False
+        if _check_partial_fit_first_call(self, classes):
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
-
+        
+        # A sparse LabelBinarizer, with sparse_output=True, has been shown to
+        # outpreform or match a dense label binarizer in all cases and has also
+        # resulted in less or equal memory consumption in the fit_ovr function
+        # overall.
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
         Y = self.label_binarizer_.fit_transform(y)
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
-
+        # In cases where individual estimators are very fast to train setting
+        # n_jobs > 1 in can results in slower performance due to the overhead
+        # of spawning threads.  See joblib issue #112.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(
             _partial_fit_binary)(self.estimators_[i],
             X, next(columns) if self.classes_[i] in
@@ -447,7 +455,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self._first_partial_run = True
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -492,28 +499,30 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             Multi-class targets.
 
+        classes : array, shape (n_classes,)
+            Classes across all calls to partial_fit.
+            Can be obtained via `np.unique(y_all)`, where y_all is the
+            target vector of the entire dataset.
+            This argument is only required in the first call of partial_fit
+            and can be omitted in the subsequent calls.
+
         Returns
         -------
         self
         """
-        if self._first_partial_run:
-            if classes is None:
-                raise ValueError("Must contain all classes of target")
-            self._first_partial_run = False
-            self.classes_ = np.unique(classes)
-            self.n_classes = self.classes_.shape[0]
+        if _check_partial_fit_first_call(self, classes):
             self.estimators_ = [clone(self.estimator) for i in
-                                range(self.n_classes *
-                                (self.n_classes-1) // 2)]
+                                range(self.n_classes_ *
+                                (self.n_classes_-1) // 2)]
 
         y = np.asarray(y)
         check_consistent_length(X, y)
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_ovo_binary)(
-                self.estimators_.pop(0), X, y, self.classes_[i],
-                self.classes_[j])
-            for i in range(self.n_classes) for j in range(i + 1,
-                                                self.n_classes))
+                estimator, X, y, self.classes_[i], self.classes_[j])
+            for estimator, (i, j) in izip(self.estimators_, ((i, j) for i 
+                                in range(self.n_classes_) for j in range
+                                            (i + 1, self.n_classes_))))
         return self
 
     def predict(self, X):
@@ -558,6 +567,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         confidences = np.vstack([_predict_binary(est, X) for est in self.estimators_]).T
         return _ovr_decision_function(predictions, confidences,
                                       len(self.classes_))
+
+    @property
+    def n_classes_(self):
+        return len(self.classes_)
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
