@@ -1,8 +1,7 @@
 machine:
   environment:
     # We need to set this variable to let python see the package installed through apt-get
-    # PYTHONPATH: "/usr//usr/lib/python2.7/dist-packages"
-    CYTHON_VERSION: "0.21"
+    # PYTHONPATH: "/usr/lib/python2.7/dist-packages"
 dependencies: 
   cache_directories: 
     - "~/scikit_learn_data"
@@ -38,7 +37,7 @@ dependencies:
         # Configure the conda environment and put it in the path using the
         # provided versions
         conda create -n testenv --yes python numpy scipy \
-          cython=$CYTHON_VERSION nose coverage matplotlib sphinx pillow
+          cython nose coverage matplotlib sphinx pillow
         source /home/ubuntu/miniconda/envs/testenv/bin/activate testenv
         # The --user is needed to let sphinx see the source and the binaries
         # The pipefail is requested to propagate exit code
