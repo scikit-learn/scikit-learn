@@ -262,7 +262,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     For mono-output tasks it is::
 
-        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        1 / (2 * n_samples) * ||y - Xw||^2_2
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
@@ -487,7 +487,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Minimizes the objective function::
 
-            1 / (2 * n_samples) * ||y - Xw||^2_2 +
+            1 / (2 * n_samples) * ||y - Xw||^2_2
             + alpha * l1_ratio * ||w||_1
             + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
@@ -1446,7 +1446,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
-        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        1 / (2 * n_samples) * ||y - Xw||^2_2
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
