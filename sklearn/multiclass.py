@@ -37,8 +37,12 @@ import array
 import numpy as np
 import warnings
 import scipy.sparse as sp
+try:
+    from itertools import izip, product
+except:
+    from itertools import product
+    izip = zip
 
-from itertools import izip, product
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
@@ -250,9 +254,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Y = self.label_binarizer_.fit_transform(y)
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
-        # In cases where individual estimators are very fast to train setting
-        # n_jobs > 1 in can results in slower performance due to the overhead
-        # of spawning threads.  See joblib issue #112.
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(
             _partial_fit_binary)(self.estimators_[i],
             X, next(columns) if self.classes_[i] in
