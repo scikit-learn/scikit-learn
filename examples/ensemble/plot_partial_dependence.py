@@ -44,13 +44,13 @@ on age.
 .. [2] For classification you can think of it as the regression score before
        the link function.
 """
+from __future__ import print_function
 print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
-from six.moves.urllib.error import HTTPError
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import GradientBoostingRegressor
@@ -69,17 +69,14 @@ def main():
                                                         random_state=1)
     names = cal_housing.feature_names
 
-    print('_' * 80)
-    print("Training GBRT...")
+    print("Training GBRT...", flush=True, end='')
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=4,
                                     learning_rate=0.1, loss='huber',
                                     random_state=1)
     clf.fit(X_train, y_train)
-    print("done.")
+    print(" done.")
 
-    print('_' * 80)
     print('Convenience plot with ``partial_dependence_plots``')
-    print
 
     features = [0, 5, 1, 2, (5, 1)]
     fig, axs = plot_partial_dependence(clf, X_train, features,
@@ -89,9 +86,7 @@ def main():
                  'for the California housing dataset')
     plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
 
-    print('_' * 80)
     print('Custom 3d plot via ``partial_dependence``')
-    print
     fig = plt.figure()
 
     target_feature = (1, 5)
