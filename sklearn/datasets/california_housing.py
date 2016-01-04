@@ -21,6 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
+from io import BytesIO
 import os
 from os.path import exists
 from os import makedirs
@@ -28,10 +29,10 @@ import tarfile
 
 try:
     # Python 2
-    import urllib.request as urllib
+    from urllib2 import urlopen
 except ImportError:
     # Python 3+
-    import urllib
+    from urllib.request import urlopen
 
 import numpy as np
 
@@ -41,7 +42,6 @@ from ..externals import joblib
 
 
 DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
-ARCHIVE_NAME = "cal_housing.tgz"
 TARGET_FILENAME = "cal_housing.pkz"
 
 # Grab the module-level docstring to use as a description of the
@@ -90,12 +90,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
-        archive_path = os.path.join(data_home, ARCHIVE_NAME)
-        print('downloading Cal. housing from %s to %s' % (DATA_URL, archive_path))
-        urllib.urlretrieve(DATA_URL, archive_path)
-        fileobj = tarfile.open(archive_path, "r:gz").extractfile(
-            'CaliforniaHousing/cal_housing.data')
-        os.remove(archive_path)
+        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
+        archive_fileobj = BytesIO(urlopen(DATA_URL).read())
+        fileobj = tarfile.open(
+            mode="r:gz",
+            fileobj=archive_fileobj).extractfile(
+                'CaliforniaHousing/cal_housing.data')
 
         cal_housing = np.loadtxt(fileobj, delimiter=',')
         # Columns are not in the same order compared to the previous
