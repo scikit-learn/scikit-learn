@@ -14,6 +14,8 @@ np.import_array()
 
 from sklearn.tree._tree cimport Node
 from sklearn.tree._tree cimport Tree
+from sklearn.tree._tree cimport DTYPE_t
+from sklearn.tree._tree cimport SIZE_t
 
 
 ctypedef np.int32_t int32
@@ -27,14 +29,9 @@ from numpy import bool as np_bool
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
 
-# Define a datatype for the data array
-DTYPE = np.float32
-ctypedef np.float32_t DTYPE_t
-ctypedef np.npy_intp SIZE_t
-
 
 # constant to mark tree leafs
-cdef int LEAF = -1
+cdef SIZE_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 Node* root_node,
@@ -84,12 +81,11 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         shape ``(n_samples, K)``.
     """
     cdef Py_ssize_t i
-    cdef int32 node_id
     cdef Node *node
     for i in range(n_samples):
         node = root_node
         # While node not a leaf
-        while node.left_child != -1 and node.right_child != -1:
+        while node.left_child != TREE_LEAF:
             if X[i * n_features + node.feature] <= node.threshold:
                 node = root_node + node.left_child
             else:
@@ -216,7 +212,7 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
             stack_size -= 1
             current_node = node_stack[stack_size]
 
-            if current_node.left_child == LEAF:
+            if current_node.left_child == TREE_LEAF:
                 out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
                           learn_rate
                 total_weight += weight_stack[stack_size]
