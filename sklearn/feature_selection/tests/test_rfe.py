@@ -25,7 +25,7 @@ from sklearn.metrics import get_scorer
 
 class MockClassifier(object):
     """
-    Dummy classifier to test recursive feature ellimination
+    Dummy classifier to test recursive feature elimination
     """
 
     def __init__(self, foo_param=0):

@@ -394,7 +394,7 @@ def _fit_one_transformer(transformer, X, y):
 
 def _transform_one(transformer, name, X, transformer_weights):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         return transformer.transform(X) * transformer_weights[name]
     return transformer.transform(X)
 
@@ -402,7 +402,7 @@ def _transform_one(transformer, name, X, transformer_weights):
 def _fit_transform_one(transformer, name, X, y, transformer_weights,
                        **fit_params):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         if hasattr(transformer, 'fit_transform'):
             X_transformed = transformer.fit_transform(X, y, **fit_params)
             return X_transformed * transformer_weights[name], transformer

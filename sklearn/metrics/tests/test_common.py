@@ -47,7 +47,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
 
-# TODO Curve are currently not coverd by invariance test
+# TODO Curve are currently not covered by invariance test
 # from sklearn.metrics import precision_recall_curve
 # from sklearn.metrics import roc_curve
 
@@ -212,7 +212,7 @@ METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
 
-# Treshold-based metrics with an "average" argument
+# Threshold-based metrics with an "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = [
     "roc_auc_score", "average_precision_score",
 ]

@@ -125,7 +125,7 @@ def test_incr_mean_variance_axis():
         assert_array_almost_equal(X_vars, X_vars_incr)
         assert_equal(X.shape[axis], n_incr)
 
-        # Test _incremantal_mean_and_var with whole data
+        # Test _incremental_mean_and_var with whole data
         X = np.vstack(data_chunks)
         X_lil = sp.lil_matrix(X)
         X_csr = sp.csr_matrix(X_lil)

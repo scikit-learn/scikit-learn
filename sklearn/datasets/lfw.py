@@ -170,7 +170,7 @@ def _load_imgs(file_paths, slice_, color, resize):
             face = imresize(face, resize)
         if not color:
             # average the color channels to compute a gray levels
-            # representaion
+            # representation
             face = face.mean(axis=2)
 
         faces[i, ...] = face
@@ -335,7 +335,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
-    # interating over the metadata lines for each pair to find the filename to
+    # iterating over the metadata lines for each pair to find the filename to
     # decode and load in memory
     target = np.zeros(n_pairs, dtype=np.int)
     file_paths = list()

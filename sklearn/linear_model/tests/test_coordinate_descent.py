@@ -235,7 +235,7 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have seleted an elastic-net
+    # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
@@ -247,7 +247,7 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have seleted an elastic-net
+    # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 

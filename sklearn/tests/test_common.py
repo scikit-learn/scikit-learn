@@ -45,7 +45,7 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, clonable
+    # Test that estimators are default-constructible, cloneable
     # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
 

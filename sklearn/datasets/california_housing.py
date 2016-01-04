@@ -117,7 +117,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     # avg bed rooms = total bed rooms / households
     data[:, 3] /= data[:, 5]
 
-    # avg occupancy = population / housholds
+    # avg occupancy = population / households
     data[:, 5] = data[:, 4] / data[:, 5]
 
     # target in units of 100,000
