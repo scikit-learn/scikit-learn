@@ -93,12 +93,11 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         archive_path = os.path.join(data_home, ARCHIVE_NAME)
         print('downloading Cal. housing from %s to %s' % (DATA_URL, archive_path))
         urllib.urlretrieve(DATA_URL, archive_path)
-        tarfile.open(archive_path, "r:gz").extractall(path=data_home)
+        fileobj = tarfile.open(archive_path, "r:gz").extractfile(
+            'CaliforniaHousing/cal_housing.data')
         os.remove(archive_path)
 
-        data_path = os.path.join(data_home, 'CaliforniaHousing',
-                                 'cal_housing.data')
-        cal_housing = np.loadtxt(data_path, delimiter=',')
+        cal_housing = np.loadtxt(fileobj, delimiter=',')
         # Columns are not in the same order compared to the previous
         # URL resource on lib.stat.cmu.edu
         columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
