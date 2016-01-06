@@ -187,7 +187,7 @@ class IsolationForest(BaseBagging):
                                           max_depth=max_depth,
                                           sample_weight=sample_weight)
 
-        self.threshold_ = sp.stats.scoreatpercentile(
+        self.threshold_ = -sp.stats.scoreatpercentile(
             -self.decision_function(X), 100. * (1. - self.contamination))
 
         return self
@@ -210,8 +210,8 @@ class IsolationForest(BaseBagging):
 
         """
         X = check_array(X, accept_sparse='csr')
-        is_inlier = -np.ones(X.shape[0], dtype=int)
-        is_inlier[self.decision_function(X) <= self.threshold_] = 1
+        is_inlier = np.ones(X.shape[0], dtype=int)
+        is_inlier[self.decision_function(X) <= self.threshold_] = -1
 
         return is_inlier
 

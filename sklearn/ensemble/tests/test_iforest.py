@@ -184,11 +184,11 @@ def test_iforest_works():
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [6, 3], [-4, 7]]
 
     # Test LOF
-    clf = IsolationForest(random_state=rng)
+    clf = IsolationForest(random_state=rng, contamination=0.25)
     clf.fit(X)
     decision_func = - clf.decision_function(X)
     pred = clf.predict(X)
 
     # assert detect outliers:
     assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
-    assert_array_equal(pred, 6 * [-1] + 2 * [1])
+    assert_array_equal(pred, 6 * [1] + 2 * [-1])
