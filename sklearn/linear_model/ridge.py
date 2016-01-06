@@ -895,7 +895,10 @@ class _RidgeGCV(LinearModel):
     def _pre_compute_svd(self, X, y):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
-        U, s, _ = linalg.svd(X, full_matrices=0)
+        X_ = np.hstack((X, np.ones((X.shape[0], 1))))
+        # to emulate fit_intercept=True situation, add a column on ones
+        # Note that by centering, the other columns are orthogonal to that one
+        U, s, _ = linalg.svd(X_, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
@@ -904,20 +907,13 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        if True:  # U.shape[0] != U.shape[1]:
-            w = ((v + alpha) ** -1) - (alpha ** -1)
-            c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
-            G_diag = self._decomp_diag(w, U) + (alpha ** -1)
-        else:
-            # the other formula leads to numerical error when UUT=Id 
-            # and v has a zeros eigen value
-            test = v > 1.e-15
-            v = v[test]
-            U = U[:, test]
-            UT_y = UT_y[test]
-            c = np.dot(U, self._diag_dot((v + alpha) ** -1, UT_y))
-            G_diag = self._decomp_diag((v + alpha) ** -1, U)
-
+        test = np.var(U, 0) < 1.e-6  # detect constant column
+        w = alpha * ((v + alpha) ** -1) - 1
+        w[test] = - 1  # cancel the regularization for the intercept
+        c = np.dot(U, self._diag_dot(w, UT_y)) + y
+        G_diag = self._decomp_diag(w, U) + 1
+        c /= alpha  # for compatibility with textbook version
+        G_diag /= alpha  # for compatibility with textbook version
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_diag = G_diag[:, np.newaxis]
