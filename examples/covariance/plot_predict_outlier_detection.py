@@ -33,7 +33,6 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.font_manager
-from scipy import stats
 
 from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
@@ -51,7 +50,9 @@ classifiers = {
     "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
                                      kernel="rbf", gamma=0.1),
     "robust covariance estimator": EllipticEnvelope(contamination=0.25),
-    "Isolation Forest": IsolationForest(max_samples=n_samples, random_state=rng, contamination=0.25)}
+    "Isolation Forest": IsolationForest(max_samples=n_samples,
+                                        random_state=rng,
+                                        contamination=0.25)}
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
