@@ -344,6 +344,8 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
+    # store reference to original array to check if copy is needed when function returns
+    array_orig = array
     # store whether originally we wanted numeric dtype
     dtype_numeric = dtype == "numeric"
 
@@ -381,7 +383,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        # Do not physically copy memory map : if type(array) == np.memmap:
+        # type(array) == np.ndarray
+        # array.base is array_orig
+        array = np.asarray(array, dtype=dtype, order=order)
 
         if ensure_2d:
             if array.ndim == 1:
@@ -396,8 +401,6 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                     "X.reshape(1, -1) if it contains a single sample.",
                     DeprecationWarning)
             array = np.atleast_2d(array)
-            # To ensure that array flags are maintained
-            array = np.array(array, dtype=dtype, order=order, copy=copy)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
@@ -429,6 +432,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning_)
+
+    if copy and np.may_share_memory(array,array_orig):
+        array = np.array(array, dtype=dtype, order=order)
+
     return array
 
 

@@ -1,10 +1,21 @@
 from __future__ import print_function
 
+import os
 import types
 import warnings
 import sys
 import traceback
 import pickle
+import tempfile
+import shutil
+# WindowsError only exist in Windows
+from nose.tools import assert_false
+
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 from copy import deepcopy
 
 import numpy as np
@@ -52,6 +63,7 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 
 BOSTON = None
+_TEMP_READONLY_MEMMAP_MEMORY = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
@@ -79,6 +91,7 @@ def _yield_non_meta_checks(name, Estimator):
     yield check_fit_score_takes_y
     yield check_dtype_object
     yield check_estimators_fit_returns_self
+    yield check_estimators_fit_returns_self_readonly
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -118,6 +131,7 @@ def _yield_classifier_checks(name, Classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
+    yield check_classifiers_train_readonly
     if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]
         # TODO some complication with -1 label
             and name not in ["DecisionTreeClassifier",
@@ -157,6 +171,7 @@ def _yield_regressor_checks(name, Regressor):
     # TODO: test with multiple responses
     # basic testing
     yield check_regressors_train
+    yield check_regressors_train_readonly
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
@@ -181,6 +196,7 @@ def _yield_transformer_checks(name, Transformer):
                     'FunctionTransformer', 'Normalizer']:
         # basic tests
         yield check_transformer_general
+        yield check_transformer_general_readonly
         yield check_transformers_unfitted
 
 
@@ -190,6 +206,7 @@ def _yield_clustering_checks(name, Clusterer):
         # this is clustering on the features
         # let's not test that here.
         yield check_clustering
+        yield check_clustering_readonly
         yield check_estimators_partial_fit_n_features
 
 
@@ -237,16 +254,99 @@ def check_estimator(Estimator):
         check(name, Estimator)
 
 
-def _boston_subset(n_samples=200):
+def _boston_subset(n_samples=200, scale_y=False, convert_y_2d=False):
+    """Utility function used to cache boston subset into a global variable"""
     global BOSTON
     if BOSTON is None:
         boston = load_boston()
         X, y = boston.data, boston.target
         X, y = shuffle(X, y, random_state=0)
-        X, y = X[:n_samples], y[:n_samples]
         X = StandardScaler().fit_transform(X)
         BOSTON = X, y
-    return BOSTON
+    else:
+        X, y = BOSTON
+        X, y = X[:n_samples], y[:n_samples]
+        if scale_y:
+            y = StandardScaler().fit_transform(y)
+        if convert_y_2d:
+            y = y[:, np.newaxis]
+    return X, y
+
+
+def _readonly_boston_subset(*args, **kwargs):
+    """Utility function used to return a r-o memmap, without recreating
+    a new memory map at each call"""
+    _init_temp_memory()
+    f = _TEMP_READONLY_MEMMAP_MEMORY.cache(_boston_subset)
+    return f(*args, **kwargs)
+
+
+def _boston_subset_with_mode(*args, **kwargs):
+    """Factorisation function used in checks"""
+    readonly = kwargs.pop('readonly', None)
+    if readonly:
+        return _readonly_boston_subset(*args, **kwargs)
+    else:
+        return _boston_subset(*args, **kwargs)
+
+
+def _make_blobs(*args, **kwargs):
+    """Utility function used to ensure that
+    we have only positive value for X"""
+    positive = kwargs.pop('positive', False)
+    scale = kwargs.pop('scale', False)
+    shuffle_flag = kwargs.pop('shuffle', False)
+    X, y = make_blobs(*args, **kwargs)
+    if scale:
+        X = StandardScaler().fit_transform(X)
+    if positive:
+        X -= X.min()
+    if shuffle_flag:
+        X, y = shuffle(X, y, random_state=7)
+    return X, y
+
+
+def _readonly_make_blobs(*args, **kwargs):
+    """Utility function used to return a r-o memmap, without recreating
+     a new memory map at each call"""
+    _init_temp_memory()
+    f = _TEMP_READONLY_MEMMAP_MEMORY.cache(_make_blobs)
+    return f(*args, **kwargs)
+
+
+def _make_blobs_with_mode(*args, **kwargs):
+    """Factorisation function used in checks"""
+    readonly = kwargs.pop('readonly', None)
+    if readonly:
+        return _readonly_make_blobs(*args, **kwargs)
+    else:
+        return _make_blobs(*args, **kwargs)
+
+
+def _init_temp_memory(mmap_mode='r'):
+    """Utility function used to initialize a temp folder"""
+    global _TEMP_READONLY_MEMMAP_MEMORY
+    if _TEMP_READONLY_MEMMAP_MEMORY is None:
+        temp_folder = tempfile.mkdtemp(prefix='sklearn_checks_temp_')
+        _TEMP_READONLY_MEMMAP_MEMORY = Memory(cachedir=temp_folder,
+                                              mmap_mode=mmap_mode, verbose=0)
+        # Cannot use atexit as it is called everytime a test end,
+        #  thus forcing us to regenerate cache at every check
+        # atexit.register(_clear_temp_memory(warn=True))
+
+
+def _clear_temp_memory(warn=False):
+    """Utility function used to delete the local temp folder"""
+    global _TEMP_READONLY_MEMMAP_MEMORY
+    if _TEMP_READONLY_MEMMAP_MEMORY is not None:
+        # Recovering temp_folder
+        cachedir = os.path.dirname(_TEMP_READONLY_MEMMAP_MEMORY.cachedir)
+        _TEMP_READONLY_MEMMAP_MEMORY = None
+        try:
+            shutil.rmtree(cachedir)
+        except WindowsError:
+            if warn:
+                warnings.warn("Could not delete temporary folder %s" % cachedir)
 
 
 def set_testing_parameters(estimator):
@@ -310,7 +410,7 @@ def set_testing_parameters(estimator):
 
 
 class NotAnArray(object):
-    " An object that is convertable to an array"
+    """An object that is convertable to an array"""
 
     def __init__(self, data):
         self.data = data
@@ -514,8 +614,21 @@ def check_transformer_general(name, Transformer):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
+
+
+def check_transformer_general(name, Transformer, readonly=False):
+    X, y = _make_blobs_with_mode(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                                 random_state=0, n_features=2, cluster_std=0.1,
+                                 readonly=readonly, positive=True, scale=True)
+    if readonly:
+        assert_false(X.flags['WRITEABLE'])
     _check_transformer(name, Transformer, X, y)
     _check_transformer(name, Transformer, X.tolist(), y.tolist())
+
+
+def check_transformer_general_readonly(name, Transformer):
+    check_transformer_general(name, Transformer, readonly=True)
+
 
 
 def check_transformer_data_not_an_array(name, Transformer):
@@ -532,7 +645,7 @@ def check_transformer_data_not_an_array(name, Transformer):
 
 def check_transformers_unfitted(name, Transformer):
     X, y = _boston_subset()
-
+    
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
 
@@ -857,10 +970,10 @@ def check_estimators_partial_fit_n_features(name, Alg):
     assert_raises(ValueError, alg.partial_fit, X[:, :-1], y)
 
 
-def check_clustering(name, Alg):
-    X, y = make_blobs(n_samples=50, random_state=1)
-    X, y = shuffle(X, y, random_state=7)
-    X = StandardScaler().fit_transform(X)
+def check_clustering(name, Alg, readonly=False):
+    X, y = _make_blobs_with_mode(n_samples=50, random_state=1,
+                                 scale=True,
+                                 readonly=readonly, shuffle=True)
     n_samples, n_features = X.shape
     # catch deprecation and neighbors warnings
     with warnings.catch_warnings(record=True):
@@ -874,6 +987,8 @@ def check_clustering(name, Alg):
         alg.set_params(max_iter=100)
 
     # fit
+    if readonly:
+        assert_false(X.flags['WRITEABLE'])
     alg.fit(X)
     # with lists
     alg.fit(X.tolist())
@@ -889,6 +1004,10 @@ def check_clustering(name, Alg):
     with warnings.catch_warnings(record=True):
         pred2 = alg.fit_predict(X)
     assert_array_equal(pred, pred2)
+
+
+def check_clustering_readonly(name, Alg):
+    check_clustering(name, Alg, readonly=True)
 
 
 def check_clusterer_compute_labels_predict(name, Clusterer):
@@ -942,13 +1061,20 @@ def check_classifiers_one_label(name, Classifier):
 
 
 @ignore_warnings  # Warnings are raised by decision function
-def check_classifiers_train(name, Classifier):
-    X_m, y_m = make_blobs(n_samples=300, random_state=0)
-    X_m, y_m = shuffle(X_m, y_m, random_state=7)
-    X_m = StandardScaler().fit_transform(X_m)
-    # generate binary problem from multi-class one
-    y_b = y_m[y_m != 2]
-    X_b = X_m[y_m != 2]
+def check_classifiers_train(name, Classifier, readonly=False):
+    if name in ['BernoulliNB', 'MultinomialNB']:
+        positive = True
+    else:
+        positive = False
+    X_m, y_m = _make_blobs_with_mode(n_samples=300,
+                                     random_state=0, shuffle=True,
+                                     readonly=readonly, scale=True,
+                                     positive=positive)
+    # generate binary problem
+    X_b, y_b = _make_blobs_with_mode(n_samples=300,
+                                     random_state=0, shuffle=True,
+                                     readonly=readonly, scale=True,
+                                     positive=positive, centers=2)
     for (X, y) in [(X_m, y_m), (X_b, y_b)]:
         # catch deprecation warnings
         classes = np.unique(y)
@@ -956,14 +1082,15 @@ def check_classifiers_train(name, Classifier):
         n_samples, n_features = X.shape
         with warnings.catch_warnings(record=True):
             classifier = Classifier()
-        if name in ['BernoulliNB', 'MultinomialNB']:
-            X -= X.min()
         set_testing_parameters(classifier)
         set_random_state(classifier)
         # raises error on malformed input for fit
         assert_raises(ValueError, classifier.fit, X, y[:-1])
 
         # fit
+        if readonly:
+            assert_false(X.flags['WRITEABLE'])
+            assert_false(y.flags['WRITEABLE'])
         classifier.fit(X, y)
         # with lists
         classifier.fit(X.tolist(), y.tolist())
@@ -1012,22 +1139,33 @@ def check_classifiers_train(name, Classifier):
             assert_raises(ValueError, classifier.predict_proba, X.T)
 
 
-def check_estimators_fit_returns_self(name, Estimator):
+def check_classifiers_train_readonly(name, Classifier):
+    check_classifiers_train(name, Classifier, readonly=True)
+
+
+def check_estimators_fit_returns_self(name, Estimator, readonly=False):
     """Check if self is returned when calling fit"""
-    X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
+    X, y = _make_blobs_with_mode(random_state=0, n_samples=9, n_features=4,
+                                 readonly=readonly, positive=True)
     y = multioutput_estimator_convert_y_2d(name, y)
-    # some want non-negative input
-    X -= X.min()
 
     estimator = Estimator()
 
     set_testing_parameters(estimator)
     set_random_state(estimator)
 
+    if readonly:
+        assert_false(X.flags['WRITEABLE'])
+        assert_false(y.flags['WRITEABLE'])
     assert_true(estimator.fit(X, y) is estimator)
 
 
 @ignore_warnings
+def check_estimators_fit_returns_self_readonly(name, Estimator):
+    """Check if Estimator.fit does not fail on read only mem-mapped data"""
+    check_estimators_fit_returns_self(name, Estimator, readonly=True)
+
+
 def check_estimators_unfitted(name, Estimator):
     """Check that predict raises an exception in an unfitted estimator.
 
@@ -1161,11 +1299,19 @@ def check_regressors_int(name, Regressor):
     assert_array_almost_equal(pred1, pred2, 2, name)
 
 
-def check_regressors_train(name, Regressor):
-    X, y = _boston_subset()
-    y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
-    y = y.ravel()
-    y = multioutput_estimator_convert_y_2d(name, y)
+def check_regressors_train_readonly(name, Regressors):
+    check_regressors_train(name, Regressors, readonly=True)
+
+
+def check_regressors_train(name, Regressor, readonly=False):
+    # Reproduce multioutput_convert_y_2d for read only boston subset
+    if name in (['MultiTaskElasticNetCV', 'MultiTaskLassoCV',
+                 'MultiTaskLasso', 'MultiTaskElasticNet']):
+        convert_y_2d = True
+    else:
+        convert_y_2d = False
+    X, y = _boston_subset_with_mode(readonly=readonly, scale_y=True,
+                                    convert_y_2d=convert_y_2d)
     rnd = np.random.RandomState(0)
     # catch deprecation warnings
     with warnings.catch_warnings(record=True):
@@ -1185,7 +1331,12 @@ def check_regressors_train(name, Regressor):
         y_ = y_.T
     else:
         y_ = y
+        if readonly:
+            assert_false(X.flags['WRITEABLE'])
+            assert_false(y_.flags['WRITEABLE'])
     set_random_state(regressor)
+    if readonly:
+        assert_false(X.flags['WRITEABLE'])
     regressor.fit(X, y_)
     regressor.fit(X.tolist(), y_.tolist())
     y_pred = regressor.predict(X)
@@ -1196,6 +1347,32 @@ def check_regressors_train(name, Regressor):
     # skipped
     if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
         assert_greater(regressor.score(X, y_), 0.5)
+
+
+def check_regressors_pickle(name, Regressor):
+    X, y = _boston_subset(scale_y=True)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    rnd = np.random.RandomState(0)
+    # catch deprecation warnings
+    with warnings.catch_warnings(record=True):
+        regressor = Regressor()
+    set_testing_parameters(regressor)
+    if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
+        # linear regressors need to set alpha, but not generalized CV ones
+        regressor.alpha = 0.01
+
+    if name in CROSS_DECOMPOSITION:
+        y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
+        y_ = y_.T
+    else:
+        y_ = y
+    regressor.fit(X, y_)
+    y_pred = regressor.predict(X)
+    # store old predictions
+    pickled_regressor = pickle.dumps(regressor)
+    unpickled_regressor = pickle.loads(pickled_regressor)
+    pickled_y_pred = unpickled_regressor.predict(X)
+    assert_array_almost_equal(pickled_y_pred, y_pred)
 
 
 @ignore_warnings
