@@ -392,7 +392,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
-
+    intercept_decay : double
     Returns
     -------
     weights : array, shape=[n_features]
@@ -492,6 +492,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Initial state of the learning rate. This value is equal to the
         iteration count except when the learning rate is set to `optimal`.
         Default: 1.0.
+    intercept_decay : double
     average : int
         The number of iterations before averaging starts. average=1 is
         equivalent to averaging for all iterations.

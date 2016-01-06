@@ -82,6 +82,8 @@ cdef class Splitter:
 
         random_state: object
             The user inputted random state to be used for pseudo-randomness
+
+        presort: bint
         """
 
         self.criterion = criterion
@@ -137,6 +139,9 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
+
+        X_idx_sorted: numpy.ndarray (optional)
+            If presort is
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)

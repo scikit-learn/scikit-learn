@@ -52,8 +52,8 @@ def graph_shortest_path(dist_matrix, directed=True, method='auto'):
 
     Returns
     -------
-    G : np.ndarray, float, shape = [N,N]
-        G[i,j] gives the shortest distance from point i to point j
+    graph : np.ndarray, float, shape = [N,N]
+        graph[i,j] gives the shortest distance from point i to point j
         along the graph.
 
     Notes
@@ -163,13 +163,10 @@ cdef np.ndarray dijkstra(dist_matrix,
 
     Parameters
     ----------
-    graph : array or sparse matrix
+    dist_matrix : array or sparse matrix
         dist_matrix is the matrix of distances betweeen connected points.
         unconnected points have distance=0.  It will be converted to
         a csr_matrix internally
-    indptr :
-        These arrays encode a distance matrix in compressed-sparse-row
-        format.
     graph : ndarray
         on input, graph is the matrix of distances betweeen connected points.
         unconnected points have distance=0

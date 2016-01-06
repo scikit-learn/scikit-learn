@@ -375,7 +375,7 @@ cdef class DistanceMetric:
             If not specified, then Y=X.
         Returns
         -------
-        dist : ndarray
+        Darr : ndarray
             The shape (Nx, Ny) array of pairwise distances between points in
             X and Y.
         """

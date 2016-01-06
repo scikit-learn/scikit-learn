@@ -94,6 +94,8 @@ def csgraph_masked_from_dense(graph,
         are treated as null edges.
     nan_null : bool
         If True (default), then NaN entries are treated as non-edges
+    copy : bool
+        If True (default), then the graph array is copied
 
     Returns
     -------

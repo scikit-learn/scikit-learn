@@ -288,6 +288,15 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     Parameters
     ----------
     X: array-like, dtype=float, size=[n_samples, n_features]
+    support : array, dtype=int32
+    SV : array, dtype=float64
+    nSV : array, dtype=int32
+    sv_coef : array, dtype=float64
+    intercept : array, dtype=float64
+    probA : array, dtype=float64, optional
+        np.empty(0) by default
+    probB : array, dtype=float64, optional
+        np.empty(0) by default
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
@@ -298,6 +307,12 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         Gamma parameter in RBF kernel.
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
+    class_weight : array, dtype float64, shape (n_classes,), optional
+        np.empty(0) by default.
+    sample_weight : array, dtype float64, shape (n_samples,), optional
+        np.empty(0) by default.
+    cache_size : float64, optional
+        Cache size for gram matrix columns (in megabytes). 100 by default.
 
     Returns
     -------

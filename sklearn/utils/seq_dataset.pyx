@@ -171,6 +171,9 @@ cdef class ArrayDataset(SequentialDataset):
 
         sample_weights : ndarray, dtype=double, ndim=1, mode='c'
             The weight of each sample, of shape(n_samples,)
+
+        seed : unsigned integer
+            Seed for XorShift Random Number Generator
         """
         if X.shape[0] > INT_MAX or X.shape[1] > INT_MAX:
             raise ValueError("More than %d samples or features not supported;"
@@ -248,6 +251,9 @@ cdef class CSRDataset(SequentialDataset):
 
         sample_weights : ndarray, dtype=double, ndim=1, mode='c'
             The weight of each sample.
+
+        seed : unsigned integer
+            Seed for XorShift Random Number Generator
         """
         # keep a reference to the data to prevent garbage collection
         self.X_data = X_data
