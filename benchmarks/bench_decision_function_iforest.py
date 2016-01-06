@@ -6,8 +6,7 @@ IsolationForest's decision function benchmark
 An histogram of IsolationForest's decision function on classical anomaly
 detection datasets.
 
-This is WIP to define a good threshold on decision function to obtain
-binary predict.
+This is an example which plots the decision function of IsolationForest for normal data and for outliers on real-world datasets.
 
 """
 print(__doc__)
