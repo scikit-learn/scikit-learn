@@ -37,11 +37,6 @@ import array
 import numpy as np
 import warnings
 import scipy.sparse as sp
-try:
-    from itertools import izip, product
-except:
-    from itertools import product
-    izip = zip
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
@@ -54,6 +49,7 @@ from .utils.validation import check_is_fitted
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
+from .externals.six.moves import zip as izip
 
 __all__ = [
     "OneVsRestClassifier",
