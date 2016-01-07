@@ -73,6 +73,30 @@ def test_ovr_fit_predict():
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
+def test_ovr_partial_fit_predict():
+    n_iter = 5
+    # make sure partial_fit and regular fit yield the same results
+    ovr1 = OneVsRestClassifier(MultinomialNB())
+    for _ in range(n_iter):
+        ovr1 = ovr1.partial_fit(iris.data, iris.target)
+
+    pred = ovr1.predict(iris.data)
+    assert_equal(len(ovr1.estimators_), n_classes)
+
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
+
+    assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
+
+    # Test on another classifier
+    ovr = OneVsRestClassifier(Perceptron())
+    for _ in range(n_iter):
+        ovr = ovr.partial_fit(iris.data, iris.target)
+
+    pred = ovr.predict(iris.data)
+    assert_greater(np.mean(iris.target == pred), 0.65)
+
+
 def test_ovr_ovo_regressor():
     # test that ovr and ovo work on regressors which don't have a decision_function
     ovr = OneVsRestClassifier(DecisionTreeRegressor())
