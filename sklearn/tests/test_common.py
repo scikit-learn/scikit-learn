@@ -23,7 +23,9 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
 
 import sklearn
+
 from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.decomposition import ProjectedGradientNMF
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -63,8 +65,6 @@ def test_non_meta_estimators():
     # input validation etc for non-meta estimators
     estimators = all_estimators()
     for name, Estimator in estimators:
-        if issubclass(Estimator, BiclusterMixin):
-            continue
         if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
@@ -212,6 +212,7 @@ def test_transformer_n_iter():
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield _named_check(
                 check_transformer_n_iter, name), name, estimator
+
 
 
 def test_get_params_invariance():

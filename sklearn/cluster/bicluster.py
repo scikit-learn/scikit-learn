@@ -35,10 +35,19 @@ def _scale_normalize(X):
 
     """
     X = make_nonnegative(X)
-    row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
-    col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0))).squeeze()
+    row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1)))
+    if row_diag.shape[0] != 1:
+        row_diag = row_diag.squeeze()
+
+    col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0)))
+    if col_diag.ndim == 1 and col_diag.shape[0] != 1:
+        col_diag = col_diag.squeeze()
+    if col_diag.ndim == 2 and col_diag.shape[1] != 1:
+        col_diag = col_diag.squeeze()
+
     row_diag = np.where(np.isnan(row_diag), 0, row_diag)
     col_diag = np.where(np.isnan(col_diag), 0, col_diag)
+
     if issparse(X):
         n_rows, n_cols = X.shape
         r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
@@ -110,17 +119,21 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                              " one of {1}.".format(self.svd_method,
                                                    legal_svd_methods))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Creates a biclustering for X.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
-        self._fit(X)
+        return self._fit(X)
 
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
@@ -156,6 +169,8 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
 
         assert_all_finite(u)
         assert_all_finite(vt)
+        if u.shape[1] == 1 and vt.shape[0] == 1:
+            n_discard = 0
         u = u[:, n_discard:]
         vt = vt[n_discard:]
         return u, vt.T
@@ -278,6 +293,7 @@ class SpectralCoclustering(BaseSpectral):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
+
         z = np.vstack((row_diag[:, np.newaxis] * u,
                        col_diag[:, np.newaxis] * v))
 
@@ -291,6 +307,7 @@ class SpectralCoclustering(BaseSpectral):
                                for c in range(self.n_clusters))
         self.columns_ = np.vstack(self.column_labels_ == c
                                   for c in range(self.n_clusters))
+        return self
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -475,6 +492,7 @@ class SpectralBiclustering(BaseSpectral):
         self.columns_ = np.vstack(self.column_labels_ == label
                                   for _ in range(n_row_clusters)
                                   for label in range(n_col_clusters))
+        return self
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise
