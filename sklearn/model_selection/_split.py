@@ -65,7 +65,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples
             The target variable for supervised learning problems.
 
         labels : array-like, with shape (n_samples,), optional
@@ -290,7 +290,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,), optional
+        y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
         labels : array-like, with shape (n_samples,), optional
@@ -606,6 +606,31 @@ class StratifiedKFold(_BaseKFold):
         for i in range(self.n_folds):
             yield test_folds == i
 
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedKFold, self).split(X, y, labels)
 
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
@@ -1092,6 +1117,32 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = rng.permutation(test)
 
             yield train, test
+
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedShuffleSplit, self).split(X, y, labels)
 
 
 def _validate_shuffle_split_init(test_size, train_size):
