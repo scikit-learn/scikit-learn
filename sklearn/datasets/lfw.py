@@ -460,7 +460,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         from the dataset containing 5749 people. Changing the ``slice_`` or resize
         parameters will change the shape of the output.
 
-    target : numpy array of shape (13233,)
+    target : numpy array of shape (2200,)
         Labels associated to each pair of images. The two label values being
         different persons or the same person.
 
