@@ -789,8 +789,9 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
+            Where n_labels is the labels for the n_samples
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
