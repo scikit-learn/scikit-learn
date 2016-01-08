@@ -76,6 +76,9 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
      By `Jatin Shah`_ and `Raghav R V`_.
 
+   - :class:`linear_model.RANSACRegressor` now supports ``sample_weights``.
+     By `Imaculate`_.
+
 Bug fixes
 .........
 
@@ -3999,3 +4002,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Asish Panda: https://github.com/kaichogami
 
 .. _Philipp Dowling: https://github.com/phdowling
+
+.. _Imaculate: https://github.com/Imaculate
