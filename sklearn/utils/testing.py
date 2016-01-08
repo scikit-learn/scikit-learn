@@ -530,9 +530,10 @@ def uninstall_mldata_mock():
 
 
 # Meta estimators need another estimator to be instantiated.
-META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputRegressor",
-                   "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
-                   "RFECV", "BaseEnsemble"]
+META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
+                   "MultiOutputRegressor", "MultiOutputClassifier",
+                   "OutputCodeClassifier", "OneVsRestClassifier",
+                   "RFE", "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]

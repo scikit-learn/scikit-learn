@@ -976,8 +976,8 @@ See the :ref:`metrics` section of the user guide for further details.
 
 .. _multioutput_ref:
 
-:mod:`sklearn.multioutput`: Multioutput regression
-==================================================
+:mod:`sklearn.multioutput`: Multioutput regression and classification
+=====================================================================
 
 .. automodule:: sklearn.multioutput
    :no-members:
@@ -992,6 +992,7 @@ See the :ref:`metrics` section of the user guide for further details.
     :template: class.rst
 
     multioutput.MultiOutputRegressor
+    multioutput.MultiOutputClassifier
 
 .. _naive_bayes_ref:
 
