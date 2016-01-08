@@ -6,6 +6,8 @@ This module implements multiclass learning algorithms:
     - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
+    - rakel (multilabel)
+    - (ensemble) classifier chain (multilabel)
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
@@ -30,6 +32,7 @@ case.
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 # Author: Hamzeh Alsalhi <93hamsal@gmail.com>
+# Author: Alain Pena <alain.pena.r@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -37,22 +40,35 @@ import array
 import numpy as np
 import warnings
 import scipy.sparse as sp
+from scipy.special import comb
+import copy as cp
+from functools import cmp_to_key
+try:
+    from itertools import izip
+except ImportError:
+    from builtins import zip as izip
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
-from .utils import check_random_state
+from .utils import check_random_state, check_X_y
 from .utils.validation import _num_samples
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
+from .utilities import get_random_numbers, cycle_permutations, shuffle_array
+from .utilities import get_most_probable_class, round_nearest
+from .basic_checks import check_is_in_range, check_is_binary_01
+from .powerset import Powerset
 
 __all__ = [
     "OneVsRestClassifier",
     "OneVsOneClassifier",
     "OutputCodeClassifier",
+    "RakelClassifier",
+    "ClassifierChain",
 ]
 
 
@@ -637,3 +653,805 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]
+
+
+def _cmp_fct(val1, val2):
+    """
+    Comparing function between 2 arrays of same size.
+    """
+    for i1, i2 in izip(val1, val2):
+        if (i1 < i2):
+            return -1
+        elif (i1 > i2):
+            return 1
+    return 0
+
+
+def _valid_possibility(possibility, sorted_array):
+    """
+    Tests if the possibility is absent from the sorted array.
+    """
+    cmped = 0
+    for elem in sorted_array:
+        cmped = _cmp_fct(possibility, elem)
+        if (cmped == 0):
+            return False
+        elif (cmped < 0):
+            return True
+    return True
+
+
+def _make_possibility(poss, n_labels):
+    """
+    Converts an array of indexes into a "boolean" array.
+    """
+    possibility = np.zeros((n_labels,), dtype=np.int8)
+    possibility[poss] = 1
+    return possibility
+
+
+def _get_possibility(start, n_max, sorted_array):
+    """
+    Returns a possible permutation from a start which does not appear
+    in a sorted array or raises a `ValueError` if cannot be found.
+    """
+    for p in cycle_permutations(start, n_iter=n_max):
+        if _valid_possibility(p, sorted_array):
+            return p
+    raise ValueError("Error: no possibility found.")
+
+
+class RakelClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+
+    """
+    Implements a rakel meta-classifier.
+
+    Parameters
+    ----------
+    estimator : sklearn.base.BaseEstimator
+        The underlying estimator.
+
+    k : Number
+        Size of the labelset to generate.
+        Integer value means its absolute size,
+        while float value in range [0, 1[ means the relative size.
+
+    n_estimators : Number
+        Number of labelsets to generate. It is the "m" parameter.
+
+    threshold : float
+        Threshold for the meta-estimator to consider as a true or false value.
+
+    no_hole : bool
+        Whether or not the union of the labelsets must totally cover the order.
+
+    random_state : int or RandomState
+        RNG seed.
+
+    fill_method : float or string
+        The way the classifier fills predictions if a label is not
+        in any labelset.
+            "most_frequent" for using the most frequent value for
+            this label (using percentage)
+
+            float in [0, 1] for a constant value
+
+    powerset : str
+        The method to decompress the predictions.
+
+        `majority` for taking the most dominant class, then split it back
+        into multilabel
+
+        `probabilities` for decompressing each class following its estimated
+        probabilities.
+
+    verbose : int
+        Verbosity level.
+
+    n_jobs : int
+        Number of jobs to run concurrently, currently not used.
+
+    Reference
+    ---------
+    Tsoumakas, G., Vlahavas, I.:
+
+        Random k-labelsets: An ensemble method for multilabel
+        classification.
+
+        In: Proceedings of the 18th European Conference
+        on Machine Learning (ECML 2007),
+
+        Warsaw, Poland (2007) 406-417
+    """
+
+    def __init__(self, estimator, k=1, n_estimators=1, threshold=0.5,
+                 no_hole=True, random_state=None,
+                 fill_method="most_frequent",
+                 uniqueness=True,
+                 powerset="majority",
+                 verbose=0, n_jobs=1):
+        self.estimator = estimator
+        self.k = k
+        self.n_estimators = n_estimators
+        self.threshold = threshold
+        self.no_hole = no_hole
+        self.random_state = random_state
+        self.verbose = verbose
+        self.n_jobs = n_jobs
+        self.n_labels_ = 0
+        self.fill_method = fill_method
+        self.uniqueness = uniqueness
+        self.powerset = powerset
+        self.multi_label_ = True
+        self.X_ = None
+        self.y_ = None
+        self.view_ = None
+        self.labelsets_ = None
+        self._ACCEPTABLE_COLLISION = 0.5
+
+    def _get_labelsets(self, n_labelsets, n_labels, size_labelsets,
+                       random_state=None, uniqueness=False):
+        # n_max =                   factorial(n_labels)
+        #    -----------------------------------------------------------------
+        #    (factorial(size_labelsets) * factorial(n_labels - size_labelsets)
+        if ((n_labels < size_labelsets) or
+                (size_labelsets < 0) or
+                (n_labels < 1)):
+            return []
+        if (uniqueness):
+            n_max = comb(n_labels, size_labelsets, exact=True)
+            if (n_max < n_labelsets):
+                raise ValueError("The combination of the arguments will "
+                                 "force the generation of duplicates.")
+
+        retv = [np.zeros((n_labels,), dtype=np.int8)
+                for _ in range(int(n_labelsets))]
+        if (size_labelsets == 0):
+            return retv
+
+        rnd = check_random_state(seed=random_state)
+
+        r = [rnd.choice(n_labels, size=size_labelsets, replace=False)
+             for _ in range(int(n_labelsets))]
+        for idx, arr in izip(r, retv):
+            arr[idx] = 1
+
+        retv.sort(key=cmp_to_key(_cmp_fct))
+        if not uniqueness:
+            return retv
+
+        possibility = None
+        idx = 0
+        collide_chance = n_max * self._ACCEPTABLE_COLLISION > n_labelsets
+        while idx < (len(retv) - 1):
+            # Iterates through the return value to be sure that each element
+            # is unique.
+            if (_cmp_fct(retv[idx], retv[idx+1]) == 0):
+                if (collide_chance):
+                    # If enough possibilities, let randomness decide
+                    possibility = rnd.choice(n_labels, size=size_labelsets,
+                                             replace=False)
+                    possibility = _make_possibility(possibility, n_labels)
+                    while not _valid_possibility(possibility, retv):
+                        possibility = rnd.choice(n_labels, size=size_labelsets,
+                                                 replace=False)
+                        possibility = _make_possibility(possibility, n_labels)
+                else:
+                    # Good chances of collisions, so use deterministic way
+                    possibility = _get_possibility(retv[idx+1], n_max, retv)
+                retv[idx+1] = np.asarray(possibility, dtype=np.int8)
+                retv.sort(key=cmp_to_key(_cmp_fct))
+            else:
+                idx = idx + 1
+        return retv
+
+    def _force_no_hole(self, labelsets):
+        labs = np.array([sum(i) for i in izip(*labelsets)])
+        if (np.sum(labs) < labs.size):
+            raise ValueError("Impossible to get no hole.")
+
+        indexes = np.count_nonzero(labs)
+        if indexes == labs.size:
+            return labelsets
+        amin = np.argmin(labs)
+        while not labs[amin]:
+            # 1- select the most appearing element
+            amax = np.argmax(labs)
+            # 2- remove one and resort the array of labs
+            labs[amax] = labs[amax] - 1
+            labs[amin] = labs[amin] + 1
+            idx_ = labs.size - 1
+            while ((idx_ > 0) and (labs[idx_] < labs[idx_ - 1])):
+                labs[idx_], labs[idx_ - 1] = labs[idx_ - 1], labs[idx_]
+                idx_ = idx_ - 1
+            # 3- find a labelset containing `most`th label and swap them
+            idx_ = 0
+            while not labelsets[idx_][amax]:
+                idx_ = idx_ + 1
+            labelsets[idx_][amax], labelsets[idx_][amin] = \
+                labelsets[idx_][amin], labelsets[idx_][amax]
+            amin = np.argmin(labs)
+        return labelsets
+
+    def _create_labelsets(self):
+        safe_k = int(self.k)
+        if check_is_in_range(self.k, lower_bound=0,
+                             low_exclusive=True,
+                             higher_bound=1,
+                             high_exclusive=True,
+                             launch_exception=False):
+            safe_k = int(np.ceil(self.k * self.n_labels_))
+        else:
+            check_is_in_range(safe_k, lower_bound=1,
+                              low_exclusive=False,
+                              higher_bound=self.n_labels_,
+                              high_exclusive=False,
+                              launch_exception=True,
+                              msg=("Invalid size of labelset ({0})."
+                                   ).format(str(safe_k)),
+                              exception_type=ValueError)
+
+        def get_m():
+            safe_m_ = int(self.n_estimators)
+            if not self.uniqueness:
+                return safe_m_
+            return min(safe_m_, comb(self.n_labels_, safe_k, exact=True))
+        safe_m = get_m()
+
+        check_is_in_range(safe_m, lower_bound=1,
+                          low_exclusive=False,
+                          launch_exception=True,
+                          msg=("Invalid number of labelsets ({0})."
+                               ).format(str(safe_m)),
+                          exception_type=ValueError)
+        if (self.no_hole and ((safe_k * safe_m) < self.n_labels_)):
+            raise ValueError(("Impossible to get no hole for {0}"
+                              " labels and k = {1}, m = {2}.").format(
+                              str(self.n_labels_), str(safe_k), str(safe_m)))
+        retv = self._get_labelsets(safe_m, self.n_labels_, safe_k,
+                                   random_state=cp.copy(self.random_state),
+                                   uniqueness=self.uniqueness)
+        if self.no_hole:
+            retv = self._force_no_hole(retv)
+        retv.sort(key=cmp_to_key(_cmp_fct))
+        return retv
+
+    def fit(self, X, y, copy=False):
+        """
+        Fits the underlying estimator on the data.
+
+        Parameters
+        ----------
+        X : array_like of shape [n_samples, n_features]
+            The training input samples.
+
+        y : array_like of shape [n_samples] or [n_samples, n_outputs]
+            The target values.
+
+        Returns
+        -------
+        RakelClassifier
+            self.
+
+        WARNING: IF COPY = FALSE:
+        This estimator will use the X and y arrays for the
+        prediction part, but those will not be copied. Thus, a
+        modification in one of those will have as effect to fit and
+        predict on the modified data.
+        """
+        self.X_, self.y_ = check_X_y(X, y, multi_output=True,
+                                     accept_sparse=None, copy=copy,
+                                     force_all_finite=True,
+                                     allow_nd=False)
+
+        if copy:
+            self.y_ = self.y_.copy()
+        try:
+            n_labels = self.y_.shape[1]
+        except IndexError:
+            n_labels = 1
+            self.view_ = np.reshape(self.y_, (len(self.y_), 1))
+            self.multi_label_ = False
+        else:
+            self.view_ = self.y_
+            self.multi_label_ = True
+
+        self.n_labels_ = n_labels
+        try:
+            self.labelsets_ = self._create_labelsets()
+        except ValueError:
+            self.view_ = None
+            self.n_labels_ = 0
+            self.labelsets_ = None
+            self.X_ = None
+            self.y_ = None
+            raise
+        return self
+
+    def __predict(self, X, predict_only=True):
+        """
+        Prediction helper.
+        """
+        if (self.labelsets_ is None):
+            raise Exception(("Rakel not initialized. "
+                             "Perform a fit first."))
+        check_is_binary_01(
+            self.view_, launch_exception=True,
+            exception_type=ValueError)
+        if self.fill_method == "most_frequent":
+            def get_most_freqs():
+                frequencies1 = np.array(
+                    [float((self.view_[:, i] == 1).sum())
+                        for i in range(int(self.n_labels_))])
+                frequencies1 /= float(self.view_.shape[0])
+                return frequencies1
+            fill_vals = get_most_freqs()
+        else:
+            check_is_in_range(elem=self.fill_method,
+                              lower_bound=0.0,
+                              higher_bound=1.0, low_exclusive=False,
+                              high_exclusive=False,
+                              launch_exception=True,
+                              msg="Error: invalid fill_method.",
+                              exception_type=ValueError)
+            fill_vals = [self.fill_method for _ in range(int(self.n_labels_))]
+
+        if (self.verbose > 1):
+            print("Number of estimators: {0}.".format(str(self.n_estimators)))
+        votes = np.zeros((X.shape[0], self.n_labels_))
+        if predict_only:
+            avg = np.zeros((X.shape[0], self.n_labels_))
+            retv = np.zeros((X.shape[0], self.n_labels_))
+        else:
+            retv = [np.zeros((X.shape[0], 2))
+                    for _ in range(int(self.n_labels_))]
+
+        rnds = get_random_numbers(shape=(self.n_estimators, ),
+                                  random_state=cp.copy(self.random_state))
+        for bin_labelset, rnd in izip(self.labelsets_, rnds):
+            labelset = bin_labelset.nonzero()[0]
+            if (self.verbose > 2):
+                print("labelset: {0}".format(labelset))
+            power = Powerset()
+            y_train = power.compressed_powerize(self.view_[:, labelset])
+            estim = clone(self.estimator)
+            try:
+                estim.set_params(random_state=rnd)
+            except ValueError:
+                pass
+            estim.fit(self.X_, y_train)
+
+            if predict_only:
+                result = estim.predict(X)
+                uncompressed = power.unpowerize(result)
+                for sample, uncom in enumerate(uncompressed):
+                    for label, unc in izip(labelset, uncom):
+                        avg[sample, label] += unc
+                        votes[sample, label] += 1
+            else:
+                r = estim.predict_proba(X)
+                if self.powerset == "probabilities":
+                    odd = power.probas_unpowerize(r)
+                    for idx_label, label in enumerate(odd):
+                        for i in range(label.shape[0]):
+                            retv[labelset[idx_label]][i, :] += label[i, :]
+                            votes[i, labelset[idx_label]] += 1
+                else:
+                    # odd = [[0 for _ in range(n_samples)]
+                    #        for i in range(n_labels)]
+                    odd = power.majority_unpowerize(r)
+                    for idx_label, label in enumerate(odd):
+                        retv[labelset[idx_label]][:, 1] += label
+                        votes[:, labelset[idx_label]] += 1
+                    for idx_label in range(int(self.n_labels_)):
+                        retv[idx_label][:, 0] = (votes[:, idx_label] -
+                                                 retv[idx_label][:, 1])
+
+            del estim
+
+        if predict_only:
+            for i in range(votes.shape[0]):
+                for j in range(votes.shape[1]):
+                    if votes[i, j] == 0:
+                        if (self.verbose > 0):
+                            print(("The label {0} of the sample {1} "
+                                   "cannot be estimated. Set to fill "
+                                   "value.").format(str(j), str(i)))
+                        votes[i, j] = 1.0
+                        avg[i, j] = fill_vals[j]
+                    avg[i, j] /= votes[i, j]
+                    if (avg[i, j] > self.threshold):
+                        retv[i, j] = 1
+        else:
+            for i in range(votes.shape[0]):
+                for j in range(votes.shape[1]):
+                    if votes[i, j] == 0:
+                        if (self.verbose > 0):
+                            print(("The label {0} of the sample {1} "
+                                   "cannot be estimated. Set to fill "
+                                   "value.").format(str(j), str(i)))
+                        votes[i, j] = 1.0
+                        retv[j][i, 1] = fill_vals[j]
+                    else:
+                        retv[j][i, :] /= votes[i, j]
+                    retv[j][i, 0] = 1.0 - retv[j][i, 1]
+
+        if not self.multi_label_:
+            if predict_only:
+                return retv.ravel()
+            else:
+                return retv[0]
+
+        return retv
+
+    def predict(self, X):
+        """
+        Predict class or regression value for X using the underlying
+            estimator. For a classification model, the predicted class for
+        each sample in X is returned. For a regression model, the predicted
+        value based on X is returned.
+
+        Parameters
+        ----------
+        X : array_like of shape [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        array of shape = [n_samples] or [n_samples, n_outputs]
+            The predicted classes, or the predict values.
+        """
+        return self.__predict(X, predict_only=True)
+
+    def predict_proba(self, X):
+        """
+        Predict class probabilities of the input samples X using
+        the underlying estimator.
+
+        Parameters
+        ----------
+        X : array_like of shape [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        array of shape = [n_samples, n_classes], or a list of n_outputs
+            such arrays if n_outputs > 1. The class probabilities of
+            the input samples. The order of the classes corresponds to
+            the one from the y used for fitting.
+        """
+        return self.__predict(X, predict_only=False)
+
+
+class BaseClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+
+    """
+    Base classifier chain estimator.
+
+    It manages the different operations common to the various
+    classifier chains, and allow to determine a custom order
+    by being inherited.
+
+    Classifier chains are similar to the binary relevance for
+    the multilabel, but the output of each estimator is introduced
+    in the inputs of the following steps.
+
+    The implementation is lazy in order to spare memory.
+
+    Parameters
+    ----------
+    estimator : sklearn.base.BaseEstimator
+        The underlying estimator of this meta-classifier that
+        will be used to compute the predictions.
+        It must be able to classify multilabel data
+        if the steps are multilabel, or multiclass data
+        if the steps are multiclass.
+
+    n_jobs : int
+        The number of jobs to run the estimator.
+        No support for multithreading implemented yet,
+        rendering this parameter useless.
+
+    n_estimators : int
+        The number of classifier chains in the ensemble.
+
+    shuffle : bool
+        If the order should be randomized for each classifier
+        chain of the ensemble
+
+    random_state : int or RandomState
+        RNGseed.
+
+    estimators_random_state_level : int
+        Boolean mask allowing to tune at which level the
+        randomness applies. The different masks available are:
+
+            `ESTIMATOR_SAME_RND` : if set, the random seed of
+            the underlying estimator will not be modified,
+            leading to the same random seed for each step of the
+            chain.
+
+            `CLASSIFIERCHAIN_FOREST_SAME_RND` : if set, the
+            classifier chains from the forest will have the
+            same random seed. In case of a random order ECC
+            with a seed not None, this will result into
+            classifiers chains with the exact same
+            labels order.
+
+            `ALL_SAME_RND` : if set, is the same as setting the 2
+            other masks.
+
+    verbose:integer
+        Controls the verbosity of the classifier.
+
+    References
+    ----------
+    .. [1]  J. Read, B. Pfahringer, G. Holmes, E. Frank
+            "Classifier chains for multi-label classification".
+            Machine learning, vol. 85(3), pp. 333-359, 2011.
+    """
+    ESTIMATOR_SAME_RND = 1
+    CLASSIFIERCHAIN_FOREST_SAME_RND = 2
+    ALL_SAME_RND = ESTIMATOR_SAME_RND | CLASSIFIERCHAIN_FOREST_SAME_RND
+
+    def __init__(self, estimator, n_jobs=1, n_estimators=1,
+                 shuffle=True, random_state=None,
+                 estimators_random_state_level=0, verbose=0):
+        self.n_estimators = n_estimators
+        self.estimator = estimator
+        self.n_jobs = n_jobs
+        self.shuffle = shuffle
+        self.random_state = random_state
+        self.estimators_random_state_level = estimators_random_state_level
+        self.verbose = verbose
+        self.X_ = None
+        self.y_ = None
+        self.view_ = None
+        self.n_labels_ = 0
+        self.labelsets_ = None
+        self.results_ = None
+
+    def fit(self, X, y, copy=False):
+        """
+        Fits the data.
+
+        Parameters
+        ----------
+        X : array-like
+            The array of features
+
+        y : array-like
+            The array of labels
+
+        copy : bool
+            Whether these data should be copied or not.
+            Copying allows to make the classifier independent
+            of modifications on the data later, but
+            delaying the method.
+
+            Not copying does only copy reference, thus modifying
+            `X` or `y` afterwards will modify the internal
+            arrays.
+
+        Returns
+        -------
+        BaseClassifierChain
+            The fitted classifier chain
+
+        WARNING
+            IF COPY = FALSE:
+            This estimator will use the X and y arrays for the
+            prediction part, but those will not be copied. Thus, a
+            modification in one of those will have as effect to fit
+            and predict on the modified datas.
+        """
+        self.X_ = None
+        self.y_ = None
+        self.X_, self.y_ = check_X_y(X, y, multi_output=True,
+                                     accept_sparse=None, copy=copy,
+                                     force_all_finite=True,
+                                     allow_nd=False)
+        if copy:
+            self.y_ = self.y_.copy()
+        try:
+            n_labels = self.y_.shape[1]
+        except IndexError:
+            n_labels = 1
+            self.view_ = np.reshape(self.y_, (len(self.y_), 1))
+        else:
+            self.view_ = self.y_
+
+        self.n_labels_ = n_labels
+        self.labelsets_ = self.make_labelsets()
+
+        return self
+
+    def _check_fit(self):
+        if ((self.X_ is None) or (self.y_ is None)):
+            raise Exception("Classifier not initialized. "
+                            "Perform a fit first.")
+
+    def make_labelsets(self):
+        """
+        Defines the various labelsets.
+
+        Returns
+        -------
+        list of np.array of int
+            The various labelsets for each estimator.
+        """
+        raise NotImplementedError("make_labelsets must be overriden to "
+                                  "generate a correct labelset order.")
+
+    def iter_labelset(self, labelset):
+        for index in labelset:
+            yield [index]
+
+    def __predict_method_aux(self, X, index,
+                             random_state=None, predict_only=True):
+        order = self.labelsets_[index]
+        rnd = check_random_state(seed=random_state)
+        nextXfit = self.X_
+        nextX = X
+
+        predicted = np.empty((X.shape[0], self.n_labels_))
+        retv = None
+
+        for current_range in self.iter_labelset(order):
+            estimator = clone(self.estimator)
+            if ((self.estimators_random_state_level &
+                 self.ESTIMATOR_SAME_RND) == 0):
+                try:
+                    estimator.set_params(
+                        **{"random_state": get_random_numbers(
+                            random_state=rnd)})
+                except ValueError:
+                    pass
+            currentXfit = nextXfit
+            currentX = nextX
+            data = self.view_[:, current_range]
+            if (len(current_range) == 1):
+                data = data.ravel()
+            estimator.fit(currentXfit, data)
+            if predict_only:
+                sub_predicted = estimator.predict(currentX)
+            else:
+                sub_predicted = estimator.predict_proba(currentX)
+            del estimator
+            try:
+                sub_predicted.shape
+                sub_predicted = [sub_predicted]
+            except AttributeError:
+                pass
+            if predict_only:
+                sub_predicted = sub_predicted[0]
+            else:
+                if (retv is None):
+                    try:
+                        n_samples, n_odds = sub_predicted[0].shape
+                    except AttributeError:
+                        n_samples, n_odds = sub_predicted.shape
+                    retv = [np.empty((n_samples, n_odds), dtype=float)
+                            for _ in range(self.n_labels_)]
+
+                sub_predicted_tmp = np.empty((n_samples, len(current_range)),
+                                             dtype=float)
+                for idx, elem in enumerate(current_range):
+                    try:
+                        sub_predicted.shape
+                    except AttributeError:
+                        retv[elem] = sub_predicted[idx]
+                        sub_predicted_tmp[:, idx] = (
+                            get_most_probable_class(sub_predicted[idx]))
+                    else:
+                        retv[elem] = sub_predicted
+                        sub_predicted_tmp[:, idx] = (
+                            get_most_probable_class(sub_predicted))
+                sub_predicted = sub_predicted_tmp
+            nextX = np.empty((currentX.shape[0],
+                              currentX.shape[1] + len(current_range)))
+            nextX[:, :-len(current_range)] = currentX
+            nextXfit = np.empty((currentXfit.shape[0],
+                                 currentXfit.shape[1] + len(current_range)))
+            nextXfit[:, :-len(current_range)] = currentXfit
+            if (len(current_range) == 1):
+                sub_predicted = sub_predicted.reshape((-1, 1))
+            predicted[:, current_range] = sub_predicted
+            for idx, j in enumerate(current_range):
+                nextXfit[:, -len(current_range) + idx] = self.view_[:, j]
+                nextX[:, -len(current_range) + idx] = predicted[:, j]
+
+        if predict_only:
+            if self.results_ is None:
+                self.results_ = predicted
+            else:
+                self.results_ += predicted
+        else:
+            if self.results_ is None:
+                self.results_ = retv
+            else:
+                for idx_label in range(len(retv)):
+                    self.results_[idx_label] += retv[idx_label]
+
+    def __predict_method(self, X, predict_only=True):
+        self._check_fit()
+        random = check_random_state(seed=cp.copy(self.random_state))
+
+        self.results_ = None
+        rnd = [random for _ in range(self.n_estimators)]
+        if ((self.estimators_random_state_level &
+             self.CLASSIFIERCHAIN_FOREST_SAME_RND) == 0):
+            rnd = get_random_numbers(
+                shape=self.n_estimators,
+                random_state=random)
+        for idx, rnd_ in enumerate(rnd):
+            self.__predict_method_aux(
+                        X, idx, random_state=cp.copy(rnd_),
+                        predict_only=predict_only)
+            if self.verbose > 1:
+                r = str(len(str(self.n_estimators)))
+                r = "".join(("{:0>", r, "d}"))
+                r = r.format(idx + 1)
+                print(("Predicted {0} / {1}.").format(r, self.n_estimators))
+        retv = self.results_
+        self.results_ = None
+
+        if predict_only:
+            retv /= self.n_estimators
+            retv = round_nearest(retv, inplace=True)
+        else:
+            for idx_label in range(len(retv)):
+                retv[idx_label] /= self.n_estimators
+
+        return retv
+
+    def predict(self, X):
+        """
+        Predict class for X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape =
+        [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        array of shape = [n_samples] or [n_samples, n_outputs]
+            The predicted classes.
+        """
+        retv = self.__predict_method(X, True)
+        if (retv.shape[0] == 1 or retv.shape[0] == retv.size):
+            return retv.ravel()
+        return retv
+
+    def predict_proba(self, X):
+        """
+        Predict class probabilities for X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape =
+        [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        array of shape = [n_samples, n_classes], or a list of
+        n_outputs
+        """
+        retv = self.__predict_method(X, False)
+        if (len(retv) == 1):
+            return retv[0]
+        return retv
+
+
+class ClassifierChain(BaseClassifierChain):
+    def make_labelsets(self):
+        rnd = check_random_state(seed=cp.copy(self.random_state))
+        if (self.shuffle):
+            base = np.arange(self.n_labels_, dtype=int)
+            return [shuffle_array(base, inplace=False, random_state=rnd)
+                    for _ in range(self.n_estimators)]
+        return [np.arange(self.n_labels_, dtype=int)
+                for _ in range(self.n_estimators)]

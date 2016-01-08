@@ -1,5 +1,11 @@
 import numpy as np
 import scipy.sparse as sp
+import sys
+import re
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
@@ -14,6 +20,16 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.testing import assert_allclose
+from sklearn.utilities import convert_probabilities, probs_to_class
+from sklearn.utilities import get_random_numbers, get_most_probable_class
+from sklearn.multiclass import RakelClassifier, _get_possibility
+from sklearn.multiclass import _valid_possibility
+from sklearn.multiclass import ClassifierChain, BaseClassifierChain
+from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.powerset import Powerset
+from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -549,3 +565,804 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def count_identical(array, container):
+    retv = 0
+    for ar in container:
+        if (array == ar).all():
+            retv = retv + 1
+    return retv
+
+
+def assert_labelsets(rak):
+    assert_equal(len(rak.labelsets_), rak.n_estimators)
+    assert_equal(type(rak.labelsets_), type([]))
+    for l in rak.labelsets_:
+        if (rak.k < 1):
+            assert_equal(np.sum(l), int(rak.k * rak.n_labels_))
+        else:
+            assert_equal(np.sum(l), rak.k)
+        assert_equal(type(l), type(np.zeros((10,))))
+    if rak.no_hole:
+        r = np.array([sum(i) for i in zip(*rak.labelsets_)])
+        assert_equal(rak.n_labels_, np.count_nonzero(r))
+    if rak.uniqueness:
+        for l in rak.labelsets_:
+            assert_equal(1, count_identical(l, rak.labelsets_))
+
+
+def test_rakel_get_possibility():
+    array = [['0', '1', '2'],
+             ['0', '2', '1'],
+             ['1', '0', '2'],  # 2
+             ['1', '2', '0'],
+             ['2', '0', '1'],  # 4
+             ['2', '1', '0']]
+    assert_raises(ValueError, _get_possibility, array[3], 10, array)
+    del array[4]
+    del array[2]
+    assert_array_equal(['1', '0', '2'],
+                       _get_possibility(array[0], 2, array))
+    assert_array_equal(['1', '0', '2'],
+                       _get_possibility(array[1], 1, array))
+    assert_array_equal(['2', '0', '1'],
+                       _get_possibility(array[2], 1, array))
+    assert_array_equal(['1', '0', '2'],
+                       _get_possibility(array[3], 3, array))
+    assert_raises(ValueError, _get_possibility, array[3], 2, array)
+
+
+def test_rakel_labelsets():
+    random_state = 0
+
+    # init
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    n_classes = 10
+    length = 1
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    rakel = RakelClassifier(DecisionTreeClassifier(random_state=random_state),
+                            random_state=random_state, no_hole=False,
+                            k=1, n_estimators=10, uniqueness=True)
+    assert_array_equal([], rakel._get_labelsets(n_labelsets=11,
+                                                n_labels=10,
+                                                size_labelsets=11))
+
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    rakel.n_estimators = 0
+    assert_raises(ValueError, rakel.fit, X, y)
+    rakel.n_estimators = -1
+    assert_raises(ValueError, rakel.fit, X, y)
+    rakel.n_estimators = 10
+    rakel.k = 2
+    rakel.fit(X, y)
+    assert_true(_valid_possibility(rakel.labelsets_[-1],
+                                   rakel.labelsets_[:-1]))
+    assert_labelsets(rakel)
+    rakel.k = 11
+    assert_raise_message(ValueError, "Invalid size", rakel.fit, X, y)
+    rakel.k = 2
+    rakel.n_estimators = 100
+    rakel.fit(X, y)
+    assert_equal(len(rakel.labelsets_), n_classes * (n_classes - 1) * 0.5)
+    assert_raise_message(ValueError, "duplicate",
+                         rakel._get_labelsets, rakel.n_estimators,
+                         rakel.n_labels_, rakel.k, random_state=None,
+                         uniqueness=True)
+    assert_raise_message(ValueError, "duplicate",
+                         rakel._get_labelsets, 2,
+                         rakel.n_labels_, 0, random_state=None,
+                         uniqueness=True)
+    assert_array_equal(rakel._get_labelsets(4, 3, 0, uniqueness=False),
+                       [np.zeros((3,)) for _ in range(4)])
+    rakel.k = 5
+    rakel.n_estimators = 252
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    rakel.n_estimators = 140
+    rakel._ACCEPTABLE_COLLISION = 0.99
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    rakel._ACCEPTABLE_COLLISION = 0.5
+    rakel.k = 2
+    rakel.n_estimators = 2
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    rakel.no_hole = True
+    assert_raise_message(ValueError, "no hole",
+                         rakel._force_no_hole,
+                         rakel.labelsets_)
+    assert_raise_message(ValueError, "no hole", rakel.fit, X, y)
+    rakel.n_estimators = 10
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    rakel.uniqueness = False
+    rakel.n_estimators = 30
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    labs = rakel.labelsets_
+    rakel.k = float(rakel.k) / rakel.n_labels_
+    rakel.fit(X, y)
+    assert_labelsets(rakel)
+    assert_array_equal(labs, rakel.labelsets_)
+
+
+def test_rakel_fit():
+    # If fit fails, all computed properties should be reset
+    random_state = 0
+
+    # init
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    n_classes = 10
+    length = 1
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    Xt, yt = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state + n_samples, return_indicator=True)
+    rakel = RakelClassifier(DecisionTreeClassifier(random_state=random_state),
+                            random_state=random_state, no_hole=False,
+                            k=1, n_estimators=10, uniqueness=True)
+    rakel.fit(X, y, copy=False)
+    assert_array_equal(rakel.X_, X)
+    assert_array_equal(rakel.y_, y)
+    assert_equal(rakel.n_labels_, n_classes)
+    assert_true(rakel.multi_label_)
+    assert_equal(len(rakel.labelsets_), 10)
+    assert_true(rakel is rakel.fit(X, y, copy=False))
+    rakel.k = 11
+    assert_raises(ValueError, rakel.fit, X, y, copy=False)
+    assert_array_equal(rakel.X_, None)
+    assert_array_equal(rakel.y_, None)
+    assert_equal(rakel.n_labels_, 0)
+    assert_equal(rakel.labelsets_, None)
+    assert_raises(ValueError, rakel.fit, X, y, copy=True)
+    assert_array_equal(rakel.X_, None)
+    assert_array_equal(rakel.y_, None)
+    assert_equal(rakel.n_labels_, 0)
+    assert_equal(rakel.labelsets_, None)
+    rakel.k = 1
+    y_ = y[:, 9].ravel()
+    rakel.fit(X, y_, copy=False)
+    assert_array_equal(rakel.X_, X)
+    assert_array_equal(rakel.y_, y_)
+    assert_equal(rakel.n_labels_, 1)
+    assert_false(rakel.multi_label_)
+    assert_equal(len(rakel.labelsets_), 1)
+    rakel.fit(X, y, copy=True)
+    assert_array_equal(rakel.X_, X)
+    assert_array_equal(rakel.y_, y)
+    assert_equal(rakel.n_labels_, n_classes)
+    assert_true(rakel.multi_label_)
+    assert_equal(len(rakel.labelsets_), 10)
+    X[0, 0] = 1 - X[0, 0]
+    y[0, 0] = 1 - y[0, 0]
+    assert_raises(AssertionError, assert_array_equal, rakel.X_, X)
+    assert_raises(AssertionError, assert_array_equal, rakel.y_, y)
+
+
+def test_rakel_predicts():
+    random_state = 0
+
+    # init
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    n_classes = 5
+    length = 1
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    Xt, yt = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state + n_samples, return_indicator=True)
+    tree = DecisionTreeClassifier(random_state=get_random_numbers(
+                                  random_state=random_state))
+    tree.fit(X, y)
+    y_predict = tree.predict(Xt)
+    y_probas = tree.predict_proba(Xt)
+    y_r = y[:, 0]
+    p = Powerset()
+    p_r = Powerset()
+    single = p_r.compressed_powerize(y_r)
+    comp = p.compressed_powerize(y)
+    tree.fit(X, comp)
+    rm1_tree_yt = tree.predict(Xt)
+    rm1_tree_ytp = tree.predict_proba(Xt)
+    tree.fit(X, y_r)
+    rm1r_tree_yt = tree.predict(Xt)
+    rm1r_tree_ytp = tree.predict_proba(Xt)
+    tree.fit(X, single)
+    rm1r_tree_yt_ = tree.predict(Xt)
+    rm1r_tree_ytp_ = tree.predict_proba(Xt)
+    assert_array_equal(rm1r_tree_yt_, rm1r_tree_yt)
+    assert_array_equal(y_predict, probs_to_class(y_probas))
+    assert_allclose(rm1r_tree_ytp, rm1r_tree_ytp_, rtol=1e-10)
+
+    rm1 = RakelClassifier(tree, k=1, n_estimators=1,
+                          threshold=0.5, no_hole=True,
+                          powerset="probabilities",
+                          random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(Exception, "initialized", rm1.predict_proba, Xt)
+    assert_array_equal(rm1_tree_yt, probs_to_class(rm1_tree_ytp))
+
+    rm1.fit(X, y_r)
+    rm1.fill_method = "i am incorrect"
+    assert_raises(ValueError, rm1.predict, Xt)
+    rm1.fill_method = -0.2
+    assert_raises(ValueError, rm1.predict, Xt)
+    rm1.fill_method = 1.1
+    assert_raises(ValueError, rm1.predict, Xt)
+    rm1.fill_method = "most_frequent"
+    res1 = rm1.predict(Xt)
+    assert_array_equal(p_r.unpowerize(rm1r_tree_yt_), res1)
+    assert_allclose(rm1r_tree_ytp_, rm1.predict_proba(Xt), rtol=1e-10)
+
+    rm1.k = n_classes
+    rm1.fit(X, y)
+    saved_stdout = sys.stdout
+    try:
+        out = StringIO()
+        sys.stdout = out
+        rm1.verbose = 5
+        res1 = rm1.predict(Xt)
+        output = out.getvalue().strip()
+        assert_true(re.compile("Number of estimators: \\d+.").search(output))
+        assert_true(re.compile("labelset: ").search(output))
+        rl = RakelClassifier(tree, k=1, n_estimators=1,
+                             threshold=0.5, no_hole=False,
+                             powerset="probabilities",
+                             random_state=random_state, verbose=5)
+        rl.fit(X, y)
+        out = StringIO()
+        sys.stdout = out
+        res1 = rl.predict(Xt)
+        output = out.getvalue().strip()
+        assert_true(re.compile("cannot be estimated").search(output))
+        out = StringIO()
+        sys.stdout = out
+        res1 = rl.predict_proba(Xt)
+        output = out.getvalue().strip()
+        assert_true(re.compile("cannot be estimated").search(output))
+    finally:
+        sys.stdout = saved_stdout
+    rm1.verbose = 0
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    trees = ExtraTreesClassifier()
+    assert_array_equal(p.unpowerize(rm1_tree_yt), res1)
+    assert_allclose(p.probas_unpowerize(rm1_tree_ytp), resp1, rtol=1e-10)
+    assert_allclose(
+        y_probas, convert_probabilities(y_probas, yt.shape), rtol=1e-10)
+    rm1 = RakelClassifier(trees, k=0.05, n_estimators=30, threshold=0.5,
+                          powerset="probabilities", no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    resp1 = rm1.predict_proba(Xt)
+    rm1 = RakelClassifier(trees, k=0.05, n_estimators=30, threshold=0.5,
+                          powerset="probabilities", no_hole=True,
+                          random_state=random_state, verbose=0,
+                          fill_method=1.0)
+    rm1.fit(X, y)
+    assert_allclose(resp1, rm1.predict_proba(Xt), rtol=1e-10)
+    rm1 = RakelClassifier(trees, k=0.05, n_estimators=30, threshold=0.5,
+                          powerset="probabilities", no_hole=True,
+                          random_state=random_state, verbose=0,
+                          fill_method=0.0)
+    rm1.fit(X, y)
+    assert_allclose(resp1, rm1.predict_proba(Xt), rtol=1e-10)
+    rm1 = RakelClassifier(trees, k=0.05, n_estimators=30, threshold=0.5,
+                          powerset="probabilities", no_hole=True,
+                          random_state=random_state, verbose=0,
+                          fill_method=0.5)
+    rm1.fit(X, y)
+    assert_allclose(resp1, rm1.predict_proba(Xt), rtol=1e-10)
+
+    rm1 = RakelClassifier(tree, k=n_classes, n_estimators=1,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=False,
+                          random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(
+        Exception, "initialized", rm1.predict_proba, Xt)
+    p = Powerset()
+    comp = p.compressed_powerize(y)
+    rm1_tree_y = tree.fit(X, comp)
+    rm1_tree_yt = tree.predict(Xt)
+    rm1_tree_ytp = tree.predict_proba(Xt)
+
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    assert_array_equal(p.unpowerize(rm1_tree_yt), res1)
+    assert_allclose(p.probas_unpowerize(rm1_tree_ytp), resp1, rtol=1e-10)
+    assert_allclose(
+        y_probas, convert_probabilities(y_probas, yt.shape), rtol=1e-10)
+
+    rm1 = RakelClassifier(tree, k=0.9999999999999, n_estimators=1,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(
+        Exception, "initialized", rm1.predict_proba, Xt)
+    p = Powerset()
+    comp = p.compressed_powerize(y)
+    rm1_tree_y = tree.fit(X, comp)
+    rm1_tree_yt = tree.predict(Xt)
+    rm1_tree_ytp = tree.predict_proba(Xt)
+    del rm1_tree_y
+
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    assert_array_equal(p.unpowerize(rm1_tree_yt), res1)
+    assert_allclose(p.probas_unpowerize(rm1_tree_ytp), resp1, rtol=1e-10)
+    assert_allclose(
+        y_probas, convert_probabilities(y_probas, yt.shape), rtol=1e-10)
+
+    base = DummyClassifier(strategy="most_frequent")
+    rm1 = RakelClassifier(base, k=1, n_estimators=1, threshold=0.5,
+                          powerset="probabilities",
+                          no_hole=False, random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(
+        Exception, "initialized", rm1.predict_proba, Xt)
+    base.fit(X, y)
+    base_predict = base.predict(Xt)
+    base_probas = base.predict_proba(Xt)
+    rm1.fit(X, y)
+    rm1.labelsets_ = []
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    assert_array_equal(base_predict, res1)
+    for label in resp1:
+        for i in range(label.shape[0]):
+            assert_allclose(label[0, :], label[i, :], rtol=1e-10)
+
+    # Test no error with absence of random_state
+    rm1.estimator = OneVsRestClassifier(tree)
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    # Test with majority unpowerset
+    rm1 = RakelClassifier(base, k=1, n_estimators=n_classes, threshold=0.5,
+                          powerset="majority",
+                          no_hole=True, fill_method=0.5,
+                          random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(Exception, "initialized", rm1.predict_proba, Xt)
+    base_sum = np.sum(y, axis=0) * 1.0
+    result = np.asarray([np.round(base_sum / n_samples)
+                         for _ in range(n_samples)])
+    base_probas = convert_probabilities(result, yt.shape)
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    assert_array_equal(result, res1)
+    assert_allclose(
+        convert_probabilities(base_probas, yt.shape), resp1, rtol=1e-10)
+    #
+    rm1 = RakelClassifier(base, k=1, n_estimators=1, threshold=0.5,
+                          powerset="probabilities",
+                          no_hole=False, fill_method=0.5,
+                          random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(
+        Exception, "initialized", rm1.predict_proba, Xt)
+    base_predict[:] = 0.5
+    base_probas = convert_probabilities(base_probas, yt.shape)
+    for label in base_probas:
+        it = np.nditer(label, flags=['multi_index'])
+        while not it.finished:
+            label[it.multi_index] = 0.5
+            it.iternext()
+    rm1.fit(X, y)
+    rm1.labelsets_ = []
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    assert_array_equal(base_predict, res1)
+    assert_allclose(
+        convert_probabilities(base_probas, yt.shape), resp1, rtol=1e-10)
+
+    rm1 = RakelClassifier(tree, k=1, n_estimators=n_classes,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    assert_raise_message(Exception, "initialized", rm1.predict, Xt)
+    assert_raise_message(Exception, "initialized", rm1.predict_proba, Xt)
+    base = OneVsRestClassifier(estimator=tree, n_jobs=1)
+    base.fit(X, y)
+    base_predict = base.predict(Xt)
+    base_probas = base.predict_proba(Xt)
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    assert_array_equal(base_predict, res1)
+    assert_allclose(
+        convert_probabilities(base_probas, yt.shape), resp1, rtol=1e-10)
+
+    rm1 = RakelClassifier(tree, k=0.2, n_estimators=n_classes, fill_method=0,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+
+    rm1 = RakelClassifier(tree, k=0.2, n_estimators=n_classes, fill_method=1,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    res2 = rm1.predict(Xt)
+    resp2 = rm1.predict_proba(Xt)
+    assert_array_equal(res1, res2)
+    assert_allclose(resp1, resp2, rtol=1e-10)
+    rm1 = RakelClassifier(tree, k=0.2, n_estimators=n_classes, fill_method=0.5,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    res2 = rm1.predict(Xt)
+    resp2 = rm1.predict_proba(Xt)
+    assert_array_equal(res1, res2)
+    assert_allclose(resp1, resp2, rtol=1e-10)
+    rm1 = RakelClassifier(tree, k=0.2, n_estimators=n_classes,
+                          powerset="probabilities",
+                          fill_method="most_frequent",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    res2 = rm1.predict(Xt)
+    resp2 = rm1.predict_proba(Xt)
+    assert_array_equal(res1, res2)
+    assert_allclose(resp1, resp2, rtol=1e-10)
+
+    rm1 = RakelClassifier(tree, k=0.4, n_estimators=30, fill_method=0,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    res1 = rm1.predict(Xt)
+    resp1 = rm1.predict_proba(Xt)
+    rm1 = RakelClassifier(tree, k=0.4, n_estimators=30, fill_method=1,
+                          powerset="probabilities",
+                          threshold=0.5, no_hole=True,
+                          random_state=random_state, verbose=0)
+    rm1.fit(X, y)
+    res2 = rm1.predict(Xt)
+    resp2 = rm1.predict_proba(Xt)
+    assert_array_equal(res1, res2)
+    assert_allclose(resp1, resp2, rtol=1e-10)
+
+
+def test_classifier_chain_fit():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    length = 1
+    for n_classes, n_samples in [[1, 1], [1, 10], [5, 1], [5, 10]]:
+        X, y = datasets.make_multilabel_classification(
+            n_samples=n_samples, n_features=n_features, length=length,
+            n_classes=n_classes, n_labels=n_labels,
+            allow_unlabeled=False,
+            random_state=random_state, return_indicator=True)
+        X[0, :] = 0
+        y[0, :] = 0
+
+        classif = ClassifierChain(
+            estimator=DecisionTreeClassifier(random_state=random_state),
+            shuffle=False, random_state=random_state, n_estimators=6,
+            estimators_random_state_level=(
+                ClassifierChain.ESTIMATOR_SAME_RND |
+                ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+        assert_equal(classif.fit(X, y, copy=False), classif)
+        assert_equal(classif.n_labels_, n_classes)
+        assert_array_equal(classif.X_, X)
+        assert_array_equal(classif.y_, y)
+        X[0, :] = 1
+        y[0, :] = 1
+        assert_array_equal(classif.X_, X)
+        assert_array_equal(classif.y_, y)
+        assert_equal(len(classif.labelsets_), classif.n_estimators)
+        assert_equal(len(classif.labelsets_[0]), classif.n_labels_)
+        assert_true(classif._check_fit() is None)
+
+        assert_raises(Exception, classif.fit, X, [20, 10])
+        assert_raises(Exception, classif._check_fit)
+
+        assert_equal(classif.fit(X, y, copy=True), classif)
+        assert_equal(classif.n_labels_, n_classes)
+        assert_array_equal(classif.X_, X)
+        assert_array_equal(classif.y_, y)
+        assert_true(classif._check_fit() is None)
+        X[0, :] = 0
+        y[0, :] = 0
+        assert_equal(len(classif.labelsets_), classif.n_estimators)
+        assert_equal(len(classif.labelsets_[0]), classif.n_labels_)
+        assert_raises(AssertionError, assert_array_equal, classif.X_, X)
+        assert_raises(AssertionError, assert_array_equal, classif.y_, y)
+        assert_true(classif._check_fit() is None)
+
+
+def test_classifier_chain_iter_labelset():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    classif = ClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    classif.fit(X, y)
+    labelset = classif.labelsets_[0]
+    for idx, l in enumerate(classif.iter_labelset(labelset)):
+        assert_array_equal([labelset[idx]], l)
+
+
+def test_classifier_chain_make_labelsets():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    classif = BaseClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        n_estimators=6,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    assert_raises(NotImplementedError, classif.make_labelsets)
+    assert_raises(NotImplementedError, classif.fit, X, y)
+    classif = ClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        n_estimators=6,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    classif.fit(X, y)
+    labelsets = classif.make_labelsets()
+    assert_equal(len(labelsets), classif.n_estimators)
+    assert_equal(len(labelsets[0]), classif.n_labels_)
+    assert_equal(classif.n_labels_, n_classes)
+    for labelset in labelsets:
+        assert_array_equal(labelset, labelsets[0])
+        assert_array_equal(np.unique(labelset),
+                           np.arange(classif.n_labels_, dtype=int))
+    classif.shuffle = True
+    labelsets = classif.make_labelsets()
+    assert_equal(len(labelsets), classif.n_estimators)
+    assert_equal(len(labelsets[0]), classif.n_labels_)
+    assert_equal(classif.n_labels_, n_classes)
+    diff = False
+    for labelset in labelsets:
+        diff = diff or not np.array_equal(labelset, labelsets[0])
+        assert_array_equal(np.unique(labelset),
+                           np.arange(classif.n_labels_, dtype=int))
+    assert_true(diff)
+
+    classif = ClassifierChain(
+        estimator=DecisionTreeClassifier(random_state=random_state),
+        shuffle=False, random_state=random_state,
+        n_estimators=1,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+    classif.fit(X, y)
+    labelsets = classif.make_labelsets()
+    assert_equal(len(labelsets), classif.n_estimators)
+    assert_equal(len(labelsets[0]), classif.n_labels_)
+    assert_equal(classif.n_labels_, n_classes)
+    assert_array_equal(np.unique(labelsets[0]),
+                       np.arange(classif.n_labels_, dtype=int))
+
+
+def test_classifier_chain_predicts():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    Xt, yt = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state + n_samples, return_indicator=True)
+
+    tree = DecisionTreeClassifier(random_state=random_state)
+    tree.fit(X, y[:, 0])
+    tree_predict = tree.predict(Xt)
+    tree_proba = tree.predict_proba(Xt)
+
+    trees = ExtraTreesClassifier(random_state=random_state)
+    trees.fit(X, y[:, 0])
+    trees_predict = trees.predict(Xt)
+    trees_proba = trees.predict_proba(Xt)
+
+    classif = ClassifierChain(
+        estimator=tree, shuffle=True, random_state=random_state,
+        n_estimators=3,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+
+    assert_raises(Exception, classif.predict, Xt)
+    assert_raises(Exception, classif.predict_proba, Xt)
+    classif.fit(X, y)
+    pr = classif.predict(Xt)
+    assert_array_equal(pr, probs_to_class(classif.predict_proba(Xt)))
+    assert_array_equal(pr.shape, (n_samples, n_classes))
+    pr = classif.predict_proba(Xt)
+    assert_equal(len(pr), n_classes)
+    for p in pr:
+        assert_array_equal(p.shape, (n_samples, n_labels))
+    classif.fit(X, y[:, 0])
+    pr = classif.predict_proba(Xt)
+    assert_array_equal(classif.predict(Xt),
+                       probs_to_class(pr).ravel())
+    assert_allclose(pr, tree_proba, rtol=1e-10)
+    assert_array_equal(classif.predict(Xt), tree_predict)
+    classif.estimator = trees
+    classif.fit(X, y)
+    pr = classif.predict(Xt)
+    assert_array_equal(pr, probs_to_class(classif.predict_proba(Xt)))
+    assert_array_equal(pr.shape, (n_samples, n_classes))
+    prl = classif.predict_proba(Xt)
+    assert_equal(len(prl), n_classes)
+    for p in prl:
+        assert_array_equal(p.shape, (n_samples, n_labels))
+    classif.fit(X, y[:, 0])
+    pr = classif.predict_proba(Xt)
+    assert_array_equal(classif.predict(Xt),
+                       probs_to_class(pr).ravel())
+    assert_allclose(pr, trees_proba, rtol=1e-10)
+    assert_array_equal(classif.predict(Xt), trees_predict)
+
+    classif.estimators_random_state_level = 0
+    classif.fit(X, y)
+    pr = classif.predict_proba(Xt)
+    assert_raises(AssertionError, assert_allclose, pr, prl, rtol=1e-10)
+
+    # Test no error with absence of random_state
+    classif.estimator = OneVsRestClassifier(tree)
+    classif.fit(X, y)
+    assert_array_equal(classif.predict(Xt),
+                       probs_to_class(classif.predict_proba(Xt)))
+    classif.estimator = tree
+
+    # Test verbosity
+    saved_stdout = sys.stdout
+    try:
+        out = StringIO()
+        sys.stdout = out
+        classif.verbose = 5
+        res1 = classif.predict(Xt)
+        output = out.getvalue().strip()
+        assert_equal(len(re.split("Predicted \\d+ / \\d+", output)),
+                     1 + classif.n_estimators)
+    finally:
+        sys.stdout = saved_stdout
+
+    class ClassifierChainExp(ClassifierChain):
+        def iter_labelset(self, labelset):
+            retv = None
+            for index in labelset:
+                if (retv is None):
+                    retv = [index]
+                else:
+                    retv.append(index)
+                    yield retv
+                    retv = None
+            if (retv is not None):
+                yield retv
+
+    classif = ClassifierChainExp(
+        estimator=tree, shuffle=True, random_state=random_state,
+        n_estimators=1,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+
+    assert_raises(Exception, classif.predict, Xt)
+    assert_raises(Exception, classif.predict_proba, Xt)
+    classif.fit(X, y)
+    pr = classif.predict(Xt)
+    assert_array_equal(pr, probs_to_class(classif.predict_proba(Xt)))
+    assert_array_equal(pr.shape, (n_samples, n_classes))
+    pr = classif.predict_proba(Xt)
+    assert_equal(len(pr), n_classes)
+    for p in pr:
+        assert_array_equal(p.shape, (n_samples, n_labels))
+
+
+def test_classifier_chain_compare():
+    random_state = 0
+    n_features = 10
+    n_labels = 2
+    n_samples = 10
+    length = 1
+    n_classes = 5
+    X, y = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state, return_indicator=True)
+    Xt, yt = datasets.make_multilabel_classification(
+        n_samples=n_samples, n_features=n_features, length=length,
+        n_classes=n_classes, n_labels=n_labels,
+        allow_unlabeled=False,
+        random_state=random_state + n_samples, return_indicator=True)
+
+    tree = DecisionTreeClassifier(random_state=random_state)
+
+    classif = ClassifierChain(
+        estimator=tree, shuffle=False, random_state=random_state,
+        n_estimators=1,
+        estimators_random_state_level=(
+            ClassifierChain.ESTIMATOR_SAME_RND |
+            ClassifierChain.CLASSIFIERCHAIN_FOREST_SAME_RND))
+
+    tree_probas = [np.empty((n_samples, n_labels), dtype=float)
+                   for _ in range(n_classes)]
+    Xfit = X
+    Xtpred = Xt
+    for idx in range(n_classes - 1):
+        tree.fit(Xfit, y[:, idx])
+        tree_probas[idx] = tree.predict_proba(Xtpred)
+        Xfit = np.hstack((Xfit, y[:, idx].reshape((-1, 1))))
+        Xtpred = np.hstack((Xtpred, get_most_probable_class(
+            tree_probas[idx]).reshape((-1, 1))))
+    tree.fit(Xfit, y[:, n_classes - 1])
+    tree_probas[n_classes - 1] = tree.predict_proba(Xtpred)
+
+    classif.fit(X, y)
+    classif_probas = classif.predict_proba(Xt)
+    assert_allclose(tree_probas, classif_probas, rtol=1e-10)
+
+    classif.n_estimators = 3
+    classif.fit(X, y)
+    classif_probas = classif.predict_proba(Xt)
+    assert_allclose(tree_probas, classif_probas, rtol=1e-10)
