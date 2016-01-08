@@ -98,7 +98,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                logger.warning("Downloading LFW data (~200MB): %s", archive_url)
+                logger.warning("Downloading LFW data (~200MB): %s",
+                               archive_url)
                 urllib.urlretrieve(archive_url, archive_path)
             else:
                 raise IOError("%s is missing" % target_filepath)
@@ -281,13 +282,13 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     dataset.data : numpy array of shape (13233, 2914)
         Each row corresponds to a ravelled face image of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the shape
-        of the output.
+        pixels. Changing the ``slice_`` or resize parameters will change the
+        shape of the output.
 
     dataset.images : numpy array of shape (13233, 62, 47)
         Each row is a face image corresponding to one of the 5749 people in
-        the dataset. Changing the ``slice_`` or resize parameters will change the shape
-        of the output.
+        the dataset. Changing the ``slice_`` or resize parameters will change
+        the shape of the output.
 
     dataset.target : numpy array of shape (13233,)
         Labels associated to each face image. Those labels range from 0-5748
@@ -373,8 +374,8 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
-@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will be "
-            "removed in 0.19."
+@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will "
+            "be removed in 0.19."
             "Use fetch_lfw_people(download_if_missing=False) instead.")
 def load_lfw_people(download_if_missing=False, **kwargs):
     """Alias for fetch_lfw_people(download_if_missing=False)
@@ -450,17 +451,19 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     -------
     The data is returned as a Bunch object with the following attributes:
 
-    data : numpy array of shape (2200, 5828)
+    data : numpy array of shape (2200, 5828). NOTE: Shape depends on
+           ``subset``.
         Each row corresponds to 2 ravel'd face images of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the shape
-        of the output.
+        pixels. Changing the ``slice_`` or resize parameters will change the
+        shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47)
+    pairs : numpy array of shape (2200, 2, 62, 47). NOTE: Shape depends on
+            ``subset``.
         Each row has 2 face images corresponding to same or different person
-        from the dataset containing 5749 people. Changing the ``slice_`` or resize
-        parameters will change the shape of the output.
+        from the dataset containing 5749 people. Changing the ``slice_`` or
+        resize parameters will change the shape of the output.
 
-    target : numpy array of shape (2200,)
+    target : numpy array of shape (2200,). NOTE: Shape depends on ``subset``.
         Labels associated to each pair of images. The two label values being
         different persons or the same person.
 
@@ -500,8 +503,8 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
 
 
-@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will be "
-            "removed in 0.19."
+@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will "
+            "be removed in 0.19."
             "Use fetch_lfw_pairs(download_if_missing=False) instead.")
 def load_lfw_pairs(download_if_missing=False, **kwargs):
     """Alias for fetch_lfw_pairs(download_if_missing=False)
