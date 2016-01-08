@@ -11,7 +11,8 @@ from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
-
+from ..utils.fixes import signature
+import warnings
 
 _EPSILON = np.spacing(1)
 
@@ -177,7 +178,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.residual_metric = residual_metric
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight = None):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
@@ -243,6 +244,17 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         except ValueError:
             pass
 
+        fit_parameters = signature(base_estimator.fit).parameters
+        estimator_name = type(base_estimator).__name__
+        if (sample_weight is not None
+                    and "sample_weight" not in fit_parameters):
+            warnings.warn("%s does not support sample_weight. Samples"
+                              " weights are only used for the calibration"
+                              " itself." % estimator_name)
+            base_estimator_sample_weight = None
+        else:
+            base_estimator_sample_weight = sample_weight
+
         n_inliers_best = 0
         score_best = np.inf
         inlier_mask_best = None
@@ -269,7 +281,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                 continue
 
             # fit model for current random sample set
-            base_estimator.fit(X_subset, y_subset)
+            if base_estimator_sample_weight is None:
+                base_estimator.fit(X_subset, y_subset)
+            else:
+                base_estimator.fit(X_subset, y_subset, sample_weight= base_estimator_sample_weight[subset_idxs])
 
             # check if estimated model is valid
             if (self.is_model_valid is not None and not
