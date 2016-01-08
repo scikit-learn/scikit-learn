@@ -853,6 +853,9 @@ class _RidgeGCV(LinearModel):
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
+        # the following  emulates an additional constant regressor 
+        # corresponding to fit_intercept=True
+        K += np.ones_like(K)
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         return v, Q, QT_y
@@ -876,7 +879,10 @@ class _RidgeGCV(LinearModel):
         -----
         We don't construct matrix G, instead compute action on y & diagonal.
         """
-        w = 1.0 / (v + alpha)
+        constant_column = np.var(Q, 0) < 1.e-6  # detect constant column
+        w = 1. / (v + alpha)
+        w[constant_column] = 0  # cancel the regularization for the intercept
+        w[v == 0] = 0
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
@@ -907,9 +913,9 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        test = np.var(U, 0) < 1.e-6  # detect constant column
+        constant_column = np.var(U, 0) < 1.e-6  # detect constant column
         w = alpha * ((v + alpha) ** -1) - 1
-        w[test] = - 1  # cancel the regularization for the intercept
+        w[constant_column] = - 1  # cancel the regularization for the intercept
         c = np.dot(U, self._diag_dot(w, UT_y)) + y
         G_diag = self._decomp_diag(w, U) + 1
         c /= alpha  # for compatibility with textbook version
