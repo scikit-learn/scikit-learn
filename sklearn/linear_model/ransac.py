@@ -11,8 +11,7 @@ from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
-from ..utils.fixes import signature
-import warnings
+from ..utils import validation
 
 _EPSILON = np.spacing(1)
 
@@ -196,6 +195,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
 
+        TypeError
+            If sample_weight is passed and the base estimator fit method
+            does not support it
+
         """
         X = check_array(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
@@ -244,11 +247,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         except ValueError:
             pass
 
-        fit_parameters = signature(base_estimator.fit).parameters
+        estimator_fit_has_sample_weight = validation.has_fit_parameters(base_estimator, "sample_weight")
         estimator_name = type(base_estimator).__name__
         if (sample_weight is not None
-                    and "sample_weight" not in fit_parameters):
-            warnings.warn("%s does not support sample_weight. Samples"
+                    and not estimator_fit_has_sample_weight ):
+            raise TypeError("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
             base_estimator_sample_weight = None
