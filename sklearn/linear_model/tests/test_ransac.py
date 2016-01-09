@@ -5,7 +5,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from scipy import sparse
 
 from sklearn.utils.testing import assert_less
-from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.linear_model import LinearRegression, RANSACRegressor,Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 
 
@@ -353,3 +353,14 @@ def test_ransac_dynamic_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=1.1)
     assert_raises(ValueError, ransac_estimator.fit, X, y)
+
+def test_ransac_fit_sample_weight():
+    ransac_estimator = RANSACRegressor()
+    n_samples = y.shape[0]
+    weights = np.ones(n_samples)
+    ransac_estimator.fit(X, y, weights)
+    assert_equal(ransac_estimator.inlier_mask_.shape[0], n_samples) #sanity check
+
+    base_estimator = Lasso() #check that if base_estimator.fit doesn't support sample_weight raises error
+    ransac_estimator = RANSACRegressor(base_estimator)
+    assert_raises(TypeError,ransac_estimator.fit,X,y, weights )
