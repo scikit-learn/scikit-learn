@@ -11,7 +11,7 @@ from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
-from ..utils import validation
+from ..utils.validation import has_fit_parameter
 
 _EPSILON = np.spacing(1)
 
@@ -247,7 +247,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         except ValueError:
             pass
 
-        estimator_fit_has_sample_weight = validation.has_fit_parameters(base_estimator, "sample_weight")
+        estimator_fit_has_sample_weight = has_fit_parameter(base_estimator, "sample_weight")
         estimator_name = type(base_estimator).__name__
         if (sample_weight is not None
                     and not estimator_fit_has_sample_weight ):
