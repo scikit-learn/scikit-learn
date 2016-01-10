@@ -451,19 +451,19 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     -------
     The data is returned as a Bunch object with the following attributes:
 
-    data : numpy array of shape (2200, 5828). NOTE: Shape depends on
-           ``subset``.
+    data : numpy array of shape (2200, 5828). Shape depends on ``subset``.
         Each row corresponds to 2 ravel'd face images of original size 62 x 47
-        pixels. Changing the ``slice_`` or resize parameters will change the
-        shape of the output.
+        pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
+        will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47). NOTE: Shape depends on
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
             ``subset``.
         Each row has 2 face images corresponding to same or different person
-        from the dataset containing 5749 people. Changing the ``slice_`` or
-        resize parameters will change the shape of the output.
+        from the dataset containing 5749 people. Changing the ``slice_``,
+        ``resize`` or ``subset`` parameters will change the shape of the
+        output.
 
-    target : numpy array of shape (2200,). NOTE: Shape depends on ``subset``.
+    target : numpy array of shape (2200,). Shape depends on ``subset``.
         Labels associated to each pair of images. The two label values being
         different persons or the same person.
 
