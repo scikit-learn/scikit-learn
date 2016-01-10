@@ -297,11 +297,13 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    ridge_gcv = _RidgeGCV(fit_intercept=False)
-    ridge = Ridge(alpha=1.0, fit_intercept=False)
+    ridge_gcv = _RidgeGCV(fit_intercept=True)
+    ridge = Ridge(alpha=1.0, fit_intercept=True)
+    X_diabetes_ = X_diabetes - X_diabetes.mean(0)
+    # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes)
     errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
     values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
@@ -310,10 +312,10 @@ def _test_ridge_loo(filter_):
     values2 = []
     for i in range(n_samples):
         sel = np.arange(n_samples) != i
-        X_new = X_diabetes[sel]
+        X_new = X_diabetes_[sel]
         y_new = y_diabetes[sel]
         ridge.fit(X_new, y_new)
-        value = ridge.predict([X_diabetes[i]])[0]
+        value = ridge.predict([X_diabetes_[i]])[0]
         error = (y_diabetes[i] - value) ** 2
         errors2.append(error)
         values2.append(value)
@@ -324,7 +326,7 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute_svd(X_diabetes_, y_diabetes)
     errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
     values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
 

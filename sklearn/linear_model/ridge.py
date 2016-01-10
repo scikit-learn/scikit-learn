@@ -853,9 +853,12 @@ class _RidgeGCV(LinearModel):
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
-        # the following  emulates an additional constant regressor 
+        # the following emulates an additional constant regressor
         # corresponding to fit_intercept=True
-        K += np.ones_like(K)
+        # but this is done only when the features have been centered
+        if np.abs(X.mean(0)).max() < 1.e-12:
+            # test whether features have been centered
+            K += np.ones_like(K)
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         return v, Q, QT_y
@@ -953,7 +956,6 @@ class _RidgeGCV(LinearModel):
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
-
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
