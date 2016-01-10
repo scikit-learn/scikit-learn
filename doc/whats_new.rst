@@ -70,6 +70,9 @@ Enhancements
      :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
      parameter. By `Brian McFee`_.
 
+   - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
+     now support ``partial_fit``. By `Asish Panda`_ and `Philipp Dowling`_.
+
 Bug fixes
 .........
 
@@ -3989,3 +3992,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Elvis Dohmatob: https://github.com/dohmatob
 .. _yelite: https://github.com/yelite
 .. _Issam H. Laradji: https://github.com/IssamLaradji
+
+.. _Asish Panda: https://github.com/kaichogami
+
+.. _Philipp Dowling: https://github.com/phdowling
