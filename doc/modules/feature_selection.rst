@@ -105,7 +105,9 @@ and p-values (or only scores for :class:`SelectKBest` and
 
 .. topic:: Examples:
 
-    :ref:`example_feature_selection_plot_feature_selection.py`
+    * :ref:`example_feature_selection_plot_feature_selection.py`
+
+    * :ref:`example_feature_selection_plot_f_test_vs_mi.py`
 
 .. _rfe:
 
