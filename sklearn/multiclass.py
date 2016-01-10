@@ -185,7 +185,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
-        y : (sparse) array-like, shape = [n_samples,], [n_samples, n_classes]
+        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -215,20 +215,20 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     def partial_fit(self, X, y, classes=None):
         """Partially fit underlying estimators
-        
+
         Should be used when memory is inefficient to train all data.
         Chunks of data can be passed in several iteration.
-        
+
         Parameters
         ----------
         X : (sparse) array-like, shape = [n_samples, n_features]
             Data.
 
-        y : (sparse) array-like, shape = [n_samples,], [n_samples, n_classes]
+        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
-        classes : array, shape (n_classes,)
+        classes : array, shape (n_classes, )
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
@@ -274,7 +274,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        y : (sparse) array-like, shape = [n_samples,], [n_samples, n_classes].
+        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes].
             Predicted multi-class targets.
         """
         check_is_fitted(self, 'estimators_')
@@ -329,7 +329,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self, 'estimators_')
-        # Y[i,j] gives the probability that sample i has the label j.
+        # Y[i, j] gives the probability that sample i has the label j.
         # In the multi-label case, these are not disjoint.
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
 
@@ -482,10 +482,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return self
 
     def partial_fit(self, X, y, classes=None):
-        """Partially fit underlying estimators 
-        
-        Should be used when memory is inefficient to train all data. Chunks 
-        of data can be passed in several iteration, where the first call 
+        """Partially fit underlying estimators
+
+        Should be used when memory is inefficient to train all data. Chunks
+        of data can be passed in several iteration, where the first call
         should have an array of all target variables.
 
 
@@ -497,7 +497,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             Multi-class targets.
 
-        classes : array, shape (n_classes,)
+        classes : array, shape (n_classes, )
             Classes across all calls to partial_fit.
             Can be obtained via `np.unique(y_all)`, where y_all is the
             target vector of the entire dataset.
