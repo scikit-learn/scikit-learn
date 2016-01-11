@@ -242,8 +242,8 @@ def balanced_accuracy_score(y_true, y_pred, balance=0.5):
     if y_type is not "binary":
         raise ValueError("%s is not supported" % y_type)
 
-    cm = confusion_matrix(y_true,y_pred)
-    neg, pos = cm.sum(axis=1,dtype='float')
+    cm = confusion_matrix(y_true, y_pred)
+    neg, pos = cm.sum(axis=1, dtype='float')
     tn, tp = np.diag(cm)
 
     sensitivity = tp / pos
