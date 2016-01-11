@@ -188,16 +188,16 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values.
 
+        sample_weight: numpy array of shape [n_samples]
+                       Individual weights for each sample
+                       raises error if sample_weight is passed and base_estimator fit method does not support it.
+
         Raises
         ------
         ValueError
             If no valid consensus set could be found. This occurs if
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
-
-        TypeError
-            If sample_weight is passed and the base estimator fit method
-            does not support it
 
         """
         X = check_array(X, accept_sparse='csr')
@@ -251,7 +251,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         estimator_name = type(base_estimator).__name__
         if (sample_weight is not None
                     and not estimator_fit_has_sample_weight ):
-            raise TypeError("%s does not support sample_weight. Samples"
+            raise ValueError("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
             base_estimator_sample_weight = None
