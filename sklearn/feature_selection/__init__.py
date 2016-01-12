@@ -22,7 +22,7 @@ from .rfe import RFECV
 
 from .from_model import SelectFromModel
 
-from .mutual_info_ import mutual_info
+from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
 
 __all__ = ['GenericUnivariateSelect',
@@ -39,4 +39,5 @@ __all__ = ['GenericUnivariateSelect',
            'f_classif',
            'f_oneway',
            'f_regression',
-           'mutual_info']
+           'mutual_info_classif',
+           'mutual_info_regression']

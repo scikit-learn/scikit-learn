@@ -24,7 +24,7 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.feature_selection import mutual_info, f_regression
+from sklearn.feature_selection import f_regression, mutual_info_regression
 
 X = np.random.rand(1000, 3)
 y = X[:, 0] + np.sin(6 * np.pi * X[:, 1]) + 0.1 * np.random.randn(1000)
@@ -32,7 +32,7 @@ y = X[:, 0] + np.sin(6 * np.pi * X[:, 1]) + 0.1 * np.random.randn(1000)
 f_test, _ = f_regression(X, y)
 f_test /= np.max(f_test)
 
-mi = mutual_info(X, y)
+mi = mutual_info_regression(X, y)
 mi /= np.max(mi)
 
 plt.figure(figsize=(15, 5))

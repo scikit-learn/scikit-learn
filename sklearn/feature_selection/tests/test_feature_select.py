@@ -25,8 +25,9 @@ from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (
-    chi2, mutual_info, f_classif, f_oneway, f_regression, SelectPercentile,
-    SelectKBest, SelectFpr, SelectFdr, SelectFwe, GenericUnivariateSelect)
+    chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
+    mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
+    SelectFdr, SelectFwe, GenericUnivariateSelect)
 
 
 ##############################################################################
@@ -564,13 +565,11 @@ def test_mutual_info_classification():
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
 
-    score_func = lambda X, y: mutual_info(X, y, discrete_target=True)
-
     # Test in KBest mode.
-    univariate_filter = SelectKBest(score_func, k=5)
+    univariate_filter = SelectKBest(mutual_info_classif, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = GenericUnivariateSelect(
-        score_func, mode='k_best', param=5).fit(X, y).transform(X)
+        mutual_info_classif, mode='k_best', param=5).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -578,10 +577,10 @@ def test_mutual_info_classification():
     assert_array_equal(support, gtruth)
 
     # Test in Percentile mode.
-    univariate_filter = SelectPercentile(score_func, percentile=25)
+    univariate_filter = SelectPercentile(mutual_info_classif, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = GenericUnivariateSelect(
-        score_func, mode='percentile', param=25).fit(X, y).transform(X)
+        mutual_info_classif, mode='percentile', param=25).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -594,11 +593,11 @@ def test_mutual_info_regression():
                            shuffle=False, random_state=0, noise=10)
 
     # Test in KBest mode.
-    univariate_filter = SelectKBest(mutual_info, k=5)
+    univariate_filter = SelectKBest(mutual_info_regression, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
     X_r2 = GenericUnivariateSelect(
-        mutual_info, mode='k_best', param=5).fit(X, y).transform(X)
+        mutual_info_regression, mode='k_best', param=5).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -606,10 +605,10 @@ def test_mutual_info_regression():
     assert_array_equal(support, gtruth)
 
     # Test in Percentile mode.
-    univariate_filter = SelectPercentile(mutual_info, percentile=25)
+    univariate_filter = SelectPercentile(mutual_info_regression, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        mutual_info, mode='percentile', param=25).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(mutual_info_regression, mode='percentile',
+                                   param=25).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)

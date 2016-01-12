@@ -295,7 +295,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues) or a single array scores.
+        (scores, pvalues) or a single array with scores.
     """
 
     def __init__(self, score_func):
@@ -354,7 +354,7 @@ class SelectPercentile(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues) or a single array scores.
+        (scores, pvalues) or a single array with scores.
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -375,9 +375,10 @@ class SelectPercentile(_BaseFilter):
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info: Mutual information between features and the target.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -424,7 +425,7 @@ class SelectKBest(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single scores array.
 
     k : int or "all", optional, default=10
         Number of top features to select.
@@ -446,9 +447,10 @@ class SelectKBest(_BaseFilter):
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info: Mutual information between features and the target.
+    mutual_info_regression: Mutual information for a continious target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -512,8 +514,9 @@ class SelectFpr(_BaseFilter):
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    mutual_info_classif:
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info: Mutual information between features and the target.
+    mutual_info_regression: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -564,9 +567,10 @@ class SelectFdr(_BaseFilter):
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info: Mutual information between features and the target.
+    mutual_info_regression: Mutual information for a contnuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
@@ -617,7 +621,6 @@ class SelectFwe(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
@@ -670,9 +673,10 @@ class GenericUnivariateSelect(_BaseFilter):
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info: Mutual information between features and the target.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.

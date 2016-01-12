@@ -6,7 +6,8 @@ from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
                                    assert_false, assert_true, assert_raises)
-from sklearn.feature_selection.mutual_info_ import mutual_info, _compute_mi
+from sklearn.feature_selection.mutual_info_ import (
+    mutual_info_regression, mutual_info_classif, _compute_mi)
 
 
 class TestMIComputation(object):
@@ -101,7 +102,7 @@ class TestMutualInfo(object):
 
         # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
         # informative.
-        mi = mutual_info(X, y, discrete_features=True, discrete_target=True)
+        mi = mutual_info_classif(X, y, discrete_features=True)
         assert_array_equal(np.argsort(-mi), np.array([0, 2, 1]))
 
     def test_continuous(self):
@@ -124,7 +125,7 @@ class TestMutualInfo(object):
         X = Z[:, 1:]
         y = Z[:, 0]
 
-        mi = mutual_info(X, y, random_state=0)
+        mi = mutual_info_regression(X, y, random_state=0)
         assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
 
     def test_mixed(self):
@@ -136,8 +137,7 @@ class TestMutualInfo(object):
         y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
         X[:, 2] = X[:, 2] > 0.5
 
-        mi = mutual_info(X, y, discrete_features=[2], discrete_target=True,
-                         random_state=0)
+        mi = mutual_info_classif(X, y, discrete_features=[2], random_state=0)
         assert_array_equal(np.argsort(-mi), [2, 0, 1])
 
     def test_discrete_features_option(self):
@@ -145,25 +145,24 @@ class TestMutualInfo(object):
                       [1, 1, 0],
                       [2, 0, 1],
                       [2, 0, 1],
-                      [2, 0, 1]])
-        y = np.array([0, 1, 2, 2, 1])
+                      [2, 0, 1]], dtype=float)
+        y = np.array([0, 1, 2, 2, 1], dtype=float)
         X_csr = csr_matrix(X)
 
-        assert_raises(ValueError, mutual_info, X_csr, y,
-                      discrete_features=False)
+        for mutual_info in (mutual_info_regression, mutual_info_classif):
+            assert_raises(ValueError, mutual_info_regression, X_csr, y,
+                          discrete_features=False)
 
-        mi_1 = mutual_info(X, y, discrete_features='auto',
-                           discrete_target=True, random_state=0)
-        mi_2 = mutual_info(X, y, discrete_features=False,
-                           discrete_target=True, random_state=0)
+            mi_1 = mutual_info(X, y, discrete_features='auto', random_state=0)
+            mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
 
-        mi_3 = mutual_info(X_csr, y, discrete_features='auto',
-                           discrete_target=True)
-        mi_4 = mutual_info(X_csr, y, discrete_features=True,
-                           discrete_target=True)
+            mi_3 = mutual_info(X_csr, y, discrete_features='auto',
+                               random_state=0)
+            mi_4 = mutual_info(X_csr, y, discrete_features=True,
+                               random_state=0)
 
-        assert_array_equal(mi_1, mi_2)
-        assert_array_equal(mi_3, mi_4)
+            assert_array_equal(mi_1, mi_2)
+            assert_array_equal(mi_3, mi_4)
 
         assert_false(np.allclose(mi_1, mi_3))
 

@@ -194,19 +194,9 @@ def _iterate_columns(X, columns=None):
         yield _get_column(X, i)
 
 
-def mutual_info(X, y, discrete_features='auto', discrete_target=False,
-                n_neighbors=3, copy=True, random_state=None):
+def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
+                 n_neighbors=3, copy=True, random_state=None):
     """Estimate mutual information between the features and the target.
-
-    Mutual information (MI) [1]_ between two random variables is a non-negative
-    value, which measures the dependency between the variables. It is equal
-    to zero if and only if two random variables are independent, and higher
-    values mean higher dependency.
-
-    This function is capable of estimating MI between continuous and discrete
-    variables as described in [1]_ and [2]_.
-    It can be used for univariate features selection, read more in the
-    :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
@@ -224,7 +214,7 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
         Whether to consider `y` as a discrete variable.
     n_neighbors : int, default 3
         Number of neighbors to use for MI estimation for continuous variables,
-        see [2]_ and [3]_. Higher values reduce variance of the estimation, but
+        see [1]_ and [2]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
     copy : bool, default True
         Whether to make a copy of the given data. If set to False, the initial
@@ -237,26 +227,13 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
     -------
     mi : ndarray, shape (n_features,)
         Estimated mutual information between each feature and the target.
-
-    Notes
-    -----
-    1. Terms "discrete feature" and "discrete target" are used instead of
-       naming them as "categorical", because it describes the essence more
-       accurately. For example, pixel intensities of an image are discrete
-       features (but hardly categorical) and you will get better results if
-       mark them as such. Also note, that treating a continuous variable as
-       discrete and vice versa will usually give incorrect results, so be
-       attentive about that.
-    2. True mutual information can't be negative. If its estimate turns out
-       to be negative, it is replaced by zero.
+        A negative value will be replaced by 0.
 
     References
     ----------
-    .. [1] `Mutual Information <http://en.wikipedia.org/wiki/Mutual_information>`_
-           on Wikipedia.
-    .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
+    .. [1] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
            information". Phys. Rev. E 69, 2004.
-    .. [3] B. C. Ross "Mutual Information between Discrete and Continuous
+    .. [2] B. C. Ross "Mutual Information between Discrete and Continuous
            Data Sets". PLoS ONE 9(2), 2014.
     """
     X, y = check_X_y(X, y, accept_sparse='csc', y_numeric=not discrete_target)
@@ -283,7 +260,7 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
     if copy:
         X = X.copy()
 
-    if not discrete_target:
+    if not discrete_target and np.any(continuous_mask):
         X[:, continuous_mask] = scale(X[:, continuous_mask],
                                       with_mean=False, copy=False)
 
@@ -303,3 +280,137 @@ def mutual_info(X, y, discrete_features='auto', discrete_target=False,
           x, discrete_feature in moves.zip(_iterate_columns(X), discrete_mask)]
 
     return np.array(mi)
+
+
+def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
+                           copy=True, random_state=None):
+    """Estimate mutual information for a continuous target variable.
+
+    Mutual information (MI) [1]_ between two random variables is a non-negative
+    value, which measures the dependency between the variables. It is equal
+    to zero if and only if two random variables are independent, and higher
+    values mean higher dependency.
+
+    This function relies on the algorithms of MI estimation described in [2]_
+    and [3]_.
+
+    It can be used for univariate features selection, read more in the
+    :ref:`User Guide <univariate_feature_selection>`.
+
+    Parameters
+    ----------
+    X : array_like or sparse matrix, shape (n_samples, n_features)
+        Feature matrix.
+    y : array_like, shape (n_samples,)
+        Target vector.
+    discrete_features : {'auto', bool, array_like}, default 'auto'
+        If bool, then determines whether to consider all features discrete
+        or continuous. If array, then it should be either a boolean mask
+        with shape (n_features,) or array with indices of discrete features.
+        If 'auto', it is assigned to False for dense `X` and to True for
+        sparse `X`.
+    n_neighbors : int, default 3
+        Number of neighbors to use for MI estimation for continuous variables,
+        see [2]_ and [3]_. Higher values reduce variance of the estimation, but
+        could introduce a bias.
+    copy : bool, default True
+        Whether to make a copy of the given data. If set to False, the initial
+        data will be overwritten.
+    random_state : int seed, RandomState instance or None, default None
+        The seed of the pseudo random number generator for adding small noise
+        to continuous variables in order to remove repeated values.
+
+    Returns
+    -------
+    mi : ndarray, shape (n_features,)
+        Estimated mutual information between each feature and the target.
+
+    Notes
+    -----
+    1. The term "discrete features" is used instead of naming them
+       "categorical", because it describes the essence more accurately.
+       For example, pixel intensities of an image are discrete features
+       (but hardly categorical) and you will get better results if mark them
+       as such. Also note, that treating a continuous variable as discrete and
+       vice versa will usually give incorrect results, so be attentive about that.
+    2. True mutual information can't be negative. If its estimate turns out
+       to be negative, it is replaced by zero.
+
+    References
+    ----------
+    .. [1] `Mutual Information <http://en.wikipedia.org/wiki/Mutual_information>`_
+           on Wikipedia.
+    .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
+           information". Phys. Rev. E 69, 2004.
+    .. [3] B. C. Ross "Mutual Information between Discrete and Continuous
+           Data Sets". PLoS ONE 9(2), 2014.
+    """
+    return _estimate_mi(X, y, discrete_features, False, n_neighbors,
+                        copy, random_state)
+
+
+def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
+                        copy=True, random_state=None):
+    """Estimate mutual information for a discrete target variable.
+
+    Mutual information (MI) [1]_ between two random variables is a non-negative
+    value, which measures the dependency between the variables. It is equal
+    to zero if and only if two random variables are independent, and higher
+    values mean higher dependency.
+
+    This function relies on the algorithms of MI estimation described in [2]_
+    and [3]_.
+
+    It can be used for univariate features selection, read more in the
+    :ref:`User Guide <univariate_feature_selection>`.
+
+    Parameters
+    ----------
+    X : array_like or sparse matrix, shape (n_samples, n_features)
+        Feature matrix.
+    y : array_like, shape (n_samples,)
+        Target vector.
+    discrete_features : {'auto', bool, array_like}, default 'auto'
+        If bool, then determines whether to consider all features discrete
+        or continuous. If array, then it should be either a boolean mask
+        with shape (n_features,) or array with indices of discrete features.
+        If 'auto', it is assigned to False for dense `X` and to True for
+        sparse `X`.
+    n_neighbors : int, default 3
+        Number of neighbors to use for MI estimation for continuous variables,
+        see [2]_ and [3]_. Higher values reduce variance of the estimation, but
+        could introduce a bias.
+    copy : bool, default True
+        Whether to make a copy of the given data. If set to False, the initial
+        data will be overwritten.
+    random_state : int seed, RandomState instance or None, default None
+        The seed of the pseudo random number generator for adding small noise
+        to continuous variables in order to remove repeated values.
+
+    Returns
+    -------
+    mi : ndarray, shape (n_features,)
+        Estimated mutual information between each feature and the target.
+
+    Notes
+    -----
+    1. The term "discrete features" is used instead of naming them
+       "categorical", because it describes the essence more accurately.
+       For example, pixel intensities of an image are discrete features
+       (but hardly categorical) and you will get better results if mark them
+       as such. Also note, that treating a continuous variable as discrete and
+       vice versa will usually give incorrect results, so be attentive about that.
+    2. True mutual information can't be negative. If its estimate turns out
+       to be negative, it is replaced by zero.
+
+    References
+    ----------
+    .. [1] `Mutual Information <http://en.wikipedia.org/wiki/Mutual_information>`_
+           on Wikipedia.
+    .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
+           information". Phys. Rev. E 69, 2004.
+    .. [3] B. C. Ross "Mutual Information between Discrete and Continuous
+           Data Sets". PLoS ONE 9(2), 2014.
+    """
+    return _estimate_mi(X, y, discrete_features, True, n_neighbors,
+                        copy, random_state)

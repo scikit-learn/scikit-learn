@@ -88,15 +88,15 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`, :func:`mutual_info`
+ * For regression: :func:`f_regression`, :func:`mutual_info_regression`
 
- * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info`
+ * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
 
 .. topic:: Feature selection with sparse data
 
    If you use sparse data (i.e. data represented as sparse matrices),
-   :func:`chi2` and :func:`mutual_info` will deal with the data without making
-   it dense.
+   :func:`chi2`, :func:`mutual_info_regression`, :func:`mutual_info_classif`
+   will deal with the data without making it dense.
 
 .. warning::
 

@@ -534,7 +534,8 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
-   feature_selection.mutual_info
+   feature_selection.mutual_info_classif
+   feature_selection.mutual_info_regression
 
 
 .. _gaussian_process_ref:
