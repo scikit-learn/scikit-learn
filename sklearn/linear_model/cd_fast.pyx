@@ -498,7 +498,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
         We minimize
 
-        1 w^T Q w - q^T w + alpha norm(w, 1) + beta norm(w, 2)^2
+        1 w^T Q w - 2 q^T w + alpha norm(w, 1) + beta norm(w, 2)^2
         -                                      ----
         2                                        2
 
