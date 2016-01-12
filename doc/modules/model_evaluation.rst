@@ -878,6 +878,44 @@ method.
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
+.. _balanced_accuracy_score
+
+Balanced accuracy score
+-----------------------
+
+The :func:`balanced_accuracy_score` function computes the
+`Balanced accuracy score (BAC) <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_
+for binary classes.  Quoting Wikipedia:
+
+
+    "The balanced accuracy avoids inflated performance estimates on
+    imbalanced datasets. It is defined as the arithmetic mean of sensitivity
+    and specificity, or the average accuracy obtained on either class."
+
+If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
+number of true positives, true negatives, false positives and false negatives,
+the BAC metric is defined as
+
+.. math::
+
+  BAC = \frac{tp}{tp + fn) + \frac{tn}{tn + fp)
+
+Here is a small example illustrating the usage of the :func:`balanced_accuracy_score`
+function:
+
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_true = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    >>> y_pred = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    >>> accuracy_score(y_true, y_pred)
+    0.9
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.5
+
+In this example accuracy is not the metric to use. Its value only
+reflect the imbalanced distribution of the dataset.
+See `Accuracy paradox <http://en.wikipedia.org/wiki/Accuracy_paradox>`_.
+
 .. _matthews_corrcoef:
 
 Matthews correlation coefficient
