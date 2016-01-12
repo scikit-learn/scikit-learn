@@ -907,8 +907,8 @@ function:
     >>> from sklearn.metrics import balanced_accuracy_score
     >>> y_true = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     >>> y_pred = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    >>> accuracy_score(y_true, y_pred)
-    0.9
+    >>> accuracy_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.9...
     >>> balanced_accuracy_score(y_true, y_pred)
     0.5
 
