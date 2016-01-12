@@ -878,7 +878,7 @@ method.
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
 
-.. _balanced_accuracy_score
+.. _balanced_accuracy_score:
 
 Balanced accuracy score
 -----------------------
