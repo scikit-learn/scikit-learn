@@ -4,40 +4,44 @@ parameters of an estimator.
 """
 from __future__ import print_function
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
-
 from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
+import numbers
 import operator
+import time
 import warnings
 
 import numpy as np
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
-from ._split import check_cv
-from ._validation import _fit_and_score
-from ..externals.joblib import Parallel, delayed
 from ..externals import six
+from ..externals.joblib import Parallel, delayed
+from ..metrics.scorer import check_scoring
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
+from ..utils.metaestimators import if_delegate_has_method
 from ..utils.random import sample_without_replacement
 from ..utils.validation import _num_samples, indexable
-from ..utils.metaestimators import if_delegate_has_method
-from ..metrics.scorer import check_scoring
+from ._split import check_cv
+from ._validation import _fit_and_score
+from ..exceptions import FitFailedWarning
 
 
-__all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
-           'ParameterSampler', 'RandomizedSearchCV']
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Andreas Mueller <amueller@ais.uni-bonn.de>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+# License: BSD 3 clause
+__all__ = ['GridSearchCV', 'GridSearchCluster', 'ParameterGrid',
+           'fit_grid_point', 'ParameterSampler', 'RandomizedSearchCV',
+           'RandomizedSearchCluster']
 
 
 class ParameterGrid(object):
+
     """Grid of parameters with a discrete number of values for each.
 
     Can be used to iterate over parameter value combinations with the
@@ -158,6 +162,7 @@ class ParameterGrid(object):
 
 
 class ParameterSampler(object):
+
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
@@ -214,6 +219,7 @@ class ParameterSampler(object):
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
+
     def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
@@ -234,8 +240,8 @@ class ParameterSampler(object):
             if grid_size < self.n_iter:
                 raise ValueError(
                     "The total space of parameters %d is smaller "
-                    "than n_iter=%d." % (grid_size, self.n_iter)
-                    + " For exhaustive searches, use GridSearchCV.")
+                    "than n_iter=%d." % (grid_size, self.n_iter) +
+                    " For exhaustive searches, use GridSearchCV.")
             for i in sample_without_replacement(grid_size, self.n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
@@ -360,9 +366,31 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
-class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      MetaEstimatorMixin)):
-    """Base class for hyper parameter search with cross-validation."""
+class _ScoreTuple (namedtuple('_ScoreTuple',
+                              ('parameters',
+                               'score'))):
+    # A raw namedtuple is very memory efficient as it packs the attributes
+    # in a struct to get rid of the __dict__ of attributes in particular it
+    # does not copy the string for the keys on each instance.
+    # By deriving a namedtuple class just to introduce the __repr__ method we
+    # would also reintroduce the __dict__ on the instance. By telling the
+    # Python interpreter that this subclass uses static __slots__ instead of
+    # dynamic attributes. Furthermore we don't need any additional slot in the
+    # subclass so we set __slots__ to the empty tuple.
+    __slots__ = ()
+
+    def __repr__(self):
+        """Simple custom repr to summarize the main info"""
+        return "mean: {0:.5f}, std: {1:.5f}, params: {2}".format(
+            self.mean_validation_score,
+            np.std(self.cv_validation_scores),
+            self.parameters)
+
+
+class BaseSearch(six.with_metaclass(ABCMeta, BaseEstimator,
+                                    MetaEstimatorMixin)):
+
+    """Base class for hyper parameter search."""
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
@@ -520,6 +548,456 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         return self.best_estimator_.transform(Xt)
 
+
+class SearchClusterMixin(object):
+
+    """Adds unsupervised search to BaseSearch."""
+
+    def _fit(self, X, y=None, parameter_iterable=None):
+        """Draws heavily on the _fit method of BaseSearchCV.
+        """
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+        estimator = self.estimator
+
+        grid_scores = list()
+        out = Parallel(n_jobs=1
+                       )(
+            delayed(fit_and_score_cluster)(clone(estimator),
+                                           X, scorer=self.scorer_,
+                                           verbose=self.verbose,
+                                           parameters=parameters,
+                                           fit_params=self.fit_params,
+                                           error_score=self.error_score)
+            for parameters in parameter_iterable)
+
+        for score, parameters, _time in out:
+            grid_scores.append(_ScoreTuple(parameters, score))
+
+        # Store the computed scores
+        self.grid_scores_ = grid_scores
+
+        # Find the best parameters by comparing on the score:
+        # note that `sorted` is deterministic in the way it breaks ties
+        best = sorted(grid_scores, key=lambda x: x.score,
+                      reverse=True)[0]
+
+        self.best_params_ = best.parameters
+        self.best_score_ = best.score
+
+        if self.refit:
+            # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(estimator).set_params(
+                **best.parameters)
+            if y is not None:
+                best_estimator.fit(X, y=None, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
+            self.best_estimator_ = best_estimator
+        return self
+
+
+def fit_and_score_cluster(estimator, X, scorer, verbose, parameters,
+                          fit_params, y=None, error_score='raise'):
+    """Fit estimator and compute scores for a given dataset.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+                Target relative to X for classification or regression;
+                None for unsupervised learning.
+
+    scorer : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    verbose : integer
+        The verbosity level.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+    parameters : dict or None
+        Parameters to be set on the estimator.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    Returns
+    -------
+    score : float
+        Score on the data to fit.
+
+    parameters : dict or None, optional
+        The parameters that have been evaluated.
+
+    scoring_time : float
+        Time spent for fitting and scoring in seconds.
+
+    """
+    if parameters is not None:
+        estimator.set_params(**parameters)
+
+    start_time = time.time()
+
+    try:
+        estimator.fit(X, y, **fit_params)
+        score = scorer(estimator, X)
+    except Exception as e:
+        if error_score == 'raise':
+            raise
+        elif isinstance(error_score, numbers.Number):
+            warnings.warn("Clusterer score failed. "
+                          "The score will be set to %f. "
+                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+
+            score = error_score
+        else:
+            raise ValueError("error_score must be the string 'raise' or a"
+                             " numeric value. (Hint: if using 'raise', please"
+                             " make sure that it has been spelled correctly.)"
+                             )
+    # TODO: Handle `verbose` level to produce output
+    scoring_time = time.time() - start_time
+
+    return score, parameters, scoring_time
+
+
+class GridSearchCluster(BaseSearch, SearchClusterMixin):
+
+    """Exhaustive search over specified parameter values for an estimator.
+
+    Important members are fit, predict.
+
+    GridSearch implements a "fit" and a "score" method.
+    It also implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" if they are implemented in the
+    estimator used.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by grid-search over a parameter grid.
+
+    Read more in the :ref:`User Guide <grid_search>`.
+
+    Parameters
+    ----------
+    estimator : estimator object.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
+
+    param_grid : dict or list of dictionaries
+        Dictionary with parameters names (string) as keys and lists of
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored. This enables searching over any sequence
+        of parameter settings.
+
+    scoring : string, callable or None, default=None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X)``.
+        If ``None``, the ``score`` method of the estimator is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    n_jobs : int, default=1
+        Number of jobs to run in parallel.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    refit : boolean, default=True
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this GridSearchCV instance after fitting.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+
+    Examples
+    --------
+    # TODO: Add examples here
+
+
+    Attributes
+    ----------
+    grid_scores_ : list of named tuples
+        Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``score``, the score for the estimator
+
+    best_estimator_ : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data. Not available if refit=False.
+
+    best_score_ : float
+        Score of best_estimator.
+
+    best_params_ : dict
+        Parameter setting that gave the best results.
+
+    scorer_ : function
+        Scorer function used to choose the best parameters for the model.
+
+    Notes
+    ------
+    The parameters selected are those that maximize the score, unless an
+    explicit score is passed in which case it is used instead.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    point in the grid (and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
+
+    See Also
+    ---------
+    :class:`ParameterGrid`:
+        generates all the combinations of a an hyperparameter grid.
+
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
+    """
+
+    def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
+                 n_jobs=1, refit=True, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise'):
+
+        super(GridSearchCluster, self).__init__(
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, refit=refit, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score)
+        self.param_grid = param_grid
+        _check_param_grid(param_grid)
+
+    def fit(self, X, y=None):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+                        """
+        return self._fit(X, y, ParameterGrid(self.param_grid))
+
+
+class RandomizedSearchCluster(BaseSearch, SearchClusterMixin):
+
+    """Randomized search on hyper parameters.
+
+    RandomizedSearchCV implements a "fit" and a "score" method.
+    It also implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" if they are implemented in the
+    estimator used.
+
+    The parameters of the estimator used to apply these methods are optimized
+    by random search over parameter settings.
+
+    In contrast to GridSearchCluster, not all parameter values are tried out,
+    but rather a fixed number of parameter settings is sampled from the
+    specified distributions. The number of parameter settings that are tried
+    is given by n_iter.
+
+    If all parameters are presented as a list,
+    sampling without replacement is performed. If at least one parameter
+    is given as a distribution, sampling with replacement is used.
+    It is highly recommended to use continuous distributions for continuous
+    parameters.
+
+    Read more in the :ref:`User Guide <randomized_parameter_search>`.
+
+    Parameters
+    ----------
+    estimator : estimator object.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
+
+    param_distributions : dict
+        Dictionary with parameters names (string) as keys and distributions
+        or lists of parameters to try. Distributions must provide a ``rvs``
+        method for sampling (such as those from scipy.stats.distributions).
+        If a list is given, it is sampled uniformly.
+
+    n_iter : int, default=10
+        Number of parameter settings that are sampled. n_iter trades
+        off runtime vs quality of the solution.
+
+    scoring : string, callable or None, default=None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X)``.
+        If ``None``, the ``score`` method of the estimator is used.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    n_jobs : int, default=1
+        Number of jobs to run in parallel.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    refit : boolean, default=True
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this RandomizedSearchCV instance after fitting.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+    random_state : int or RandomState
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
+    Attributes
+    ----------
+    grid_scores_ : list of named tuples
+        Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``score``, the score for the estimator
+
+    best_estimator_ : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified).
+        Not available if refit=False.
+
+    best_score_ : float
+        Score of best_estimator.
+
+    best_params_ : dict
+        Parameter setting that gave the best results.
+
+    Notes
+    -----
+    The parameters selected are those that maximize the score, according to the
+    scoring parameter.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    parameter setting(and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
+
+    See Also
+    --------
+    :class:`GridSearchCluster`:
+        Does exhaustive search over a grid of parameters.
+
+    :class:`ParameterSampler`:
+        A generator over parameter settins, constructed from
+        param_distributions.
+
+    """
+
+    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
+                 fit_params=None, n_jobs=1, refit=True,
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None,
+                 error_score='raise'):
+
+        self.param_distributions = param_distributions
+        self.n_iter = n_iter
+        self.random_state = random_state
+        super(RandomizedSearchCluster, self).__init__(
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, refit=refit, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score)
+
+    def fit(self, X, y=None):
+        """Run fit on the estimator with randomly drawn parameters.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+        """
+        sampled_params = ParameterSampler(self.param_distributions,
+                                          self.n_iter,
+                                          random_state=self.random_state)
+        return self._fit(X, y, sampled_params)
+
+
+class SearchCVMixin(object):
+
+    """Implements cross-validation for adding to BaseSearch."""
+
     def _fit(self, X, y, labels, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
@@ -606,7 +1084,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self
 
 
-class GridSearchCV(BaseSearchCV):
+class GridSearchCV(BaseSearch, SearchCVMixin):
+
     """Exhaustive search over specified parameter values for an estimator.
 
     Important members are fit, predict.
@@ -701,24 +1180,7 @@ class GridSearchCV(BaseSearchCV):
 
     Examples
     --------
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svr = svm.SVC()
-    >>> clf = GridSearchCV(svr, parameters)
-    >>> clf.fit(iris.data, iris.target)
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None, error_score=...,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         decision_function_shape=None, degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1, probability=False,
-                         random_state=None, shrinking=True, tol=...,
-                         verbose=False),
-           fit_params={}, iid=..., n_jobs=1,
-           param_grid=..., pre_dispatch=..., refit=...,
-           scoring=..., verbose=...)
-
+    TODO: Add examples here.
 
     Attributes
     ----------
@@ -763,7 +1225,7 @@ class GridSearchCV(BaseSearchCV):
     See Also
     ---------
     :class:`ParameterGrid`:
-        generates all the combinations of a hyperparameter grid.
+        generates all the combinations of a an hyperparameter grid.
 
     :func:`sklearn.model_selection.train_test_split`:
         utility function to split the data into a development set usable
@@ -807,7 +1269,8 @@ class GridSearchCV(BaseSearchCV):
         return self._fit(X, y, labels, ParameterGrid(self.param_grid))
 
 
-class RandomizedSearchCV(BaseSearchCV):
+class RandomizedSearchCV(BaseSearch, SearchCVMixin):
+
     """Randomized search on hyper parameters.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
