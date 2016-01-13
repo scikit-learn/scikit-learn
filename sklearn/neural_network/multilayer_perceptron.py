@@ -409,7 +409,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("beta_2 must be >= 0 and < 1, got %s" %
                              self.beta_2)
         if self.epsilon <= 0.0:
-            raise ValueError("epsilon must be > 0, got %s." % self.max_iter)
+            raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
 
         # raise ValueError if not registered
         supported_activations = ['logistic', 'tanh', 'relu']
