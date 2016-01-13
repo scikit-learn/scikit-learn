@@ -535,7 +535,7 @@ META_ESTIMATORS = ["OneVsOneClassifier",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel"]
+         "SelectFromModel", "GridSearchCluster", "RandomizedSearchCluster"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
@@ -786,6 +786,7 @@ def _delete_folder(folder_path, warn=False):
 
 
 class TempMemmap(object):
+
     def __init__(self, data, mmap_mode='r'):
         self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
         self.mmap_mode = mmap_mode

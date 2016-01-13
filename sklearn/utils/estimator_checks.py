@@ -131,6 +131,7 @@ def _yield_classifier_checks(name, Classifier):
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
 
+
 def check_supervised_y_no_nan(name, Estimator):
     # Checks that the Estimator targets are not NaN.
 
@@ -146,11 +147,12 @@ def check_supervised_y_no_nan(name, Estimator):
     except ValueError as e:
         if str(e) != errmsg:
             raise ValueError("Estimator {0} raised warning as expected, but "
-                             "does not match expected error message" \
+                             "does not match expected error message"
                              .format(name))
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
                          "array y with NaN value.".format(name))
+
 
 def _yield_regressor_checks(name, Regressor):
     # TODO: test with intercept
@@ -1524,7 +1526,8 @@ def check_get_params_invariance(name, estimator):
     if name in ('FeatureUnion', 'Pipeline'):
         e = estimator([('clf', T())])
 
-    elif name in ('GridSearchCV', 'RandomizedSearchCV', 'SelectFromModel'):
+    elif name in ('GridSearchCluster', 'RandomizedSearchCluster',
+                  'GridSearchCV', 'RandomizedSearchCV', 'SelectFromModel'):
         return
 
     else:
