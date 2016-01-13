@@ -132,6 +132,7 @@ class LinearSVCNoScore(LinearSVC):
     def score(self):
         raise AttributeError
 
+
 class KMeansNoScore(KMeans):
 
     """An KMeans clusterer that has no score method."""
@@ -262,7 +263,7 @@ def test_grid_search_no_score():
 def silhouette_scorer(estimator, X, y=None):
     return silhouette_score(X, estimator.labels_)
 
- 
+
 @ignore_warnings
 def test_grid_search_cluster_no_score():
     # Test grid-search on classifier that has no score function.
@@ -275,9 +276,9 @@ def test_grid_search_cluster_no_score():
                                     scoring=scorer)
     grid_search.fit(X)
 
-    grid_search_no_score = GridSearchCluster(clf_no_score, 
+    grid_search_no_score = GridSearchCluster(clf_no_score,
                                              {'n_clusters': n_clusters},
-                                        scoring=scorer)
+                                             scoring=scorer)
     # smoketest grid search
     grid_search_no_score.fit(X)
 
@@ -287,7 +288,7 @@ def test_grid_search_cluster_no_score():
     assert_equal(grid_search.score(X), grid_search_no_score.score(X))
 
     # giving no scoring function raises an error
-    grid_search_no_score = GridSearchCV(clf_no_score, 
+    grid_search_no_score = GridSearchCV(clf_no_score,
                                         {'n_clusters': n_clusters})
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
@@ -522,7 +523,7 @@ def test_grid_search_sparse():
 
 def test_grid_search_cluster_sparse():
     # Test that grid search works with both dense and sparse matrices
-    X_, y_ =  make_blobs(random_state=0, centers=3)
+    X_, y_ = make_blobs(random_state=0, centers=3)
 
     clf = KMeans()
     clf = GridSearchCluster(clf, {'n_clusters': [2, 3]})
@@ -868,7 +869,7 @@ def test_pickle_cluster():
     pickle.dumps(grid_search)  # smoke test
 
     random_search = RandomizedSearchCluster(clf, {'foo_param': [1, 2, 3]},
-                                       refit=True, n_iter=3)
+                                            refit=True, n_iter=3)
     random_search.fit(X)
     pickle.dumps(random_search)  # smoke test
 
@@ -960,8 +961,8 @@ class FailingClusterer(FailingClassifier):
             raise ValueError("Failing classifier failed as required")
 
         self.labels_ = self.predict(X)
-    
-    
+
+
 def test_grid_search_failing_classifier():
     # GridSearchCV with on_error != 'raise'
     # Ensures that a warning is raised and score reset where appropriate.
@@ -1005,11 +1006,11 @@ def test_grid_search_failing_clusterer():
     clf = FailingClusterer()
 
     # refit=False because we only want to check that errors caused by fits
-    # will be caught and warnings raised instead. If refit was done, then an 
-    # exception would be raised on refit and not caught by grid_search 
+    # will be caught and warnings raised instead. If refit was done, then an
+    # exception would be raised on refit and not caught by grid_search
     # (expected behavior), and this would cause an error in this test.
-    gs = GridSearchCluster(clf, [{'parameter': [0, 1, 2]}], 
-                           scoring=silhouette_scorer, refit=False, 
+    gs = GridSearchCluster(clf, [{'parameter': [0, 1, 2]}],
+                           scoring=silhouette_scorer, refit=False,
                            error_score=0.0)
 
     assert_warns(FitFailedWarning, gs.fit, X)
@@ -1021,8 +1022,8 @@ def test_grid_search_failing_clusterer():
                if this_point.parameters['parameter'] ==
                FailingClusterer.FAILING_PARAMETER)
 
-    gs = GridSearchCluster(clf, [{'parameter': [0, 1, 2]}], 
-                           scoring=silhouette_scorer, refit=False, 
+    gs = GridSearchCluster(clf, [{'parameter': [0, 1, 2]}],
+                           scoring=silhouette_scorer, refit=False,
                            error_score=float('nan'))
     assert_warns(FitFailedWarning, gs.fit, X)
     assert all(np.all(np.isnan(this_point.score))
@@ -1054,7 +1055,7 @@ def test_grid_search_failing_clusterer_raise():
     clf = FailingClusterer()
 
     # refit=False because we want to test the behaviour of the grid search part
-    gs = GridSearchCluster(clf, [{'parameter': [0, 1, 2]}], 
+    gs = GridSearchCluster(clf, [{'parameter': [0, 1, 2]}],
                            scoring=silhouette_scorer,
                            refit=False, error_score='raise')
 
