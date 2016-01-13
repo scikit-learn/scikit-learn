@@ -87,85 +87,43 @@ class KernelECA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None, eigen_solver='auto',
-                 tol=0, max_iter=None, random_state=None):
+                 tol=0, max_iter=None, random_state=None,center=False):
         self.n_components = n_components
-        self.kernel = kernel
+        self._kernel = kernel
         self.kernel_params = kernel_params
         self.gamma = gamma
         self.degree = degree
         self.coef0 = coef0
-        self.eigen_solver = eigen_solver
+        self.eigen_solver = eigen_solver #not selectable right now
         self.tol = tol
         self.max_iter = max_iter
         self.random_state = random_state
         self._centerer = KernelCenterer()
-
+        self.center = center
+        
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
 
     def _get_kernel(self, X, Y=None):
-        if callable(self.kernel):
+        if callable(self._kernel):
             params = self.kernel_params or {}
         else:
             params = {"gamma": self.gamma,
                       "degree": self.degree,
                       "coef0": self.coef0}
-        return pairwise_kernels(X, Y, metric=self.kernel,
+        return pairwise_kernels(X, Y, metric=self._kernel,
                                 filter_params=True, **params)
 
     def _fit_transform(self, K):
         """ Fit's using kernel K"""
         # center kernel
-        K = self._centerer.fit_transform(K)
+        if self.center == True:
+            K = self._centerer.fit_transform(K)
 
-        if self.n_components is None:
-            n_components = K.shape[0]
-        else:
-            n_components = min(K.shape[0], self.n_components)
-
-        # compute eigenvectors
-        if self.eigen_solver == 'auto':
-            if K.shape[0] > 200 and n_components < 10:
-                eigen_solver = 'arpack'
-            else:
-                eigen_solver = 'dense'
-        else:
-            eigen_solver = self.eigen_solver
-
-        if eigen_solver == 'dense':
-            self.lambdas_, self.alphas_ = linalg.eigh(
-                K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
-        elif eigen_solver == 'arpack':
-            random_state = check_random_state(self.random_state)
-            # initialize with [-1,1] as in ARPACK
-            v0 = random_state.uniform(-1, 1, K.shape[0])
-            self.lambdas_, self.alphas_ = eigsh(K, n_components,
-                                                which="LA",
-                                                tol=self.tol,
-                                                maxiter=self.max_iter,
-                                                v0=v0)
-
-        # sort eigenvectors in descending order
-        indices = self.lambdas_.argsort()[::-1]
-        self.lambdas_ = self.lambdas_[indices]
-        self.alphas_ = self.alphas_[:, indices]
-        
-        # Computing sorted kernel ECA entropy terms
-        N = len(self.alphas_[0])
-        s = 0
-        for i in range(N):
-            s += (np.sqrt(self.lambdas_[i]) * self.alphas_[i].T * np.ones(N))**2
-        self.entropy = (1/(N**2)) * s
-        
-        self.sorted_entropy_index = self.entropy.argsort()[::-1]
-        self.entropy = self.entropy[self.sorted_entropy_index]
-        
-        # Rearrange descending entropy components
-        self.alphas_ = self.alphas_[:, self.sorted_entropy_index]
-        self.lambdas_ = self.lambdas_[self.sorted_entropy_index]
-
-        return K
+        X_transformed = self.kernelECA(K=K)    
+        self.X_transformed = X_transformed
+        return K        
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -202,8 +160,8 @@ class KernelECA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
-        X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
-
+        X_transformed= self.X_transformed
+        
         return X_transformed
 
     def transform(self, X):
@@ -224,3 +182,50 @@ class KernelECA(BaseEstimator, TransformerMixin):
 
     def inverse_transform(self, X):
         raise NotImplementedError("Function inverse_transform is not implemented.")
+
+    # here are the helper functions => to integrate in the code!
+    def kernelECA(self,K):   
+        if self.n_components is None:
+            n_components = K.shape[0]
+        else:
+            n_components = min(K.shape[0], self.n_components)
+             
+        # compute eigenvectors
+        self.lambdas_, self.alphas_ = linalg.eigh(K)
+        
+        d = self.lambdas_
+        E = self.alphas_
+        # sort eigenvectors in descending order
+        D,E = self.sort_eigenvalues(d,E)
+    
+        d = np.diag(D)
+        sorted_entropy_index,entropy = self.ECA(D,E)
+        Es = E[:,sorted_entropy_index]
+        ds = d[sorted_entropy_index]
+
+        Phi = np.zeros((K.shape[0],n_components))
+        for i in range(n_components):
+            Phi[:,i] = np.sqrt(ds[i]) * Es[:,i]
+    
+        X_transformed = Phi
+        
+        return X_transformed
+
+    def sort_eigenvalues(self,D,E):
+        d = D
+        indices = np.argsort(d)[::-1]
+    
+        d = d[indices]
+        D = np.zeros((len(d),len(d)))
+        for i in range(len(d)):
+            D[i,i] = d[i]
+        E = E[:,indices]
+
+        return D,E
+    
+    def ECA(self,D,E):
+        N = E.shape[0]
+        entropy = np.multiply(np.diag(D).T , (np.dot(np.ones((1,N)),E))**2)[0]
+        indices = np.argsort(entropy)[::-1]
+        entropy = entropy[indices]
+        return indices,entropy
