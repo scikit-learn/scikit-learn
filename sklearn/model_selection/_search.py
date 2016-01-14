@@ -1179,7 +1179,23 @@ class GridSearchCV(BaseSearch, SearchCVMixin):
 
     Examples
     --------
-    TODO: Add examples here.
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> iris = datasets.load_iris()
+    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
+    >>> svr = svm.SVC()
+    >>> clf = GridSearchCV(svr, parameters)
+    >>> clf.fit(iris.data, iris.target)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    GridSearchCV(cv=None, error_score=...,
+           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+                         decision_function_shape=None, degree=..., gamma=...,
+                         kernel='rbf', max_iter=-1, probability=False,
+                         random_state=None, shrinking=True, tol=...,
+                         verbose=False),
+           fit_params={}, iid=..., n_jobs=1,
+           param_grid=..., pre_dispatch=..., refit=...,
+           scoring=..., verbose=...)
 
     Attributes
     ----------
