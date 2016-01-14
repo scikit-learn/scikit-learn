@@ -1526,7 +1526,7 @@ def check_get_params_invariance(name, estimator):
     if name in ('FeatureUnion', 'Pipeline'):
         e = estimator([('clf', T())])
 
-    elif name in ('GridSearchCluster', 'RandomizedSearchCluster',
+    elif name in ('GridSearchTransductive', 'RandomizedSearchTransductive',
                   'GridSearchCV', 'RandomizedSearchCV', 'SelectFromModel'):
         return
 
