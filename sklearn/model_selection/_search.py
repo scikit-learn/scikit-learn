@@ -35,9 +35,9 @@ from ..exceptions import FitFailedWarning
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-__all__ = ['GridSearchCV', 'GridSearchCluster', 'ParameterGrid',
+__all__ = ['GridSearchCV', 'GridSearchTransductive', 'ParameterGrid',
            'fit_grid_point', 'ParameterSampler', 'RandomizedSearchCV',
-           'RandomizedSearchCluster']
+           'RandomizedSearchTransductive']
 
 
 class ParameterGrid(object):
@@ -549,7 +549,7 @@ class BaseSearch(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.transform(Xt)
 
 
-class SearchClusterMixin(object):
+class SearchTransductiveMixin(object):
 
     """Adds unsupervised search to BaseSearch."""
 
@@ -562,12 +562,12 @@ class SearchClusterMixin(object):
         grid_scores = list()
         out = Parallel(n_jobs=1
                        )(
-            delayed(fit_and_score_cluster)(clone(estimator),
-                                           X, scorer=self.scorer_,
-                                           verbose=self.verbose,
-                                           parameters=parameters,
-                                           fit_params=self.fit_params,
-                                           error_score=self.error_score)
+            delayed(fit_and_score_transductive)(clone(estimator),
+                                                X, scorer=self.scorer_,
+                                                verbose=self.verbose,
+                                                parameters=parameters,
+                                                fit_params=self.fit_params,
+                                                error_score=self.error_score)
             for parameters in parameter_iterable)
 
         for score, parameters, _time in out:
@@ -597,8 +597,8 @@ class SearchClusterMixin(object):
         return self
 
 
-def fit_and_score_cluster(estimator, X, scorer, verbose, parameters,
-                          fit_params, y=None, error_score='raise'):
+def fit_and_score_transductive(estimator, X, scorer, verbose, parameters,
+                               fit_params, y=None, error_score='raise'):
     """Fit estimator and compute scores for a given dataset.
 
     Parameters
@@ -609,9 +609,9 @@ def fit_and_score_cluster(estimator, X, scorer, verbose, parameters,
     X : array-like of shape at least 2D
         The data to fit.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-                Target relative to X for classification or regression;
-                None for unsupervised learning.
+    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
 
     scorer : callable
         A scorer callable object / function with signature
@@ -656,7 +656,7 @@ def fit_and_score_cluster(estimator, X, scorer, verbose, parameters,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
-            warnings.warn("Clusterer score failed. "
+            warnings.warn("Transductive model score failed. "
                           "The score will be set to %f. "
                           "Details: \n%r" % (error_score, e), FitFailedWarning)
 
@@ -672,7 +672,7 @@ def fit_and_score_cluster(estimator, X, scorer, verbose, parameters,
     return score, parameters, scoring_time
 
 
-class GridSearchCluster(BaseSearch, SearchClusterMixin):
+class GridSearchTransductive(BaseSearch, SearchTransductiveMixin):
 
     """Exhaustive search over specified parameter values for an estimator.
 
@@ -802,7 +802,7 @@ class GridSearchCluster(BaseSearch, SearchClusterMixin):
                  n_jobs=1, refit=True, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise'):
 
-        super(GridSearchCluster, self).__init__(
+        super(GridSearchTransductive, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, refit=refit, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
@@ -827,7 +827,7 @@ class GridSearchCluster(BaseSearch, SearchClusterMixin):
         return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
-class RandomizedSearchCluster(BaseSearch, SearchClusterMixin):
+class RandomizedSearchTransductive(BaseSearch, SearchTransductiveMixin):
 
     """Randomized search on hyper parameters.
 
@@ -839,7 +839,7 @@ class RandomizedSearchCluster(BaseSearch, SearchClusterMixin):
     The parameters of the estimator used to apply these methods are optimized
     by random search over parameter settings.
 
-    In contrast to GridSearchCluster, not all parameter values are tried out,
+    In contrast to GridSearchTransductive, not all parameter values are tried out,
     but rather a fixed number of parameter settings is sampled from the
     specified distributions. The number of parameter settings that are tried
     is given by n_iter.
@@ -953,7 +953,7 @@ class RandomizedSearchCluster(BaseSearch, SearchClusterMixin):
 
     See Also
     --------
-    :class:`GridSearchCluster`:
+    :class:`GridSearchTransductive`:
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
@@ -970,7 +970,7 @@ class RandomizedSearchCluster(BaseSearch, SearchClusterMixin):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-        super(RandomizedSearchCluster, self).__init__(
+        super(RandomizedSearchTransductive, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, refit=refit, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
