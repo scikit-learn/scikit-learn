@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.multiclass import OneVsRestRegressor
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils import shuffle
 
@@ -25,6 +26,7 @@ from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression,
                                   SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
@@ -73,6 +75,24 @@ def test_ovr_fit_predict():
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_regression():
+    X, y = datasets.make_regression(n_targets=3)
+    X_train, y_train = X[:50], y[:50]
+    X_test, y_test = X[50:], y[50:]
+
+    references = np.zeros_like(y_test)
+    for n in range(3):
+        rgr = GradientBoostingRegressor(random_state=0)
+        rgr.fit(X_train, y_train[:, n])
+        references[:,n] = rgr.predict(X_test)
+
+    rgr = OneVsRestRegressor(GradientBoostingRegressor(random_state=0))
+    rgr.fit(X_train, y_train)
+    y_pred = rgr.predict(X_test)
+
+    assert_almost_equal(references, y_pred)
 
 
 def test_ovr_partial_fit():
