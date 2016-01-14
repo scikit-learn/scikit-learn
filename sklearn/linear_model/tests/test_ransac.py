@@ -367,8 +367,8 @@ def test_ransac_fit_sample_weight():
     # check that mask is correct
     assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
-    """ check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
-        X = X1 repeated n1 times, X2 repeated n2 times and so forth"""
+    # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
+    #   X = X1 repeated n1 times, X2 repeated n2 times and so forth
     random_state = check_random_state(0)
     X_ = random_state.randint(0, 200, [10, 1])
     y_ = np.ndarray.flatten(0.2 * X_ + 2)
@@ -392,8 +392,8 @@ def test_ransac_fit_sample_weight():
 
     assert_almost_equal(ransac_estimator.estimator_.coef_, ref_coef_)
 
-    """ check that if base_estimator.fit doesn't support
-            sample_weight, raises error"""
+    # check that if base_estimator.fit doesn't support
+    # sample_weight, raises error
     base_estimator = Lasso()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
