@@ -38,11 +38,11 @@ by decomposing such problems into binary classification problems.
 
     The set of labels can be different for each output variable.
     For instance, a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear" or "apple", 
+    takes possible values in a finite set of species such as "pear", "apple"; 
     and "blue" or "green" for a second output variable that takes possible values
     in a finite set of colors such as "green", "red", "blue", "yellow"...
 
-    This means that any classifiers handling a multi-output
+    This means that any classifiers handling multi-output
     multiclass or multi-task classification tasks,
     support the multi-label classification task as a special case.
     Multi-task classification is similar to the multi-output
