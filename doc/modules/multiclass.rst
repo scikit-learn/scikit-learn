@@ -42,7 +42,7 @@ by decomposing such problems into binary classification problems.
     and "blue" or "green" for a second output variable that takes possible values
     in a finite set of colors such as "green", "red", "blue", "yellow"...
 
-    This means that any classifiers handling multi-output
+    This means that any classifiers handling a multi-output
     multiclass or multi-task classification tasks,
     support the multi-label classification task as a special case.
     Multi-task classification is similar to the multi-output
