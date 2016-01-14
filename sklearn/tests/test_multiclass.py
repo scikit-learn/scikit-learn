@@ -13,7 +13,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.multiclass import OneVsRestRegressor
+from sklearn.multiclass import MultiOutputRegressor
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils import shuffle
 
@@ -88,7 +88,7 @@ def test_ovr_regression():
         rgr.fit(X_train, y_train[:, n])
         references[:,n] = rgr.predict(X_test)
 
-    rgr = OneVsRestRegressor(GradientBoostingRegressor(random_state=0))
+    rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr.fit(X_train, y_train)
     y_pred = rgr.predict(X_test)
 

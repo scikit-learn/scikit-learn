@@ -53,8 +53,8 @@ from .externals.joblib import delayed
 from .externals.six.moves import zip as izip
 
 __all__ = [
+    "MultiOutputRegressor",
     "OneVsRestClassifier",
-    "OneVsRestRegressor",
     "OneVsOneClassifier",
     "OutputCodeClassifier",
 ]
@@ -399,8 +399,8 @@ def _fit_regression(estimator, X, y):
     return estimator
 
 
-class OneVsRestRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
-    """One-vs-the-rest (OvR) multi target regression
+class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
+    """Multi target regression
 
     This strategy consits of fitting one regressor per target. This is a
     simple strategy for extending regressors that do not natively support
