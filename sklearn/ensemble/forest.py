@@ -62,7 +62,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import bincount
+from ..utils.fixes import bincount, parallel_helper
 from ..utils.multiclass import check_classification_targets
 
 __all__ = ["RandomForestClassifier",
@@ -121,11 +121,6 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-def _parallel_helper(obj, methodname, *args, **kwargs):
-    """Private helper to workaround Python 2 pickle limitations"""
-    return getattr(obj, methodname)(*args, **kwargs)
-
-
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                                     _LearntSelectorMixin)):
     """Base class for forests of trees.
@@ -178,7 +173,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
-            delayed(_parallel_helper)(tree, 'apply', X, check_input=False)
+            delayed(parallel_helper)(tree, 'apply', X, check_input=False)
             for tree in self.estimators_)
 
         return np.array(results).T
@@ -206,7 +201,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               backend="threading")(
-            delayed(_parallel_helper)(tree, 'decision_path', X,
+            delayed(parallel_helper)(tree, 'decision_path', X,
                                       check_input=False)
             for tree in self.estimators_)
 
@@ -577,7 +572,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_helper)(e, 'predict_proba', X,
+            delayed(parallel_helper)(e, 'predict_proba', X,
                                       check_input=False)
             for e in self.estimators_)
 
@@ -689,7 +684,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              backend="threading")(
-            delayed(_parallel_helper)(e, 'predict', X, check_input=False)
+            delayed(parallel_helper)(e, 'predict', X, check_input=False)
             for e in self.estimators_)
 
         # Reduce

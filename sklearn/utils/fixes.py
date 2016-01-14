@@ -343,6 +343,11 @@ else:
     from functools import partial
 
 
+def parallel_helper(obj, methodname, *args, **kwargs):
+    """Helper to workaround Python 2 limitations of pickling instance methods"""
+    return getattr(obj, methodname)(*args, **kwargs)
+
+
 if np_version < (1, 6, 2):
     # Allow bincount to accept empty arrays
     # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
