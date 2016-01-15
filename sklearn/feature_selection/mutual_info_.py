@@ -310,8 +310,8 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
     to zero if and only if two random variables are independent, and higher
     values mean higher dependency.
 
-    This function relies on the algorithms of MI estimation described in [2]_
-    and [3]_.
+    The function relies on nonparametric methods based on entropy estimation
+    from k-nearest neighbors distances. Refer to [2]_ and [3]_.
 
     It can be used for univariate features selection, read more in the
     :ref:`User Guide <univariate_feature_selection>`.
@@ -382,8 +382,8 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
     to zero if and only if two random variables are independent, and higher
     values mean higher dependency.
 
-    This function relies on the algorithms of MI estimation described in [2]_
-    and [3]_.
+    The function relies on nonparametric methods based on entropy estimation
+    from k-nearest neighbors distances. Refer to [2]_ and [3]_.
 
     It can be used for univariate features selection, read more in the
     :ref:`User Guide <univariate_feature_selection>`.
