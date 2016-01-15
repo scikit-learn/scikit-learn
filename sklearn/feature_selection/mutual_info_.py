@@ -104,33 +104,41 @@ def _compute_mi_cd(c, d, n_neighbors):
     .. [1] B. C. Ross "Mutual Information between Discrete and Continuous
        Data Sets". PLoS ONE 9(2), 2014.
     """
+    n_samples = c.shape[0]
     c = c.reshape((-1, 1))
-    n_samples = c.size
-
-    nn = NearestNeighbors(n_neighbors=n_neighbors)
 
     radius = np.empty(n_samples)
     label_counts = np.empty(n_samples)
+    k_all = np.empty(n_samples)
+    nn = NearestNeighbors()
     for label in np.unique(d):
         mask = d == label
         count = np.sum(mask)
         if count > 1:
-            nn.set_params(n_neighbors=min(n_neighbors, count - 1))
+            k = min(n_neighbors, count - 1)
+            nn.set_params(n_neighbors=k)
             nn.fit(c[mask])
             r = nn.kneighbors()[0]
             radius[mask] = np.nextafter(r[:, -1], 0)
-        else:
-            radius[mask] = 0
+            k_all[mask] = k
         label_counts[mask] = count
+
+    # Ignore points with unique labels.
+    mask = label_counts > 1
+    n_samples = np.sum(mask)
+    label_counts = label_counts[mask]
+    k_all = k_all[mask]
+    c = c[mask]
+    radius = radius[mask]
 
     nn.set_params(algorithm='kd_tree')
     nn.fit(c)
     ind = nn.radius_neighbors(radius=radius, return_distance=False)
-    neighbor_counts = np.array([i.size for i in ind])
+    m_all = np.array([i.size for i in ind])
 
-    mi = (digamma(n_samples) + digamma(n_neighbors) -
+    mi = (digamma(n_samples) + np.mean(digamma(k_all)) -
           np.mean(digamma(label_counts)) -
-          np.mean(digamma(neighbor_counts + 1)))
+          np.mean(digamma(m_all + 1)))
 
     return max(0, mi)
 

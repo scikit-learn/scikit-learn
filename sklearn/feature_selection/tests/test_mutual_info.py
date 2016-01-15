@@ -5,7 +5,7 @@ from numpy.testing import run_module_suite
 from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
-                                   assert_false, assert_true, assert_raises)
+                                   assert_false, assert_raises, assert_equal)
 from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
 
@@ -88,6 +88,24 @@ class TestMIComputation(object):
             for n_neighbors in [3, 5, 7]:
                 I_computed = _compute_mi(x, y, True, False, n_neighbors)
                 assert_almost_equal(I_computed, I_theory, 1)
+
+    def test_cd_unique_label(self):
+        # Test that adding unique label doesn't change MI.
+        n_samples = 100
+        x = np.random.uniform(size=n_samples) > 0.5
+
+        y = np.empty(n_samples)
+        mask = x == 0
+        y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
+        y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
+
+        mi_1 = _compute_mi(x, y, True, False)
+
+        x = np.hstack((x, 2))
+        y = np.hstack((y, 10))
+        mi_2 = _compute_mi(x, y, True, False)
+
+        assert_equal(mi_1, mi_2)
 
 
 class TestMutualInfo(object):
