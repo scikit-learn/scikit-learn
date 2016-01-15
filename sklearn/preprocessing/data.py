@@ -172,7 +172,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                 # scale_ is very small so that mean_2 = mean_1/scale_ > 0, even
                 # if mean_1 was close to zero. The problem is thus essentially
                 # due to the lack of precision of mean_. A solution is then to
-                # substract the mean again:
+                # subtract the mean again:
                 if not np.allclose(mean_2, 0):
                     warnings.warn("Numerical issues were encountered "
                                   "when scaling the data "

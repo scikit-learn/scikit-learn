@@ -459,7 +459,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     Attributes
     ----------
-    base_estimator_ : list of estimators
+    base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
 
     estimators_ : list of estimators

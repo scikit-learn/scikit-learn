@@ -30,6 +30,7 @@ from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import bincount
+from ..utils.fixes import signature
 from ..base import _pprint
 from ..gaussian_process.kernels import Kernel as GPKernel
 
@@ -476,7 +477,7 @@ class LabelKFold(_BaseKFold):
                              " than the number of labels: %d."
                              % (self.n_folds, n_labels))
 
-        # Weight labels by their number of occurences
+        # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
 
         # Distribute the most frequent labels first
@@ -1320,9 +1321,9 @@ def check_cv(cv=3, y=None, classifier=False):
           - An object to be used as a cross-validation generator.
           - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If classifier is False or if ``y`` is
-        neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if classifier is True and ``y`` is either
+        binary or multiclass, :class:`StratifiedKFold` used. In all other
+        cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1509,13 +1510,13 @@ def _build_repr(self):
     cls = self.__class__
     init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
     # Ignore varargs, kw and default values and pop self
+    init_signature = signature(init)
+    # Consider the constructor parameters excluding 'self'
     if init is object.__init__:
-        # No explicit constructor to introspect
         args = []
     else:
-        args = sorted(inspect.getargspec(init)[0])
-    if 'self' in args:
-        args.remove('self')
+        args = sorted([p.name for p in init_signature.parameters.values()
+                       if p.name != 'self' and p.kind != p.VAR_KEYWORD])
     class_name = self.__class__.__name__
     params = dict()
     for key in args:

@@ -70,6 +70,15 @@ Enhancements
      :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
      parameter. By `Brian McFee`_.
 
+   - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
+     now support ``partial_fit``. By `Asish Panda`_ and `Philipp Dowling`_.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
+     By `Jatin Shah`_ and `Raghav R V`_.
+
+   - :class:`linear_model.RANSACRegressor` now supports ``sample_weights``.
+     By `Imaculate`_.
+
 Bug fixes
 .........
 
@@ -3922,7 +3931,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
-.. _Raghav R V: https://github.com/ragv
+.. _Raghav R V: https://github.com/rvraghav93
 
 .. _Trevor Stephens: http://trevorstephens.com/
 
@@ -3989,3 +3998,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Elvis Dohmatob: https://github.com/dohmatob
 .. _yelite: https://github.com/yelite
 .. _Issam H. Laradji: https://github.com/IssamLaradji
+
+.. _Asish Panda: https://github.com/kaichogami
+
+.. _Philipp Dowling: https://github.com/phdowling
+
+.. _Imaculate: https://github.com/Imaculate

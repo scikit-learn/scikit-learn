@@ -563,7 +563,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     Notes
     -----
-    You might get slighly different results with the solver liblinear than
+    You might get slightly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
     """
     if copy:
@@ -1049,6 +1049,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         the entire probability distribution. Works only for the 'newton-cg',
         'sag' and 'lbfgs' solver.
 
+        .. versionadded:: 0.18
+           Stochastic Average Gradient descent solver for 'multinomial' case.
+
     verbose : int, default: 0
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
@@ -1415,6 +1418,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'newton-cg',
         'sag' and 'lbfgs' solver.
+
+        .. versionadded:: 0.18
+           Stochastic Average Gradient descent solver for 'multinomial' case.
 
     intercept_scaling : float, default 1.
         Useful only if solver is liblinear.

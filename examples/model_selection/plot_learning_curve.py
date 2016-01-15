@@ -27,7 +27,7 @@ from sklearn.model_selection import ShuffleSplit
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
     """
-    Generate a simple plot of the test and traning learning curve.
+    Generate a simple plot of the test and training learning curve.
 
     Parameters
     ----------

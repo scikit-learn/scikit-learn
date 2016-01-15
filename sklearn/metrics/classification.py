@@ -1,4 +1,4 @@
-"""Metrics to assess performance on classification task given classe prediction
+"""Metrics to assess performance on classification task given class prediction
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better
@@ -398,7 +398,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def matthews_corrcoef(y_true, y_pred):
+def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC) for binary classes
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -422,6 +422,9 @@ def matthews_corrcoef(y_true, y_pred):
 
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], default None
+        Sample weights.
 
     Returns
     -------
@@ -457,8 +460,17 @@ def matthews_corrcoef(y_true, y_pred):
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    with np.errstate(invalid='ignore'):
-        mcc = np.corrcoef(y_true, y_pred)[0, 1]
+    mean_yt = np.average(y_true, weights=sample_weight)
+    mean_yp = np.average(y_pred, weights=sample_weight)
+
+    y_true_u_cent = y_true - mean_yt
+    y_pred_u_cent = y_pred - mean_yp
+
+    cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent, weights=sample_weight)
+    var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
+    var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
+
+    mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
 
     if np.isnan(mcc):
         return 0.
@@ -1550,6 +1562,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
 
+    y_pred = check_array(y_pred, ensure_2d=False)
     # Clipping
     Y = np.clip(y_pred, eps, 1 - eps)
 

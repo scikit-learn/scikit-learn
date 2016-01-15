@@ -17,7 +17,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csr_matrix
 
 from . import check_random_state
 from .fixes import np_version
@@ -59,12 +59,14 @@ def squared_norm(x):
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports CSR sparse
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports sparse
     matrices and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
     if issparse(X):
+        if not isinstance(X, csr_matrix):
+            X = csr_matrix(X)
         norms = csr_row_norms(X)
     else:
         norms = np.einsum('ij,ij->i', X, X)

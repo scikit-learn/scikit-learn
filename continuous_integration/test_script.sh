@@ -19,7 +19,7 @@ python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
 
-# Skip tests that require large downloads over the network to save bandwith
+# Skip tests that require large downloads over the network to save bandwidth
 # usage as travis workers are stateless and therefore traditional local
 # disk caching does not work.
 export SKLEARN_SKIP_NETWORK_TESTS=1

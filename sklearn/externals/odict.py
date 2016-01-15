@@ -10,7 +10,7 @@ except ImportError:
     try:
         from dummy_thread import get_ident as _get_ident
     except ImportError:
-        # Ensure that this module is still importable under Pythhon3 to avoid
+        # Ensure that this module is still importable under Python3 to avoid
         # crashing code-inspecting tools like nose.
         from _dummy_thread import get_ident as _get_ident
 

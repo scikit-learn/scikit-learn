@@ -79,7 +79,7 @@ X3 = np.array([[1, 1, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0],
                [0, 0, 0, 1, 0, 0], [0, 0, 0, 1, 0, 0]])
 Y3 = np.array([1, 1, 1, 1, 2, 2, 2, 2])
 
-# test sample 4 - two more or less redundent feature groups
+# test sample 4 - two more or less redundant feature groups
 X4 = np.array([[1, 0.9, 0.8, 0, 0, 0], [1, .84, .98, 0, 0, 0],
                [1, .96, .88, 0, 0, 0], [1, .91, .99, 0, 0, 0],
                [0, 0, 0, .89, .91, 1], [0, 0, 0, .79, .84, 1],

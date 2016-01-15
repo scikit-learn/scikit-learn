@@ -462,7 +462,7 @@ def test_ovr_multinomial_iris():
     clf = LogisticRegressionCV(cv=precomputed_folds)
     clf.fit(train, target)
 
-    # Conflate classes 0 and 1 and train clf1 on this modifed dataset
+    # Conflate classes 0 and 1 and train clf1 on this modified dataset
     clf1 = LogisticRegressionCV(cv=precomputed_folds)
     target_copy = target.copy()
     target_copy[target_copy == 0] = 1

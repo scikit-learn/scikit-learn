@@ -169,7 +169,7 @@ pca = PCA(n_components=8).fit(data_train)
 
 X = pca.transform(data_train)
 
-# Gemerate grid along first two principal components
+# Generate grid along first two principal components
 multiples = np.arange(-2, 2, 0.1)
 # steps along first component
 first = multiples[:, np.newaxis] * pca.components_[0, :]

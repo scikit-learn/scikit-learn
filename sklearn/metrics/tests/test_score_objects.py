@@ -82,6 +82,12 @@ class DummyScorer(object):
         return 1
 
 
+def test_all_scorers_repr():
+    # Test that all scorers have a working repr
+    for name, scorer in SCORERS.items():
+        repr(scorer)
+
+
 def test_check_scoring():
     # Test all branches of check_scoring
     estimator = EstimatorWithoutFit()

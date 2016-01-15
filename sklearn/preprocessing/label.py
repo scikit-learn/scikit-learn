@@ -212,7 +212,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Represents the type of the target data as evaluated by
         utils.multiclass.type_of_target. Possible type are 'continuous',
         'continuous-multioutput', 'binary', 'multiclass',
-        'mutliclass-multioutput', 'multilabel-indicator', and 'unknown'.
+        'multiclass-multioutput', 'multilabel-indicator', and 'unknown'.
 
     sparse_input_ : boolean,
         True if the input data to transform is given as a sparse matrix, False

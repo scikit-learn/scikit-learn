@@ -38,11 +38,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
-        the sums of the predicted probalities, which is recommended for
+        the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
-        Sequence of weights (`float` or `int`) to weight the occurances of
+        Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
@@ -199,7 +199,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         If `voting='soft'`:
           array-like = [n_classifiers, n_samples, n_classes]
-            Class probabilties calculated by each classifier.
+            Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_classifiers, n_samples]
             Class labels predicted by each classifier.

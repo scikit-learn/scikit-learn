@@ -11,7 +11,7 @@ from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
-
+from ..utils.validation import has_fit_parameter
 
 _EPSILON = np.spacing(1)
 
@@ -177,7 +177,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.residual_metric = residual_metric
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
@@ -187,6 +187,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values.
+
+        sample_weight: array-like, shape = [n_samples]
+            Individual weights for each sample
+            raises error if sample_weight is passed and base_estimator
+            fit method does not support it.
 
         Raises
         ------
@@ -243,6 +248,17 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         except ValueError:
             pass
 
+        estimator_fit_has_sample_weight = has_fit_parameter(base_estimator,
+                                                            "sample_weight")
+        estimator_name = type(base_estimator).__name__
+        if (sample_weight is not None and not
+                estimator_fit_has_sample_weight):
+            raise ValueError("%s does not support sample_weight. Samples"
+                             " weights are only used for the calibration"
+                             " itself." % estimator_name)
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
+
         n_inliers_best = 0
         score_best = np.inf
         inlier_mask_best = None
@@ -269,7 +285,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                 continue
 
             # fit model for current random sample set
-            base_estimator.fit(X_subset, y_subset)
+            if sample_weight is None:
+                base_estimator.fit(X_subset, y_subset)
+            else:
+                base_estimator.fit(X_subset, y_subset,
+                                   sample_weight=sample_weight[subset_idxs])
 
             # check if estimated model is valid
             if (self.is_model_valid is not None and not

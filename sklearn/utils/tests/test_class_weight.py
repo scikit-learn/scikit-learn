@@ -78,7 +78,7 @@ def test_compute_class_weight_invariance():
     # create dataset where class 0 is duplicated twice
     X_0 = np.vstack([X] + [X[y == 0]] * 2)
     y_0 = np.hstack([y] + [y[y == 0]] * 2)
-    # cuplicate everything
+    # duplicate everything
     X_ = np.vstack([X] * 2)
     y_ = np.hstack([y] * 2)
     # results should be identical

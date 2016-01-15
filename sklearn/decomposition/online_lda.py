@@ -67,7 +67,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     -------
     (doc_topic_distr, suff_stats) :
         `doc_topic_distr` is unnormalized topic distribution for each document.
-        In the literature, this is `gamma`. we can calcuate `E[log(theta)]`
+        In the literature, this is `gamma`. we can calculate `E[log(theta)]`
         from it.
         `suff_stats` is expected sufficient statistics for the M-step.
             When `cal_sstats == False`, this will be None.
@@ -582,7 +582,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         sub_sampling : boolean, optional, (default=False)
             Compensate for subsampling of documents.
-            It is used in calcuate bound in online learning.
+            It is used in calculate bound in online learning.
 
         Returns
         -------

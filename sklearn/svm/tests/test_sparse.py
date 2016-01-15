@@ -280,7 +280,7 @@ def test_sparse_oneclasssvm():
 
 def test_sparse_realdata():
     # Test on a subset from the 20newsgroups dataset.
-    # This catchs some bugs if input is not correctly converted into
+    # This catches some bugs if input is not correctly converted into
     # sparse format or weights are not correctly initialized.
 
     data = np.array([0.03771744, 0.1003567, 0.01174647, 0.027069])
