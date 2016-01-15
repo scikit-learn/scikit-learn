@@ -19,8 +19,13 @@ def test_silhouette():
     silhouette = silhouette_score(D, y, metric='precomputed')
     assert(silhouette > 0)
     # Test without calculating D
-    silhouette_metric = silhouette_score(X, y, metric='euclidean')
+    silhouette_metric = silhouette_score(X, y, metric='euclidean',
+                                         blockwise=False)
     assert_almost_equal(silhouette, silhouette_metric)
+    # Test with the block method
+    silhouette_metric_block = silhouette_score(X, y, metric='euclidean',
+                                               blockwise=True)
+    assert_almost_equal(silhouette, silhouette_metric_block)
     # Test with sampling
     silhouette = silhouette_score(D, y, metric='precomputed',
                                   sample_size=int(X.shape[0] / 2),
