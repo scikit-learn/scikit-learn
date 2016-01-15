@@ -12,6 +12,7 @@ from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils.validation import check_X_y
+from ..utils.multiclass import check_classification_targets
 
 
 def _compute_mi_cc(x, y, n_neighbors):
@@ -433,5 +434,6 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
     .. [3] B. C. Ross "Mutual Information between Discrete and Continuous
            Data Sets". PLoS ONE 9(2), 2014.
     """
+    check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors,
                         copy, random_state)
