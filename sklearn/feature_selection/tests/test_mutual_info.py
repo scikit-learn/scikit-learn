@@ -48,11 +48,11 @@ class TestMIComputation(object):
 
         x, y = Z[:, 0], Z[:, 1]
 
-        # Theory and computed values won't be very close, assert that relative
-        # error is less than 10%.
+        # Theory and computed values won't be very close, assert that the
+        # first figures after decimal point match.
         for n_neighbors in [3, 5, 7]:
             I_computed = _compute_mi(x, y, False, False, n_neighbors)
-            assert_true(np.abs(I_computed - I_theory) < 0.1 * I_theory)
+            assert_almost_equal(I_computed, I_theory, 1)
 
     def test_cd(self):
         # To test define a joint distribution as follows:
@@ -84,10 +84,10 @@ class TestMIComputation(object):
             I_theory = -0.5 * ((1 - p) * np.log(0.5 * (1 - p)) +
                                p * np.log(0.5 * p) + np.log(0.5)) - np.log(2)
 
-            # Again assert that relative error is less than 10%.
+            # Assert the same tolerance.
             for n_neighbors in [3, 5, 7]:
                 I_computed = _compute_mi(x, y, True, False, n_neighbors)
-                assert_true(np.abs(I_computed - I_theory) < 0.1 * I_theory)
+                assert_almost_equal(I_computed, I_theory, 1)
 
 
 class TestMutualInfo(object):
