@@ -279,11 +279,12 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
 
     rng = check_random_state(random_state)
     if np.any(continuous_mask):
+        if copy:
+            X = X.copy()
+
         if not discrete_target:
             X[:, continuous_mask] = scale(X[:, continuous_mask],
-                                          with_mean=False, copy=copy)
-        elif copy:
-            X = X.copy()
+                                          with_mean=False, copy=False)
 
         # Add small noise to continuous features as advised in Kraskov et. al.
         X = X.astype(float)
