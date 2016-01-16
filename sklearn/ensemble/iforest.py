@@ -54,7 +54,7 @@ class IsolationForest(BaseBagging):
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
-    contamination : float in ]0., 0.5[, optional (default=0.1)
+    contamination : float in (0., 0.5), optional (default=0.1)
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Used when fitting to define the threshold
         on the decision function.
@@ -258,8 +258,9 @@ class IsolationForest(BaseBagging):
 
         scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
 
-        # minus as bigger is better (here less abnormal)
-        # and add 0.5 to give a sense to scores = 0:
+        # Take the opposite of the scores as bigger is better (here less
+        # abnormal) and add 0.5 (this value plays a special role as described
+        # in the original paper) to give a sense to scores = 0:
         return 0.5 - scores
 
 
