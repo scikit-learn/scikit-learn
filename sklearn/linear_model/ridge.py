@@ -850,14 +850,13 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _pre_compute(self, X, y):
+    def _pre_compute(self, X, y, centered_kernel=True):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
         # the following emulates an additional constant regressor
         # corresponding to fit_intercept=True
         # but this is done only when the features have been centered
-        if np.abs(X.mean(0)).max() < 1.e-12:
-            # test whether features have been centered
+        if centered_kernel:
             K += np.ones_like(K)
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
@@ -874,7 +873,8 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
+    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y,
+                                  sample_weight=None):
         """Helper function to avoid code duplication between self._errors and
         self._values.
 
@@ -882,9 +882,16 @@ class _RidgeGCV(LinearModel):
         -----
         We don't construct matrix G, instead compute action on y & diagonal.
         """
-        constant_column = np.var(Q, 0) < 1.e-6  # detect constant column
+        if sample_weight is None:
+            sample_weight = np.ones(y.shape[0])
+
+        Q_ = Q - np.dot(
+            sample_weight[:, np.newaxis],
+            np.dot(sample_weight, Q)[np.newaxis]) / np.sum(sample_weight ** 2)
+        dummy_column = np.sum(Q_ ** 2, 0) < 1.e-6
+        # detect columns colinear to sample_weight
         w = 1. / (v + alpha)
-        w[constant_column] = 0  # cancel the regularization for the intercept
+        w[dummy_column] = 0  # cancel the regularization for the intercept
         w[v == 0] = 0
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
@@ -893,18 +900,23 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
+    def _errors(self, alpha, y, v, Q, QT_y, sample_weight=None):
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y,
+                                                   sample_weight)
         return (c / G_diag) ** 2, c
 
-    def _values(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
+    def _values(self, alpha, y, v, Q, QT_y, sample_weight=None):
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y,
+                                                   sample_weight)
         return y - (c / G_diag), c
 
-    def _pre_compute_svd(self, X, y):
+    def _pre_compute_svd(self, X, y, centered_kernel=True):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
-        X_ = np.hstack((X, np.ones((X.shape[0], 1))))
+        if centered_kernel:
+            X_ = np.hstack((X, np.ones((X.shape[0], 1))))
+        else:
+            X_ = X
         # to emulate fit_intercept=True situation, add a column on ones
         # Note that by centering, the other columns are orthogonal to that one
         U, s, _ = linalg.svd(X_, full_matrices=0)
@@ -916,9 +928,10 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        constant_column = np.var(U, 0) < 1.e-6  # detect constant column
+        dummy_column = np.var(U, 0) < 1.e-12
+        # detect columns colinear to ones
         w = alpha * ((v + alpha) ** -1) - 1
-        w[constant_column] = - 1  # cancel the regularization for the intercept
+        w[dummy_column] = - 1  # cancel the regularization for the intercept
         c = np.dot(U, self._diag_dot(w, UT_y)) + y
         G_diag = self._decomp_diag(w, U) + 1
         c /= alpha  # for compatibility with textbook version
@@ -988,7 +1001,14 @@ class _RidgeGCV(LinearModel):
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
-        v, Q, QT_y = _pre_compute(X, y)
+        if sample_weight is not None:
+            X, y = _rescale_data(X, y, sample_weight)
+
+        centered_kernel = True
+        if sparse.issparse(X) or not self.fit_intercept:
+            centered_kernel = False
+
+        v, Q, QT_y = _pre_compute(X, y, centered_kernel)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -997,9 +1017,7 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
-            weighted_alpha = (sample_weight * alpha
-                              if sample_weight is not None
-                              else alpha)
+            weighted_alpha = alpha
             if error:
                 out, c = _errors(weighted_alpha, y, v, Q, QT_y)
             else:
