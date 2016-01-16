@@ -65,9 +65,8 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_labels)
+        y : array-like, of length n_samples
             The target variable for supervised learning problems.
-            Where n_labels is the number of labels for each sample
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -817,7 +816,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
-            
+
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
@@ -1114,6 +1113,32 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = rng.permutation(test)
 
             yield train, test
+
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedShuffleSplit, self).split(X, y, labels)
 
 
 def _validate_shuffle_split_init(test_size, train_size):
