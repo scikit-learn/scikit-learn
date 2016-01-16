@@ -53,9 +53,10 @@ plt.semilogx(alphas, scores - std_error, 'b--')
 # alpha=0.2 controls the translucency of the fill color
 plt.fill_between(alphas, scores + std_error, scores - std_error, alpha=0.2)
 
-plt.ylabel('CV score')
+plt.ylabel('CV score +/- std error')
 plt.xlabel('alpha')
 plt.axhline(np.max(scores), linestyle='--', color='.5')
+plt.xlim([alphas[0], alphas[-1]])
 
 ##############################################################################
 # Bonus: how much can you trust the selection of alpha?
