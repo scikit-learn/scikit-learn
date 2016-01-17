@@ -20,8 +20,9 @@ def _compute_mi_cc(x, y, n_neighbors):
 
     Parameters
     ----------
-    x, y : ndarray
-        Samples of random variables, 1-d arrays of identical shape.
+    x, y : ndarray, shape (n_samples,)
+        Samples of two continuous random variables, must have an identical
+        shape.
 
     n_neighbors : int
         Number of nearest neighbors to search for each point, see [1]_.
@@ -77,11 +78,11 @@ def _compute_mi_cd(c, d, n_neighbors):
 
     Parameters
     ----------
-    c : ndarray
-        Samples from a continuous random variable.
+    c : ndarray, shape (n_samples,)
+        Samples of a continuous random variable.
 
-    d : ndarray
-        Samples from a discrete random variable.
+    d : ndarray, shape (n_samples,)
+        Samples of a discrete random variable.
 
     n_neighbors : int
         Number of nearest neighbors to search for each point, see [1]_.
