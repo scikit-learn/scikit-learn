@@ -82,6 +82,10 @@ Enhancements
    - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
      error on the samples for every trial. By `Manoj Kumar`_.
 
+   - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
+     By `Manoj Kumar`_.
+
+
 Bug fixes
 .........
 
