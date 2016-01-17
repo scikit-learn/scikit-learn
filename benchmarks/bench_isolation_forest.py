@@ -19,10 +19,8 @@ from sklearn.utils import shuffle as sh
 
 np.random.seed(1)
 
-# set to True to obtain histograms of the decision functions
-decision_function = True  
-
-datasets = ['http'] #, 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+# datasets = ['http']
 
 for dat in datasets:
     # loading and vectorization
@@ -78,9 +76,8 @@ for dat in datasets:
     if dat == 'http' or dat == 'smtp':
         y = (y != 'normal.').astype(int)
 
-    n_samples, n_features = np.shape(X)
+    n_samples, n_features = X.shape
     n_samples_train = n_samples // 2
-    n_samples_test = n_samples - n_samples_train
 
     X = X.astype(float)
     X_train = X[:n_samples_train, :]
@@ -97,29 +94,34 @@ for dat in datasets:
 
     scoring = - model.decision_function(X_test)  # the lower, the more normal
 
-    if decision_function==True:
-        f, ax = plt.subplots(3, sharex=True, sharey=True)
-        ax[0].hist(scoring, np.linspace(-0.5, 0.5, 200), color='black')
-        ax[0].set_title('decision function for %s dataset' % dat, size=20)
-        ax[0].legend(loc="lower right")
-        ax[1].hist(scoring[y_test == 0], np.linspace(-0.5, 0.5, 200), color='b',
-                   label='normal data')
-        ax[1].legend(loc="lower right")
-        ax[2].hist(scoring[y_test == 1], np.linspace(-0.5, 0.5, 200), color='r',
-                   label='outliers')
-        ax[2].legend(loc="lower right")
-    else:
-        predict_time = time() - tstart
-        fpr, tpr, thresholds = roc_curve(y_test, scoring)
-        AUC = auc(fpr, tpr)
-        plt.plot(fpr, tpr, lw=1, label='ROC for %s (area = %0.3f, train-time: %0.2fs, test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
+    # Show score histograms
+    f, ax = plt.subplots(3, sharex=True, sharey=True)
+    bins = np.linspace(-0.5, 0.5, 200)
+    ax[0].hist(scoring, bins, color='black')
+    ax[0].set_title('decision function for %s dataset' % dat)
+    ax[0].legend(loc="lower right")
+    ax[1].hist(scoring[y_test == 0], bins, color='b',
+               label='normal data')
+    ax[1].legend(loc="lower right")
+    ax[2].hist(scoring[y_test == 1], bins, color='r',
+               label='outliers')
+    ax[2].legend(loc="lower right")
 
-if decision_function==False:
-    plt.xlim([-0.05, 1.05])
-    plt.ylim([-0.05, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic')
-    plt.legend(loc="lower right")
+    # Show ROC Curves
+    plt.figure(0)
+    predict_time = time() - tstart
+    fpr, tpr, thresholds = roc_curve(y_test, scoring)
+    AUC = auc(fpr, tpr)
+    label = ('%s (area: %0.3f, train-time: %0.2fs, '
+             'test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
+    plt.plot(fpr, tpr, lw=1, label=label)
+
+plt.figure(0)  # for ROC curves
+plt.xlim([-0.05, 1.05])
+plt.ylim([-0.05, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('Receiver operating characteristic (ROC) curves')
+plt.legend(loc="lower right")
 
 plt.show()
