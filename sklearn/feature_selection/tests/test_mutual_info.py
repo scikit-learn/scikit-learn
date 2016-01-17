@@ -10,179 +10,183 @@ from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
 
 
-class TestMIComputation(object):
-    def test_dd(self):
-        # In discrete case computations are straightforward and can be done
-        # by hand on given vectors.
-        x = np.array([0, 1, 1, 0, 0])
-        y = np.array([1, 0, 0, 0, 1])
+def test_compute_mi_dd():
+    # In discrete case computations are straightforward and can be done
+    # by hand on given vectors.
+    x = np.array([0, 1, 1, 0, 0])
+    y = np.array([1, 0, 0, 0, 1])
 
-        H_x = H_y = -(3/5) * np.log(3/5) - (2/5) * np.log(2/5)
-        H_xy = -1/5 * np.log(1/5) - 2/5 * np.log(2/5) - 2/5 * np.log(2/5)
-        I_xy = H_x + H_y - H_xy
+    H_x = H_y = -(3/5) * np.log(3/5) - (2/5) * np.log(2/5)
+    H_xy = -1/5 * np.log(1/5) - 2/5 * np.log(2/5) - 2/5 * np.log(2/5)
+    I_xy = H_x + H_y - H_xy
 
-        assert_almost_equal(_compute_mi(x,  y, True, True), I_xy)
+    assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
 
-    def test_cc(self):
-        # For two continuous variables a good approach is to test on bivariate
-        # normal distribution, where mutual information is known.
 
-        # Mean of the distribution, irrelevant for mutual information.
-        mean = np.zeros(2)
+def test_compute_mi_cc():
+    # For two continuous variables a good approach is to test on bivariate
+    # normal distribution, where mutual information is known.
 
-        # Setup covariance matrix with correlation coeff. equal 0.5.
-        sigma_1 = 1
-        sigma_2 = 10
-        corr = 0.5
-        cov = np.array([
-            [sigma_1**2, corr * sigma_1 * sigma_2],
-            [corr * sigma_1 * sigma_2, sigma_2**2]
-        ])
+    # Mean of the distribution, irrelevant for mutual information.
+    mean = np.zeros(2)
 
-        # True theoretical mutual information.
-        I_theory = (np.log(sigma_1) + np.log(sigma_2) -
-                    0.5 * np.log(np.linalg.det(cov)))
+    # Setup covariance matrix with correlation coeff. equal 0.5.
+    sigma_1 = 1
+    sigma_2 = 10
+    corr = 0.5
+    cov = np.array([
+        [sigma_1**2, corr * sigma_1 * sigma_2],
+        [corr * sigma_1 * sigma_2, sigma_2**2]
+    ])
 
-        np.random.seed(0)
-        Z = np.random.multivariate_normal(mean, cov, size=1000)
+    # True theoretical mutual information.
+    I_theory = (np.log(sigma_1) + np.log(sigma_2) -
+                0.5 * np.log(np.linalg.det(cov)))
 
-        x, y = Z[:, 0], Z[:, 1]
+    np.random.seed(0)
+    Z = np.random.multivariate_normal(mean, cov, size=1000)
 
-        # Theory and computed values won't be very close, assert that the
-        # first figures after decimal point match.
-        for n_neighbors in [3, 5, 7]:
-            I_computed = _compute_mi(x, y, False, False, n_neighbors)
-            assert_almost_equal(I_computed, I_theory, 1)
+    x, y = Z[:, 0], Z[:, 1]
 
-    def test_cd(self):
-        # To test define a joint distribution as follows:
-        # p(x, y) = p(x) p(y | x)
-        # X ~ Bernoulli(p)
-        # (Y | x = 0) ~ Uniform(-1, 1)
-        # (Y | x = 1) ~ Uniform(0, 2)
+    # Theory and computed values won't be very close, assert that the
+    # first figures after decimal point match.
+    for n_neighbors in [3, 5, 7]:
+        I_computed = _compute_mi(x, y, False, False, n_neighbors)
+        assert_almost_equal(I_computed, I_theory, 1)
 
-        # Use the following formula for mutual information:
-        # I(X; Y) = H(Y) - H(Y | X)
-        # Two entropies can be computed by hand:
-        # H(Y) = -(1-p)/2 * ln((1-p)/2) - p/2*log(p/2) - 1/2*log(1/2)
-        # H(Y | X) = ln(2)
 
-        # Now we need to implement sampling from out distribution, which is
-        # done easily using conditional distribution logic.
+def test_compute_mi_cd():
+    # To test define a joint distribution as follows:
+    # p(x, y) = p(x) p(y | x)
+    # X ~ Bernoulli(p)
+    # (Y | x = 0) ~ Uniform(-1, 1)
+    # (Y | x = 1) ~ Uniform(0, 2)
 
-        n_samples = 1000
-        np.random.seed(0)
+    # Use the following formula for mutual information:
+    # I(X; Y) = H(Y) - H(Y | X)
+    # Two entropies can be computed by hand:
+    # H(Y) = -(1-p)/2 * ln((1-p)/2) - p/2*log(p/2) - 1/2*log(1/2)
+    # H(Y | X) = ln(2)
 
-        for p in [0.3, 0.5, 0.7]:
-            x = np.random.uniform(size=n_samples) > p
+    # Now we need to implement sampling from out distribution, which is
+    # done easily using conditional distribution logic.
 
-            y = np.empty(n_samples)
-            mask = x == 0
-            y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
-            y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
+    n_samples = 1000
+    np.random.seed(0)
 
-            I_theory = -0.5 * ((1 - p) * np.log(0.5 * (1 - p)) +
-                               p * np.log(0.5 * p) + np.log(0.5)) - np.log(2)
-
-            # Assert the same tolerance.
-            for n_neighbors in [3, 5, 7]:
-                I_computed = _compute_mi(x, y, True, False, n_neighbors)
-                assert_almost_equal(I_computed, I_theory, 1)
-
-    def test_cd_unique_label(self):
-        # Test that adding unique label doesn't change MI.
-        n_samples = 100
-        x = np.random.uniform(size=n_samples) > 0.5
+    for p in [0.3, 0.5, 0.7]:
+        x = np.random.uniform(size=n_samples) > p
 
         y = np.empty(n_samples)
         mask = x == 0
         y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
         y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
 
-        mi_1 = _compute_mi(x, y, True, False)
+        I_theory = -0.5 * ((1 - p) * np.log(0.5 * (1 - p)) +
+                           p * np.log(0.5 * p) + np.log(0.5)) - np.log(2)
 
-        x = np.hstack((x, 2))
-        y = np.hstack((y, 10))
-        mi_2 = _compute_mi(x, y, True, False)
+        # Assert the same tolerance.
+        for n_neighbors in [3, 5, 7]:
+            I_computed = _compute_mi(x, y, True, False, n_neighbors)
+            assert_almost_equal(I_computed, I_theory, 1)
 
-        assert_equal(mi_1, mi_2)
+
+def test_compute_mi_cd_unique_label():
+    # Test that adding unique label doesn't change MI.
+    n_samples = 100
+    x = np.random.uniform(size=n_samples) > 0.5
+
+    y = np.empty(n_samples)
+    mask = x == 0
+    y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
+    y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
+
+    mi_1 = _compute_mi(x, y, True, False)
+
+    x = np.hstack((x, 2))
+    y = np.hstack((y, 10))
+    mi_2 = _compute_mi(x, y, True, False)
+
+    assert_equal(mi_1, mi_2)
 
 
-class TestMutualInfo(object):
-    # We are going test that feature ordering by MI matches our expectations.
-    def test_discrete(self):
-        X = np.array([[0, 0, 0],
-                      [1, 1, 0],
-                      [2, 0, 1],
-                      [2, 0, 1],
-                      [2, 0, 1]])
-        y = np.array([0, 1, 2, 2, 1])
+# We are going test that feature ordering by MI matches our expectations.
+def test_mutual_info_classif_discrete():
+    X = np.array([[0, 0, 0],
+                  [1, 1, 0],
+                  [2, 0, 1],
+                  [2, 0, 1],
+                  [2, 0, 1]])
+    y = np.array([0, 1, 2, 2, 1])
 
-        # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
-        # informative.
-        mi = mutual_info_classif(X, y, discrete_features=True)
-        assert_array_equal(np.argsort(-mi), np.array([0, 2, 1]))
+    # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
+    # informative.
+    mi = mutual_info_classif(X, y, discrete_features=True)
+    assert_array_equal(np.argsort(-mi), np.array([0, 2, 1]))
 
-    def test_continuous(self):
-        # We generate sample from multivariate normal distribution, using
-        # transformation from initially uncorrelated variables. The zero
-        # variables after transformation is selected as the target vector,
-        # it has the strongest correlation with the variable 2, and
-        # the weakest correlation with the variable 1.
-        T = np.array([
-            [1, 0.5, 2, 1],
-            [0, 1, 0.1, 0.0],
-            [0, 0.1, 1, 0.1],
-            [0, 0.1, 0.1, 1]
-        ])
-        cov = T.dot(T.T)
-        mean = np.zeros(4)
 
-        np.random.seed(0)
-        Z = np.random.multivariate_normal(mean, cov, size=1000)
-        X = Z[:, 1:]
-        y = Z[:, 0]
+def test_mutual_info_regression():
+    # We generate sample from multivariate normal distribution, using
+    # transformation from initially uncorrelated variables. The zero
+    # variables after transformation is selected as the target vector,
+    # it has the strongest correlation with the variable 2, and
+    # the weakest correlation with the variable 1.
+    T = np.array([
+        [1, 0.5, 2, 1],
+        [0, 1, 0.1, 0.0],
+        [0, 0.1, 1, 0.1],
+        [0, 0.1, 0.1, 1]
+    ])
+    cov = T.dot(T.T)
+    mean = np.zeros(4)
 
-        mi = mutual_info_regression(X, y, random_state=0)
-        assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
+    np.random.seed(0)
+    Z = np.random.multivariate_normal(mean, cov, size=1000)
+    X = Z[:, 1:]
+    y = Z[:, 0]
 
-    def test_mixed(self):
-        # Here the target is discrete and there are two continuous and one
-        # discrete feature. The idea of this test is clear from the code.
-        np.random.seed(0)
-        X = np.random.rand(1000, 3)
-        X[:, 1] += X[:, 0]
-        y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
-        X[:, 2] = X[:, 2] > 0.5
+    mi = mutual_info_regression(X, y, random_state=0)
+    assert_array_equal(np.argsort(-mi), np.array([1, 2, 0]))
 
-        mi = mutual_info_classif(X, y, discrete_features=[2], random_state=0)
-        assert_array_equal(np.argsort(-mi), [2, 0, 1])
 
-    def test_discrete_features_option(self):
-        X = np.array([[0, 0, 0],
-                      [1, 1, 0],
-                      [2, 0, 1],
-                      [2, 0, 1],
-                      [2, 0, 1]], dtype=float)
-        y = np.array([0, 1, 2, 2, 1], dtype=float)
-        X_csr = csr_matrix(X)
+def test_mutual_info_classif_mixed():
+    # Here the target is discrete and there are two continuous and one
+    # discrete feature. The idea of this test is clear from the code.
+    np.random.seed(0)
+    X = np.random.rand(1000, 3)
+    X[:, 1] += X[:, 0]
+    y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
+    X[:, 2] = X[:, 2] > 0.5
 
-        for mutual_info in (mutual_info_regression, mutual_info_classif):
-            assert_raises(ValueError, mutual_info_regression, X_csr, y,
-                          discrete_features=False)
+    mi = mutual_info_classif(X, y, discrete_features=[2], random_state=0)
+    assert_array_equal(np.argsort(-mi), [2, 0, 1])
 
-            mi_1 = mutual_info(X, y, discrete_features='auto', random_state=0)
-            mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
 
-            mi_3 = mutual_info(X_csr, y, discrete_features='auto',
-                               random_state=0)
-            mi_4 = mutual_info(X_csr, y, discrete_features=True,
-                               random_state=0)
+def test_mutual_info_options():
+    X = np.array([[0, 0, 0],
+                  [1, 1, 0],
+                  [2, 0, 1],
+                  [2, 0, 1],
+                  [2, 0, 1]], dtype=float)
+    y = np.array([0, 1, 2, 2, 1], dtype=float)
+    X_csr = csr_matrix(X)
 
-            assert_array_equal(mi_1, mi_2)
-            assert_array_equal(mi_3, mi_4)
+    for mutual_info in (mutual_info_regression, mutual_info_classif):
+        assert_raises(ValueError, mutual_info_regression, X_csr, y,
+                      discrete_features=False)
 
-        assert_false(np.allclose(mi_1, mi_3))
+        mi_1 = mutual_info(X, y, discrete_features='auto', random_state=0)
+        mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
+
+        mi_3 = mutual_info(X_csr, y, discrete_features='auto',
+                           random_state=0)
+        mi_4 = mutual_info(X_csr, y, discrete_features=True,
+                           random_state=0)
+
+        assert_array_equal(mi_1, mi_2)
+        assert_array_equal(mi_3, mi_4)
+
+    assert_false(np.allclose(mi_1, mi_3))
 
 
 if __name__ == '__main__':
