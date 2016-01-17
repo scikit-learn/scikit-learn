@@ -160,32 +160,6 @@ def _compute_mi(x, y, x_discrete, y_discrete, n_neighbors=3):
         return _compute_mi_cc(x, y, n_neighbors)
 
 
-def _get_column(X, i):
-    """Get column of a matrix.
-
-    Parameters
-    ----------
-    X : ndarray or csc_matrix, shape (n_samples, n_features)
-        Matrix from which to get a column.
-
-    i : int
-        Column index.
-
-    Returns
-    -------
-    xi : ndarray, shape (n_samples,)
-        i-th column of `X` in dense format.
-    """
-    if issparse(X):
-        x = np.zeros(X.shape[0])
-        start_ptr, end_ptr = X.indptr[i], X.indptr[i + 1]
-        x[X.indices[start_ptr:end_ptr]] = X.data[start_ptr:end_ptr]
-    else:
-        x = X[:, i]
-
-    return x
-
-
 def _iterate_columns(X, columns=None):
     """Iterate over columns of a matrix.
 
@@ -205,8 +179,15 @@ def _iterate_columns(X, columns=None):
     if columns is None:
         columns = range(X.shape[1])
 
-    for i in columns:
-        yield _get_column(X, i)
+    if issparse(X):
+        for i in columns:
+            x = np.zeros(X.shape[0])
+            start_ptr, end_ptr = X.indptr[i], X.indptr[i + 1]
+            x[X.indices[start_ptr:end_ptr]] = X.data[start_ptr:end_ptr]
+            yield x
+    else:
+        for i in columns:
+            yield X[:, i]
 
 
 def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
