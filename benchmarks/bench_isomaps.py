@@ -6,7 +6,10 @@
 We will compare performance and evaluate the reductions of
 example data sets using 1-NN classifier.
 """
+
 from time import time
+
+import numpy as np
 
 from sklearn import datasets
 from sklearn import manifold, neighbors
@@ -16,10 +19,10 @@ from sklearn.pipeline import Pipeline
 
 n_samples = 1000
 n_components = 2
-landmarks = 10
+landmarks = 'auto'
 manifold_noise = .8
 test_size = .2
-n_jobs = -1
+n_jobs = 1
 random_state = 0
 
 classification_data_sets = (
@@ -65,7 +68,7 @@ def train_and_test_many(learner, data_sets, score_function):
                 data, target = data_set.data, data_set.target
 
             X_train, X_test, y_train, y_test = train_test_split(
-                    data, target, test_size=test_size, random_state=0)
+                data, target, test_size=test_size, random_state=0)
 
             train_dt = time()
             pipe.fit(X_train, y_train)
@@ -81,6 +84,8 @@ def train_and_test_many(learner, data_sets, score_function):
 
 if __name__ == '__main__':
     print(__doc__)
+
+    np.random.seed(7434)
 
     print('Classification:')
     knn = neighbors.KNeighborsClassifier(n_jobs=n_jobs, n_neighbors=1)

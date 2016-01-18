@@ -5,8 +5,6 @@ The main interface is in the function :func:`shortest_path`.  This
 calls cython routines that compute the shortest path using
 the Floyd-Warshall algorithm, Dijkstra's algorithm with Fibonacci Heaps,
 the Bellman-Ford algorithm, or Johnson's Algorithm.
-
-This module is a backdoor for scipy.sparse.csgraph.
 """
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
@@ -17,28 +15,14 @@ import numpy as np
 cimport numpy as np
 
 from scipy.sparse import csr_matrix, isspmatrix, isspmatrix_csr, isspmatrix_csc
-from .sparsetools._graph_validation import validate_graph
+from sklearn.utils.sparsetools import validate_graph
 
 cimport cython
 
 from libc.stdlib cimport malloc, free
+from numpy.math cimport INFINITY
 
-DTYPE = np.float64
-ctypedef np.float64_t DTYPE_t
-
-ITYPE = np.int32
-ctypedef np.int32_t ITYPE_t
-
-# Fused type for int32 and int64
-ctypedef fused int32_or_int64:
-    np.int32_t
-    np.int64_t
-
-# EPS is the precision of DTYPE
-cdef DTYPE_t DTYPE_EPS = 1E-15
-
-# NULL_IDX is the index used in predecessor matrices to store a non-path
-cdef ITYPE_t NULL_IDX = -9999
+include 'parameters.pxi'
 
 
 class NegativeCycleError(Exception):
@@ -48,16 +32,18 @@ class NegativeCycleError(Exception):
 
 def shortest_path(csgraph, method='auto',
                   directed=True,
-                  indices=None,
                   return_predecessors=False,
                   unweighted=False,
-                  overwrite=False):
+                  overwrite=False,
+                  indices=None):
     """
     shortest_path(csgraph, method='auto', directed=True, return_predecessors=False,
-                  unweighted=False, overwrite=False)
+                  unweighted=False, overwrite=False, indices=None)
 
     Perform a shortest-path graph search on a positive directed or
     undirected graph.
+
+    .. versionadded:: 0.11.0
 
     Parameters
     ----------
@@ -97,9 +83,6 @@ def shortest_path(csgraph, method='auto',
         If False, then find the shortest path on an undirected graph: the
         algorithm can progress from point i to j along csgraph[i, j] or
         csgraph[j, i]
-    indices : array_like or int, optional
-        if specified, only compute the paths for the points at the given
-        indices.
     return_predecessors : bool, optional
         If True, return the size (N, N) predecesor matrix
     unweighted : bool, optional
@@ -110,6 +93,9 @@ def shortest_path(csgraph, method='auto',
         If True, overwrite csgraph with the result.  This applies only if
         method == 'FW' and csgraph is a dense, c-ordered array with
         dtype=float64.
+    indices : array_like or int, optional
+        If specified, only compute the paths for the points at the given
+        indices. Incompatible with method == 'FW'.
 
     Returns
     -------
@@ -144,27 +130,21 @@ def shortest_path(csgraph, method='auto',
                    copy_if_dense=(not overwrite),
                    copy_if_sparse=(not overwrite))
 
+    cdef bint issparse
+    cdef ssize_t N      # XXX cdef ssize_t Nk fails in Python 3 (?)
+
     if method == 'auto':
         # guess fastest method based on number of nodes and edges
         N = csgraph.shape[0]
-        if isspmatrix(csgraph):
+        issparse = isspmatrix(csgraph)
+        if issparse:
             Nk = csgraph.nnz
         else:
             Nk = np.sum(csgraph > 0)
 
-        if indices is not None:
-            # Indices were passed, so only indices*k
-            # edges should be analyzed with fl.
-            if isinstance(indices, int):
-                n_indices = indices
-            else:
-                n_indices = len(indices)
-
-            Nk = n_indices * Nk / N
-
-        if Nk < N * N / 4:
-            if ((isspmatrix(csgraph) and np.any(csgraph.data < 0))
-                      or (not isspmatrix(csgraph) and np.any(csgraph < 0))):
+        if indices is not None or Nk < N * N / 4:
+            if ((issparse and np.any(csgraph.data < 0))
+                      or (not issparse and np.any(csgraph < 0))):
                 method = 'J'
             else:
                 method = 'D'
@@ -172,45 +152,43 @@ def shortest_path(csgraph, method='auto',
             method = 'FW'
 
     if method == 'FW':
+        if indices is not None:
+            raise ValueError("Cannot specify indices with method == 'FW'.")
         return floyd_warshall(csgraph, directed,
-                              indices=indices,
                               return_predecessors=return_predecessors,
                               unweighted=unweighted,
                               overwrite=overwrite)
 
     elif method == 'D':
         return dijkstra(csgraph, directed,
-                        indices=indices,
                         return_predecessors=return_predecessors,
-                        unweighted=unweighted)
+                        unweighted=unweighted, indices=indices)
 
     elif method == 'BF':
         return bellman_ford(csgraph, directed,
-                            indices=indices,
                             return_predecessors=return_predecessors,
-                            unweighted=unweighted)
+                            unweighted=unweighted, indices=indices)
 
     elif method == 'J':
         return johnson(csgraph, directed,
-                       indices=indices,
                        return_predecessors=return_predecessors,
-                       unweighted=unweighted)
+                       unweighted=unweighted, indices=indices)
 
     else:
         raise ValueError("unrecognized method '%s'" % method)
 
 
 def floyd_warshall(csgraph, directed=True,
-                   indices=None,
                    return_predecessors=False,
                    unweighted=False,
                    overwrite=False):
     """
-    floyd_warshall(csgraph, directed=True, indices=None,
-                   return_predecessors=False, unweighted=False,
-                   overwrite=False)
+    floyd_warshall(csgraph, directed=True, return_predecessors=False,
+                   unweighted=False, overwrite=False)
 
     Compute the shortest path lengths using the Floyd-Warshall algorithm
+
+    .. versionadded:: 0.11.0
 
     Parameters
     ----------
@@ -222,9 +200,6 @@ def floyd_warshall(csgraph, directed=True,
         If False, then find the shortest path on an undirected graph: the
         algorithm can progress from point i to j along csgraph[i, j] or
         csgraph[j, i]
-    indices : array_like or int, optional
-        if specified, only compute the paths for the points at the given
-        indices.
     return_predecessors : bool, optional
         If True, return the size (N, N) predecesor matrix
     unweighted : bool, optional
@@ -259,21 +234,6 @@ def floyd_warshall(csgraph, directed=True,
                                  csr_output=False,
                                  copy_if_dense=not overwrite)
 
-    N = csgraph.shape[0]
-
-    #------------------------------
-    # intitialize/validate indices
-    if indices is None:
-        indices = np.arange(N, dtype=ITYPE)
-        return_shape = indices.shape + (N,)
-    else:
-        indices = np.array(indices, order='C', dtype=ITYPE, copy=True)
-        return_shape = indices.shape + (N,)
-        indices = np.atleast_1d(indices).reshape(-1)
-        indices[indices < 0] += N
-        if np.any(indices < 0) or np.any(indices >= N):
-            raise ValueError("indices out of range 0...N")
-
     if unweighted:
         dist_matrix[~np.isinf(dist_matrix)] = 1
 
@@ -290,8 +250,6 @@ def floyd_warshall(csgraph, directed=True,
     if np.any(dist_matrix.diagonal() < 0):
         raise NegativeCycleError("Negative cycle in nodes %s"
                                  % np.where(dist_matrix.diagonal() < 0)[0])
-
-    dist_matrix = dist_matrix[indices]
 
     if return_predecessors:
         return dist_matrix, predecessor_matrix
@@ -310,13 +268,11 @@ cdef void _floyd_warshall(
     # dist_matrix should be a [N,N] matrix, such that dist_matrix[i, j]
     # is the distance from point i to point j.  Zero-distances imply that
     # the points are not connected.
-    global NULL_IDX
     cdef int N = dist_matrix.shape[0]
     assert dist_matrix.shape[1] == N
 
     cdef unsigned int i, j, k
 
-    cdef DTYPE_t infinity = np.inf
     cdef DTYPE_t d_ijk
 
     #----------------------------------------------------------------------
@@ -324,11 +280,11 @@ cdef void _floyd_warshall(
     #   - set non-edges to infinity
     #   - set diagonal to zero
     #   - symmetrize matrix if non-directed graph is desired
-    dist_matrix[dist_matrix == 0] = infinity
+    dist_matrix[dist_matrix == 0] = INFINITY
     dist_matrix.flat[::N + 1] = 0
     if not directed:
-        for i from 0 <= i < N:
-            for j from i + 1 <= j < N:
+        for i in range(N):
+            for j in range(i + 1, N):
                 if dist_matrix[j, i] <= dist_matrix[i, j]:
                     dist_matrix[i, j] = dist_matrix[j, i]
                 else:
@@ -354,21 +310,21 @@ cdef void _floyd_warshall(
     # In each loop, this finds the shortest path from point i
     #  to point j using intermediate nodes 0 ... k
     if store_predecessors:
-        for k from 0 <= k < N:
-            for i from 0 <= i < N:
-                if dist_matrix[i, k] == infinity:
+        for k in range(N):
+            for i in range(N):
+                if dist_matrix[i, k] == INFINITY:
                     continue
-                for j from 0 <= j < N:
+                for j in range(N):
                     d_ijk = dist_matrix[i, k] + dist_matrix[k, j]
                     if d_ijk < dist_matrix[i, j]:
                         dist_matrix[i, j] = d_ijk
                         predecessor_matrix[i, j] = predecessor_matrix[k, j]
     else:
-        for k from 0 <= k < N:
-            for i from 0 <= i < N:
-                if dist_matrix[i, k] == infinity:
+        for k in range(N):
+            for i in range(N):
+                if dist_matrix[i, k] == INFINITY:
                     continue
-                for j from 0 <= j < N:
+                for j in range(N):
                     d_ijk = dist_matrix[i, k] + dist_matrix[k, j]
                     if d_ijk < dist_matrix[i, j]:
                         dist_matrix[i, j] = d_ijk
@@ -379,7 +335,7 @@ def dijkstra(csgraph, directed=True, indices=None,
              unweighted=False, limit=np.inf):
     """
     dijkstra(csgraph, directed=True, indices=None, return_predecessors=False,
-             unweighted=False)
+             unweighted=False, limit=np.inf)
 
     Dijkstra algorithm using Fibonacci Heaps
 
@@ -409,6 +365,7 @@ def dijkstra(csgraph, directed=True, indices=None,
         will decrease computation time by aborting calculations between pairs
         that are separated by a distance > limit. For such pairs, the distance
         will be equal to np.inf (i.e., not connected).
+
         .. versionadded:: 0.14.0
 
     Returns
@@ -439,8 +396,6 @@ def dijkstra(csgraph, directed=True, indices=None,
     be handled by specialized algorithms such as Bellman-Ford's algorithm
     or Johnson's algorithm.
     """
-    global NULL_IDX
-
     #------------------------------
     # validate csgraph and convert to csr matrix
     csgraph = validate_graph(csgraph, directed, DTYPE,
@@ -466,10 +421,8 @@ def dijkstra(csgraph, directed=True, indices=None,
         if np.any(indices < 0) or np.any(indices >= N):
             raise ValueError("indices out of range 0...N")
 
-    if not np.isscalar(limit):
-        raise TypeError('limit must be numeric (float)')
-    limit = float(limit)
-    if limit < 0:
+    cdef DTYPE_t limitf = limit
+    if limitf < 0:
         raise ValueError('limit must be >= 0')
 
     #------------------------------
@@ -494,7 +447,7 @@ def dijkstra(csgraph, directed=True, indices=None,
     if directed:
         _dijkstra_directed(indices,
                            csr_data, csgraph.indices, csgraph.indptr,
-                           dist_matrix, predecessor_matrix, limit)
+                           dist_matrix, predecessor_matrix, limitf)
     else:
         csgraphT = csgraph.T.tocsr()
         if unweighted:
@@ -504,7 +457,7 @@ def dijkstra(csgraph, directed=True, indices=None,
         _dijkstra_undirected(indices,
                              csr_data, csgraph.indices, csgraph.indptr,
                              csrT_data, csgraphT.indices, csgraphT.indptr,
-                             dist_matrix, predecessor_matrix, limit)
+                             dist_matrix, predecessor_matrix, limitf)
 
     if return_predecessors:
         return (dist_matrix.reshape(return_shape),
@@ -536,10 +489,10 @@ cdef _dijkstra_directed(
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc(N *
                                                         sizeof(FibonacciNode))
 
-    for i from 0 <= i < Nind:
+    for i in range(Nind):
         j_source = source_indices[i]
 
-        for k from 0 <= k < N:
+        for k in range(N):
             initialize_node(&nodes[k], k)
 
         dist_matrix[i, j_source] = 0
@@ -550,7 +503,7 @@ cdef _dijkstra_directed(
             v = remove_min(&heap)
             v.state = SCANNED
 
-            for j from csr_indptr[v.index] <= j < csr_indptr[v.index + 1]:
+            for j in range(csr_indptr[v.index], csr_indptr[v.index + 1]):
                 j_current = csr_indices[j]
                 current_node = &nodes[j_current]
                 if current_node.state != SCANNED:
@@ -600,10 +553,10 @@ cdef _dijkstra_undirected(
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc(N *
                                                         sizeof(FibonacciNode))
 
-    for i from 0 <= i < Nind:
+    for i in range(Nind):
         j_source = source_indices[i]
 
-        for k from 0 <= k < N:
+        for k in range(N):
             initialize_node(&nodes[k], k)
 
         dist_matrix[i, j_source] = 0
@@ -614,7 +567,7 @@ cdef _dijkstra_undirected(
             v = remove_min(&heap)
             v.state = SCANNED
 
-            for j from csr_indptr[v.index] <= j < csr_indptr[v.index + 1]:
+            for j in range(csr_indptr[v.index], csr_indptr[v.index + 1]):
                 j_current = csr_indices[j]
                 current_node = &nodes[j_current]
                 if current_node.state != SCANNED:
@@ -632,7 +585,7 @@ cdef _dijkstra_undirected(
                             if return_pred:
                                 pred[i, j_current] = v.index
 
-            for j from csrT_indptr[v.index] <= j < csrT_indptr[v.index + 1]:
+            for j in range(csrT_indptr[v.index], csrT_indptr[v.index + 1]):
                 j_current = csrT_indices[j]
                 current_node = &nodes[j_current]
                 if current_node.state != SCANNED:
@@ -716,8 +669,6 @@ def bellman_ford(csgraph, directed=True, indices=None,
     If all edge weights are positive, then Dijkstra's algorithm is a better
     choice.
     """
-    global NULL_IDX
-
     #------------------------------
     # validate csgraph and convert to csr matrix
     csgraph = validate_graph(csgraph, directed, DTYPE,
@@ -783,7 +734,6 @@ cdef int _bellman_ford_directed(
             np.ndarray[ITYPE_t, ndim=1, mode='c'] csr_indptr,
             np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix,
             np.ndarray[ITYPE_t, ndim=2, mode='c'] pred):
-    global DTYPE_EPS
     cdef unsigned int Nind = dist_matrix.shape[0]
     cdef unsigned int N = dist_matrix.shape[1]
     cdef unsigned int i, j, k, j_source, count
@@ -792,14 +742,14 @@ cdef int _bellman_ford_directed(
 
     cdef int return_pred = (pred.size > 0)
 
-    for i from 0 <= i < Nind:
+    for i in range(Nind):
         j_source = source_indices[i]
 
         # relax all edges N-1 times
-        for count from 0 <= count < N - 1:
-            for j from 0 <= j < N:
+        for count in range(N - 1):
+            for j in range(N):
                 d1 = dist_matrix[i, j]
-                for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+                for k in range(csr_indptr[j], csr_indptr[j + 1]):
                     w12 = csr_weights[k]
                     d2 = dist_matrix[i, csr_indices[k]]
                     if d1 + w12 < d2:
@@ -808,9 +758,9 @@ cdef int _bellman_ford_directed(
                             pred[i, csr_indices[k]] = j
 
         # check for negative-weight cycles
-        for j from 0 <= j < N:
+        for j in range(N):
             d1 = dist_matrix[i, j]
-            for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+            for k in range(csr_indptr[j], csr_indptr[j + 1]):
                 w12 = csr_weights[k]
                 d2 = dist_matrix[i, csr_indices[k]]
                 if d1 + w12 + DTYPE_EPS < d2:
@@ -826,7 +776,6 @@ cdef int _bellman_ford_undirected(
             np.ndarray[ITYPE_t, ndim=1, mode='c'] csr_indptr,
             np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix,
             np.ndarray[ITYPE_t, ndim=2, mode='c'] pred):
-    global DTYPE_EPS
     cdef unsigned int Nind = dist_matrix.shape[0]
     cdef unsigned int N = dist_matrix.shape[1]
     cdef unsigned int i, j, k, j_source, ind_k, count
@@ -835,14 +784,14 @@ cdef int _bellman_ford_undirected(
 
     cdef int return_pred = (pred.size > 0)
 
-    for i from 0 <= i < Nind:
+    for i in range(Nind):
         j_source = source_indices[i]
 
         # relax all edges N-1 times
-        for count from 0 <= count < N - 1:
-            for j from 0 <= j < N:
+        for count in range(N - 1):
+            for j in range(N):
                 d1 = dist_matrix[i, j]
-                for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+                for k in range(csr_indptr[j], csr_indptr[j + 1]):
                     w12 = csr_weights[k]
                     ind_k = csr_indices[k]
                     d2 = dist_matrix[i, ind_k]
@@ -856,9 +805,9 @@ cdef int _bellman_ford_undirected(
                             pred[i, j] = ind_k
 
         # check for negative-weight cycles
-        for j from 0 <= j < N:
+        for j in range(N):
             d1 = dist_matrix[i, j]
-            for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+            for k in range(csr_indptr[j], csr_indptr[j + 1]):
                 w12 = csr_weights[k]
                 d2 = dist_matrix[i, csr_indices[k]]
                 if abs(d2 - d1) > w12 + DTYPE_EPS:
@@ -1027,8 +976,8 @@ cdef void _johnson_add_weights(
     # let w(u, v) = w(u, v) + h(u) - h(v)
     cdef unsigned int j, k, N = dist_array.shape[0]
 
-    for j from 0 <= j < N:
-        for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+    for j in range(N):
+        for k in range(csr_indptr[j], csr_indptr[j + 1]):
             csr_weights[k] += dist_array[j]
             csr_weights[k] -= dist_array[csr_indices[k]]
 
@@ -1038,30 +987,29 @@ cdef int _johnson_directed(
             np.ndarray[ITYPE_t, ndim=1, mode='c'] csr_indices,
             np.ndarray[ITYPE_t, ndim=1, mode='c'] csr_indptr,
             np.ndarray[DTYPE_t, ndim=1, mode='c'] dist_array):
-    global DTYPE_EPS
     cdef unsigned int N = dist_array.shape[0]
     cdef unsigned int j, k, j_source, count
 
     cdef DTYPE_t d1, d2, w12
 
     # relax all edges (N+1) - 1 times
-    for count from 0 <= count < N:
-        for k from 0 <= k < N:
+    for count in range(N):
+        for k in range(N):
             if dist_array[k] < 0:
                 dist_array[k] = 0
 
-        for j from 0 <= j < N:
+        for j in range(N):
             d1 = dist_array[j]
-            for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+            for k in range(csr_indptr[j], csr_indptr[j + 1]):
                 w12 = csr_weights[k]
                 d2 = dist_array[csr_indices[k]]
                 if d1 + w12 < d2:
                     dist_array[csr_indices[k]] = d1 + w12
 
     # check for negative-weight cycles
-    for j from 0 <= j < N:
+    for j in range(N):
         d1 = dist_array[j]
-        for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+        for k in range(csr_indptr[j], csr_indptr[j + 1]):
             w12 = csr_weights[k]
             d2 = dist_array[csr_indices[k]]
             if d1 + w12 + DTYPE_EPS < d2:
@@ -1075,21 +1023,20 @@ cdef int _johnson_undirected(
             np.ndarray[ITYPE_t, ndim=1, mode='c'] csr_indices,
             np.ndarray[ITYPE_t, ndim=1, mode='c'] csr_indptr,
             np.ndarray[DTYPE_t, ndim=1, mode='c'] dist_array):
-    global DTYPE_EPS
     cdef unsigned int N = dist_array.shape[0]
     cdef unsigned int j, k, j_source, count
 
     cdef DTYPE_t d1, d2, w12
 
     # relax all edges (N+1) - 1 times
-    for count from 0 <= count < N:
-        for k from 0 <= k < N:
+    for count in range(N):
+        for k in range(N):
             if dist_array[k] < 0:
                 dist_array[k] = 0
 
-        for j from 0 <= j < N:
+        for j in range(N):
             d1 = dist_array[j]
-            for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+            for k in range(csr_indptr[j], csr_indptr[j + 1]):
                 w12 = csr_weights[k]
                 ind_k = csr_indices[k]
                 d2 = dist_array[ind_k]
@@ -1099,9 +1046,9 @@ cdef int _johnson_undirected(
                     dist_array[j] = d1 = d2 + w12
 
     # check for negative-weight cycles
-    for j from 0 <= j < N:
+    for j in range(N):
         d1 = dist_array[j]
-        for k from csr_indptr[j] <= k < csr_indptr[j + 1]:
+        for k in range(csr_indptr[j], csr_indptr[j + 1]):
             w12 = csr_weights[k]
             d2 = dist_array[csr_indices[k]]
             if abs(d2 - d1) > w12 + DTYPE_EPS:
@@ -1317,7 +1264,7 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     heap.min_node = temp
 
     # re-link the heap
-    for i from 0 <= i < 100:
+    for i in range(100):
         heap.roots_by_rank[i] = NULL
 
     while temp:
@@ -1348,154 +1295,3 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 #        print_node(leftmost_sibling(heap.min_node))
 #    else:
 #        print "[empty heap]"
-
-
-@cython.boundscheck(False)
-cdef void dijkstra_directed_one_row(unsigned int i_node,
-                    unsigned int pos_in_graph,
-                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors,
-                    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances,
-                    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr,
-                    np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
-                    FibonacciHeap* heap,
-                    FibonacciNode* nodes):
-    """
-    Calculate distances from a single point to all targets using a
-    directed graph.
-
-    Parameters
-    ----------
-    i_node : index of source point
-    pos_in_graph : int
-        index of source point in graph matrix.
-        This might differ from i_node value if some
-        shortest-path doesn't need to be computed.
-    neighbors : array, shape = [N,]
-        indices of neighbors for each point
-    distances : array, shape = [N,]
-        lengths of edges to each neighbor
-    indptr : array, shape = (N+1,)
-        the neighbors of point i are given by
-        neighbors[indptr[i]:indptr[i+1]]
-    graph : array, shape = (N,N)
-        on return, graph[i_node] contains the path lengths from
-        i_node to each target
-    heap : the Fibonacci heap object to use
-    nodes : the array of nodes to use
-    """
-    cdef unsigned int N = graph.shape[1]
-    cdef unsigned int i
-    cdef FibonacciNode *v
-    cdef FibonacciNode *current_neighbor
-    cdef DTYPE_t dist
-
-    # initialize nodes
-    for i from 0 <= i < N:
-        initialize_node(&nodes[i], i)
-
-    heap.min_node = NULL
-    insert_node(heap, &nodes[i_node])
-
-    while heap.min_node:
-        v = remove_min(heap)
-        v.state = 2  # 2 -> SCANNED
-
-        for i from indptr[v.index] <= i < indptr[v.index + 1]:
-            current_neighbor = &nodes[neighbors[i]]
-            if current_neighbor.state != 2:      # 2 -> SCANNED
-                dist = distances[i]
-                if current_neighbor.state == 0:  # 0 -> NOT_IN_HEAP
-                    current_neighbor.state = 1   # 1 -> IN_HEAP
-                    current_neighbor.val = v.val + dist
-                    insert_node(heap, current_neighbor)
-                elif current_neighbor.val > v.val + dist:
-                    decrease_val(heap, current_neighbor,
-                                 v.val + dist)
-
-        #v has now been scanned: add the distance to the results
-        graph[pos_in_graph, v.index] = v.val
-
-
-@cython.boundscheck(False)
-cdef void dijkstra_one_row(unsigned int i_node,
-                    unsigned int pos_in_graph,
-                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors1,
-                    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances1,
-                    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr1,
-                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors2,
-                    np.ndarray[DTYPE_t, ndim=1, mode='c'] distances2,
-                    np.ndarray[ITYPE_t, ndim=1, mode='c'] indptr2,
-                    np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
-                    FibonacciHeap* heap,
-                    FibonacciNode* nodes):
-    """
-    Calculate distances from a single point to all targets using an
-    undirected graph.
-
-    Parameters
-    ----------
-    i_node : index of source point
-    pos_in_graph : int
-        index of source point in graph matrix.
-        This might differ from i_node value if some
-        shortest-path doesn't need to be computed.
-    neighbors[1,2] : array, shape = [N,]
-        indices of neighbors for each point
-    distances[1,2] : array, shape = [N,]
-        lengths of edges to each neighbor
-    indptr[1,2] : array, shape = (N+1,)
-        the neighbors of point i are given by
-        neighbors1[indptr1[i]:indptr1[i+1]] and
-        neighbors2[indptr2[i]:indptr2[i+1]]
-    graph : array, shape = (N,)
-        on return, graph[i_node_in_graph] contains the path lengths from
-        i_node to each target
-    heap : the Fibonacci heap object to use
-    nodes : the array of nodes to use
-    """
-    cdef unsigned int N = graph.shape[1]
-    cdef unsigned int i
-    cdef FibonacciNode *v
-    cdef FibonacciNode *current_neighbor
-    cdef DTYPE_t dist
-
-    # re-initialize nodes
-    # children, parent, left_sibling, right_sibling should already be NULL
-    # rank should already be 0, index will already be set
-    # we just need to re-set state and val
-    for i from 0 <= i < N:
-        nodes[i].state = 0  # 0 -> NOT_IN_HEAP
-        nodes[i].val = 0
-
-    insert_node(heap, &nodes[i_node])
-
-    while heap.min_node:
-        v = remove_min(heap)
-        v.state = 2  # 2 -> SCANNED
-
-        for i from indptr1[v.index] <= i < indptr1[v.index + 1]:
-            current_neighbor = &nodes[neighbors1[i]]
-            if current_neighbor.state != 2:      # 2 -> SCANNED
-                dist = distances1[i]
-                if current_neighbor.state == 0:  # 0 -> NOT_IN_HEAP
-                    current_neighbor.state = 1   # 1 -> IN_HEAP
-                    current_neighbor.val = v.val + dist
-                    insert_node(heap, current_neighbor)
-                elif current_neighbor.val > v.val + dist:
-                    decrease_val(heap, current_neighbor,
-                                 v.val + dist)
-
-        for i from indptr2[v.index] <= i < indptr2[v.index + 1]:
-            current_neighbor = &nodes[neighbors2[i]]
-            if current_neighbor.state != 2:      # 2 -> SCANNED
-                dist = distances2[i]
-                if current_neighbor.state == 0:  # 0 -> NOT_IN_HEAP
-                    current_neighbor.state = 1   # 1 -> IN_HEAP
-                    current_neighbor.val = v.val + dist
-                    insert_node(heap, current_neighbor)
-                elif current_neighbor.val > v.val + dist:
-                    decrease_val(heap, current_neighbor,
-                                 v.val + dist)
-
-        #v has now been scanned: add the distance to the results
-        graph[pos_in_graph, v.index] = v.val

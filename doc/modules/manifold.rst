@@ -143,11 +143,48 @@ The overall complexity of Isomap is
 * :math:`k` : number of nearest neighbors
 * :math:`d` : output dimension
 
+Landmark-ISOMAP
+---------------
+Due to its complexity, Isomap may be unsuitable for reducing very large
+data sets. A variation known as Landmark-Isomap (or L-ISOMAP) is available
+for such cases.
+
+When performing reductions using L-ISOMAP, a small set of samples (landmarks)
+is selected. These landmarks are used as reference points to compute the
+shortest path graph and the embedding. Finally, the remaining samples are
+projected taking as reference the landmarks.
+
+L-ISOMAP offers significant performance increase and memory requirement
+reduction in comparison to the original algorithm.
+
+1. **Nearest neighbor search.** ISOMAP and L-ISOMAP are identical here.
+
+2. **Shortest-path graph search.**  Only shortest path trees that have a
+   landmark as source will be computed. This reduces time complexity to
+   approximately :math:`O[l N(k + \log(N))]`, where :math:`l` is the number of
+   landmarks selected.
+
+3. **Partial eigenvalue decomposition.** The dissimilarity matrix
+   :math:`l \times l` containing the geodesic distances between the landmarks
+   is used in the eigendecomposition process, reducing its cost to
+   :math:`d l^2` for the dense solver. L-ISOMAP is left with projecting
+   the remaining samples to the new feature-space, which requires no more than
+   :math:`O(l N)` in time.
+
+.. topic:: Examples:
+
+    * See :ref:`example_manifold_plot_compare_isomaps.py` for a performance
+    comparison between the original Isomap and L-ISOMAP.
+
 .. topic:: References:
 
    * `"A global geometric framework for nonlinear dimensionality reduction"
      <http://science.sciencemag.org/content/290/5500/2319.full>`_
      Tenenbaum, J.B.; De Silva, V.; & Langford, J.C.  Science 290 (5500)
+   * `"Global versus local methods in nonlinear dimensionality reduction"
+     <http://papers.nips.cc/paper/2141-global-versus-local-methods-in-nonlinear-dimensionality-reduction.pdf>`_
+     Silva, V. D.; & Tenenbaum, J. B. In Advances in neural information
+     processing systems (pp. 705-712).
 
 .. _locally_linear_embedding:
 

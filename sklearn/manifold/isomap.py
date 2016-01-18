@@ -1,7 +1,11 @@
 """Isomap for manifold learning"""
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
+#         Lucas David      -- <ld492@drexel.edu>
 # License: BSD 3 clause (C) 2011
+
+import warnings
+
 import numpy as np
 from scipy.spatial import distance
 
@@ -78,7 +82,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
-    landmarks : [None|int|'auto'|array-like] (default = None)
+    landmarks : [None|'auto'|int|array-like] (default = None)
         The number or list of landmarks to use.
         If this parameter was set, L-Isomap (Landmark Isomap) will execute
         instead of the original algorithm.
@@ -88,21 +92,23 @@ class Isomap(BaseEstimator, TransformerMixin):
             None       -- All samples will be used.
                           The original Isomap algorithm will be executed.
 
-            'auto'     -- Automatically computes the number of landmarks to use.
+            'auto'     -- Automatically infers the number of landmarks to use.
 
             int        -- Use exactly landmarks randomly-selected landmarks.
                           Should be a number sufficiently greater than
                           n_components + 1, for stability [2].
 
-            array-like -- Use the landmarks passed in the list.
+            array-like -- Use the landmarks passed in the array-like structure.
 
     landmarks_method : ['min-max'|'random'] (default = 'min-max')
         Algorithm used to select the landmarks.
 
-        'random' : randomly selects landmarks.
+        Options are:
 
-        'min-max' : use greedy optimization to find well-distributed
-        landmarks.
+            'random'   -- Randomly selects landmarks.
+
+            'min-max'  -- Uses greedy optimization to find well-distributed
+                          landmarks.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
@@ -167,10 +173,9 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.landmarks_ = None
-
     def _compute_landmarks(self):
-        """Computes the landmarks in the training data that will be used.
+        """Computes the landmarks in the training data that will be used
+        when fitting the data set.
 
         Returns
         -------
@@ -178,64 +183,74 @@ class Isomap(BaseEstimator, TransformerMixin):
             The array of landmarks to use, or None, if all samples should
             be used.
         """
-        if self.landmarks is not None:
-            n_samples = self.training_data_.shape[0]
+        if self.landmarks is None or isinstance(self.landmarks, np.ndarray):
+            self.landmarks_ = self.landmarks
+            return self.landmarks_
 
-            if isinstance(self.landmarks, np.ndarray):
-                self.landmarks_ = self.landmarks
-            else:
-                n_landmarks = self.landmarks
+        n_samples = self.training_data_.shape[0]
+        n_landmarks = self.landmarks
 
-                if n_landmarks == 'auto':
-                    n_landmarks = min(self.n_components + 10, n_samples)
+        if n_landmarks == 'auto':
+            n_landmarks = min(self.n_components + 10, n_samples)
 
-                random_state = check_random_state(self.random_state)
+        if not isinstance(n_landmarks, int):
+            raise ValueError("unrecognized landmarks '%s'" % n_landmarks)
 
-                if isinstance(n_landmarks, int):
-                    if self.landmarks_method == 'random':
-                        self.landmarks_ = np.arange(n_samples)
-                        random_state.shuffle(self.landmarks_)
-                        self.landmarks_ = self.landmarks_[:n_landmarks]
+        random_state = check_random_state(self.random_state)
 
-                    elif self.landmarks_method == 'min-max':
-                        seed = random_state.randint(n_landmarks)
-                        landmarks = [seed]
+        if self.landmarks_method == 'random':
+            self.landmarks_ = np.arange(n_samples)
+            random_state.shuffle(self.landmarks_)
+            self.landmarks_ = self.landmarks_[:n_landmarks]
 
-                        m = distance.cdist(self.training_data_[landmarks],
-                                           self.training_data_).flatten()
+        elif self.landmarks_method == 'min-max':
+            seed = random_state.randint(n_landmarks)
+            landmarks = [seed]
 
-                        for i in range(1, n_landmarks):
-                            landmarks.append(np.argmax(m))
-                            e = distance.cdist(
-                                    self.training_data_[landmarks[i], None],
-                                    self.training_data_).flatten()
-                            m = np.minimum(m, e)
+            m = distance.cdist(self.training_data_[landmarks],
+                               self.training_data_).flatten()
 
-                        self.landmarks_ = np.array(landmarks)
-                    else:
-                        raise ValueError(
-                            "unrecognized landmark selection method '%s'"
-                            % self.landmarks_method)
-                else:
-                    raise ValueError("unrecognized landmarks '%s'"
-                                     % n_landmarks)
+            for i in range(1, n_landmarks):
+                landmarks.append(np.argmax(m))
+                e = distance.cdist(
+                    self.training_data_[landmarks[i], None],
+                    self.training_data_).flatten()
+                m = np.minimum(m, e)
+
+            self.landmarks_ = np.array(landmarks)
+        else:
+            raise ValueError("unrecognized landmark method '%s'"
+                             % self.landmarks_method)
 
         return self.landmarks_
->>>>>>> Merge Isomap and LandmarkIsomap classes.
 
-    def _fit_transform(self, X):
+    def fit(self, X, y=None):
+        """Compute the `n_components`-dimensional embedding of data set X.
+
+        Parameters
+        ----------
+        X : [array-like|sparse matrix|BallTree|KDTree|NearestNeighbors]
+            Sample data, shape = (n_samples, n_features),
+            in the form of a numpy array, precomputed tree,
+            or NearestNeighbors object.
+
+        y : array-like, optional
+            Samples' labels. This information is ignored by ISOMAP.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         X = check_array(X)
 
-        landmarks = self._compute_landmarks(X)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
-
         self.training_data_ = self.nbrs_._fit_X
 
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                                     kernel="precomputed",
+                                     kernel='precomputed',
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
@@ -244,91 +259,48 @@ class Isomap(BaseEstimator, TransformerMixin):
                                mode='distance', n_jobs=self.n_jobs)
 
         landmarks = self._compute_landmarks()
-
         self.dist_matrix_ = shortest_path(kng,
                                           method=self.path_method,
                                           directed=False,
                                           indices=landmarks).T
-
-        self.dist_matrix_[np.isinf(self.dist_matrix_)] = 0
+        infinities = np.isinf(self.dist_matrix_)
+        if infinities.any():
+            warnings.warn('Neighborhood graph is disconnected, ISOMAP may '
+                          'result in a bad lower-dimensional embedding. '
+                          'Try to increase n_neighbors parameter.')
+            self.dist_matrix_[infinities] = 0
 
         G = (self.dist_matrix_ if landmarks is None
              else self.dist_matrix_[landmarks])
         G = G ** 2
         G *= -.5
 
-        if landmarks is None or landmarks.shape[0] == X.shape[0]:
-            self.embedding_ = self.kernel_pca_.fit_transform(G)
-        else:
-            # Selectively replaces embedding_ rows.
-            # This preserves the order of the samples in X.
-            self.embedding_ = np.zeros((X.shape[0], self.n_components))
-            self.embedding_[landmarks] = self.kernel_pca_.fit_transform(G)
+        self.embedding_ = self.kernel_pca_.fit_transform(G)
 
-            # Embed the samples that are not landmarks.
-            others = np.ones(X.shape[0], dtype=bool)
-            others[landmarks] = 0
-            self.embedding_[others] = self.transform(X[others])
+        if landmarks is not None:
+            # Project the remaining samples.
+            self.embedding_ = self.transform(X)
 
-    def reconstruction_error(self):
-        """Compute the reconstruction error for the embedding.
-
-        Returns
-        -------
-        reconstruction_error : float
-
-        Notes
-        -------
-        The cost function of an isomap embedding is
-
-        ``E = frobenius_norm[K(D) - K(D_fit)] / n_samples``
-
-        Where D is the matrix of distances for the input data X,
-        D_fit is the matrix of distances for the output embedding X_fit,
-        and K is the isomap kernel:
-
-        ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
-        """
-
-        G = (self.dist_matrix_ if self.landmarks_ is None
-             else self.dist_matrix_[self.landmarks_])
-        G = -0.5 * G ** 2
-        G_center = KernelCenterer().fit_transform(G)
-        evals = self.kernel_pca_.lambdas_
-        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
-
-    def fit(self, X, y=None):
-        """Compute the embedding vectors for data X
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
-            Sample data, shape = (n_samples, n_features), in the form of a
-            numpy array, precomputed tree, or NearestNeighbors
-            object.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None):
-        """Fit the model from data in X and transform X.
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit the model from data contained in X and transform X.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+        X : [array-like|sparse matrix|BallTree|KDTree|NearestNeighbors]
+            Sample data, shape = (n_samples, n_features),
+            in the form of a numpy array, precomputed tree,
+            or NearestNeighbors object.
+
+        y : array-like, optional
+            Samples' labels. This information is ignored by ISOMAP.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        self._fit_transform(X)
-        return self.embedding_
+        return self.fit(X, y).embedding_
 
     def transform(self, X):
         """Transform X.
@@ -369,3 +341,30 @@ class Isomap(BaseEstimator, TransformerMixin):
         G_X *= -0.5
 
         return self.kernel_pca_.transform(G_X)
+
+    def reconstruction_error(self):
+        """Compute the reconstruction error for the embedding.
+
+        Returns
+        -------
+        reconstruction_error : float
+
+        Notes
+        -------
+        The cost function of an isomap embedding is
+
+        ``E = frobenius_norm[K(D) - K(D_fit)] / n_samples``
+
+        Where D is the matrix of distances for the input data X,
+        D_fit is the matrix of distances for the output embedding X_fit,
+        and K is the isomap kernel:
+
+        ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
+        """
+        G = (self.dist_matrix_
+             if self.landmarks_ is None
+             else self.dist_matrix_[self.landmarks_])
+        G = -0.5 * G ** 2
+        G_center = KernelCenterer().fit_transform(G)
+        evals = self.kernel_pca_.lambdas_
+        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]

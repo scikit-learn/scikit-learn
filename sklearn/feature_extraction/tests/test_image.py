@@ -11,7 +11,7 @@ from numpy.testing import assert_raises
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.graph import connected_components
+from sklearn.utils.sparsetools import connected_components
 from sklearn.utils.testing import SkipTest, assert_equal, assert_true
 from sklearn.utils.fixes import sp_version
 

@@ -1,76 +1,13 @@
 from __future__ import division, print_function, absolute_import
 
 import numpy as np
-from numpy.testing import (assert_array_almost_equal, assert_raises, dec,
+from numpy.testing import (assert_array_almost_equal, assert_raises,
                            run_module_suite, assert_array_equal)
-from collections import defaultdict
 
-from sklearn.utils.graph import single_source_shortest_path_length
-from sklearn.utils.graph_shortest_path import (shortest_path, dijkstra, johnson,
-                                               bellman_ford,
-                                               NegativeCycleError)
-from sklearn.utils.sparsetools._graph_tools import construct_dist_matrix
-
-
-def floyd_warshall_slow(graph, directed=False):
-    N = graph.shape[0]
-
-    # set nonzero entries to infinity
-    graph[np.where(graph == 0)] = np.inf
-
-    # set diagonal to zero
-    graph.flat[::N + 1] = 0
-
-    if not directed:
-        graph = np.minimum(graph, graph.T)
-
-    for k in range(N):
-        for i in range(N):
-            for j in range(N):
-                graph[i, j] = min(graph[i, j], graph[i, k] + graph[k, j])
-
-    graph[np.where(np.isinf(graph))] = 0
-
-    return graph
-
-
-def generate_graph(N=20):
-    # sparse grid of distances
-    rng = np.random.RandomState(0)
-    dist_matrix = rng.random_sample((N, N))
-
-    # make symmetric: distances are not direction-dependent
-    dist_matrix = dist_matrix + dist_matrix.T
-
-    # make graph sparse
-    i = (rng.randint(N, size=N * N // 2), rng.randint(N, size=N * N // 2))
-    dist_matrix[i] = 0
-
-    # set diagonal to zero
-    dist_matrix.flat[::N + 1] = 0
-
-    return dist_matrix
-
-
-def test_shortest_path():
-    dist_matrix = generate_graph(20)
-    # We compare path length and not costs (-> set distances to 0 or 1)
-    dist_matrix[dist_matrix != 0] = 1
-
-    for directed in (True, False):
-        if not directed:
-            dist_matrix = np.minimum(dist_matrix, dist_matrix.T)
-
-        graph_py = floyd_warshall_slow(dist_matrix.copy(), directed)
-        for i in range(dist_matrix.shape[0]):
-            # Non-reachable nodes have distance 0 in graph_py
-            dist_dict = defaultdict(int)
-            dist_dict.update(single_source_shortest_path_length(dist_matrix,
-                                                                i))
-
-            for j in range(graph_py[i].shape[0]):
-                assert_array_almost_equal(dist_dict[j], graph_py[i, j])
-
+from sklearn.utils.graph import (shortest_path, dijkstra,
+                                 johnson, bellman_ford,
+                                 NegativeCycleError)
+from sklearn.utils.sparsetools import construct_dist_matrix
 
 directed_G = np.array([[0, 3, 3, 0, 0],
                        [0, 0, 0, 2, 4],
@@ -172,8 +109,11 @@ def test_shortest_path_indices():
         assert_array_almost_equal(SP, undirected_SP[indices].reshape(outshape))
 
     for indshape in [(4,), (4, 1), (2, 2)]:
-        for func in (dijkstra, bellman_ford, johnson):
+        for func in (dijkstra, bellman_ford, johnson, shortest_path):
             yield check, func, indshape
+
+    assert_raises(ValueError, shortest_path, directed_G, method='FW',
+                  indices=indices)
 
 
 def test_predecessors():
@@ -241,7 +181,7 @@ def test_negative_cycles():
 
 
 def test_masked_input():
-    G = np.ma.masked_equal(directed_G, 0)
+    np.ma.masked_equal(directed_G, 0)
 
     def check(method):
         SP = shortest_path(directed_G, method=method, directed=True,

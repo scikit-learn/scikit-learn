@@ -7,75 +7,84 @@ An illustration of dimensionality reduction on the Swiss-roll
 data set with both Isomap and Landmark Isomap (L-Isomap) methods.
 """
 
-# Author: Lucas David -- <lucasdavid@comp.ufscar.br>
+# Author: Lucas David -- <ld492@drexel.edu>
 # License: BSD 3 clause, (C) 2015
+
+
+from time import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import NullFormatter
+from mpl_toolkits.mplot3d import Axes3D
+
+from sklearn import datasets
+from sklearn.manifold import Isomap
+
+Axes3D
 
 print(__doc__)
 
-from time import time
-import matplotlib.pyplot as plt
-from matplotlib.ticker import NullFormatter
-from mpl_toolkits.mplot3d import Axes3D
-from sklearn import manifold, datasets
+EXECUTIONS = [{'n_samples': n_samples, 'noise': 0.0}
+              for n_samples in (1000, 5000, 10000, 30000)]
+N_EXECUTIONS = len(EXECUTIONS)
 
-# Next line to silence pyflakes. This import is needed.
-Axes3D
 
-isomap_params = {'n_neighbors': 10, 'n_components': 2}
-l_isomap_params = {'n_neighbors': 10, 'n_components': 2, 'landmarks': 'auto'}
-
-comparisons = [
-    (
-        n_samples,
-        (manifold.Isomap, isomap_params),
-        (manifold.Isomap, l_isomap_params),
-    ) for n_samples in range(1000, 6001, 5000)]
-
-n_comparisons = len(comparisons)
-
-fig = plt.figure(figsize=(15, 8))
-plt.suptitle('Isomap and L-Isomap Comparison', fontsize=14)
-
-for i, comparison in enumerate(comparisons):
-    n_samples = comparison[0]
-    methods = comparison[1:]
-
-    X, color = datasets.make_swiss_roll(n_samples, random_state=0)
-
-    print('Comparison %i: %i samples' % (i, n_samples))
-
-    try:
-        # compatibility matplotlib < 1.0
-        ax = fig.add_subplot(n_comparisons, 3, i * 3 + 1, projection='3d')
+def plot_manifold(X, y, ax, title):
+    if X.shape[1] == 3:
         ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
         ax.view_init(4, -72)
-    except:
-        ax = fig.add_subplot(251, projection='3d')
-        plt.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
+        ax.zaxis.set_major_formatter(NullFormatter())
+    else:
+        plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Spectral)
+    plt.title(title, fontdict={'fontsize': 9})
+    ax.xaxis.set_major_formatter(NullFormatter())
+    ax.yaxis.set_major_formatter(NullFormatter())
+    for spine in ('top', 'bottom', 'left', 'right'):
+        ax.spines[spine].set_visible(False)
+    plt.axis('tight')
 
-    plt.title('%i samples.' % n_samples)
 
-    for j, (method, params) in enumerate(methods):
-        try:
-            print('#%i' % j)
+np.random.rand(7421)
 
-            t0, t1 = time(), None
-            transformer = method(**params)
-            Y = transformer.fit_transform(X)
-            t1 = time()
+fig = plt.figure(figsize=(15, 9))
+plt.suptitle('ISOMAP and L-ISOMAP Comparison', fontsize=14)
 
-            print('params: %s' % str(params))
-            print('time elapsed: %.6g sec.\n' % (t1 - t0))
+for i, execution in enumerate(EXECUTIONS):
+    n_samples, noise = execution['n_samples'], execution['noise']
+    print('comparison %i: %i samples' % (i, n_samples))
 
-            ax = fig.add_subplot(n_comparisons, 3, i * 3 + 2 + j)
-            plt.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.Spectral)
-            plt.title('#%i: (%.6g sec)' % (j, (t1 - t0)))
+    X, color = datasets.make_swiss_roll(n_samples, noise=noise,
+                                        random_state=3241)
 
-            ax.xaxis.set_major_formatter(NullFormatter())
-            ax.yaxis.set_major_formatter(NullFormatter())
-            plt.axis('tight')
+    # Original ISOMAP will only look to a subset,
+    # because of its performance issues.
+    Y = X[np.random.choice(X.shape[0], size=1000)]
 
-        except MemoryError as e:
-            print('Failed.\n' % j)
+    isomap_start = time()
+    transformer = Isomap(n_neighbors=10, n_components=2)
+    isomap_Z = transformer.fit(Y).transform(X)
+    isomap_end = time()
+
+    l_isomap_start = time()
+    transformer = Isomap(n_neighbors=10, n_components=2, landmarks='auto')
+    l_isomap_Z = transformer.fit_transform(X)
+    l_isomap_end = time()
+
+    print('\tISOMAP took %.6g seconds to fit %i samples.'
+          % (isomap_end - isomap_start, 1000))
+    print('\tL-ISOMAP took %.6g seconds to fit %s samples.\n'
+          % (l_isomap_end - l_isomap_start, n_samples))
+
+    ax = fig.add_subplot(N_EXECUTIONS, 3, i * 3 + 1, projection='3d')
+    plot_manifold(X, color, ax, 'X dataset (%s samples)' % n_samples)
+
+    ax = fig.add_subplot(N_EXECUTIONS, 3, i * 3 + 2)
+    plot_manifold(isomap_Z, color, ax,
+                  'ISOMAP (%.6g sec)' % (isomap_end - isomap_start))
+
+    ax = fig.add_subplot(N_EXECUTIONS, 3, i * 3 + 3)
+    plot_manifold(l_isomap_Z, color, ax,
+                  'L-ISOMAP (%.6g sec)' % (l_isomap_end - l_isomap_start))
 
 plt.show()
