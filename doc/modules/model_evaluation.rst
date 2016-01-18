@@ -60,6 +60,7 @@ Scoring                      Function                                    Comment
 **Classification**
 'accuracy'                   :func:`metrics.accuracy_score`
 'average_precision'          :func:`metrics.average_precision_score`
+'balanced_accuracy_score'    :func:`metrics.balanced_accuracy_score`     for binary targets
 'f1'                         :func:`metrics.f1_score`                    for binary targets
 'f1_micro'                   :func:`metrics.f1_score`                    micro-averaged
 'f1_macro'                   :func:`metrics.f1_score`                    macro-averaged
@@ -221,6 +222,7 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    matthews_corrcoef
    precision_recall_curve
    roc_curve
@@ -621,7 +623,15 @@ In this context, we can define the notions of precision, recall and F-measure:
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn},
+   \text{recall (also called sensitivity)} = \frac{tp}{tp + fn},
+
+.. math::
+
+   \text{specificity} = \frac{tn}{tn + fp},
+
+.. math::
+
+   \text{balanced accuracy} = 0.5 * \text{sensitivity} + 0.5 * \text{specificity},
 
 .. math::
 
@@ -636,6 +646,12 @@ Here are some small examples in binary classification::
   1.0
   >>> metrics.recall_score(y_true, y_pred)
   0.5
+  >>> metrics.balanced_accuracy_score(y_true, y_pred)
+  0.75
+  >>> metrics.balanced_accuracy_score(y_true, y_pred, balance=1)
+  0.5
+  >>> metrics.balanced_accuracy_score(y_true, y_pred, balance=0)
+  1.0
   >>> metrics.f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.66...
   >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
@@ -861,6 +877,44 @@ method.
 
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
 sample has label 0.  The log loss is non-negative.
+
+.. _balanced_accuracy_score:
+
+Balanced accuracy score
+-----------------------
+
+The :func:`balanced_accuracy_score` function computes the
+`Balanced accuracy score (BAC) <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_
+for binary classes.  Quoting Wikipedia:
+
+
+    "The balanced accuracy avoids inflated performance estimates on
+    imbalanced datasets. It is defined as the arithmetic mean of sensitivity
+    and specificity, or the average accuracy obtained on either class."
+
+If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
+number of true positives, true negatives, false positives and false negatives,
+the BAC metric is defined as
+
+.. math::
+
+  BAC = \frac{tp}{tp + fn) + \frac{tn}{tn + fp)
+
+Here is a small example illustrating the usage of the :func:`balanced_accuracy_score`
+function:
+
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_true = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    >>> y_pred = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    >>> accuracy_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.9...
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.5
+
+In this example accuracy is not the metric to use. Its value only
+reflect the imbalanced distribution of the dataset.
+See `Accuracy paradox <http://en.wikipedia.org/wiki/Accuracy_paradox>`_.
 
 .. _matthews_corrcoef:
 
