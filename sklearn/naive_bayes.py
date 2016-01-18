@@ -115,6 +115,12 @@ class GaussianNB(BaseNB):
 
     Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
 
+    Parameters
+    ----------
+    class_prior_override : array-like, size (n_classes,)
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -137,15 +143,25 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB()
+    GaussianNB(class_prior_override=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB()
+    GaussianNB(class_prior_override=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
+
+    def __init__(self, class_prior_override=None):
+        # Check if we need to override the class priors
+        if class_prior_override is not None:
+            self.class_prior_override = np.asarray(class_prior_override)
+            # Check that the sum is 1
+            if self.class_prior_override.sum() != 1.0:
+                raise ValueError("The sum of the priors should be 1.")
+        else:
+            self.class_prior_override = None
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -341,7 +357,16 @@ class GaussianNB(BaseNB):
             n_classes = len(self.classes_)
             self.theta_ = np.zeros((n_classes, n_features))
             self.sigma_ = np.zeros((n_classes, n_features))
-            self.class_prior_ = np.zeros(n_classes)
+            # We have to check if we override the prior or not
+            if self.class_prior_override is not None:
+                # Check if the number of classes is in line with the class priors
+                if len(self.class_prior_override) != n_classes:
+                    raise ValueError("y and class_prior_override have"
+                                     "incompatible shapes")
+                else:
+                    self.class_prior_ = self.class_prior_override
+            else:
+                self.class_prior_ = np.zeros(n_classes)
             self.class_count_ = np.zeros(n_classes)
         else:
             if X.shape[1] != self.theta_.shape[1]:
@@ -380,7 +405,11 @@ class GaussianNB(BaseNB):
             self.class_count_[i] += N_i
 
         self.sigma_[:, :] += epsilon
-        self.class_prior_[:] = self.class_count_ / np.sum(self.class_count_)
+        # Check whether or not to override the class priors
+        if self.class_prior_override is not None:
+            self.class_prior = self.class_prior_override
+        else:
+            self.class_prior_[:] = self.class_count_ / np.sum(self.class_count_)
         return self
 
     def _joint_log_likelihood(self, X):

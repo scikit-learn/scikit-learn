@@ -94,6 +94,14 @@ def test_gnb_sample_weight():
     assert_array_almost_equal(clf_dupl.sigma_, clf_sw.sigma_)
 
 
+def test_gnb_class_prior_override():
+    """Test whether the class prior override is properly used. """
+    clf = GaussianNB(class_prior_override=[0.3, 0.7]).fit(X, y)
+    assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
+                              np.array([[0.825303662161683,
+                                         0.174696337838317]]), 8)
+
+
 def test_discrete_prior():
     # Test whether class priors are properly set.
     for cls in [BernoulliNB, MultinomialNB]:
