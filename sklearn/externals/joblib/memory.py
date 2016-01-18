@@ -36,7 +36,7 @@ from ._memory_helpers import open_py_source
 from .logger import Logger, format_time, pformat
 from . import numpy_pickle
 from .disk import mkdirp, rm_subdirs
-from ._compat import _basestring
+from ._compat import _basestring, PY3_OR_LATER
 
 FIRST_LINE_TEXT = "# first line:"
 
@@ -547,7 +547,7 @@ class MemorizedFunc(Logger):
             out.write(func_code)
         # Also store in the in-memory store of function hashes
         is_named_callable = False
-        if sys.version_info[0] > 2:
+        if PY3_OR_LATER:
             is_named_callable = (hasattr(self.func, '__name__')
                                  and self.func.__name__ != '<lambda>')
         else:
