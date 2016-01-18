@@ -92,6 +92,9 @@ Enhancements
 Bug fixes
 .........
 
+    - :class:`StratifiedKFold` now raises error if all n_labels for individual classes is less than n_folds.
+      (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
+
     - :class:`RandomizedPCA` default number of `iterated_power` is 2 instead of 3.
       This is a speed up with a minor precision decrease. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 

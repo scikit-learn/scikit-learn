@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
@@ -206,7 +207,7 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
-    y = np.array([3, 3, -1, -1, 2])
+    y = np.array([3, 3, -1, -1, 3])
 
     skf_3 = StratifiedKFold(3)
     assert_warns_message(Warning, "The least populated class",
@@ -219,11 +220,21 @@ def test_kfold_valueerrors():
         warnings.simplefilter("ignore")
         check_cv_coverage(skf_3, X2, y, labels=None, expected_n_iter=3)
 
+    # Check that errors are raised if all n_labels for individual
+    # classes are less than n_folds.
+    y = np.array([3, 3, -1, -1, 2])
+
+    assert_raises(ValueError, next, skf_3.split(X2, y))
+
     # Error when number of folds is <= 1
     assert_raises(ValueError, KFold, 0)
     assert_raises(ValueError, KFold, 1)
-    assert_raises(ValueError, StratifiedKFold, 0)
-    assert_raises(ValueError, StratifiedKFold, 1)
+    error_string = ("k-fold cross-validation requires at least one"
+                    " train/test split")
+    assert_raise_message(ValueError, error_string,
+                         StratifiedKFold, 0)
+    assert_raise_message(ValueError, error_string,
+                         StratifiedKFold, 1)
 
     # When n_folds is not integer:
     assert_raises(ValueError, KFold, 1.5)
