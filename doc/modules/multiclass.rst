@@ -14,7 +14,8 @@ Multiclass and multilabel algorithms
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 ``multiclass`` and ``multilabel`` classification problems
-by decomposing such problems into binary classification problems.
+by decomposing such problems into binary classification problems. Multitarget
+regression is also supported.
 
   - **Multiclass classification** means a classification task with more than
     two classes; e.g., classify a set of images of fruits which may be oranges,
@@ -27,6 +28,11 @@ by decomposing such problems into binary classification problems.
     that are not mutually exclusive, such as topics that are relevant for a
     document. A text might be about any of religion, politics, finance or
     education at the same time or none of these.
+
+  - **Multioutput regression** assigns each sample a set of target
+    values.  This can be thought of as predicting several properties
+    for each data-point, such as wind direction and magnitude at a
+    certain location.
 
   - **Multioutput-multiclass classification** and **multi-task classification**
     means that a single estimator has to handle
@@ -274,3 +280,32 @@ Below is an example of multiclass learning using Output-Codes::
     .. [4] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.
+
+Multioutput regression
+======================
+
+Multioutput regression support can be added to any regressor with
+:class:`MultiOutputRegressor`.  This strategy consists of fitting one
+regressor per target. Since each target is represented by exactly one
+regressor it is possible to gain knowledge about the target by
+inspecting its corresponding classifier. As
+:class:`MultiOutputRegressor` fits one regressor per target it can not
+take advantage of correlations between targets.
+
+Below is an example of multioutput regression:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.multiclass import MultiOutputRegressor
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>> X, y = make_regression(n_samples=10, n_targets=3)
+  >>> MultiOutputRegressor(GradientBoostingRegressor()).fit(X, y).predict(X)
+  array([[  63.36283843,   96.03434865,  155.88841863],
+       [-117.78937903,  -61.3561745 , -182.53690686],
+       [-190.55227782, -121.04035245, -238.35482   ],
+       [ -60.13395579, -103.96793942,  -74.65208555],
+       [ 273.94643437,  300.24624785,  273.63218797],
+       [ -58.81551102,    3.55243734,  -49.1948011 ],
+       [ 304.94208492,  151.93111239,  300.82089197],
+       [ 281.35806586,  228.25093746,  258.58373687],
+       [  52.95925752,  -16.93162176,   -8.96607203],
+       [  23.73495025,  -40.74274766,   -3.79028485]])
