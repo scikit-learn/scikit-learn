@@ -873,8 +873,7 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y,
-                                  sample_weight=None):
+    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
         """Helper function to avoid code duplication between self._errors and
         self._values.
 
@@ -882,15 +881,9 @@ class _RidgeGCV(LinearModel):
         -----
         We don't construct matrix G, instead compute action on y & diagonal.
         """
-        if sample_weight is None:
-            sample_weight = np.ones(y.shape[0])
-
-        Q_ = Q - np.dot(
-            sample_weight[:, np.newaxis],
-            np.dot(sample_weight, Q)[np.newaxis]) / np.sum(sample_weight ** 2)
-        dummy_column = np.sum(Q_ ** 2, 0) < 1.e-6
-        # detect columns colinear to sample_weight
         w = 1. / (v + alpha)
+        dummy_column = np.var(Q, 0) < 1.e-12
+        # detect constant columns
         w[dummy_column] = 0  # cancel the regularization for the intercept
         w[v == 0] = 0
         c = np.dot(Q, self._diag_dot(w, QT_y))
@@ -900,14 +893,12 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors(self, alpha, y, v, Q, QT_y, sample_weight=None):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y,
-                                                   sample_weight)
+    def _errors(self, alpha, y, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return (c / G_diag) ** 2, c
 
-    def _values(self, alpha, y, v, Q, QT_y, sample_weight=None):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y,
-                                                   sample_weight)
+    def _values(self, alpha, y, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y, centered_kernel=True):
