@@ -1525,7 +1525,7 @@ def check_get_params_invariance(name, estimator):
         e = estimator([('clf', T())])
 
     elif name in ('GridSearchCV', 'RandomizedSearchCV', 'SelectFromModel',
-                  'GPSearchCV'):
+                  'SequentialSearchCV'):
         return
 
     else:

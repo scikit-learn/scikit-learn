@@ -863,44 +863,30 @@ def test_parameters_sampler_replacement():
     samples = list(sampler)
     assert_equal(len(samples), 7)
 
-
 def test_gp_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
-    for acquisition_function in ('EI',):
+    for acquisition_function in ('EI', 'UCB'):
         gp_search = SequentialSearchCV(
-            clf, {'foo_param': randint(1, 3)},
-            acquisition_function=acquisition_function)
+            clf, {'foo_param': {'bounds': (1, 4), 'type': int}},
+            acquisition_function=acquisition_function,
+            random_state=0, n_init=3)
         # make sure it selects the smallest parameter in case of ties
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
         gp_search.fit(X, y)
-        sys.stdout = old_stdout
         assert_equal(gp_search.best_estimator_.foo_param, 2)
-
-        # test the same thing giving it a list
-        gp_search = SequentialSearchCV(
-            clf, {'foo_param': [1, 2, 3]},
-            acquisition_function=acquisition_function, n_candidates=3)
-        # make sure it selects the smallest parameter in case of ties
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        gp_search.fit(X, y)
-        sys.stdout = old_stdout
-        assert_equal(gp_search.best_estimator_.foo_param, 2)
+        assert_equal(gp_search.best_score_, 1)
 
     clf = MockContinuousClassifier()
     for acquisition_function in ('UCB', 'EI'):
         gp_search = SequentialSearchCV(
-            clf, {'foo_param': uniform(-1, 1)}, 
-            acquisition_function=acquisition_function)
+            clf, {'foo_param': {'bounds': (-1, 1)}},
+            acquisition_function=acquisition_function,
+            random_state=0, n_init=1, n_iter=4)
         # make sure it selects the smallest parameter in case of ties
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
         gp_search.fit(X, y)
-        sys.stdout = old_stdout
         # test that it is close to zero
         assert_less_equal(np.abs(gp_search.best_estimator_.foo_param),  0.1)
+        assert_less_equal(gp_search.best_score_, 1)
 
     # Smoke test the score etc:
     gp_search.score(X, y)
@@ -917,23 +903,24 @@ def test_gp_search():
 def test_gp_search_no_score():
     # Test grid-search on classifier that has no score function.
     clf = LinearSVC(random_state=0)
-    X, y = make_blobs(random_state=0, centers=2)
+    X, y = make_blobs(random_state=0, centers=2, n_samples=20)
 
+    params = {'C': {'bounds': (10*-2, 10**2), 'scale': 'log'}}
     clf_no_score = LinearSVCNoScore(random_state=0)
     gp_search = SequentialSearchCV(
-        clf, {'C': expon(scale=10)},
+        clf, params,
         scoring='accuracy', random_state=0, iid=False)
     gp_search.fit(X, y)
 
     grid_search_no_score = SequentialSearchCV(
-        clf_no_score, {'C': expon(scale=10)},
+        clf_no_score, params,
         scoring='accuracy', random_state=0, iid=False)
     # smoketest grid search
     grid_search_no_score.fit(X, y)
 
     # giving no scoring function raises an error
     grid_search_no_score = SequentialSearchCV(
-        clf_no_score, {'C': expon(scale=10)})
+        clf_no_score, params)
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
 
@@ -942,19 +929,76 @@ def test_gp_no_refit():
     # Test that grid search can be used for model selection only
     clf = MockClassifier()
     grid_search = SequentialSearchCV(
-        clf, {'foo_param': randint(1, 3)}, refit=False)
+        clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
+        n_init=1, n_iter=4)
     grid_search.fit(X, y)
     assert_true(hasattr(grid_search, "best_params_"))
+    assert_true(hasattr(grid_search, "best_score_"))
+    assert_false(hasattr(grid_search, "best_estimator_"))
 
 
 def test_gp_search_error():
     # Test that grid search will capture errors on data with different
     # length
-    X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
     clf = LinearSVC()
-    cv = SequentialSearchCV(clf, {'C': expon(scale=10)})
-    assert_raises(ValueError, cv.fit, X_[:180], y_)
+    grid_search = SequentialSearchCV(
+        clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
+        n_init=1, n_iter=4)
+    assert_raises(ValueError, grid_search.fit, X[:3], y)
 
 
-# def test_bad_input():
-#     # raise when n_ininit > n_iter and such
+def test_bad_input():
+    # raise when n_init > n_iter and such
+    clf = MockClassifier()
+    grid_search = SequentialSearchCV(
+        clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
+        n_init=5, n_iter=2)
+    assert_raises(ValueError, grid_search.fit, X, y)
+
+    wrong_bounds = [(), (0, 3, 4), (2, -1)]
+    for bound in wrong_bounds:
+        grid_search = SequentialSearchCV(
+            clf, {'foo_param': {'bounds': bound}}, refit=False,
+            n_init=5, n_iter=2)
+        assert_raises(ValueError, grid_search.fit, X, y)
+
+    wrong_scale = ["wrong", "scale"]
+    for scale in wrong_scale:
+        grid_search = SequentialSearchCV(
+            clf, {'foo_param': {'scale': scale}}, refit=False,
+            n_init=5, n_iter=2)
+        assert_raises(ValueError, grid_search.fit, X, y)
+
+    wrong_type = [dict, list]
+    for type_ in wrong_type:
+        grid_search = SequentialSearchCV(
+            clf, {'foo_param': {'type': type_}}, refit=False,
+            n_init=5, n_iter=2)
+        assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def check_grid_scores_parameters(grid_scores, param, type_, bounds):
+    # Check that the parameters in grid search lie between
+    # the given bounds and are of a particular type
+    for grid in grid_scores:
+        curr_param = grid.parameters[param]
+        assert_true(isinstance(curr_param, type_))
+        assert_true(bounds[0] <= curr_param <= bounds[-1])
+
+
+def test_bounds():
+    clf = MockContinuousClassifier()
+    grid_search = SequentialSearchCV(
+        clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
+        n_init=2, n_iter=5)
+    grid_search.fit(X, y)
+    check_grid_scores_parameters(
+        grid_search.grid_scores_, 'foo_param', float, (0, 3))
+
+    clf = MockClassifier()
+    grid_search = SequentialSearchCV(
+        clf, {'foo_param': {'bounds': (0, 3), 'type': int}}, refit=False,
+        n_init=2, n_iter=5)
+    grid_search.fit(X, y)
+    check_grid_scores_parameters(
+        grid_search.grid_scores_, 'foo_param', int, (0, 3))

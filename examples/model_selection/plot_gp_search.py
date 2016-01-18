@@ -16,32 +16,37 @@ from scipy import stats
 from sklearn.model_selection import SequentialSearchCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.linear_model import Ridge
-from sklearn.datasets import make_regression
+from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.datasets import load_iris, load_digits
 
 
-# Loading the Digits dataset
-X, y = make_regression(
-    n_samples=50, n_features=500, noise=1., random_state=0)
+# Make synthetic dataset where not all the features are explanatory
+iris = load_iris()
+X, y = iris.data, iris.target
+# X, y = make_regression(
+#     n_samples=50, n_features=500, noise=1., random_state=0)
 
-# build a classifier
-clf = Ridge()
+# Use ElasticNet so that some of the non-important features
+# are zeroed out.
+clf = LogisticRegression()
 
-# specify parameters and distributions to sample from
-expon = stats.expon(scale=20)
-expon.random_state = 0  # for reproductible results
-params = {'alpha': expon}
+# Specify exponential and uniform priors for the l1_ratio and
+# alpha
+expon = stats.expon(scale=10**-2)
+params = {'C': {'bounds': [10**-5, 10**5], 'scale': 'logscale'}}
 
-# run randomized search
+# Run SequentialSearch with first 5 iterations random.
 gp_search = SequentialSearchCV(
-  clf, params, verbose=1, n_iter=20)
+  clf, params, n_iter=20, random_state=0, n_init=3)
 gp_search.fit(X, y)
 
-# retrieve the maximum score at each iteration
+# Retrieve the maximum score at each iteration
 gp_cum_scores = [np.max(
       [gp_search.grid_scores_[j].mean_validation_score for j in range(i)])
       for i in range(1, len(gp_search.grid_scores_))]
 
+# Do the same experiment with randomized search cv
+params = {'C': expon}#, 'l1_ratio': l1_ratio}
 rdm_search = RandomizedSearchCV(
   clf, params, random_state=0, n_iter=20)
 rdm_search.fit(X, y)
@@ -50,8 +55,8 @@ rdm_cum_scores = [np.max(
       [rdm_search.grid_scores_[j].mean_validation_score for j in range(i)])
       for i in range(1, len(rdm_search.grid_scores_))]
 
-
-params = {'alpha': np.logspace(-3, 3, 20)}
+# Do a standard grid search across pre-defined parameters.
+params = {'C': np.logspace(-5, 5, 20)}
 
 grid_search = GridSearchCV(clf, params)
 grid_search.fit(X, y)

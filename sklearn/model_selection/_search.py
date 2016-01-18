@@ -21,12 +21,13 @@ import operator
 import warnings
 
 import numpy as np
-from scipy import stats
+from scipy import stats, optimize
 
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
 from ._split import check_cv
 from ._validation import _fit_and_score
+from ..externals.odict import OrderedDict
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
@@ -35,11 +36,38 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import _num_samples, indexable
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import check_scoring
+from ..preprocessing import LabelEncoder
 from ..gaussian_process import GaussianProcessRegressor
+from ..gaussian_process.kernels import RBF
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
+
+
+def _acquisition_func(x0, gp, prev_best, func, xi, kappa):
+
+    x0 = np.reshape(x0, (1, 1))
+    if func == 'UCB':
+        predictions, std = gp.predict(x0, return_std=True)
+        acquisition_func = predictions + kappa * std
+    elif func == 'EI':
+        predictions, std = gp.predict(x0, return_std=True)
+        improvement = predictions - prev_best - xi
+        if std != 0:
+            Z = improvement / std
+            acquisition_func = std * (
+                Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
+        # In this case Z is huge, safe to say the pdf at Z is 0.0
+        # and cdf at Z is 1.0
+        else:
+            acquisition_func = improvement
+
+    else:
+        raise ValueError(
+            'acquisition_function not implemented yet : '
+            + func)
+    return acquisition_func[0]
 
 
 class ParameterGrid(object):
@@ -1005,15 +1033,19 @@ class RandomizedSearchCV(BaseSearchCV):
 
 
 class SequentialSearchCV(BaseSearchCV):
-    """Search over hyperparameters using Gaussian process.
+    """Search over hyperparameters based on a surrogate model.
 
-    The parameters of the estimator used to apply these methods are optimized
-    by cross-validated search over parameter settings.
+    The best hyperparameters of the estimator are estimated
+    by cross-validated search over the provided hyperparameter settings.
 
-    In contrast to GridSearchCV, not all parameter values are tried out, but
-    rather a fixed number of parameter settings are sampled from the specified
-    distributions by optimizing an acquisition function. The number of
-    parameter settings that are tried is given by n_iter.
+    In contrast to GridSearchCV, not all parameter values are tried out.
+    Initially, a fixed number of settings are initially tried out for and
+    the cross-validation scores are evaluated.
+    Given these initial evaluations, the new best hyperparameter is chosen
+    by maximizing a function (commonly called acquisition function).
+    The number of initial random parameter settings that are tried for is given by
+    ``n_init`` and the total number parameter settings that are tried for
+    is given by ``n_iter``.
 
     If all parameters are presented as a list,
     sampling without replacement is performed. If at least one parameter
@@ -1028,8 +1060,8 @@ class SequentialSearchCV(BaseSearchCV):
     estimator : estimator object.
         A object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
+        The estimator must implement a ``fit`` method and can either
+        provide a ``score`` function, or ``scoring`` must be passed.
 
     param_distributions : dict
         Dictionary with parameters names (string) as keys and distributions
@@ -1063,7 +1095,7 @@ class SequentialSearchCV(BaseSearchCV):
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, optional default "2*n_jobs"
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -1094,8 +1126,8 @@ class SequentialSearchCV(BaseSearchCV):
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        :class:`StratifiedKFold` used. For all other cases
+        :class:`KFold`` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1119,7 +1151,7 @@ class SequentialSearchCV(BaseSearchCV):
         step, which will always raise the error.
 
     n_candidates : int, default=500
-        Number of random candidates to sample for each GP iterations
+        Number of random candidates to sample for each GP iteration
         Default is 500.
 
     gp_params : dict, default={}
@@ -1175,16 +1207,17 @@ class SequentialSearchCV(BaseSearchCV):
         Randomized search on hyper parameters.
 
     Examples
-    -------
-    >>> from sklearn import linear_model, gp_search, datasets
+    --------
+    >>> from sklearn import linear_model, datasets
+    >>> from sklearn.model_selection import SequentialSearchCV
     >>> from scipy import stats
     >>> X, y = datasets.make_regression()
     >>> clf = linear_model.Ridge()
     >>> parameters = {"alpha": stats.expon(scale=100)}
-    >>> search = gp_search.GPSearchCV(clf, parameters)
+    >>> search = SequentialSearchCV(clf, parameters)
     >>> search.fit(X, y)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GPSearchCV(acquisition_function='UCB', cv=None, error_score='raise',
+    SequentialSearchCV(acquisition_function='UCB', cv=None, error_score='raise',
           estimator=Ridge(alpha=1.0, copy_X=True, fit_intercept=True, ...
        normalize=False, random_state=None, solver='auto', tol=0.001),
           fit_params={}, gp_params={}, iid=True, kappa=1.96, n_candidates=500,
@@ -1195,58 +1228,118 @@ class SequentialSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_distributions, n_init=3, n_iter=10,
+    def __init__(self, estimator, param_distributions, scale=list(), n_init=3, n_iter=10,
                  scoring=None, fit_params=None, acquisition_function='UCB',
                  n_jobs=1, iid=True, refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score='raise', n_candidates=500,
-                 gp_params={}, xi=0.01, kappa=1.96):
-
-        if acquisition_function not in ('UCB', 'EI', 'greedy'):
-            raise ValueError(
-                "acquisition_function should be one of " +
-                "'UCB', 'EI' or 'greedy'. Found %s instead" %
-                acquisition_function)
+                 gp_params={}, xi=0.01, kappa=1.96,
+                 n_local_candidates=10):
         self.acquisition_function = acquisition_function
         self.param_distributions = param_distributions
-        if n_init > n_iter:
-            raise ValueError('n_init cannot be larger than n_iter')
         self.n_init = n_init
         self.n_iter = n_iter
         self.random_state = random_state
         self.gp_params = gp_params
-        if xi <= 0:
-            raise ValueError('Parameter xi must be positive')
         self.xi = xi
-        if kappa <= 0:
-            raise ValueError('Parameter kappa must be positive')
         self.kappa = kappa
         self.n_candidates = n_candidates
+        self.scale = scale
+        self.n_local_candidates = n_local_candidates
 
         super(SequentialSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
 
-    def _evaluate_params(self, params, cv, X, y, labels):
-        all_scores = Parallel(
+    def _evaluate_params(self, candidates, cv, X, y, labels, scale):
+
+        # Use the context-manager API to reuse processes for every
+        # call to Parallel.
+        with Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=self.pre_dispatch
-        )(delayed(_fit_and_score)(clone(self.estimator), X, y, self.scorer_,
-                                  train, test, self.verbose, params,
-                                  self.fit_params, return_parameters=False,
-                                  error_score=self.error_score)
-          for train, test in cv.split(X, y, labels))
+            pre_dispatch=self.pre_dispatch) as parallel:
 
-        n_test_samples = 0
-        score = 0
-        for tmp_score, tmp_n_test_samples, _ in all_scores:
-            tmp_score *= tmp_n_test_samples
-            n_test_samples += tmp_n_test_samples
-            score += tmp_score
-        score /= float(n_test_samples)
+            tested_parameters, cv_scores, grid_scores = [], [], []
 
-        return score, all_scores
+            for i, params in enumerate(candidates):
+
+                # We need this because we need the paramter strings
+                # in the same order which params is stored.
+                if i == 0:
+                    params_list = list(params.keys())
+
+                scaled_candidates = self.scale_candidates(params)
+                all_scores = parallel(delayed(_fit_and_score)(
+                    clone(self.estimator), X, y, self.scorer_,
+                    train, test, self.verbose, scaled_candidates,
+                    self.fit_params, return_parameters=False,
+                    error_score=self.error_score)
+                    for train, test in cv.split(X, y, labels))
+
+                all_scores = np.asarray(all_scores)
+                fold_scores = all_scores[:, 0]
+                n_test_samples = all_scores[:, 1]
+
+                if self.iid:
+                    score = np.sum(
+                        fold_scores * n_test_samples) / np.sum(n_test_samples)
+                else:
+                    score = np.mean(fold_scores)
+
+                if self.verbose > 0:
+                    print('Step ' + str(i) + ' - Hyperparameter '
+                          + str(params) + ', score: ' + str(score))
+
+                tested_parameters.append(list(params.values()))
+                cv_scores.append(score)
+                grid_scores.append(
+                    _CVScoreTuple(scaled_candidates, score, fold_scores))
+
+        return tested_parameters, cv_scores, grid_scores, params_list
+
+    def scale_candidates(self, params_dict):
+
+        scaled_candidates = dict()
+        for param, val in params_dict.items():
+            bounds = self._param_distributions[param]['bounds']
+            scale = self._param_distributions[param]['scale']
+            param_type = self._param_distributions[param]['type']
+
+            if scale == "logscale":
+                bounds = np.log10(bounds)
+            scaled_values = val * (bounds[-1] - bounds[0]) + bounds[0]
+
+            if scale == "logscale":
+                scaled_values = 10**scaled_values
+
+            if param_type == int:
+                scaled_values = int(scaled_values)
+
+            scaled_candidates[param] = scaled_values
+        return scaled_candidates
+
+
+    def acquisition_values(self, grid_points, gp, prev_best):
+        if self.acquisition_function == 'UCB':
+            predictions, std = gp.predict(
+                grid_points, return_std=True)
+            acquisition_func = predictions + self.kappa * std
+        elif self.acquisition_function == 'EI':
+            predictions, std = gp.predict(
+                grid_points, return_std=True)
+            std_mask = std != 0.0
+            acquisition_func = np.zeros_like(std)
+            improvement = predictions - prev_best - self.xi
+            acquisition_func[~std_mask] = improvement[~std_mask]
+            Z = improvement[std_mask] / std[std_mask]
+            acquisition_func[std_mask] = std[std_mask] * (
+                Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
+        else:
+            raise ValueError(
+                'acquisition_function not implemented yet : '
+                + self.acquisition_function)
+        return acquisition_func
 
     def fit(self, X, y=None, labels=None):
         """
@@ -1267,79 +1360,143 @@ class SequentialSearchCV(BaseSearchCV):
             train/test set.
 
         """
+        if self.acquisition_function not in ('UCB', 'EI', 'greedy'):
+            raise ValueError(
+                "acquisition_function should be one of " +
+                "'UCB', 'EI' or 'greedy'. Found %s instead" %
+                self.acquisition_function)
+
+        if self.n_init > self.n_iter:
+            raise ValueError('n_init cannot be larger than n_iter')
+
+        if self.xi <= 0:
+            raise ValueError('Parameter xi must be positive')
+
+        if self.kappa <= 0:
+            raise ValueError('Parameter kappa must be positive')
+
+        # Preprocess self.param_distributions to store default values.
+        param_distributions = dict()
+        for param, param_describe in self.param_distributions.items():
+            new_param_describe = dict()
+            if not isinstance(param_describe, dict):
+                raise ValueError(
+                    "Expected type dict but %s provided" %
+                    type(param_describe))
+
+            scale = param_describe.get("scale", None)
+            if scale is not None and scale != "log":
+                raise ValueError(
+                    "Only uniform and log supported. Got %s" % scale)
+            new_param_describe["scale"] = scale
+
+            bounds = param_describe.get("bounds", None)
+            if bounds is None:
+                if scale is None:
+                    bounds = (0.0, 1.0)
+                else:
+                    bounds = (10**-5, 10**5)
+            if len(bounds) != 2 or bounds[-1] <= bounds[0] or not np.iterable(bounds):
+                raise ValueError("Provide reasonable bounds.")
+            new_param_describe["bounds"] = bounds
+
+            param_type = param_describe.get("type", float)
+            if param_type not in [float, int]:
+                raise ValueError(
+                    "Only int and float supported. Got %s" % param_type)
+            new_param_describe["type"] = param_type
+            param_distributions[param] = new_param_describe
+
+        self._param_distributions = param_distributions
+
+        samples_uniform = dict()
+        for param, _ in param_distributions.items():
+            samples_uniform[param] = stats.uniform()
+
         cv_scores, grid_scores, tested_parameters = [], [], []
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
-        cv = check_cv(self.cv, X, classifier=is_classifier(self.estimator))
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
 
-        #  Initialize with random candidates
         init_candidates = ParameterSampler(
-            self.param_distributions, self.n_init,
+            param_distributions=samples_uniform, n_iter=self.n_init,
             random_state=self.random_state)
 
-        for i, params in enumerate(init_candidates):
-            score, all_scores = self._evaluate_params(
-                params, cv, X, y, labels)
+        tested_parameters, cv_scores, grid_scores, params_list = \
+            self._evaluate_params(
+                init_candidates, cv, X, y, labels, self.scale)
 
-            if self.verbose > 0:
-                print('Step ' + str(i) + ' - Hyperparameter '
-                      + str(params) + ', score: ' + str(score))
-            tested_parameters.append(list(params.values()))
-            cv_scores.append(score)
-            grid_scores.append(
-                _CVScoreTuple(params, score, np.array(all_scores)))
+        gp_scores = (-np.asarray(cv_scores)).tolist()
+        gp_params = self.gp_params
+        if not gp_params:
+            length_scale = np.ones_like(tested_parameters[0])
+            gp_params = {'kernel': RBF(length_scale=length_scale), 'normalize_y':True}
 
-        for i in range(self.n_iter-self.n_init):
+        rng = check_random_state(self.random_state)
+        for i in range(self.n_iter - self.n_init):
             # Model with a Gaussian Process
             gp = GaussianProcessRegressor(**self.gp_params)
-            gp.fit(tested_parameters, cv_scores)
+            gp.fit(tested_parameters, gp_scores)
 
             # Sample candidates and predict their corresponding
             # acquisition values
             candidates = ParameterSampler(
-                self.param_distributions, self.n_candidates,
-                random_state=self.random_state)
+                samples_uniform, self.n_candidates,
+                random_state=rng)
             candidate_values = []
-            candidate_dict = []
             for s in candidates:
-                # get the candidates as an array
                 candidate_values.append(list(s.values()))
-                candidate_dict.append(s)
 
-            if self.acquisition_function == 'UCB':
-                predictions, std = gp.predict(
-                    candidate_values, return_std=True)
-                acquisition_func = predictions + self.kappa * std
-            elif self.acquisition_function == 'EI':
-                predictions, std = gp.predict(
-                    candidate_values, return_std=True)
-                y_best = np.max(cv_scores)
-                Z = (predictions - y_best - self.xi) / std
-                acquisition_func = std * (
-                    Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
-                # best_candidate = candidates[np.argmax(ei)]
-            else:
-                raise ValueError(
-                    'acquisition_function not implemented yet : '
-                    + self.acquisition_function)
-            best_idx = np.argmax(acquisition_func)
-            best_candidate = candidate_dict[best_idx]
-            score, all_scores = self._evaluate_params(
-                best_candidate, cv, X, y, labels)
-            tested_parameters.append(list(best_candidate.values()))
-            cv_scores.append(score)
-            grid_scores.append(
-                _CVScoreTuple(best_candidate, score, np.array(all_scores)))
+            candidate_values = np.asarray(candidate_values)
+            predictions = gp.predict(candidate_values)
+            max_ind = predictions.argmin()
+            best_score = predictions[max_ind]
+            best_params = candidate_values[max_ind]
+            n_dims = candidate_values.shape[1]
+
+            # Spray some points closer to the candidates that give the
+            # best score.
+            local_points = best_params + rng.randn(
+                self.n_local_candidates, n_dims) * 10**-3
+            all_points = np.vstack((candidate_values, local_points))
+
+            acquisition_vals = self.acquisition_values(all_points, gp, best_score)
+
+            top_grid = acquisition_vals.argsort()[:20]
+            opt_points = all_points[top_grid]
+            opt_vals = acquisition_vals[top_grid]
+
+            # TODO: In Parallel
+            new_candidates = []
+            func_values = []
+            for candidate in opt_points:
+                new_val, new_func, _ = optimize.fmin_l_bfgs_b(_acquisition_func,
+                    np.asfortranarray([candidate]),
+                    args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
+                    bounds=[(0.0, 1.0),], approx_grad=True)
+                new_candidates.append(new_val)
+                func_values.append(new_func)
+
+            best_idx = np.argmin(func_values)
+            best_candidate = dict(zip(params_list, new_candidates[best_idx]))
+
+            best_param, best_score, best_grid_score, _ = self._evaluate_params(
+                [best_candidate], cv, X, y, labels, self.scale)
+            tested_parameters.append(best_param[0])
+            gp_scores.append(-best_score[0])
+            grid_scores.append(best_grid_score[0])
             if self.verbose > 0:
                 print('Step ' + str(i+self.n_init) + ' - Hyperparameter '
-                      + str(best_candidate) + ', score: ' + str(score))
+                      + str(best_candidate) + ', score: ' + str(best_score))
 
         # Store the computed scores
         self.grid_scores_ = grid_scores
 
         # Find the best parameters by comparing on the mean validation score:
         # note that `sorted` is deterministic in the way it breaks ties
+        # that is, it picks the smallest parameter.
         best = sorted(grid_scores, key=lambda x: x.mean_validation_score,
                       reverse=True)[0]
+
         self.best_params_ = best.parameters
         self.best_score_ = best.mean_validation_score
 
@@ -1354,4 +1511,3 @@ class SequentialSearchCV(BaseSearchCV):
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
         return self
-
