@@ -12,7 +12,7 @@ from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 
 
-def _get_feature_importances(estimator):
+def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
     if hasattr(estimator, "feature_importances_"):
         importances = estimator.feature_importances_
@@ -22,7 +22,8 @@ def _get_feature_importances(estimator):
             importances = np.abs(estimator.coef_)
 
         else:
-            importances = np.sum(np.abs(estimator.coef_), axis=0)
+            importances = np.linalg.norm(estimator.coef_,
+                                         axis=0, ord=norm_order)
 
     else:
         raise ValueError(
@@ -173,6 +174,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
+    norm_order : non-zero int, inf, -inf, default 1
+        Order of the norm used to compare the vectors of coefficients in the
+        case where the coeff_ attribute of the estimator is of dimension 2.
+
     Attributes
     ----------
     `estimator_`: an estimator
@@ -183,10 +188,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     `threshold_`: float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None, prefit=False):
+
+    def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
+        self.norm_order = norm_order
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
