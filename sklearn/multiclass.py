@@ -399,6 +399,11 @@ def _fit_regression(estimator, X, y):
     return estimator
 
 
+def _parallel_helper(obj, methodname, *args, **kwargs):
+    """Private helper to workaround Python 2 pickle limitations"""
+    return getattr(obj, methodname)(*args, **kwargs)
+
+
 class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
     """Multi target regression
 
@@ -434,7 +439,14 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         -------
         self
         """
-        X, y = check_X_y(X, y, multi_output=True)
+        X, y = check_X_y(X, y,
+                         multi_output=True,
+                         accept_sparse=['csr', 'csc', 'coo', 'dok', 'lil'])
+
+        if y.ndim == 1:
+            raise ValueError("y must have at least two dimensions for "
+                             "multi target regression but has only one.")
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_regression)(
             self.estimator, X, y[:, i]) for i in range(y.shape[1]))
         return self
@@ -454,14 +466,12 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         """
         check_is_fitted(self, 'estimators_')
 
-        X = check_array(X)
-        
-        pred = np.zeros((X.shape[0], len(self.estimators_)))
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo', 'dok', 'lil'])
 
-        for i, e in enumerate(self.estimators_):
-            pred[:, i] = e.predict(X)
+        pred = Parallel(n_jobs=self.n_jobs)(delayed(_parallel_helper)(e, 'predict', X)
+                                            for e in self.estimators_)
 
-        return pred
+        return np.asarray(pred).T
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):
