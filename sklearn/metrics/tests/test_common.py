@@ -365,8 +365,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
                         # matrix instead of a number. Testing of
                         # confusion_matrix with sample_weight is in
                         # test_classification.py
-    "hamming_loss",
-    "matthews_corrcoef_score",
     "median_absolute_error",
 ]
 
