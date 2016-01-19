@@ -6,13 +6,17 @@ Plot Ridge coefficients as a function of the L2 regularization
 .. currentmodule:: sklearn.linear_model
 
 :class:`Ridge` Regression is the estimator used in this example.
-Each color in the left plot represents a different feature of the
+Each color in the left plot represents one different dimension of the
 coefficient vector, and this is displayed as a function of the
 regularization parameter. The right plot shows how exact the solution
-is.
+is. This example illustrates how a well defined solution is
+found by Ridge regression and how regularization affects the
+coefficients and their values. The plot on the right shows how
+the difference of the coefficients from the estimator changes
+as a function of regularization.
 
 In this example the dependent variable Y is set as a function
-of the input features: Y = X*w + c. The coefficient vector w is
+of the input features: y = X*w + c. The coefficient vector w is
 randomly sampled from a normal distribution, whereas the bias term c is
 set to a constant.
 
@@ -37,35 +41,35 @@ it is possible to extract the exact coefficients.
 
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import make_regression
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
-from sklearn.datasets import make_regression
 
 clf = Ridge()
 
-features, Y, b = make_regression(n_samples=10, n_features=10, coef=True, random_state=1, bias=3.5)
+X, y, w = make_regression(n_samples=10, n_features=10, coef=True,
+                          random_state=1, bias=3.5)
 
 coefs = []
-err = []
+errors = []
 
 alphas = np.logspace(-6, 6, 200)
 
 # Train the model with different regularisation strengths
 for a in alphas:
     clf.set_params(alpha=a)
-    clf.fit(features, Y)
+    clf.fit(X, y)
     coefs.append(clf.coef_)
-    err.append(mean_squared_error(clf.coef_, b))
-
+    errors.append(mean_squared_error(clf.coef_, w))
 
 # Display results
 plt.figure(figsize=(20, 6))
 
 plt.subplot(121)
 ax = plt.gca()
-ax.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
 ax.plot(alphas, coefs)
 ax.set_xscale('log')
 plt.xlabel('alpha')
@@ -73,10 +77,9 @@ plt.ylabel('weights')
 plt.title('Ridge coefficients as a function of the regularization')
 plt.axis('tight')
 
-
 plt.subplot(122)
 ax = plt.gca()
-ax.plot(alphas, err)
+ax.plot(alphas, errors)
 ax.set_xscale('log')
 plt.xlabel('alpha')
 plt.ylabel('error')
