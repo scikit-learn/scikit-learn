@@ -288,24 +288,24 @@ Multioutput regression support can be added to any regressor with
 :class:`MultiOutputRegressor`.  This strategy consists of fitting one
 regressor per target. Since each target is represented by exactly one
 regressor it is possible to gain knowledge about the target by
-inspecting its corresponding classifier. As
+inspecting its corresponding regressor. As
 :class:`MultiOutputRegressor` fits one regressor per target it can not
 take advantage of correlations between targets.
 
 Below is an example of multioutput regression:
 
   >>> from sklearn.datasets import make_regression
-  >>> from sklearn.multiclass import MultiOutputRegressor
+  >>> from sklearn.multioutput import MultiOutputRegressor
   >>> from sklearn.ensemble import GradientBoostingRegressor
-  >>> X, y = make_regression(n_samples=10, n_targets=3)
-  >>> MultiOutputRegressor(GradientBoostingRegressor()).fit(X, y).predict(X)
-  array([[  63.36283843,   96.03434865,  155.88841863],
-       [-117.78937903,  -61.3561745 , -182.53690686],
-       [-190.55227782, -121.04035245, -238.35482   ],
-       [ -60.13395579, -103.96793942,  -74.65208555],
-       [ 273.94643437,  300.24624785,  273.63218797],
-       [ -58.81551102,    3.55243734,  -49.1948011 ],
-       [ 304.94208492,  151.93111239,  300.82089197],
-       [ 281.35806586,  228.25093746,  258.58373687],
-       [  52.95925752,  -16.93162176,   -8.96607203],
-       [  23.73495025,  -40.74274766,   -3.79028485]])
+  >>> X, y = make_regression(n_samples=10, n_targets=3, random_state=1)
+  >>> MultiOutputRegressor(GradientBoostingRegressor(random_state=0)).fit(X, y).predict(X)
+  array([[-154.75474165, -147.03498585,  -50.03812219],
+         [   7.12165031,    5.12914884,  -81.46081961],
+         [-187.8948621 , -100.44373091,   13.88978285],
+         [-141.62745778,   95.02891072, -191.48204257],
+         [  97.03260883,  165.34867495,  139.52003279],
+         [ 123.92529176,   21.25719016,   -7.84253   ],
+         [-122.25193977,  -85.16443186, -107.12274212],
+         [ -30.170388  ,  -94.80956739,   12.16979946],
+         [ 140.72667194,  176.50941682,  -17.50447799],
+         [ 149.37967282,  -81.15699552,   -5.72850319]])

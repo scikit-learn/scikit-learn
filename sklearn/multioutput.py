@@ -1,7 +1,4 @@
 """
-Multioutput regression strategies
-=================================
-
 This module implements multioutput regression.
 
 The estimator provided in this module is a meta-estimator: it requires
