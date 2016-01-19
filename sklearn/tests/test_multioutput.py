@@ -3,10 +3,11 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 from sklearn import datasets
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import ElasticNet, Lasso
 from sklearn.multioutput import MultiOutputRegressor
 
 
@@ -52,3 +53,21 @@ def test_multi_target_sparse_regression():
         rgr_sparse.fit(sparse(X_train), y_train)
 
         assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
+
+
+def test_multi_target_sample_weights():
+    X = [[1,2,3], [4,5,6]]
+    y = [[3.141, 2.718], [2.718, 3.141]]
+    w = [0.8, 0.6]
+
+    rgr = MultiOutputRegressor(Lasso())
+    assert_raises_regex(ValueError, "does not support sample weights",
+                        rgr.fit, X, y, w)
+    rgr.fit(X, y)
+    assert_raises_regex(ValueError, "does not support sample weights",
+                        rgr.predict, X, w)
+
+    rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
+    rgr.fit(X, y, w)
+    assert_almost_equal(rgr.predict(X), [[3.1406921, 2.7183079],
+                                         [2.7183079, 3.1406921]])

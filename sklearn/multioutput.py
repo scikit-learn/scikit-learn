@@ -15,7 +15,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, clone, MetaEstimatorMixin, RegressorMixin
 from .utils import check_array, check_random_state, check_X_y
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, has_fit_parameter
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -53,7 +53,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit underlying regressors
 
         Parameters
@@ -62,7 +62,12 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
             Data.
 
         y : array-like, shape = [n_samples, n_targets]
-            Multiple targets.
+            The multiple target values.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
 
         Returns
         -------
@@ -76,17 +81,26 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
             raise ValueError("y must have at least two dimensions for "
                              "multi target regression but has only one.")
 
+        if (sample_weight is not None and
+            not has_fit_parameter(self.estimator, 'sample_weight')):
+            raise ValueError("Underlying regressor does not support sample weights.")
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_regression)(
             self.estimator, X, y[:, i]) for i in range(y.shape[1]))
         return self
 
-    def predict(self, X):
+    def predict(self, X, sample_weight=None):
         """Predict regression values for X.
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
             Data.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying regressor supports sample
+            weights.
 
         Returns
         -------
@@ -96,6 +110,10 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         check_is_fitted(self, 'estimators_')
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo', 'dok', 'lil'])
+
+        if (sample_weight is not None and
+            not has_fit_parameter(self.estimator, 'sample_weight')):
+            raise ValueError("Underlying regressor does not support sample weights.")
 
         pred = Parallel(n_jobs=self.n_jobs)(delayed(_parallel_helper)(e, 'predict', X)
                                             for e in self.estimators_)
