@@ -17,6 +17,7 @@ the lower the better
 #          Noel Dawe <noel@dawe.me>
 #          Jatin Shah <jatindshah@gmail.com>
 #          Saurabh Jha <saurabh.jhaa@gmail.com>
+#          Bernardo Stein <bernardovstein@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -178,7 +179,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None):
+def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -201,6 +202,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -239,6 +242,13 @@ def confusion_matrix(y_true, y_pred, labels=None):
     else:
         labels = np.asarray(labels)
 
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int)
+    else:
+        sample_weight = np.asarray(sample_weight)
+
+    check_consistent_length(sample_weight, y_true, y_pred)
+
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
     # convert yt, yp into index
@@ -249,8 +259,10 @@ def confusion_matrix(y_true, y_pred, labels=None):
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
     y_pred = y_pred[ind]
     y_true = y_true[ind]
+    # also eliminate weights of eliminated items
+    sample_weight = sample_weight[ind]
 
-    CM = coo_matrix((np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
+    CM = coo_matrix((sample_weight, (y_true, y_pred)),
                     shape=(n_labels, n_labels)
                     ).toarray()
 
