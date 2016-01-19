@@ -784,8 +784,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
         j_indices = []
-        indptr = _make_int_array()
-        values = _make_int_array()
+        indptr = _make_long_array()
         indptr.append(0)
         for doc in raw_documents:
             feature_counter = {}
@@ -966,6 +965,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
     return array.array(str("i"))
+
+def _make_long_array():
+    """Construct an array.array of a type suitable for scipy.sparse indices (which now support 64-bit signed integers)."""
+    return array.array(str("l"))
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
