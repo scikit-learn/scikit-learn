@@ -2,11 +2,9 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections import Sequence
-
 import numpy as np
 from scipy.sparse import issparse
 import warnings
-
 from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
                          assert_all_finite,
@@ -85,7 +83,7 @@ def safe_indexing(X, indices):
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
-                                   indices.dtype.kind == 'i'):
+                                           indices.dtype.kind == 'i'):
             # This is often substantially faster than X[indices]
             return X.take(indices, axis=0)
         else:
@@ -278,16 +276,37 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
+
+    return safe_pwr(X, 2, copy)
+
+
+def safe_pwr(X, n, copy=True):
+    """Element wise n-th powering of array-likes and sparse matrices.
+
+    Parameters
+    ----------
+    X : array like, matrix, sparse matrix
+
+    n : int
+
+    copy : boolean, optional, default True
+        Whether to create a copy of X and operate on it or to perform
+        inplace computation (default behaviour).
+
+    Returns
+    -------
+    X ** n : element wise n-th powering
+    """
     X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
-        X.data **= 2
+        X.data **= n
     else:
         if copy:
-            X = X ** 2
+            X = X ** n
         else:
-            X **= 2
+            X **= n
     return X
 
 
