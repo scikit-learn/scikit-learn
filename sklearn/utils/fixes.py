@@ -393,3 +393,34 @@ if np_version < (1, 8, 1):
         return bool(np.asarray(a1 == a2).all())
 else:
     from numpy import array_equal
+
+if np_version < (1, 8):
+
+    def norm_2d(X, ord=None, axis=None, keepdims=False):
+        """
+        Handles the axis and keepdims parameters for the norm function in
+        old versions of numpy.
+        WARNING: Only tested for 2 dimensions, do not use with 1 dimensional arrays
+        """
+        if axis is None:
+            norm = np.linalg.norm(X, ord=ord)
+            if keepdims:
+                norm = norm.reshape(1, 1)
+            return norm
+
+        if axis == 0:
+            X = X.T
+
+        norm = np.zeros(X.shape[0])
+        for i in range(len(norm)):
+            norm[i] = np.linalg.norm(X[i], ord=ord)
+
+        if keepdims:
+            norm = norm.reshape((1, len(norm)))
+            if axis == 1:
+                norm = norm.T
+
+        return norm
+
+else:
+    norm_2d = np.linalg.norm
