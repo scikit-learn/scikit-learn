@@ -276,37 +276,16 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-
-    return safe_pwr(X, 2, copy)
-
-
-def safe_pwr(X, n, copy=True):
-    """Element wise n-th powering of array-likes and sparse matrices.
-
-    Parameters
-    ----------
-    X : array like, matrix, sparse matrix
-
-    n : int
-
-    copy : boolean, optional, default True
-        Whether to create a copy of X and operate on it or to perform
-        inplace computation (default behaviour).
-
-    Returns
-    -------
-    X ** n : element wise n-th powering
-    """
     X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
-        X.data **= n
+        X.data **= 2
     else:
         if copy:
-            X = X ** n
+            X = X ** 2
         else:
-            X **= n
+            X **= 2
     return X
 
 
