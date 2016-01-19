@@ -247,6 +247,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     else:
         sample_weight = np.asarray(sample_weight)
 
+    check_consistent_length(sample_weight, y_true, y_pred)
+
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
     # convert yt, yp into index
