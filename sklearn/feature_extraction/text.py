@@ -811,7 +811,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         j_indices = np.asarray(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
+        indptr = np.frombuffer(indptr, dtype=np.int_)
         values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
