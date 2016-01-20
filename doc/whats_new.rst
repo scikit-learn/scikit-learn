@@ -127,6 +127,25 @@ API changes summary
    - ``residual_metric`` has been deprecated in :class:`linear_model.RANSACRegressor`.
      Use ``loss`` instead. By `Manoj Kumar`_.
 
+
+.. _changes_0_17_1:
+
+Version 0.17.1
+==============
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+
+    - Upgrade vendored joblib to version 0.9.4 that fixes an important bug in
+      ``joblib.Parallel`` that can silently yield to wrong results when working
+      on datasets larger than 1MB:
+      https://github.com/joblib/joblib/blob/0.9.4/CHANGES.rst
+
+
 .. _changes_0_17:
 
 Version 0.17
