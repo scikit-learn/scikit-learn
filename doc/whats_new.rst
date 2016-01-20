@@ -105,12 +105,12 @@ Bug fixes
       Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
-      Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
+      Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
 
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding`. By `Peter Fischer`_.
+      and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
 
     - Random forest, extra trees, decision trees and gradient boosting
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
