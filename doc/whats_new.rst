@@ -15,6 +15,13 @@ Changelog
 New features
 ............
 
+   - Added two functions for mutual information estimation:
+     :func:`feature_selection.mutual_info_classif` and 
+     :func:`feature_selection.mutual_info_regression`. These functions can be
+     used in :class:`feature_selection.SelectKBest` and
+     :class:`feature_selection.SelectPercentile`, which now accept callable
+     returning only `scores`. By `Nikolay Mayorov`_.
+
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
      and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new
