@@ -294,7 +294,8 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
     values mean higher dependency.
 
     The function relies on nonparametric methods based on entropy estimation
-    from k-nearest neighbors distances. Refer to [2]_ and [3]_.
+    from k-nearest neighbors distances as described in [2]_ and [3]_. Both
+    methods are based on the idea originally proposed in [4]_.
 
     It can be used for univariate features selection, read more in the
     :ref:`User Guide <univariate_feature_selection>`.
@@ -351,6 +352,8 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
            information". Phys. Rev. E 69, 2004.
     .. [3] B. C. Ross "Mutual Information between Discrete and Continuous
            Data Sets". PLoS ONE 9(2), 2014.
+    .. [4] L. F. Kozachenko, N. N. Leonenko, “Sample Estimate of the Entropy
+           of a Random Vector”, Probl. Peredachi Inf., 23:2 (1987), 9–16
     """
     return _estimate_mi(X, y, discrete_features, False, n_neighbors,
                         copy, random_state)
@@ -366,7 +369,8 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
     values mean higher dependency.
 
     The function relies on nonparametric methods based on entropy estimation
-    from k-nearest neighbors distances. Refer to [2]_ and [3]_.
+    from k-nearest neighbors distances as described in [2]_ and [3]_. Both
+    methods are based on the idea originally proposed in [4]_.
 
     It can be used for univariate features selection, read more in the
     :ref:`User Guide <univariate_feature_selection>`.
@@ -423,6 +427,8 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
            information". Phys. Rev. E 69, 2004.
     .. [3] B. C. Ross "Mutual Information between Discrete and Continuous
            Data Sets". PLoS ONE 9(2), 2014.
+    .. [4] L. F. Kozachenko, N. N. Leonenko, “Sample Estimate of the Entropy
+           of a Random Vector”, Probl. Peredachi Inf., 23:2 (1987), 9–16
     """
     check_classification_targets(y)
     return _estimate_mi(X, y, discrete_features, True, n_neighbors,
