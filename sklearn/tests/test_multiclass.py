@@ -38,6 +38,8 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
 
+digits = datasets.load_digits()
+
 
 def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
@@ -77,10 +79,12 @@ def test_ovr_fit_predict():
 
 def test_ovr_partial_fit():
     # Test if partial_fit is working as intented
-    X, y = shuffle(iris.data, iris.target, random_state=0)
+    # Test when mini batches do not have all classes
+    p = digits.target.argsort()
+    X, y = digits.data[p], digits.target[p]
     ovr = OneVsRestClassifier(MultinomialNB())
-    ovr.partial_fit(X[:100], y[:100], np.unique(y))
-    ovr.partial_fit(X[100:], y[100:])
+    ovr.partial_fit(X[:500], y[:500], np.unique(y))
+    ovr.partial_fit(X[500:], y[500:])
     pred = ovr.predict(X)
     ovr2 = OneVsRestClassifier(MultinomialNB())
     pred2 = ovr2.fit(X, y).predict(X)
@@ -89,7 +93,7 @@ def test_ovr_partial_fit():
     assert_equal(len(ovr.estimators_), len(np.unique(y)))
     assert_greater(np.mean(y == pred), 0.65)
 
-    # Test when mini batches doesn't have all classes
+    # Test when mini batches have all classes
     ovr = OneVsRestClassifier(MultinomialNB())
     ovr.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
     ovr.partial_fit(iris.data[60:], iris.target[60:])
@@ -470,16 +474,20 @@ def test_ovo_partial_fit_predict():
     assert_almost_equal(pred1, pred2)
 
     # Test when mini-batches don't have all target classes
-    ovo1 = OneVsOneClassifier(MultinomialNB())
-    ovo1.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
-    ovo1.partial_fit(iris.data[60:], iris.target[60:])
-    pred1 = ovo1.predict(iris.data)
-    ovo2 = OneVsOneClassifier(MultinomialNB())
-    pred2 = ovo2.fit(iris.data, iris.target).predict(iris.data)
+    p = digits.target.argsort()
+    X, y = digits.data[p], digits.target[p]
+    n_classes_digits = len(np.unique(y))
 
-    assert_almost_equal(pred1, pred2)
-    assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
-    assert_greater(np.mean(iris.target == pred1), 0.65)
+    ovo = OneVsOneClassifier(MultinomialNB())
+    ovo.partial_fit(X[:500], y[:500], np.unique(y))
+    ovo.partial_fit(X[500:], y[500:])
+    pred = ovo.predict(X)
+    ovr2 = OneVsOneClassifier(MultinomialNB())
+    pred2 = ovr2.fit(X, y).predict(X)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovo.estimators_), n_classes_digits * (n_classes_digits - 1) / 2)
+    assert_greater(np.mean(y == pred), 0.65)
 
 
 def test_ovo_decision_function():

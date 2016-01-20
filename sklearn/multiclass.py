@@ -259,7 +259,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             _partial_fit_binary)(self.estimators_[i],
             X, next(columns) if self.classes_[i] in
             self.label_binarizer_.classes_ else
-            np.zeros((1, len(y))))
+            np.zeros((1, len(y)), dtype=np.int)[0])
             for i in range(self.n_classes_))
 
         return self
@@ -408,11 +408,11 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
 
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y_binary = np.zeros_like(y)
-    y_binary[y == j] = 1
-    ind = np.arange(X.shape[0])
-    return _partial_fit_binary(estimator, X[cond], y_binary)
-
+    if len(y) != 0:
+        y_binary = np.zeros_like(y)
+        y_binary[y == j] = 1
+        return _partial_fit_binary(estimator, X[cond], y_binary)
+    return estimator
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-one multiclass strategy
