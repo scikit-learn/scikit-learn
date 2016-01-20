@@ -365,7 +365,7 @@ class SelectPercentile(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores, None if `score_func` returned scores only.
+        p-values of feature scores, None if `score_func` returned only scores.
 
     Notes
     -----
@@ -425,7 +425,7 @@ class SelectKBest(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues) or a single scores array.
+        (scores, pvalues) or a single array with scores.
 
     k : int or "all", optional, default=10
         Number of top features to select.
@@ -437,7 +437,7 @@ class SelectKBest(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores, None if `score_func` returned scores only.
+        p-values of feature scores, None if `score_func` returned only scores.
 
     Notes
     -----
