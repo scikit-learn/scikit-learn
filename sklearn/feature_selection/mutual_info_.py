@@ -51,12 +51,15 @@ def _compute_mi_cc(x, y, n_neighbors):
     y = y.reshape((-1, 1))
     xy = np.hstack((x, y))
 
+    # Here we rely on NearestNeighbors to select the fastest algorithm.
     nn = NearestNeighbors(metric='chebyshev', n_neighbors=n_neighbors)
 
     nn.fit(xy)
     radius = nn.kneighbors()[0]
     radius = np.nextafter(radius[:, -1], 0)
 
+    # Algorithm is selected explicitly to allow passing an array as radius
+    # later (not all algorithms support this).
     nn.set_params(algorithm='kd_tree')
 
     nn.fit(x)
