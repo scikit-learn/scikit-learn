@@ -94,9 +94,9 @@ def test_gnb_sample_weight():
     assert_array_almost_equal(clf_dupl.sigma_, clf_sw.sigma_)
 
 
-def test_gnb_class_prior_override():
+def test_gnb_class_prior():
     """Test whether the class prior override is properly used. """
-    clf = GaussianNB(class_prior_override=[0.3, 0.7]).fit(X, y)
+    clf = GaussianNB(class_prior=np.array([0.3, 0.7])).fit(X, y)
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
                                          0.174696337838317]]), 8)
@@ -280,6 +280,14 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
         assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
+
+def test_gnb_uniform_prior():
+    """ Test whether Gaussian NB classes fit a uniform prior """
+    """ when fit_prior=False and class_prior=None"""
+    clf = GaussianNB(fit_prior=False, class_prior=None)
+    clf.fit([[0], [0], [1]], [0, 0, 1])
+    prior = clf.class_prior_
+    assert_array_equal(prior, np.array([.5, .5]))
 
 def test_discretenb_uniform_prior():
     # Test whether discrete NB classes fit a uniform prior

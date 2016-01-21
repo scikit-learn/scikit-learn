@@ -38,6 +38,25 @@ __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
     """Abstract base class for naive Bayes estimators"""
 
+    def _update_class_prior(self, class_prior=None):
+        n_classes = len(self.classes_)
+        # Take into account the class_prior
+        if class_prior is not None:
+            # Check that the provide prior match the number of classes
+            if len(class_prior) != n_classes:
+                raise ValueError("Number of priors must match number of"
+                                 " classes.")
+            # Check that the sum is 1
+            if class_prior.sum() != 1.0:
+                raise ValueError("The sum of the priors should be 1.")
+            self.class_prior_ = class_prior
+        elif self.fit_prior:
+            # empirical prior, with sample_weight taken into account
+            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+        else:
+            self.class_prior_ = np.ones(n_classes, dtype=np.float64) / float(n_classes)
+
+
     @abstractmethod
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
@@ -117,10 +136,14 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
-    class_prior_override : array-like, size (n_classes,)
+    fit_prior : boolean
+        Whether to learn class prior probabilities or not.
+        If false, a uniform prior will be used.
+
+    class_prior : array-like, size=[n_classes,]
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
-
+    
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -143,25 +166,19 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(class_prior_override=None)
+    GaussianNB(class_prior=None, fit_prior=True)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(class_prior_override=None)
+    GaussianNB(class_prior=None, fit_prior=True)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, class_prior_override=None):
-        # Check if we need to override the class priors
-        if class_prior_override is not None:
-            self.class_prior_override = np.asarray(class_prior_override)
-            # Check that the sum is 1
-            if self.class_prior_override.sum() != 1.0:
-                raise ValueError("The sum of the priors should be 1.")
-        else:
-            self.class_prior_override = None
+    def __init__(self, fit_prior=True, class_prior=None):
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -357,17 +374,10 @@ class GaussianNB(BaseNB):
             n_classes = len(self.classes_)
             self.theta_ = np.zeros((n_classes, n_features))
             self.sigma_ = np.zeros((n_classes, n_features))
-            # We have to check if we override the prior or not
-            if self.class_prior_override is not None:
-                # Check if the number of classes is in line with the class priors
-                if len(self.class_prior_override) != n_classes:
-                    raise ValueError("y and class_prior_override have"
-                                     "incompatible shapes")
-                else:
-                    self.class_prior_ = self.class_prior_override
-            else:
-                self.class_prior_ = np.zeros(n_classes)
-            self.class_count_ = np.zeros(n_classes)
+
+            self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+            self._update_class_prior(class_prior=self.class_prior)
+
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -405,11 +415,8 @@ class GaussianNB(BaseNB):
             self.class_count_[i] += N_i
 
         self.sigma_[:, :] += epsilon
-        # Check whether or not to override the class priors
-        if self.class_prior_override is not None:
-            self.class_prior = self.class_prior_override
-        else:
-            self.class_prior_[:] = self.class_count_ / np.sum(self.class_count_)
+        self._update_class_prior(class_prior=self.class_prior)
+
         return self
 
     def _joint_log_likelihood(self, X):
