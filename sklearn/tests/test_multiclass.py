@@ -105,6 +105,14 @@ def test_ovr_partial_fit():
     assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred), 0.65)
 
+    # Test for corner case, will fail unless issue #6202 is addressed
+    ovr = OneVsRestClassifier(SGDClassifier())
+    X = np.random.randn(10, 2)
+    ovr.partial_fit(X[:5], [0, 1, 2, 0, 1], [0, 1, 2])
+    ovr.partial_fit(X[5:], [0, 0, 0, 0, 0])
+    pred = ovr.predict(X)
+    assert_greater(np.mean(iris.target == pred), 0.65)
+
 
 def test_ovr_ovo_regressor():
     # test that ovr and ovo work on regressors which don't have a decision_function
@@ -488,6 +496,14 @@ def test_ovo_partial_fit_predict():
     assert_almost_equal(pred, pred2)
     assert_equal(len(ovo.estimators_), n_classes_digits * (n_classes_digits - 1) / 2)
     assert_greater(np.mean(y == pred), 0.65)
+
+    # This test fails for OvR, issue #6202 needs to be solved
+    ovo = OneVsOneClassifier(SGDClassifier())
+    X = np.random.randn(10, 2)
+    ovo.partial_fit(X[:5], [1, 1, 2, 1, 1], [0, 1, 2])
+    ovo.partial_fit(X[5:], [0, 0, 0, 0, 0])
+    pred = ovo.predict(X)
+    assert_greater(np.mean(np.array([0, 1, 2, 0, 1, 0, 0, 0, 0, 0]) == pred), 0.65)
 
 
 def test_ovo_decision_function():

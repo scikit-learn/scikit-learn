@@ -259,7 +259,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             _partial_fit_binary)(self.estimators_[i],
             X, next(columns) if self.classes_[i] in
             self.label_binarizer_.classes_ else
-            np.zeros((1, len(y)), dtype=np.int)[0])
+            np.zeros(len(y), dtype=np.int))
             for i in range(self.n_classes_))
 
         return self
@@ -513,6 +513,11 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                 range(self.n_classes_ *
                                 (self.n_classes_-1) // 2)]
 
+        # Check if mini-batch contains classes from self.classes_
+        if not set(self.classes_).issuperset(y):
+            raise ValueError("Mini-batch contains {0} while classes "
+                             "must be a subset of {1}".format(np.unique(y), 
+                                                          self.classes_))
         y = np.asarray(y)
         check_consistent_length(X, y)
         check_classification_targets(y)
