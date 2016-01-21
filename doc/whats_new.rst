@@ -19,8 +19,8 @@ New features
      :func:`feature_selection.mutual_info_classif` and 
      :func:`feature_selection.mutual_info_regression`. These functions can be
      used in :class:`feature_selection.SelectKBest` and
-     :class:`feature_selection.SelectPercentile`, which now accept callable
-     returning only `scores`. By `Nikolay Mayorov`_.
+     :class:`feature_selection.SelectPercentile` as score functions.
+     By `Andrea Bravi`_ and `Nikolay Mayorov`_.
 
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
@@ -95,6 +95,9 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.confusion_matrix`.
      By `Bernardo Stein`_.
 
+   - :class:`feature_selection.SelectKBest` and :class:`feature_selection.SelectPercentile`
+     now accept score functions that take X, y as input and return only the scores.
+     By `Nikolay Mayorov`_.
 
 Bug fixes
 .........
@@ -4044,3 +4047,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Imaculate: https://github.com/Imaculate
 
 .. _Bernardo Stein: https://github.com/DanielSidhion
+
+.. _Andrea Bravi: https://github.com/AndreaBravi
+
