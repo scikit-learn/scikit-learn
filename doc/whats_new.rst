@@ -20,7 +20,7 @@ New features
      :func:`feature_selection.mutual_info_regression`. These functions can be
      used in :class:`feature_selection.SelectKBest` and
      :class:`feature_selection.SelectPercentile`, which now accept callable
-     returning only `scores`. By `Nikolay Mayorov`_.
+     returning only `scores`. By `Andrea Bravi`_ and `Nikolay Mayorov`_.
 
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
@@ -4044,3 +4044,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Imaculate: https://github.com/Imaculate
 
 .. _Bernardo Stein: https://github.com/DanielSidhion
+
+.. _Andrea Bravi: https://github.com/AndreaBravi
+
