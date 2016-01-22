@@ -31,6 +31,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Noel Dawe <http://noel.dawe.me>`_
   * Vincent Dubourg
   * Edouard Duchesnay
+  * `Tom Dupré la Tour <https://github.com/TomDLT>`_
   * Alexander Fabisch
   * `Virgile Fritsch <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
@@ -49,6 +50,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Wei Li <http://kuantkid.github.com>`_
   * Paolo Losi
   * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
+  * `Jan Hendrik Metzen <https://github.com/jmetzen>`_
   * Vincent Michel
   * Jarrod Millman
   * `Andreas Müller <http://peekaboo-vision.blogspot.com>`_ (release manager)
