@@ -1035,13 +1035,13 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
-    ``best_score_`` : float
+    best_score_ : float
         Best cross validation score on the left out data
         (i.e. best mean squared error). Note that by default GridSearchCV
         computes ``best_score_`` based on the R^2, not the mean squared error,
         which will account for differences between the two.
 
-    ``best_params_`` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the left out data.
 
     See also
@@ -1249,13 +1249,13 @@ class LassoLarsCV(LarsCV):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
-    ``best_score_`` : float
+    best_score_ : float
         Best cross validation score on the left out data
         (i.e. best mean squared error). Note that by default GridSearchCV
         computes ``best_score_`` based on the R^2, not the mean squared error,
         which will account for differences between the two.
 
-    ``best_params_`` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the left out data.
 
     Notes
@@ -1361,13 +1361,13 @@ class LassoLarsIC(LassoLars):
         alphas. The alpha which has the smallest information criteria
         is chosen.
 
-    ``best_score_`` : float
+    best_score_ : float
         Best cross validation score on the left out data
         (i.e. best mean squared error). Note that by default GridSearchCV
         computes ``best_score_`` based on the R^2, not the mean squared error,
         which will account for differences between the two.
 
-    ``best_params_`` : dict
+    best_params_ : dict
         Parameter setting that gave the best results on the left out data.
 
     Examples
