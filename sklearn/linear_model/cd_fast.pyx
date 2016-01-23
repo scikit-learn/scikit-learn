@@ -22,8 +22,6 @@ ctypedef np.uint32_t UINT32_t
 
 np.import_array()
 
-import sys  # XXX
-
 # The following two functions are shamelessly copied from the tree code.
 
 cdef enum:
@@ -864,7 +862,6 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
                 w_ii = w[ii]  # Store previous value
 
-                # XXX remove this line and put it in the update of H
                 if w_ii != 0.0:
                     # H -= w_ii * Q[ii]
                     daxpy(n_features, -w_ii, Q_ptr + ii * n_features, 1,
