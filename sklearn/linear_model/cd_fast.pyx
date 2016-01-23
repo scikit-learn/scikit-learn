@@ -130,25 +130,25 @@ cdef extern from "cblas.h":
 
 
 # Function to compute the duality gap
-cdef double duality_gap( # Data
-                        unsigned int n_samples,
-                        unsigned int n_features,
-                        unsigned int n_tasks,
-                        DOUBLE * X_data,
-                        DOUBLE * y_data,
-                        DOUBLE * R_data,
-                        DOUBLE * w_data,
-                        # Variables intended to be modified
-                        DOUBLE * XtA_data,
-                        double * dual_scaling,
-                        # Parameters
-                        double alpha,
-                        double beta,
-                        bint positive,
-                        # active set for improved performance
-                        np.int32_t* disabled_data = NULL,
-                        unsigned int n_disabled = 0
-                        ) nogil:
+cdef double enet_duality_gap( # Data
+                             unsigned int n_samples,
+                             unsigned int n_features,
+                             unsigned int n_tasks,
+                             DOUBLE * X_data,
+                             DOUBLE * y_data,
+                             DOUBLE * R_data,
+                             DOUBLE * w_data,
+                             # Variables intended to be modified
+                             DOUBLE * XtA_data,
+                             double * dual_scaling,
+                             # Parameters
+                             double alpha,
+                             double beta,
+                             bint positive,
+                             # active set for improved performance
+                             np.int32_t* disabled_data = NULL,
+                             unsigned int n_disabled = 0
+                             ) nogil:
 
     cdef double R_norm2
     cdef double w_norm2
@@ -328,11 +328,11 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 else:
                     n_features_dual_gap = 0
 
-                gap = duality_gap(n_samples, n_features, n_tasks,
-                                  <DOUBLE*>X.data, <DOUBLE*>y.data, <DOUBLE*>R.data, <DOUBLE*>w.data,
-                                  <DOUBLE*>XtA.data, <DOUBLE*>dual_scaling.data,
-                                  alpha, beta, positive,
-                                  <np.int32_t*>disabled.data, n_features_dual_gap)
+                gap = enet_duality_gap(n_samples, n_features, n_tasks,
+                                       <DOUBLE*>X.data, <DOUBLE*>y.data, <DOUBLE*>R.data,
+                                       <DOUBLE*>w.data, <DOUBLE*>XtA.data,
+                                       <DOUBLE*>dual_scaling.data, alpha, beta, positive,
+                                       <np.int32_t*>disabled.data, n_features_dual_gap)
 
                 # break if we reached desired tolerance
                 if gap < tol:
@@ -406,7 +406,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double sparse_duality_gap(unsigned int n_samples,
+cdef double sparse_enet_duality_gap(unsigned int n_samples,
                        unsigned int n_features,
                        double[:] X_data,
                        int[:] X_indices,
@@ -667,12 +667,12 @@ def sparse_enet_coordinate_descent(double[:] w,
                 else:
                     n_features_dual_gap = 0
 
-                gap = sparse_duality_gap(n_samples, n_features, X_data,
-                                         X_indices, X_indptr, X_mean,
-                                         y, y_sum, R, R_shift, w,
-                                         XtA, X_T_R, dual_scaling,
-                                         alpha, beta, positive, center,
-                                         disabled, n_features_dual_gap)
+                gap = sparse_enet_duality_gap(n_samples, n_features, X_data,
+                                              X_indices, X_indptr, X_mean,
+                                              y, y_sum, R, R_shift, w,
+                                              XtA, X_T_R, dual_scaling,
+                                              alpha, beta, positive, center,
+                                              disabled, n_features_dual_gap)
 
                 # return if we reached desired tolerance
                 if gap < tol:
