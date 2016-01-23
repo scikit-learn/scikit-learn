@@ -284,7 +284,6 @@ def median_absolute_error(y_true, y_pred, sample_weight=None):
         sample_weight = np.array(sample_weight)
         y_pred = y_pred.ravel()
         y_true = y_true.ravel()
-        print sample_weight.shape
         return _weighted_percentile(np.abs(y_pred - y_true),
                                     np.asarray(sample_weight))
 
