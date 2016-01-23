@@ -271,6 +271,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int i
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
+    cdef unsigned int n_features_dual_gap
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint do_gap = 0
@@ -321,37 +322,20 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             do_gap = (do_gap or (screening > 0 and n_iter % screening == 0)
                       or (n_iter == max_iter - 1)) or (n_iter == 0)
 
-            if do_gap and screening > 0:  # Screening
+            if do_gap:  # Screening
+                if screening > 0:
+                    n_features_dual_gap = n_features - n_active
+                else:
+                    n_features_dual_gap = 0
+
                 gap = duality_gap(n_samples, n_features, n_tasks,
                                   <DOUBLE*>X.data, <DOUBLE*>y.data, <DOUBLE*>R.data, <DOUBLE*>w.data,
                                   <DOUBLE*>XtA.data, <DOUBLE*>dual_scaling.data,
                                   alpha, beta, positive,
-                                  <np.int32_t*>disabled.data, n_features - n_active)
+                                  <np.int32_t*>disabled.data, n_features_dual_gap)
 
-                if (gap < tol) or (n_iter == max_iter - 1):
-                    # recompute non lazy gap as safeguard if screening is not correct
-                    # or if last iteration
-                    gap = duality_gap(n_samples, n_features, n_tasks,
-                                      <DOUBLE*>X.data, <DOUBLE*>y.data, <DOUBLE*>R.data, <DOUBLE*>w.data,
-                                      <DOUBLE*>XtA.data, <DOUBLE*>dual_scaling.data,
-                                      alpha, beta, positive,
-                                      <np.int32_t*>disabled.data, 0)
-                    # 0 because we do not trust the screening
-                    # XXX to do really?
-
-                    # break if we reached desired tolerance
-                    if gap < tol:
-                        break
-
-            if do_gap and screening == 0:
-                gap = duality_gap(n_samples, n_features, n_tasks,
-                                  <DOUBLE*>X.data, <DOUBLE*>y.data, <DOUBLE*>R.data, <DOUBLE*>w.data,
-                                  <DOUBLE*>XtA.data, <DOUBLE*>dual_scaling.data,
-                                  alpha, beta, positive,
-                                  <np.int32_t*>disabled.data, 0)
-
+                # break if we reached desired tolerance
                 if gap < tol:
-                    # return if we reached desired tolerance
                     break
 
             if do_gap and screening > 0:  # Screening
@@ -497,7 +481,7 @@ cdef double sparse_duality_gap(unsigned int n_samples,
                 dual_scaling[0] = 1. / alpha
             else:
                 dual_scaling[0] = yTA / R_norm2 / alpha
-        elif positive:#XXX to check
+        elif positive:
             dual_scaling[0] = fmin(yTA / (alpha * R_norm2),
                                  1. / dual_norm_XtA)
         else:
@@ -596,6 +580,7 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
+    cdef unsigned int n_features_dual_gap
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
@@ -677,38 +662,20 @@ def sparse_enet_coordinate_descent(double[:] w,
                       or (n_iter == max_iter - 1)) or (n_iter == 0)
 
             if do_gap and screening > 0:  # Screening
+                if screening > 0:
+                    n_features_dual_gap = n_features - n_active
+                else:
+                    n_features_dual_gap = 0
+
                 gap = sparse_duality_gap(n_samples, n_features, X_data,
                                          X_indices, X_indptr, X_mean,
                                          y, y_sum, R, R_shift, w,
                                          XtA, X_T_R, dual_scaling,
                                          alpha, beta, positive, center,
-                                         disabled, n_features - n_active)
+                                         disabled, n_features_dual_gap)
 
-                if (gap < tol) or (n_iter == max_iter - 1):
-                    # recompute non lazy gap as safeguard if screening is not correct
-                    # or if last iteration
-                    # XXX to erase this one?
-                    gap = sparse_duality_gap(n_samples, n_features, X_data,
-                                             X_indices, X_indptr, X_mean,
-                                             y, y_sum, R, R_shift, w,
-                                             XtA, X_T_R, dual_scaling,
-                                             alpha, beta, positive, center,
-                                             disabled, 0)
-
-                    # return if we reached desired tolerance
-                    if gap < tol:
-                        break
-
-            if do_gap and screening == 0:  # Screening
-                gap = sparse_duality_gap(n_samples, n_features, X_data,
-                                         X_indices, X_indptr, X_mean,
-                                         y, y_sum, R, R_shift, w,
-                                         XtA, X_T_R, dual_scaling,
-                                         alpha, beta, positive, center,
-                                         disabled, 0)
-
+                # return if we reached desired tolerance
                 if gap < tol:
-                    # return if we reached desired tolerance
                     break
 
             if do_gap and screening > 0:  # Screening
