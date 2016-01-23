@@ -583,7 +583,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV, KernelRidge
+    RidgeClassifier, RidgeCV, :func:`sklearn.kernel_ridge.KernelRidge`
 
     Examples
     --------
