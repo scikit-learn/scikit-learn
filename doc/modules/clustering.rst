@@ -18,17 +18,13 @@ data can be found in the ``labels_`` attribute.
 .. topic:: Input data
 
     One important thing to note is that the algorithms implemented in
-    this module take different kinds of matrix as input.  On one hand,
-    :class:`MeanShift` and :class:`KMeans` take data matrices of shape
-    [n_samples, n_features]. These can be obtained from the classes in
-    the :mod:`sklearn.feature_extraction` module. On the other hand,
-    :class:`AffinityPropagation` and :class:`SpectralClustering` take
-    similarity matrices of shape [n_samples, n_samples].  These can be
-    obtained from the functions in the :mod:`sklearn.metrics.pairwise`
-    module. In other words, :class:`MeanShift` and :class:`KMeans` work
-    with points in a vector space, whereas :class:`AffinityPropagation`
-    and :class:`SpectralClustering` can work with arbitrary objects, as
-    long as a similarity measure exists for such objects.
+    this module can take different kinds of matrix as input. All the
+    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
+    module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
+    and :class:`DBSCAN` one can also input similarity matrices of shape
+    ``[n_samples, n_samples]``. These can be obtained from the functions
+    in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
 ===============================
