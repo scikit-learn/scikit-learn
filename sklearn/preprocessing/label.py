@@ -9,6 +9,7 @@
 from collections import defaultdict
 import itertools
 import array
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -295,6 +296,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         self.sparse_input_ = sp.issparse(y)
         self.classes_ = unique_labels(y)
+        if len(self.classes_) == 1:
+                warnings.warn("Only one label in y and this label will be "
+                              "regarded as negative one.")
         return self
 
     def transform(self, y):
