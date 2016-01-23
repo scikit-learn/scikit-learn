@@ -236,6 +236,17 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     [[ 0.          0.          0.46915237]
      [ 0.2159048   0.4425765   0.23668876]]
 
+    References
+    ----------
+    R. Tibshirani (1996) "Regression shrinkage and selection via the lasso"
+    J. Royal. Statist. Soc B., Vol. 58, No. 1, pages 267-288).
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
 
     See also
     --------
@@ -362,6 +373,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
+
+    References
+    ----------
+    H. Zou, T. Hastie (2005). "Regularization and Variable Selection via the
+    Elastic Net". Journal of the Royal Statistical Society, Series B: 301–320.
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
 
     See also
     --------
@@ -603,6 +626,18 @@ class ElasticNet(LinearModel, RegressorMixin):
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    References
+    ----------
+    H. Zou, T. Hastie (2005). "Regularization and Variable Selection via the
+    Elastic Net". Journal of the Royal Statistical Society, Series B: 301–320.
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
 
     See also
     --------
@@ -889,6 +924,18 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    References
+    ----------
+    R. Tibshirani (1996) "Regression shrinkage and selection via the lasso"
+    J. Royal. Statist. Soc B., Vol. 58, No. 1, pages 267-288).
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
     """
     path = staticmethod(enet_path)
 
