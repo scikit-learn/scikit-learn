@@ -4053,3 +4053,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Andrea Bravi: https://github.com/AndreaBravi
 
+.. _Devashish Deshpande: https://github.com/dsquareindia
+
