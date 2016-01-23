@@ -104,4 +104,5 @@ if __name__ == '__main__':
     plt.xlabel('number of features')
     plt.ylabel('Time (s)')
     plt.axis('tight')
+    plt.tight_layout()
     plt.show()
