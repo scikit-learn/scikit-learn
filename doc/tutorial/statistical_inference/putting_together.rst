@@ -34,10 +34,10 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. literalinclude:: ../../auto_examples/applications/face_recognition.py
 
-.. |prediction| image:: ../../images/sphx_glr_plot_face_recognition_1.png
+.. |prediction| image:: ../../images/plot_face_recognition_1.png
    :scale: 50
- 
-.. |eigenfaces| image:: ../../images/sphx_glr_plot_face_recognition_2.png
+
+.. |eigenfaces| image:: ../../images/plot_face_recognition_2.png
    :scale: 50
 
 .. list-table::
@@ -49,7 +49,7 @@ The dataset used in this example is a preprocessed excerpt of the
 
      - |eigenfaces|
 
-   * 
+   *
 
      - **Prediction**
 
