@@ -44,8 +44,8 @@ biclusters on the diagonal. Here is an example of this structure
 where biclusters have higher average values than the other rows and
 columns:
 
-.. figure:: ../auto_examples/bicluster/images/plot_spectral_coclustering_003.png
-   :target: ../auto_examples/bicluster/images/plot_spectral_coclustering_003.png
+.. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
+   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
    :align: center
    :scale: 50
 
@@ -56,8 +56,8 @@ each column belongs to all row clusters. Here is an example of this
 structure where the variance of the values within each bicluster is
 small:
 
-.. figure:: ../auto_examples/bicluster/images/plot_spectral_biclustering_003.png
-   :target: ../auto_examples/bicluster/images/plot_spectral_biclustering_003.png
+.. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
+   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
    :align: center
    :scale: 50
 

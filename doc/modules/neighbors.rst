@@ -184,11 +184,11 @@ distance can be supplied which is used to compute the weights.
 
 
 
-.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
+.. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_002.png
+.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
@@ -227,7 +227,7 @@ weights proportional to the inverse of the distance from the query point.
 Alternatively, a user-defined function of the distance can be supplied,
 which will be used to compute the weights.
 
-.. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
    :align: center
    :scale: 75
@@ -237,7 +237,7 @@ The use of multi-output nearest neighbors for regression is demonstrated in
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
@@ -497,11 +497,11 @@ This is useful, for example, for removing noisy features.
 In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
-.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_001.png
+.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nearest_centroid_001.png
    :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
-.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_002.png
+.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nearest_centroid_002.png
    :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
@@ -551,12 +551,12 @@ Hashing <mathematical_description_of_lsh>`).
 ``n_candidates``. The accuracy of queries can be controlled using these
 parameters as demonstrated in the following plots:
 
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_001.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_hyperparameters_001.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
    :align: center
    :scale: 50
 
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_002.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_hyperparameters_002.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
    :align: center
    :scale: 50
@@ -574,17 +574,17 @@ environment such as availability of BLAS optimizations, number of CPU cores and
 size of the CPU caches. Following graphs depict scalability of LSHForest queries
 with index size.
 
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_001.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_scalability_001.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
    :align: center
    :scale: 50
 
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_002.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_scalability_002.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
    :align: center
    :scale: 50
 
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_003.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_approximate_nearest_neighbors_scalability_003.png
    :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
    :align: center
    :scale: 50

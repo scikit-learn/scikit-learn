@@ -16,7 +16,7 @@ For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
 the tree, the more complex the decision rules and the fitter the model.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -186,7 +186,7 @@ fraction of training samples of the same class in a leaf::
     >>> clf.predict_proba(iris.data[:1, :])
     array([[ 1.,  0.,  0.]])
 
-.. figure:: ../auto_examples/tree/images/plot_iris_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
    :scale: 75
@@ -201,7 +201,7 @@ fraction of training samples of the same class in a leaf::
 Regression
 ==========
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -265,7 +265,7 @@ The use of multi-output trees for regression is demonstrated in
 :ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
    :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
    :scale: 75
    :align: center
@@ -275,7 +275,7 @@ The use of multi-output trees for classification is demonstrated in
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center

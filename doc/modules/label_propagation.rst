@@ -37,7 +37,7 @@ A few features available in this model:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
 constructing a similarity graph over all items in the input dataset. 
 
-.. figure:: ../auto_examples/semi_supervised/images/plot_label_propagation_structure_001.png
+.. figure:: ../auto_examples/semi_supervised/images/sphx_glr_plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
     :align: center
     :scale: 60%

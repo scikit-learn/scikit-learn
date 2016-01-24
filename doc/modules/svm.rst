@@ -51,7 +51,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -254,7 +254,7 @@ classes or certain individual samples keywords ``class_weight`` and
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
    :align: center
    :scale: 75
@@ -266,7 +266,7 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
-.. figure:: ../auto_examples/svm/images/plot_weighted_samples_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
@@ -341,7 +341,7 @@ will only take as input an array X, as there are no class labels.
 
 See, section :ref:`outlier_detection` for more details on this usage.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -556,7 +556,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
 

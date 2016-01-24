@@ -82,7 +82,7 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/plot_color_quantization_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
    :target: ../auto_examples/cluster/plot_color_quantization.html
    :scale: 30
    :align: right
@@ -130,7 +130,7 @@ per class; and linear transformations of the feature space.
 near-equal-size classes separated by concentric hyperspheres.
 :func:`make_hastie_10_2` generates a similar binary, 10-dimensional problem.
 
-.. image:: ../auto_examples/datasets/images/plot_random_dataset_001.png
+.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_dataset.html
    :scale: 50
    :align: center
@@ -159,7 +159,7 @@ respect to true bag-of-words mixtures include:
 * Documents without labels words at random, rather than from a base
   distribution.
 
-.. image:: ../auto_examples/datasets/images/plot_random_multilabel_dataset_001.png
+.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_multilabel_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_multilabel_dataset.html
    :scale: 50
    :align: center

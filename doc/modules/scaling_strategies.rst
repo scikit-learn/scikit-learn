@@ -97,7 +97,7 @@ systems and demonstrates most of the notions discussed above.
 Furthermore, it also shows the evolution of the performance of different
 algorithms with the number of processed examples.
 
-.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_001.png
+.. |accuracy_over_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_001.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -109,7 +109,7 @@ algorithms, ``MultinomialNB`` is the most expensive, but its overhead can be
 mitigated by increasing the size of the mini-batches (exercise: change
 ``minibatch_size`` to 100 and 10000 in the program and compare).
 
-.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_003.png
+.. |computation_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_003.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 

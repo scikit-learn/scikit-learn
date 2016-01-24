@@ -183,7 +183,7 @@ scoring method.
 .. topic:: **Exercise**
    :class: green
 
-   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_001.png
+   .. image:: ../../auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: right
         :scale: 90

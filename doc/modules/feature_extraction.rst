@@ -892,7 +892,7 @@ features or samples. For instance Ward clustering
 (:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
 of an image, thus forming contiguous patches:
 
-.. figure:: ../auto_examples/cluster/images/plot_face_ward_segmentation_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_face_ward_segmentation_001.png
    :target: ../auto_examples/cluster/plot_face_ward_segmentation.html
    :align: center
    :scale: 40

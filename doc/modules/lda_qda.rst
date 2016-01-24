@@ -17,7 +17,7 @@ These classifiers are attractive because they have closed-form solutions that
 can be easily computed, are inherently multiclass, have proven to work well in
 practice and have no hyperparameters to tune.
 
-.. |ldaqda| image:: ../auto_examples/classification/images/plot_lda_qda_001.png
+.. |ldaqda| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_qda_001.png
         :target: ../auto_examples/classification/plot_lda_qda.html
         :scale: 80
 
@@ -148,7 +148,7 @@ an estimate for the covariance matrix). Setting this parameter to a value
 between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
-.. |shrinkage| image:: ../auto_examples/classification/images/plot_lda_001.png
+.. |shrinkage| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_001.png
         :target: ../auto_examples/classification/plot_lda.html
         :scale: 75
 

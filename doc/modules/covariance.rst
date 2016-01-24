@@ -133,7 +133,7 @@ with the :meth:`oas` function of the `sklearn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
 object to the same sample.
 
-.. figure:: ../auto_examples/covariance/images/plot_covariance_estimation_001.png
+.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_covariance_estimation_001.png
    :target: ../auto_examples/covariance/plot_covariance_estimation.html
    :align: center
    :scale: 65%
@@ -155,7 +155,7 @@ object to the same sample.
      an :class:`OAS` estimator of the covariance.
 
 
-.. figure:: ../auto_examples/covariance/images/plot_lw_vs_oas_001.png
+.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_lw_vs_oas_001.png
    :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
@@ -187,7 +187,7 @@ the precision matrix: the higher its ``alpha`` parameter, the more sparse
 the precision matrix. The corresponding :class:`GraphLassoCV` object uses
 cross-validation to automatically set the ``alpha`` parameter.
 
-.. figure:: ../auto_examples/covariance/images/plot_sparse_cov_001.png
+.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_sparse_cov_001.png
    :target: ../auto_examples/covariance/plot_sparse_cov.html
    :align: center
    :scale: 60%
@@ -309,11 +309,11 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
      :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
      (so we get a better estimate of the precision matrix too).
 
-.. |robust_vs_emp| image:: ../auto_examples/covariance/images/plot_robust_vs_empirical_covariance_001.png
+.. |robust_vs_emp| image:: ../auto_examples/covariance/images/sphx_glr_plot_robust_vs_empirical_covariance_001.png
    :target: ../auto_examples/covariance/plot_robust_vs_empirical_covariance.html
    :scale: 49%
 
-.. |mahalanobis| image:: ../auto_examples/covariance/images/plot_mahalanobis_distances_001.png
+.. |mahalanobis| image:: ../auto_examples/covariance/images/sphx_glr_plot_mahalanobis_distances_001.png
    :target: ../auto_examples/covariance/plot_mahalanobis_distances.html
    :scale: 49%
 

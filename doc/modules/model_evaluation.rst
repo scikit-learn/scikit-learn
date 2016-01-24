@@ -395,7 +395,7 @@ predicted to be in group :math:`j`. Here is an example::
 Here is a visual representation of such a confusion matrix (this figure comes
 from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
 
-.. image:: ../auto_examples/model_selection/images/plot_confusion_matrix_001.png
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
@@ -935,7 +935,7 @@ Here is a small example of how to use the :func:`roc_curve` function::
 
 This figure shows an example of such an ROC curve:
 
-.. image:: ../auto_examples/model_selection/images/plot_roc_001.png
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_001.png
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
@@ -963,7 +963,7 @@ F1 score, ROC doesn't require optimizing a threshold for each label. The
 if the predicted outputs have been binarized.
 
 
-.. image:: ../auto_examples/model_selection/images/plot_roc_002.png
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center

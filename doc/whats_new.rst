@@ -3368,13 +3368,13 @@ This release also includes the dictionary-learning work developed by
 
 
 
-.. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
+.. |banner1| image:: ./auto_examples/manifold/images/thumb/sphx_glr_plot_compare_methods_thumb.png
    :target: auto_examples/manifold/plot_compare_methods.html
 
-.. |banner2| image:: ./auto_examples/linear_model/images/thumb/plot_omp.png
+.. |banner2| image:: ./auto_examples/linear_model/images/thumb/sphx_glr_plot_omp_thumb.png
    :target: auto_examples/linear_model/plot_omp.html
 
-.. |banner3| image:: ./auto_examples/decomposition/images/thumb/plot_kernel_pca.png
+.. |banner3| image:: ./auto_examples/decomposition/images/thumb/sphx_glr_plot_kernel_pca_thumb.png
    :target: auto_examples/decomposition/plot_kernel_pca.html
 
 .. |center-div| raw:: html
