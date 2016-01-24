@@ -547,7 +547,7 @@ creating a decision energy by positioning *kernels* on observations:
 
 .. topic:: **Interactive example**
 
-   See the :ref:`SVM GUI <example_applications_svm_gui.py>` to download
+   See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
    ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 

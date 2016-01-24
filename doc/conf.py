@@ -224,6 +224,43 @@ latex_domain_indices = False
 trim_doctests_flags = True
 
 
+sphinx_gallery_conf = {
+    'doc_module': 'sklearn',
+    'reference_url'     : {
+        'sklearn': None,
+        'matplotlib': 'http://matplotlib.org',
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
+        'nibabel': 'http://nipy.org/nibabel'}
+    }
+
+
+# The following dictionary contains the information used to create the
+# thumbnails for the front page of the scikit-learn home page.
+# key: first image in set
+# values: (number of plot in set, height of thumbnail)
+carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
+                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_gpr_co2_001.png': 350,
+                   'sphx_glr_plot_adaboost_twoclass_001.png': 372,
+                   'sphx_glr_plot_compare_methods_001.png': 349}
+
+import sphinx_gallery
+def make_carousel_thumbs(app, exception):
+    """produces the final resized carousel images"""
+    if exception is not None:
+        return
+    print('Preparing carousel images')
+    print(sphinx_gallery.__file__)
+
+    image_dir = os.path.join(app.builder.outdir, '_images')
+    for glr_plot, max_width in carousel_thumbs.items():
+        image = os.path.join(image_dir, glr_plot)
+        if os.path.exists(image):
+            c_thumb = os.path.join(image_dir, glr_plot[:-4]+'_carousel.png')
+            sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
+
+
 def generate_example_rst(app, what, name, obj, options, lines):
     # generate empty examples files, so that we don't get
     # inclusion errors if there are no examples for a class / module
@@ -238,6 +275,7 @@ def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
     app.connect('autodoc-process-docstring', generate_example_rst)
+    app.connect('build-finished', make_carousel_thumbs)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
@@ -245,15 +283,3 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
-
-sphinx_gallery_conf = {
-    'doc_module': 'sklearn',
-    'reference_url'     : {
-        'sklearn': None,
-        'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
-        'nibabel': 'http://nipy.org/nibabel'}
-    }
-
-
