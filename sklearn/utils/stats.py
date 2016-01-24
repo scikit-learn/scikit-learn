@@ -51,12 +51,8 @@ except TypeError as e:
 def _weighted_percentile(array, sample_weight, percentile=50):
     """Compute the weighted ``percentile`` of ``array`` with ``sample_weight``. """
     sorted_idx = np.argsort(array)
-    sample_weight = np.array(sample_weight)
-    midpoint = sum(sample_weight)/2.0
     # Find index of median prediction for each sample
     weight_cdf = sample_weight[sorted_idx].cumsum()
     percentile_idx = np.searchsorted(
         weight_cdf, (percentile / 100.) * weight_cdf[-1])
-    if weight_cdf[percentile_idx] == midpoint:
-        return np.mean(array[sorted_idx[percentile_idx]:sorted_idx[percentile_idx+1]+1])
     return array[sorted_idx[percentile_idx]]
