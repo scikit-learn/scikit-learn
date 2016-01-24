@@ -59,3 +59,9 @@ def test_MDS():
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
+    # Testing for extendible MDS
+    mds_clf = mds.MDS(dissimilarity="euclidean", extendible=True)
+    mds_clf.fit(sim)
+    sim2 = np.array([[3, 1, 1, 2],
+                     [4, 1, 2, 2]])
+    mds_clf.transform(sim2, sim)
