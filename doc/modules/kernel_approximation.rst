@@ -97,7 +97,7 @@ use of larger feature spaces more efficient.
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_kernel_approximation.py`
+    * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
 
 .. _additive_chi_kernel_approx:
 

@@ -193,7 +193,7 @@ fraction of training samples of the same class in a leaf::
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_iris.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
 
 
 .. _tree_regression:
@@ -223,7 +223,7 @@ instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
 
 
 .. _tree_multioutput:
@@ -262,7 +262,7 @@ of size ``[n_samples, n_outputs]`` then the resulting estimator will:
 
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
@@ -271,7 +271,7 @@ X is a single real value and the outputs Y are the sine and cosine of X.
    :align: center
 
 The use of multi-output trees for classification is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
@@ -282,8 +282,8 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression_multioutput.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References:
 

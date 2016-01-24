@@ -274,12 +274,12 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_iris.py`,
- * :ref:`example_svm_plot_separating_hyperplane.py`,
- * :ref:`example_svm_plot_separating_hyperplane_unbalanced.py`
- * :ref:`example_svm_plot_svm_anova.py`,
- * :ref:`example_svm_plot_svm_nonlinear.py`
- * :ref:`example_svm_plot_weighted_samples.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`,
 
 
 .. _svm_regression:
@@ -322,7 +322,7 @@ floating point values instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_svm_regression.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
 
 
@@ -349,8 +349,8 @@ See, section :ref:`outlier_detection` for more details on this usage.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_oneclass.py`
- * :ref:`example_applications_plot_species_distribution_modeling.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
+ * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 
 Complexity
@@ -498,7 +498,7 @@ instance that will use that kernel::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`.
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
@@ -540,7 +540,7 @@ is advised to use :class:`sklearn.model_selection.GridSearchCV` with
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_rbf_parameters.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
 
 .. _svm_mathematical_formulation:
 

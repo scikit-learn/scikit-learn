@@ -98,7 +98,7 @@ and pipeline on 2D data.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_color_quantization.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 
 .. _sample_generators:

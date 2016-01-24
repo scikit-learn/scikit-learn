@@ -90,7 +90,7 @@ come late in the stream as their learning rate decreases over time.
 Examples
 --------
 Finally, we have a full-fledged example of
-:ref:`example_applications_plot_out_of_core_classification.py`. It is aimed at
+:ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. It is aimed at
 providing a starting point for people wanting to build out-of-core learning
 systems and demonstrates most of the notions discussed above.
 

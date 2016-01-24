@@ -169,12 +169,12 @@ probabilistically drawn given the KDE model.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_kde_1d.py`: computation of simple kernel
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_kde_1d.py`: computation of simple kernel
     density estimates in one dimension.
 
-  * :ref:`example_neighbors_plot_digits_kde_sampling.py`: an example of using
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_digits_kde_sampling.py`: an example of using
     Kernel Density estimation to learn a generative model of the hand-written
     digits data, and drawing new samples from this model.
 
-  * :ref:`example_neighbors_plot_species_kde.py`: an example of Kernel Density
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_species_kde.py`: an example of Kernel Density
     estimation using the Haversine distance metric to visualize geospatial data

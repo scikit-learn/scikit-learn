@@ -160,8 +160,8 @@ See the examples below and the doc string of
 
 .. topic:: Examples:
 
- * :ref:`example_neural_networks_plot_mlp_training_curves.py`
- * :ref:`example_neural_networks_plot_mnist_filters.py`
+ * :ref:`sphx_glr_examples_neural_networks_plot_mlp_training_curves.py`
+ * :ref:`sphx_glr_examples_neural_networks_plot_mnist_filters.py`
 
 Regression
 ==========
@@ -192,7 +192,7 @@ See the examples below for further information.
 
 .. topic:: Examples:
 
- * :ref:`example_neural_networks_plot_mlp_alpha.py`
+ * :ref:`sphx_glr_auto_examples_neural_networks_plot_mlp_alpha.py`
 
 Algorithms
 ==========

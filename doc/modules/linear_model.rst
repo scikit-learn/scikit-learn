@@ -60,7 +60,7 @@ example, when data are collected without an experimental design.
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_ols.py`
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
 
 Ordinary Least Squares Complexity
@@ -113,8 +113,8 @@ its ``coef_`` member::
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_ridge_path.py`
-   * :ref:`example_text_document_classification_20newsgroups.py`
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
+   * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
 
 Ridge Complexity
@@ -165,7 +165,7 @@ upon which the given solution is dependent. For this reason, the Lasso
 and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero
 weights (see
-:ref:`example_applications_plot_tomography_l1_reconstruction.py`).
+:ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
 Mathematically, it consists of a linear model trained with :math:`\ell_1` prior
 as regularizer. The objective function to minimize is:
@@ -195,8 +195,8 @@ computes the coefficients along the full path of possible values.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
-  * :ref:`example_applications_plot_tomography_l1_reconstruction.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -264,7 +264,7 @@ They also tend to break when the problem is badly conditioned
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_model_selection.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py`
 
 
 .. _multi_task_lasso:
@@ -296,7 +296,7 @@ columns.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_multi_task_lasso_support.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_multi_task_lasso_support.py`
 
 
 Mathematically, it consists of a linear model trained with a mixed
@@ -353,8 +353,8 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
-  * :ref:`example_linear_model_plot_lasso_coordinate_descent_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py`
 
 
 
@@ -451,7 +451,7 @@ function of the norm of its coefficients.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_lasso_lars.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars.py`
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
@@ -509,7 +509,7 @@ previously chosen dictionary elements.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_omp.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_omp.py`
 
 .. topic:: References:
 
@@ -627,7 +627,7 @@ is more robust to ill-posed problem.
 
 .. topic:: Examples:
 
- * :ref:`example_linear_model_plot_bayesian_ridge.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
 
 .. topic:: References
 
@@ -670,7 +670,7 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_ard.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ard.py`
 
 .. topic:: References:
 
@@ -749,9 +749,9 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_logistic_l1_l2_sparsity.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_l1_l2_sparsity.py`
 
-  * :ref:`example_linear_model_plot_logistic_path.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
 
   * :ref:`example_linear_model_plot_logistic_multinomial.py`
 
@@ -990,8 +990,8 @@ performance.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_ransac.py`
-  * :ref:`example_linear_model_plot_robust_fit.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
 .. topic:: References:
 
@@ -1017,8 +1017,8 @@ better than an ordinary least squares in high dimension.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_theilsen.py`
-  * :ref:`example_linear_model_plot_robust_fit.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_robust_fit.py`
 
 .. topic:: References:
 
@@ -1059,7 +1059,7 @@ considering only a random subset of all possible combinations.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_theilsen.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_theilsen.py`
 
 .. topic:: References:
 

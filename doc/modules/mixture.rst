@@ -62,10 +62,10 @@ full covariance.
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm_covariances.py` for an example of
+    * See :ref:`sphx_glr_example_mixture_plot_gmm_covariances.py` for an example of
       using the Gaussian mixture as clustering on the iris dataset.
 
-    * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py` for an example on plotting the
       density estimation.
 
 Pros and cons of class :class:`GaussianMixture`
@@ -109,7 +109,7 @@ number of components for a Gaussian mixture model.
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm_selection.py` for an example
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py` for an example
       of model selection performed with classical Gaussian mixture.
 
 .. _expectation_maximization:
@@ -231,11 +231,11 @@ data.
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on plotting the
       confidence ellipsoids for both :class:`GaussianMixture`
       and :class:`DPGMM`.
 
-    * :ref:`example_mixture_plot_gmm_sin.py` shows using
+    * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
       :class:`GaussianMixture` and :class:`DPGMM` to fit a sine wave
 
 Pros and cons of class :class:`DPGMM`: Dirichlet process mixture model

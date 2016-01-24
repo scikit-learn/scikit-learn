@@ -71,7 +71,7 @@ but regular, observation outside the frontier.
 
 .. topic:: Examples:
 
-   * See :ref:`example_svm_plot_oneclass.py` for visualizing the
+   * See :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py` for visualizing the
      frontier learned around some data by a
      :class:`svm.OneClassSVM` object.
 
@@ -118,7 +118,7 @@ This strategy is illustrated below.
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_mahalanobis_distances.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` for
      an illustration of the difference between using a standard
      (:class:`covariance.EmpiricalCovariance`) or a robust estimate
      (:class:`covariance.MinCovDet`) of location and covariance to
@@ -160,10 +160,10 @@ This strategy is illustrated below.
 
 .. topic:: Examples:
 
-   * See :ref:`example_ensemble_plot_isolation_forest.py` for
+   * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
      an illustration of the use of IsolationForest.
 
-   * See :ref:`example_covariance_plot_outlier_detection.py` for a
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
      comparison of :class:`ensemble.IsolationForest` with
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
      method) and a covariance-based outlier detection with
@@ -236,7 +236,7 @@ multiple modes and :class:`ensemble.IsolationForest` performs well in every case
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_outlier_detection.py` for a
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
      comparison of the :class:`svm.OneClassSVM` (tuned to perform like
      an outlier detection method), the :class:`ensemble.IsolationForest`
      and a covariance-based outlier

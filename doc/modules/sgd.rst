@@ -158,11 +158,11 @@ further information.
 
 .. topic:: Examples:
 
- - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
- - :ref:`example_linear_model_plot_sgd_iris.py`
- - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
- - :ref:`example_linear_model_plot_sgd_comparison.py`
- - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_separating_hyperplane.py`,
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting ```average=True```. ASGD works by averaging the coefficients
@@ -218,7 +218,7 @@ matrix format as defined in `scipy.sparse.csr_matrix
 
 .. topic:: Examples:
 
- - :ref:`example_text_document_classification_20newsgroups.py`
+ - :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
 Complexity
 ==========

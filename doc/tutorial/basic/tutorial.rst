@@ -200,7 +200,7 @@ resolution. Do you agree with the classifier?
 
 A complete example of this classification problem is available as an
 example that you can run and study:
-:ref:`example_classification_plot_digits_classification.py`.
+:ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
 
 
 Model persistence

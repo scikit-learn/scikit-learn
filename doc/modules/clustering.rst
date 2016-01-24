@@ -214,9 +214,9 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
    k-means performs intuitively and when it does not
- * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 .. topic:: References:
 
@@ -262,13 +262,13 @@ small, as shown in the example and cited reference.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`example_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
- * :ref:`example_cluster_plot_dict_face_patches.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 
 .. topic:: References:
@@ -313,10 +313,10 @@ appropriate for small to medium sized datasets.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
+ * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
    Propagation on a synthetic 2D datasets with 3 classes.
 
- * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
+ * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
 
@@ -400,7 +400,7 @@ given sample.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
 
 .. topic:: References:
@@ -457,10 +457,10 @@ function of the gradient of the image.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
+ * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`example_cluster_plot_face_segmentation.py`: Spectral clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_face_segmentation.py`: Spectral clustering
    to split the image of the raccoon face in regions.
 
 .. |face_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_001.png
@@ -574,7 +574,7 @@ Euclidean metrics, average linkage is a good alternative.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_digits_linkage.py`: exploration of the
+ * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
 
 
@@ -619,18 +619,18 @@ enable only merging of neighboring pixels on an image, as in the
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_face_ward_segmentation.py`: Ward clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`: Ward clustering
    to split the image of a raccoon face in regions.
 
- * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
    versus unstructured approaches.
 
- * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+ * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
    Example of dimensionality reduction with feature agglomeration based on
    Ward hierarchical clustering.
 
- * :ref:`example_cluster_plot_agglomerative_clustering.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 .. warning:: **Connectivity constraints with average and complete linkage**
 
@@ -640,7 +640,7 @@ enable only merging of neighboring pixels on an image, as in the
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
-    :ref:`example_cluster_plot_agglomerative_clustering.py`).
+    :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
@@ -692,7 +692,7 @@ each class.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_agglomerative_clustering_metrics.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 .. _dbscan:
@@ -742,7 +742,7 @@ by black points below.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_dbscan.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 .. topic:: Implementation
 
@@ -972,7 +972,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments.
 
@@ -1106,7 +1106,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments. This example also includes the Adjusted Rand
    Index.
@@ -1290,7 +1290,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments.
 
@@ -1496,7 +1496,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
 .. _calinski_harabaz_index:

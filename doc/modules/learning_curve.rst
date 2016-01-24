@@ -41,9 +41,9 @@ this reason, it is often helpful to use the tools described below.
 
 .. topic:: Examples:
 
-   * :ref:`example_model_selection_plot_underfitting_overfitting.py`
-   * :ref:`example_model_selection_plot_validation_curve.py`
-   * :ref:`example_model_selection_plot_learning_curve.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
 
 
 .. _validation_curve:

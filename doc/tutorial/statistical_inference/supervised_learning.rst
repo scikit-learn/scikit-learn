@@ -443,7 +443,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`example_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in

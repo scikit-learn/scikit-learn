@@ -196,7 +196,7 @@ distance can be supplied which is used to compute the weights.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_classification.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
 
 .. _regression:
@@ -233,7 +233,7 @@ which will be used to compute the weights.
    :scale: 75
 
 The use of multi-output nearest neighbors for regression is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
@@ -245,10 +245,10 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_regression.py`: an example of regression
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
-  * :ref:`example_plot_multioutput_face_completion.py`: an example of
+  * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
 
 
@@ -509,7 +509,7 @@ the model from 0.81 to 0.82.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
 
 .. _approximate_nearest_neighbors:
@@ -595,10 +595,10 @@ standard deviation across different queries.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_approximate_nearest_neighbors_hyperparameters.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_approximate_nearest_neighbors_hyperparameters.py`: an example of
     the behavior of hyperparameters of approximate nearest neighbor search using LSH Forest.
 
-  * :ref:`example_neighbors_plot_approximate_nearest_neighbors_scalability.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_approximate_nearest_neighbors_scalability.py`: an example of
     scalability of approximate nearest neighbor search using LSH Forest.
 
 .. _mathematical_description_of_lsh:

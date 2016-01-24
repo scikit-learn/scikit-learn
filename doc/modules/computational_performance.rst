@@ -65,7 +65,7 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 
 To benchmark different estimators for your case you can simply change the
 ``n_features`` parameter in this example:
-:ref:`example_applications_plot_prediction_latency.py`. This should give
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
 Influence of the Number of Features
@@ -215,7 +215,7 @@ Prediction Throughput
 Another important metric to care about when sizing production systems is the
 throughput i.e. the number of predictions you can make in a given amount of
 time. Here is a benchmark from the
-:ref:`example_applications_plot_prediction_latency.py` example that measures
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py` example that measures
 this quantity for a number of estimators on synthetic data:
 
 .. |throughput_benchmark| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_004.png

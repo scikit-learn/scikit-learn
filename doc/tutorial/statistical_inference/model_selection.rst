@@ -195,7 +195,7 @@ scoring method.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
 
 
@@ -289,6 +289,6 @@ appended to their name.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
        :lines: 17-24
 
-   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
+   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_diabetes.py`
 
 

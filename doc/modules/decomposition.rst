@@ -52,8 +52,8 @@ data based on the amount of variance it explains. As such it implements a
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_pca_vs_lda.py`
-    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
 
 .. _IncrementalPCA:
@@ -93,7 +93,7 @@ number of samples to be processed in the dataset.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_incremental_pca.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`
 
 
 .. _RandomizedPCA:
@@ -159,8 +159,8 @@ is not the exact inverse transform of ``transform`` even when
 
 .. topic:: Examples:
 
-    * :ref:`example_applications_face_recognition.py`
-    * :ref:`example_decomposition_plot_faces_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_applications_face_recognition.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
 
@@ -188,7 +188,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_kernel_pca.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
 
 
 .. _SparsePCA:
@@ -264,7 +264,7 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: Examples:
 
-   * :ref:`example_decomposition_plot_faces_decomposition.py`
+   * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
 
@@ -346,7 +346,7 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`example_text_document_clustering.py`
+   * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
 
 .. topic:: References:
 
@@ -408,7 +408,7 @@ a positive sign. Therefore, the split_code is non-negative.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_sparse_coding.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
 
 
 Generic dictionary learning
@@ -462,7 +462,7 @@ extracted from part of the image of a raccoon face looks like.
 
 .. topic:: Examples:
 
-  * :ref:`example_decomposition_plot_image_denoising.py`
+  * :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 
 .. topic:: References:
@@ -505,7 +505,7 @@ does not fit into the memory.
    computationally efficient and implements on-line learning with a
    ``partial_fit`` method.
 
-    Example: :ref:`example_cluster_plot_dict_face_patches.py`
+    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
 
@@ -597,7 +597,7 @@ of heteroscedastic noise:
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
 .. _ICA:
 
@@ -637,9 +637,9 @@ components with some sparsity:
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_ica_blind_source_separation.py`
-    * :ref:`example_decomposition_plot_ica_vs_pca.py`
-    * :ref:`example_decomposition_plot_faces_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_ica_blind_source_separation.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_ica_vs_pca.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 
 .. _NMF:
@@ -726,8 +726,8 @@ and the regularized objective function is:
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_faces_decomposition.py`
-    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
@@ -821,7 +821,7 @@ when data can be fetched sequentially.
 
 .. topic:: Examples:
 
-    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 

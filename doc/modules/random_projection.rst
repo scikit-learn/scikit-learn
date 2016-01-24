@@ -76,7 +76,7 @@ bounded distortion introduced by the random projection::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_johnson_lindenstrauss_bound.py`
+  * See :ref:`sphx_glr_auto_examples_plot_johnson_lindenstrauss_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
     empirical validation using sparse random matrices.
 

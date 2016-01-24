@@ -159,7 +159,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_multilabel.py`
+    * :ref:`sphx_glr_auto_examples_plot_multilabel.py`
 
 .. _ovo_classification:
 

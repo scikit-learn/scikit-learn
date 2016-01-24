@@ -31,7 +31,7 @@ flexible.
 
 .. topic:: Examples:
 
-    :ref:`example_classification_plot_lda_qda.py`: Comparison of LDA and QDA
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`: Comparison of LDA and QDA
     on synthetic data.
 
 Dimensionality reduction using Linear Discriminant Analysis
@@ -54,7 +54,7 @@ This parameter has no influence on
 
 .. topic:: Examples:
 
-    :ref:`example_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
+    :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`: Comparison of LDA and PCA
     for dimensionality reduction of the Iris dataset
 
 Mathematical formulation of the LDA and QDA classifiers
@@ -174,7 +174,7 @@ a high number of features.
 
 .. topic:: Examples:
 
-    :ref:`example_classification_plot_lda.py`: Comparison of LDA classifiers
+    :ref:`sphx_glr_auto_examples_classification_plot_lda.py`: Comparison of LDA classifiers
     with and without shrinkage.
 
 .. topic:: References:

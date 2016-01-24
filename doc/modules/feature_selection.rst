@@ -110,9 +110,9 @@ samples for accurate estimation.
 
 .. topic:: Examples:
 
-    * :ref:`example_feature_selection_plot_feature_selection.py`
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
 
-    * :ref:`example_feature_selection_plot_f_test_vs_mi.py`
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_f_test_vs_mi.py`
 
 .. _rfe:
 
@@ -133,10 +133,10 @@ number of features.
 
 .. topic:: Examples:
 
-    * :ref:`example_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
       showing the relevance of pixels in a digit classification task.
 
-    * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
@@ -158,7 +158,7 @@ For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`example_feature_selection_plot_select_from_model_boston.py`: Selecting the two
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_boston.py`: Selecting the two
       most important features from the Boston dataset without knowing the
       threshold beforehand.
 
@@ -197,7 +197,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`example_text_document_classification_20newsgroups.py`: Comparison
+    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
 
@@ -276,7 +276,7 @@ of features non zero.
 
 .. topic:: Examples:
 
-   * :ref:`example_linear_model_plot_sparse_recovery.py`: An example
+   * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`: An example
      comparing different feature selection approaches and discussing in
      which situation each approach is to be favored.
 
@@ -316,11 +316,11 @@ meta-transformer)::
 
 .. topic:: Examples:
 
-    * :ref:`example_ensemble_plot_forest_importances.py`: example on
+    * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`: example on
       synthetic data showing the recovery of the actually meaningful
       features.
 
-    * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
+    * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
 Feature selection as part of a pipeline

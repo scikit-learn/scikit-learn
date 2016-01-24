@@ -350,7 +350,7 @@ In the multilabel case with binary label indicators: ::
 
 .. topic:: Example:
 
-  * See :ref:`example_feature_selection_plot_permutation_test_for_classification.py`
+  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
@@ -393,7 +393,7 @@ predicted to be in group :math:`j`. Here is an example::
          [1, 0, 2]])
 
 Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
+from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
@@ -402,15 +402,15 @@ from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
 
 .. topic:: Example:
 
-  * See :ref:`example_model_selection_plot_confusion_matrix.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
     for an example of using a confusion matrix to evaluate classifier output
     quality.
 
-  * See :ref:`example_classification_plot_digits_classification.py`
+  * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
     for an example of using a confusion matrix to classify
     hand-written digits.
 
-  * See :ref:`example_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
     for an example of using a confusion matrix to classify text
     documents.
 
@@ -439,15 +439,15 @@ and inferred labels::
 
 .. topic:: Example:
 
-  * See :ref:`example_classification_plot_digits_classification.py`
+  * See :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`example_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
     for an example of classification report usage for text
     documents.
 
-  * See :ref:`example_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
 
@@ -579,19 +579,19 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`example_text_document_classification_20newsgroups.py`
+  * See :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
-  * See :ref:`example_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
 
-  * See :ref:`example_model_selection_plot_precision_recall.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-  * See :ref:`example_linear_model_plot_sparse_recovery.py`
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`
     for an example of :func:`precision_recall_curve` usage to select
     features for sparse linear models.
 
@@ -970,15 +970,15 @@ if the predicted outputs have been binarized.
 
 .. topic:: Examples:
 
-  * See :ref:`example_model_selection_plot_roc.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc.py`
     for an example of using ROC to
     evaluate the quality of the output of a classifier.
 
-  * See :ref:`example_model_selection_plot_roc_crossval.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`
     for an example of using ROC to
     evaluate classifier output quality, using cross-validation.
 
-  * See :ref:`example_applications_plot_species_distribution_modeling.py`
+  * See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     for an example of using ROC to
     model species distribution.
 
@@ -1029,7 +1029,7 @@ set [0,1] has an error: ::
 
 .. topic:: Example:
 
-  * See :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`
+  * See :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
     for an example of zero one loss usage to perform recursive feature
     elimination with cross-validation.
 
@@ -1356,7 +1356,7 @@ function::
 
 .. topic:: Examples:
 
-  * See :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+  * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
@@ -1438,7 +1438,7 @@ Here is a small example of usage of the :func:`r2_score` function::
 
 .. topic:: Example:
 
-  * See :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
+  * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 

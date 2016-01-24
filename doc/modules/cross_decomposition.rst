@@ -39,4 +39,4 @@ Classes included in this module are :class:`PLSRegression`
 
 .. topic:: Examples:
 
-    * :ref:`example_cross_decomposition_plot_compare_cross_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`

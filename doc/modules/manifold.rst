@@ -85,10 +85,10 @@ from the data itself, without the use of predetermined classifications.
 
 .. topic:: Examples:
 
-    * See :ref:`example_manifold_plot_lle_digits.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` for an example of
       dimensionality reduction on handwritten digits.
 
-    * See :ref:`example_manifold_plot_compare_methods.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
       dimensionality reduction on a toy "S-curve" dataset.
 
 The manifold learning implementations available in sklearn are

@@ -39,7 +39,7 @@ weights of independent RBMs. This method is known as unsupervised pre-training.
 
 .. topic:: Examples:
 
-   * :ref:`example_neural_networks_plot_rbm_logistic_classification.py`
+   * :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`
 
 
 Graphical model and parametrization

@@ -471,7 +471,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
 
 
 Decoding text files
@@ -565,18 +565,18 @@ In particular in a **supervised setting** it can be successfully combined
 with fast and scalable linear models to train **document classifiers**,
 for instance:
 
- * :ref:`example_text_document_classification_20newsgroups.py`
+ * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
 In an **unsupervised setting** it can be used to group similar documents
 together by applying clustering algorithms such as :ref:`k_means`:
 
-  * :ref:`example_text_document_clustering.py`
+  * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+  * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation
@@ -759,7 +759,7 @@ be ingested using such an approach, from a practical point of view the learning
 time is often limited by the CPU time one wants to spend on the task.
 
 For a full-fledged example of out-of-core scaling in a text classification
-task see :ref:`example_applications_plot_out_of_core_classification.py`.
+task see :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
 
 Customizing the vectorizer classes
 ----------------------------------
@@ -911,8 +911,8 @@ or similarity matrices.
 
 .. note:: **Examples**
 
-   * :ref:`example_cluster_plot_face_ward_segmentation.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`
 
-   * :ref:`example_cluster_plot_segmentation_toy.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`
 
-   * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+   * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`

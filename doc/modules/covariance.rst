@@ -43,7 +43,7 @@ user, and ``assume_centered=True`` should be used.
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_covariance_estimation.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
      an example on how to fit an :class:`EmpiricalCovariance` object
      to data.
 
@@ -87,7 +87,7 @@ bias/variance trade-off, and is discussed below.
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_covariance_estimation.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
      an example on how to fit a :class:`ShrunkCovariance` object
      to data.
 
@@ -107,7 +107,7 @@ fitting a :class:`LedoitWolf` object to the same sample.
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_covariance_estimation.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
      an example on how to fit a :class:`LedoitWolf` object to data and
      for visualizing the performances of the Ledoit-Wolf estimator in
      terms of likelihood.
@@ -146,11 +146,11 @@ object to the same sample.
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_covariance_estimation.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_covariance_estimation.py` for
      an example on how to fit an :class:`OAS` object
      to data.
 
-   * See :ref:`example_covariance_plot_lw_vs_oas.py` to visualize the
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
      Mean Squared Error difference between a :class:`LedoitWolf` and
      an :class:`OAS` estimator of the covariance.
 
@@ -235,11 +235,11 @@ paper. It is the same algorithm as in the R ``glasso`` package.
 
 .. topic:: Examples:
 
-   * :ref:`example_covariance_plot_sparse_cov.py`: example on synthetic
+   * :ref:`sphx_glr_auto_examples_covariance_plot_sparse_cov.py`: example on synthetic
      data showing some recovery of a structure, and comparing to other
      covariance estimators.
 
-   * :ref:`example_applications_plot_stock_market.py`: example on real
+   * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`: example on real
      stock market data, finding which symbols are most linked.
 
 .. topic:: References:
@@ -300,11 +300,11 @@ attributes of a :class:`MinCovDet` robust covariance estimator object.
 
 .. topic:: Examples:
 
-   * See :ref:`example_covariance_plot_robust_vs_empirical_covariance.py` for
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py` for
      an example on how to fit a :class:`MinCovDet` object to data and see how
      the estimate remains accurate despite the presence of outliers.
 
-   * See :ref:`example_covariance_plot_mahalanobis_distances.py` to
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_mahalanobis_distances.py` to
      visualize the difference between :class:`EmpiricalCovariance` and
      :class:`MinCovDet` covariance estimators in terms of Mahalanobis distance
      (so we get a better estimate of the precision matrix too).

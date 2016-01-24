@@ -79,7 +79,7 @@ snippet below illustrates how to instantiate a bagging ensemble of
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_bias_variance.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
 .. topic:: References
 
@@ -229,9 +229,9 @@ amount of time (e.g., on large datasets).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_forest_iris.py`
- * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -276,8 +276,8 @@ to the prediction function.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_importances.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. _random_trees_embedding:
 
@@ -301,12 +301,12 @@ the transformation performs an implicit, non-parametric density estimation.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_random_forest_embedding.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`
 
- * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+ * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` compares non-linear
    dimensionality reduction techniques on handwritten digits.
 
- * :ref:`example_ensemble_plot_feature_transformation.py` compares
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_feature_transformation.py` compares
    supervised and unsupervised tree based feature transformations.
 
 .. seealso::
@@ -381,18 +381,18 @@ decision trees).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py` compares the
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
    classification error of a decision stump, decision tree, and a boosted
    decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
 
- * :ref:`example_ensemble_plot_adaboost_multiclass.py` shows the performance
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
    of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
 
- * :ref:`example_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
    and decision function values for a non-linearly separable two-class problem
    using AdaBoost-SAMME.
 
- * :ref:`example_ensemble_plot_adaboost_regression.py` demonstrates regression
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
    with the AdaBoost.R2 algorithm.
 
 .. topic:: References
@@ -513,8 +513,8 @@ the ``feature_importances_`` property.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
 
 .. _gradient_boosting_warm_start:
 
@@ -643,7 +643,7 @@ the parameter ``loss``:
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals
-      (see :ref:`example_ensemble_plot_gradient_boosting_quantile.py`).
+      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
   * Classification
 
@@ -733,9 +733,9 @@ is too time consuming.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
- * :ref:`example_ensemble_plot_ensemble_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
 
 Interpretation
 --------------
@@ -779,7 +779,7 @@ accessed via the ``feature_importances_`` property::
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
 .. currentmodule:: sklearn.ensemble.partial_dependence
 
@@ -891,7 +891,7 @@ averaged.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py`
 
 
 .. topic:: References
