@@ -530,6 +530,22 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
 
+    Examples
+    --------
+
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.svm import LinearSVC
+    >>> X, y = make_classification(random_state=0)
+    >>> # Bagging ensemble of LinearSVC base estimators, each built on
+    >>> # random subsets of 50% of the samples and 50% of the features.
+    >>> bagging = BaggingClassifier(LinearSVC(random_state=0),
+    ...                             max_samples=0.5, max_features=0.5,
+    ...                             oob_score=True)
+    >>> cross_val_score(bagging, X, y).mean()              # doctest +ELLIPSIS
+    0.8...
+
     References
     ----------
 
@@ -886,6 +902,25 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         `oob_prediction_` might contain NaN.
+
+    Examples
+    --------
+
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.ensemble import BaggingRegressor
+    >>> from sklearn.tree import DecisionTreeRegressor
+    >>> boston = load_boston()
+    >>> X, y = boston.data, boston.target
+    >>> # Bagging ensemble of DecisionTreeRegressor, each built on
+    >>> # random subsets of 80% of the samples and 80% of the features.
+    >>> # The out-of-bag samples are used for the scoring estimate
+    >>> bagging = BaggingRegressor(DecisionTreeRegressor(random_state=0),
+    ...                            n_estimators=10,
+    ...                            max_samples=0.8, max_features=0.8,
+    ...                            oob_score=False, random_state=0)
+    >>> cross_val_score(bagging, X, y).mean()             # doctest: +ELLIPSIS
+    0.5...
 
     References
     ----------

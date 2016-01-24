@@ -885,6 +885,18 @@ class RandomForestClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
 
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.model_selection import cross_val_score
+    >>> forest = RandomForestClassifier(n_estimators=10)
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> cross_val_score(forest, X, y, cv=5).mean()        # doctest: +ELLIPSIS
+    0.9...
+
     References
     ----------
 
@@ -1058,6 +1070,18 @@ class RandomForestRegressor(ForestRegressor):
 
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sklearn.model_selection import cross_val_score
+    >>> forest = RandomForestRegressor(n_estimators=10, random_state=42)
+    >>> boston = load_boston()
+    >>> X, y = boston.data, boston.target
+    >>> cross_val_score(forest, X, y, cv=5).mean()        # doctest: +ELLIPSIS
+    0.7...
+
 
     References
     ----------
@@ -1253,6 +1277,20 @@ class ExtraTreesClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
 
+    Examples
+    --------
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.datasets import make_blobs
+    >>> from sklearn.ensemble import ExtraTreesClassifier
+
+    >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100,
+    ...                   random_state=0)
+
+    >>> clf = ExtraTreesClassifier(n_estimators=5, max_depth=None,
+    ...                            min_samples_split=1, random_state=0)
+    >>> scores = cross_val_score(clf, X, y).mean()        # doctest: +ELLIPSIS
+    0.99...
+
     References
     ----------
 
@@ -1427,6 +1465,20 @@ class ExtraTreesRegressor(ForestRegressor):
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
 
+    Examples
+    --------
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.ensemble import ExtraTreesRegressor
+
+    >>> X, y = make_regression(n_samples=10000, n_features=10,
+    ...                        random_state=0)
+    >>> clf = ExtraTreesRegressor(n_estimators=10, max_depth=None,
+    ...                           min_samples_split=1, random_state=0)
+    >>> scores = cross_val_score(clf, X, y)
+    >>> scores.mean()                                     # doctest: +ELLIPSIS
+    0.929...
+
     References
     ----------
 
@@ -1560,6 +1612,24 @@ class RandomTreesEmbedding(BaseForest):
     ----------
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
+
+    Examples
+    --------
+
+    >>> from sklearn.ensemble import RandomTreesEmbedding
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> rte =  RandomTreesEmbedding(random_state=42)
+    >>> print("The dimensionality before transforming: %d" % X.shape[1])
+    The dimensionality before transforming: 4
+    >>> X_transformed = rte.fit_transform(X, y)
+    >>> type(X_transformed)
+    scipy.sparse.csr.csr_matrix
+    >>> print("The dimensionality after transforming: %d"
+    ...       % X_transformed.shape[1])
+    The dimensionality after transforming: 235
+
 
     References
     ----------

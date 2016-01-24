@@ -349,6 +349,19 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    Examples
+    --------
+
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import AdaBoostClassifier
+
+    >>> iris = load_iris()
+    >>> clf = AdaBoostClassifier(n_estimators=100)
+    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores.mean()                                     # doctest: +ELLIPSIS
+    0.9...
+
     See also
     --------
     AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
@@ -896,6 +909,18 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.ensemble import AdaBoostRegressor
+
+    >>> boston = load_boston()
+    >>> clf = AdaBoostRegressor(n_estimators=100)
+    >>> scores = cross_val_score(clf, boston.data, boston.target)
+    >>> scores.mean()                                     # doctest: +ELLIPSIS
+    0.5...
 
     See also
     --------
