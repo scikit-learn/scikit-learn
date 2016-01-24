@@ -27,15 +27,9 @@ from github_link import make_linkcode_resolve
 
 # -- General configuration ---------------------------------------------------
 
-# Try to override the matplotlib configuration as early as possible
-try:
-    import gen_rst
-except:
-    pass
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['gen_rst',
+extensions = ['sphinx_gallery.gen_gallery',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
               'sphinx.ext.linkcode', 'sphinx.ext.doctest',
@@ -251,3 +245,15 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+sphinx_gallery_conf = {
+    'doc_module': 'sklearn',
+    'reference_url'     : {
+        'sklearn': None,
+        'matplotlib': 'http://matplotlib.org',
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
+        'nibabel': 'http://nipy.org/nibabel'}
+    }
+
+
