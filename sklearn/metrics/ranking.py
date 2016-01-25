@@ -100,7 +100,11 @@ def auc(x, y, reorder=False):
                                  "the x array is not increasing: %s" % x)
 
     area = direction * np.trapz(y, x)
-
+    if isinstance(area, np.memmap):
+        # Reductions such as .sum used internally in np.trapz do not return a
+        # scalar by default for numpy.memmap instances contrary to
+        # regular numpy.ndarray instances.
+        area = area.dtype.type(area)
     return area
 
 
