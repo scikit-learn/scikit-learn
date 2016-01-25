@@ -612,10 +612,10 @@ may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in :ref:`this example
-<example_cluster_plot_agglomerative_clustering.py>`, or
+<sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`raccoon face <example_cluster_plot_face_ward_segmentation.py>` example.
+:ref:`raccoon face <sphx_glr_example_cluster_plot_face_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 

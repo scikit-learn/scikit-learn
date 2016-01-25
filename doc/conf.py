@@ -24,6 +24,7 @@ from sklearn.externals.six import u
 sys.path.insert(0, os.path.abspath('sphinxext'))
 
 from github_link import make_linkcode_resolve
+import sphinx_gallery
 
 # -- General configuration ---------------------------------------------------
 
@@ -245,13 +246,11 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}
 
-import sphinx_gallery
 def make_carousel_thumbs(app, exception):
     """produces the final resized carousel images"""
     if exception is not None:
         return
     print('Preparing carousel images')
-    print(sphinx_gallery.__file__)
 
     image_dir = os.path.join(app.builder.outdir, '_images')
     for glr_plot, max_width in carousel_thumbs.items():

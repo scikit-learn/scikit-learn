@@ -133,7 +133,7 @@ learn::
              [  0.,   0.,   6.,  13.,  10.,   0.,   0.,   0.]])
 
     The :ref:`simple example on this dataset
-    <example_classification_plot_digits_classification.py>` illustrates how starting
+    <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
 
