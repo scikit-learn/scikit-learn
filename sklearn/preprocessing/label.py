@@ -140,6 +140,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
 
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
