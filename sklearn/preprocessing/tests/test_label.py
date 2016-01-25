@@ -12,6 +12,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -167,6 +168,10 @@ def test_label_encoder():
     assert_array_equal(le.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
                        [0, 1, 4, 4, 5, -1, -1])
     assert_raises(ValueError, le.transform, [0, 6])
+
+    le.fit(["apple", "orange"])
+    msg = "bad input shape"
+    assert_raise_message(ValueError, msg, le.transform, "apple")
 
 
 def test_label_encoder_fit_transform():
