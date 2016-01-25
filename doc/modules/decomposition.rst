@@ -648,21 +648,20 @@ components with some sparsity:
 Non-negative matrix factorization (NMF or NNMF)
 ===============================================
 
+NMF with the Frobenius norm
+---------------------------
+
 :class:`NMF` is an alternative approach to decomposition that assumes that the
 data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
-does not contain negative values.
-It finds a decomposition of samples :math:`X`
-into two matrices :math:`W` and :math:`H` of non-negative elements,
-by optimizing for the squared Frobenius norm:
+does not contain negative values. It finds a decomposition of samples
+:math:`X` into two matrices :math:`W` and :math:`H` of non-negative elements,
+by optimizing the distance :math:`d` between :math:`X` and the matrix product
+:math:`WH`. The most widely used distance function is the squared Frobenius
+norm, which is an obvious extension of the Euclidean norm to matrices:
 
 .. math::
-    \arg\min_{W,H} \frac{1}{2} ||X - WH||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {WH}_{ij})^2
-
-This norm is an obvious extension of the Euclidean norm to matrices. (Other
-optimization objectives have been suggested in the NMF literature, in
-particular Kullback-Leibler divergence, but these are not currently
-implemented.)
+    d_{Fro}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
@@ -716,7 +715,7 @@ and the intensity of the regularization with the :attr:`alpha`
 and the regularized objective function is:
 
 .. math::
-    \frac{1}{2}||X - WH||_{Fro}^2
+    d_{Fro}(X, WH)
     + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
     + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
     + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
@@ -725,10 +724,57 @@ and the regularized objective function is:
 :func:`non_negative_factorization` allows a finer control through the
 :attr:`regularization` attribute, and may regularize only W, only H, or both.
 
+NMF with a beta-divergence
+--------------------------
+
+As described previously, the most widely used distance function is the squared
+Frobenius norm, which is an obvious extension of the Euclidean norm to
+matrices:
+
+.. math::
+    d_{Fro}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
+
+However, NMF can also be used with a different function to measure the
+distance between X and the matrix product WH. Another typical distance
+function used in NMF is the (generalized) Kullback-Leibler (KL) divergence,
+also referred as I-divergence:
+
+.. math::
+    d_{KL}(X, Y) = \sum_{i,j} (X_{ij} * log(\frac{X_{ij}}{Y_{ij}}) - X_{ij} + Y_{ij})
+
+Another commonly used distance is the Itakura-Saito (IS) divergence:
+
+.. math::
+    d_{IS}(X, Y) = \sum_{i,j} (\frac{X_{ij}}{Y_{ij}} - log(\frac{X_{ij}}{Y_{ij}}) - 1)
+
+These three distances are special cases of the beta-divergence family, with
+:math:`\beta = 2, 1, 0` respectively [Fevotte, 2011]. The beta-divergence are
+defined by :
+
+.. math::
+    d_{\beta}(X, Y) = \sum_{i,j} \frac{1}{\beta(\beta - 1)}(X_{ij}^\beta + (\beta-1)Y_{ij}^\beta - \beta X_{ij} Y_{ij}^{\beta - 1})
+
+Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can be
+continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
+respectively.
+
+:class:`NMF` implements three solvers, using Projected Gradient ('pg')
+(deprecated, it will be removed in 0.19), Coordinate Descent ('cd'), and
+Multiplicative Update ('mu'). The 'mu' solver can optimize every
+beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
+(generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
+Itakura-Saito divergence (:math:`\beta=0`). Note that for
+:math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster.
+
+The 'cd' and 'pg' solvers can only optimize the Frobenius norm. Due to the
+underlying non-convexity of NMF, the different solvers may converge to
+different minima, even when optimizing the same distance function.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
     * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
 .. topic:: References:
 
@@ -753,6 +799,10 @@ and the regularized objective function is:
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
       A. Cichocki, P. Anh-Huy, 2009
+
+    * `"Algorithms for nonnegative matrix factorization with the beta-divergence"
+      <http://http://arxiv.org/pdf/1010.1763v3.pdf>`_
+      C. Fevotte, J. Idier, 2011
 
 
 .. _LatentDirichletAllocation:

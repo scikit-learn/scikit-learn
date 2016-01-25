@@ -15,6 +15,7 @@ from __future__ import division, print_function
 from math import sqrt
 import warnings
 import numbers
+import time
 
 import numpy as np
 import scipy.sparse as sp
@@ -27,6 +28,8 @@ from ..utils.validation import check_is_fitted, check_non_negative
 from ..utils import deprecated
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
+
+EPSILSON = 1e-9
 
 
 INTEGER_TYPES = (numbers.Integral, np.integer)
@@ -80,18 +83,155 @@ def _safe_compute_error(X, W, H):
     return error
 
 
-def _check_string_param(sparseness, solver):
+def beta_divergence(X, W, H, beta):
+    """Compute the beta-divergence of X and dot(W, H).
+
+    If beta == 2, this is the Frobenius squared norm
+    If beta == 1, this is the generalized Kullback-Leibler divergence
+    If beta == 0, this is the Itakura-Saito divergence
+    Else, this is the general beta-divergence.
+    """
+    beta = _beta_loss_to_float(beta)
+
+    # The method can be called with scalars
+    if isinstance(X, numbers.Number):
+        W = np.array([[W]])
+        H = np.array([[H]])
+        X = np.array([[X]])
+
+    # Frobenius norm
+    if beta == 2:
+        # Avoid the creation of the dense np.dot(W, H) if X is sparse.
+        if sp.issparse(X):
+            norm_X = np.dot(X.data, X.data)
+            norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
+            cross_prod = trace_dot((X * H.T), W)
+            res = (norm_X + norm_WH - 2. * cross_prod) / 2.
+        else:
+            res = squared_norm(X - np.dot(W, H)) / 2.
+        return res
+
+    if sp.issparse(X):
+        # compute np.dot(W, H) only where X is nonzero
+        WH_data = _special_sparse_dot(W, H, X).data
+        X_data = X.data
+    else:
+        WH = fast_dot(W, H)
+        WH_data = WH.ravel()
+        X_data = X.ravel()
+
+    # do not affect the zeros: here 0 ** (-1) = 0 and not infinity
+    WH_data = WH_data[X_data != 0]
+    X_data = X_data[X_data != 0]
+
+    # used to avoid division by zero
+    WH_data[WH_data == 0] = EPSILSON
+
+    # generalized Kullback-Leibler divergence
+    if beta == 1:
+        # fast and memory efficient computation of np.sum(np.dot(W, H))
+        sum_WH = np.dot(np.sum(W, axis=0), np.sum(H, axis=1))
+        # computes np.sum(X * log(X / WH)) only where X is nonzero
+        div = X_data / WH_data
+        res = np.dot(X_data, np.log(div))
+        # add full np.sum(np.dot(W, H)) - np.sum(X)
+        res += sum_WH - X_data.sum()
+
+    # Itakura-Saito divergence
+    elif beta == 0:
+        div = X_data / WH_data
+        res = np.sum(div) - np.product(X.shape) - np.sum(np.log(div))
+
+    # beta-divergence, beta not in (0, 1, 2)
+    else:
+        if sp.issparse(X):
+            # slow loop, but memory efficient computation of :
+            # np.sum(np.dot(W, H) ** beta)
+            sum_WH_beta = 0
+            for i in range(X.shape[1]):
+                sum_WH_beta += np.sum(fast_dot(W, H[:, i]) ** beta)
+
+        else:
+            sum_WH_beta = np.sum(WH ** beta)
+
+        sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
+        res = (X_data ** beta).sum() - beta * sum_X_WH
+        res += sum_WH_beta * (beta - 1)
+        res /= beta * (beta - 1)
+
+    return res
+
+
+def _special_sparse_dot(W, H, X):
+    """Computes np.dot(W, H), only where X is non zero."""
+    if sp.issparse(X):
+        ii, jj = X.nonzero()
+        dot_vals = np.multiply(W[ii, :], H.T[jj, :]).sum(axis=1)
+        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
+        return WH.tocsr()
+    else:
+        return fast_dot(W, H)
+
+
+def _compute_regularization(alpha, l1_ratio, regularization, n_samples,
+                            n_features):
+    """Compute L1 and L2 regularization coefficients for W and H"""
+    alpha_H = 0.
+    alpha_W = 0.
+    if regularization in ('both', 'components'):
+        alpha_H = float(alpha)
+    if regularization in ('both', 'transformation'):
+        alpha_W = float(alpha)
+
+    l1_reg_W = alpha_W * l1_ratio
+    l1_reg_H = alpha_H * l1_ratio
+    l2_reg_W = alpha_W * (1. - l1_ratio)
+    l2_reg_H = alpha_H * (1. - l1_ratio)
+    return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
+
+
+def _check_string_param(sparseness, solver, regularization, beta_loss):
     allowed_sparseness = (None, 'data', 'components')
     if sparseness not in allowed_sparseness:
         raise ValueError(
             'Invalid sparseness parameter: got %r instead of one of %r' %
             (sparseness, allowed_sparseness))
 
-    allowed_solver = ('pg', 'cd')
+    allowed_solver = ('pg', 'cd', 'mu')
     if solver not in allowed_solver:
         raise ValueError(
             'Invalid solver parameter: got %r instead of one of %r' %
             (solver, allowed_solver))
+
+    allowed_regularization = ('both', 'components', 'transformation', None)
+    if regularization not in allowed_regularization:
+        raise ValueError(
+            'Invalid regularization parameter: got %r instead of one of %r' %
+            (regularization, allowed_regularization))
+
+    # 'mu' is the only solver that handles other beta losses than 'frobenius'
+    if solver != 'mu' and beta_loss not in (2, 'frobenius'):
+        raise ValueError(
+            'Invalid beta_loss parameter: solver %r does not handle beta_loss'
+            ' = %r' % (solver, beta_loss))
+
+    beta_loss = _beta_loss_to_float(beta_loss)
+    return beta_loss
+
+
+def _beta_loss_to_float(beta_loss):
+    """Convert string beta_loss to float"""
+    allowed_beta_loss = {'frobenius': 2,
+                         'kullback-leibler': 1,
+                         'itakura-saito': 0}
+    if isinstance(beta_loss, str) and beta_loss in allowed_beta_loss:
+        beta_loss = allowed_beta_loss[beta_loss]
+
+    if not isinstance(beta_loss, numbers.Number):
+        raise ValueError('Invalid beta_loss parameter: got %r instead '
+                         'of one of %r, or a float.' %
+                         (beta_loss, allowed_beta_loss.keys()))
+    return beta_loss
 
 
 def _initialize_nmf(X, n_components, init=None, eps=1e-6,
@@ -230,7 +370,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     return W, H
 
 
-def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
+def _nls_subproblem(V, W, H, tol, max_iter, l1_reg=0., l2_reg=0.,
                     sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
@@ -254,15 +394,11 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     max_iter : int
         Maximum number of iterations before timing out.
 
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms. Set it to zero to
-        have no regularization.
+    l1_reg : double, default: 0.
+        L1 regularization parameter.
 
-    l1_ratio : double, default: 0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L2 penalty.
-        For l1_ratio = 1 it is an L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+    l2_reg : double, default: 0.
+        L2 regularization parameter.
 
     sigma : float
         Constant used in the sufficient decrease condition checked by the line
@@ -302,10 +438,10 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     gamma = 1
     for n_iter in range(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
-        if alpha > 0 and l1_ratio == 1.:
-            grad += alpha
-        elif alpha > 0:
-            grad += alpha * (l1_ratio + (1 - l1_ratio) * H)
+        if l1_reg > 0:
+            grad += l1_reg
+        if l2_reg > 0:
+            grad += l2_reg * H
 
         # The following multiplication with a boolean array is more than twice
         # as fast as indexing into grad.
@@ -345,7 +481,7 @@ def _nls_subproblem(V, W, H, tol, max_iter, alpha=0., l1_ratio=0.,
     return H, grad, n_iter
 
 
-def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, alpha, l1_ratio,
+def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, l1_reg, l2_reg,
                                  sparseness, beta, eta):
     """Helper function for _fit_projected_gradient"""
     n_samples, n_features = X.shape
@@ -353,25 +489,25 @@ def _update_projected_gradient_w(X, W, H, tolW, nls_max_iter, alpha, l1_ratio,
 
     if sparseness is None:
         Wt, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW, nls_max_iter,
-                                           alpha=alpha, l1_ratio=l1_ratio)
+                                           l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'data':
         Wt, gradW, iterW = _nls_subproblem(
             safe_vstack([X.T, np.zeros((1, n_samples))]),
             safe_vstack([H.T, np.sqrt(beta) * np.ones((1,
                          n_components_))]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            W.T, tolW, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'components':
         Wt, gradW, iterW = _nls_subproblem(
             safe_vstack([X.T,
                          np.zeros((n_components_, n_samples))]),
             safe_vstack([H.T,
                          np.sqrt(eta) * np.eye(n_components_)]),
-            W.T, tolW, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            W.T, tolW, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
 
     return Wt.T, gradW.T, iterW
 
 
-def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
+def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, l1_reg, l2_reg,
                                  sparseness, beta, eta):
     """Helper function for _fit_projected_gradient"""
     n_samples, n_features = X.shape
@@ -379,24 +515,24 @@ def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
 
     if sparseness is None:
         H, gradH, iterH = _nls_subproblem(X, W, H, tolH, nls_max_iter,
-                                          alpha=alpha, l1_ratio=l1_ratio)
+                                          l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'data':
         H, gradH, iterH = _nls_subproblem(
             safe_vstack([X, np.zeros((n_components_, n_features))]),
             safe_vstack([W,
                          np.sqrt(eta) * np.eye(n_components_)]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            H, tolH, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
     elif sparseness == 'components':
         H, gradH, iterH = _nls_subproblem(
             safe_vstack([X, np.zeros((1, n_features))]),
             safe_vstack([W, np.sqrt(beta) * np.ones((1, n_components_))]),
-            H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
+            H, tolH, nls_max_iter, l1_reg=l1_reg, l2_reg=l2_reg)
 
     return H, gradH, iterH
 
 
-def _fit_projected_gradient(X, W, H, tol, max_iter,
-                            nls_max_iter, alpha, l1_ratio,
+def _fit_projected_gradient(X, W, H, tol, max_iter, nls_max_iter, l1_reg_W,
+                            l1_reg_H, l2_reg_W, l2_reg_H,
                             sparseness, beta, eta):
     """Compute Non-negative Matrix Factorization (NMF) with Projected Gradient
 
@@ -431,7 +567,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
         # update W
         W, gradW, iterW = _update_projected_gradient_w(X, W, H, tolW,
                                                        nls_max_iter,
-                                                       alpha, l1_ratio,
+                                                       l1_reg_W, l2_reg_W,
                                                        sparseness, beta, eta)
         if iterW == 1:
             tolW = 0.1 * tolW
@@ -439,7 +575,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
         # update H
         H, gradH, iterH = _update_projected_gradient_h(X, W, H, tolH,
                                                        nls_max_iter,
-                                                       alpha, l1_ratio,
+                                                       l1_reg_H, l2_reg_H,
                                                        sparseness, beta, eta)
         if iterH == 1:
             tolH = 0.1 * tolH
@@ -448,7 +584,7 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
 
     if n_iter == max_iter:
         W, _, _ = _update_projected_gradient_w(X, W, H, tol, nls_max_iter,
-                                               alpha, l1_ratio, sparseness,
+                                               l1_reg_W, l2_reg_W, sparseness,
                                                beta, eta)
 
     return W, H, n_iter
@@ -485,8 +621,8 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
     return _update_cdnmf_fast(W, HHt, XHt, permutation)
 
 
-def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
-                            l1_ratio=0., regularization=None, update_H=True,
+def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
+                            l1_reg_H=0, l2_reg_W=0, l2_reg_H=0, update_H=True,
                             verbose=0, shuffle=False, random_state=None):
     """Compute Non-negative Matrix Factorization (NMF) with Coordinate Descent
 
@@ -511,18 +647,17 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    alpha : double, default: 0.
-        Constant that multiplies the regularization terms.
+    l1_reg_W : double, default: 0.
+        L1 regularization parameter for W.
 
-    l1_ratio : double, default: 0.
-        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
-        For l1_ratio = 0 the penalty is an L2 penalty.
-        For l1_ratio = 1 it is an L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+    l1_reg_H : double, default: 0.
+        L1 regularization parameter for H.
 
-    regularization : 'both' | 'components' | 'transformation' | None
-        Select whether the regularization affects the components (H), the
-        transformation (W), both or none of them.
+    l2_reg_W : double, default: 0.
+        L2 regularization parameter for W.
+
+    l2_reg_H : double, default: 0.
+        L2 regularization parameter for H.
 
     update_H : boolean, default: True
         Set to True, both W and H will be estimated from initial guesses.
@@ -559,29 +694,18 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     Ht = check_array(H.T, order='C')
     X = check_array(X, accept_sparse='csr')
 
-    # L1 and L2 regularization
-    l1_H, l2_H, l1_W, l2_W = 0, 0, 0, 0
-    if regularization in ('both', 'components'):
-        alpha = float(alpha)
-        l1_H = l1_ratio * alpha
-        l2_H = (1. - l1_ratio) * alpha
-    if regularization in ('both', 'transformation'):
-        alpha = float(alpha)
-        l1_W = l1_ratio * alpha
-        l2_W = (1. - l1_ratio) * alpha
-
     rng = check_random_state(random_state)
 
     for n_iter in range(max_iter):
         violation = 0.
 
         # Update W
-        violation += _update_coordinate_descent(X, W, Ht, l1_W, l2_W,
-                                                shuffle, rng)
+        violation += _update_coordinate_descent(X, W, Ht, l1_reg_W,
+                                                l2_reg_W, shuffle, rng)
         # Update H
         if update_H:
-            violation += _update_coordinate_descent(X.T, Ht, W, l1_H, l2_H,
-                                                    shuffle, rng)
+            violation += _update_coordinate_descent(X.T, Ht, W, l1_reg_H,
+                                                    l2_reg_H, shuffle, rng)
 
         if n_iter == 0:
             violation_init = violation
@@ -600,9 +724,265 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, alpha=0.001,
     return W, Ht.T, n_iter
 
 
+def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
+                             H_sum=None, HHt=None, XHt=None, update_H=True):
+    """update W in Multiplicative Update NMF"""
+    if beta_loss == 2:
+        # Numerator
+        if XHt is None:
+            XHt = safe_sparse_dot(X, H.T)
+        if update_H:
+            # avoid a copy of XHt, which will be re-computed (update_H=True)
+            numerator = XHt
+            XHt = None
+        else:
+            # preserve the XHt, which is not re-computed (update_H=False)
+            numerator = XHt.copy()
+
+        # Denominator
+        if HHt is None:
+            HHt = fast_dot(H, H.T)
+        denominator = fast_dot(W, HHt)
+
+    else:
+        # Numerator
+        # if X is sparse, compute WH only where X is non zero
+        WH_safe_X = _special_sparse_dot(W, H, X)
+        if sp.issparse(X):
+            WH_safe_X_data = WH_safe_X.data
+            X_data = X.data
+        else:
+            WH_safe_X_data = WH_safe_X
+            X_data = X
+            # copy used in the Denominator
+            WH = WH_safe_X.copy()
+
+        # to avoid division by zero
+        if beta_loss - 2. < 0:
+            WH_safe_X_data[WH_safe_X_data == 0] = EPSILSON
+
+        if beta_loss == 1:
+            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+        else:
+            WH_safe_X_data **= beta_loss - 2
+            # element-wise multiplication
+            WH_safe_X_data *= X_data
+
+        # here numerator = dot(X * (dot(W, H) ** (beta_loss - 2), H.T)
+        numerator = safe_sparse_dot(WH_safe_X, H.T)
+
+        # Denominator
+        if beta_loss == 1:
+            if H_sum is None:
+                H_sum = np.sum(H, axis=1)  # shape(n_components, )
+            denominator = H_sum[np.newaxis, :]
+
+        else:
+            # computation of WHHt = dot(dot(W, H) ** beta_loss - 1, H.T)
+            if sp.issparse(X):
+                # memory efficient computation
+                # (compute row by row, avoiding the dense matrix WH)
+                WHHt = np.empty(W.shape)
+                for i in range(X.shape[0]):
+                    WHi = fast_dot(W[i, :], H)
+                    WHi **= beta_loss - 1
+                    WHHt[i, :] = fast_dot(WHi, H.T)
+            else:
+                WH **= beta_loss - 1
+                WHHt = fast_dot(WH, H.T)
+            denominator = WHHt
+
+    # Add L1 and L2 regularization
+    if l1_reg_W > 0:
+        denominator += l1_reg_W
+    if l2_reg_W > 0:
+        denominator = denominator + l2_reg_W * W
+    denominator[denominator == 0] = EPSILSON
+
+    numerator /= denominator
+    delta_W = numerator
+
+    # gamma is in ]0, 1]
+    if gamma != 1:
+        delta_W **= gamma
+
+    return delta_W, H_sum, HHt, XHt
+
+
+def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
+    """update H in Multiplicative Update NMF"""
+    if beta_loss == 2:
+        numerator = safe_sparse_dot(W.T, X)
+        denominator = fast_dot(fast_dot(W.T, W), H)
+
+    else:
+        # Numerator
+        WH_safe_X = _special_sparse_dot(W, H, X)
+        if sp.issparse(X):
+            WH_safe_X_data = WH_safe_X.data
+            X_data = X.data
+        else:
+            WH_safe_X_data = WH_safe_X
+            X_data = X
+            # copy used in the Denominator
+            WH = WH_safe_X.copy()
+
+        # to avoid division by zero
+        if beta_loss - 2. < 0:
+            WH_safe_X_data[WH_safe_X_data == 0] = EPSILSON
+
+        if beta_loss == 1:
+            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+        else:
+            WH_safe_X_data **= beta_loss - 2
+            # element-wise multiplication
+            WH_safe_X_data *= X_data
+
+        # here numerator = dot(W.T, (dot(W, H) ** (beta_loss - 2)) * X)
+        numerator = safe_sparse_dot(W.T, WH_safe_X)
+
+        # Denominator
+        if beta_loss == 1:
+            W_sum = np.sum(W, axis=0)  # shape(n_components, )
+            W_sum[W_sum == 0] = 1.
+            denominator = W_sum[:, np.newaxis]
+
+        # beta_loss not in (1, 2)
+        else:
+            # computation of WtWH = dot(W.T, dot(W, H) ** beta_loss - 1)
+            if sp.issparse(X):
+                # memory efficient computation
+                # (compute column by column, avoiding the dense matrix WH)
+                WtWH = np.empty(H.shape)
+                for i in range(X.shape[1]):
+                    WHi = fast_dot(W, H[:, i])
+                    WHi **= beta_loss - 1
+                    WtWH[:, i] = fast_dot(W.T, WHi)
+            else:
+                WH **= beta_loss - 1
+                WtWH = fast_dot(W.T, WH)
+            denominator = WtWH
+
+    # Add L1 and L2 regularization
+    if l1_reg_H > 0:
+        denominator += l1_reg_H
+    if l2_reg_H > 0:
+        denominator = denominator + l2_reg_H * H
+    denominator[denominator == 0] = EPSILSON
+
+    numerator /= denominator
+    delta_H = numerator
+
+    # gamma is in ]0, 1]
+    if gamma != 1:
+        delta_H **= gamma
+
+    return delta_H
+
+
+def _fit_multiplicative_update(X, W, H, beta_loss='frobenius', n_iter=200,
+                               l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
+                               update_H=True, verbose=0):
+    """Compute Non-negative Matrix Factorization with Multiplicative Update
+
+    The objective function is beta_divergence(X, WH) and is minimized with an
+    alternating minimization of W and H. Each minimization is done with a
+    Multiplicative Update.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Constant input matrix.
+
+    W : array-like, shape (n_samples, n_components)
+        Initial guess for the solution.
+
+    H : array-like, shape (n_components, n_features)
+        Initial guess for the solution.
+
+    beta_loss : float or string, default 'frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits.
+
+    n_iter : integer, default: 200
+        Number of iterations.
+
+    l1_reg_W : double, default: 0.
+        L1 regularization parameter for W.
+
+    l1_reg_H : double, default: 0.
+        L1 regularization parameter for H.
+
+    l2_reg_W : double, default: 0.
+        L2 regularization parameter for W.
+
+    l2_reg_H : double, default: 0.
+        L2 regularization parameter for H.
+
+    update_H : boolean, default: True
+        Set to True, both W and H will be estimated from initial guesses.
+        Set to False, only W will be estimated.
+
+    verbose : integer, default: 0
+        The verbosity level.
+
+    Returns
+    -------
+    W : array, shape (n_samples, n_components)
+        Solution to the non-negative least squares problem.
+
+    H : array, shape (n_components, n_features)
+        Solution to the non-negative least squares problem.
+
+    References
+    ----------
+    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
+    factorization with the beta-divergence. Neural Computation, 23(9).
+    """
+    beta_loss = _beta_loss_to_float(beta_loss)
+
+    # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
+    if beta_loss < 1:
+        gamma = 1. / (2. - beta_loss)
+    elif beta_loss > 2:
+        gamma = 1. / (beta_loss - 1.)
+    else:
+        gamma = 1.
+
+    start_time = time.time()
+    H_sum, HHt, XHt = None, None, None
+    for epoch in range(n_iter):
+        # update W
+        # H_sum, HHt and XHt are saved and reused if not update_H
+        delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+            X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
+            H_sum, HHt, XHt, update_H)
+        W *= delta_W
+
+        # update H
+        if update_H:
+            delta_H = _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H,
+                                               l2_reg_H, gamma)
+            H *= delta_H
+
+            # These values will be recomputed since H changed
+            H_sum, HHt, XHt = None, None, None
+
+    if verbose:
+        end_time = time.time()
+        print("Epoch %02d reached after %.3f seconds." %
+              (epoch + 1, end_time - start_time))
+
+    return W, H
+
+
 def non_negative_factorization(X, W=None, H=None, n_components=None,
                                init='random', update_H=True, solver='cd',
-                               tol=1e-4, max_iter=200, alpha=0., l1_ratio=0.,
+                               beta_loss='frobenius', tol=1e-4,
+                               max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False, nls_max_iter=2000,
                                sparseness=None, beta=1, eta=0.1):
@@ -624,6 +1004,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
         ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
         ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+
+    For multiplicative-update ('mu') solver, the Frobenius norm
+    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
+    by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -668,16 +1052,34 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    solver : 'pg' | 'cd'
+    solver : 'pg' | 'cd' | 'mu'
         Numerical solver to use:
-        'pg' is a (deprecated) Projected Gradient solver.
-        'cd' is a Coordinate Descent solver.
+        'pg' is a Projected Gradient solver (deprecated).
+        'cd' is a Coordinate Descent solver (recommended).
+        'mu' is a Multiplicative Update solver.
+
+        .. versionadded:: 0.17
+           Coordinate Descent solver.
+
+        .. versionchanged:: 0.17
+           Deprecated Projected Gradient solver.
+
+        .. versionadded:: 0.18
+           Multiplicative Update solver.
+
+    beta_loss : float or string, default 'frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Used only in 'mu' solver.
 
     tol : float, default: 1e-4
-        Tolerance of the stopping condition.
+        Tolerance of the stopping condition. Not used in 'mu' solver.
 
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
+        'mu' solver always does the maximum number of iteration.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms.
@@ -739,11 +1141,15 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     large scale nonnegative matrix and tensor factorizations."
     IEICE transactions on fundamentals of electronics, communications and
     computer sciences 92.3: 708-721, 2009.
+
+    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
+    factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
     X = check_array(X, accept_sparse=('csr', 'csc'))
     check_non_negative(X, "NMF (input X)")
-    _check_string_param(sparseness, solver)
+    beta_loss = _check_string_param(sparseness, solver, regularization,
+                                    beta_loss)
 
     n_samples, n_features = X.shape
     if n_components is None:
@@ -765,10 +1171,18 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         _check_init(W, (n_samples, n_components), "NMF (input W)")
     elif not update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
-        W = np.zeros((n_samples, n_components))
+        # 'mu' solver should not be initialized by zeros
+        if solver == 'mu':
+            avg = np.sqrt(X.mean() / n_components)
+            W = avg * np.ones((n_samples, n_components))
+        else:
+            W = np.zeros((n_samples, n_components))
     else:
         W, H = _initialize_nmf(X, n_components, init=init,
                                random_state=random_state)
+
+    l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
+        alpha, l1_ratio, regularization, n_samples, n_features)
 
     if solver == 'pg':
         warnings.warn("'pg' solver will be removed in release 0.19."
@@ -777,28 +1191,35 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
             W, H, n_iter = _fit_projected_gradient(X, W, H, tol,
                                                    max_iter,
                                                    nls_max_iter,
-                                                   alpha, l1_ratio,
+                                                   l1_reg_W, l1_reg_H,
+                                                   l2_reg_W, l2_reg_H,
                                                    sparseness,
                                                    beta, eta)
         else:  # transform
             W, H, n_iter = _update_projected_gradient_w(X, W, H,
                                                         tol, nls_max_iter,
-                                                        alpha, l1_ratio,
+                                                        l1_reg_W, l2_reg_W,
                                                         sparseness, beta,
                                                         eta)
     elif solver == 'cd':
-        W, H, n_iter = _fit_coordinate_descent(X, W, H, tol,
-                                               max_iter,
-                                               alpha, l1_ratio,
-                                               regularization,
+        W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
+                                               l1_reg_W, l1_reg_H,
+                                               l2_reg_W, l2_reg_H,
                                                update_H=update_H,
                                                verbose=verbose,
                                                shuffle=shuffle,
                                                random_state=random_state)
+    elif solver == 'mu':
+        W, H = _fit_multiplicative_update(X, W, H, beta_loss, max_iter,
+                                          l1_reg_W, l1_reg_H, l2_reg_W,
+                                          l2_reg_H, update_H, verbose)
+        # 'mu' solver always does the maximum number of iteration
+        n_iter = max_iter
+
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
-    if n_iter == max_iter:
+    if n_iter == max_iter and solver != 'mu':
         warnings.warn("Maximum number of iteration %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
@@ -824,6 +1245,10 @@ class NMF(BaseEstimator, TransformerMixin):
 
         ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
         ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+
+    For multiplicative-update ('mu') solver, the Frobenius norm
+    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
+    by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
@@ -856,10 +1281,11 @@ class NMF(BaseEstimator, TransformerMixin):
 
         - 'custom': use custom matrices W and H
 
-    solver : 'pg' | 'cd'
+    solver : 'pg' | 'cd' | 'mu'
         Numerical solver to use:
         'pg' is a Projected Gradient solver (deprecated).
         'cd' is a Coordinate Descent solver (recommended).
+        'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -867,11 +1293,23 @@ class NMF(BaseEstimator, TransformerMixin):
         .. versionchanged:: 0.17
            Deprecated Projected Gradient solver.
 
-    tol : double, default: 1e-4
-        Tolerance value used in stopping conditions.
+        .. versionadded:: 0.18
+           Multiplicative Update solver.
+
+
+    beta_loss : float or string, default 'frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Used only in 'mu' solver.
+
+    tol : float, default: 1e-4
+        Tolerance of the stopping condition. Not used in 'mu' solver.
 
     max_iter : integer, default: 200
-        Number of iterations to compute.
+        Maximum number of iterations before timing out.
+        'mu' solver always does the maximum number of iteration.
 
     random_state : integer seed, RandomState instance, or None (default)
         Random number generator seed control.
@@ -952,15 +1390,14 @@ class NMF(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import NMF
     >>> model = NMF(n_components=2, init='random', random_state=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    NMF(alpha=0.0, beta=1, eta=0.1, init='random', l1_ratio=0.0, max_iter=200,
-      n_components=2, nls_max_iter=2000, random_state=0, shuffle=False,
-      solver='cd', sparseness=None, tol=0.0001, verbose=0)
+    NMF(alpha=0.0, beta=1, beta_loss='frobenius', eta=0.1, init='random',
+      l1_ratio=0.0, max_iter=200, n_components=2, nls_max_iter=2000,
+      random_state=0, shuffle=False, solver='cd', sparseness=None, tol=0.0001,
+      verbose=0)
 
     >>> model.components_
     array([[ 2.09783018,  0.30560234],
            [ 2.13443044,  2.13171694]])
-    >>> model.reconstruction_err_ #doctest: +ELLIPSIS
-    0.00115993...
 
     References
     ----------
@@ -972,15 +1409,19 @@ class NMF(BaseEstimator, TransformerMixin):
     large scale nonnegative matrix and tensor factorizations."
     IEICE transactions on fundamentals of electronics, communications and
     computer sciences 92.3: 708-721, 2009.
-    """
 
+    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
+    factorization with the beta-divergence. Neural Computation, 23(9).
+    """
     def __init__(self, n_components=None, init=None, solver='cd',
-                 tol=1e-4, max_iter=200, random_state=None,
-                 alpha=0., l1_ratio=0., verbose=0, shuffle=False,
-                 nls_max_iter=2000, sparseness=None, beta=1, eta=0.1):
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 shuffle=False, nls_max_iter=2000, sparseness=None,
+                 beta=1, eta=0.1):
         self.n_components = n_components
         self.init = init
         self.solver = solver
+        self.beta_loss = beta_loss
         self.tol = tol
         self.max_iter = max_iter
         self.random_state = random_state
@@ -1032,8 +1473,8 @@ class NMF(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=('csr', 'csc'))
 
         W, H, n_iter_ = non_negative_factorization(
-            X=X, W=W, H=H, n_components=self.n_components,
-            init=self.init, update_H=True, solver=self.solver,
+            X=X, W=W, H=H, n_components=self.n_components, init=self.init,
+            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
@@ -1045,7 +1486,11 @@ class NMF(BaseEstimator, TransformerMixin):
             self.comp_sparseness_ = _sparseness(H.ravel())
             self.data_sparseness_ = _sparseness(W.ravel())
 
-        self.reconstruction_err_ = _safe_compute_error(X, W, H)
+        if self.solver == 'mu':
+            self.reconstruction_err_ = beta_divergence(X, W, H,
+                                                       self.beta_loss)
+        else:
+            self.reconstruction_err_ = beta_divergence(X, W, H, 2.)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
@@ -1099,12 +1544,11 @@ class NMF(BaseEstimator, TransformerMixin):
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
+            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
+            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle,
-            nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
-            beta=self.beta, eta=self.eta)
+            shuffle=self.shuffle, nls_max_iter=self.nls_max_iter,
+            sparseness=self.sparseness, beta=self.beta, eta=self.eta)
 
         self.n_iter_ = n_iter_
         return W
@@ -1277,15 +1721,14 @@ class ProjectedGradientNMF(NMF):
     >>> from sklearn.decomposition import NMF
     >>> model = NMF(n_components=2, init='random', random_state=0)
     >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    NMF(alpha=0.0, beta=1, eta=0.1, init='random', l1_ratio=0.0, max_iter=200,
-      n_components=2, nls_max_iter=2000, random_state=0, shuffle=False,
-      solver='cd', sparseness=None, tol=0.0001, verbose=0)
+    NMF(alpha=0.0, beta=1, beta_loss='frobenius', eta=0.1, init='random',
+      l1_ratio=0.0, max_iter=200, n_components=2, nls_max_iter=2000,
+      random_state=0, shuffle=False, solver='cd', sparseness=None, tol=0.0001,
+      verbose=0)
 
     >>> model.components_
     array([[ 2.09783018,  0.30560234],
            [ 2.13443044,  2.13171694]])
-    >>> model.reconstruction_err_ #doctest: +ELLIPSIS
-    0.00115993...
 
     References
     ----------
@@ -1299,12 +1742,13 @@ class ProjectedGradientNMF(NMF):
     computer sciences 92.3: 708-721, 2009.
     """
 
-    def __init__(self, n_components=None, solver='pg', init=None,
-                 tol=1e-4, max_iter=200, random_state=None,
-                 alpha=0., l1_ratio=0., verbose=0,
-                 nls_max_iter=2000, sparseness=None, beta=1, eta=0.1):
+    def __init__(self, n_components=None, solver='pg', beta_loss='frobenius',
+                 init=None, tol=1e-4, max_iter=200, random_state=None,
+                 alpha=0., l1_ratio=0., verbose=0, nls_max_iter=2000,
+                 sparseness=None, beta=1, eta=0.1):
         super(ProjectedGradientNMF, self).__init__(
-            n_components=n_components, init=init, solver='pg', tol=tol,
-            max_iter=max_iter, random_state=random_state, alpha=alpha,
-            l1_ratio=l1_ratio, verbose=verbose, nls_max_iter=nls_max_iter,
-            sparseness=sparseness, beta=beta, eta=eta)
+            n_components=n_components, init=init, solver='pg',
+            beta_loss=beta_loss, tol=tol, max_iter=max_iter,
+            random_state=random_state, alpha=alpha, l1_ratio=l1_ratio,
+            verbose=verbose, nls_max_iter=nls_max_iter, sparseness=sparseness,
+            beta=beta, eta=eta)
