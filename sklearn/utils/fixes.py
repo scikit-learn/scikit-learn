@@ -396,12 +396,16 @@ else:
 
 if np_version < (1, 8):
 
-    def norm_2d(X, ord=None, axis=None, keepdims=False):
+    def norm(X, ord=None, axis=None, keepdims=False):
         """
         Handles the axis and keepdims parameters for the norm function in
         old versions of numpy.
         WARNING: Only tested for 2 dimensions, do not use with 1 dimensional arrays
         """
+
+        if X.ndim == 1:
+            return _norm_1d(X, ord=ord, keepdims=keepdims)
+
         if axis is None:
             norm = np.linalg.norm(X, ord=ord)
             if keepdims:
@@ -422,5 +426,14 @@ if np_version < (1, 8):
 
         return norm
 
+
+    def _norm_1d(X, ord=None, keepdims=False):
+        norm = np.linalg.norm(X, ord=ord)
+        if keepdims:
+            norm = np.reshape(norm, (1,))
+
+        return norm
+
+
 else:
-    norm_2d = np.linalg.norm
+    norm = np.linalg.norm
