@@ -669,6 +669,27 @@ avg / total       0.51      0.53      0.47        75
         assert_equal(report, expected_report)
 
 
+def test_classification_report_multiclass_with_long_string_label():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array(["blue", "green"*5, "red"])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = """\
+                           precision    recall  f1-score   support
+
+                     blue       0.83      0.79      0.81        24
+greengreengreengreengreen       0.33      0.10      0.15        31
+                      red       0.42      0.90      0.57        20
+
+              avg / total       0.51      0.53      0.47        75
+"""
+
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50

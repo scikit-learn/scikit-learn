@@ -27,7 +27,6 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
-from scipy.spatial.distance import hamming as sp_hamming
 
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
@@ -640,7 +639,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     References
     ----------
-    .. [1] `Wikipedia entry for the F1-score <http://en.wikipedia.org/wiki/F1_score>`_
+    .. [1] `Wikipedia entry for the F1-score
+            <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -1386,11 +1386,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     last_line_heading = 'avg / total'
 
     if target_names is None:
-        width = len(last_line_heading)
         target_names = ['%s' % l for l in labels]
-    else:
-        width = max(len(cn) for cn in target_names)
-        width = max(width, len(last_line_heading), digits)
+    name_width = max(len(cn) for cn in target_names)
+    width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     fmt = '%% %ds' % width  # first column: class name
@@ -1508,8 +1506,10 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         weight_average = np.mean(sample_weight)
 
     if y_type.startswith('multilabel'):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return (n_differences / (y_true.shape[0] * len(classes) * weight_average))
+        n_differences = count_nonzero(y_true - y_pred,
+                                      sample_weight=sample_weight)
+        return (n_differences /
+                (y_true.shape[0] * len(classes) * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
