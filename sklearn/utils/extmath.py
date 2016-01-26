@@ -26,6 +26,7 @@ from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from ..exceptions import NonBLASDotWarning
+from ..utils.arpack import svds
 
 
 def norm(x):
@@ -264,6 +265,105 @@ def randomized_range_finder(A, size, n_iter=2,
     Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
     return Q
 
+def svd_solver(M, n_components, svd_method='auto', n_iter=2, random_state=0,
+               copy=True):
+    """Unified interface for SVD solvers
+
+    Parameters
+    ----------
+    M: ndarray or sparse matrix
+        Matrix to decompose.
+
+    n_components: int
+        Number of singular values and vectors to extract.
+
+    svd_method: 'randomized', 'arpack', 'full' or 'auto' (default)
+        Selects the algorithm for finding singular vectors. If 'randomized',
+        :func:`sklearn.utils.extmath.randomized_svd` is used, which may be
+        faster for large matrices on which you wish to extract a small number
+        of components. If 'arpack', :func:`sklearn.utils.arpack.svds` is used,
+        which is more accurate, but possibly slower in some cases. If 'full',
+        :func:`scipy.linalg.svd` is used. Finally, the default 'auto' value
+        picks 'full' or 'randomized' depending on the dimensions of `M` as well
+        as `n_components`.
+
+    n_iter: int (default is 2)
+        Number of power iterations (can be used to deal with very noisy
+        problems).
+
+    random_state: RandomState or an int seed (default is 0)
+        A random number generator instance to make behavior.
+
+    copy: bool (default is True)
+        Copy M or not.
+
+    Returns
+    -------
+
+    U:
+        Unitary matrix having left singular vectors as columns.
+
+    S: ndarray
+        The singular values, sorted in non-increasing order.
+
+    V:
+        Unitary matrix having right singular vectors as rows.
+
+    Raises
+    ------
+    ValueError
+        If an invalid value of `svd_method` is used.
+
+    LinAlgError
+        If SVD computation does not converge.
+
+    """
+
+    legal_svd_methods = ['auto', 'full', 'arpack', 'randomized']
+
+    if svd_method not in legal_svd_methods:
+        raise ValueError("Unknown SVD method: '{0}'. svd_method must be one of"
+                         " {1}.".format(svd_method, legal_svd_methods))
+
+    random_state = check_random_state(random_state)
+    n_samples, n_features = M.shape
+
+    if svd_method == 'auto':
+        # Small problem, just call full SVD
+        if max(M.shape) <= 500:
+            svd_method = 'full'
+        elif n_components >= 1 and n_components < .8 * min(M.shape):
+            svd_method = 'randomized'
+        # This is also the case of n_components in (0,1)
+        else:
+            svd_method = 'full'
+
+    if svd_method == 'full':
+        # Center data
+        mean = np.mean(M, axis=0)
+        M_centered = np.array(M, copy=copy)
+        M_centered -= mean
+
+        U, S, V = linalg.svd(M_centered, full_matrices=False)
+        # Flip eigenvectors' sign to enforce deterministic output
+        U, V = svd_flip(U, V)
+
+    elif svd_method == 'arpack':
+        # Random init solution, as ARPACK does it internally
+        v0 = random_state.uniform(-1, 1, size=min(M.shape))
+        U, S, V = svds(M, k=n_components, tol=self.tol, v0=v0)
+        # svds doesn't abide by scipy.linalg.svd/randomized_svd
+        # conventions, so reverse its outputs.
+        S = S[::-1]
+        # Flip eigenvectors' sign to enforce deterministic output
+        U, V = svd_flip(U[:, ::-1], V[::-1])
+
+    elif svd_method == 'randomized':
+        # Sign flipping is done inside
+        U, S, V = randomized_svd(M, n_components=n_components, n_iter=n_iter,
+                                 flip_sign=True, random_state=random_state)
+
+    return U, S, V
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
                    power_iteration_normalizer='auto', transpose='auto',
