@@ -674,7 +674,7 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://books.nips.cc/papers/files/nips20/NIPS2007_0976.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
 .. _Logistic_regression:
 

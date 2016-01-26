@@ -8,20 +8,15 @@ Utilities for fast persistence of big data, with optional compression.
 
 import pickle
 import traceback
-import sys
 import os
 import zlib
 import warnings
-import struct
-import codecs
-
-from ._compat import _basestring
-
 from io import BytesIO
 
-PY3 = sys.version_info[0] >= 3
+from ._compat import _basestring, PY3_OR_LATER
 
-if PY3:
+
+if PY3_OR_LATER:
     Unpickler = pickle._Unpickler
     Pickler = pickle._Pickler
 
@@ -215,11 +210,11 @@ class NumpyPickler(Pickler):
         else:
             self.file = BytesIO()
         # Count the number of npy files that we have created:
-        self._npy_counter = 0
+        self._npy_counter = 1
         # By default we want a pickle protocol that only changes with
         # the major python version and not the minor one
         if protocol is None:
-            protocol = (pickle.DEFAULT_PROTOCOL if PY3
+            protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
                         else pickle.HIGHEST_PROTOCOL)
 
         Pickler.__init__(self, self.file,
@@ -257,8 +252,8 @@ class NumpyPickler(Pickler):
             files, rather than pickling them. Of course, this is a
             total abuse of the Pickler class.
         """
-        if self.np is not None and type(obj) in (self.np.ndarray,
-                                            self.np.matrix, self.np.memmap):
+        if (self.np is not None and type(obj) in
+                (self.np.ndarray, self.np.matrix, self.np.memmap)):
             size = obj.size * obj.itemsize
             if self.compress and size < self.cache_size * _MEGA:
                 # When compressing, as we are not writing directly to the
@@ -267,19 +262,21 @@ class NumpyPickler(Pickler):
                     # Pickling doesn't work with memmaped arrays
                     obj = self.np.asarray(obj)
                 return Pickler.save(self, obj)
-            self._npy_counter += 1
-            try:
-                filename = '%s_%02i.npy' % (self._filename,
-                                            self._npy_counter)
-                # This converts the array in a container
-                obj, filename = self._write_array(obj, filename)
-                self._filenames.append(filename)
-            except:
-                self._npy_counter -= 1
-                # XXX: We should have a logging mechanism
-                print('Failed to save %s to .npy file:\n%s' % (
+
+            if not obj.dtype.hasobject:
+                try:
+                    filename = '%s_%02i.npy' % (self._filename,
+                                                self._npy_counter)
+                    # This converts the array in a container
+                    obj, filename = self._write_array(obj, filename)
+                    self._filenames.append(filename)
+                    self._npy_counter += 1
+                except Exception:
+                    # XXX: We should have a logging mechanism
+                    print('Failed to save %s to .npy file:\n%s' % (
                         type(obj),
                         traceback.format_exc()))
+
         return Pickler.save(self, obj)
 
     def close(self):
@@ -326,7 +323,7 @@ class NumpyUnpickler(Unpickler):
             self.stack.append(array)
 
     # Be careful to register our new method.
-    if PY3:
+    if PY3_OR_LATER:
         dispatch[pickle.BUILD[0]] = load_build
     else:
         dispatch[pickle.BUILD] = load_build
@@ -462,7 +459,7 @@ def load(filename, mmap_mode=None):
             obj = unpickler.load()
         except UnicodeDecodeError as exc:
             # More user-friendly error message
-            if PY3:
+            if PY3_OR_LATER:
                 new_exc = ValueError(
                     'You may be trying to read with '
                     'python 3 a joblib pickle generated with python 2. '

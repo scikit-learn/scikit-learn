@@ -53,7 +53,7 @@ MAX_IDEAL_BATCH_DURATION = 2
 # can cause third party libraries to crash. Under Python 3.4+ it is possible
 # to set an environment variable to switch the default start method from
 # 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
-# of causing semantic changes and some additional pool instantiation overhead.
+# of causing semantic changes and some additional pool instanciation overhead.
 if hasattr(mp, 'get_context'):
     method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
     DEFAULT_MP_CONTEXT = mp.get_context(method=method)
@@ -137,10 +137,7 @@ class SafeFunction(object):
             e_type, e_value, e_tb = sys.exc_info()
             text = format_exc(e_type, e_value, e_tb, context=10,
                               tb_offset=1)
-            if issubclass(e_type, TransportableException):
-                raise
-            else:
-                raise TransportableException(text, e_type)
+            raise TransportableException(text, e_type)
 
 
 ###############################################################################
@@ -262,7 +259,7 @@ class Parallel(Logger):
         pre_dispatch: {'all', integer, or expression, as in '3*n_jobs'}
             The number of batches (of tasks) to be pre-dispatched.
             Default is '2*n_jobs'. When batch_size="auto" this is reasonable
-            default and the multiprocessing workers should never starve.
+            default and the multiprocessing workers shoud never starve.
         batch_size: int or 'auto', default: 'auto'
             The number of atomic tasks to dispatch at once to each
             worker. When individual evaluations are very fast, multiprocessing
@@ -533,7 +530,6 @@ class Parallel(Logger):
                     mmap_mode=self._mmap_mode,
                     temp_folder=self._temp_folder,
                     verbose=max(0, self.verbose - 50),
-                    context_id=0,  # the pool is used only for one call
                 )
                 if self._mp_context is not None:
                     # Use Python 3.4+ multiprocessing context isolation
@@ -613,13 +609,14 @@ class Parallel(Logger):
         elif self.batch_size == 'auto':
             old_batch_size = self._effective_batch_size
             batch_duration = self._smoothed_batch_duration
-            if (0 < batch_duration < MIN_IDEAL_BATCH_DURATION):
+            if (batch_duration > 0 and
+                    batch_duration < MIN_IDEAL_BATCH_DURATION):
                 # The current batch size is too small: the duration of the
                 # processing of a batch of task is not large enough to hide
                 # the scheduling overhead.
                 ideal_batch_size = int(
                     old_batch_size * MIN_IDEAL_BATCH_DURATION / batch_duration)
-                # Multiply by two to limit oscillations between min and max.
+                # Multiply by two to limit oscilations between min and max.
                 batch_size = max(2 * ideal_batch_size, 1)
                 self._effective_batch_size = batch_size
                 if self.verbose >= 10:
@@ -750,14 +747,13 @@ Sub-process traceback:
                 # Kill remaining running processes without waiting for
                 # the results as we will raise the exception we got back
                 # to the caller instead of returning any result.
-                with self._lock:
-                    self._terminate_pool()
-                    if self._managed_pool:
-                        # In case we had to terminate a managed pool, let
-                        # us start a new one to ensure that subsequent calls
-                        # to __call__ on the same Parallel instance will get
-                        # a working pool as they expect.
-                        self._initialize_pool()
+                self._terminate_pool()
+                if self._managed_pool:
+                    # In case we had to terminate a managed pool, let
+                    # us start a new one to ensure that subsequent calls
+                    # to __call__ on the same Parallel instance will get
+                    # a working pool as they expect.
+                    self._initialize_pool()
                 raise exception
 
     def __call__(self, iterable):
@@ -798,10 +794,13 @@ Sub-process traceback:
         self.n_completed_tasks = 0
         self._smoothed_batch_duration = 0.0
         try:
-            self._iterating = True
-
+            # Only set self._iterating to True if at least a batch
+            # was dispatched. In particular this covers the edge
+            # case of Parallel used with an exhausted iterator.
             while self.dispatch_one_batch(iterator):
-                pass
+                self._iterating = True
+            else:
+                self._iterating = False
 
             if pre_dispatch == "all" or n_jobs == 1:
                 # The iterable was consumed all at once by the above for loop.
