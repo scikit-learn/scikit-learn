@@ -203,35 +203,6 @@ def test_agglomerative_clustering():
     clustering2.fit(X_dist)
     assert_array_equal(clustering.labels_, clustering2.labels_)
 
-    # Test that using clustering based on cophenetic distance without
-    # a set threshold raises a ValueError
-
-    assert_raises(ValueError, AgglomerativeClustering(n_clusters=10,
-                                                  connectivity=connectivity,
-                                                  linkage="average",
-                                                  distance="True"))
-
-    # Test that clustering based on cophenetic distance does not yield
-    # the same result for fit with two different thresholds
-
-    clustering = AgglomerativeClustering(n_clusters=10,
-                                         connectivity=connectivity,
-                                         linkage="average",
-                                         distance="True",
-                                         threshold=20.0)
-    clustering.fit(X)
-    max_clustering = max(clustering.labels_)
-
-    clustering2 = AgglomerativeClustering(n_clusters=10,
-                                          connectivity=connectivity,
-                                          linkage="average",
-                                          distance="True",
-                                          threshold=2.0)
-    clustering2.fit(X)
-    max_clustering2 = max(clustering2.labels_)
-
-    assert_not_equal(max_clustering, max_clustering2)
-
 
 def test_ward_agglomeration():
     # Check that we obtain the correct solution in a simplistic case
