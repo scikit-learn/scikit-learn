@@ -629,8 +629,7 @@ def _hc_cut_distance(children, n_leaves, distance=None, threshold=None):
             these_children = children[-nodes[0] - n_leaves]
 
             # Hold label for flat cluster constant
-            if (these_children[0] <= threshold and main_cluster == 0)
-            or (these_children[1] <= threshold and main_cluster == 0):
+            if (these_children[0] <= threshold and main_cluster == 0) or (these_children[1] <= threshold and main_cluster == 0):
                 main_cluster = 1
                 main_cluster_id = cluster_id
                 cluster_id += 1
