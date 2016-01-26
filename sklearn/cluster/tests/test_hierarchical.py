@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
@@ -201,6 +202,46 @@ def test_agglomerative_clustering():
                                           linkage="complete")
     clustering2.fit(X_dist)
     assert_array_equal(clustering.labels_, clustering2.labels_)
+
+    
+    # Test that using clustering based on cophenetic distance with
+    # compute_full_tree not None raises a ValueError
+
+    assert_raises(ValueError, AgglomerativeClustering(n_clusters=10,
+                                                  connectivity=connectivity,
+                                                  linkage="average",
+                                                  compute_full_tree='auto',
+                                                  distance="True",
+                                                  threshold=10.0))
+
+    # Test that using clustering based on cophenetic distance without
+    # a set threshold raises a ValueError
+
+    assert_raises(ValueError, AgglomerativeClustering(n_clusters=10,
+                                                  connectivity=connectivity,
+                                                  linkage="average",
+                                                  distance="True"))
+
+    # Test that clustering based on cophenetic distance does not yield
+    # the same result for fit with two different thresholds
+
+    clustering = AgglomerativeClustering(n_clusters=10,
+                                         connectivity=connectivity,
+                                         linkage="average",
+                                         distance="True",
+                                         threshold=20.0)
+    clustering.fit(X)
+    max_clustering = max(clustering.labels_)
+
+    clustering2 = AgglomerativeClustering(n_clusters=10,
+                                          connectivity=connectivity,
+                                          linkage="average",
+                                          distance="True",
+                                          threshold=2.0)
+    clustering2.fit(X)
+    max_clustering2 = max(clustering2.labels_)
+
+    assert_not_equal(max_clustering, max_clustering2)
 
 
 def test_ward_agglomeration():
