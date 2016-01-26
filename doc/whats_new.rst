@@ -29,6 +29,11 @@ Bug fixes
       how this affected :func:`datasets.fetch_20newsgroups`. By `Loic
       Esteve`_.
 
+    - Fixed a bug that prevented using ROC AUC score to perform grid search on
+      several CPU / cores on large arrays. See `#6147
+      <https://github.com/scikit-learn/scikit-learn/issues/6147>`_
+      By `Olivier Grisel`_.
+
 .. _changes_0_17:
 
 Version 0.17
