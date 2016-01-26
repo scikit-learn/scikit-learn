@@ -16,7 +16,7 @@ New features
 ............
 
    - Added two functions for mutual information estimation:
-     :func:`feature_selection.mutual_info_classif` and 
+     :func:`feature_selection.mutual_info_classif` and
      :func:`feature_selection.mutual_info_regression`. These functions can be
      used in :class:`feature_selection.SelectKBest` and
      :class:`feature_selection.SelectPercentile` as score functions.
@@ -165,6 +165,11 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/issues/6196>`_ for
       how this affected :func:`datasets.fetch_20newsgroups`. By `Loic
       Esteve`_.
+
+    - Fixed a bug that prevented using ROC AUC score to perform grid search on
+      several CPU / cores on large arrays. See `#6147
+      <https://github.com/scikit-learn/scikit-learn/issues/6147>`_
+      By `Olivier Grisel`_.
 
 .. _changes_0_17:
 
@@ -4061,4 +4066,3 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrea Bravi: https://github.com/AndreaBravi
 
 .. _Devashish Deshpande: https://github.com/dsquareindia
-
