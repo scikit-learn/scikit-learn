@@ -801,11 +801,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
         if self.distance is not None and self.threshold is None:
             raise ValueError("If distance is set to true a threshold "
-                             "must be provided.")
-
-        if self.distance is not None and self.compute_full_tree is None:
-            raise ValueError("Clustering based on cophenetic distance is currently "
-                             "only possible for a fully computed tree.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
