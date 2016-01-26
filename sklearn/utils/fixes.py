@@ -394,7 +394,7 @@ if np_version < (1, 8, 1):
 else:
     from numpy import array_equal
 
-if np_version < (1, 8):
+if np_version < (1, 10):
 
     def norm(X, ord=None, axis=None, keepdims=False):
         """
