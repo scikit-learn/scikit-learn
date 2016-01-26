@@ -2,9 +2,11 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections import Sequence
+
 import numpy as np
 from scipy.sparse import issparse
 import warnings
+
 from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
                          assert_all_finite,
@@ -83,7 +85,7 @@ def safe_indexing(X, indices):
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and
-                                           indices.dtype.kind == 'i'):
+                                   indices.dtype.kind == 'i'):
             # This is often substantially faster than X[indices]
             return X.take(indices, axis=0)
         else:

@@ -10,6 +10,7 @@ from ..externals import six
 from ..utils import safe_mask, check_array, deprecated
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
+from ..utils.fixes import norm
 
 
 def _get_feature_importances(estimator, norm_order=1):
@@ -22,8 +23,7 @@ def _get_feature_importances(estimator, norm_order=1):
             importances = np.abs(estimator.coef_)
 
         else:
-            importances = np.linalg.norm(estimator.coef_,
-                                         axis=0, ord=norm_order)
+            importances = norm(estimator.coef_, axis=0, ord=norm_order)
 
     else:
         raise ValueError(
@@ -205,7 +205,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             raise ValueError(
                 'Either fit the model before transform or set "prefit=True"'
                 ' while passing the fitted estimator to the constructor.')
-        scores = _get_feature_importances(estimator)
+        scores = _get_feature_importances(estimator, self.norm_order)
         self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
         return scores >= self.threshold_

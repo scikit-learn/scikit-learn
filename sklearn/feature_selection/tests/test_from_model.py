@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from nose.tools import assert_raises, assert_true
-
+from sklearn.utils.fixes import norm
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -100,6 +100,29 @@ def test_feature_importances():
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
     assert_array_equal(X_new, X[:, mask])
+
+
+@skip_if_32bit
+def test_feature_importances_2d_coef():
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0, n_classes=4)
+
+    est = LogisticRegression()
+    for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
+        for order in [1, 2, np.inf]:
+            # Fit SelectFromModel a multi-class problem
+            transformer = SelectFromModel(estimator=LogisticRegression(), threshold=threshold, norm_order=order)
+            transformer.fit(X, y)
+            assert_true(hasattr(transformer.estimator_, 'coef_'))
+            X_new = transformer.transform(X)
+            assert_less(X_new.shape[1], X.shape[1])
+
+            # Manually check that the norm is correctly performed
+            est.fit(X, y)
+            importances = norm(est.coef_, axis=0, ord=order)
+            feature_mask = importances > func(importances)
+            assert_array_equal(X_new, X[:, feature_mask])
 
 
 def test_partial_fit():
