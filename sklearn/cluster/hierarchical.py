@@ -803,7 +803,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             raise ValueError("If distance is set to true a threshold "
                              "must be provided.")
 
-        if self.distance is not None and self.compute_full_tree is not None:
+        if self.distance is not None and self.compute_full_tree is None:
             raise ValueError("Clustering based on cophenetic distance is currently "
                              "only possible for a fully computed tree.")
 
@@ -846,8 +846,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.children_, self.n_components_, self.n_leaves_, parents, returned_distance = \
             memory.cache(tree_builder)(X, connectivity,
                                        n_clusters=n_clusters,
-                                       **kwargs,
-                                       return_distance="True")
+                                       return_distance="True",
+                                       **kwargs)
         # Cut the tree
         if compute_full_tree:
             if self.distance is not None:
