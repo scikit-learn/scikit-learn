@@ -158,6 +158,13 @@ Bug fixes
       on datasets larger than 1MB:
       https://github.com/joblib/joblib/blob/0.9.4/CHANGES.rst
 
+    - Fixed reading of Bunch pickles generated with scikit-learn
+      version <= 0.16. This can affect users who have already
+      downloaded a dataset with scikit-learn 0.16 and are loading it
+      with scikit-learn 0.17. See `#6196
+      <https://github.com/scikit-learn/scikit-learn/issues/6196>`_ for
+      how this affected :func:`datasets.fetch_20newsgroups`. By `Loic
+      Esteve`_.
 
 .. _changes_0_17:
 
