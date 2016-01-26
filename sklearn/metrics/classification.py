@@ -1330,7 +1330,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          average=None, sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1348,6 +1348,29 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     target_names : list of strings
         Optional display names matching the labels (same order).
+
+    average : None, string or tuple of strings, which are a subset of [
+        'weighted', 'micro', 'macro', 'samples']
+        This determines the averaging methods shown in the report:
+
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            accepted for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
+        if average = None (default), results for all relevant averaging
+        methods are shown
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -1367,13 +1390,15 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     >>> y_pred = [0, 0, 2, 2, 1]
     >>> target_names = ['class 0', 'class 1', 'class 2']
     >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                 precision    recall  f1-score   support
+                          precision    recall  f1-score   support
     <BLANKLINE>
-        class 0       0.50      1.00      0.67         1
-        class 1       0.00      0.00      0.00         1
-        class 2       1.00      0.67      0.80         3
+                 class 0       0.50      1.00      0.67         1
+                 class 1       0.00      0.00      0.00         1
+                 class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-    avg / total       0.70      0.60      0.61         5
+    weighted avg / total       0.70      0.60      0.61         5
+       micro avg / total       0.60      0.60      0.60         5
+       macro avg / total       0.50      0.56      0.49         5
     <BLANKLINE>
 
     """
@@ -1383,14 +1408,45 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     else:
         labels = np.asarray(labels)
 
-    last_line_heading = 'avg / total'
+    is_binary_classification = len(labels) == 2
+    is_multilabel = _check_targets(y_true, y_pred)[0].startswith('multilabel')
+
+    if is_binary_classification and average:
+        raise ValueError('Averaging methods are not relevant for binary '
+                         'classification. Please omit average argument.')
+
+    if average:
+        if isinstance(average, basestring):
+            averages = (average,)
+        else:
+            averages = average
+        average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+        if not set(averages).issubset(average_options):
+            raise ValueError('average has to be one or more of ' +
+                             str(average_options))
+        if 'samples' in averages and not is_multilabel:
+            raise ValueError("'samples' averaging method is only allowed "
+                             "for multi-label classifications.")
+    else:
+        if is_binary_classification:
+            averages = (None,)  # dummy entry to let totals show up
+        elif is_multilabel:
+            averages = ('samples', 'weighted', 'micro', 'macro')
+        else:
+            averages = ('weighted', 'micro', 'macro')
+
+    if not is_binary_classification:
+        last_line_headings = [a + ' avg / total' for a in averages]
+    else:
+        last_line_headings = ['total']
+    max_width_last_line = max(len(h) for h in last_line_headings)
 
     if target_names is None:
-        width = len(last_line_heading)
+        width = max_width_last_line
         target_names = ['%s' % l for l in labels]
     else:
         width = max(len(cn) for cn in target_names)
-        width = max(width, len(last_line_heading), digits)
+        width = max(width, max_width_last_line, digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     fmt = '%% %ds' % width  # first column: class name
@@ -1407,6 +1463,17 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                                                   average=None,
                                                   sample_weight=sample_weight)
 
+    # compute average metrics for all methods in averages
+    average_metrics = (precision_recall_fscore_support(y_true, y_pred,
+                                                       labels=labels,
+                                                       average=el,
+                                                       sample_weight=
+                                                       sample_weight)
+                       # skip calculating average_metrics in case of a binary
+                       # classification
+                       if el else None
+                       for el in averages)
+
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
@@ -1416,14 +1483,16 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     report += '\n'
 
-    # compute averages
-    values = [last_line_heading]
-    for v in (np.average(p, weights=s),
-              np.average(r, weights=s),
-              np.average(f1, weights=s)):
-        values += ["{0:0.{1}f}".format(v, digits)]
-    values += ['{0}'.format(np.sum(s))]
-    report += fmt % tuple(values)
+    # add average metrics and totals to the report
+    for h, metric in zip(last_line_headings, average_metrics):
+        values = [h]
+        if metric:
+            for v in metric[:3]:
+                values += ["{0:0.{1}f}".format(v, digits)]
+        else:  # binary classification case
+            values += ["-"] * 3
+        values += ['{0}'.format(np.sum(s))]
+        report += fmt % tuple(values)
     return report
 
 
