@@ -800,7 +800,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                              " %s was provided." % str(self.n_clusters))
 
         if self.distance is not None and self.threshold is None:
-            raise ValueError("If distance is set to true a threshold "
+            raise ValueError("If distance is set to true a threshold"
+                             "must be provided.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
