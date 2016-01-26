@@ -846,7 +846,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.children_, self.n_components_, self.n_leaves_, parents, returned_distance = \
             memory.cache(tree_builder)(X, connectivity,
                                        n_clusters=n_clusters,
-                                       **kwargs, return_distance="True")
+                                       **kwargs,
+                                       return_distance="True")
         # Cut the tree
         if compute_full_tree:
             if self.distance is not None:
