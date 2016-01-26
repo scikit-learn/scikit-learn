@@ -579,6 +579,105 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 
 ###############################################################################
+# Functions for cutting hierarchical clustering tree based on cophenetic distance
+
+def _hc_cut_distance(children, n_leaves, distance=None, threshold=None):
+    """Function cutting the ward tree for a given number of clusters.
+
+    Parameters
+    ----------
+    n_clusters : int or ndarray
+        The number of clusters to form.
+
+    children : list of pairs. Length of n_nodes
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
+
+    n_leaves : int
+        Number of leaves of the tree.
+
+    distance : "True" or None (optional)
+        Clustering based on the cophenetic distance. Forms flat clusters
+        so that the observations in each cluster do not have a
+        cophenetic distance larger than the set threshold.
+
+    threshold : float
+        Threshold for clustering based on cophenetic distance.
+
+    Returns
+    -------
+    labels : array [n_samples]
+        cluster labels for each point
+
+    """
+
+    # In this function, we store nodes as a heap to avoid recomputing
+    # the max of the nodes: the first element is always the smallest
+    # We use negated indices as heaps work on smallest elements, and we
+    # are interested in largest elements
+    # children[-1] is the root of the tree
+    nodes = [-(max(children[-1]) + 1)]
+    label = np.zeros(n_leaves, dtype=np.intp)
+    cluster_id = 0
+    main_cluster_id = 0
+    main_cluster = 0
+
+    while len(nodes) != 0:
+        # As we have a heap, nodes[0] is the smallest element
+        if -nodes[0] >= n_leaves:
+            these_children = children[-nodes[0] - n_leaves]
+
+            # Hold label for flat cluster constant
+            if (these_children[0] <= threshold and main_cluster == 0)
+            or (these_children[1] <= threshold and main_cluster == 0):
+                main_cluster = 1
+                main_cluster_id = cluster_id
+                cluster_id += 1
+
+            # Set labels for both children individually
+            # Label only need to be set for leaves
+            if these_children[0] < n_leaves:
+                if distance[-nodes[0] - n_leaves] <= threshold:
+                    # If the cophenetic distance is smaller than the set
+                    # threshold, set label for current child and all
+                    # its descendents and do not insert current child
+                    label[these_children[0]] = main_cluster_id
+                    label[_hierarchical._hc_get_descendent(these_children[0], children, n_leaves)] = main_cluster_id
+                else:
+                    # Otherwise, only set label for current child
+                    label[these_children[0]] = cluster_id
+                    # Insert current child to check on descendents
+                    heappush(nodes, -these_children[0])
+                    cluster_id += 1
+            else:
+                # Insert current child to check on descendents
+                heappush(nodes, -these_children[0])
+
+            if these_children[1] < n_leaves:
+                if distance[-nodes[0] - n_leaves] <= threshold:
+                    # If the cophenetic distance is smaller than the set
+                    # threshold, set label for current child and all
+                    # its descendents and do not insert its children
+                    label[these_children[1]] = main_cluster_id
+                    label[_hierarchical._hc_get_descendent(these_children[1], children, n_leaves)] = main_cluster_id
+                else:
+                    # Otherwise, only set label for current child
+                    label[these_children[1]] = cluster_id
+                    # Insert current child to check on descendents
+                    heappush(nodes, -these_children[1])
+                    cluster_id += 1
+            else:
+                # Insert current child to check on descendents
+                heappush(nodes, -these_children[1])
+
+        # Remove largest node
+        heappop(nodes)
+
+    return label
+
+
+###############################################################################
 
 class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     """
@@ -636,6 +735,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         value, and should accept an array of shape [M, N] and the keyword
         argument ``axis=1``, and reduce it to an array of size [M].
 
+    distance : "True" or None (optional)
+        Clustering based on the cophenetic distance. Forms flat clusters so that
+        the observations in each cluster do not have a cophenetic distance
+        larger than the defined threshold.
+
+    threshold : float
+        Threshold for clustering based on cophenetic distance.
+
     Attributes
     ----------
     labels_ : array [n_samples]
@@ -660,7 +767,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func=np.mean,
+                 distance=None, threshold=None):
         self.n_clusters = n_clusters
         self.memory = memory
         self.connectivity = connectivity
@@ -668,6 +776,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
+        self.distance = distance
+        self.threshold = threshold
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
@@ -689,6 +799,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
                              " %s was provided." % str(self.n_clusters))
+
+        if self.distance is not None and self.threshold is None:
+            raise ValueError("If distance is set to true a threshold "
+                             "must be provided.")
+
+        if self.distance is not None and self.compute_full_tree is not None:
+            raise ValueError("Clustering based on cophenetic distance is currently "
+                             "only possible for a fully computed tree.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
@@ -726,13 +844,17 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
-        self.children_, self.n_components_, self.n_leaves_, parents = \
+        self.children_, self.n_components_, self.n_leaves_, parents, returned_distance = \
             memory.cache(tree_builder)(X, connectivity,
                                        n_clusters=n_clusters,
-                                       **kwargs)
+                                       **kwargs, return_distance="True")
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+            if self.distance is not None:
+                self.labels_ = _hc_cut_distance(self.children_, self.n_leaves_,
+                                                returned_distance,self.threshold)
+            else:
+                self.labels_ = _hc_cut(self.n_clusters, self.children_,
                                    self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
