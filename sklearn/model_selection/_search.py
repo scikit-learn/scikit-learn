@@ -4,6 +4,12 @@ parameters of an estimator.
 """
 from __future__ import print_function
 
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Andreas Mueller <amueller@ais.uni-bonn.de>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+# License: BSD 3 clause
+
 from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
@@ -30,11 +36,6 @@ from ._validation import _fit_and_score
 from ..exceptions import FitFailedWarning
 
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD 3 clause
 __all__ = ['GridSearchCV', 'GridSearchTransductive', 'ParameterGrid',
            'fit_grid_point', 'ParameterSampler', 'RandomizedSearchCV',
            'RandomizedSearchTransductive']
