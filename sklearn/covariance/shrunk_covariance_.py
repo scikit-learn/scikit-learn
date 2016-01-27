@@ -198,6 +198,9 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     if not assume_centered:
         X = X - X.mean(0)
 
+    # A non-blocked version of the computation is present in the tests
+    # in tests/test_covariance.py
+
     # number of blocks to split the covariance matrix into
     n_splits = int(n_features / block_size)
     X2 = X ** 2
@@ -232,6 +235,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta = delta_ - 2. * mu * emp_cov_trace.sum() + n_features * mu ** 2
     delta /= n_features
     # get final beta as the min between beta and delta
+    # We do this to prevent shrinking more than "1", which whould invert
+    # the value of covariances
     beta = min(beta, delta)
     # finally get shrinkage
     shrinkage = 0 if beta == 0 else beta / delta
