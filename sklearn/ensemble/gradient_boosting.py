@@ -1859,9 +1859,9 @@ class GradientBoostingClassifierCV(BaseEstimator):
     """ Gradient Boosting Classification with Cross Validation
 
     This class keeps adding estimators to the underlying GB estimator till
-    adding a new estimators does not affect the score by much. The goal of this
-    class is to determine the best choice of `n_estimators` for each set of
-    parameters. In most cases, this will be much faster than using
+    adding a new estimators does not improve the score by much. The goal of
+    this class is to determine the best choice of `n_estimators` for each set
+    of parameters. In most cases, this will be much faster than using
     :class:`sklearn.model_selection.GridSearchCV` due to early stopping.
     All parameters which are not parsed by this class are passed directly to
     the underlying Gradient Boosting estimator. If one or more parameters is a
@@ -2232,8 +2232,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         # Pre processing to ensure every parameter is a list
         # which `ParameterGrid` can iterate over
         for key, value in params.items():
-            if not type(value) is list:
-                params[key] = [value]
+            params[key] = np.atleast_1d(value)
 
         return params
 

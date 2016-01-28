@@ -3,16 +3,17 @@
 Early stopping of Gradient Boosting
 ===================================
 
-Gradient boosting works by fitting a classifier at each iteration to improve
-its prediction over the training data. The improvement in prediction
-succesively reduces as more classifiers are added. The
+Gradient boosting works by fitting a regression tree at each iteration to
+improve its prediction over the training data. The improvement in prediction
+succesively reduces as more regression trees are added. The
 :class:`~sklearn.ensemble.GradientBoostingClassifierCV` class halts the
-training when no there is no significant improvement in the last few
-iterations. This example illustrates how the GradientBoostingClassifierCV class
-can acheive almost the same accuracy as compared to the
-GradientBoostingClassifier class with significantly lesser number of
-estimators. This can save memory and prediction time. Moreover, the class can
-be used as a drop-in replacement for the GradientBoostingClassifier class.
+training when there is no significant improvement in accuracy on the validation
+data during the last few iterations. This example illustrates how the 
+GradientBoostingClassifierCV class can acheive almost the same accuracy as
+compared to the GradientBoostingClassifier class with significantly lesser
+number of estimators. This can save memory and prediction time. Moreover, the
+class can be used as a drop-in replacement for the GradientBoostingClassifier
+class.
 
 """
 
@@ -37,7 +38,8 @@ score_gbcv = []
 
 for X, y in data_list:
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33,
+                                                        random_state=13)
 
     gbcv = ensemble.GradientBoostingClassifierCV()
     gb = ensemble.GradientBoostingClassifier()
