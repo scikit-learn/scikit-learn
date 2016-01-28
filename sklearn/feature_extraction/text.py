@@ -784,7 +784,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
         j_indices = []
-        indptr = _make_long_array()
+        if sp_version >= (0, 14):
+            # We can use 64-bit indices
+            # NOTE: long on Windows is only 32 bits
+            # indptr stores indices into j_indices, which can be large
+            indptr = _make_long_array()
+        else:
+            # Sparse arrays only support 32-bit integers
+            # j_indices stores feature indices, likely to be < 2^31
+            indptr = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
             feature_counter = {}
@@ -967,7 +975,12 @@ def _make_int_array():
     return array.array(str("i"))
 
 def _make_long_array():
-    """Construct an array.array of a type suitable for scipy.sparse indices (which now support 64-bit signed integers)."""
+    """Construct an array.array of a type suitable for large scipy.sparse indices.
+
+    scipy 0.14 and later can construct sparse matrices with 64 bit integer indices.
+
+    NOTE: long on Windows is only 32 bits
+    """
     return array.array(str("l"))
 
 
