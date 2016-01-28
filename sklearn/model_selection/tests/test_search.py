@@ -299,8 +299,8 @@ def test_grid_search_transductive_clusterer_no_score():
     assert_equal(grid_search.score(X), grid_search_no_score.score(X))
 
     # giving no scoring function raises an error
-    grid_search_no_score = GridSearchCV(clf_no_score,
-                                        {'n_clusters': n_clusters})
+    grid_search_no_score = GridSearchTransductive(clf_no_score,
+                                                  {'n_clusters': n_clusters})
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
 
