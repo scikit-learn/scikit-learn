@@ -34,18 +34,6 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     X = iris.data[:, pair]
     y = iris.target
 
-    # Shuffle
-    idx = np.arange(X.shape[0])
-    np.random.seed(13)
-    np.random.shuffle(idx)
-    X = X[idx]
-    y = y[idx]
-
-    # Standardize
-    mean = X.mean(axis=0)
-    std = X.std(axis=0)
-    X = (X - mean) / std
-
     # Train
     clf = DecisionTreeClassifier().fit(X, y)
 
@@ -73,6 +61,9 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
 
     plt.axis("tight")
 
-plt.suptitle("Decision surface of a decision tree using paired features")
-plt.legend()
+plt.suptitle("Decision surface of a decision tree using paired features",
+             position=(0.5, 0.9))
+handles, labels = plt.gca().get_legend_handles_labels()
+plt.figlegend(handles=handles, labels=labels, loc='upper left')
+plt.tight_layout(rect=[0, 0.03, 1, 0.8])
 plt.show()
