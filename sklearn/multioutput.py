@@ -51,6 +51,9 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
     n_jobs : int, optional, default: 1
         The number of jobs to run in parallel for `fit`. If -1,
         then the number of jobs is set to the number of cores.
+        When individual estimators are fast to train or predict
+        using `n_jobs>1` can result in slower performance due
+        to the overhead of spawning processes.
     """
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
