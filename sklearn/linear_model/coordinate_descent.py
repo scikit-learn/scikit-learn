@@ -607,7 +607,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic', l1_weights=None):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -622,6 +622,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
+		self.l1_weights = l1_weights
 
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
