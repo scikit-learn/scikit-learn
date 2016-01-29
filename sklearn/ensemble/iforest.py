@@ -16,7 +16,6 @@ from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 
 from .bagging import BaseBagging
-from .forest import _parallel_helper
 from .base import _partition_estimators
 
 __all__ = ["IsolationForest"]

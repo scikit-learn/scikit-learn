@@ -15,6 +15,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, clone, MetaEstimatorMixin, RegressorMixin
 from .utils import check_array, check_random_state, check_X_y
+from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -29,11 +30,6 @@ def _fit_regression(estimator, X, y, sample_weight):
     else:
         estimator.fit(X, y)
     return estimator
-
-
-def _parallel_helper(obj, methodname, *args, **kwargs):
-    """Private helper to workaround Python 2 pickle limitations"""
-    return getattr(obj, methodname)(*args, **kwargs)
 
 
 class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
@@ -112,7 +108,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo', 'dok', 'lil'])
 
-        pred = Parallel(n_jobs=self.n_jobs)(delayed(_parallel_helper)(e, 'predict', X)
+        pred = Parallel(n_jobs=self.n_jobs)(delayed(parallel_helper)(e, 'predict', X)
                                             for e in self.estimators_)
 
         return np.asarray(pred).T
