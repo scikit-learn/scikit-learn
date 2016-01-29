@@ -622,7 +622,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
-		self.l1_weights = l1_weights
+        self.l1_weights = l1_weights
 
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
