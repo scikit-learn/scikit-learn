@@ -7,7 +7,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import as_float_array, check_array, check_consistent_length
+from .utils import as_float_array, check_array, check_consistent_length, deprecated
 from .utils.fixes import astype
 from ._isotonic import _isotonic_regression, _make_unique
 import warnings
@@ -193,12 +193,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    X_ : ndarray (n_samples, )
-        A copy of the input X.
-
-    y_ : ndarray (n_samples, )
-        Isotonic fit of y.
-
     X_min_ : float
         Minimum value of input array `X_` for left bound.
 
@@ -234,6 +228,32 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
 
+    @property
+    @deprecated("Attribute ``X_`` is deprecated in version 0.18 and will be removed in version 0.20.")
+    def X_(self):
+        return self._X_
+
+    @X_.setter
+    def X_(self, value):
+        self._X_ = value
+
+    @X_.deleter
+    def X_(self):
+        del self._X_
+
+    @property
+    @deprecated("Attribute ``y_`` is deprecated in version 0.18 and will be removed in version 0.20.")
+    def y_(self):
+        return self._y_
+
+    @y_.setter
+    def y_(self, value):
+        self._y_ = value
+
+    @y_.deleter
+    def y_(self):
+        del self._y_
+
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
             raise ValueError("X should be a 1d array")
@@ -252,7 +272,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             # single y, constant prediction
             self.f_ = lambda x: y.repeat(x.shape)
         else:
-            self.f_ = interpolate.interp1d(X, y, kind='slinear',
+            self.f_ = interpolate.interp1d(X, y, kind='linear',
                                            bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight):
@@ -282,9 +302,26 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X, y, sample_weight = [astype(array[order], np.float64, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
-        self.X_ = unique_X
-        self.y_ = isotonic_regression(unique_y, unique_sample_weight, self.y_min,
+        self._X_ = unique_X
+        self._y_ = isotonic_regression(unique_y, unique_sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
+
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self._X_)
+        self.X_max_ = np.max(self._X_)
+
+        # Remove unnecessary points for faster prediction
+        keep_data = np.ones((len(self._y_),), dtype=bool)
+        # Aside from the 1st and last point, remove points whose y values
+        # are equal to both the point before and the point after it.
+        keep_data[1:-1] = np.logical_or(
+            np.not_equal(self._y_[1:-1], self._y_[:-2]),
+            np.not_equal(self._y_[1:-1], self._y_[2:])
+            )
+        # We're keeping self.X_ and self.y_ around for backwards compatibility,
+        # but they should be considered deprecated.
+        self._necessary_X_ = self._X_[keep_data]
+        self._necessary_y_ = self._y_[keep_data]
 
         return order_inv
 
@@ -316,12 +353,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # Build y_
         self._build_y(X, y, sample_weight)
 
-        # Handle the left and right bounds on X
-        self.X_min_ = np.min(self.X_)
-        self.X_max_ = np.max(self.X_)
-
         # Build f_
-        self._build_f(self.X_, self.y_)
+        self._build_f(self._necessary_X_, self._necessary_y_)
 
         return self
 
@@ -381,4 +414,4 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         We need to rebuild the interpolation function.
         """
         self.__dict__.update(state)
-        self._build_f(self.X_, self.y_)
+        self._build_f(self._necessary_X_, self._necessary_y_)

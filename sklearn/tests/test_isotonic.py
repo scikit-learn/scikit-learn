@@ -346,3 +346,40 @@ def test_isotonic_zero_weight_loop():
 
     # This will hang in failure case.
     regression.fit(x, y, sample_weight=w)
+
+
+def test_fast_predict():
+    # test that the faster prediction change doesn't
+    # affect out-of-sample predictions:
+    # https://github.com/scikit-learn/scikit-learn/pull/6206
+    rng = np.random.RandomState(123)
+    n_samples = 10**3
+    # X values over the -10,10 range
+    training_X = 20.0 * rng.rand(n_samples) - 10
+    training_Y = np.less(
+        rng.rand(n_samples),
+        1.0 / (1.0 + np.exp(-training_X))
+        ).astype('int64')
+    
+    weights = rng.rand(n_samples)
+    # we also want to test that everything still works when some weights are 0
+    weights[rng.rand(n_samples) < 0.1] = 0
+
+    slow_model = IsotonicRegression(y_min=0, y_max=1, out_of_bounds="clip")
+    fast_model = IsotonicRegression(y_min=0, y_max=1, out_of_bounds="clip")
+    
+    # fit with ALL input data, not just necessary
+    # this code is taken from the .fit() method, without removing unnecessary points
+    slow_model._build_y(training_X, training_Y, sample_weight=weights)
+    slow_model.X_min_ = np.min(slow_model._X_)
+    slow_model.X_max_ = np.max(slow_model._X_)
+    slow_model._build_f(slow_model._X_, slow_model._y_)
+
+    #fit with just the necessary data
+    fast_model.fit(training_X, training_Y, sample_weight=weights)
+    
+    pred_X = 20.0 * rng.rand(n_samples) - 10
+    pred_slow = slow_model.predict(pred_X)
+    pred_fast = fast_model.predict(pred_X)
+    
+    assert_array_equal(pred_slow, pred_fast)
