@@ -7,7 +7,7 @@ from sklearn.utils.testing import assert_raises_regex
 
 from sklearn import datasets
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.linear_model import ElasticNet, Lasso
+from sklearn.linear_model import Lasso
 from sklearn.multioutput import MultiOutputRegressor
 
 
@@ -55,7 +55,7 @@ def test_multi_target_sparse_regression():
         assert_almost_equal(rgr.predict(X_test), rgr_sparse.predict(sparse(X_test)))
 
 
-def test_multi_target_sample_weights():
+def test_multi_target_sample_weights_api():
     X = [[1,2,3], [4,5,6]]
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [0.8, 0.6]
@@ -63,11 +63,24 @@ def test_multi_target_sample_weights():
     rgr = MultiOutputRegressor(Lasso())
     assert_raises_regex(ValueError, "does not support sample weights",
                         rgr.fit, X, y, w)
-    rgr.fit(X, y)
-    assert_raises_regex(ValueError, "does not support sample weights",
-                        rgr.predict, X, w)
 
+    # no exception should be raised if the base estimator supports weights
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr.fit(X, y, w)
-    assert_almost_equal(rgr.predict(X), [[3.1406921, 2.7183079],
-                                         [2.7183079, 3.1406921]])
+
+
+def test_multi_target_sample_weights():
+    # weighted regressor
+    Xw = [[1,2,3], [4,5,6]]
+    yw = [[3.141, 2.718], [2.718, 3.141]]
+    w = [2., 1.]
+    rgr_w = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
+    rgr_w.fit(Xw, yw, w)
+
+    # unweighted, but with repeated samples
+    X = [[1,2,3], [1,2,3], [4,5,6]]
+    y = [[3.141, 2.718], [3.141, 2.718], [2.718, 3.141]]
+    rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
+    rgr.fit(X, y)
+
+    assert_almost_equal(rgr.predict(X), rgr_w.predict(X))
