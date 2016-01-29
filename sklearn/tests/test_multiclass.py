@@ -89,17 +89,49 @@ def test_ovr_partial_fit():
     assert_equal(len(ovr.estimators_), len(np.unique(y)))
     assert_greater(np.mean(y == pred), 0.65)
 
-    # Test when mini batches doesn't have all classes
+    # Test when classes are more than 2 in each pass
+    X = np.random.rand(14, 2)
+    y = [0, 0, 1, 1, 2, 2, 0, 0, 1, 2, 2, 3, 3, 3]
     ovr = OneVsRestClassifier(MultinomialNB())
-    ovr.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
-    ovr.partial_fit(iris.data[60:], iris.target[60:])
-    pred = ovr.predict(iris.data)
+    ovr.partial_fit(X[:7], y[:7], np.unique(y))
+    ovr.partial_fit(X[7:], y[7:])
+    pred = ovr.predict(X)
+
+    ovr1 = OneVsRestClassifier(MultinomialNB())
+    ovr1.fit(X, y)
+    pred1 = ovr1.predict(X)
+    assert_almost_equal(np.mean(y == pred), np.mean(pred1 == y))
+
+    # Test when mini batches have 2 classes in each
+    # pass.
+    temp = datasets.load_iris()
+    X, y= temp.data, temp.target
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:60], y[:60], np.unique(y))
+    ovr.partial_fit(X[60:], y[60:])
+    pred = ovr.predict(X)
     ovr2 = OneVsRestClassifier(MultinomialNB())
-    pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
+    pred2 = ovr2.fit(X, y).predict(X)
     
     assert_almost_equal(pred, pred2)
-    assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
-    assert_greater(np.mean(iris.target == pred), 0.65)
+    assert_equal(len(ovr.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred), 0.65)
+
+    # Check when mini batch classes doesn't conain classes from all_classes
+    rnd = np.random.rand(10, 2)
+    ovr = OneVsRestClassifier(MultinomialNB())
+    assert_raises(ValueError, ovr.partial_fit, rnd[:5], [0, 1, 2, 3, 4], 
+                                              [0, 1, 2, 3])
+
+    # Test when mini-batches have one class target
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:125], y[:125], np.unique(y))
+    ovr.partial_fit(X[125:], y[125:])
+    pred = ovr.predict(X)
+    
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred), 0.65)
 
 
 def test_ovr_ovo_regressor():
