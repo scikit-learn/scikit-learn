@@ -171,6 +171,11 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/issues/6147>`_
       By `Olivier Grisel`_.
 
+    - Fixed a bug that prevented to properly set the ``presort`` parameter
+      in :class:`ensemble.GradientBoostingRegressor`. See #5857`
+      <https://github.com/scikit-learn/scikit-learn/issues/5857>`_
+      By Andrew McCulloh.
+
 .. _changes_0_17:
 
 Version 0.17
