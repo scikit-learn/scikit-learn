@@ -62,7 +62,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     plt.axis("tight")
 
 plt.suptitle("Decision surface of a decision tree using paired features",
-             position=(0.5, 0.9))
+    position=(0.5, 0.035))        
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.figlegend(handles=handles, labels=labels, loc='upper left')
 plt.tight_layout(rect=[0, 0.03, 1, 0.8])
