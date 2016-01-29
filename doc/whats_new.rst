@@ -99,6 +99,9 @@ Enhancements
      now accept score functions that take X, y as input and return only the scores.
      By `Nikolay Mayorov`_.
 
+   - Prediction of out-of-sample events with Isotonic Regression is now much
+     faster (over 1000x in tests with synthetic data). By `Jonathan Arfa`_.
+
 Bug fixes
 .........
 
@@ -139,6 +142,9 @@ API changes summary
 
    - ``residual_metric`` has been deprecated in :class:`linear_model.RANSACRegressor`.
      Use ``loss`` instead. By `Manoj Kumar`_.
+
+   - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
+     :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
 
 
 .. _changes_0_17_1:
@@ -4071,3 +4077,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrea Bravi: https://github.com/AndreaBravi
 
 .. _Devashish Deshpande: https://github.com/dsquareindia
+
+.. _Jonathan Arfa: https://github.com/jarfa
