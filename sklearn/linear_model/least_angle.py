@@ -21,7 +21,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -1056,7 +1056,7 @@ class LarsCV(Lars):
     cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1152,7 +1152,7 @@ class LarsCV(Lars):
         # Store our parameters
         self.alpha_ = best_alpha
         self.cv_alphas_ = all_alphas
-        self.cv_mse_path_ = mse_path
+        self.mse_path_ = mse_path
 
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
@@ -1164,6 +1164,12 @@ class LarsCV(Lars):
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
+
+    @property
+    @deprecated("Attribute mse_path_ is deprecated in 0.18 and "
+                "will be removed in 0.20. Use 'cv_mse_path_' instead")
+    def cv_mse_path_(self):
+        return self.mse_path_
 
 
 class LassoLarsCV(LarsCV):
@@ -1265,7 +1271,7 @@ class LassoLarsCV(LarsCV):
     cv_alphas_ : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    cv_mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
