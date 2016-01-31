@@ -11,8 +11,8 @@ Checks pyx files to see if they have been changed relative to their
 corresponding C files.  If they have, then runs cython on these files to
 recreate the C files.
 
-The script detects changes in the pyx files using checksums [or hashes] stored
-in a database file
+The script detects changes in the pyx/pxd files using checksums
+[or hashes] stored in a database file
 
 Simple script to invoke Cython on all .pyx
 files; while waiting for a proper build system. Uses file hashes to
@@ -27,10 +27,13 @@ Originally written by Dag Sverre Seljebotn, and adapted from statsmodel 0.6.1
 We copied it for scikit-learn.
 
 Note: this script does not check any of the dependent C libraries; it only
-operates on the Cython .pyx files.
+operates on the Cython .pyx files or their corresponding Cython header (.pxd)
+files.
 """
-# author: Arthur Mensch
-# license: BSD
+# Author: Arthur Mensch <arthur.mensch@inria.fr>
+# Author: Raghav R V <rvraghav93@gmail.com>
+#
+# License: BSD 3 clause
 
 from __future__ import division, print_function, absolute_import
 
@@ -50,10 +53,7 @@ except NameError:
     WindowsError = None
 
 
-#
-# Rules
-#
-def process_pyx(fromfile, tofile):
+def cythonize(cython_file, gen_file):
     try:
         from Cython.Compiler.Version import version as cython_version
         from distutils.version import LooseVersion
@@ -64,53 +64,52 @@ def process_pyx(fromfile, tofile):
         pass
 
     flags = ['--fast-fail']
-    if tofile.endswith('.cpp'):
+    if gen_file.endswith('.cpp'):
         flags += ['--cplus']
 
     try:
         try:
-            r = subprocess.call(['cython'] + flags + ["-o", tofile, fromfile])
-            if r != 0:
-                raise Exception('Cython failed')
+            rc = subprocess.call(['cython'] +
+                                 flags + ["-o", gen_file, cython_file])
+            if rc != 0:
+                raise Exception('Cythonizing %s failed' % cython_file)
         except OSError:
             # There are ways of installing Cython that don't result in a cython
             # executable on the path, see scipy issue gh-2397.
-            r = subprocess.call([sys.executable, '-c',
-                                 'import sys; from Cython.Compiler.Main '
-                                 'import setuptools_main as main;'
-                                 ' sys.exit(main())'] + flags +
-                                ["-o", tofile, fromfile])
-            if r != 0:
-                raise Exception('Cython failed')
+            rc = subprocess.call([sys.executable, '-c',
+                                  'import sys; from Cython.Compiler.Main '
+                                  'import setuptools_main as main;'
+                                  ' sys.exit(main())'] + flags +
+                                 ["-o", gen_file, cython_file])
+            if rc != 0:
+                raise Exception('Cythonizing %s failed' % cython_file)
     except OSError:
         raise OSError('Cython needs to be installed')
 
 
-rules = {
-    '.pyx': process_pyx,
-}
-
-
-#
-# Hash db
-#
 def load_hashes(filename):
-    # Return { filename : (sha1 of input, sha1 of output) }
-    if os.path.isfile(filename):
-        hashes = {}
-        with open(filename, 'r') as f:
-            for line in f:
-                filename, inhash, outhash = line.split()
-                hashes[filename] = (inhash, outhash)
-    else:
+    """Load the hashes dict from the hashfile"""
+    # { filename : (sha1 of header if available or 'NA',
+    #               sha1 of input,
+    #               sha1 of output) }
+
+    hashes = {}
+    try:
+        with open(filename, 'r') as cython_hash_file:
+            for hash_record in cython_hash_file:
+                (filename, header_hash,
+                 cython_hash, gen_file_hash) = hash_record.split()
+                hashes[filename] = (header_hash, cython_hash, gen_file_hash)
+    except (KeyError, ValueError, AttributeError, IOError):
         hashes = {}
     return hashes
 
 
-def save_hashes(hash_db, filename):
-    with open(filename, 'w') as f:
-        for key, value in hash_db.items():
-            f.write("%s %s %s\n" % (key, value[0], value[1]))
+def save_hashes(hashes, filename):
+    """Save the hashes dict to the hashfile"""
+    with open(filename, 'w') as cython_hash_file:
+        for key, value in hashes.items():
+            cython_hash_file.write("%s %s %s %s\n" % (key, value[0], value[1], value[2]))
 
 
 def sha1_of_file(filename):
@@ -120,59 +119,72 @@ def sha1_of_file(filename):
     return h.hexdigest()
 
 
-#
-# Main program
-#
-def normpath(path):
+def clean_path(path):
+    """Clean the path"""
     path = path.replace(os.sep, '/')
     if path.startswith('./'):
         path = path[2:]
     return path
 
 
-def get_hash(frompath, topath):
-    from_hash = sha1_of_file(frompath)
-    to_hash = sha1_of_file(topath) if os.path.exists(topath) else None
-    return from_hash, to_hash
+def get_hash_tuple(header_path, cython_path, gen_file_path):
+    """Get the hashes from the given files"""
+
+    header_hash = (sha1_of_file(header_path) 
+                   if os.path.exists(header_path) else 'NA')
+    from_hash = sha1_of_file(cython_path)
+    to_hash = (sha1_of_file(gen_file_path)
+               if os.path.exists(gen_file_path) else 'NA')
+
+    return header_hash, from_hash, to_hash
 
 
-def process(path, fromfile, tofile, processor_function, hash_db):
-    fullfrompath = os.path.join(path, fromfile)
-    fulltopath = os.path.join(path, tofile)
-    current_hash = get_hash(fullfrompath, fulltopath)
-    if current_hash == hash_db.get(normpath(fullfrompath)):
-        print('%s has not changed' % fullfrompath)
+def cythonize_if_unchanged(path, cython_file, gen_file, hashes):
+    full_cython_path = os.path.join(path, cython_file)
+    full_header_path = full_cython_path.replace('.pyx', '.pxd')
+    full_gen_file_path = os.path.join(path, gen_file)
+
+    current_hash = get_hash_tuple(full_header_path, full_cython_path,
+                                full_gen_file_path)
+
+    if current_hash == hashes.get(clean_path(full_cython_path)):
+        print('%s has not changed' % full_cython_path)
         return
 
-    print('Processing %s' % fullfrompath)
-    processor_function(fullfrompath, fulltopath)
+    print('Processing %s' % full_cython_path)
+    cythonize(full_cython_path, full_gen_file_path)
+
     # changed target file, recompute hash
-    current_hash = get_hash(fullfrompath, fulltopath)
-    # store hash in db
-    hash_db[normpath(fullfrompath)] = current_hash
+    current_hash = get_hash_tuple(full_header_path, full_cython_path,
+                                full_gen_file_path)
+
+    # Update the hashes dict with the new hash
+    hashes[clean_path(full_cython_path)] = current_hash
 
 
-def find_process_files(root_dir):
+def check_and_cythonize(root_dir):
     print(root_dir)
-    hash_db = load_hashes(HASH_FILE)
+    hashes = load_hashes(HASH_FILE)
+
     for cur_dir, dirs, files in os.walk(root_dir):
         for filename in files:
-            for fromext, function in rules.items():
-                if filename.endswith(fromext):
-                    toext = ".c"
-                    with open(os.path.join(cur_dir, filename), 'rb') as f:
-                        data = f.read()
-                        m = re.search(b"libcpp", data, re.I | re.M)
-                        if m:
-                            toext = ".cpp"
-                    fromfile = filename
-                    tofile = filename[:-len(fromext)] + toext
-                    process(cur_dir, fromfile, tofile, function, hash_db)
-    save_hashes(hash_db, HASH_FILE)
+            if filename.endswith('.pyx'):
+                gen_file_ext = '.c'
+                # Cython files with libcpp imports should be compiled to cpp
+                with open(os.path.join(cur_dir, filename), 'rb') as f:
+                    data = f.read()
+                    m = re.search(b"libcpp", data, re.I | re.M)
+                    if m:
+                        gen_file_ext = ".cpp"
+                cython_file = filename
+                gen_file = filename.replace('.pyx', gen_file_ext)
+                cythonize_if_unchanged(cur_dir, cython_file, gen_file, hashes)
+
+    save_hashes(hashes, HASH_FILE)
 
 
 def main(root_dir=DEFAULT_ROOT):
-    find_process_files(root_dir)
+    check_and_cythonize(root_dir)
 
 
 if __name__ == '__main__':
