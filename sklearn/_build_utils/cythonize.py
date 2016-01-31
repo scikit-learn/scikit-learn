@@ -109,7 +109,8 @@ def save_hashes(hashes, filename):
     """Save the hashes dict to the hashfile"""
     with open(filename, 'w') as cython_hash_file:
         for key, value in hashes.items():
-            cython_hash_file.write("%s %s %s %s\n" % (key, value[0], value[1], value[2]))
+            cython_hash_file.write("%s %s %s %s\n"
+                                   % (key, value[0], value[1], value[2]))
 
 
 def sha1_of_file(filename):
@@ -130,7 +131,7 @@ def clean_path(path):
 def get_hash_tuple(header_path, cython_path, gen_file_path):
     """Get the hashes from the given files"""
 
-    header_hash = (sha1_of_file(header_path) 
+    header_hash = (sha1_of_file(header_path)
                    if os.path.exists(header_path) else 'NA')
     from_hash = sha1_of_file(cython_path)
     to_hash = (sha1_of_file(gen_file_path)
@@ -145,7 +146,7 @@ def cythonize_if_unchanged(path, cython_file, gen_file, hashes):
     full_gen_file_path = os.path.join(path, gen_file)
 
     current_hash = get_hash_tuple(full_header_path, full_cython_path,
-                                full_gen_file_path)
+                                  full_gen_file_path)
 
     if current_hash == hashes.get(clean_path(full_cython_path)):
         print('%s has not changed' % full_cython_path)
@@ -156,7 +157,7 @@ def cythonize_if_unchanged(path, cython_file, gen_file, hashes):
 
     # changed target file, recompute hash
     current_hash = get_hash_tuple(full_header_path, full_cython_path,
-                                full_gen_file_path)
+                                  full_gen_file_path)
 
     # Update the hashes dict with the new hash
     hashes[clean_path(full_cython_path)] = current_hash
@@ -180,7 +181,9 @@ def check_and_cythonize(root_dir):
                 gen_file = filename.replace('.pyx', gen_file_ext)
                 cythonize_if_unchanged(cur_dir, cython_file, gen_file, hashes)
 
-    save_hashes(hashes, HASH_FILE)
+                # Save hashes once per module. This prevents cythonizing prev.
+                # files again when debugging broken code in a single file
+                save_hashes(hashes, HASH_FILE)
 
 
 def main(root_dir=DEFAULT_ROOT):
