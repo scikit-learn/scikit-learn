@@ -460,15 +460,15 @@ function of the gradient of the image.
  * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
-   to split the image of lena in regions.
+ * :ref:`example_cluster_plot_face_segmentation.py`: Spectral clustering
+   to split the image of the raccoon face in regions.
 
-.. |lena_kmeans| image:: ../auto_examples/cluster/images/plot_lena_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+.. |face_kmeans| image:: ../auto_examples/cluster/images/plot_face_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
-.. |lena_discretize| image:: ../auto_examples/cluster/images/plot_lena_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+.. |face_discretize| image:: ../auto_examples/cluster/images/plot_face_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
 Different label assignment strategies
@@ -486,7 +486,7 @@ geometrical shape.
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
-|lena_kmeans|                          |lena_discretize|
+|face_kmeans|                          |face_discretize|
 =====================================  =====================================
 
 
@@ -615,12 +615,12 @@ merging to nearest neighbors as in :ref:`this example
 <example_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
+:ref:`raccoon face <example_cluster_plot_face_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering
-   to split the image of lena in regions.
+ * :ref:`example_cluster_plot_face_ward_segmentation.py`: Ward clustering
+   to split the image of a raccoon face in regions.
 
  * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
@@ -1397,5 +1397,3 @@ Drawbacks
 
  * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
-
-
