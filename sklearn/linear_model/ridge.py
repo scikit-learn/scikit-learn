@@ -882,9 +882,9 @@ class _RidgeGCV(LinearModel):
         We don't construct matrix G, instead compute action on y & diagonal.
         """
         w = 1. / (v + alpha)
-        dummy_column = np.var(Q, 0) < 1.e-12
+        constant_column = np.var(Q, 0) < 1.e-12
         # detect constant columns
-        w[dummy_column] = 0  # cancel the regularization for the intercept
+        w[constant_column] = 0  # cancel the regularization for the intercept
         w[v == 0] = 0
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
@@ -905,12 +905,10 @@ class _RidgeGCV(LinearModel):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
         if centered_kernel:
-            X_ = np.hstack((X, np.ones((X.shape[0], 1))))
-        else:
-            X_ = X
+            X = np.hstack((X, np.ones((X.shape[0], 1))))
         # to emulate fit_intercept=True situation, add a column on ones
         # Note that by centering, the other columns are orthogonal to that one
-        U, s, _ = linalg.svd(X_, full_matrices=0)
+        U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
@@ -919,10 +917,10 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        dummy_column = np.var(U, 0) < 1.e-12
+        constant_column = np.var(U, 0) < 1.e-12
         # detect columns colinear to ones
         w = alpha * ((v + alpha) ** -1) - 1
-        w[dummy_column] = - 1  # cancel the regularization for the intercept
+        w[constant_column] = - 1  # cancel the regularization for the intercept
         c = np.dot(U, self._diag_dot(w, UT_y)) + y
         G_diag = self._decomp_diag(w, U) + 1
         c /= alpha  # for compatibility with textbook version
@@ -1008,11 +1006,10 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
-            weighted_alpha = alpha
             if error:
-                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
+                out, c = _errors(alpha, y, v, Q, QT_y)
             else:
-                out, c = _values(weighted_alpha, y, v, Q, QT_y)
+                out, c = _values(alpha, y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
