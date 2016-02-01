@@ -919,12 +919,11 @@ class _RidgeGCV(LinearModel):
         """
         constant_column = np.var(U, 0) < 1.e-12
         # detect columns colinear to ones
-        w = alpha * ((v + alpha) ** -1) - 1
-        w[constant_column] = - 1  # cancel the regularization for the intercept
-        c = np.dot(U, self._diag_dot(w, UT_y)) + y
-        G_diag = self._decomp_diag(w, U) + 1
-        c /= alpha  # for compatibility with textbook version
-        G_diag /= alpha  # for compatibility with textbook version
+        w = ((v + alpha) ** -1) - (alpha ** -1)
+        w[constant_column] = - (alpha ** -1)
+        # cancel the regularization for the intercept
+        c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
+        G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             G_diag = G_diag[:, np.newaxis]
