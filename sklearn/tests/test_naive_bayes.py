@@ -100,6 +100,20 @@ def test_gnb_class_prior():
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
                                          0.174696337838317]]), 8)
+    assert_array_equal(clf.class_prior_, np.array([0.3, 0.7]))
+
+
+def test_gnb_prior_greater_one():
+    """Test if an error is risen if the sum of prior greater than one"""
+    clf = GaussianNB(class_prior=np.array([2., 1.]))
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_gnb_prior_large_bias():
+    """Test if an error is risen if the sum of prior greater than one"""
+    clf = GaussianNB(class_prior=np.array([0.01, 0.99]))
+    clf.fit(X, y)
+    assert_equal(clf.predict([[-0.1, -0.1]]), np.array([2]))
 
 
 def test_discrete_prior():
