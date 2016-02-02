@@ -226,6 +226,17 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                                            round(tree.threshold[node_id], 4),
                                            characters[4])
 
+            missing_direction = tree.missing_direction[node_id]
+            if missing_direction == 0:
+                missing_direction = "Left"
+            elif missing_direction == 1:
+                missing_direction = "Right"
+            else:
+                missing_direction = "Undefined"
+
+            node_string += ('Missing dir. - %s%s'
+                            % (missing_direction, characters[4]))
+
         # Write impurity
         if impurity:
             if isinstance(criterion, _criterion.FriedmanMSE):
