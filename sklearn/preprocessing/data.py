@@ -1704,7 +1704,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
 
-    unique_samples_ : list of length `n_features`
+    unique_samples_ : list of arrays
         Each entry is an array of the unique samples found in each feature.
         Only available when n_values is ``'auto'``.
 
@@ -1802,7 +1802,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             self.active_features_ = active_features
 
             # Find the index of the start of each class in the
-            # `active_features` array
+            # ``active_features`` array
             split_indices = np.searchsorted(active_features,
                                             self.feature_indices_)
 
@@ -1841,7 +1841,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 if not found_classes.issubset(train_classes):
                     if self.handle_unknown not in ['error', 'ignore']:
                         template = ("handle_unknown should be either error or "
-                                    "unknown, got %s")
+                                    "ignore, got %s")
                         raise ValueError(template % self.handle_unknown)
 
                     if self.handle_unknown == 'error':
