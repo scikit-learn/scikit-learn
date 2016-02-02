@@ -1455,9 +1455,7 @@ def test_one_hot_encoder_error():
 
     enc = OneHotEncoder(handle_unknown='not a valid string')
     data = [[1, 100], [10, 200]]
-    enc.fit(data)
-    data[0][0] = 5
-    assert_raises(ValueError, enc.transform, data)
+    assert_raises(ValueError, enc.fit, data)
 
 def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
@@ -1539,8 +1537,7 @@ def test_one_hot_encoder_unknown_transform():
 
     # Raise error if handle_unknown is neither ignore or error.
     oh = OneHotEncoder(handle_unknown='42')
-    oh.fit(X)
-    assert_raises(ValueError, oh.transform, y)
+    assert_raises(ValueError, oh.fit, X)
 
 def test_one_hot_unknown_fit():
 

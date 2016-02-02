@@ -1754,6 +1754,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         -------
         self
         """
+        if self.handle_unknown not in ['error', 'ignore']:
+            template = ("handle_unknown should be either error or "
+                        "ignore, got %s")
+            raise ValueError(template % self.handle_unknown)
         self.fit_transform(X)
         return self
 
@@ -1857,10 +1861,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 train_classes = set(self.unique_samples_[i])
 
                 if not found_classes.issubset(train_classes):
-                    if self.handle_unknown not in ['error', 'ignore']:
-                        template = ("handle_unknown should be either error or "
-                                    "ignore, got %s")
-                        raise ValueError(template % self.handle_unknown)
 
                     if self.handle_unknown == 'error':
                         new_classes = found_classes.difference(train_classes)
