@@ -374,7 +374,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
                         # matrix instead of a number. Testing of
                         # confusion_matrix with sample_weight is in
                         # test_classification.py
-    "median_absolute_error",
 ]
 
 
@@ -956,10 +955,12 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
-    assert_not_equal(
-        unweighted_score, weighted_score,
-        msg="Unweighted and weighted scores are unexpectedly "
-            "equal (%f) for %s" % (weighted_score, name))
+    if name != "median_absolute_error":
+    # unweighted and weighted give same value for this metric. see #6217
+        assert_not_equal(
+            unweighted_score, weighted_score,
+            msg="Unweighted and weighted scores are unexpectedly "
+                "equal (%f) for %s" % (weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,

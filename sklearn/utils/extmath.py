@@ -862,3 +862,13 @@ def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
         raise RuntimeError('cumsum was found to be unstable: '
                            'its last element does not correspond to sum')
     return out
+
+
+def weighted_median(array, sample_weight):
+    sorted_idx = np.argsort(array)
+    sample_weight = np.asarray(sample_weight)
+    weight_cdf = sample_weight[sorted_idx].cumsum()
+    weighted_percentile = (weight_cdf - sample_weight/2.0) / weight_cdf[-1]
+    sorted_array = array[sorted_idx]
+    weighted_median = np.interp(0.5, weighted_percentile, sorted_array)
+    return weighted_median

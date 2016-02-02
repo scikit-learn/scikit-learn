@@ -26,6 +26,7 @@ import numpy as np
 
 from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
+from ..utils.extmath import weighted_median
 from ..externals.six import string_types
 
 import warnings
@@ -241,16 +242,6 @@ def mean_squared_error(y_true, y_pred,
     return np.average(output_errors, weights=multioutput)
 
 
-def _weighted_percentile(array, sample_weight, percentile=50):
-    sorted_idx = np.argsort(array)
-    sample_weight = np.array(sample_weight)
-    weight_cdf = sample_weight[sorted_idx].cumsum()
-    weighted_percentile = (weight_cdf - sample_weight/2.0) / weight_cdf[-1]
-    sorted_array = np.sort(array)
-    weighted_median = np.interp(percentile/100., weighted_percentile, sorted_array)
-    return weighted_median
-
-
 def median_absolute_error(y_true, y_pred, sample_weight=None):
     """Median absolute error regression loss
 
@@ -285,7 +276,6 @@ def median_absolute_error(y_true, y_pred, sample_weight=None):
                                                    'uniform_average')
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in median_absolute_error")
-
     if sample_weight is None:
         return np.median(np.abs(y_pred - y_true))
     else:
@@ -293,7 +283,7 @@ def median_absolute_error(y_true, y_pred, sample_weight=None):
         sample_weight = np.array(sample_weight)
         y_pred = y_pred.ravel()
         y_true = y_true.ravel()
-        return _weighted_percentile(np.abs(y_pred - y_true),
+        return weighted_median(np.abs(y_pred - y_true),
                                     np.asarray(sample_weight))
 
 
