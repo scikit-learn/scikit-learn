@@ -1702,9 +1702,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         (and then potentially masked by `active_features_` afterwards)
 
     n_values_ : array of shape (n_features,)
-        Maximum number of values per feature.
+        0 based continuous integer values in each.
 
-    unique_samples_ : list of arrays
+    unique_samples_ : list of length n_features
         Each entry is an array of the unique samples found in each feature.
         Only available when n_values is ``'auto'``.
 
@@ -1790,7 +1790,28 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         column_indices = (X + indices[:-1]).ravel()
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)
-        data = np.ones(n_samples * n_features)
+        max_col = indices[-1]
+        # the column numbers which will exceed the dimensions of the coo_matrix
+        # we construct. This means that the feature exceeded its bound
+        # specified in ``n_values``
+        wrong_indices = column_indices >= max_col
+        num_wrong = np.count_nonzero(wrong_indices)
+        data = np.ones(n_samples * n_features - num_wrong)
+        if num_wrong > 0:
+            if self.handle_unknown == 'ignore':
+                corrected_indices = ~wrong_indices
+                # Delte the problematic columns and the corresponding rows
+                # and reduce the number of 1s in data accordingly
+                column_indices = column_indices[corrected_indices]
+                row_indices = row_indices[corrected_indices]
+
+            else:
+                for feature in range(n_features):
+                    mx = np.max(X[:, feature])
+                    if mx >= self.n_values[feature]:
+                        msg = "The value %d exceeds its limit of %d"
+                        raise ValueError(msg % (mx, self.n_values[feature]))
+
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
@@ -1809,10 +1830,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             af_copy = active_features.copy()
             split_arrays = np.split(af_copy, split_indices[1:-1])
             # Adjust to get actual class labels by subtracting offsets
-            samples = [np.subtract(split_arrays[i],
-                                   self.feature_indices_[i],
-                                   split_arrays[i])
-                                   for i in range(n_features)]
+            samples = [np.subtract(split_arrays[i], self.feature_indices_[i],
+                                   split_arrays[i]) for i in range(n_features)]
             self.unique_samples_ = samples
 
         return out if self.sparse else out.toarray()

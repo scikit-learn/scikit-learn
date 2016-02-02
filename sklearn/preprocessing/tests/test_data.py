@@ -1542,6 +1542,19 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
 
+def test_one_hot_unknown_fit():
+
+    X = np.array([[1, 5]])
+    oh = OneHotEncoder(n_values=[2, 4], handle_unknown='ignore')
+    assert_array_equal(
+        oh.fit_transform(X).toarray(),
+        np.array([[0.,  1.,  0.,  0.,  0.,  0.]]))
+
+    X = np.array([[1, 7]])
+    oh = OneHotEncoder(n_values=[2, 4], handle_unknown='error')
+    assert_raises_regex(ValueError, "The value 7 exceeds its limit of 4",
+                      oh.fit_transform, X)
+
 
 def test_fit_cold_start():
     X = iris.data
