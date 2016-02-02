@@ -1702,7 +1702,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         (and then potentially masked by `active_features_` afterwards)
 
     n_values_ : array of shape (n_features,)
-        0 based continuous integer values in each.
+        0 based continuous integer values in each feature.
 
     unique_samples_ : list of length n_features
         Each entry is an array of the unique samples found in each feature.
@@ -1800,8 +1800,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if num_wrong > 0:
             if self.handle_unknown == 'ignore':
                 corrected_indices = ~wrong_indices
-                # Delte the problematic columns and the corresponding rows
-                # and reduce the number of 1s in data accordingly
+                # Delete the problematic columns and the corresponding rows
                 column_indices = column_indices[corrected_indices]
                 row_indices = row_indices[corrected_indices]
 
