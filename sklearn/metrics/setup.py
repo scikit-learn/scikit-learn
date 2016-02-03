@@ -23,6 +23,8 @@ def configuration(parent_package="", top_path=None):
                          extra_compile_args=blas_info.pop('extra_compile_args',
                                                           []),
                          **blas_info)
+    config.add_subpackage('tests')
+    config.add_subpackage('cluster')
 
     return config
 
