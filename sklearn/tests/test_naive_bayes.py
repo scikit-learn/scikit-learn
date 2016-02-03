@@ -110,7 +110,7 @@ def test_gnb_prior_greater_one():
 
 
 def test_gnb_prior_large_bias():
-    """Test if an error is risen if the sum of prior greater than one"""
+    """Test if good prediction when class prior favor largely one of the class"""
     clf = GaussianNB(class_prior=np.array([0.01, 0.99]))
     clf.fit(X, y)
     assert_equal(clf.predict([[-0.1, -0.1]]), np.array([2]))

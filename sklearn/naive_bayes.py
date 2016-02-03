@@ -121,7 +121,7 @@ class GaussianNB(BaseNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size=[n_classes,]
+    class_prior : array-like, size=(n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
     
