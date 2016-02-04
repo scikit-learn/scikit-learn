@@ -98,9 +98,9 @@ def test_isotonic_regression():
 
 def test_isotonic_regression_ties_min():
     # Setup examples with ties on minimum
-    x = [0, 1, 1, 2, 3, 4, 5]
-    y = [0, 1, 2, 3, 4, 5, 6]
-    y_true = [0, 1.5, 1.5, 3, 4, 5, 6]
+    x = [1, 1, 2, 3, 4, 5]
+    y = [1, 2, 3, 4, 5, 6]
+    y_true = [1.5, 1.5, 3, 4, 5, 6]
 
     # Check that we get identical results for fit/transform and fit_transform
     ir = IsotonicRegression()
