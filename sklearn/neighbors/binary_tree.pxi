@@ -148,7 +148,7 @@ from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
 import warnings
-from ..utils import check_array
+from ..utils import check_array, _has_userdefined_metric
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from typedefs import DTYPE, ITYPE
@@ -1289,8 +1289,8 @@ cdef class BinaryTree:
             [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
-        # For BallTree, user defined metrics should be allowed to handle nan.
-        allow_nan = callable(getattr(self, "metric", None))
+        # Allow userdefined metrics to handle the nan.
+        allow_nan = _has_userdefined_metric(self)
         X = check_array(X, dtype=DTYPE, order='C',
                         force_all_finite=not allow_nan)
 
@@ -1440,7 +1440,8 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt
 
         # validate X and prepare for query
-        allow_nan = callable(getattr(self, "metric", None))
+        # Allow userdefined metrics to handle the nan.
+        allow_nan = _has_userdefined_metric(self)
         X = check_array(X, dtype=DTYPE, order='C',
                         force_all_finite=not allow_nan)
 
@@ -1592,7 +1593,8 @@ cdef class BinaryTree:
         cdef DTYPE_t log_knorm = _log_kernel_norm(h_c, n_features, kernel_c)
 
         # validate X and prepare for query
-        allow_nan = callable(getattr(self, "metric", None))
+        # Allow userdefined metrics to handle the nan.
+        allow_nan = _has_userdefined_metric(self)
         X = check_array(X, dtype=DTYPE, order='C',
                         force_all_finite=not allow_nan)
 
@@ -1697,7 +1699,8 @@ cdef class BinaryTree:
         cdef ITYPE_t i
 
         # validate X and prepare for query
-        allow_nan = callable(getattr(self, "metric", None))
+        # Allow userdefined metrics to handle the nan.
+        allow_nan = _has_userdefined_metric(self)
         X = check_array(X, dtype=DTYPE, order='C',
                         force_all_finite=not allow_nan)
 

@@ -48,7 +48,7 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
     cdef ITYPE_t i, j
     cdef DTYPE_t rad = 0
 
-    cdef DTYPE_t* lower_bounds = &tree.node_bounds[0, i_node, 0]
+    cdef DTYPE_ t* lower_bounds = &tree.node_bounds[0, i_node, 0]
     cdef DTYPE_t* upper_bounds = &tree.node_bounds[1, i_node, 0]
     cdef DTYPE_t* data = &tree.data[0, 0]
     cdef ITYPE_t* idx_array = &tree.idx_array[0]

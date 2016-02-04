@@ -20,6 +20,7 @@ from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.fixes import argpartition
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _has_callable_metric
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..exceptions import NotFittedError
@@ -200,7 +201,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        nan_restricted = not callable(getattr(self, 'metric', None))
+        # Allow userdefined metrics to handle the nan.
+        allow_nan = _has_callable_metric(self)
         X = check_array(X, accept_sparse='csr',
                         force_all_finite=nan_restricted)
 
@@ -330,9 +332,10 @@ class KNeighborsMixin(object):
         if X is not None:
             query_is_train = False
 
-            nan_restricted = not callable(getattr(self, 'metric', None))
+            # Allow userdefined metrics to handle the nan.
+            allow_nan = _has_callable_metric(self)
             X = check_array(X, accept_sparse='csr',
-                            force_all_finite=nan_restricted)
+                            force_all_finite=not allow_nan)
         else:
             query_is_train = True
             X = self._fit_X
@@ -378,7 +381,7 @@ class KNeighborsMixin(object):
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
                 raise ValueError(
-                    "%s does not work with sparse metrices. Densify the data, "
+                    "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             result = Parallel(n_jobs, backend='threading')(
                 delayed(self._tree.query, check_pickle=False)(
@@ -471,8 +474,10 @@ class KNeighborsMixin(object):
 
         # kneighbors does the None handling.
         if X is not None:
-            nan_restricted = not callable(getattr(self, 'metric', None))
-            X = check_array(X, accept_sparse='csr', force_all_finite=False)
+            # Allow userdefined metrics to handle the nan.
+            allow_nan = _has_callable_metric(self)
+            X = check_array(X, accept_sparse='csr',
+                            force_all_finite=not allow_nan)
             n_samples1 = X.shape[0]
         else:
             n_samples1 = self._fit_X.shape[0]
@@ -576,9 +581,10 @@ class RadiusNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            nan_restricted = not callable(getattr(self, 'metric', None))
+            # Allow userdefined metrics to handle the nan.
+            allow_nan = _has_callable_metric(self)
             X = check_array(X, accept_sparse='csr',
-                            force_all_finite=nan_restricted)
+                            force_all_finite=not allow_nan)
         else:
             query_is_train = True
             X = self._fit_X
@@ -698,9 +704,10 @@ class RadiusNeighborsMixin(object):
         kneighbors_graph
         """
         if X is not None:
-            nan_restricted = not callable(getattr(self, 'metric', None))
+            # Allow userdefined metrics to handle the nan.
+            allow_nan = _has_callable_metric(self)
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            force_all_finite=nan_restricted)
+                            force_all_finite=not allow_nan)
 
         n_samples2 = self._fit_X.shape[0]
         if radius is None:
@@ -747,8 +754,10 @@ class SupervisedFloatMixin(object):
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            nan_restricted = not callable(getattr(self, 'metric', None))
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            # Allow userdefined metrics to handle the nan.
+            allow_nan = _has_callable_metric(self)
+            X, y = check_X_y(X, y, "csr", multi_output=True,
+                             force_all_finite=not allow_nan)
         self._y = y
         return self._fit(X)
 
@@ -768,8 +777,10 @@ class SupervisedIntegerMixin(object):
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            nan_restricted = not callable(getattr(self, 'metric', None))
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            # Allow userdefined metrics to handle the nan.
+            allow_nan = _has_callable_metric(self)
+            X, y = check_X_y(X, y, "csr", multi_output=True,
+                             force_all_finite=not allow_nan)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
