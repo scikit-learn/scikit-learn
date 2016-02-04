@@ -750,7 +750,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     """Agglomerate features.
 
     Similar to AgglomerativeClustering, but recursively merges features
-    instead of samples.
+    instead of samples. It should be noted that agglomerative approaches
+    works best with large group of clusters. 
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
