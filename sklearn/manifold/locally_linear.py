@@ -613,7 +613,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                                       algorithm=self.neighbors_algorithm)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = check_array(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
