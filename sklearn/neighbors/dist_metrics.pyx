@@ -242,7 +242,7 @@ cdef class DistanceMetric:
             self.kwargs = state[4]
         self.vec_ptr = get_vec_ptr(self.vec)
         self.mat_ptr = get_mat_ptr(self.mat)
-        self.size = 1
+        self.size = self.vec.shape[0]
 
     @classmethod
     def get_metric(cls, metric, **kwargs):
@@ -644,6 +644,9 @@ cdef class MahalanobisDistance(DistanceMetric):
     """
     def __init__(self, V=None, VI=None):
         if VI is None:
+            if V is None:
+                raise ValueError("Must provide either V or VI "
+                                 "for Mahalanobis distance")
             VI = np.linalg.inv(V)
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")

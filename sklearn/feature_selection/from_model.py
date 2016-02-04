@@ -175,8 +175,9 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         feature selection.
 
     norm_order : non-zero int, inf, -inf, default 1
-        Order of the norm used to compare the vectors of coefficients in the
-        case where the coeff_ attribute of the estimator is of dimension 2.
+        Order of the norm used to filter the vectors of coefficients below
+        ``threshold`` in the case where the ``coeff_`` attribute of the
+        estimator is of dimension 2.
 
     Attributes
     ----------

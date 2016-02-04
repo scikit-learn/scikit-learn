@@ -78,12 +78,3 @@ def test_norm():
     assert_equal((), norm(X).shape)
     assert_equal((3,), norm(X, axis=0).shape)
     assert_equal((4,), norm(X, axis=1).shape)
-
-    assert_equal((1, 1), norm(X, keepdims=True).shape)
-    assert_equal((1, 3), norm(X, axis=0, keepdims=True).shape)
-    assert_equal((4, 1), norm(X, axis=1, keepdims=True).shape)
-
-    # Test shapes for 1D arrays
-    X = np.array([-2, 4, 5])
-    assert_equal((), norm(X).shape)
-    assert_equal((1,), norm(X, keepdims=True).shape)

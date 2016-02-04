@@ -394,46 +394,25 @@ if np_version < (1, 8, 1):
 else:
     from numpy import array_equal
 
-if np_version < (1, 10):
+if 'axis' not in signature(np.linalg.norm).parameters:
 
-    def norm(X, ord=None, axis=None, keepdims=False):
+    def norm(X, ord=None, axis=None):
         """
-        Handles the axis and keepdims parameters for the norm function in
-        old versions of numpy.
-        WARNING: Only tested for 2 dimensions, do not use with 1 dimensional arrays
+        Handles the axis parameter for the norm function in old versions of numpy.
         """
 
-        if X.ndim == 1:
-            return _norm_1d(X, ord=ord, keepdims=keepdims)
-
-        if axis is None:
-            norm = np.linalg.norm(X, ord=ord)
-            if keepdims:
-                norm = norm.reshape(1, 1)
-            return norm
+        if axis is None or X.ndim == 1:
+            result = np.linalg.norm(X, ord=ord)
+            return result
 
         if axis == 0:
             X = X.T
 
-        norm = np.zeros(X.shape[0])
-        for i in range(len(norm)):
-            norm[i] = np.linalg.norm(X[i], ord=ord)
+        result = np.zeros(X.shape[0])
+        for i in range(len(result)):
+            result[i] = np.linalg.norm(X[i], ord=ord)
 
-        if keepdims:
-            norm = norm.reshape((1, len(norm)))
-            if axis == 1:
-                norm = norm.T
-
-        return norm
-
-
-    def _norm_1d(X, ord=None, keepdims=False):
-        norm = np.linalg.norm(X, ord=ord)
-        if keepdims:
-            norm = np.reshape(norm, (1,))
-
-        return norm
-
+        return result
 
 else:
     norm = np.linalg.norm

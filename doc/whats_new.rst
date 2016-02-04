@@ -16,7 +16,7 @@ New features
 ............
 
    - Added two functions for mutual information estimation:
-     :func:`feature_selection.mutual_info_classif` and 
+     :func:`feature_selection.mutual_info_classif` and
      :func:`feature_selection.mutual_info_regression`. These functions can be
      used in :class:`feature_selection.SelectKBest` and
      :class:`feature_selection.SelectPercentile` as score functions.
@@ -158,6 +158,23 @@ Bug fixes
       on datasets larger than 1MB:
       https://github.com/joblib/joblib/blob/0.9.4/CHANGES.rst
 
+    - Fixed reading of Bunch pickles generated with scikit-learn
+      version <= 0.16. This can affect users who have already
+      downloaded a dataset with scikit-learn 0.16 and are loading it
+      with scikit-learn 0.17. See `#6196
+      <https://github.com/scikit-learn/scikit-learn/issues/6196>`_ for
+      how this affected :func:`datasets.fetch_20newsgroups`. By `Loic
+      Esteve`_.
+
+    - Fixed a bug that prevented using ROC AUC score to perform grid search on
+      several CPU / cores on large arrays. See `#6147
+      <https://github.com/scikit-learn/scikit-learn/issues/6147>`_
+      By `Olivier Grisel`_.
+
+    - Fixed a bug that prevented to properly set the ``presort`` parameter
+      in :class:`ensemble.GradientBoostingRegressor`. See #5857`
+      <https://github.com/scikit-learn/scikit-learn/issues/5857>`_
+      By Andrew McCulloh.
 
 .. _changes_0_17:
 
@@ -4054,4 +4071,3 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrea Bravi: https://github.com/AndreaBravi
 
 .. _Devashish Deshpande: https://github.com/dsquareindia
-
