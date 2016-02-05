@@ -161,11 +161,12 @@ class GaussianNB(BaseNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _update_class_prior(self, class_prior=None):
+
+    def _init_class_prior(self):
         n_classes = len(self.classes_)
         # Take into account the class_prior
-        if class_prior is not None:
-            class_prior = np.asarray(class_prior)
+        if self.class_prior is not None:
+            class_prior = np.asarray(self.class_prior)
             # Check that the provide prior match the number of classes
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
@@ -180,6 +181,14 @@ class GaussianNB(BaseNB):
         else:
             self.class_prior_ = np.ones(n_classes, dtype=np.float64) / float(n_classes)
 
+
+    def _update_class_prior(self):
+        n_classes = len(self.classes_)
+        # We update only if fit_prior is True and that no class_prior is provided
+        if self.class_prior is None and self.fit_prior:
+            # empirical prior, with sample_weight taken into account
+            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+            
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -377,6 +386,9 @@ class GaussianNB(BaseNB):
             self.sigma_ = np.zeros((n_classes, n_features))
 
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+
+            # Initialise the class prior
+            self._init_class_prior()
     
         else:
             if X.shape[1] != self.theta_.shape[1]:
@@ -417,7 +429,7 @@ class GaussianNB(BaseNB):
         class_prior = self.class_prior
 
         self.sigma_[:, :] += epsilon
-        self._update_class_prior(class_prior=class_prior)
+        self._update_class_prior()
 
         return self
 
