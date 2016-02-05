@@ -129,6 +129,10 @@ Bug fixes
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
       are required to split a decision tree node. By `Arnaud Joly`_
 
+    - :class:`VotingClassifier` now raises ``NotFittedError`` if ``predict``,
+      ``transform`` or ``predict_proba`` are called on the non-fitted estimator.
+      by `Sebastian Raschka`_.
+
 API changes summary
 -------------------
 
