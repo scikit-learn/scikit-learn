@@ -1,6 +1,4 @@
 from itertools import product
-import pickle
-
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
@@ -15,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.validation import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn import neighbors, datasets
@@ -748,8 +747,8 @@ def test_neighbors_iris():
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
-        assert_true(np.mean(rgs.predict(iris.data).round() == iris.target)
-                    > 0.95)
+        assert_greater(np.mean(rgs.predict(iris.data).round() == iris.target),
+                       0.95)
 
 
 def test_neighbors_digits():
@@ -777,7 +776,8 @@ def test_kneighbors_graph():
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     # n_neighbors = 1
-    A = neighbors.kneighbors_graph(X, 1, mode='connectivity', include_self=True)
+    A = neighbors.kneighbors_graph(X, 1, mode='connectivity',
+                                   include_self=True)
     assert_array_equal(A.toarray(), np.eye(A.shape[0]))
 
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
@@ -788,7 +788,8 @@ def test_kneighbors_graph():
          [0.00, 1.40716026, 0.]])
 
     # n_neighbors = 2
-    A = neighbors.kneighbors_graph(X, 2, mode='connectivity', include_self=True)
+    A = neighbors.kneighbors_graph(X, 2, mode='connectivity',
+                                   include_self=True)
     assert_array_equal(
         A.toarray(),
         [[1., 1., 0.],
@@ -803,7 +804,8 @@ def test_kneighbors_graph():
          [2.23606798, 1.40716026, 0.]])
 
     # n_neighbors = 3
-    A = neighbors.kneighbors_graph(X, 3, mode='connectivity', include_self=True)
+    A = neighbors.kneighbors_graph(X, 3, mode='connectivity',
+                                   include_self=True)
     assert_array_almost_equal(
         A.toarray(),
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
@@ -962,11 +964,15 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
 
 
 def test_callable_metric():
-    metric = lambda x1, x2: np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
+
+    def custom_metric(x1, x2):
+        return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
     X = np.random.RandomState(42).rand(20, 2)
-    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto', metric=metric)
-    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute', metric=metric)
+    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto',
+                                       metric=custom_metric)
+    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute',
+                                       metric=custom_metric)
 
     nbrs1.fit(X)
     nbrs2.fit(X)
@@ -1157,26 +1163,33 @@ def test_include_self_neighbors_graph():
     assert_array_equal(rng_not_self, [[0., 1.], [1., 0.]])
 
 
-def test_kneighbors_parallel():
-    X, y = datasets.make_classification(n_samples=10, n_features=2,
+def test_same_knn_parallel():
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    for algorithm in ALGORITHMS:
+
+    def check_same_knn_parallel(algorithm):
         clf = neighbors.KNeighborsClassifier(n_neighbors=3,
                                              algorithm=algorithm)
         clf.fit(X_train, y_train)
-        y_1 = clf.predict(X_test)
-        dist_1, ind_1 = clf.kneighbors(X_test)
-        A_1 = clf.kneighbors_graph(X_test, mode='distance').toarray()
-        for n_jobs in [-1, 2, 5]:
-            clf.set_params(n_jobs=n_jobs)
-            y = clf.predict(X_test)
-            dist, ind = clf.kneighbors(X_test)
-            A = clf.kneighbors_graph(X_test, mode='distance').toarray()
-            assert_array_equal(y_1, y)
-            assert_array_almost_equal(dist_1, dist)
-            assert_array_equal(ind_1, ind)
-            assert_array_almost_equal(A_1, A)
+        y = clf.predict(X_test)
+        dist, ind = clf.kneighbors(X_test)
+        graph = clf.kneighbors_graph(X_test, mode='distance').toarray()
+
+        clf.set_params(n_jobs=3)
+        clf.fit(X_train, y_train)
+        y_parallel = clf.predict(X_test)
+        dist_parallel, ind_parallel = clf.kneighbors(X_test)
+        graph_parallel = \
+            clf.kneighbors_graph(X_test, mode='distance').toarray()
+
+        assert_array_equal(y, y_parallel)
+        assert_array_almost_equal(dist, dist_parallel)
+        assert_array_equal(ind, ind_parallel)
+        assert_array_almost_equal(graph, graph_parallel)
+
+    for algorithm in ALGORITHMS:
+        yield check_same_knn_parallel, algorithm
 
 
 def test_dtype_convert():

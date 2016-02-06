@@ -18,6 +18,7 @@ cd $TEST_DIR
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 # Skip tests that require large downloads over the network to save bandwidth
 # usage as travis workers are stateless and therefore traditional local
@@ -25,9 +26,9 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 export SKLEARN_SKIP_NETWORK_TESTS=1
 
 if [[ "$COVERAGE" == "true" ]]; then
-    nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
+   nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
 else
-    nosetests -s --with-timer --timer-top-n 20 sklearn
+   nosetests -s --with-timer --timer-top-n 20 sklearn
 fi
 
 # Is directory still empty ?
