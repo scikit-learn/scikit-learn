@@ -442,9 +442,16 @@ def _test_tolerance(filter_):
     assert_true(score >= score2)
 
 
-# ignore warning that solvers are changed to SAG for
-# temporary fix
-@ignore_warnings
+def check_dense_sparse(test_func):
+    # test dense matrix
+    ret_dense = test_func(DENSE_FILTER)
+    # test sparse matrix
+    ret_sparse = test_func(SPARSE_FILTER)
+    # test that the outputs are the same
+    if ret_dense is not None and ret_sparse is not None:
+        assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+
+
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
@@ -452,13 +459,7 @@ def test_dense_sparse():
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
                       _test_tolerance):
-        # test dense matrix
-        ret_dense = test_func(DENSE_FILTER)
-        # test sparse matrix
-        ret_sparse = test_func(SPARSE_FILTER)
-        # test that the outputs are the same
-        if ret_dense is not None and ret_sparse is not None:
-            assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+        yield check_dense_sparse, test_func
 
 
 def test_ridge_cv_sparse_svd():
