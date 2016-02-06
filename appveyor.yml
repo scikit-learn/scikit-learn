@@ -40,6 +40,7 @@ install:
   # not already installed.
   - "powershell ./continuous_integration/appveyor/install.ps1"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - "python -m pip install -U pip"
 
   # Check that we have the expected version and architecture for Python
   - "python --version"
