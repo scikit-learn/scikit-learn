@@ -281,7 +281,7 @@ Enhancements
 
    - The ``class_weight="auto"`` heuristic in classifiers supporting
      ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
-     option, which has a simpler forumlar and interpretation.
+     option, which has a simpler formula and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
@@ -774,7 +774,7 @@ Enhancements
      By `Jatin Shah`.
 
    - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
-     as optional paramter. By `Saurabh Jha`.
+     as optional parameter. By `Saurabh Jha`.
 
    - Add ``sample_weight`` parameter to `metrics.hinge_loss`.
      By `Saurabh Jha`.
@@ -858,7 +858,7 @@ Enhancements
      instead of its sum over all samples. By `Hervé Bredin`_.
 
    - The outcome of :func:`manifold.spectral_embedding` was made deterministic
-     by flipping the sign of eigen vectors. By `Hasil Sharma`_.
+     by flipping the sign of eigenvectors. By `Hasil Sharma`_.
 
    - Significant performance and memory usage improvements in
      :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
@@ -942,7 +942,7 @@ Bug fixes
       too much.) By `Dougal Sutherland`_.
 
     - Pipeline object delegate the ``classes_`` attribute to the underlying
-      estimator. It allows for instance to make bagging of a pipeline object.
+      estimator. It allows, for instance, to make bagging of a pipeline object.
       By `Arnaud Joly`_
 
     - :class:`neighbors.NearestCentroid` now uses the median as the centroid
@@ -1442,7 +1442,7 @@ Bug fixes
      By `Virgile Fritsch`_.
 
    - Fixed a race condition in parallel processing with
-     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     ``pre_dispatch != "all"`` (for instance, in ``cross_val_score``).
      By `Olivier Grisel`_.
 
    - Raise error in :class:`cluster.FeatureAgglomeration` and
@@ -3268,7 +3268,7 @@ version 0.8:
     still a ``scikits.learn`` package alias for backward compatibility.
 
     Third-party projects with a dependency on scikit-learn 0.9+ should
-    upgrade their codebase. For instance under Linux / MacOSX just run
+    upgrade their codebase. For instance, under Linux / MacOSX just run
     (make a backup first!)::
 
       find -name "*.py" | xargs sed -i 's/\bscikits.learn\b/sklearn/g'
@@ -3287,7 +3287,7 @@ version 0.8:
     backward compatibility.
 
     Third-party projects with a dependency on scikit-learn 0.9+ should
-    upgrade their codebase. For instance under Linux / MacOSX just run
+    upgrade their codebase. For instance, under Linux / MacOSX just run
     (make a backup first!)::
 
       find -name "*.py" | xargs sed -i 's/\bcross_val\b/cross_validation/g'
