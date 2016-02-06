@@ -12,15 +12,17 @@ import argparse
 import sys
 
 import matplotlib.pyplot as plt
+import scipy.sparse as sp
 import numpy as np
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import (f1_score, accuracy_score, hamming_loss,
                              jaccard_similarity_score)
+from sklearn.utils.testing import ignore_warnings
 
 
 METRICS = {
-    'f1': f1_score,
+    'f1': partial(f1_score, average='micro'),
     'f1-by-sample': partial(f1_score, average='samples'),
     'accuracy': accuracy_score,
     'hamming': hamming_loss,
@@ -30,9 +32,12 @@ METRICS = {
 FORMATS = {
     'sequences': lambda y: [list(np.flatnonzero(s)) for s in y],
     'dense': lambda y: y,
+    'csr': lambda y: sp.csr_matrix(y),
+    'csc': lambda y: sp.csc_matrix(y),
 }
 
 
+@ignore_warnings
 def benchmark(metrics=tuple(v for k, v in sorted(METRICS.items())),
               formats=tuple(v for k, v in sorted(FORMATS.items())),
               samples=1000, classes=4, density=.2,
@@ -76,11 +81,9 @@ def benchmark(metrics=tuple(v for k, v in sorted(METRICS.items())),
     for i, (s, c, d) in enumerate(it):
         _, y_true = make_multilabel_classification(n_samples=s, n_features=1,
                                                    n_classes=c, n_labels=d * c,
-                                                   return_indicator=True,
                                                    random_state=42)
         _, y_pred = make_multilabel_classification(n_samples=s, n_features=1,
                                                    n_classes=c, n_labels=d * c,
-                                                   return_indicator=True,
                                                    random_state=84)
         for j, f in enumerate(formats):
             f_true = f(y_true)
@@ -109,7 +112,7 @@ def _tabulate(results, metrics, formats):
 
 
 def _plot(results, metrics, formats, title, x_ticks, x_label,
-          format_markers=('x', '|', 'o'),
+          format_markers=('x', '|', 'o', '+'),
           metric_colors=('c', 'm', 'y', 'k', 'g', 'r', 'b')):
     """
     Plot the results by metric, format and some other variable given by
@@ -134,7 +137,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('metrics', nargs='*', default=sorted(METRICS),
                     help='Specifies metrics to benchmark, defaults to all. '
-                         'Choices are: '.format(sorted(METRICS)))
+                         'Choices are: {}'.format(sorted(METRICS)))
     ap.add_argument('--formats', nargs='+', choices=sorted(FORMATS),
                     help='Specifies multilabel formats to benchmark '
                          '(defaults to all).')

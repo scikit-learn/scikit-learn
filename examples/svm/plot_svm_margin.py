@@ -23,7 +23,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm
 
 # we create 40 separable points
@@ -53,17 +53,17 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
     yy_up = yy - a * margin
 
     # plot the line, the points, and the nearest vectors to the plane
-    pl.figure(fignum, figsize=(4, 3))
-    pl.clf()
-    pl.plot(xx, yy, 'k-')
-    pl.plot(xx, yy_down, 'k--')
-    pl.plot(xx, yy_up, 'k--')
+    plt.figure(fignum, figsize=(4, 3))
+    plt.clf()
+    plt.plot(xx, yy, 'k-')
+    plt.plot(xx, yy_down, 'k--')
+    plt.plot(xx, yy_up, 'k--')
 
-    pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-               facecolors='none', zorder=10)
-    pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=pl.cm.Paired)
+    plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
+                facecolors='none', zorder=10)
+    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired)
 
-    pl.axis('tight')
+    plt.axis('tight')
     x_min = -4.8
     x_max = 4.2
     y_min = -6
@@ -74,14 +74,14 @@ for name, penalty in (('unreg', 1), ('reg', 0.05)):
 
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
-    pl.figure(fignum, figsize=(4, 3))
-    pl.pcolormesh(XX, YY, Z, cmap=pl.cm.Paired)
+    plt.figure(fignum, figsize=(4, 3))
+    plt.pcolormesh(XX, YY, Z, cmap=plt.cm.Paired)
 
-    pl.xlim(x_min, x_max)
-    pl.ylim(y_min, y_max)
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
 
-    pl.xticks(())
-    pl.yticks(())
+    plt.xticks(())
+    plt.yticks(())
     fignum = fignum + 1
 
-pl.show()
+plt.show()

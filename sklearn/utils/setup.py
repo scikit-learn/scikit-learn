@@ -22,7 +22,7 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
         cblas_libs.append('m')
 
-    config.add_extension('sparsefuncs', sources=['sparsefuncs.c'],
+    config.add_extension('sparsefuncs_fast', sources=['sparsefuncs_fast.c'],
                          libraries=libraries)
 
     config.add_extension('arrayfuncs',
@@ -64,8 +64,8 @@ def configuration(parent_package='', top_path=None):
                          libraries=cblas_libs,
                          **blas_info)
 
-    config.add_extension("random",
-                         sources=["random.c"],
+    config.add_extension("_random",
+                         sources=["_random.c"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

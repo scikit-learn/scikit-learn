@@ -31,7 +31,7 @@ Python, Cython or C/C++?
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
 source code so as to understand how the algorithm behaves on their data
-but also for ease of maintanability (by the developers).
+but also for ease of maintainability (by the developers).
 
 When implementing a new algorithm is thus recommended to **start
 implementing it in Python using Numpy and Scipy** by taking care of avoiding
@@ -72,9 +72,17 @@ following:
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
-When using Cython, include the generated C source code alongside with
-the Cython source code. The goal is to make it possible to install the
-scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
+When using Cython, use either
+
+   $ python setup.py build_ext -i
+   $ python setup.py install
+
+to generate C files. You are responsible for adding .c/.cpp extensions along
+with build parameters in each submodule ``setup.py``.
+
+C/C++ generated files are embedded in distributed stable packages. The goal is
+to make it possible to install scikit-learn stable version
+on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
 Fast matrix multiplications
 ===========================
@@ -105,7 +113,7 @@ silently dispatched to ``numpy.dot``. If you want to be sure when the original
 activate the related warning::
 
   >>> import warnings
-  >>> from sklearn.utils.validation import NonBLASDotWarning
+  >>> from sklearn.exceptions import NonBLASDotWarning
   >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
 .. _profiling-python-code:
@@ -119,7 +127,7 @@ for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_plot_digits_classification.py` example::
+dataset and as in the :ref:`example_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -155,7 +163,7 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``totime`` columns is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives to total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
@@ -201,7 +209,7 @@ trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
-Python code: it takes around 100% of the cumulated time of the module. In
+Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line-prof`` and wire it to IPython::
 
@@ -360,8 +368,8 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that ``memory_profiler`` defines is `%memit`, which is
-analogous to `%timeit`. It can be used as follows::
+Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
+analogous to ``%timeit``. It can be used as follows::
 
     In [1]: import numpy as np
 

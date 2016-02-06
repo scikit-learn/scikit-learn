@@ -31,7 +31,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
@@ -55,9 +55,13 @@ circle4 = (x - center4[0]) ** 2 + (y - center4[1]) ** 2 < radius4 ** 2
 ###############################################################################
 # 4 circles
 img = circle1 + circle2 + circle3 + circle4
-mask = img.astype(bool)
-img = img.astype(float)
 
+# We use a mask that limits to the foreground: the problem that we are
+# interested in here is not separating the objects from the background,
+# but separating them one from the other.
+mask = img.astype(bool)
+
+img = img.astype(float)
 img += 1 + 0.2 * np.random.randn(*img.shape)
 
 # Convert the image into a graph with the value of the gradient on the
@@ -74,8 +78,8 @@ labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.matshow(img)
-pl.matshow(label_im)
+plt.matshow(img)
+plt.matshow(label_im)
 
 ###############################################################################
 # 2 circles
@@ -92,7 +96,7 @@ labels = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
 label_im = -np.ones(mask.shape)
 label_im[mask] = labels
 
-pl.matshow(img)
-pl.matshow(label_im)
+plt.matshow(img)
+plt.matshow(label_im)
 
-pl.show()
+plt.show()

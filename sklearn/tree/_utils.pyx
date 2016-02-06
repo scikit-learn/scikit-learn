@@ -5,26 +5,87 @@
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
+#          Jacob Schreiber <jmschreiber91@gmail.com>
+#
 #
 # Licence: BSD 3 clause
 
-from libc.stdlib cimport free, malloc, realloc
+from libc.stdlib cimport free
+from libc.stdlib cimport malloc
+from libc.stdlib cimport realloc
+from libc.math cimport log as ln
+
+import numpy as np
+cimport numpy as np
+np.import_array()
+
+# =============================================================================
+# Helper functions
+# =============================================================================
+
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *:
+    # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
+    # 0.20.1 to crash.
+    cdef size_t nbytes = nelems * sizeof(p[0][0])
+    if nbytes / sizeof(p[0][0]) != nelems:
+        # Overflow in the multiplication
+        raise MemoryError("could not allocate (%d * %d) bytes"
+                          % (nelems, sizeof(p[0][0])))
+    cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
+    if tmp == NULL:
+        raise MemoryError("could not allocate %d bytes" % nbytes)
+
+    p[0] = tmp
+    return tmp  # for convenience
+
+
+def _realloc_test():
+    # Helper for tests. Tries to allocate <size_t>(-1) / 2 * sizeof(size_t)
+    # bytes, which will always overflow.
+    cdef SIZE_t* p = NULL
+    safe_realloc(&p, <size_t>(-1) / 2)
+    if p != NULL:
+        free(p)
+        assert False
+
+
+# rand_r replacement using a 32bit XorShift generator
+# See http://www.jstatsoft.org/v08/i14/paper for details
+cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
+    seed[0] ^= <UINT32_t>(seed[0] << 13)
+    seed[0] ^= <UINT32_t>(seed[0] >> 17)
+    seed[0] ^= <UINT32_t>(seed[0] << 5)
+
+    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
+
+
+cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
+    """Encapsulate data into a 1D numpy array of intp's."""
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data)
+
+
+cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
+                            UINT32_t* random_state) nogil:
+    """Generate a random integer in [0; end)."""
+    return low + our_rand_r(random_state) % (high - low)
+
+
+cdef inline double rand_uniform(double low, double high,
+                                UINT32_t* random_state) nogil:
+    """Generate a random double in [low; high)."""
+    return ((high - low) * <double> our_rand_r(random_state) /
+            <double> RAND_R_MAX) + low
+
+
+cdef inline double log(double x) nogil:
+    return ln(x) / ln(2.0)
 
 
 # =============================================================================
 # Stack data structure
 # =============================================================================
-
-cdef inline void copy_stack(StackRecord* a, StackRecord* b) nogil:
-    """Assigns ``a := b`` for StackRecord. """
-    a.start = b.start
-    a.end = b.end
-    a.depth = b.depth
-    a.parent = b.parent
-    a.is_left = b.is_left
-    a.impurity = b.impurity
-    a.n_constant_features = b.n_constant_features
-
 
 cdef class Stack:
     """A LIFO data structure.
@@ -56,8 +117,8 @@ cdef class Stack:
         return self.top <= 0
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                   bint is_left, double impurity,
-                   SIZE_t n_constant_features) nogil:
+                  bint is_left, double impurity,
+                  SIZE_t n_constant_features) nogil:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -100,7 +161,7 @@ cdef class Stack:
         if top <= 0:
             return -1
 
-        copy_stack(res, stack + top - 1)
+        res[0] = stack[top - 1]
         self.top = top - 1
 
         return 0
@@ -110,51 +171,37 @@ cdef class Stack:
 # PriorityHeap data structure
 # =============================================================================
 
-cdef inline void copy_heap(PriorityHeapRecord* a, PriorityHeapRecord* b) nogil:
-    """Assigns ``a := b``. """
-    a.node_id = b.node_id
-    a.start = b.start
-    a.end = b.end
-    a.pos = b.pos
-    a.depth = b.depth
-    a.is_leaf = b.is_leaf
-    a.impurity = b.impurity
-    a.improvement = b.improvement
-
-
-cdef void swap_heap(PriorityHeapRecord* heap, SIZE_t a, SIZE_t b) nogil:
-    """Swap record ``a`` and ``b`` in ``heap``. """
-    cdef PriorityHeapRecord tmp
-    copy_heap(&tmp, heap + a)
-    copy_heap(heap + a, heap + b)
-    copy_heap(heap + b, &tmp)
-
-
 cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
-    """Restore heap invariant parent.improvement > child.improvement from ``pos`` upwards. """
+    """Restore heap invariant parent.improvement > child.improvement from
+       ``pos`` upwards. """
     if pos == 0:
         return
 
     cdef SIZE_t parent_pos = (pos - 1) / 2
 
     if heap[parent_pos].improvement < heap[pos].improvement:
-        swap_heap(heap, parent_pos, pos)
+        heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
         heapify_up(heap, parent_pos)
 
 
-cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil:
-    """Restore heap invariant parent.improvement > children.improvement from ``pos`` downwards. """
+cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos,
+                       SIZE_t heap_length) nogil:
+    """Restore heap invariant parent.improvement > children.improvement from
+       ``pos`` downwards. """
     cdef SIZE_t left_pos = 2 * (pos + 1) - 1
     cdef SIZE_t right_pos = 2 * (pos + 1)
     cdef SIZE_t largest = pos
 
-    if left_pos < heap_length and heap[left_pos].improvement > heap[largest].improvement:
+    if (left_pos < heap_length and
+            heap[left_pos].improvement > heap[largest].improvement):
         largest = left_pos
-    if right_pos < heap_length and heap[right_pos].improvement > heap[largest].improvement:
+
+    if (right_pos < heap_length and
+            heap[right_pos].improvement > heap[largest].improvement):
         largest = right_pos
 
     if largest != pos:
-        swap_heap(heap, pos, largest)
+        heap[pos], heap[largest] = heap[largest], heap[pos]
         heapify_down(heap, largest, heap_length)
 
 
@@ -192,8 +239,9 @@ cdef class PriorityHeap:
         return self.heap_ptr <= 0
 
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
-                   SIZE_t depth, bint is_leaf, double improvement,
-                   double impurity) nogil:
+                  SIZE_t depth, bint is_leaf, double improvement,
+                  double impurity, double impurity_left,
+                  double impurity_right) nogil:
         """Push record on the priority heap.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -221,6 +269,8 @@ cdef class PriorityHeap:
         heap[heap_ptr].depth = depth
         heap[heap_ptr].is_leaf = is_leaf
         heap[heap_ptr].impurity = impurity
+        heap[heap_ptr].impurity_left = impurity_left
+        heap[heap_ptr].impurity_right = impurity_right
         heap[heap_ptr].improvement = improvement
 
         # Heapify up
@@ -239,10 +289,10 @@ cdef class PriorityHeap:
             return -1
 
         # Take first element
-        copy_heap(res, heap)
+        res[0] = heap[0]
 
         # Put last element to the front
-        swap_heap(heap, 0, heap_ptr - 1)
+        heap[0], heap[heap_ptr - 1] = heap[heap_ptr - 1], heap[0]
 
         # Restore heap invariant
         if heap_ptr > 1:

@@ -27,6 +27,6 @@ def test_int_float_dict():
 def test_int_float_dict_argmin():
     # Test the argmin implementation on the IntFloatDict
     keys = np.arange(100, dtype=np.intp)
-    values = np.arange(100, dtype=np.float)
+    values = np.arange(100, dtype=np.float64)
     d = IntFloatDict(keys, values)
     assert_equal(argmin(d), (0, 0))

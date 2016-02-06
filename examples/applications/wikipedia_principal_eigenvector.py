@@ -46,6 +46,8 @@ from scipy import sparse
 
 from sklearn.decomposition import randomized_svd
 from sklearn.externals.joblib import Memory
+from sklearn.externals.six.moves.urllib.request import urlopen
+from sklearn.externals.six import iteritems
 
 
 print(__doc__)
@@ -65,9 +67,8 @@ resources = [
 
 for url, filename in resources:
     if not os.path.exists(filename):
-        import urllib
         print("Downloading data from '%s', please wait..." % url)
-        opener = urllib.urlopen(url)
+        opener = urlopen(url)
         open(filename, 'wb').write(opener.read())
         print()
 
@@ -171,14 +172,14 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
-names = dict((i, name) for name, i in index_map.iteritems())
+names = dict((i, name) for name, i in iteritems(index_map))
 
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
 print("done in %0.3fs" % (time() - t0))
 
-# print the names of the wikipedia related strongest compenents of the the
+# print the names of the wikipedia related strongest components of the the
 # principal singular vector which should be similar to the highest eigenvector
 print("Top wikipedia pages according to principal singular vectors")
 pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])

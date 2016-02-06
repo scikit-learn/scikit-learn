@@ -28,9 +28,9 @@ not for you.
 
 The complexity of this implementation is linear in the number of
 mixture components and data points. With regards to the
-dimensionality, it is linear when using `spherical` or `diag` and
-quadratic/cubic when using `tied` or `full`. For `spherical` or `diag`
-it is O(n_states * n_points * dimension) and for `tied` or `full` it
+dimensionality, it is linear when using ``spherical`` or ``diag`` and
+quadratic/cubic when using ``tied`` or ``full``. For ``spherical`` or ``diag``
+it is O(n_states * n_points * dimension) and for ``tied`` or ``full`` it
 is O(n_states * n_points * dimension^2 + n_states * dimension^3) (it
 is necessary to invert the covariance/precision matrices and compute
 its determinant, hence the cubic term).
@@ -246,7 +246,7 @@ You can verify this by normalizing the previous term.
 .. math::
 
    \log \nu_{z_{i,k}} \propto \Psi(\gamma_{k,1}) -
-   \Psi(\gamma_{k,1} + \gamma_{k,2}) + E_Q[\log P(X_i|z_i=k)] +
+   \Psi(\gamma_{k,1} + \gamma_{k,2}) + E_q[\log P(X_i|z_i=k)] +
    \sum_{j < k} \left (\Psi(\gamma_{j,2}) -
    \Psi(\gamma_{j,1}+\gamma_{j,2})\right).
 

@@ -1,9 +1,19 @@
 .. -*- mode: rst -*-
 
-|Travis|_
+|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
+
+.. |Coveralls| image:: https://coveralls.io/repos/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
+.. _Coveralls: https://coveralls.io/r/scikit-learn/scikit-learn
+
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
+.. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
+
 
 scikit-learn
 ============
@@ -34,16 +44,26 @@ Important links
 Dependencies
 ============
 
-scikit-learn is tested to work under Python 2.6+ and Python 3.3+
-(using the same codebase thanks to an embedded copy of `six <http://pythonhosted.org/six/>`_).
+scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.4.
+(using the same codebase thanks to an embedded copy of
+`six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3.
 
-The required dependencies to build the software NumPy >= 1.6.1, SciPy >= 0.9
-and a working C/C++ compiler.
+The required dependencies to build the software are NumPy >= 1.6.1,
+SciPy >= 0.9 and a working C/C++ compiler. For the development version,
+you will also require Cython >=0.23.
 
-For running the examples Matplotlib >= 0.99.1 is required and for running the
-tests you need nose >= 0.10.
+For running the examples Matplotlib >= 1.1.1 is required and for running the
+tests you need nose >= 1.1.2.
 
-This configuration matches the Ubuntu 10.04 LTS release from April 2010.
+This configuration matches the Ubuntu Precise 12.04 LTS release from April
+2012.
+
+scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
+Subprograms library. scikit-learn comes with a reference implementation, but
+the system CBLAS will be detected by the build system and used if present.
+CBLAS exists in many implementations; see `Linear algebra libraries
+<http://scikit-learn.org/stable/modules/computational_performance.html#linear-algebra-libraries>`_
+for known issues.
 
 
 Install
@@ -59,6 +79,8 @@ To install for all users on Unix/Linux::
   python setup.py build
   sudo python setup.py install
 
+For more detailed installation instructions,
+see the web page http://scikit-learn.org/stable/install.html
 
 Development
 ===========
@@ -84,7 +106,7 @@ Contributing
 Quick tutorial on how to go about setting up your environment to
 contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
-Before opening a Pull Request, have a look at the 
+Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
 with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
@@ -93,9 +115,15 @@ Testing
 -------
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have nosetests installed)::
+source directory (you will need to have the ``nose`` package installed)::
 
-   $ nosetests --exe sklearn
+   $ nosetests -v sklearn
+
+Under Windows, it is recommended to use the following command (adjust the path
+to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
+interact with tests that use ``multiprocessing``::
+
+   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.

@@ -74,6 +74,7 @@ it is known to be a bad estimator, so the probability outputs from
    <http://www.cs.unb.ca/profs/hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
+.. _gaussian_naive_bayes:
 
 Gaussian Naive Bayes
 --------------------
@@ -181,12 +182,13 @@ It is advisable to evaluate both models, if time permits.
 Out-of-core naive Bayes model fitting
 -------------------------------------
 
-Discrete naive Bayes models can be used to tackle large scale text
-classification problems for which the full training set might not fit in
-memory. To handle this case both :class:`MultinomialNB` and
-:class:`BernoulliNB` expose a ``partial_fit`` method that can be used
+Naive Bayes models can be used to tackle large scale classification problems
+for which the full training set might not fit in memory. To handle this case,
+:class:`MultinomialNB`, :class:`BernoulliNB`, and :class:`GaussianNB`
+expose a ``partial_fit`` method that can be used
 incrementally as done with other classifiers as demonstrated in
-:ref:`example_applications_plot_out_of_core_classification.py`.
+:ref:`example_applications_plot_out_of_core_classification.py`. Both discrete
+classifiers support sample weighting; :class:`GaussianNB` does not.
 
 Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
 passed the list of all the expected class labels.
@@ -194,8 +196,8 @@ passed the list of all the expected class labels.
 For an overview of available strategies in scikit-learn, see also the
 :ref:`out-of-core learning <scaling_strategies>` documentation.
 
-note::
+.. note::
 
-  The ``partial_fit`` method call of naive Bayes models introduces some
-  computational overhead. It is recommended to use data chunk sizes that are as
-  large as possible, that is as the available RAM allows.
+   The ``partial_fit`` method call of naive Bayes models introduces some
+   computational overhead. It is recommended to use data chunk sizes that are as
+   large as possible, that is as the available RAM allows.

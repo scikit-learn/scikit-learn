@@ -11,6 +11,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
+from ..utils.validation import check_array
 from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
@@ -143,7 +144,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
             ncut_value = 2.0 * (n_samples - S.sum())
             if ((abs(ncut_value - last_objective_value) < eps) or
-               (n_iter > n_iter_max)):
+                    (n_iter > n_iter_max)):
                 has_converged = True
             else:
                 # otherwise calculate rotation and continue
@@ -169,6 +170,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
+    Read more in the :ref:`User Guide <spectral_clustering>`.
+
     Parameters
     -----------
     affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
@@ -183,7 +186,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_clusters : integer, optional
         Number of clusters to extract.
 
-    n_components : integer, optional, default is k
+    n_components : integer, optional, default is n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -242,7 +245,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     This algorithm solves the normalized cut for k=2: it is a
     normalized spectral clustering.
     """
-    if not assign_labels in ('kmeans', 'discretize'):
+    if assign_labels not in ('kmeans', 'discretize'):
         raise ValueError("The 'assign_labels' parameter should be "
                          "'kmeans' or 'discretize', but '%s' was given"
                          % assign_labels)
@@ -285,6 +288,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     Alternatively, using ``precomputed``, a user-provided affinity
     matrix can be used.
+
+    Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
     -----------
@@ -348,11 +353,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `affinity_matrix_` : array-like, shape (n_samples, n_samples)
+    affinity_matrix_ : array-like, shape (n_samples, n_samples)
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    `labels_` :
+    labels_ :
         Labels of each point
 
     Notes
@@ -404,7 +409,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.coef0 = coef0
         self.kernel_params = kernel_params
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.
 
@@ -414,6 +419,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             OR, if affinity==`precomputed`, a precomputed affinity
             matrix of shape (n_samples, n_samples)
         """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=np.float64)
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
@@ -421,7 +428,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           "set ``affinity=precomputed``.")
 
         if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X

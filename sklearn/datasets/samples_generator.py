@@ -7,12 +7,15 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numbers
+import array
 import numpy as np
 from scipy import linalg
+import scipy.sparse as sp
 
-from ..preprocessing import LabelBinarizer
-from ..utils import array2d, check_random_state
+from ..preprocessing import MultiLabelBinarizer
+from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -25,8 +28,9 @@ def _generate_hypercube(samples, dimensions, rng):
     if dimensions > 30:
         return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
                           _generate_hypercube(samples, 30, rng)])
-    out = sample_without_replacement(2 ** dimensions, samples,
-                                     random_state=rng).astype('>u4')
+    out = astype(sample_without_replacement(2 ** dimensions, samples,
+                                            random_state=rng),
+                 dtype='>u4', copy=False)
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
 
@@ -46,6 +50,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     Prior to shuffling, `X` stacks a number of these primary "informative"
     features, "redundant" linear combinations of these, "repeated" duplicates
     of sampled features, and arbitrary noise for and remaining features.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -71,7 +77,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         The number of redundant features. These features are generated as
         random linear combinations of the informative features.
 
-    n_repeated : int, optional (default=2)
+    n_repeated : int, optional (default=0)
         The number of duplicated features, drawn randomly from the informative
         and the redundant features.
 
@@ -133,6 +139,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
+
+    See also
+    --------
+    make_blobs: simplified variant
+    make_multilabel_classification: unrelated generator for multilabel tasks
     """
     generator = check_random_state(random_state)
 
@@ -166,7 +177,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
-    # Intialize X and y
+    # Initialize X and y
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=np.int)
 
@@ -238,7 +249,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
-                                   return_indicator=False, random_state=None):
+                                   sparse=False, return_indicator='dense',
+                                   return_distributions=False,
+                                   random_state=None):
     """Generate a random multilabel classification problem.
 
     For each sample, the generative process is:
@@ -250,6 +263,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     In the above process, rejection sampling is used to make sure that
     n is never zero or more than `n_classes`, and that the document length
     is never zero. Likewise, we reject classes which have already been chosen.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -263,18 +278,34 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         The number of classes of the classification problem.
 
     n_labels : int, optional (default=2)
-        The average number of labels per instance. Number of labels follows
-        a Poisson distribution that never takes the value 0.
+        The average number of labels per instance. More precisely, the number
+        of labels per sample is drawn from a Poisson distribution with
+        ``n_labels`` as its expected value, but samples are bounded (using
+        rejection sampling) by ``n_classes``, and must be nonzero if
+        ``allow_unlabeled`` is False.
 
     length : int, optional (default=50)
-        Sum of the features (number of words if documents).
+        The sum of the features (number of words if documents) is drawn from
+        a Poisson distribution with this expected value.
 
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
 
-    return_indicator : bool, optional (default=False),
-        If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels.
+    sparse : bool, optional (default=False)
+        If ``True``, return a sparse feature matrix
+
+        .. versionadded:: 0.17
+           parameter to allow *sparse* output.
+
+    return_indicator : 'dense' (default) | 'sparse' | False
+        If ``dense`` return ``Y`` in the dense binary indicator format. If
+        ``'sparse'`` return ``Y`` in the sparse binary indicator format.
+        ``False`` returns a list of lists of labels.
+
+    return_distributions : bool, optional (default=False)
+        If ``True``, return the prior class probability and conditional
+        probabilities of features given classes, from which the data was
+        drawn.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -287,13 +318,22 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X : array of shape [n_samples, n_features]
         The generated samples.
 
-    Y : tuple of lists or array of shape [n_samples, n_classes]
+    Y : array or sparse CSR matrix of shape [n_samples, n_classes]
         The label sets.
+
+    p_c : array, shape [n_classes]
+        The probability of each class being drawn. Only returned if
+        ``return_distributions=True``.
+
+    p_w_c : array, shape [n_features, n_classes]
+        The probability of each feature being drawn given each class.
+        Only returned if ``return_distributions=True``.
 
     """
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
+    cumulative_p_c = np.cumsum(p_c)
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
 
@@ -301,45 +341,61 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         _, n_classes = p_w_c.shape
 
         # pick a nonzero number of labels per document by rejection sampling
-        n = n_classes + 1
-        while (not allow_unlabeled and n == 0) or n > n_classes:
-            n = generator.poisson(n_labels)
+        y_size = n_classes + 1
+        while (not allow_unlabeled and y_size == 0) or y_size > n_classes:
+            y_size = generator.poisson(n_labels)
 
         # pick n classes
-        y = []
-        while len(y) != n:
+        y = set()
+        while len(y) != y_size:
             # pick a class with probability P(c)
-            c = generator.multinomial(1, p_c).argmax()
-
-            if not c in y:
-                y.append(c)
+            c = np.searchsorted(cumulative_p_c,
+                                generator.rand(y_size - len(y)))
+            y.update(c)
+        y = list(y)
 
         # pick a non-zero document length by rejection sampling
-        k = 0
-        while k == 0:
-            k = generator.poisson(length)
+        n_words = 0
+        while n_words == 0:
+            n_words = generator.poisson(length)
 
-        # generate a document of length k words
-        x = np.zeros(n_features, dtype=int)
-        for i in range(k):
-            if len(y) == 0:
-                # if sample does not belong to any class, generate noise word
-                w = generator.randint(n_features)
-            else:
-                # pick a class and generate an appropriate word
-                c = y[generator.randint(len(y))]
-                w = generator.multinomial(1, p_w_c[:, c]).argmax()
-            x[w] += 1
+        # generate a document of length n_words
+        if len(y) == 0:
+            # if sample does not belong to any class, generate noise word
+            words = generator.randint(n_features, size=n_words)
+            return words, y
 
-        return x, y
+        # sample words with replacement from selected classes
+        cumulative_p_w_sample = p_w_c.take(y, axis=1).sum(axis=1).cumsum()
+        cumulative_p_w_sample /= cumulative_p_w_sample[-1]
+        words = np.searchsorted(cumulative_p_w_sample, generator.rand(n_words))
+        return words, y
 
-    X, Y = zip(*[sample_example() for i in range(n_samples)])
+    X_indices = array.array('i')
+    X_indptr = array.array('i', [0])
+    Y = []
+    for i in range(n_samples):
+        words, y = sample_example()
+        X_indices.extend(words)
+        X_indptr.append(len(X_indices))
+        Y.append(y)
+    X_data = np.ones(len(X_indices), dtype=np.float64)
+    X = sp.csr_matrix((X_data, X_indices, X_indptr),
+                      shape=(n_samples, n_features))
+    X.sum_duplicates()
+    if not sparse:
+        X = X.toarray()
 
-    if return_indicator:
-        lb = LabelBinarizer()
+    # return_indicator can be True due to backward compatibility
+    if return_indicator in (True, 'sparse', 'dense'):
+        lb = MultiLabelBinarizer(sparse_output=(return_indicator == 'sparse'))
         Y = lb.fit([range(n_classes)]).transform(Y)
-
-    return np.array(X, dtype=np.float64), Y
+    elif return_indicator is not False:
+        raise ValueError("return_indicator must be either 'sparse', 'dense' "
+                         'or False.')
+    if return_distributions:
+        return X, Y, p_c, p_w_c
+    return X, Y
 
 
 def make_hastie_10_2(n_samples=12000, random_state=None):
@@ -350,6 +406,8 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     the target ``y`` is defined by::
 
       y[i] = 1 if np.sum(X[i] ** 2) > 9.34 else -1
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -374,6 +432,10 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
            Learning Ed. 2", Springer, 2009.
+
+    See also
+    --------
+    make_gaussian_quantiles: a generalization of this dataset approach
     """
     rs = check_random_state(random_state)
 
@@ -392,13 +454,15 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     """Generate a random regression problem.
 
     The input set can either be well conditioned (by default) or have a low
-    rank-fat tail singular profile. See the `make_low_rank_matrix` for
+    rank-fat tail singular profile. See :func:`make_low_rank_matrix` for
     more details.
 
     The output is generated by applying a (potentially biased) random linear
     regression model with `n_informative` nonzero regressors to the previously
     generated input and some gaussian centered noise with some adjustable
     scale.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -513,6 +577,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     A simple toy dataset to visualize clustering and classification
     algorithms.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -542,7 +608,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we add one and then
     # remove it.
-    linspace = np.linspace(0, 2 * np.pi, n_samples / 2 + 1)[:-1]
+    linspace = np.linspace(0, 2 * np.pi, n_samples // 2 + 1)[:-1]
     outer_circ_x = np.cos(linspace)
     outer_circ_y = np.sin(linspace)
     inner_circ_x = outer_circ_x * factor
@@ -555,7 +621,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-    if not noise is None:
+    if noise is not None:
         X += generator.normal(scale=noise, size=X.shape)
 
     return X, y
@@ -578,6 +644,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Returns
     -------
     X : array of shape [n_samples, 2]
@@ -587,7 +655,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    n_samples_out = n_samples / 2
+    n_samples_out = n_samples // 2
     n_samples_in = n_samples - n_samples_out
 
     generator = check_random_state(random_state)
@@ -605,7 +673,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-    if not noise is None:
+    if noise is not None:
         X += generator.normal(scale=noise, size=X.shape)
 
     return X, y
@@ -614,6 +682,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None):
     """Generate isotropic Gaussian blobs for clustering.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -660,6 +730,10 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     (10, 2)
     >>> y
     array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
+
+    See also
+    --------
+    make_classification: a more intricate variant
     """
     generator = check_random_state(random_state)
 
@@ -667,8 +741,11 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:
-        centers = array2d(centers)
+        centers = check_array(centers)
         n_features = centers.shape[1]
+
+    if isinstance(cluster_std, numbers.Real):
+        cluster_std = np.ones(len(centers)) * cluster_std
 
     X = []
     y = []
@@ -679,8 +756,8 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     for i in range(n_samples % n_centers):
         n_samples_per_center[i] += 1
 
-    for i, n in enumerate(n_samples_per_center):
-        X.append(centers[i] + generator.normal(scale=cluster_std,
+    for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
+        X.append(centers[i] + generator.normal(scale=std,
                                                size=(n, n_features)))
         y += [i] * n
 
@@ -711,6 +788,8 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     `y`. The remaining features are independent of `y`.
 
     The number of features has to be >= 5.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -775,6 +854,8 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
         y(X) = (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] \
  - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 + noise * N(0, 1).
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -838,6 +919,8 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
         y(X) = arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) \
 / X[:, 0]) + noise * N(0, 1).
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -906,6 +989,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
      - gray level pictures of faces
      - TF-IDF vectors of text documents crawled from the web
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -959,6 +1044,8 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     Returns a matrix Y = DX, such as D is (n_features, n_components),
     X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1021,6 +1108,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     Only the first 4 features are informative. The remaining features are
     useless.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_samples : int, optional (default=100)
@@ -1063,6 +1152,8 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 def make_spd_matrix(n_dim, random_state=None):
     """Generate a random symmetric, positive-definite matrix.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     n_dim : int
@@ -1078,6 +1169,10 @@ def make_spd_matrix(n_dim, random_state=None):
     -------
     X : array of shape [n_dim, n_dim]
         The random symmetric, positive-definite matrix.
+
+    See also
+    --------
+    make_sparse_spd_matrix
     """
     generator = check_random_state(random_state)
 
@@ -1093,13 +1188,16 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
                            random_state=None):
     """Generate a sparse symmetric definite positive matrix.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     dim: integer, optional (default=1)
-        The size of the random  (matrix to generate.
+        The size of the random matrix to generate.
 
     alpha: float between 0 and 1, optional (default=0.95)
-        The probability that a coefficient is non zero (see notes).
+        The probability that a coefficient is zero (see notes). Larger values 
+        enforce more sparsity.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1107,15 +1205,30 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    largest_coef : float between 0 and 1, optional (default=0.9)
+        The value of the largest coefficient.
+
+    smallest_coef : float between 0 and 1, optional (default=0.1)
+        The value of the smallest coefficient.
+
+    norm_diag : boolean, optional (default=False)
+        Whether to normalize the output matrix to make the leading diagonal
+        elements all 1
+
     Returns
     -------
-    prec: array of shape = [dim, dim]
+    prec : sparse matrix of shape (dim, dim)
+        The generated matrix.
 
     Notes
     -----
     The sparsity is actually imposed on the cholesky factor of the matrix.
     Thus alpha does not translate directly into the filling fraction of
     the matrix itself.
+
+    See also
+    --------
+    make_spd_matrix
     """
     random_state = check_random_state(random_state)
 
@@ -1135,16 +1248,20 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     prec = np.dot(chol.T, chol)
 
     if norm_diag:
-        d = np.diag(prec)
+        # Form the diagonal vector into a row matrix
+        d = np.diag(prec).reshape(1, prec.shape[0])
         d = 1. / np.sqrt(d)
+
         prec *= d
-        prec *= d[:, np.newaxis]
+        prec *= d.T
 
     return prec
 
 
 def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     """Generate a swiss roll dataset.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1175,7 +1292,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
            Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
     """
@@ -1196,6 +1313,8 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 
 def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     """Generate an S curve dataset.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1244,6 +1363,8 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     standard normal distribution and defining classes separated by nested
     concentric multi-dimensional spheres such that roughly equal numbers of
     samples are in each class (quantiles of the :math:`\chi^2` distribution).
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1334,6 +1455,8 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     """Generate an array with constant block diagonal structure for
     biclustering.
 
+    Read more in the :ref:`User Guide <sample_generators>`.
+
     Parameters
     ----------
     shape : iterable (n_rows, n_cols)
@@ -1379,6 +1502,9 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
 
+    See also
+    --------
+    make_checkerboard
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
@@ -1418,8 +1544,11 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
 
 def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
                       maxval=100, shuffle=True, random_state=None):
+
     """Generate an array with block checkerboard structure for
     biclustering.
+
+    Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -1466,6 +1595,9 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
         Spectral biclustering of microarray data: coclustering genes
         and conditions. Genome research, 13(4), 703-716.
 
+    See also
+    --------
+    make_biclusters
     """
     generator = check_random_state(random_state)
 

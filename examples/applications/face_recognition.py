@@ -10,30 +10,32 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-Expected results for the top 5 most represented people in the dataset::
+Expected results for the top 5 most represented people in the dataset:
 
-                     precision    recall  f1-score   support
+================== ============ ======= ========== =======
+                   precision    recall  f1-score   support
+================== ============ ======= ========== =======
+     Ariel Sharon       0.67      0.92      0.77        13
+     Colin Powell       0.75      0.78      0.76        60
+  Donald Rumsfeld       0.78      0.67      0.72        27
+    George W Bush       0.86      0.86      0.86       146
+Gerhard Schroeder       0.76      0.76      0.76        25
+      Hugo Chavez       0.67      0.67      0.67        15
+       Tony Blair       0.81      0.69      0.75        36
 
-  Gerhard_Schroeder       0.91      0.75      0.82        28
-    Donald_Rumsfeld       0.84      0.82      0.83        33
-         Tony_Blair       0.65      0.82      0.73        34
-       Colin_Powell       0.78      0.88      0.83        58
-      George_W_Bush       0.93      0.86      0.90       129
-
-        avg / total       0.86      0.84      0.85       282
-
-
+      avg / total       0.80      0.80      0.80       322
+================== ============ ======= ========== =======
 
 """
 from __future__ import print_function
 
 from time import time
 import logging
-import pylab as pl
+import matplotlib.pyplot as plt
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import fetch_lfw_people
-from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import RandomizedPCA
@@ -54,7 +56,7 @@ lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 # introspect the images arrays to find the shapes (for plotting)
 n_samples, h, w = lfw_people.images.shape
 
-# fot machine learning we use the 2 data directly (as relative pixel
+# for machine learning we use the 2 data directly (as relative pixel
 # positions info is ignored by this model)
 X = lfw_people.data
 n_features = X.shape[1]
@@ -75,7 +77,7 @@ print("n_classes: %d" % n_classes)
 
 # split into a training and testing set
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25)
+    X, y, test_size=0.25, random_state=42)
 
 
 ###############################################################################
@@ -105,7 +107,7 @@ print("Fitting the classifier to the training set")
 t0 = time()
 param_grid = {'C': [1e3, 5e3, 1e4, 5e4, 1e5],
               'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1], }
-clf = GridSearchCV(SVC(kernel='rbf', class_weight='auto'), param_grid)
+clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
 clf = clf.fit(X_train_pca, y_train)
 print("done in %0.3fs" % (time() - t0))
 print("Best estimator found by grid search:")
@@ -129,14 +131,14 @@ print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
     """Helper function to plot a gallery of portraits"""
-    pl.figure(figsize=(1.8 * n_col, 2.4 * n_row))
-    pl.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
+    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+    plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
     for i in range(n_row * n_col):
-        pl.subplot(n_row, n_col, i + 1)
-        pl.imshow(images[i].reshape((h, w)), cmap=pl.cm.gray)
-        pl.title(titles[i], size=12)
-        pl.xticks(())
-        pl.yticks(())
+        plt.subplot(n_row, n_col, i + 1)
+        plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
+        plt.title(titles[i], size=12)
+        plt.xticks(())
+        plt.yticks(())
 
 
 # plot the result of the prediction on a portion of the test set
@@ -156,4 +158,4 @@ plot_gallery(X_test, prediction_titles, h, w)
 eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
 plot_gallery(eigenfaces, eigenface_titles, h, w)
 
-pl.show()
+plt.show()

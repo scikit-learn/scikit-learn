@@ -26,7 +26,7 @@ import time
 
 import numpy as np
 import scipy as sp
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
@@ -62,13 +62,13 @@ for assign_labels in ('kmeans', 'discretize'):
     t1 = time.time()
     labels = labels.reshape(lena.shape)
 
-    pl.figure(figsize=(5, 5))
-    pl.imshow(lena,   cmap=pl.cm.gray)
+    plt.figure(figsize=(5, 5))
+    plt.imshow(lena,   cmap=plt.cm.gray)
     for l in range(N_REGIONS):
-        pl.contour(labels == l, contours=1,
-                   colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
-    pl.xticks(())
-    pl.yticks(())
-    pl.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
+        plt.contour(labels == l, contours=1,
+                    colors=[plt.cm.spectral(l / float(N_REGIONS)), ])
+    plt.xticks(())
+    plt.yticks(())
+    plt.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))
 
-pl.show()
+plt.show()

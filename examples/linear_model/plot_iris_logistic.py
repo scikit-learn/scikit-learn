@@ -19,7 +19,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import linear_model, datasets
 
 # import some data to play with
@@ -43,17 +43,17 @@ Z = logreg.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.figure(1, figsize=(4, 3))
-pl.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
+plt.figure(1, figsize=(4, 3))
+plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
 # Plot also the training points
-pl.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=pl.cm.Paired)
-pl.xlabel('Sepal length')
-pl.ylabel('Sepal width')
+plt.scatter(X[:, 0], X[:, 1], c=Y, edgecolors='k', cmap=plt.cm.Paired)
+plt.xlabel('Sepal length')
+plt.ylabel('Sepal width')
 
-pl.xlim(xx.min(), xx.max())
-pl.ylim(yy.min(), yy.max())
-pl.xticks(())
-pl.yticks(())
+plt.xlim(xx.min(), xx.max())
+plt.ylim(yy.min(), yy.max())
+plt.xticks(())
+plt.yticks(())
 
-pl.show()
+plt.show()

@@ -28,13 +28,15 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     name_or_id : the integer id or the string name metadata of the MLComp
                  dataset to load
 
-    `set_` : select the portion to load: 'train', 'test' or 'raw'
+    set_ : select the portion to load: 'train', 'test' or 'raw'
 
     mlcomp_root : the filesystem path to the root folder where MLComp datasets
                   are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
                   environment variable is looked up instead.
 
     **kwargs : domain specific kwargs to be passed to the dataset loader.
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------
@@ -78,10 +80,11 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
             metadata_file = os.path.join(mlcomp_root, dataset, 'metadata')
             if not os.path.exists(metadata_file):
                 continue
-            for line in file(metadata_file):
-                if line.strip() == expected_name_line:
-                    dataset_path = os.path.join(mlcomp_root, dataset)
-                    break
+            with open(metadata_file) as f:
+                for line in f:
+                    if line.strip() == expected_name_line:
+                        dataset_path = os.path.join(mlcomp_root, dataset)
+                        break
         if dataset_path is None:
             raise ValueError("Could not find dataset with metadata line: " +
                              expected_name_line)
@@ -91,10 +94,11 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     metadata_file = os.path.join(dataset_path, 'metadata')
     if not os.path.exists(metadata_file):
         raise ValueError(dataset_path + ' is not a valid MLComp dataset')
-    for line in file(metadata_file):
-        if ":" in line:
-            key, value = line.split(":", 1)
-            metadata[key.strip()] = value.strip()
+    with open(metadata_file) as f:
+        for line in f:
+            if ":" in line:
+                key, value = line.split(":", 1)
+                metadata[key.strip()] = value.strip()
 
     format = metadata.get('format', 'unknow')
     loader = LOADERS.get(format)

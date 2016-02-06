@@ -109,7 +109,7 @@ def test_non_consicutive_labels():
 
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
                              seed=42):
-    """Compute score for random uniform cluster labelings"""
+    # Compute score for random uniform cluster labelings
     random_labels = np.random.RandomState(seed).random_integers
     scores = np.zeros((len(k_range), n_runs))
     for i, k in enumerate(k_range):
@@ -121,7 +121,7 @@ def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
 
 
 def test_adjustment_for_chance():
-    """Check that adjusted scores are almost zero on random labels"""
+    # Check that adjusted scores are almost zero on random labels
     n_clusters_range = [2, 10, 50, 90]
     n_samples = 100
     n_runs = 10
@@ -134,7 +134,7 @@ def test_adjustment_for_chance():
 
 
 def test_adjusted_mutual_info_score():
-    """Compute the Adjusted Mutual Information and test against known values"""
+    # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     # Mutual information
@@ -177,22 +177,49 @@ def test_contingency_matrix():
 
 
 def test_exactly_zero_info_score():
-    """Check numerical stabability when information is exactly zero"""
-    for i in np.logspace(1, 4, 4):
+    # Check numerical stability when information is exactly zero
+    for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = np.ones(i, dtype=np.int),\
             np.arange(i, dtype=np.int)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                                                  max_n_classes=1e4), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b,
+                                     max_n_classes=1e4), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b,
+                                                max_n_classes=1e4), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                                                  max_n_classes=1e4), 0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
-    """Check relation between v_measure, entropy and mutual information"""
-    for i in np.logspace(1, 4, 4):
+    # Check relation between v_measure, entropy and mutual information
+    for i in np.logspace(1, 4, 4).astype(np.int):
         random_state = np.random.RandomState(seed)
         labels_a, labels_b = random_state.random_integers(0, 10, i),\
             random_state.random_integers(0, 10, i)
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
+
+
+def test_max_n_classes():
+    rng = np.random.RandomState(seed=0)
+    labels_true = rng.rand(53)
+    labels_pred = rng.rand(53)
+    labels_zero = np.zeros(53)
+    labels_true[:2] = 0
+    labels_zero[:3] = 1
+    labels_pred[:2] = 0
+    for score_func in score_funcs:
+        expected = ("Too many classes for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_true, labels_pred,
+                             max_n_classes=50)
+        expected = ("Too many clusters for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_zero, labels_pred,
+                             max_n_classes=50)

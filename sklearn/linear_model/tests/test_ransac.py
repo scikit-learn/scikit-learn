@@ -1,9 +1,19 @@
-import numpy as np
-from numpy.testing import assert_equal, assert_raises
 from scipy import sparse
 
+import numpy as np
+from scipy import sparse
+
+from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
+
+from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_less
-from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
+from sklearn.linear_model.ransac import _dynamic_max_trials
 
 
 # Generate coordinates of line
@@ -84,7 +94,7 @@ def test_ransac_max_trials():
                                        random_state=0)
     assert getattr(ransac_estimator, 'n_trials_', None) is None
     ransac_estimator.fit(X, y)
-    assert_equal(ransac_estimator.n_trials_, 11)
+    assert_equal(ransac_estimator.n_trials_, 2)
 
 
 def test_ransac_stop_n_inliers():
@@ -133,7 +143,19 @@ def test_ransac_predict():
                                        residual_threshold=0.5, random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), np.zeros((100, 1)))
+    assert_equal(ransac_estimator.predict(X), np.zeros(100))
+
+
+def test_ransac_resid_thresh_no_inliers():
+    # When residual_threshold=0.0 there are no inliers and a
+    # ValueError with a message should be raised
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       residual_threshold=0.0, random_state=0)
+
+    assert_raises_regexp(ValueError,
+                    "No inliers.*residual_threshold.*0\.0",
+                    ransac_estimator.fit, X, y)
 
 
 def test_ransac_sparse_coo():
@@ -192,13 +214,14 @@ def test_ransac_none_estimator():
     ransac_estimator.fit(X, y)
     ransac_none_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), ransac_none_estimator.predict(X))
+    assert_array_almost_equal(ransac_estimator.predict(X),
+                              ransac_none_estimator.predict(X))
 
 
 def test_ransac_min_n_samples():
     base_estimator = LinearRegression()
     ransac_estimator1 = RANSACRegressor(base_estimator, min_samples=2,
-                                        residual_threshold=5,  random_state=0)
+                                        residual_threshold=5, random_state=0)
     ransac_estimator2 = RANSACRegressor(base_estimator,
                                         min_samples=2. / X.shape[0],
                                         residual_threshold=5, random_state=0)
@@ -219,9 +242,13 @@ def test_ransac_min_n_samples():
     ransac_estimator5.fit(X, y)
     ransac_estimator6.fit(X, y)
 
-    assert_equal(ransac_estimator1.predict(X), ransac_estimator2.predict(X))
-    assert_equal(ransac_estimator1.predict(X), ransac_estimator5.predict(X))
-    assert_equal(ransac_estimator1.predict(X), ransac_estimator6.predict(X))
+    assert_array_almost_equal(ransac_estimator1.predict(X),
+                              ransac_estimator2.predict(X))
+    assert_array_almost_equal(ransac_estimator1.predict(X),
+                              ransac_estimator5.predict(X))
+    assert_array_almost_equal(ransac_estimator1.predict(X),
+                              ransac_estimator6.predict(X))
+
     assert_raises(ValueError, ransac_estimator3.fit, X, y)
     assert_raises(ValueError, ransac_estimator4.fit, X, y)
     assert_raises(ValueError, ransac_estimator7.fit, X, y)
@@ -247,6 +274,7 @@ def test_ransac_multi_dimensional_targets():
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
+# XXX: Remove in 0.20
 def test_ransac_residual_metric():
     residual_metric1 = lambda dy: np.sum(np.abs(dy), axis=1)
     residual_metric2 = lambda dy: np.sum(dy ** 2, axis=1)
@@ -265,19 +293,60 @@ def test_ransac_residual_metric():
 
     # multi-dimensional
     ransac_estimator0.fit(X, yyy)
-    ransac_estimator1.fit(X, yyy)
-    ransac_estimator2.fit(X, yyy)
-    assert_equal(ransac_estimator0.predict(X), ransac_estimator1.predict(X))
-    assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
+    assert_warns(DeprecationWarning, ransac_estimator1.fit, X, yyy)
+    assert_warns(DeprecationWarning, ransac_estimator2.fit, X, yyy)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator1.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
 
     # one-dimensional
     ransac_estimator0.fit(X, y)
+    assert_warns(DeprecationWarning, ransac_estimator2.fit, X, y)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
+
+def test_ransac_residual_loss():
+    loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
+    loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+
+    loss_mono = lambda y_true, y_pred : np.abs(y_true - y_pred)
+    yyy = np.column_stack([y, y, y])
+
+    base_estimator = LinearRegression()
+    ransac_estimator0 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0)
+    ransac_estimator1 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        loss=loss_multi1)
+    ransac_estimator2 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        loss=loss_multi2)
+
+    # multi-dimensional
+    ransac_estimator0.fit(X, yyy)
+    ransac_estimator1.fit(X, yyy)
+    ransac_estimator2.fit(X, yyy)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator1.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
+
+    # one-dimensional
+    ransac_estimator0.fit(X, y)
+    ransac_estimator2.loss = loss_mono
     ransac_estimator2.fit(X, y)
-    assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
+    ransac_estimator3 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        loss="squared_loss")
+    ransac_estimator3.fit(X, y)
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
 
 
 def test_ransac_default_residual_threshold():
-
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        random_state=0)
@@ -293,5 +362,87 @@ def test_ransac_default_residual_threshold():
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
-if __name__ == "__main__":
-    np.testing.run_module_suite()
+def test_ransac_dynamic_max_trials():
+    # Numbers hand-calculated and confirmed on page 119 (Table 4.3) in
+    #   Hartley, R.~I. and Zisserman, A., 2004,
+    #   Multiple View Geometry in Computer Vision, Second Edition,
+    #   Cambridge University Press, ISBN: 0521540518
+
+    # e = 0%, min_samples = X
+    assert_equal(_dynamic_max_trials(100, 100, 2, 0.99), 1)
+
+    # e = 5%, min_samples = 2
+    assert_equal(_dynamic_max_trials(95, 100, 2, 0.99), 2)
+    # e = 10%, min_samples = 2
+    assert_equal(_dynamic_max_trials(90, 100, 2, 0.99), 3)
+    # e = 30%, min_samples = 2
+    assert_equal(_dynamic_max_trials(70, 100, 2, 0.99), 7)
+    # e = 50%, min_samples = 2
+    assert_equal(_dynamic_max_trials(50, 100, 2, 0.99), 17)
+
+    # e = 5%, min_samples = 8
+    assert_equal(_dynamic_max_trials(95, 100, 8, 0.99), 5)
+    # e = 10%, min_samples = 8
+    assert_equal(_dynamic_max_trials(90, 100, 8, 0.99), 9)
+    # e = 30%, min_samples = 8
+    assert_equal(_dynamic_max_trials(70, 100, 8, 0.99), 78)
+    # e = 50%, min_samples = 8
+    assert_equal(_dynamic_max_trials(50, 100, 8, 0.99), 1177)
+
+    # e = 0%, min_samples = 10
+    assert_equal(_dynamic_max_trials(1, 100, 10, 0), 0)
+    assert_equal(_dynamic_max_trials(1, 100, 10, 1), float('inf'))
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       stop_probability=-0.1)
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       stop_probability=1.1)
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
+
+
+def test_ransac_fit_sample_weight():
+    ransac_estimator = RANSACRegressor(random_state=0)
+    n_samples = y.shape[0]
+    weights = np.ones(n_samples)
+    ransac_estimator.fit(X, y, weights)
+    # sanity check
+    assert_equal(ransac_estimator.inlier_mask_.shape[0], n_samples)
+
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+                                   ).astype(np.bool_)
+    ref_inlier_mask[outliers] = False
+    # check that mask is correct
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+
+    # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
+    #   X = X1 repeated n1 times, X2 repeated n2 times and so forth
+    random_state = check_random_state(0)
+    X_ = random_state.randint(0, 200, [10, 1])
+    y_ = np.ndarray.flatten(0.2 * X_ + 2)
+    sample_weight = random_state.randint(0, 10, 10)
+    outlier_X = random_state.randint(0, 1000, [1, 1])
+    outlier_weight = random_state.randint(0, 10, 1)
+    outlier_y = random_state.randint(-1000, 0, 1)
+
+    X_flat = np.append(np.repeat(X_, sample_weight, axis=0),
+                       np.repeat(outlier_X, outlier_weight, axis=0), axis=0)
+    y_flat = np.ndarray.flatten(np.append(np.repeat(y_, sample_weight, axis=0),
+                                np.repeat(outlier_y, outlier_weight, axis=0),
+                                          axis=0))
+    ransac_estimator.fit(X_flat, y_flat)
+    ref_coef_ = ransac_estimator.estimator_.coef_
+
+    sample_weight = np.append(sample_weight, outlier_weight)
+    X_ = np.append(X_, outlier_X, axis=0)
+    y_ = np.append(y_, outlier_y)
+    ransac_estimator.fit(X_, y_, sample_weight)
+
+    assert_almost_equal(ransac_estimator.estimator_.coef_, ref_coef_)
+
+    # check that if base_estimator.fit doesn't support
+    # sample_weight, raises error
+    base_estimator = Lasso()
+    ransac_estimator = RANSACRegressor(base_estimator)
+    assert_raises(ValueError, ransac_estimator.fit, X, y, weights)

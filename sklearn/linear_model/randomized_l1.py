@@ -8,6 +8,7 @@ sparse Logistic Regression
 # License: BSD 3 clause
 import itertools
 from abc import ABCMeta, abstractmethod
+import warnings
 
 import numpy as np
 from scipy.sparse import issparse
@@ -18,10 +19,12 @@ from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
-from ..utils import (as_float_array, check_random_state, safe_asarray,
-                     check_arrays, safe_mask)
+from ..utils import (as_float_array, check_random_state, check_X_y,
+                     check_array, safe_mask)
+from ..utils.validation import check_is_fitted
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
+from ..exceptions import ConvergenceWarning
 
 
 ###############################################################################
@@ -49,7 +52,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
                 verbose=max(0, verbose - 1),
                 **params)
             for _ in range(n_resampling)):
-        scores_ += active_set.astype(np.float)
+        scores_ += active_set
 
     scores_ /= n_resampling
     return scores_
@@ -76,17 +79,18 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            training data.
+            Training data.
 
         y : array-like, shape = [n_samples]
-            target values.
+            Target values.
 
         Returns
         -------
         self : object
-            returns an instance of self.
+            Returns an instance of self.
         """
-        X, y = check_arrays(X, y)
+        X, y = check_X_y(X, y, ['csr', 'csc'], y_numeric=True,
+                         ensure_min_samples=2, estimator=self)
         X = as_float_array(X, copy=False)
         n_samples, n_features = X.shape
 
@@ -120,6 +124,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def get_support(self, indices=False):
         """Return a mask, or list, of the features/indices selected."""
+        check_is_fitted(self, 'scores_')
+
         mask = self.scores_ > self.selection_threshold
         return mask if not indices else np.where(mask)[0]
 
@@ -128,9 +134,10 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self, X):
         """Transform a new matrix using the selected features"""
         mask = self.get_support()
+        X = check_array(X)
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return safe_asarray(X)[:, safe_mask(X, mask)]
+        return check_array(X)[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """Transform a new matrix using the selected features"""
@@ -155,14 +162,16 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     X -= X.mean(axis=0)
     y -= y.mean()
 
-    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float))
+    alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float64))
 
     X = (1 - weights) * X
-    alphas_, _, coef_ = lars_path(X, y,
-                                  Gram=precompute, copy_X=False,
-                                  copy_Gram=False, alpha_min=np.min(alpha),
-                                  method='lasso', verbose=verbose,
-                                  max_iter=max_iter, eps=eps)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', ConvergenceWarning)
+        alphas_, _, coef_ = lars_path(X, y,
+                                      Gram=precompute, copy_X=False,
+                                      copy_Gram=False, alpha_min=np.min(alpha),
+                                      method='lasso', verbose=verbose,
+                                      max_iter=max_iter, eps=eps)
 
     if len(alpha) > 1:
         if len(alphas_) > 1:  # np.min(alpha) < alpha_min
@@ -182,6 +191,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     Randomized Lasso works by resampling the train data and computing
     a Lasso on each resampling. In short, the features selected more
     often are good features. It is also known as stability selection.
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------
@@ -259,14 +270,14 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     memory : Instance of joblib.Memory or string
         Used for internal caching. By default, no caching is done.
-        If a string is given, it is thepath to the caching directory.
+        If a string is given, it is the path to the caching directory.
 
     Attributes
     ----------
-    `scores_` : array, shape = [n_features]
+    scores_ : array, shape = [n_features]
         Feature scores between 0 and 1.
 
-    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+    all_scores_ : array, shape = [n_features, n_reg_parameter]
         Feature scores between 0 and 1 for all values of the regularization \
         parameter. The reference article suggests ``scores_`` is the max of \
         ``all_scores_``.
@@ -319,7 +330,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     def _make_estimator_and_params(self, X, y):
         assert self.precompute in (True, False, None, 'auto')
         alpha = self.alpha
-        if alpha in ('aic', 'bic'):
+        if isinstance(alpha, six.string_types) and alpha in ('aic', 'bic'):
             model = LassoLarsIC(precompute=self.precompute,
                                 criterion=self.alpha,
                                 max_iter=self.max_iter,
@@ -345,7 +356,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     else:
         X *= (1 - weights)
 
-    C = np.atleast_1d(np.asarray(C, dtype=np.float))
+    C = np.atleast_1d(np.asarray(C, dtype=np.float64))
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
 
     for this_C, this_scores in zip(C, scores.T):
@@ -365,6 +376,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     a LogisticRegression on each resampling. In short, the features selected
     more often are good features. It is also known as stability selection.
 
+    Read more in the :ref:`User Guide <randomized_l1>`.
+
     Parameters
     ----------
     C : float, optional, default=1
@@ -381,7 +394,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     n_resampling : int, optional, default=200
         Number of randomized models.
 
-    selection_threshold: float, optional, default=0.25
+    selection_threshold : float, optional, default=0.25
         The score above which features should be selected.
 
     fit_intercept : boolean, optional, default=True
@@ -427,14 +440,14 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     memory : Instance of joblib.Memory or string
         Used for internal caching. By default, no caching is done.
-        If a string is given, it is thepath to the caching directory.
+        If a string is given, it is the path to the caching directory.
 
     Attributes
     ----------
-    `scores_` : array, shape = [n_features]
+    scores_ : array, shape = [n_features]
         Feature scores between 0 and 1.
 
-    `all_scores_` : array, shape = [n_features, n_reg_parameter]
+    all_scores_ : array, shape = [n_features, n_reg_parameter]
         Feature scores between 0 and 1 for all values of the regularization \
         parameter. The reference article suggests ``scores_`` is the max \
         of ``all_scores_``.
@@ -504,8 +517,10 @@ def _lasso_stability_path(X, y, mask, weights, eps):
 
     alpha_max = np.max(np.abs(np.dot(X.T, y))) / X.shape[0]
     alpha_min = eps * alpha_max  # set for early stopping in path
-    alphas, _, coefs = lars_path(X, y, method='lasso', verbose=False,
-                                 alpha_min=alpha_min)
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', ConvergenceWarning)
+        alphas, _, coefs = lars_path(X, y, method='lasso', verbose=False,
+                                     alpha_min=alpha_min)
     # Scale alpha by alpha_max
     alphas /= alphas[0]
     # Sort alphas in assending order
@@ -527,6 +542,8 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
     """Stabiliy path based on randomized Lasso estimates
+
+    Read more in the :ref:`User Guide <randomized_l1>`.
 
     Parameters
     ----------

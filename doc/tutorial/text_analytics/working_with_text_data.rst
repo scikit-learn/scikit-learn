@@ -25,12 +25,10 @@ Tutorial setup
 --------------
 
 To get started with this tutorial, you firstly must have the
-*scikit-learn* and all of its requiered dependencies installed.
+*scikit-learn* and all of its required dependencies installed.
 
-Please refer to the `scikit-learn install`_ page for more information
-and for per-system instructions.
-
-.. _`scikit-learn install`: http://scikit-learn.sourceforge.net/install.html
+Please refer to the :ref:`installation instructions <installation-instructions>`
+page for more information and for per-system instructions.
 
 The source of this tutorial can be found within your
 scikit-learn folder::
@@ -43,14 +41,14 @@ The tutorial folder, should contain the following folders:
 
   * ``data`` - folder to put the datasets used during the tutorial
 
-  * ``skeletons`` - sample incomplete scripts for the exercices
+  * ``skeletons`` - sample incomplete scripts for the exercises
 
-  * ``solutions`` - solutions of the exercices
+  * ``solutions`` - solutions of the exercises
 
 
 You can already copy the skeletons into a new folder somewhere
 on your hard-drive named ``sklearn_tut_workspace`` where you
-will edit your own files for the exercices while keeping
+will edit your own files for the exercises while keeping
 the original skeletons intact::
 
     % cp -r skeletons work_directory/sklearn_tut_workspace
@@ -66,8 +64,8 @@ For instance::
     % python fetch_data.py
 
 
-Loading the 20 newgroups dataset
---------------------------------
+Loading the 20 newsgroups dataset
+---------------------------------
 
 The dataset is called "Twenty Newsgroups". Here is the official
 description, quoted from the `website
@@ -353,7 +351,7 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5)),
+  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
   ... ])
   >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
   >>> predicted = text_clf.predict(docs_test)
@@ -369,19 +367,20 @@ analysis of the results::
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.94      0.82      0.87       319
-           comp.graphics       0.88      0.98      0.92       389
-                 sci.med       0.95      0.89      0.92       396
-  soc.religion.christian       0.90      0.95      0.92       398
+             alt.atheism       0.95      0.81      0.87       319
+           comp.graphics       0.88      0.97      0.92       389
+                 sci.med       0.94      0.90      0.92       396
+  soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
              avg / total       0.92      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[261,  10,  12,  36],
-         [  5, 380,   2,   2],
-         [  7,  32, 353,   4],
-         [  6,  11,   4, 377]])
+  array([[258,  11,  15,  35],
+         [  4, 379,   3,   3],
+         [  5,  33, 355,   3],
+         [  5,  10,   4, 379]])
+
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and christian are more often confused for one another than
@@ -419,9 +418,9 @@ Instead of tweaking the parameters of the various components of the
 chain, it is possible to run an exhaustive search of the best
 parameters on a grid of possible values. We try out all classifiers
 on either words or bigrams, with or without idf, and with a penalty
-parameter of either 100 or 1000 for the linear SVM::
+parameter of either 0.01 or 0.001 for the linear SVM::
 
-  >>> from sklearn.grid_search import GridSearchCV
+  >>> from sklearn.model_selection import GridSearchCV
   >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
   ...               'tfidf__use_idf': (True, False),
   ...               'clf__alpha': (1e-2, 1e-3),
@@ -461,7 +460,7 @@ we can do::
   vect__ngram_range: (1, 1)
 
   >>> score                                              # doctest: +ELLIPSIS
-  0.902...
+  0.900...
 
 .. note:
 
@@ -470,9 +469,8 @@ we can do::
   we trained on a small, 400-document subset of our full training set.
 
 
-
 Exercises
-=========
+~~~~~~~~~
 
 To do the exercises, copy the content of the 'skeletons' folder as
 a new folder named 'workspace'::
@@ -548,7 +546,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`
 
 * If you don't have labels, try using
-  :ref:`Clustering <example_document_clustering.py>`
+  :ref:`Clustering <example_text_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look

@@ -20,7 +20,7 @@ import itertools
 
 import numpy as np
 from scipy import linalg
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from sklearn import mixture
@@ -40,7 +40,7 @@ n_components_range = range(1, 7)
 cv_types = ['spherical', 'tied', 'diag', 'full']
 for cv_type in cv_types:
     for n_components in n_components_range:
-        # Fit a mixture of gaussians with EM
+        # Fit a mixture of Gaussians with EM
         gmm = mixture.GMM(n_components=n_components, covariance_type=cv_type)
         gmm.fit(X)
         bic.append(gmm.bic(X))
@@ -49,35 +49,36 @@ for cv_type in cv_types:
             best_gmm = gmm
 
 bic = np.array(bic)
-color_iter = itertools.cycle(['k', 'r', 'g', 'b', 'c', 'm', 'y'])
+color_iter = itertools.cycle(['navy', 'turquoise', 'cornflowerblue',
+                              'darkorange'])
 clf = best_gmm
 bars = []
 
 # Plot the BIC scores
-spl = pl.subplot(2, 1, 1)
+spl = plt.subplot(2, 1, 1)
 for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
     xpos = np.array(n_components_range) + .2 * (i - 2)
-    bars.append(pl.bar(xpos, bic[i * len(n_components_range):
-                                 (i + 1) * len(n_components_range)],
-                       width=.2, color=color))
-pl.xticks(n_components_range)
-pl.ylim([bic.min() * 1.01 - .01 * bic.max(), bic.max()])
-pl.title('BIC score per model')
+    bars.append(plt.bar(xpos, bic[i * len(n_components_range):
+                                  (i + 1) * len(n_components_range)],
+                        width=.2, color=color))
+plt.xticks(n_components_range)
+plt.ylim([bic.min() * 1.01 - .01 * bic.max(), bic.max()])
+plt.title('BIC score per model')
 xpos = np.mod(bic.argmin(), len(n_components_range)) + .65 +\
     .2 * np.floor(bic.argmin() / len(n_components_range))
-pl.text(xpos, bic.min() * 0.97 + .03 * bic.max(), '*', fontsize=14)
+plt.text(xpos, bic.min() * 0.97 + .03 * bic.max(), '*', fontsize=14)
 spl.set_xlabel('Number of components')
 spl.legend([b[0] for b in bars], cv_types)
 
 # Plot the winner
-splot = pl.subplot(2, 1, 2)
+splot = plt.subplot(2, 1, 2)
 Y_ = clf.predict(X)
 for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covars_,
                                              color_iter)):
     v, w = linalg.eigh(covar)
     if not np.any(Y_ == i):
         continue
-    pl.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
+    plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
 
     # Plot an ellipse to show the Gaussian component
     angle = np.arctan2(w[0][1], w[0][0])
@@ -88,10 +89,10 @@ for i, (mean, covar, color) in enumerate(zip(clf.means_, clf.covars_,
     ell.set_alpha(.5)
     splot.add_artist(ell)
 
-pl.xlim(-10, 10)
-pl.ylim(-3, 6)
-pl.xticks(())
-pl.yticks(())
-pl.title('Selected GMM: full model, 2 components')
-pl.subplots_adjust(hspace=.35, bottom=.02)
-pl.show()
+plt.xlim(-10, 10)
+plt.ylim(-3, 6)
+plt.xticks(())
+plt.yticks(())
+plt.title('Selected GMM: full model, 2 components')
+plt.subplots_adjust(hspace=.35, bottom=.02)
+plt.show()

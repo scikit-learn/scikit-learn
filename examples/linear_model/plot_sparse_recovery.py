@@ -45,7 +45,7 @@ print(__doc__)
 
 import warnings
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import linalg
 
@@ -56,6 +56,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.utils.extmath import pinvh
+from sklearn.exceptions import ConvergenceWarning
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
@@ -114,19 +115,19 @@ for conditioning in (1, 1e-4):
     alpha_grid, scores_path = lasso_stability_path(X, y, random_state=42,
                                                    eps=0.05)
 
-    pl.figure()
+    plt.figure()
     # We plot the path as a function of alpha/alpha_max to the power 1/3: the
     # power 1/3 scales the path less brutally than the log, and enables to
     # see the progression along the path
-    hg = pl.plot(alpha_grid[1:] ** .333, scores_path[coef != 0].T[1:], 'r')
-    hb = pl.plot(alpha_grid[1:] ** .333, scores_path[coef == 0].T[1:], 'k')
-    ymin, ymax = pl.ylim()
-    pl.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
-    pl.ylabel('Stability score: proportion of times selected')
-    pl.title('Stability Scores Path - Mutual incoherence: %.1f' % mi)
-    pl.axis('tight')
-    pl.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
-              loc='best')
+    hg = plt.plot(alpha_grid[1:] ** .333, scores_path[coef != 0].T[1:], 'r')
+    hb = plt.plot(alpha_grid[1:] ** .333, scores_path[coef == 0].T[1:], 'k')
+    ymin, ymax = plt.ylim()
+    plt.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
+    plt.ylabel('Stability score: proportion of times selected')
+    plt.title('Stability Scores Path - Mutual incoherence: %.1f' % mi)
+    plt.axis('tight')
+    plt.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
+               loc='best')
 
     ###########################################################################
     # Plot the estimated stability scores for a given alpha
@@ -137,6 +138,7 @@ for conditioning in (1, 1e-4):
     # as it is specifically set up to be challenging.
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', ConvergenceWarning)
         lars_cv = LassoLarsCV(cv=6).fit(X, y)
 
     # Run the RandomizedLasso: we use a paths going down to .1*alpha_max
@@ -148,7 +150,7 @@ for conditioning in (1, 1e-4):
     # Compare with F-score
     F, _ = f_regression(X, y)
 
-    pl.figure()
+    plt.figure()
     for name, score in [('F-test', F),
                         ('Stability selection', clf.scores_),
                         ('Lasso coefs', np.abs(lars_cv.coef_)),
@@ -156,17 +158,17 @@ for conditioning in (1, 1e-4):
                         ]:
         precision, recall, thresholds = precision_recall_curve(coef != 0,
                                                                score)
-        pl.semilogy(np.maximum(score / np.max(score), 1e-4),
-                    label="%s. AUC: %.3f" % (name, auc(recall, precision)))
+        plt.semilogy(np.maximum(score / np.max(score), 1e-4),
+                     label="%s. AUC: %.3f" % (name, auc(recall, precision)))
 
-    pl.plot(np.where(coef != 0)[0], [2e-4] * n_relevant_features, 'mo',
-            label="Ground truth")
-    pl.xlabel("Features")
-    pl.ylabel("Score")
+    plt.plot(np.where(coef != 0)[0], [2e-4] * n_relevant_features, 'mo',
+             label="Ground truth")
+    plt.xlabel("Features")
+    plt.ylabel("Score")
     # Plot only the 100 first coefficients
-    pl.xlim(0, 100)
-    pl.legend(loc='best')
-    pl.title('Feature selection scores - Mutual incoherence: %.1f'
-             % mi)
+    plt.xlim(0, 100)
+    plt.legend(loc='best')
+    plt.title('Feature selection scores - Mutual incoherence: %.1f'
+              % mi)
 
-pl.show()
+plt.show()

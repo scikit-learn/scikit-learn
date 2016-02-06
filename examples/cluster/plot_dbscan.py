@@ -48,11 +48,11 @@ print("Silhouette Coefficient: %0.3f"
 
 ##############################################################################
 # Plot result
-import pylab as pl
+import matplotlib.pyplot as plt
 
 # Black removed and is used for noise instead.
 unique_labels = set(labels)
-colors = pl.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
 for k, col in zip(unique_labels, colors):
     if k == -1:
         # Black used for noise.
@@ -61,12 +61,12 @@ for k, col in zip(unique_labels, colors):
     class_member_mask = (labels == k)
 
     xy = X[class_member_mask & core_samples_mask]
-    pl.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-            markeredgecolor='k', markersize=14)
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+             markeredgecolor='k', markersize=14)
 
     xy = X[class_member_mask & ~core_samples_mask]
-    pl.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
-            markeredgecolor='k', markersize=6)
+    plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+             markeredgecolor='k', markersize=6)
 
-pl.title('Estimated number of clusters: %d' % n_clusters_)
-pl.show()
+plt.title('Estimated number of clusters: %d' % n_clusters_)
+plt.show()

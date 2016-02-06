@@ -4,6 +4,7 @@ from collections import defaultdict
 from functools import partial
 
 import numpy as np
+import scipy.sparse as sp
 from sklearn.externals.six.moves import zip
 
 from sklearn.utils.testing import assert_equal
@@ -131,10 +132,11 @@ def test_make_classification_informative_features():
                   n_clusters_per_class=2)
 
 
-def test_make_multilabel_classification():
+def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=100, n_features=20,
                                               n_classes=3, random_state=0,
+                                              return_indicator=False,
                                               allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (100, 20), "X shape mismatch")
         if not allow_unlabeled:
@@ -147,12 +149,32 @@ def test_make_multilabel_classification_return_indicator():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=25, n_features=20,
                                               n_classes=3, random_state=0,
-                                              return_indicator=True,
                                               allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
         assert_true(np.all(np.sum(Y, axis=0) > min_length))
 
+    # Also test return_distributions and return_indicator with True
+    X2, Y2, p_c, p_w_c = make_multilabel_classification(
+        n_samples=25, n_features=20, n_classes=3, random_state=0,
+        allow_unlabeled=allow_unlabeled, return_distributions=True)
+
+    assert_array_equal(X, X2)
+    assert_array_equal(Y, Y2)
+    assert_equal(p_c.shape, (3,))
+    assert_almost_equal(p_c.sum(), 1)
+    assert_equal(p_w_c.shape, (20, 3))
+    assert_almost_equal(p_w_c.sum(axis=0), [1] * 3)
+
+def test_make_multilabel_classification_return_indicator_sparse():
+    for allow_unlabeled, min_length in zip((True, False), (0, 1)):
+        X, Y = make_multilabel_classification(n_samples=25, n_features=20,
+                                              n_classes=3, random_state=0,
+                                              return_indicator='sparse',
+                                              allow_unlabeled=allow_unlabeled)
+        assert_equal(X.shape, (25, 20), "X shape mismatch")
+        assert_equal(Y.shape, (25, 3), "Y shape mismatch")
+        assert_true(sp.issparse(Y))
 
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
@@ -194,13 +216,16 @@ def test_make_regression_multitarget():
 
 
 def test_make_blobs():
-    X, y = make_blobs(n_samples=50, n_features=2,
-                      centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                      random_state=0)
+    cluster_stds = np.array([0.05, 0.2, 0.4])
+    cluster_centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
+    X, y = make_blobs(random_state=0, n_samples=50, n_features=2,
+                      centers=cluster_centers, cluster_std=cluster_stds)
 
     assert_equal(X.shape, (50, 2), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
+    for i, (ctr, std) in enumerate(zip(cluster_centers, cluster_stds)):
+        assert_almost_equal((X[y == i] - ctr).std(), std, 1, "Unexpected std")
 
 
 def test_make_friedman1():
@@ -259,7 +284,7 @@ def test_make_sparse_coded_signal():
     assert_equal(X.shape, (8, 5), "X shape mismatch")
     for col in X.T:
         assert_equal(len(np.flatnonzero(col)), 3, 'Non-zero coefs mismatch')
-    assert_array_equal(np.dot(D, X), Y)
+    assert_array_almost_equal(np.dot(D, X), Y)
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)),
                               np.ones(D.shape[1]))
 
@@ -288,8 +313,8 @@ def test_make_swiss_roll():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5,), "t shape mismatch")
-    assert_array_equal(X[:, 0], t * np.cos(t))
-    assert_array_equal(X[:, 2], t * np.sin(t))
+    assert_array_almost_equal(X[:, 0], t * np.cos(t))
+    assert_array_almost_equal(X[:, 2], t * np.sin(t))
 
 
 def test_make_s_curve():
@@ -297,8 +322,8 @@ def test_make_s_curve():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5,), "t shape mismatch")
-    assert_array_equal(X[:, 0], np.sin(t))
-    assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+    assert_array_almost_equal(X[:, 0], np.sin(t))
+    assert_array_almost_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
 
 
 def test_make_biclusters():
@@ -313,7 +338,7 @@ def test_make_biclusters():
 
     X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
                                shuffle=True, random_state=0)
-    assert_array_equal(X, X2)
+    assert_array_almost_equal(X, X2)
 
 
 def test_make_checkerboard():

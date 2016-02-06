@@ -305,8 +305,8 @@ class ParseResults(object):
         else:
             del self.__tokdict[i]
 
-    def __contains__( self, k ):
-        return self.__tokdict.has_key(k)
+    def __contains__(self, k):
+        return k in self.__tokdict
 
     def __len__( self ): return len( self.__toklist )
     def __bool__(self): return len( self.__toklist ) > 0
@@ -965,7 +965,7 @@ class ParserElement(object):
               (see L{I{parseWithTabs}<parseWithTabs>})
             - define your parse action using the full (s,loc,toks) signature, and
               reference the input string using the parse action's s argument
-            - explictly expand the tabs in your input string before calling
+            - explicitly expand the tabs in your input string before calling
               parseString
         """
         ParserElement.resetCache()
@@ -1269,8 +1269,8 @@ class ParserElement(object):
 
     def __getattr__(self,aname):
         if aname == "myException":
-            self.myException = ret = self.getException();
-            return ret;
+            self.myException = ret = self.getException()
+            return ret
         else:
             raise AttributeError, "no such attribute " + aname
 

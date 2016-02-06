@@ -51,13 +51,13 @@ linear algebra libraries optimizations etc.). Here we see on a setting
 with few features that independently of estimator choice the bulk mode is
 always faster, and for some of them by 1 to 2 orders of magnitude:
 
-.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_1.png
+.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_001.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
 .. centered:: |atomic_prediction_latency|
 
-.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_2.png
+.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_002.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -65,20 +65,21 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 
 To benchmark different estimators for your case you can simply change the
 ``n_features`` parameter in this example:
-:ref:`example_applications_plot_predictiaccordon_latency.py`. This should give
+:ref:`example_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
 Influence of the Number of Features
 -----------------------------------
 
 Obviously when the number of features increases so does the memory
-consumption of each example. Indeed, for a matrix of `M` instances with `N`
-features, the space complexity is in `O(N.M)`. From a computing perspective
-it also means that the number of basic operations (e.g. multiplications for
-vector-matrix products in linear models) increases too. Here is a graph of
-the evolution of the prediction latency with the number of features:
+consumption of each example. Indeed, for a matrix of :math:`M` instances
+with :math:`N` features, the space complexity is in :math:`O(NM)`.
+From a computing perspective it also means that the number of basic operations
+(e.g., multiplications for vector-matrix products in linear models) increases
+too. Here is a graph of the evolution of the prediction latency with the
+number of features:
 
-.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_3.png
+.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_003.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -147,7 +148,7 @@ describe it fully. Of course sparsity influences in turn the prediction time
 as the sparse dot-product takes time roughly proportional to the number of
 non-zero coefficients.
 
-.. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_1.png
+.. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_001.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -162,19 +163,19 @@ support vector. In the following graph the ``nu`` parameter of
 :class:`sklearn.svm.classes.NuSVR` was used to influence the number of
 support vectors.
 
-.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_2.png
+.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_002.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
 .. centered:: |nusvr_model_complexity|
 
 For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
-ExternalTrees etc) the number of trees and their depth play the most
+ExtraTrees etc) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
 
-.. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_3.png
+.. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_003.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -198,7 +199,7 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_4.png
+ .. |prediction_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_004.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -217,7 +218,7 @@ time. Here is a benchmark from the
 :ref:`example_applications_plot_prediction_latency.py` example that measures
 this quantity for a number of estimators on synthetic data:
 
-.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_4.png
+.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_004.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -245,12 +246,11 @@ Basically, you ought to make sure that Numpy is built using an optimized `BLAS
 
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
-BLAS calls in their inner loops. Nor do models implemented in third party C++
-library (like ``LinearSVC``, ``LogisticRegression`` from ``liblinear`` and SVC /
-SVR from ``libsvm``). On the other hand a linear model implemented with a BLAS
-DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned BLAS
-implementation and lead to orders of magnitude speedup over a non-optimized
-BLAS.
+BLAS calls in their inner loops, nor do kernel SVMs (``SVC``, ``SVR``,
+``NuSVC``, ``NuSVR``).  On the other hand a linear model implemented with a
+BLAS DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned
+BLAS implementation and lead to orders of magnitude speedup over a
+non-optimized BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
 scikit-learn install with the following commands::
@@ -270,6 +270,24 @@ and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
+
+.. warning::
+
+    Multithreaded BLAS libraries sometimes conflict with Python's
+    ``multiprocessing`` module, which is used by e.g. ``GridSearchCV`` and
+    most other estimators that take an ``n_jobs`` argument (with the exception
+    of ``SGDClassifier``, ``SGDRegressor``, ``Perceptron``,
+    ``PassiveAggressiveClassifier`` and tree-based methods such as random
+    forests). This is true of Apple's Accelerate and OpenBLAS when built with
+    OpenMP support.
+
+    Besides scikit-learn, NumPy and SciPy also use BLAS internally, as
+    explained earlier.
+
+    If you experience hanging subprocesses with ``n_jobs>1`` or ``n_jobs=-1``,
+    make sure you have a single-threaded BLAS library, or set ``n_jobs=1``,
+    or upgrade to Python 3.4 which has a new version of ``multiprocessing``
+    that should be immune to this problem.
 
 Model Compression
 -----------------

@@ -61,6 +61,8 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
@@ -94,6 +96,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
+
+    n_neighbors : integer > 0
+        Parameter for knn kernel
 
     """
 
@@ -167,10 +172,10 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             Normalized probability distributions across
             class labels
         """
-        if sparse.isspmatrix(X):
-            X_2d = X
-        else:
-            X_2d = np.atleast_2d(X)
+        check_is_fitted(self, 'X_')
+
+        X_2d = check_array(X, accept_sparse = ['csc', 'csr', 'coo', 'dok',
+                        'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
             probabilities = []
@@ -205,10 +210,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         self : returns an instance of self.
         """
-        if sparse.isspmatrix(X):
-            self.X_ = X
-        else:
-            self.X_ = np.asarray(X)
+        X, y = check_X_y(X, y)
+        self.X_ = X
+        check_classification_targets(y)
 
         # actual graph construction (implementations should override this)
         graph_matrix = self._build_graph()
@@ -257,42 +261,53 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
         self.transduction_ = transduction.ravel()
+        self.n_iter_ = self.max_iter - remaining_iter
         return self
 
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier
 
+    Read more in the :ref:`User Guide <label_propagation>`.
+
     Parameters
     ----------
     kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported..
+
     gamma : float
-      parameter for rbf kernel
+        Parameter for rbf kernel
+
     n_neighbors : integer > 0
-      parameter for knn kernel
+        Parameter for knn kernel
+
     alpha : float
-      clamping factor
+        Clamping factor
+
     max_iter : float
-      change maximum number of iterations allowed
+        Change maximum number of iterations allowed
+
     tol : float
-      Convergence tolerance: threshold to consider the system at steady
-      state
+        Convergence tolerance: threshold to consider the system at steady
+        state
 
     Attributes
     ----------
-    `X_` : array, shape = [n_samples, n_features]
+    X_ : array, shape = [n_samples, n_features]
         Input array.
 
-    `classes_` : array, shape = [n_classes]
+    classes_ : array, shape = [n_classes]
         The distinct labels used in classifying instances.
 
-    `label_distributions_` : array, shape = [n_samples, n_classes]
+    label_distributions_ : array, shape = [n_samples, n_classes]
         Categorical distribution for each item.
 
-    `transduction_` : array, shape = [n_samples]
+    transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    n_iter_ : int
+        Number of iterations run.
 
     Examples
     --------
@@ -342,36 +357,46 @@ class LabelSpreading(BaseLabelPropagation):
     but uses affinity matrix based on the normalized graph Laplacian
     and soft clamping across the labels.
 
+    Read more in the :ref:`User Guide <label_propagation>`.
+
     Parameters
     ----------
     kernel : {'knn', 'rbf'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported.
+
     gamma : float
       parameter for rbf kernel
+
     n_neighbors : integer > 0
       parameter for knn kernel
+
     alpha : float
       clamping factor
+
     max_iter : float
       maximum number of iterations allowed
+
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
 
     Attributes
     ----------
-    `X_` : array, shape = [n_samples, n_features]
+    X_ : array, shape = [n_samples, n_features]
         Input array.
 
-    `classes_` : array, shape = [n_classes]
+    classes_ : array, shape = [n_classes]
         The distinct labels used in classifying instances.
 
-    `label_distributions_` : array, shape = [n_samples, n_classes]
+    label_distributions_ : array, shape = [n_samples, n_classes]
         Categorical distribution for each item.
 
-    `transduction_` : array, shape = [n_samples]
+    transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    n_iter_ : int
+        Number of iterations run.
 
     Examples
     --------

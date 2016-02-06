@@ -33,7 +33,8 @@ by decomposing such problems into binary classification problems.
     several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array.*
+    classification task. *The output format is a 2d numpy array or sparse
+    matrix.*
 
     The set of labels can be different for each output variable.
     For instance a sample could be assigned "pear" for an output variable that
@@ -59,9 +60,13 @@ grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :class:`sklearn.lda.LDA`,
+    :ref:`LDA and QDA <lda_qda>`,
     :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`.
+    :ref:`Nearest Neighbors <neighbors>`,
+    setting ``multi_class='multinomial'`` in
+    :class:`sklearn.linear_model.LogisticRegression`.
+  - Support multilabel: :ref:`Decision Trees <tree>`,
+    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`.
   - One-Vs-One: :class:`sklearn.svm.SVC`.
   - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
@@ -77,43 +82,28 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 Multilabel classification format
 ================================
 
-In multilabel learning, the joint set of binary classification tasks
-is expressed with either a sequence of sequences or a label binary indicator
-array.
+In multilabel learning, the joint set of binary classification tasks is
+expressed with label binary indicator array: each sample is one row of a 2d
+array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
+zero elements, corresponds to the subset of labels. An array such as
+``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
+sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
-In the sequence of sequences format, each set of labels is represented as
-a sequence of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is
-then expressed as ``[]``, and a set of samples as ``[[0], [1, 2], []]``.
-In the label indicator format, each sample is one row of a 2d array of
-shape (n_samples, n_classes) with binary values: the one, i.e. the non zero
-elements, corresponds to the subset of labels. Our previous example is
-therefore expressed as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``
-and an empty set of labels would be represented by a row of zero elements.
+Producing multilabel data as a list of sets of labels may be more intuitive.
+The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
+transformer can be used to convert between a collection of collections of
+labels and the indicator format.
 
+  >>> from sklearn.preprocessing import MultiLabelBinarizer
+  >>> y = [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
+  >>> MultiLabelBinarizer().fit_transform(y)
+  array([[0, 0, 1, 1, 1],
+         [0, 0, 1, 0, 0],
+         [1, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [1, 1, 1, 0, 0]])
 
-In the preprocessing module, the transformer
-:class:`sklearn.preprocessing.label_binarize` and the function
-:func:`sklearn.preprocessing.LabelBinarizer`
-can help you to convert the sequence of sequences format to the label
-indicator format.
-
-  >>> from sklearn.datasets import make_multilabel_classification
-  >>> from sklearn.preprocessing import LabelBinarizer
-  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0)
-  >>> Y
-  ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
-  >>> LabelBinarizer().fit_transform(Y)
-  array([[1, 1, 1, 0, 0],
-         [1, 1, 1, 0, 1],
-         [1, 1, 0, 0, 1],
-         [1, 1, 0, 0, 0],
-         [0, 0, 1, 1, 0]])
-
-.. warning::
-
-    - The sequence of sequences format will disappear in a near future.
-    - Most estimators and functions support both multilabel format.
-
+.. _ovr_classification:
 
 One-Vs-The-Rest
 ===============
@@ -151,11 +141,11 @@ Multilabel learning
 -------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
-To use this feature, feed the classifier a list of tuples containing
-target labels, like in the example below.
+To use this feature, feed the classifier an indicator matrix, in which cell
+[i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/plot_multilabel_1.png
+.. figure:: ../auto_examples/images/plot_multilabel_001.png
     :target: ../auto_examples/plot_multilabel.html
     :align: center
     :scale: 75%
@@ -165,19 +155,25 @@ target labels, like in the example below.
 
     * :ref:`example_plot_multilabel.py`
 
+.. _ovo_classification:
 
 One-Vs-One
 ==========
 
 :class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
-Since it requires to fit `n_classes * (n_classes - 1) / 2` classifiers,
+In the event of a tie (among two classes with an equal number of votes), it
+selects the class with the highest aggregate classification confidence by
+summing over the pair-wise classification confidence levels computed by the
+underlying binary classifiers.
+
+Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
 O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
-`n_samples`. This is because each individual learning problem only involves
+``n_samples``. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used `n_classes` times.
+dataset is used ``n_classes`` times.
 
 Multiclass learning
 -------------------
@@ -199,6 +195,13 @@ Below is an example of multiclass learning using OvO::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 
+.. topic:: References:
+
+    .. [1] "Pattern Recognition and Machine Learning. Springer",
+        Christopher M. Bishop, page 183, (First Edition)
+
+.. _ecoc:
+
 Error-Correcting Output-Codes
 =============================
 
@@ -211,14 +214,14 @@ code book. The code size is the dimensionality of the aforementioned space.
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
 accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [2]_ although more elaborate methods may be added in the
+book as advocated in [3]_ although more elaborate methods may be added in the
 future.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to
+In :class:`OutputCodeClassifier`, the ``code_size`` attribute allows the user to
 control the number of classifiers which will be used. It is a percentage of the
 total number of classes.
 
@@ -258,16 +261,16 @@ Below is an example of multiclass learning using Output-Codes::
 
 .. topic:: References:
 
-    .. [1] "Solving multiclass learning problems via error-correcting output codes",
+    .. [2] "Solving multiclass learning problems via error-correcting output codes",
         Dietterich T., Bakiri G.,
         Journal of Artificial Intelligence Research 2,
         1995.
 
-    .. [2] "The error coding method and PICTs",
+    .. [3] "The error coding method and PICTs",
         James G., Hastie T.,
         Journal of Computational and Graphical statistics 7,
         1998.
 
-    .. [3] "The Elements of Statistical Learning",
+    .. [4] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.

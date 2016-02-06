@@ -106,8 +106,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
             k_results_build[algorithm][i] = (t1 - t0)
             k_results_query[algorithm][i] = (t2 - t1)
 
-    pl.figure('scikit-learn nearest neighbors benchmark results',
-              figsize=(8, 11))
+    pl.figure(figsize=(8, 11))
 
     for (sbplt, vals, quantity,
          build_time, query_time) in [(311, Nrange, 'N',

@@ -1,7 +1,5 @@
-""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral
-clustering.
+"""Affinity Propagation clustering algorithm."""
 
-"""
 # Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 
@@ -10,22 +8,26 @@ clustering.
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array
+from ..utils import as_float_array, check_array
+from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False):
+                         damping=0.5, copy=True, verbose=False,
+                         return_n_iter=False):
     """Perform Affinity Propagation Clustering of data
+
+    Read more in the :ref:`User Guide <affinity_propagation>`.
 
     Parameters
     ----------
 
-    S : array [n_samples, n_samples]
+    S : array-like, shape (n_samples, n_samples)
         Matrix of similarities between points
 
-    preference : array [n_samples,] or float, optional, default: None
+    preference : array-like, shape (n_samples,) or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -51,14 +53,21 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     verbose : boolean, optional, default: False
         The verbosity level
 
+    return_n_iter : bool, default False
+        Whether or not to return the number of iterations.
+
     Returns
     -------
 
-    cluster_centers_indices : array [n_clusters]
+    cluster_centers_indices : array, shape (n_clusters,)
         index of clusters centers
 
-    labels : array [n_samples]
+    labels : array, shape (n_samples,)
         cluster labels for each point
+
+    n_iter : int
+        number of iterations run. Returned only if `return_n_iter` is
+        set to True.
 
     Notes
     -----
@@ -87,6 +96,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     A = np.zeros((n_samples, n_samples))
     R = np.zeros((n_samples, n_samples))  # Initialize messages
+    # Intermediate results
+    tmp = np.zeros((n_samples, n_samples))
 
     # Remove degeneracies
     S += ((np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) *
@@ -98,35 +109,36 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     ind = np.arange(n_samples)
 
     for it in range(max_iter):
-        # Compute responsibilities
-        Rold = R.copy()
-        AS = A + S
+        # tmp = A + S; compute responsibilities
+        np.add(A, S, tmp)
+        I = np.argmax(tmp, axis=1)
+        Y = tmp[ind, I]  # np.max(A + S, axis=1)
+        tmp[ind, I] = -np.inf
+        Y2 = np.max(tmp, axis=1)
 
-        I = np.argmax(AS, axis=1)
-        Y = AS[np.arange(n_samples), I]  # np.max(AS, axis=1)
+        # tmp = Rnew
+        np.subtract(S, Y[:, None], tmp)
+        tmp[ind, I] = S[ind, I] - Y2
 
-        AS[ind, I[ind]] = - np.finfo(np.double).max
+        # Damping
+        tmp *= 1 - damping
+        R *= damping
+        R += tmp
 
-        Y2 = np.max(AS, axis=1)
-        R = S - Y[:, np.newaxis]
+        # tmp = Rp; compute availabilities
+        np.maximum(R, 0, tmp)
+        tmp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
 
-        R[ind, I[ind]] = S[ind, I[ind]] - Y2[ind]
+        # tmp = -Anew
+        tmp -= np.sum(tmp, axis=0)
+        dA = np.diag(tmp).copy()
+        tmp.clip(0, np.inf, tmp)
+        tmp.flat[::n_samples + 1] = dA
 
-        R = (1 - damping) * R + damping * Rold  # Damping
-
-        # Compute availabilities
-        Aold = A
-        Rp = np.maximum(R, 0)
-        Rp.flat[::n_samples + 1] = R.flat[::n_samples + 1]
-
-        A = np.sum(Rp, axis=0)[np.newaxis, :] - Rp
-
-        dA = np.diag(A)
-        A = np.minimum(A, 0)
-
-        A.flat[::n_samples + 1] = dA
-
-        A = (1 - damping) * A + damping * Aold  # Damping
+        # Damping
+        tmp *= 1 - damping
+        A *= damping
+        A -= tmp
 
         # Check for convergence
         E = (np.diag(A) + np.diag(R)) > 0
@@ -168,13 +180,18 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = None
         labels.fill(np.nan)
 
-    return cluster_centers_indices, labels
+    if return_n_iter:
+        return cluster_centers_indices, labels, it + 1
+    else:
+        return cluster_centers_indices, labels
 
 
 ###############################################################################
 
 class AffinityPropagation(BaseEstimator, ClusterMixin):
-    """Perform Affinity Propagation Clustering of data
+    """Perform Affinity Propagation Clustering of data.
+
+    Read more in the :ref:`User Guide <affinity_propagation>`.
 
     Parameters
     ----------
@@ -186,12 +203,12 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         of estimated clusters that stops the convergence.
 
     max_iter : int, optional, default: 200
-        Maximum number of iterations
+        Maximum number of iterations.
 
     copy : boolean, optional, default: True
         Make a copy of input data.
 
-    preference : array [n_samples,] or float, optional, default: None
+    preference : array-like, shape (n_samples,) or float, optional
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
@@ -209,17 +226,20 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    `cluster_centers_indices_` : array, [n_clusters]
+    cluster_centers_indices_ : array, shape (n_clusters,)
         Indices of cluster centers
 
-    `cluster_centers_` : array, [n_clusters, n_features]
-        Cluster centers (if affinity != ``precomputed'').
+    cluster_centers_ : array, shape (n_clusters, n_features)
+        Cluster centers (if affinity != ``precomputed``).
 
-    `labels_` : array, [n_samples]
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
-    `affinity_matrix_` : array-like, [n_samples, n_samples]
+    affinity_matrix_ : array, shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
+
+    n_iter_ : int
+        Number of iterations taken to converge.
 
     Notes
     -----
@@ -249,33 +269,34 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     @property
     def _pairwise(self):
-        return self.affinity is "precomputed"
+        return self.affinity == "precomputed"
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Create affinity matrix from negative euclidean distances, then
         apply affinity propagation clustering.
 
         Parameters
         ----------
 
-        X: array [n_samples, n_features] or [n_samples, n_samples]
+        X: array-like, shape (n_samples, n_features) or (n_samples, n_samples)
             Data matrix or, if affinity is ``precomputed``, matrix of
             similarities / affinities.
         """
-
-        if self.affinity is "precomputed":
+        X = check_array(X, accept_sparse='csr')
+        if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity is "euclidean":
+        elif self.affinity == "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
                              "'euclidean'. Got %s instead"
                              % str(self.affinity))
 
-        self.cluster_centers_indices_, self.labels_ = affinity_propagation(
-            self.affinity_matrix_, self.preference, max_iter=self.max_iter,
-            convergence_iter=self.convergence_iter, damping=self.damping,
-            copy=self.copy, verbose=self.verbose)
+        self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
+            affinity_propagation(
+                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+                convergence_iter=self.convergence_iter, damping=self.damping,
+                copy=self.copy, verbose=self.verbose, return_n_iter=True)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
@@ -287,17 +308,15 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             New data to predict.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : array, shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
-        if not hasattr(self, "cluster_centers_indices_"):
-            raise ValueError("Estimator is not fitted.")
-
+        check_is_fitted(self, "cluster_centers_indices_")
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")

@@ -5,15 +5,20 @@
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
+import warnings
 from sklearn.base import BaseEstimator
-from sklearn.learning_curve import learning_curve, validation_curve
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import make_classification
-from sklearn.cross_validation import KFold
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn.learning_curve import learning_curve, validation_curve
+    from sklearn.cross_validation import KFold
+
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 
@@ -46,8 +51,8 @@ class MockImprovingEstimator(BaseEstimator):
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingEstimator, self).__init__(
-              n_max_train_sizes)
+        super(MockIncrementalImprovingEstimator,
+              self).__init__(n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
@@ -84,8 +89,11 @@ def test_learning_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-                                                            cv=3)
+    with warnings.catch_warnings(record=True) as w:
+        train_sizes, train_scores, test_scores = learning_curve(
+            estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
+    if len(w) > 0:
+        raise RuntimeError("Unexpected warning: %r" % w[0].message)
     assert_equal(train_scores.shape, (10, 3))
     assert_equal(test_scores.shape, (10, 3))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
@@ -100,8 +108,8 @@ def test_learning_curve_unsupervised():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X,
-                                                            y=None, cv=3)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y=None, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -144,7 +152,8 @@ def test_learning_curve_incremental_learning():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=3, exploit_incremental_learning=True)
+        estimator, X, y, cv=3, exploit_incremental_learning=True,
+        train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -158,7 +167,8 @@ def test_learning_curve_incremental_learning_unsupervised():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y=None, cv=3, exploit_incremental_learning=True)
+        estimator, X, y=None, cv=3, exploit_incremental_learning=True,
+        train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -222,9 +232,9 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n=30, n_folds=3, indices=False)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-                                                            cv=cv)
+    cv = KFold(n=30, n_folds=3)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -237,8 +247,13 @@ def test_validation_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     param_range = np.linspace(0, 1, 10)
-    train_scores, test_scores = validation_curve(MockEstimatorWithParameter(),
-                                                 X, y, param_name="param",
-                                                 param_range=param_range, cv=2)
+    with warnings.catch_warnings(record=True) as w:
+        train_scores, test_scores = validation_curve(
+            MockEstimatorWithParameter(), X, y, param_name="param",
+            param_range=param_range, cv=2
+        )
+    if len(w) > 0:
+        raise RuntimeError("Unexpected warning: %r" % w[0].message)
+
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)

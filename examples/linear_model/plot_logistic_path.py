@@ -14,7 +14,7 @@ print(__doc__)
 
 from datetime import datetime
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import linear_model
 from sklearn import datasets
@@ -46,10 +46,10 @@ for c in cs:
 print("This took ", datetime.now() - start)
 
 coefs_ = np.array(coefs_)
-pl.plot(np.log10(cs), coefs_)
-ymin, ymax = pl.ylim()
-pl.xlabel('log(C)')
-pl.ylabel('Coefficients')
-pl.title('Logistic Regression Path')
-pl.axis('tight')
-pl.show()
+plt.plot(np.log10(cs), coefs_)
+ymin, ymax = plt.ylim()
+plt.xlabel('log(C)')
+plt.ylabel('Coefficients')
+plt.title('Logistic Regression Path')
+plt.axis('tight')
+plt.show()

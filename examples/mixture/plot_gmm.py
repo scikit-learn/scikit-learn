@@ -3,8 +3,8 @@
 Gaussian Mixture Model Ellipsoids
 =================================
 
-Plot the confidence ellipsoids of a mixture of two gaussians with EM
-and variational dirichlet process.
+Plot the confidence ellipsoids of a mixture of two Gaussians with EM
+and variational Dirichlet process.
 
 Both models have access to five components with which to fit the
 data. Note that the EM model will necessarily use all five components
@@ -15,7 +15,7 @@ is trying to fit too many components, while the Dirichlet Process model
 adapts it number of state automatically.
 
 This example doesn't show it, as we're in a low-dimensional space, but
-another advantage of the dirichlet process model is that it can fit
+another advantage of the Dirichlet process model is that it can fit
 full covariance matrices effectively even when there are less examples
 per cluster than there are dimensions in the data, due to
 regularization properties of the inference algorithm.
@@ -24,7 +24,7 @@ import itertools
 
 import numpy as np
 from scipy import linalg
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from sklearn import mixture
@@ -38,19 +38,20 @@ C = np.array([[0., -0.1], [1.7, .4]])
 X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
-# Fit a mixture of gaussians with EM using five components
+# Fit a mixture of Gaussians with EM using five components
 gmm = mixture.GMM(n_components=5, covariance_type='full')
 gmm.fit(X)
 
-# Fit a dirichlet process mixture of gaussians using five components
+# Fit a Dirichlet process mixture of Gaussians using five components
 dpgmm = mixture.DPGMM(n_components=5, covariance_type='full')
 dpgmm.fit(X)
 
-color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
+color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
+                              'darkorange'])
 
 for i, (clf, title) in enumerate([(gmm, 'GMM'),
                                   (dpgmm, 'Dirichlet Process GMM')]):
-    splot = pl.subplot(2, 1, 1 + i)
+    splot = plt.subplot(2, 1, 1 + i)
     Y_ = clf.predict(X)
     for i, (mean, covar, color) in enumerate(zip(
             clf.means_, clf._get_covars(), color_iter)):
@@ -61,7 +62,7 @@ for i, (clf, title) in enumerate([(gmm, 'GMM'),
         # components.
         if not np.any(Y_ == i):
             continue
-        pl.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
+        plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
 
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])
@@ -71,10 +72,10 @@ for i, (clf, title) in enumerate([(gmm, 'GMM'),
         ell.set_alpha(0.5)
         splot.add_artist(ell)
 
-    pl.xlim(-10, 10)
-    pl.ylim(-3, 6)
-    pl.xticks(())
-    pl.yticks(())
-    pl.title(title)
+    plt.xlim(-10, 10)
+    plt.ylim(-3, 6)
+    plt.xticks(())
+    plt.yticks(())
+    plt.title(title)
 
-pl.show()
+plt.show()

@@ -20,7 +20,7 @@ print(__doc__)
 
 import numpy as np
 import scipy as sp
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import cluster
 
@@ -47,12 +47,12 @@ vmin = lena.min()
 vmax = lena.max()
 
 # original lena
-pl.figure(1, figsize=(3, 2.2))
-pl.imshow(lena, cmap=pl.cm.gray, vmin=vmin, vmax=256)
+plt.figure(1, figsize=(3, 2.2))
+plt.imshow(lena, cmap=plt.cm.gray, vmin=vmin, vmax=256)
 
 # compressed lena
-pl.figure(2, figsize=(3, 2.2))
-pl.imshow(lena_compressed, cmap=pl.cm.gray, vmin=vmin, vmax=vmax)
+plt.figure(2, figsize=(3, 2.2))
+plt.imshow(lena_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins lena
 regular_values = np.linspace(0, 256, n_clusters + 1)
@@ -60,21 +60,21 @@ regular_labels = np.searchsorted(regular_values, lena) - 1
 regular_values = .5 * (regular_values[1:] + regular_values[:-1])  # mean
 regular_lena = np.choose(regular_labels.ravel(), regular_values)
 regular_lena.shape = lena.shape
-pl.figure(3, figsize=(3, 2.2))
-pl.imshow(regular_lena, cmap=pl.cm.gray, vmin=vmin, vmax=vmax)
+plt.figure(3, figsize=(3, 2.2))
+plt.imshow(regular_lena, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # histogram
-pl.figure(4, figsize=(3, 2.2))
-pl.clf()
-pl.axes([.01, .01, .98, .98])
-pl.hist(X, bins=256, color='.5', edgecolor='.5')
-pl.yticks(())
-pl.xticks(regular_values)
+plt.figure(4, figsize=(3, 2.2))
+plt.clf()
+plt.axes([.01, .01, .98, .98])
+plt.hist(X, bins=256, color='.5', edgecolor='.5')
+plt.yticks(())
+plt.xticks(regular_values)
 values = np.sort(values)
 for center_1, center_2 in zip(values[:-1], values[1:]):
-    pl.axvline(.5 * (center_1 + center_2), color='b')
+    plt.axvline(.5 * (center_1 + center_2), color='b')
 
 for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
-    pl.axvline(.5 * (center_1 + center_2), color='b', linestyle='--')
+    plt.axvline(.5 * (center_1 + center_2), color='b', linestyle='--')
 
-pl.show()
+plt.show()

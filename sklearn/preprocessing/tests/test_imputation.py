@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy import sparse
 
@@ -9,10 +10,10 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn import grid_search
+from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
-
+ 
 
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
@@ -75,7 +76,7 @@ def _check_statistics(X, X_true,
 
 
 def test_imputation_shape():
-    """Verify the shapes of the imputed matrix for different strategies."""
+    # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
@@ -88,8 +89,8 @@ def test_imputation_shape():
 
 
 def test_imputation_mean_median_only_zero():
-    """Test imputation using the mean and median strategies, when
-       missing_values == 0."""
+    # Test imputation using the mean and median strategies, when
+    # missing_values == 0.
     X = np.array([
         [np.nan, 0, 0,  0,  5],
         [np.nan, 1, 0,  np.nan,  3],
@@ -121,9 +122,21 @@ def test_imputation_mean_median_only_zero():
                       statistics_median, 0)
 
 
+def safe_median(arr, *args, **kwargs):
+    # np.median([]) raises a TypeError for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.median(arr, *args, **kwargs)
+
+
+def safe_mean(arr, *args, **kwargs):
+    # np.mean([]) raises a RuntimeWarning for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
+
+
 def test_imputation_mean_median():
-    """Test imputation using the mean and median strategies, when
-       missing_values != 0."""
+    # Test imputation using the mean and median strategies, when
+    # missing_values != 0.
     rng = np.random.RandomState(0)
 
     dim = 10
@@ -134,9 +147,9 @@ def test_imputation_mean_median():
     values = np.arange(1, shape[0]+1)
     values[4::2] = - values[4::2]
 
-    tests = [("mean", "NaN", lambda z, v, p: np.mean(np.hstack((z, v)))),
+    tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
              ("mean", 0, lambda z, v, p: np.mean(v)),
-             ("median", "NaN", lambda z, v, p: np.median(np.hstack((z, v)))),
+             ("median", "NaN", lambda z, v, p: safe_median(np.hstack((z, v)))),
              ("median", 0, lambda z, v, p: np.median(v))]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -192,8 +205,7 @@ def test_imputation_mean_median():
 
 
 def test_imputation_median_special_cases():
-    """Test median imputation with sparse boundary cases
-    """
+    # Test median imputation with sparse boundary cases
     X = np.array([
         [0, np.nan, np.nan],  # odd: implicit zero
         [5, np.nan, np.nan],  # odd: explicit nonzero
@@ -222,7 +234,7 @@ def test_imputation_median_special_cases():
 
 
 def test_imputation_most_frequent():
-    """Test imputation using the most-frequent strategy."""
+    # Test imputation using the most-frequent strategy.
     X = np.array([
         [-1, -1,  0,  5],
         [-1,  2, -1,  3],
@@ -245,7 +257,7 @@ def test_imputation_most_frequent():
 
 
 def test_imputation_pipeline_grid_search():
-    """Test imputation within a pipeline + gridsearch."""
+    # Test imputation within a pipeline + gridsearch.
     pipeline = Pipeline([('imputer', Imputer(missing_values=0)),
                          ('tree', tree.DecisionTreeRegressor(random_state=0))])
 
@@ -256,13 +268,13 @@ def test_imputation_pipeline_grid_search():
 
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
-    Y = sparse_random_matrix(l, 1, density=0.10).todense()
-    gs = grid_search.GridSearchCV(pipeline, parameters)
+    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
+    gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
 
 def test_imputation_pickle():
-    """Test for pickling imputers."""
+    # Test for pickling imputers.
     import pickle
 
     l = 100
@@ -281,11 +293,11 @@ def test_imputation_pickle():
 
 
 def test_imputation_copy():
-    """Test imputation with copy"""
+    # Test imputation with copy
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
     # copy=True, dense => copy
-    X = X_orig.copy().todense()
+    X = X_orig.copy().toarray()
     imputer = Imputer(missing_values=0, strategy="mean", copy=True)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
@@ -299,7 +311,7 @@ def test_imputation_copy():
     assert_false(np.all(X.data == Xt.data))
 
     # copy=False, dense => no copy
-    X = X_orig.copy().todense()
+    X = X_orig.copy().toarray()
     imputer = Imputer(missing_values=0, strategy="mean", copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1

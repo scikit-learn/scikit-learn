@@ -19,7 +19,7 @@ print(__doc__)
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -40,8 +40,8 @@ ols.fit(X_train, y_train)
 ###############################################################################
 # Plot the figure
 def plot_figs(fig_num, elev, azim, X_train, clf):
-    fig = pl.figure(fig_num, figsize=(4, 3))
-    pl.clf()
+    fig = plt.figure(fig_num, figsize=(4, 3))
+    plt.clf()
     ax = Axes3D(fig, elev=elev, azim=azim)
 
     ax.scatter(X_train[:, 0], X_train[:, 1], y_train, c='k', marker='+')
@@ -71,4 +71,4 @@ elev = -.5
 azim = 90
 plot_figs(3, elev, azim, X_train, ols)
 
-pl.show()
+plt.show()

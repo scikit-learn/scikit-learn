@@ -9,14 +9,15 @@ Base IO code for all datasets
 
 import os
 import csv
+import sys
 import shutil
-import warnings
 from os import environ
 from os.path import dirname
 from os.path import join
 from os.path import exists
 from os.path import expanduser
 from os.path import isdir
+from os.path import splitext
 from os import listdir
 from os import makedirs
 
@@ -26,12 +27,46 @@ from ..utils import check_random_state
 
 
 class Bunch(dict):
-    """Container object for datasets: dictionary-like object that
-       exposes its keys as attributes."""
+    """Container object for datasets
+
+    Dictionary-like object that exposes its keys as attributes.
+
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
+
+    """
 
     def __init__(self, **kwargs):
-        dict.__init__(self, kwargs)
-        self.__dict__ = self
+        super(Bunch, self).__init__(kwargs)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __setstate__(self, state):
+        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # empty __dict__. This causes a surprising behaviour when
+        # loading these pickles scikit-learn 0.17: reading bunch.key
+        # uses __dict__ but assigning to bunch.key use __setattr__ and
+        # only changes bunch['key']. More details can be found at:
+        # https://github.com/scikit-learn/scikit-learn/issues/6196.
+        # Overriding __setstate__ to be a noop has the effect of
+        # ignoring the pickled __dict__
+        pass
 
 
 def get_data_home(data_home=None):
@@ -44,7 +79,7 @@ def get_data_home(data_home=None):
     in the user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programmatically by giving an explit folder path. The
+    variable or programmatically by giving an explicit folder path. The
     '~' symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
@@ -66,7 +101,6 @@ def clear_data_home(data_home=None):
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
-               charset=None, charset_error=None,
                decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
 
@@ -84,7 +118,7 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used has supervised signal label names. The
+    The folder names are used as supervised signal label names. The
     individual file names are not important.
 
     This function does not try to extract features into a numpy array or
@@ -104,6 +138,8 @@ def load_files(container_path, description=None, categories=None,
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -155,19 +191,6 @@ def load_files(container_path, description=None, categories=None,
         'target_names', the meaning of the labels, and 'DESCR', the full
         description of the dataset.
     """
-    if charset is not None:
-        warnings.warn("The charset parameter is deprecated as of version "
-                      "0.14 and will be removed in 0.16. Use encode instead.",
-                      DeprecationWarning)
-        encoding = charset
-
-    if charset_error is not None:
-        warnings.warn("The charset_error parameter is deprecated as of "
-                      "version 0.14 and will be removed in 0.16. Use "
-                      "decode_error instead.",
-                      DeprecationWarning)
-        decode_error = charset_error
-
     target = []
     target_names = []
     filenames = []
@@ -198,7 +221,10 @@ def load_files(container_path, description=None, categories=None,
         target = target[indices]
 
     if load_content:
-        data = [open(filename, 'rb').read() for filename in filenames]
+        data = []
+        for filename in filenames:
+            with open(filename, 'rb') as f:
+                data.append(f.read())
         if encoding is not None:
             data = [d.decode(encoding, decode_error) for d in data]
         return Bunch(data=data,
@@ -227,6 +253,8 @@ def load_iris():
     Features            real, positive
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Returns
     -------
     data : Bunch
@@ -249,24 +277,105 @@ def load_iris():
     ['setosa', 'versicolor', 'virginica']
     """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data', 'iris.csv')))
-    fdescr = open(join(module_path, 'descr', 'iris.rst'))
-    temp = next(data_file)
-    n_samples = int(temp[0])
-    n_features = int(temp[1])
-    target_names = np.array(temp[2:])
-    data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,), dtype=np.int)
+    with open(join(module_path, 'data', 'iris.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        target_names = np.array(temp[2:])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
 
-    for i, ir in enumerate(data_file):
-        data[i] = np.asarray(ir[:-1], dtype=np.float)
-        target[i] = np.asarray(ir[-1], dtype=np.int)
+        for i, ir in enumerate(data_file):
+            data[i] = np.asarray(ir[:-1], dtype=np.float64)
+            target[i] = np.asarray(ir[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
+        fdescr = rst_file.read()
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
-                 DESCR=fdescr.read(),
+                 DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
                                 'petal length (cm)', 'petal width (cm)'])
+
+
+def load_breast_cancer():
+    """Load and return the breast cancer wisconsin dataset (classification).
+
+    The breast cancer dataset is a classic and very easy binary classification
+    dataset.
+
+    =================   ==============
+    Classes                          2
+    Samples per class    212(M),357(B)
+    Samples total                  569
+    Dimensionality                  30
+    Features            real, positive
+    =================   ==============
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
+        full description of the dataset.
+
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
+    Examples
+    --------
+    Let's say you are interested in the samples 10, 50, and 85, and want to
+    know their class name.
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> data = load_breast_cancer()
+    >>> data.target[[10, 50, 85]]
+    array([0, 1, 0])
+    >>> list(data.target_names)
+    ['malignant', 'benign']
+    """
+    module_path = dirname(__file__)
+    with open(join(module_path, 'data', 'breast_cancer.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        first_line = next(data_file)
+        n_samples = int(first_line[0])
+        n_features = int(first_line[1])
+        target_names = np.array(first_line[2:4])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
+
+        for count, value in enumerate(data_file):
+            data[count] = np.asarray(value[:-1], dtype=np.float64)
+            target[count] = np.asarray(value[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    feature_names = np.array(['mean radius', 'mean texture',
+                              'mean perimeter', 'mean area',
+                              'mean smoothness', 'mean compactness',
+                              'mean concavity', 'mean concave points',
+                              'mean symmetry', 'mean fractal dimension',
+                              'radius error', 'texture error',
+                              'perimeter error', 'area error',
+                              'smoothness error', 'compactness error',
+                              'concavity error', 'concave points error',
+                              'symmetry error', 'fractal dimension error',
+                              'worst radius', 'worst texture',
+                              'worst perimeter', 'worst area',
+                              'worst smoothness', 'worst compactness',
+                              'worst concavity', 'worst concave points',
+                              'worst symmetry', 'worst fractal dimension'])
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 DESCR=fdescr,
+                 feature_names=feature_names)
 
 
 def load_digits(n_class=10):
@@ -282,6 +391,7 @@ def load_digits(n_class=10):
     Features             integers 0-16
     =================   ==============
 
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -313,7 +423,8 @@ def load_digits(n_class=10):
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
                       delimiter=',')
-    descr = open(join(module_path, 'descr', 'digits.rst')).read()
+    with open(join(module_path, 'descr', 'digits.rst')) as f:
+        descr = f.read()
     target = data[:, -1]
     flat_data = data[:, :-1]
     images = flat_data.view()
@@ -340,6 +451,8 @@ def load_diabetes():
     Features            real, -.2 < x < .2
     Targets             integer 25 - 346
     ==============      ==================
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------
@@ -414,26 +527,31 @@ def load_boston():
     (506, 13)
     """
     module_path = dirname(__file__)
-    data_file = csv.reader(open(join(module_path, 'data',
-                                     'boston_house_prices.csv')))
-    fdescr = open(join(module_path, 'descr', 'boston_house_prices.rst'))
-    temp = next(data_file)
-    n_samples = int(temp[0])
-    n_features = int(temp[1])
-    data = np.empty((n_samples, n_features))
-    target = np.empty((n_samples,))
-    temp = next(data_file)  # names of features
-    feature_names = np.array(temp)
 
-    for i, d in enumerate(data_file):
-        data[i] = np.asarray(d[:-1], dtype=np.float)
-        target[i] = np.asarray(d[-1], dtype=np.float)
+    fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
+    with open(fdescr_name) as f:
+        descr_text = f.read()
+
+    data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
+    with open(data_file_name) as f:
+        data_file = csv.reader(f)
+        temp = next(data_file)
+        n_samples = int(temp[0])
+        n_features = int(temp[1])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,))
+        temp = next(data_file)  # names of features
+        feature_names = np.array(temp)
+
+        for i, d in enumerate(data_file):
+            data[i] = np.asarray(d[:-1], dtype=np.float64)
+            target[i] = np.asarray(d[-1], dtype=np.float64)
 
     return Bunch(data=data,
                  target=target,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 DESCR=fdescr.read())
+                 DESCR=descr_text)
 
 
 def load_sample_images():
@@ -523,3 +641,32 @@ def load_sample_image(image_name):
     if index is None:
         raise AttributeError("Cannot find sample image: %s" % image_name)
     return images.images[index]
+
+
+def _pkl_filepath(*args, **kwargs):
+    """Ensure different filenames for Python 2 and Python 3 pickles
+
+    An object pickled under Python 3 cannot be loaded under Python 2.
+    An object pickled under Python 2 can sometimes not be loaded loaded
+    correctly under Python 3 because some Python 2 strings are decoded as
+    Python 3 strings which can be problematic for objects that use Python 2
+    strings as byte buffers for numerical data instead of "real" strings.
+
+    Therefore, dataset loaders in scikit-learn use different files for pickles
+    manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so
+    as to avoid conflicts.
+
+    args[-1] is expected to be the ".pkl" filename. Under Python 3, a
+    suffix is inserted before the extension to s
+
+    _pkl_filepath('/path/to/folder', 'filename.pkl') returns:
+      - /path/to/folder/filename.pkl under Python 2
+      - /path/to/folder/filename_py3.pkl under Python 3+
+
+    """
+    py3_suffix = kwargs.get("py3_suffix", "_py3")
+    basename, ext = splitext(args[-1])
+    if sys.version_info[0] >= 3:
+        basename += py3_suffix
+    new_args = args[:-1] + (basename + ext,)
+    return join(*new_args)

@@ -18,6 +18,10 @@ with a decision score above some value.
 """
 print(__doc__)
 
+# Author: Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD 3 clause
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -65,12 +69,14 @@ plt.axis("tight")
 for i, n, c in zip(range(2), class_names, plot_colors):
     idx = np.where(y == i)
     plt.scatter(X[idx, 0], X[idx, 1],
-               c=c, cmap=plt.cm.Paired,
-               label="Class %s" % n)
+                c=c, cmap=plt.cm.Paired,
+                label="Class %s" % n)
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
 plt.legend(loc='upper right')
-plt.xlabel("Decision Boundary")
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Decision Boundary')
 
 # Plot the two-class decision scores
 twoclass_output = bdt.decision_function(X)
@@ -78,16 +84,18 @@ plot_range = (twoclass_output.min(), twoclass_output.max())
 plt.subplot(122)
 for i, n, c in zip(range(2), class_names, plot_colors):
     plt.hist(twoclass_output[y == i],
-            bins=10,
-            range=plot_range,
-            facecolor=c,
-            label='Class %s' % n,
-            alpha=.5)
+             bins=10,
+             range=plot_range,
+             facecolor=c,
+             label='Class %s' % n,
+             alpha=.5)
 x1, x2, y1, y2 = plt.axis()
 plt.axis((x1, x2, y1, y2 * 1.2))
 plt.legend(loc='upper right')
 plt.ylabel('Samples')
-plt.xlabel('Decision Scores')
+plt.xlabel('Score')
+plt.title('Decision Scores')
 
-plt.subplots_adjust(wspace=0.25)
+plt.tight_layout()
+plt.subplots_adjust(wspace=0.35)
 plt.show()

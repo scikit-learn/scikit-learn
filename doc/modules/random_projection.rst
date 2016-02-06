@@ -64,12 +64,12 @@ bounded distortion introduced by the random projection::
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)
   array([ 7894,  9868, 11841])
 
-.. figure:: ../auto_examples/images/plot_johnson_lindenstrauss_bound_1.png
+.. figure:: ../auto_examples/images/plot_johnson_lindenstrauss_bound_001.png
    :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
 
-.. figure:: ../auto_examples/images/plot_johnson_lindenstrauss_bound_2.png
+.. figure:: ../auto_examples/images/plot_johnson_lindenstrauss_bound_002.png
    :target: ../auto_examples/plot_johnson_lindenstrauss_bound.html
    :scale: 75
    :align: center
@@ -119,7 +119,7 @@ Sparse random matrices are an alternative to dense Gaussian random
 projection matrix that guarantees similar embedding quality while being much
 more memory efficient and allowing faster computation of the projected data.
 
-If we note `s = 1 / density`, the elements of the random matrix
+If we define ``s = 1 / density``, the elements of the random matrix
 are drawn from
 
 .. math::

@@ -1,10 +1,7 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 """
-=================================================================
-Model selection with Probabilistic (PCA) and Factor Analysis (FA)
-=================================================================
+===============================================================
+Model selection with Probabilistic PCA and Factor Analysis (FA)
+===============================================================
 
 Probabilistic PCA and Factor Analysis are probabilistic models.
 The consequence is that the likelihood of new data can be used
@@ -33,13 +30,13 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import linalg
 
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.cross_validation import cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 ###############################################################################
 # Create the data
@@ -101,26 +98,26 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     print("best n_components by FactorAnalysis CV = %d" % n_components_fa)
     print("best n_components by PCA MLE = %d" % n_components_pca_mle)
 
-    pl.figure()
-    pl.plot(n_components, pca_scores, 'b', label='PCA scores')
-    pl.plot(n_components, fa_scores, 'r', label='FA scores')
-    pl.axvline(rank, color='g', label='TRUTH: %d' % rank, linestyle='-')
-    pl.axvline(n_components_pca, color='b',
-               label='PCA CV: %d' % n_components_pca, linestyle='--')
-    pl.axvline(n_components_fa, color='r',
-               label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
-    pl.axvline(n_components_pca_mle, color='k',
-               label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
+    plt.figure()
+    plt.plot(n_components, pca_scores, 'b', label='PCA scores')
+    plt.plot(n_components, fa_scores, 'r', label='FA scores')
+    plt.axvline(rank, color='g', label='TRUTH: %d' % rank, linestyle='-')
+    plt.axvline(n_components_pca, color='b',
+                label='PCA CV: %d' % n_components_pca, linestyle='--')
+    plt.axvline(n_components_fa, color='r',
+                label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
+    plt.axvline(n_components_pca_mle, color='k',
+                label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
 
     # compare with other covariance estimators
-    pl.axhline(shrunk_cov_score(X), color='violet',
-               label='Shrunk Covariance MLE', linestyle='-.')
-    pl.axhline(lw_score(X), color='orange',
-               label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
+    plt.axhline(shrunk_cov_score(X), color='violet',
+                label='Shrunk Covariance MLE', linestyle='-.')
+    plt.axhline(lw_score(X), color='orange',
+                label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
 
-    pl.xlabel('nb of components')
-    pl.ylabel('CV scores')
-    pl.legend(loc='lower right')
-    pl.title(title)
+    plt.xlabel('nb of components')
+    plt.ylabel('CV scores')
+    plt.legend(loc='lower right')
+    plt.title(title)
 
-pl.show()
+plt.show()

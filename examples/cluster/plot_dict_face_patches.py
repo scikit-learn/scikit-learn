@@ -8,8 +8,8 @@ images patches that constitute faces.
 From the programming standpoint, it is interesting because it shows how
 to use the online API of the scikit-learn to process a very large
 dataset by chunks. The way we proceed is that we load an image at a time
-and extract randomly 15 patches from this image. Once we have accumulated
-750 of these patches (using 50 images), we run the `partial_fit` method
+and extract randomly 50 patches from this image. Once we have accumulated
+500 of these patches (using 10 images), we run the `partial_fit` method
 of the online KMeans object, MiniBatchKMeans.
 
 The verbose setting on the MiniBatchKMeans enables us to see that some
@@ -22,7 +22,7 @@ print(__doc__)
 
 import time
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -44,7 +44,7 @@ buffer = []
 index = 1
 t0 = time.time()
 
-# The online learning part: cycle over the whole dataset 4 times
+# The online learning part: cycle over the whole dataset 6 times
 index = 0
 for _ in range(6):
     for img in faces.images:
@@ -68,17 +68,17 @@ print('done in %.2fs.' % dt)
 
 ###############################################################################
 # Plot the results
-pl.figure(figsize=(4.2, 4))
+plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):
-    pl.subplot(9, 9, i + 1)
-    pl.imshow(patch.reshape(patch_size), cmap=pl.cm.gray,
-              interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
+    plt.subplot(9, 9, i + 1)
+    plt.imshow(patch.reshape(patch_size), cmap=plt.cm.gray,
+               interpolation='nearest')
+    plt.xticks(())
+    plt.yticks(())
 
 
-pl.suptitle('Patches of faces\nTrain time %.1fs on %d patches' %
-            (dt, 8 * len(faces.images)), fontsize=16)
-pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+plt.suptitle('Patches of faces\nTrain time %.1fs on %d patches' %
+             (dt, 8 * len(faces.images)), fontsize=16)
+plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
-pl.show()
+plt.show()

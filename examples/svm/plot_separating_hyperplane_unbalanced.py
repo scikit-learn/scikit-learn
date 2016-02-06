@@ -27,7 +27,7 @@ unbalanced classes.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm
 #from sklearn.linear_model import SGDClassifier
 
@@ -58,10 +58,10 @@ wa = -ww[0] / ww[1]
 wyy = wa * xx - wclf.intercept_[0] / ww[1]
 
 # plot separating hyperplanes and samples
-h0 = pl.plot(xx, yy, 'k-', label='no weights')
-h1 = pl.plot(xx, wyy, 'k--', label='with weights')
-pl.scatter(X[:, 0], X[:, 1], c=y, cmap=pl.cm.Paired)
-pl.legend()
+h0 = plt.plot(xx, yy, 'k-', label='no weights')
+h1 = plt.plot(xx, wyy, 'k--', label='with weights')
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired)
+plt.legend()
 
-pl.axis('tight')
-pl.show()
+plt.axis('tight')
+plt.show()

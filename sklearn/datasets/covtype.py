@@ -2,17 +2,21 @@
 
 A classic dataset for classification benchmarks, featuring categorical and
 real-valued features.
+
+The dataset page is available from UCI Machine Learning Repository
+
+    http://archive.ics.uci.edu/ml/datasets/Covertype
+
+Courtesy of Jock A. Blackard and Colorado State University.
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
-import errno
 from gzip import GzipFile
 from io import BytesIO
 import logging
-import os
 from os.path import exists, join
 try:
     from urllib2 import urlopen
@@ -23,6 +27,8 @@ import numpy as np
 
 from .base import get_data_home
 from .base import Bunch
+from .base import _pkl_filepath
+from ..utils.fixes import makedirs
 from ..externals import joblib
 from ..utils import check_random_state
 
@@ -37,6 +43,8 @@ logger = logging.getLogger()
 def fetch_covtype(data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False):
     """Load the covertype dataset, downloading it if necessary.
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -57,17 +65,32 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
+
+    Returns
+    -------
+    dataset : dict-like object with the following attributes:
+
+    dataset.data : numpy array of shape (581012, 54)
+        Each row corresponds to the 54 features in the dataset.
+
+    dataset.target : numpy array of shape (581012,)
+        Each value corresponds to one of the 7 forest covertypes with values
+        ranging between 1 to 7.
+
+    dataset.DESCR : string
+        Description of the forest covertype dataset.
+
     """
 
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
-    samples_path = join(covtype_dir, "samples")
-    targets_path = join(covtype_dir, "targets")
+    samples_path = _pkl_filepath(covtype_dir, "samples")
+    targets_path = _pkl_filepath(covtype_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:
-        _mkdirp(covtype_dir)
-        logger.warn("Downloading %s" % URL)
+        makedirs(covtype_dir, exist_ok=True)
+        logger.warning("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
         Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
 
@@ -91,14 +114,3 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         y = y[ind]
 
     return Bunch(data=X, target=y, DESCR=__doc__)
-
-
-def _mkdirp(d):
-    """Ensure directory d exists (like mkdir -p on Unix)
-    No guarantee that the directory is writable.
-    """
-    try:
-        os.makedirs(d)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise

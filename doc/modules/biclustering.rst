@@ -10,8 +10,8 @@ cluster rows and columns of a data matrix. These clusters of rows and
 columns are known as biclusters. Each determines a submatrix of the
 original data matrix with some desired properties.
 
-For instance, given a matrix of shape `(10, 10)`, one possible bicluster
-with three rows and two columns induces a submatrix of shape `(3, 2)`::
+For instance, given a matrix of shape ``(10, 10)``, one possible bicluster
+with three rows and two columns induces a submatrix of shape ``(3, 2)``::
 
     >>> import numpy as np
     >>> data = np.arange(100).reshape(10, 10)
@@ -44,8 +44,8 @@ biclusters on the diagonal. Here is an example of this structure
 where biclusters have higher average values than the other rows and
 columns:
 
-.. figure:: ../auto_examples/bicluster/images/plot_spectral_coclustering_3.png
-   :target: ../auto_examples/bicluster/images/plot_spectral_coclustering_3.png
+.. figure:: ../auto_examples/bicluster/images/plot_spectral_coclustering_003.png
+   :target: ../auto_examples/bicluster/images/plot_spectral_coclustering_003.png
    :align: center
    :scale: 50
 
@@ -56,8 +56,8 @@ each column belongs to all row clusters. Here is an example of this
 structure where the variance of the values within each bicluster is
 small:
 
-.. figure:: ../auto_examples/bicluster/images/plot_spectral_biclustering_3.png
-   :target: ../auto_examples/bicluster/images/plot_spectral_biclustering_3.png
+.. figure:: ../auto_examples/bicluster/images/plot_spectral_biclustering_003.png
+   :target: ../auto_examples/bicluster/images/plot_spectral_biclustering_003.png
    :align: center
    :scale: 50
 
@@ -120,7 +120,7 @@ efficient.
 The input matrix :math:`A` is preprocessed as follows:
 
 .. math::
-    A_n = R^{−1/2} A C^{−1/2}
+    A_n = R^{-1/2} A C^{-1/2}
 
 Where :math:`R` is the diagonal matrix with entry :math:`i` equal to
 :math:`\sum_{j} A_{ij}` and :math:`C` is the diagonal matrix with

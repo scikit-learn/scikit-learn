@@ -6,7 +6,7 @@ from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import SelectorMixin
-from sklearn.utils import atleast2d_or_csc
+from sklearn.utils import check_array
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -15,7 +15,7 @@ class StepSelector(SelectorMixin, BaseEstimator):
         self.step = step
 
     def fit(self, X, y=None):
-        X = atleast2d_or_csc(X)
+        X = check_array(X, 'csc')
         self.n_input_feats = X.shape[1]
         return self
 
@@ -50,7 +50,7 @@ def test_transform_dense():
     assert_equal(np.float32, sel.transform(X.astype(np.float32)).dtype)
 
     # Check 1d list and other dtype:
-    names_t_actual = sel.transform(feature_names)
+    names_t_actual = sel.transform([feature_names])
     assert_array_equal(feature_names_t, names_t_actual.ravel())
 
     # Check wrong shape raises error
@@ -62,8 +62,8 @@ def test_transform_sparse():
     sel = StepSelector()
     Xt_actual = sel.fit(sparse(X)).transform(sparse(X))
     Xt_actual2 = sel.fit_transform(sparse(X))
-    assert_array_equal(Xt, Xt_actual.todense())
-    assert_array_equal(Xt, Xt_actual2.todense())
+    assert_array_equal(Xt, Xt_actual.toarray())
+    assert_array_equal(Xt, Xt_actual2.toarray())
 
     # Check dtype matches
     assert_equal(np.int32, sel.transform(sparse(X).astype(np.int32)).dtype)
@@ -85,7 +85,7 @@ def test_inverse_transform_dense():
                  sel.inverse_transform(Xt.astype(np.float32)).dtype)
 
     # Check 1d list and other dtype:
-    names_inv_actual = sel.inverse_transform(feature_names_t)
+    names_inv_actual = sel.inverse_transform([feature_names_t])
     assert_array_equal(feature_names_inv, names_inv_actual.ravel())
 
     # Check wrong shape raises error
@@ -96,7 +96,7 @@ def test_inverse_transform_sparse():
     sparse = sp.csc_matrix
     sel = StepSelector()
     Xinv_actual = sel.fit(sparse(X)).inverse_transform(sparse(Xt))
-    assert_array_equal(Xinv, Xinv_actual.todense())
+    assert_array_equal(Xinv, Xinv_actual.toarray())
 
     # Check dtype matches
     assert_equal(np.int32,

@@ -8,8 +8,8 @@ agglomeration.
 import numpy as np
 
 from ..base import TransformerMixin
-from ..utils import array2d
-
+from ..utils import check_array
+from ..utils.validation import check_is_fitted
 
 ###############################################################################
 # Mixin class for feature agglomeration.
@@ -19,7 +19,9 @@ class AgglomerationTransform(TransformerMixin):
     A class for feature agglomeration via the transform interface
     """
 
-    def transform(self, X, pooling_func=np.mean):
+    pooling_func = np.mean
+
+    def transform(self, X):
         """
         Transform a new matrix using the built clustering
 
@@ -29,17 +31,15 @@ class AgglomerationTransform(TransformerMixin):
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        pooling_func : callable, default=np.mean
-            This combines the values of agglomerated features into a single
-            value, and should accept an array of shape [M, N] and the keyword
-            argument `axis=1`, and reduce it to an array of size [M].
-
         Returns
         -------
         Y : array, shape = [n_samples, n_clusters] or [n_clusters]
             The pooled values for each feature cluster.
         """
-        X = array2d(X)
+        check_is_fitted(self, "labels_")
+
+        pooling_func = self.pooling_func
+        X = check_array(X)
         nX = []
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
@@ -66,5 +66,7 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
+        check_is_fitted(self, "labels_")
+
         unil, inverse = np.unique(self.labels_, return_inverse=True)
         return Xred[..., inverse]

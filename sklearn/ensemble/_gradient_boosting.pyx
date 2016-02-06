@@ -12,20 +12,18 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.tree._tree cimport Tree, Node
+from sklearn.tree._tree cimport Node
+from sklearn.tree._tree cimport Tree
+
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
-ctypedef np.int8_t int8
-
-from numpy import bool as np_bool
+ctypedef np.uint8_t uint8
 
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
 from numpy import ones as np_ones
 from numpy import bool as np_bool
-from numpy import int8 as np_int8
-from numpy import intp as np_intp
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
 
@@ -244,15 +242,15 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # push left child
                     node_stack[stack_size] = root_node + current_node.left_child
                     current_weight = weight_stack[stack_size]
-                    left_sample_frac = root_node[current_node.left_child].n_samples / \
-                                       <double>current_node.n_samples
+                    left_sample_frac = root_node[current_node.left_child].n_node_samples / \
+                                       <double>current_node.n_node_samples
                     if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
                         raise ValueError("left_sample_frac:%f, "
                                          "n_samples current: %d, "
                                          "n_samples left: %d"
                                          % (left_sample_frac,
-                                            current_node.n_samples,
-                                            root_node[current_node.left_child].n_samples))
+                                            current_node.n_node_samples,
+                                            root_node[current_node.left_child].n_node_samples))
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size +=1
 
@@ -267,7 +265,8 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                              total_weight)
 
 
-def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
+def _random_sample_mask(np.npy_intp n_total_samples,
+                        np.npy_intp n_total_in_bag, random_state):
      """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
      Parameters
@@ -289,15 +288,15 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
      """
      cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
           random_state.rand(n_total_samples)
-     cdef np.ndarray[int8, ndim=1, mode="c"] sample_mask = \
-          np_zeros((n_total_samples,), dtype=np_int8)
+     cdef np.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
+          np_zeros((n_total_samples,), dtype=np_bool)
 
-     cdef int n_bagged = 0
-     cdef int i = 0
+     cdef np.npy_intp n_bagged = 0
+     cdef np.npy_intp i = 0
 
-     for i from 0 <= i < n_total_samples:
+     for i in range(n_total_samples):
          if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
              sample_mask[i] = 1
              n_bagged += 1
 
-     return sample_mask.astype(np_bool)
+     return sample_mask

@@ -44,12 +44,12 @@ computationally costly.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import linalg
 
 from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 
 ###############################################################################
@@ -96,36 +96,36 @@ loglik_oa = oa.fit(X_train).score(X_test)
 
 ###############################################################################
 # Plot results
-fig = pl.figure()
-pl.title("Regularized covariance: likelihood and shrinkage coefficient")
-pl.xlabel('Regularizaton parameter: shrinkage coefficient')
-pl.ylabel('Error: negative log-likelihood on test data')
+fig = plt.figure()
+plt.title("Regularized covariance: likelihood and shrinkage coefficient")
+plt.xlabel('Regularizaton parameter: shrinkage coefficient')
+plt.ylabel('Error: negative log-likelihood on test data')
 # range shrinkage curve
-pl.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
+plt.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
 
-pl.plot(pl.xlim(), 2 * [loglik_real], '--r',
-        label="Real covariance likelihood")
+plt.plot(plt.xlim(), 2 * [loglik_real], '--r',
+         label="Real covariance likelihood")
 
 # adjust view
 lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)
-ymin = lik_min - 6. * np.log((pl.ylim()[1] - pl.ylim()[0]))
+ymin = lik_min - 6. * np.log((plt.ylim()[1] - plt.ylim()[0]))
 ymax = lik_max + 10. * np.log(lik_max - lik_min)
 xmin = shrinkages[0]
 xmax = shrinkages[-1]
 # LW likelihood
-pl.vlines(lw.shrinkage_, ymin, -loglik_lw, color='magenta',
-          linewidth=3, label='Ledoit-Wolf estimate')
+plt.vlines(lw.shrinkage_, ymin, -loglik_lw, color='magenta',
+           linewidth=3, label='Ledoit-Wolf estimate')
 # OAS likelihood
-pl.vlines(oa.shrinkage_, ymin, -loglik_oa, color='purple',
-          linewidth=3, label='OAS estimate')
+plt.vlines(oa.shrinkage_, ymin, -loglik_oa, color='purple',
+           linewidth=3, label='OAS estimate')
 # best CV estimator likelihood
-pl.vlines(cv.best_estimator_.shrinkage, ymin,
-          -cv.best_estimator_.score(X_test), color='cyan',
-          linewidth=3, label='Cross-validation best estimate')
+plt.vlines(cv.best_estimator_.shrinkage, ymin,
+           -cv.best_estimator_.score(X_test), color='cyan',
+           linewidth=3, label='Cross-validation best estimate')
 
-pl.ylim(ymin, ymax)
-pl.xlim(xmin, xmax)
-pl.legend()
+plt.ylim(ymin, ymax)
+plt.xlim(xmin, xmax)
+plt.legend()
 
-pl.show()
+plt.show()

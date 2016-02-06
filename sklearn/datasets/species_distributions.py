@@ -37,46 +37,42 @@ Notes:
 
 from io import BytesIO
 from os import makedirs
-from os.path import join
 from os.path import exists
 
 try:
     # Python 2
     from urllib2 import urlopen
+    PY2 = True
 except ImportError:
     # Python 3
     from urllib.request import urlopen
+    PY2 = False
 
 import numpy as np
 
 from sklearn.datasets.base import get_data_home, Bunch
+from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
 DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
 
-SAMPLES_URL = join(DIRECTORY_URL, "samples.zip")
-COVERAGES_URL = join(DIRECTORY_URL, "coverages.zip")
+SAMPLES_URL = DIRECTORY_URL + "samples.zip"
+COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
 
-def _load_coverage(F, header_length=6,
-                   dtype=np.int16):
-    """
-    load a coverage file.
+def _load_coverage(F, header_length=6, dtype=np.int16):
+    """Load a coverage file from an open file object.
+
     This will return a numpy array of the given dtype
     """
-    try:
-        header = [F.readline() for i in range(header_length)]
-    except:
-        F = open(F)
-        header = [F.readline() for i in range(header_length)]
-
+    header = [F.readline() for i in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 
     M = np.loadtxt(F, dtype=dtype)
-    nodata = header['NODATA_value']
+    nodata = int(header[b'NODATA_value'])
     if nodata != -9999:
         M[nodata] = -9999
     return M
@@ -87,24 +83,22 @@ def _load_csv(F):
 
     Parameters
     ----------
-    F : string or file object
-        file object or name of file
+    F : file object
+        CSV file open in byte mode.
 
     Returns
     -------
     rec : np.ndarray
         record array representing the data
     """
-    try:
+    if PY2:
+        # Numpy recarray wants Python 2 str but not unicode
         names = F.readline().strip().split(',')
-    except:
-        F = open(F)
-        names = F.readline().strip().split(',')
-
-    rec = np.loadtxt(F, skiprows=1, delimiter=',',
-                     dtype='a22,f4,f4')
+    else:
+        # Numpy recarray wants Python 3 str but not bytes...
+        names = F.readline().decode('ascii').strip().split(',')
+    rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
-
     return rec
 
 
@@ -139,6 +133,8 @@ def fetch_species_distributions(data_home=None,
                                 download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006)
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Parameters
     ----------
     data_home : optional, default: None
@@ -149,23 +145,8 @@ def fetch_species_distributions(data_home=None,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    Notes
-    ------
-
-    This dataset represents the geographic distribution of species.
-    The dataset is provided by Phillips et. al. (2006).
-
-    The two species are:
-
-    - `"Bradypus variegatus"
-      <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
-      the Brown-throated Sloth.
-
-    - `"Microryzomys minutus"
-      <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
-      also known as the Forest Small Rice Rat, a rodent that lives in Peru,
-      Colombia, Ecuador, Peru, and Venezuela.
-
+    Returns
+    --------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]
@@ -191,6 +172,23 @@ def fetch_species_distributions(data_home=None,
 
     grid_size : float
         The spacing between points of the grid, in degrees
+
+    Notes
+    ------
+
+    This dataset represents the geographic distribution of species.
+    The dataset is provided by Phillips et. al. (2006).
+
+    The two species are:
+
+    - `"Bradypus variegatus"
+      <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+      the Brown-throated Sloth.
+
+    - `"Microryzomys minutus"
+      <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+      also known as the Forest Small Rice Rat, a rodent that lives in Peru,
+      Colombia, Ecuador, Peru, and Venezuela.
 
     References
     ----------
@@ -221,7 +219,9 @@ def fetch_species_distributions(data_home=None,
                         grid_size=0.05)
     dtype = np.int16
 
-    if not exists(join(data_home, DATA_ARCHIVE_NAME)):
+    archive_path = _pkl_filepath(data_home, DATA_ARCHIVE_NAME)
+
+    if not exists(archive_path):
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
         X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
@@ -243,15 +243,14 @@ def fetch_species_distributions(data_home=None,
             fhandle = BytesIO(X[f])
             print(' - converting', f)
             coverages.append(_load_coverage(fhandle))
-        coverages = np.asarray(coverages,
-                               dtype=dtype)
+        coverages = np.asarray(coverages, dtype=dtype)
 
         bunch = Bunch(coverages=coverages,
                       test=test,
                       train=train,
                       **extra_params)
-        joblib.dump(bunch, join(data_home, DATA_ARCHIVE_NAME), compress=9)
+        joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = joblib.load(join(data_home, DATA_ARCHIVE_NAME))
+        bunch = joblib.load(archive_path)
 
     return bunch

@@ -3,6 +3,10 @@ from sklearn.utils.testing import (assert_allclose, assert_raises,
                                    assert_equal)
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
+from sklearn.pipeline import make_pipeline
+from sklearn.datasets import make_blobs
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 
 
 def compute_kernel_slow(Y, X, kernel, h):
@@ -26,9 +30,9 @@ def compute_kernel_slow(Y, X, kernel, h):
 
 
 def test_kernel_density(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
+    Y = rng.randn(n_samples, n_features)
 
     for kernel in ['gaussian', 'tophat', 'epanechnikov',
                    'exponential', 'linear', 'cosine']:
@@ -52,8 +56,8 @@ def test_kernel_density(n_samples=100, n_features=3):
 
 
 def test_kernel_density_sampling(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, n_features)
 
     bandwidth = 0.2
 
@@ -79,12 +83,17 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
         kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
         assert_raises(NotImplementedError, kde.sample, 100)
 
+    # non-regression test: used to return a scalar
+    X = rng.randn(4, 1)
+    kde = KernelDensity(kernel="gaussian").fit(X)
+    assert_equal(kde.sample().shape, (1, 1))
+
 
 def test_kde_algorithm_metric_choice():
-    """Smoke test for various metrics and algorithms"""
-    np.random.seed(0)
-    X = np.random.random((10, 2))  # 2 features required for haversine dist.
-    Y = np.random.random((10, 2))
+    # Smoke test for various metrics and algorithms
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)    # 2 features required for haversine dist.
+    Y = rng.randn(10, 2)
 
     for algorithm in ['auto', 'ball_tree', 'kd_tree']:
         for metric in ['euclidean', 'minkowski', 'manhattan',
@@ -119,6 +128,14 @@ def test_kde_badargs():
     assert_raises(ValueError, KernelDensity,
                   algorithm='kd_tree', metric='blah')
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+
+def test_kde_pipeline_gridsearch():
+    # test that kde plays nice in pipelines and grid-searches
+    X, _ = make_blobs(cluster_std=.1, random_state=1,
+                      centers=[[0, 1], [1, 0], [0, 0]])
+    pipe1 = make_pipeline(StandardScaler(with_mean=False, with_std=False),
+                          KernelDensity(kernel="gaussian"))
+    params = dict(kerneldensity__bandwidth=[0.001, 0.01, 0.1, 1, 10])
+    search = GridSearchCV(pipe1, param_grid=params, cv=5)
+    search.fit(X)
+    assert_equal(search.best_params_['kerneldensity__bandwidth'], .1)

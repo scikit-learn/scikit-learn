@@ -19,22 +19,21 @@ Exact PCA and probabilistic interpretation
 
 PCA is used to decompose a multivariate dataset in a set of successive
 orthogonal components that explain a maximum amount of the variance. In
-scikit-learn, :class:`PCA` is implemented as a `transformer` object
-that learns n components in its `fit` method, and can be used on new data
-to project it on these components.
+scikit-learn, :class:`PCA` is implemented as a *transformer* object
+that learns :math:`n` components in its ``fit`` method, and can be used on new
+data to project it on these components.
 
-The optional parameter `whiten=True` makes it possible to
+The optional parameter ``whiten=True`` makes it possible to
 project the data onto the singular space while scaling each component
 to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example
 the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm. However in that case the inverse transform is no
-longer exact since some information is lost while forward transforming.
+clustering algorithm.
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
-.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_lda_1.png
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_lda_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_lda.html
     :align: center
     :scale: 75%
@@ -45,7 +44,7 @@ probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
 `score` method that can be used in cross-validation:
 
-.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_1.png
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
@@ -55,6 +54,46 @@ data based on the amount of variance it explains. As such it implements a
 
     * :ref:`example_decomposition_plot_pca_vs_lda.py`
     * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+
+
+.. _IncrementalPCA:
+
+Incremental PCA
+---------------
+
+The :class:`PCA` object is very useful, but has certain limitations for
+large datasets. The biggest limitation is that :class:`PCA` only supports
+batch processing, which means all of the data to be processed must fit in main
+memory. The :class:`IncrementalPCA` object uses a different form of
+processing and allows for partial computations which almost
+exactly match the results of :class:`PCA` while processing the data in a
+minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
+out-of-core Principal Component Analysis either by:
+
+ * Using its ``partial_fit`` method on chunks of data fetched sequentially
+   from the local hard drive or a network database.
+
+ * Calling its fit method on a memory mapped file using ``numpy.memmap``.
+
+:class:`IncrementalPCA` only stores estimates of component and noise variances,
+in order update ``explained_variance_ratio_`` incrementally. This is why
+memory usage depends on the number of samples per batch, rather than the
+number of samples to be processed in the dataset.
+
+.. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_001.png
+    :target: ../auto_examples/decomposition/plot_incremental_pca.html
+    :align: center
+    :scale: 75%
+
+.. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_002.png
+    :target: ../auto_examples/decomposition/plot_incremental_pca.html
+    :align: center
+    :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_incremental_pca.py`
 
 
 .. _RandomizedPCA:
@@ -89,11 +128,11 @@ singular vectors reshaped as portraits. Since we only require the top
 and :math:`n_{features} = 64 \times 64 = 4096`, the computation time it
 less than 1s:
 
-.. |orig_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_1.png
+.. |orig_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_001.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -101,7 +140,7 @@ less than 1s:
 
 :class:`RandomizedPCA` can hence be used as a drop in replacement for
 :class:`PCA` with the exception that we need to give it the size of
-the lower-dimensional space `n_components` as a mandatory input parameter.
+the lower-dimensional space ``n_components`` as a mandatory input parameter.
 
 If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
 :math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
@@ -113,14 +152,9 @@ The memory footprint of :class:`RandomizedPCA` is also proportional to
 :math:`2 \cdot n_{max} \cdot n_{components}` instead of :math:`n_{max}
 \cdot n_{min}` for the exact method.
 
-Furthermore :class:`RandomizedPCA` is able to work with
-`scipy.sparse` matrices as input which make it suitable for reducing
-the dimensionality of features extracted from text documents for
-instance.
-
-Note: the implementation of `inverse_transform` in :class:`RandomizedPCA`
-is not the exact inverse transform of `transform` even when
-`whiten=False` (default).
+Note: the implementation of ``inverse_transform`` in :class:`RandomizedPCA`
+is not the exact inverse transform of ``transform`` even when
+``whiten=False`` (default).
 
 
 .. topic:: Examples:
@@ -142,12 +176,12 @@ Kernel PCA
 ----------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels. It has many
-applications including denoising, compression and structured prediction
-(kernel dependency estimation). :class:`KernelPCA` supports both
-`transform` and `inverse_transform`.
+dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+has many applications including denoising, compression and structured
+prediction (kernel dependency estimation). :class:`KernelPCA` supports both
+``transform`` and ``inverse_transform``.
 
-.. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_1.png
+.. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_001.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
@@ -192,12 +226,12 @@ there is no notion of vertical adjacency except during the human-friendly
 visualization as 64x64 pixel images. The fact that the components shown below
 appear local is the effect of the inherent structure of the data, which makes
 such local patterns minimize reconstruction error. There exist sparsity-inducing
-norms that take into account adjacency and different kinds of structure; see see
-[Jen09]_ for a review of such methods. For more details on how to use Sparse PCA,
-see the `Examples` section below.
+norms that take into account adjacency and different kinds of structure; see
+[Jen09]_ for a review of such methods.
+For more details on how to use Sparse PCA, see the Examples section, below.
 
 
-.. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_5.png
+.. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_005.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -218,13 +252,13 @@ problem solved is a PCA problem (dictionary learning) with an
 The sparsity-inducing :math:`\ell_1` norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
-hyperparameter `alpha`. Small values lead to a gently regularized
+hyperparameter ``alpha``. Small values lead to a gently regularized
 factorization, while larger values shrink many coefficients to zero.
 
 .. note::
 
   While in the spirit of an online algorithm, the class
-  :class:`MiniBatchSparsePCA` does not implement `partial_fit` because
+  :class:`MiniBatchSparsePCA` does not implement ``partial_fit`` because
   the algorithm is online along the features direction, not the samples
   direction.
 
@@ -280,12 +314,12 @@ is the transformed training set with :math:`k` features
 To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 
 .. math::
-    X' = X V_k^\top
+    X' = X V_k
 
 .. note::
     Most treatments of LSA in the natural language processing (NLP)
     and information retrieval (IR) literature
-    swap the axis of the matrix :math:`X` so that it has shape
+    swap the axes of the matrix :math:`X` so that it has shape
     ``n_features`` × ``n_samples``.
     We present LSA in a different way that matches the scikit-learn API better,
     but the singular values found are the same.
@@ -312,7 +346,7 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`example_document_clustering.py`
+   * :ref:`example_text_document_clustering.py`
 
 .. topic:: References:
 
@@ -335,11 +369,11 @@ Sparse coding with a precomputed dictionary
 The :class:`SparseCoder` object is an estimator that can be used to transform signals
 into sparse linear combination of atoms from a fixed, precomputed dictionary
 such as a discrete wavelet basis. This object therefore does not
-implement a `fit` method. The transformation amounts
+implement a ``fit`` method. The transformation amounts
 to a sparse coding problem: finding a representation of the data as a linear
 combination of as few dictionary atoms as possible. All variations of
 dictionary learning implement the following transform methods, controllable via
-the `transform_method` initialization parameter:
+the ``transform_method`` initialization parameter:
 
 * Orthogonal matching pursuit (:ref:`omp`)
 
@@ -356,16 +390,17 @@ They have been shown useful in literature for classification tasks. For image
 reconstruction tasks, orthogonal matching pursuit yields the most accurate,
 unbiased reconstruction.
 
-The dictionary learning objects offer, via the `split_code` parameter, the
+The dictionary learning objects offer, via the ``split_code`` parameter, the
 possibility to separate the positive and negative values in the results of
 sparse coding. This is useful when dictionary learning is used for extracting
 features that will be used for supervised learning, because it allows the
 learning algorithm to assign different weights to negative loadings of a
 particular atom, from to the corresponding positive loading.
 
-The split code for a single sample has length `2 * n_components`
+The split code for a single sample has length ``2 * n_components``
 and is constructed using the following rule: First, the regular code of length
-`n_components` is computed. Then, the first `n_components` entries of the split_code are
+``n_components`` is computed. Then, the first ``n_components`` entries of the
+``split_code`` are
 filled with the positive part of the regular code vector. The second half of
 the split code is filled with the negative part of the code vector, only with
 a positive sign. Therefore, the split_code is non-negative.
@@ -400,11 +435,11 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
                 0 \leq k < n_{atoms}
 
 
-.. |pca_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |dict_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_6.png
+.. |dict_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_006.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -419,7 +454,7 @@ The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of Lena looks like.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_image_denoising_1.png
+.. figure:: ../auto_examples/decomposition/images/plot_image_denoising_001.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :align: center
     :scale: 50%
@@ -450,14 +485,14 @@ mini-batches and optimizes in an online manner by cycling over the mini-batches
 for the specified number of iterations. However, at the moment it does not
 implement a stopping condition.
 
-The estimator also implements `partial_fit`, which updates the dictionary by
+The estimator also implements ``partial_fit``, which updates the dictionary by
 iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
 
 .. currentmodule:: sklearn.cluster
 
-.. image:: ../auto_examples/cluster/images/plot_dict_face_patches_1.png
+.. image:: ../auto_examples/cluster/images/plot_dict_face_patches_001.png
     :target: ../auto_examples/cluster/plot_dict_face_patches.html
     :scale: 50%
     :align: right
@@ -467,8 +502,8 @@ does not fit into the memory.
    Note that when using dictionary learning to extract a representation
    (e.g. for sparse coding) clustering can be a good proxy to learn the
    dictionary. For instance the :class:`MiniBatchKMeans` estimator is
-   computationally efficient and implements on-line learning
-   `partial_fit` method.
+   computationally efficient and implements on-line learning with a
+   ``partial_fit`` method.
 
     Example: :ref:`example_cluster_plot_dict_face_patches.py`
 
@@ -485,10 +520,10 @@ In unsupervised learning we only have a dataset :math:`X = \{x_1, x_2, \dots, x_
 
 .. math:: x_i = W h_i + \mu + \epsilon
 
-The vector :math:`h_i` is called `latent` because it is unobserved. :math:`\epsilon` is
+The vector :math:`h_i` is called "latent" because it is unobserved. :math:`\epsilon` is
 considered a noise term distributed according to a Gaussian with mean 0 and
 covariance :math:`\Psi` (i.e. :math:`\epsilon \sim \mathcal{N}(0, \Psi)`), :math:`\mu` is some
-arbitrary offset vector. Such a model is called `generative` as it describes
+arbitrary offset vector. Such a model is called "generative" as it describes
 how :math:`x_i` is generated from :math:`h_i`. If we use all the :math:`x_i`'s as columns to form
 a matrix :math:`\mathbf{X}` and all the :math:`h_i`'s as columns of a matrix :math:`\mathbf{H}`
 then we can write (with suitably defined :math:`\mathbf{M}` and :math:`\mathbf{E}`):
@@ -496,7 +531,7 @@ then we can write (with suitably defined :math:`\mathbf{M}` and :math:`\mathbf{E
 .. math::
     \mathbf{X} = W \mathbf{H} + \mathbf{M} + \mathbf{E}
 
-In other words, we `decomposed` matrix :math:`\mathbf{X}`.
+In other words, we *decomposed* matrix :math:`\mathbf{X}`.
 
 If :math:`h_i` is given, the above equation automatically implies the following
 probabilistic interpretation:
@@ -519,24 +554,24 @@ structure of the error covariance :math:`\Psi`:
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
   the probabilistic model of :class:`PCA`.
 
-* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
-  Analysis, a classical statistical model. The matrix W is sometimes called
-  `factor loading matrix`.
+* :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called
+  :class:`FactorAnalysis`, a classical statistical model. The matrix W is
+  sometimes called the "factor loading matrix".
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probabilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
 :class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
 
-Factor Analysis `can` produce similar components (the columns of its loading
+Factor analysis *can* produce similar components (the columns of its loading
 matrix) to :class:`PCA`. However, one can not make any general statements
 about these components (e.g. whether they are orthogonal):
 
-.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |fa_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_9.png
+.. |fa_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_009.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -546,7 +581,7 @@ The main advantage for Factor Analysis (over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
-.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
+.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_008.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
@@ -554,7 +589,7 @@ it can model the variance in every direction of the input space independently
 This allows better model selection than probabilistic PCA in the presence
 of heteroscedastic noise:
 
-.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_2.png
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_002.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
@@ -581,7 +616,7 @@ of the PCA variants.
 It is classically used to separate mixed signals (a problem known as
 *blind source separation*), as in the example below:
 
-.. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_1.png
+.. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_001.png
     :target: ../auto_examples/decomposition/plot_ica_blind_source_separation.html
     :align: center
     :scale: 60%
@@ -590,11 +625,11 @@ It is classically used to separate mixed signals (a problem known as
 ICA can also be used as yet another non linear decomposition that finds
 components with some sparsity:
 
-.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |ica_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_4.png
+.. |ica_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_004.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -617,16 +652,16 @@ data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
 It finds a decomposition of samples :math:`X`
-into two matrices :math:`V` and :math:`H` of non-negative elements,
-by optimizing for the squared Frobenius norm::
+into two matrices :math:`W` and :math:`H` of non-negative elements,
+by optimizing for the squared Frobenius norm:
 
 .. math::
-    \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
+    \arg\min_{W,H} \frac{1}{2} ||X - WH||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {WH}_{ij})^2
 
-This norm is an obvious extension of the Euclidean norm to matrices.
-(Other optimization objectives have been suggested in the NMF literature,
-in particular Kullback-Leibler divergence,
-but these are not currently implemented.)
+This norm is an obvious extension of the Euclidean norm to matrices. (Other
+optimization objectives have been suggested in the NMF literature, in
+particular Kullback-Leibler divergence, but these are not currently
+implemented.)
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
@@ -638,11 +673,11 @@ resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
 faces dataset, in comparison with the PCA eigenfaces.
 
-.. |pca_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
+.. |pca_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |nmf_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_3.png
+.. |nmf_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_003.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -660,27 +695,48 @@ the mean of all elements of the data), and NNDSVDar (in which the zeros are set
 to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
 
-:class:`NMF` can also be initialized with random non-negative matrices, by
-passing an integer seed or a `RandomState` to :attr:`init`.
+:class:`NMF` can also be initialized with correctly scaled random non-negative
+matrices by setting :attr:`init="random"`. An integer seed or a
+``RandomState`` can also be passed to :attr:`random_state` to control
+reproducibility.
 
-In :class:`NMF`, sparseness can be enforced by setting the attribute
-:attr:`sparseness` to ``"data"`` or ``"components"``. Sparse components lead to
-localized features, and sparse data leads to a more efficient representation of
-the data.
+In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
+to regularize the model. The L2 prior uses the Frobenius norm, while the L1
+prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
+combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
+and the intensity of the regularization with the :attr:`alpha`
+(:math:`\alpha`) parameter. Then the priors terms are:
+
+.. math::
+    \alpha \rho ||W||_1 + \alpha \rho ||H||_1
+    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+
+and the regularized objective function is:
+
+.. math::
+    \frac{1}{2}||X - WH||_{Fro}^2
+    + \alpha \rho ||W||_1 + \alpha \rho ||H||_1
+    + \frac{\alpha(1-\rho)}{2} ||W||_{Fro} ^ 2
+    + \frac{\alpha(1-\rho)}{2} ||H||_{Fro} ^ 2
+
+:class:`NMF` regularizes both W and H. The public function
+:func:`non_negative_factorization` allows a finer control through the
+:attr:`regularization` attribute, and may regularize only W, only H, or both.
 
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_faces_decomposition.py`
-    * :ref:`example_applications_topics_extraction_with_nmf.py`
+    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
     * `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
+      <http://hebb.mit.edu/people/seung/papers/ls-lponm-99.pdf>`_
       D. Lee, S. Seung, 1999
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <http://www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
+      <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
     * `"Projected gradient methods for non-negative matrix factorization"
@@ -692,3 +748,91 @@ the data.
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 
+    * `"Fast local algorithms for large scale nonnegative matrix and tensor
+      factorizations."
+      <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
+      A. Cichocki, P. Anh-Huy, 2009
+
+
+.. _LatentDirichletAllocation:
+
+Latent Dirichlet Allocation (LDA)
+=================================
+
+Latent Dirichlet Allocation is a generative probabilistic model for collections of
+discrete dataset such as text corpora. It is also a topic model that is used for
+discovering abstract topics from a collection of documents.
+
+The graphical model of LDA is a three-level Bayesian model:
+
+.. image:: ../images/lda_model_graph.png
+   :align: center
+
+When modeling text corpora, the model assumes the following generative process for
+a corpus with :math:`D` documents and :math:`K` topics:
+
+  1. For each topic :math:`k`, draw :math:`\beta_k \sim Dirichlet(\eta),\: k =1...K`
+
+  2. For each document :math:`d`, draw :math:`\theta_d \sim Dirichlet(\alpha), \: d=1...D`
+
+  3. For each word :math:`i` in document :math:`d`:
+
+    a. Draw a topic index :math:`z_{di} \sim Multinomial(\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim Multinomial(beta_{z_{di}}.)`
+
+For parameter estimation, the posterior distribution is:
+
+.. math::
+  p(z, \theta, \beta |w, \alpha, \eta) =
+    \frac{p(z, \theta, \beta|\alpha, \eta)}{p(w|\alpha, \eta)}
+
+Since the posterior is intractable, variational Bayesian method
+uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
+to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
+:math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
+
+.. math::
+  log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
+    E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
+
+Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
+between :math:`q(z,\theta,\beta)` and the true posterior
+:math:`p(z, \theta, \beta |w, \alpha, \eta)`.
+
+:class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
+both online and batch update method.
+While batch method updates variational variables after each full pass through the data,
+online method updates variational variables from mini-batch data points. Therefore,
+online method usually converges faster than batch method.
+
+.. note::
+
+  Although online method is guaranteed to converge to a local optimum point, the quality of
+  the optimum point and the speed of convergence may depend on mini-batch size and
+  attributes related to learning rate setting.
+
+When :class:`LatentDirichletAllocation` is applied on a "document-term" matrix, the matrix
+will be decomposed into a "topic-term" matrix and a "document-topic" matrix. While
+"topic-term" matrix is stored as :attr:`components_` in the model, "document-topic" matrix
+can be calculated from ``transform`` method.
+
+:class:`LatentDirichletAllocation` also implements ``partial_fit`` method. This is used
+when data can be fetched sequentially.
+
+.. topic:: Examples:
+
+    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+
+.. topic:: References:
+
+    * `"Latent Dirichlet Allocation"
+      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      D. Blei, A. Ng, M. Jordan, 2003
+
+    * `"Online Learning for Latent Dirichlet Allocation”
+      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      M. Hoffman, D. Blei, F. Bach, 2010
+
+    * `"Stochastic Variational Inference"
+      <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
+      M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013

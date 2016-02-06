@@ -14,29 +14,33 @@ detail.
 """
 print(__doc__)
 
+# Author: Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD 3 clause
+
+# importing necessary libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import AdaBoostRegressor
 
-# Create a the dataset
+# Create the dataset
 rng = np.random.RandomState(1)
 X = np.linspace(0, 6, 100)[:, np.newaxis]
 y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])
 
 # Fit regression model
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import AdaBoostRegressor
+regr_1 = DecisionTreeRegressor(max_depth=4)
 
-clf_1 = DecisionTreeRegressor(max_depth=4)
-
-clf_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=4),
+regr_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=4),
                           n_estimators=300, random_state=rng)
 
-clf_1.fit(X, y)
-clf_2.fit(X, y)
+regr_1.fit(X, y)
+regr_2.fit(X, y)
 
 # Predict
-y_1 = clf_1.predict(X)
-y_2 = clf_2.predict(X)
+y_1 = regr_1.predict(X)
+y_2 = regr_2.predict(X)
 
 # Plot the results
 plt.figure()

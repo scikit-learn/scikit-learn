@@ -148,8 +148,6 @@ def fit(
     intercept : array
         intercept in decision function
 
-    label : labels for different classes (only relevant in classification).
-
     probA, probB : array
         probability estimates, empty array for probability=False
     """
@@ -225,10 +223,6 @@ def fit(
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
-    label = np.empty((n_class), dtype=np.int32)
-    copy_label(label.data, model)
-
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
@@ -247,7 +241,7 @@ def fit(
     svm_free_and_destroy_model(&model)
     free(problem.x)
 
-    return (support, support_vectors, n_class_SV, sv_coef, intercept, label,
+    return (support, support_vectors, n_class_SV, sv_coef, intercept,
            probA, probB, fit_status)
 
 
@@ -279,7 +273,6 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
             int svm_type=0, kernel='rbf', int degree=3,
@@ -324,8 +317,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                        class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data,
-                      label.data, probA.data, probB.data)
+                      sv_coef.data, intercept.data, nSV.data, probA.data, probB.data)
 
     #TODO: use check_model
     try:
@@ -347,7 +339,6 @@ def predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, str kernel='rbf', int degree=3,
@@ -393,7 +384,7 @@ def predict_proba(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      label.data, probA.data, probB.data)
+                      probA.data, probB.data)
 
     cdef np.npy_intp n_class = get_nr(model)
     try:
@@ -415,7 +406,6 @@ def decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -448,7 +438,7 @@ def decision_function(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      label.data, probA.data, probB.data)
+                      probA.data, probB.data)
 
     if svm_type > 1:
         n_class = 1

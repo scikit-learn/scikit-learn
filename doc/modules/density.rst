@@ -24,7 +24,7 @@ A histogram is a simple visualization of data where bins are defined, and the
 number of data points within each bin is tallied.  An example of a histogram
 can be seen in the upper-left panel of the following figure:
 
-.. |hist_to_kde| image:: ../auto_examples/neighbors/images/plot_kde_1d_1.png
+.. |hist_to_kde| image:: ../auto_examples/neighbors/images/plot_kde_1d_001.png
    :target: ../auto_examples/neighbors/plot_kde_1d.html
    :scale: 80
 
@@ -68,7 +68,7 @@ dimensionality causes its performance to degrade in high dimensions.
 In the following figure, 100 points are drawn from a bimodal distribution,
 and the kernel density estimates are shown for three choices of kernels:
 
-.. |kde_1d_distribution| image:: ../auto_examples/neighbors/images/plot_kde_1d_3.png
+.. |kde_1d_distribution| image:: ../auto_examples/neighbors/images/plot_kde_1d_003.png
    :target: ../auto_examples/neighbors/plot_kde_1d.html
    :scale: 80
 
@@ -103,7 +103,7 @@ to an unsmooth (i.e. high-variance) density distribution.
 :class:`sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 
-.. |kde_kernels| image:: ../auto_examples/neighbors/images/plot_kde_1d_2.png
+.. |kde_kernels| image:: ../auto_examples/neighbors/images/plot_kde_1d_002.png
    :target: ../auto_examples/neighbors/plot_kde_1d.html
    :scale: 80
 
@@ -145,7 +145,7 @@ is an example of using a kernel density estimate for a visualization
 of geospatial data, in this case the distribution of observations of two
 different species on the South American continent:
 
-.. |species_kde| image:: ../auto_examples/neighbors/images/plot_species_kde_1.png
+.. |species_kde| image:: ../auto_examples/neighbors/images/plot_species_kde_001.png
    :target: ../auto_examples/neighbors/plot_species_kde.html
    :scale: 80
 
@@ -158,7 +158,7 @@ Here is an example of using this process to
 create a new set of hand-written digits, using a Gaussian kernel learned
 on a PCA projection of the data:
 
-.. |digits_kde| image:: ../auto_examples/neighbors/images/plot_digits_kde_sampling_1.png
+.. |digits_kde| image:: ../auto_examples/neighbors/images/plot_digits_kde_sampling_001.png
    :target: ../auto_examples/neighbors/plot_digits_kde_sampling.html
    :scale: 80
 

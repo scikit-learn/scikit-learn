@@ -1,7 +1,6 @@
 """Testing for Spectral Clustering methods"""
 
 from sklearn.externals.six.moves import cPickle
-from sklearn.metrics.pairwise import kernel_metrics
 
 dumps, loads = cPickle.dumps, cPickle.loads
 
@@ -13,13 +12,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -39,7 +39,7 @@ def test_spectral_clustering():
                                            affinity='precomputed',
                                            eigen_solver=eigen_solver,
                                            assign_labels=assign_labels
-                                           ).fit(mat)
+                                          ).fit(mat)
                 labels = model.labels_
                 if labels[0] == 0:
                     labels = 1 - labels
@@ -50,28 +50,6 @@ def test_spectral_clustering():
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
                 assert_array_equal(model_copy.labels_, model.labels_)
-
-
-def test_spectral_lobpcg_mode():
-    # Test the lobpcg mode of SpectralClustering
-    # We need a fairly big data matrix, as lobpcg does not work with
-    # small data matrices
-    centers = np.array([
-        [0., 0.],
-        [10., 10.],
-    ])
-    # The cluster_std parameter has been selected to have the blob close enough
-    # to get stable results both with the ATLAS and the reference
-    # implementations of LAPACK.
-    X, true_labels = make_blobs(n_samples=300, centers=centers,
-                                cluster_std=20.0, random_state=42)
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-    labels = spectral_clustering(S, n_clusters=len(centers),
-                                 random_state=0, eigen_solver="lobpcg")
-    # We don't care too much that it's good, just that it *worked*.
-    # There does have to be some lower limit on the performance though.
-    assert_greater(np.mean(labels == true_labels), .3)
 
 
 def test_spectral_amg_mode():
@@ -88,6 +66,7 @@ def test_spectral_amg_mode():
     S = sparse.coo_matrix(S)
     try:
         from pyamg import smoothed_aggregation_solver
+
         amg_loaded = True
     except ImportError:
         amg_loaded = False
@@ -154,12 +133,12 @@ def test_affinities():
     # on OSX and Linux
     X, y = make_blobs(n_samples=20, random_state=0,
                       centers=[[1, 1], [-1, -1]], cluster_std=0.01
-                      )
+                     )
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
-    labels = sp.fit(X).labels_
-    assert_equal(adjusted_rand_score(y, labels), 1)
+    assert_warns_message(UserWarning, 'not fully connected', sp.fit, X)
+    assert_equal(adjusted_rand_score(y, sp.labels_), 1)
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
@@ -183,7 +162,7 @@ def test_affinities():
     assert_equal((X.shape[0],), labels.shape)
 
     def histogram(x, y, **kwargs):
-        """Histogram kernel implemented as a callable."""
+        # Histogram kernel implemented as a callable.
         assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
@@ -206,11 +185,11 @@ def test_discretize(seed=8):
             y_true = np.array(y_true, np.float)
             # noise class assignment matrix
             y_indicator = sparse.coo_matrix((np.ones(n_samples),
-                                            (np.arange(n_samples),
-                                             y_true)),
+                                             (np.arange(n_samples),
+                                              y_true)),
                                             shape=(n_samples,
                                                    n_class + 1))
-            y_true_noisy = (y_indicator.todense()
+            y_true_noisy = (y_indicator.toarray()
                             + 0.1 * random_state.randn(n_samples,
                                                        n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)

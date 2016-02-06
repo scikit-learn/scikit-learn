@@ -8,8 +8,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
-
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -19,12 +17,14 @@ from .base import \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                            SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing the k-nearest neighbors vote.
+
+    Read more in the :ref:`User Guide <classification>`.
 
     Parameters
     ----------
@@ -63,7 +63,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default='minkowski')
+    metric : string or DistanceMetric object (default = 'minkowski')
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
@@ -74,9 +74,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Doesn't affect :meth:`fit` method.
 
     Examples
     --------
@@ -115,17 +119,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
-        if kwargs:
-            if 'warn_on_equidistant' in kwargs:
-                kwargs.pop('warn_on_equidistant')
-                warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in 0.16.",
-                              DeprecationWarning,
-                              stacklevel=2)
+                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 **kwargs):
+
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
+                          leaf_size=leaf_size, metric=metric, p=p,
+                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -133,15 +133,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -175,8 +176,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -185,7 +187,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -200,10 +202,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        else:
-            # Some weights may be infinite (zero distance), which can cause
-            # downstream NaN values when used for normalization.
-            weights[np.isinf(weights)] = np.finfo('f').max
 
         all_rows = np.arange(X.shape[0])
         probabilities = []
@@ -231,6 +229,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing a vote among neighbors within a given radius
+
+    Read more in the :ref:`User Guide <classification>`.
 
     Parameters
     ----------
@@ -286,9 +286,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -318,11 +317,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, **kwargs):
+                 outlier_label=None, metric_params=None, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          metric=metric, p=p, **kwargs)
+                          metric=metric, p=p, metric_params=metric_params,
+                          **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
@@ -331,8 +331,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -340,7 +341,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Class labels for each data sample.
 
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
@@ -378,7 +379,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                  in zip(pred_labels[inliers], weights)],
                                 dtype=np.int)
 
-            mode = mode.ravel().astype(np.int)
+            mode = mode.ravel()
 
             y_pred[inliers, k] = classes_k.take(mode)
 

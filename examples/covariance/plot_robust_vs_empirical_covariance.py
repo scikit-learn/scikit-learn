@@ -1,4 +1,4 @@
-"""
+r"""
 =======================================
 Robust vs Empirical covariance estimate
 =======================================
@@ -12,8 +12,10 @@ Minimum Covariance Determinant Estimator
 ----------------------------------------
 The Minimum Covariance Determinant estimator is a robust, high-breakdown point
 (i.e. it can be used to estimate the covariance matrix of highly contaminated
-datasets, up to :math:`\\frac{n_samples - n_features-1}{2}` outliers) estimator of
-covariance. The idea is to find :math:`\\frac{n_samples+n_features+1}{2}`
+datasets, up to
+:math:`\frac{n_\text{samples} - n_\text{features}-1}{2}` outliers) estimator of
+covariance. The idea is to find
+:math:`\frac{n_\text{samples} + n_\text{features}+1}{2}`
 observations whose empirical covariance has the smallest determinant, yielding
 a "pure" subset of observations from which to compute standards estimates of
 location and covariance. After a correction step aiming at compensating the
@@ -31,7 +33,8 @@ distributed data sets:
 
 - The mean and the empirical covariance of the full dataset, which break
   down as soon as there are outliers in the data set
-- The robust MCD, that has a low error provided n_samples > 5 * n_features
+- The robust MCD, that has a low error provided
+  :math:`n_\text{samples} > 5n_\text{features}`
 - The mean and the empirical covariance of the observations that are known
   to be good ones. This can be considered as a "perfect" MCD estimation,
   so one can trust our implementation by comparing to this case.
@@ -39,10 +42,11 @@ distributed data sets:
 
 References
 ----------
-.. [1] P. J. Rousseeuw. Least median of squares regression. J. Am
-    Stat Ass, 79:871, 1984.
-.. [2] Johanna Hardin, David M Rocke. Journal of Computational and
-    Graphical Statistics. December 1, 2005, 14(4): 928-946.
+.. [1] P. J. Rousseeuw. Least median of squares regression. Journal of American
+    Statistical Ass., 79:871, 1984.
+.. [2] Johanna Hardin, David M Rocke. The distribution of robust distances.
+    Journal of Computational and Graphical Statistics. December 1, 2005,
+    14(4): 928-946.
 .. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
     estimation in signal processing: A tutorial-style treatment of
     fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
@@ -51,7 +55,7 @@ References
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib.font_manager
 
 from sklearn.covariance import EmpiricalCovariance, MinCovDet
@@ -111,38 +115,39 @@ for i, n_outliers in enumerate(range_n_outliers):
 
 # Display results
 font_prop = matplotlib.font_manager.FontProperties(size=11)
-pl.subplot(2, 1, 1)
-pl.errorbar(range_n_outliers, err_loc_mcd.mean(1),
-            yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
-            label="Robust location", color='m')
-pl.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
-            yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
-            label="Full data set mean", color='green')
-pl.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
-            yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
-            label="Pure data set mean", color='black')
-pl.title("Influence of outliers on the location estimation")
-pl.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)")
-pl.legend(loc="upper left", prop=font_prop)
+plt.subplot(2, 1, 1)
+lw = 2
+plt.errorbar(range_n_outliers, err_loc_mcd.mean(1),
+             yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
+             label="Robust location", lw=lw, color='m')
+plt.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
+             yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
+             label="Full data set mean", lw=lw, color='green')
+plt.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
+             yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
+             label="Pure data set mean", lw=lw, color='black')
+plt.title("Influence of outliers on the location estimation")
+plt.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)")
+plt.legend(loc="upper left", prop=font_prop)
 
-pl.subplot(2, 1, 2)
+plt.subplot(2, 1, 2)
 x_size = range_n_outliers.size
-pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
-            yerr=err_cov_mcd.std(1),
-            label="Robust covariance (mcd)", color='m')
-pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
-            err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
-            yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
-            label="Full data set empirical covariance", color='green')
-pl.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
-        err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
-        ls='--')
-pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
-            yerr=err_cov_emp_pure.std(1),
-            label="Pure data set empirical covariance", color='black')
-pl.title("Influence of outliers on the covariance estimation")
-pl.xlabel("Amount of contamination (%)")
-pl.ylabel("RMSE")
-pl.legend(loc="upper center", prop=font_prop)
+plt.errorbar(range_n_outliers, err_cov_mcd.mean(1),
+             yerr=err_cov_mcd.std(1),
+             label="Robust covariance (mcd)", color='m')
+plt.errorbar(range_n_outliers[:(x_size / 5 + 1)],
+             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
+             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
+             label="Full data set empirical covariance", color='green')
+plt.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
+         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
+         ls='--')
+plt.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
+             yerr=err_cov_emp_pure.std(1),
+             label="Pure data set empirical covariance", color='black')
+plt.title("Influence of outliers on the covariance estimation")
+plt.xlabel("Amount of contamination (%)")
+plt.ylabel("RMSE")
+plt.legend(loc="upper center", prop=font_prop)
 
-pl.show()
+plt.show()

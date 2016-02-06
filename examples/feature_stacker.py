@@ -20,7 +20,7 @@ dataset and is only used to illustrate the usage of FeatureUnion.
 # License: BSD 3 clause
 
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
@@ -43,9 +43,7 @@ combined_features = FeatureUnion([("pca", pca), ("univ_select", selection)])
 # Use combined features to transform dataset:
 X_features = combined_features.fit(X, y).transform(X)
 
-# Classify:
 svm = SVC(kernel="linear")
-svm.fit(X_features, y)
 
 # Do grid search over k, n_components and C:
 

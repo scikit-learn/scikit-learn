@@ -21,7 +21,7 @@ print(__doc__)
 
 import time
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1.parasite_axes import host_subplot
 from mpl_toolkits.axisartist.axislines import Axes
 from scipy.sparse.csr import csr_matrix
@@ -32,7 +32,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.svm.classes import NuSVR
 from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
-from sklearn.metrics.metrics import hamming_loss
+from sklearn.metrics import hamming_loss
 
 ###############################################################################
 # Routines
@@ -99,9 +99,9 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     """
     Plot influence of model complexity on both accuracy and latency.
     """
-    pl.figure(figsize=(12, 6))
+    plt.figure(figsize=(12, 6))
     host = host_subplot(111, axes_class=Axes)
-    pl.subplots_adjust(right=0.75)
+    plt.subplots_adjust(right=0.75)
     par1 = host.twinx()
     host.set_xlabel('Model Complexity (%s)' % conf['complexity_label'])
     y1_label = conf['prediction_performance_label']
@@ -114,12 +114,12 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
     host.legend(loc='upper right')
     host.axis["left"].label.set_color(p1.get_color())
     par1.axis["right"].label.set_color(p2.get_color())
-    pl.title('Influence of Model Complexity - %s' % conf['estimator'].__name__)
-    pl.show()
+    plt.title('Influence of Model Complexity - %s' % conf['estimator'].__name__)
+    plt.show()
 
 
 def _count_nonzero_coefficients(estimator):
-    a = estimator.coef_.todense()
+    a = estimator.coef_.toarray()
     return np.count_nonzero(a)
 
 ###############################################################################
@@ -140,7 +140,7 @@ configurations = [
      'data': classification_data,
      'n_samples': 30},
     {'estimator': NuSVR,
-     'tuned_params': {'C': 1e3, 'gamma': 2**-15},
+     'tuned_params': {'C': 1e3, 'gamma': 2 ** -15},
      'changing_param': 'nu',
      'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
      'complexity_label': 'n_support_vectors',

@@ -17,12 +17,14 @@ It will:
 
 """
 
+from __future__ import unicode_literals
+
+import sys # Only needed to check Python version
 import os
 import re
 import pydoc
-from docscrape_sphinx import get_doc_object
-from docscrape_sphinx import SphinxDocString
-from sphinx.util.compat import Directive
+from .docscrape_sphinx import get_doc_object
+from .docscrape_sphinx import SphinxDocString
 import inspect
 
 
@@ -34,17 +36,20 @@ def mangle_docstrings(app, what, name, obj, options, lines,
 
     if what == 'module':
         # Strip top title
-        title_re = re.compile(ur'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
+        title_re = re.compile(r'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
                               re.I | re.S)
-        lines[:] = title_re.sub(u'', u"\n".join(lines)).split(u"\n")
+        lines[:] = title_re.sub('', "\n".join(lines)).split("\n")
     else:
-        doc = get_doc_object(obj, what, u"\n".join(lines), config=cfg)
-        lines[:] = unicode(doc).split(u"\n")
+        doc = get_doc_object(obj, what, "\n".join(lines), config=cfg)
+        if sys.version_info[0] < 3:
+            lines[:] = unicode(doc).splitlines()
+        else:
+            lines[:] = str(doc).splitlines()
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
            obj.__name__:
         if hasattr(obj, '__module__'):
-            v = dict(full_name=u"%s.%s" % (obj.__module__, obj.__name__))
+            v = dict(full_name="%s.%s" % (obj.__module__, obj.__name__))
         else:
             v = dict(full_name=obj.__name__)
         lines += [u'', u'.. htmlonly::', '']
@@ -55,7 +60,7 @@ def mangle_docstrings(app, what, name, obj, options, lines,
     references = []
     for line in lines:
         line = line.strip()
-        m = re.match(ur'^.. \[([a-z0-9_.-])\]', line, re.I)
+        m = re.match(r'^.. \[([a-z0-9_.-])\]', line, re.I)
         if m:
             references.append(m.group(1))
 
@@ -64,8 +69,8 @@ def mangle_docstrings(app, what, name, obj, options, lines,
     if references:
         for i, line in enumerate(lines):
             for r in references:
-                if re.match(ur'^\d+$', r):
-                    new_r = u"R%d" % (reference_offset[0] + int(r))
+                if re.match(r'^\d+$', r):
+                    new_r = "R%d" % (reference_offset[0] + int(r))
                 else:
                     new_r = u"%s%d" % (r, reference_offset[0])
                 lines[i] = lines[i].replace(u'[%s]_' % r,
@@ -91,16 +96,20 @@ def mangle_signature(app, what, name, obj,
 
     doc = SphinxDocString(pydoc.getdoc(obj))
     if doc['Signature']:
-        sig = re.sub(u"^[^(]*", u"", doc['Signature'])
-        return sig, u''
+        sig = re.sub("^[^(]*", "", doc['Signature'])
+        return sig, ''
 
 
 def setup(app, get_doc_object_=get_doc_object):
     global get_doc_object
     get_doc_object = get_doc_object_
 
-    app.connect('autodoc-process-docstring', mangle_docstrings)
-    app.connect('autodoc-process-signature', mangle_signature)
+    if sys.version_info[0] < 3:
+        app.connect(b'autodoc-process-docstring', mangle_docstrings)
+        app.connect(b'autodoc-process-signature', mangle_signature)
+    else:
+        app.connect('autodoc-process-docstring', mangle_docstrings)
+        app.connect('autodoc-process-signature', mangle_signature)
     app.add_config_value('numpydoc_edit_link', None, False)
     app.add_config_value('numpydoc_use_plots', None, False)
     app.add_config_value('numpydoc_show_class_members', True, True)
@@ -113,9 +122,13 @@ def setup(app, get_doc_object_=get_doc_object):
 # Docstring-mangling domains
 #-----------------------------------------------------------------------------
 
-from docutils.statemachine import ViewList
-from sphinx.domains.c import CDomain
-from sphinx.domains.python import PythonDomain
+try:
+    import sphinx  # lazy to avoid test dependency
+except ImportError:
+    CDomain = PythonDomain = object
+else:
+    from sphinx.domains.c import CDomain
+    from sphinx.domains.python import PythonDomain
 
 
 class ManglingDomainBase(object):
@@ -170,6 +183,8 @@ def wrap_mangling_directive(base_directive, objtype):
 
             lines = list(self.content)
             mangle_docstrings(env.app, objtype, name, None, None, lines)
+            # local import to avoid testing dependency
+            from docutils.statemachine import ViewList
             self.content = ViewList(lines, self.content.parent)
 
             return base_directive.run(self)

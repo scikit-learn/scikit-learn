@@ -108,7 +108,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *SV, npy_intp *SV_dims,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
-                            char *sv_coef, char *rho, char *nSV, char *label,
+                            char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
 {
     struct svm_model *model;
@@ -148,7 +148,8 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV, nSV,     model->nr_class * sizeof(int));
-        memcpy(model->label, label, model->nr_class * sizeof(int));
+        for(i=0; i < model->nr_class; i++)
+            model->label[i] = i;
     }
 
     for (i=0; i < model->nr_class-1; i++) {
@@ -274,16 +275,6 @@ void copy_nSV(char *data, struct svm_model *model)
 {
     if (model->label == NULL) return;
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
-}
-
-/*
- * same as above with model->label
- * TODO: maybe merge into the previous?
- */
-void copy_label(char *data, struct svm_model *model)
-{
-    if (model->label == NULL) return;
-    memcpy(data, model->label, model->nr_class * sizeof(int));
 }
 
 void copy_probA(char *data, struct svm_model *model, npy_intp * dims)

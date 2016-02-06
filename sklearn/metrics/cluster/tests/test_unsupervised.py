@@ -1,14 +1,17 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from .... import datasets
-from ..unsupervised import silhouette_score
-from ... import pairwise_distances
-from nose.tools import assert_false, assert_almost_equal
+from sklearn import datasets
+from sklearn.metrics.cluster.unsupervised import silhouette_score
+from sklearn.metrics import pairwise_distances
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises_regexp
 
 
 def test_silhouette():
-    """Tests the Silhouette Coefficient. """
+    # Tests the Silhouette Coefficient.
     dataset = datasets.load_iris()
     X = dataset.data
     y = dataset.target
@@ -38,10 +41,8 @@ def test_silhouette():
 
 
 def test_no_nan():
-    """Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-
-        This tests for the condition that caused issue 960.
-    """
+    # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
+    # This tests for the condition that caused issue 960.
     # Note that there is only one sample in cluster 0. This used to cause the
     # silhouette_score to return nan (see bug #960).
     labels = np.array([1, 0, 1, 1, 1])
@@ -49,3 +50,39 @@ def test_no_nan():
     D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
+
+
+def test_correct_labelsize():
+    # Assert 1 < n_labels < n_samples
+    dataset = datasets.load_iris()
+    X = dataset.data
+
+    # n_labels = n_samples
+    y = np.arange(X.shape[0])
+    assert_raises_regexp(ValueError,
+                         'Number of labels is %d\. Valid values are 2 '
+                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         silhouette_score, X, y)
+
+    # n_labels = 1
+    y = np.zeros(X.shape[0])
+    assert_raises_regexp(ValueError,
+                         'Number of labels is %d\. Valid values are 2 '
+                         'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
+                         silhouette_score, X, y)
+
+
+def test_non_encoded_labels():
+    dataset = datasets.load_iris()
+    X = dataset.data
+    labels = dataset.target
+    assert_equal(
+        silhouette_score(X, labels + 10), silhouette_score(X, labels))
+
+
+def test_non_numpy_labels():
+    dataset = datasets.load_iris()
+    X = dataset.data
+    y = dataset.target
+    assert_equal(
+        silhouette_score(list(X), list(y)), silhouette_score(X, y))

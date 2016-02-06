@@ -19,6 +19,7 @@ Who is using scikit-learn?
     <div class="logo">
 
 .. image:: images/spotify.png
+    :width: 120pt
     :target: http://www.spotify.com
 
 .. raw:: html
@@ -49,7 +50,8 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
   <div class="logo">
 
 .. image:: images/inria.png
-   :target: http://www.inria.fr
+    :width: 120pt
+    :target: http://www.inria.fr
 
 .. raw:: html
 
@@ -88,7 +90,8 @@ Gaël Varoquaux, research at Parietal
   <div class="logo">
 
 .. image:: images/evernote.png
-   :target: https://evernote.com
+    :width: 120pt
+    :target: https://evernote.com
 
 .. raw:: html
 
@@ -121,7 +124,8 @@ Mark Ayzenshtat, VP, Augmented Intelligence
   <div class="logo">
 
 .. image:: images/telecomparistech.jpg
-   :target: https://www.telecom-paristech.fr
+    :width: 120pt
+    :target: https://www.telecom-paristech.fr
 
 .. raw:: html
 
@@ -153,7 +157,8 @@ Alexandre Gramfort, Assistant Professor
   <div class="logo">
 
 .. image:: images/aweber.png
-   :target: http://aweber.com/
+    :width: 120pt
+    :target: http://aweber.com/
 
 .. raw:: html
 
@@ -191,7 +196,8 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
   <div class="logo">
 
 .. image:: images/yhat.png
-   :target: http://yhathq.com/
+    :width: 120pt
+    :target: http://yhathq.com/
 
 .. raw:: html
 
@@ -223,7 +229,8 @@ Greg Lamp, Co-founder Yhat
   <div class="logo">
 
 .. image:: images/rangespan.png
-   :target: https://www.rangespan.com
+    :width: 120pt
+    :target: https://www.rangespan.com
 
 .. raw:: html
 
@@ -255,7 +262,8 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
   <div class="logo">
 
 .. image:: images/birchbox.jpg
-   :target: https://www.birchbox.com
+    :width: 120pt
+    :target: https://www.birchbox.com
 
 .. raw:: html
 
@@ -288,8 +296,9 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
   <div class="logo">
 
-.. image:: images/bestofmedia-logo.gif
-   :target: http://www.bestofmedia.com
+.. image:: images/bestofmedia-logo.png
+    :width: 120pt
+    :target: http://www.bestofmedia.com
 
 .. raw:: html
 
@@ -321,7 +330,8 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
   <div class="logo">
 
 .. image:: images/change-logo.png
-   :target: http://www.change.org
+    :width: 120pt
+    :target: http://www.change.org
 
 .. raw:: html
 
@@ -351,7 +361,8 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
   <div class="logo">
 
 .. image:: images/phimeca.png
-   :target: http://www.phimeca.com/?lang=en
+    :width: 120pt
+    :target: http://www.phimeca.com/?lang=en
 
 .. raw:: html
 
@@ -385,7 +396,8 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
   <div class="logo">
 
 .. image:: images/howaboutwe.png
-   :target: http://www.howaboutwe.com/
+    :width: 120pt
+    :target: http://www.howaboutwe.com/
 
 .. raw:: html
 
@@ -419,7 +431,8 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
   <div class="logo">
 
 .. image:: images/peerindex.png
-   :target: http://www.peerindex.com/
+    :width: 120pt
+    :target: http://www.peerindex.com/
 
 .. raw:: html
 
@@ -427,7 +440,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
 At PeerIndex we use scientific methodology to build the Influence Graph - a
 unique dataset that allows us to identify who’s really influential and in which
-context. To do this, we have to tackle a range of machine learning and
+context. To do this, we have to tackle a range of machine learning and
 predictive modeling problems. Scikit-learn has emerged as our primary tool for
 developing prototypes and making quick progress. From predicting missing data
 and classifying tweets to clustering communities of social media users, scikit-
@@ -444,3 +457,274 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 .. raw:: html
 
    </span>
+
+
+`DataRobot <http://www.datarobot.com>`_
+----------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datarobot.png
+    :width: 120pt
+    :target: http://www.datarobot.com
+
+.. raw:: html
+
+    </div>
+
+DataRobot is building next generation predictive analytics software to make data scientists more productive, and scikit-learn is an integral part of our system. The variety of machine learning techniques in combination with the solid implementations that scikit-learn offers makes it a one-stop-shopping library for machine learning in Python. Moreover, its consistent API, well-tested code and permissive licensing allow us to use it in a production environment. Scikit-learn has literally saved us years of work we would have had to do ourselves to bring our product to market.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jeremy Achin, CEO & Co-founder DataRobot Inc.
+
+.. raw:: html
+
+   </span>
+
+
+`OkCupid <https://www.okcupid.com/>`_
+--------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/okcupid.png
+    :width: 120pt
+    :target: https://www.okcupid.com
+
+.. raw:: html
+
+    </div>
+
+We're using scikit-learn at OkCupid to evaluate and improve our matchmaking
+system. The range of features it has, especially preprocessing utilities, means
+we can use it for a wide variety of projects, and it's performant enough to
+handle the volume of data that we need to sort through. The documentation is
+really thorough, as well, which makes the library quite easy to use.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+David Koh - Senior Data Scientist at OkCupid
+
+.. raw:: html
+
+   </span>
+   
+
+`Lovely <https://www.livelovely.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/lovely.png
+    :width: 120pt
+    :target: https://www.livelovely.com
+
+.. raw:: html
+
+    </div>
+
+At Lovely, we strive to deliver the best apartment marketplace, with respect to
+our users and our listings. From understanding user behavior, improving data
+quality, and detecting fraud, scikit-learn is a regular tool for gathering
+insights, predictive modeling and improving our product. The easy-to-read
+documentation and intuitive architecture of the API makes machine learning both
+explorable and accessible to a wide range of python developers. I'm constantly
+recommending that more developers and scientists try scikit-learn.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Simon Frid - Data Scientist, Lead at Lovely
+
+.. raw:: html
+
+   </span>
+
+
+
+`Data Publica <http://www.data-publica.com/>`_
+----------------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datapublica.png
+    :width: 120pt
+    :target: http://www.data-publica.com/
+
+.. raw:: html
+
+    </div>
+
+Data Publica builds a new predictive sales tool for commercial and marketing teams called C-Radar.
+We extensively use scikit-learn to build segmentations of customers through clustering, and to predict future customers based on past partnerships success or failure.
+We also categorize companies using their website communication thanks to scikit-learn and its machine learning algorithm implementations.
+Eventually, machine learning makes it possible to detect weak signals that traditional tools cannot see.
+All these complex tasks are performed in an easy and straightforward way thanks to the great quality of the scikit-learn framework.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
+
+.. raw:: html
+
+   </span>
+
+
+
+`Machinalis <http://www.machinalis.com>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/machinalis.png
+    :width: 120pt
+    :target: http://www.machinalis.com
+
+.. raw:: html
+
+   </div>
+
+Scikit-learn is the cornerstone of all the machine learning projects carried at
+Machinalis. It has a consistent API, a wide selection of algorithms and lots
+of auxiliary tools to deal with the boilerplate.
+We have used it in production environments on a variety of projects
+including click-through rate prediction, `information extraction <https://github.com/machinalis/iepy>`_,
+and even counting sheep!
+
+In fact, we use it so much that we've started to freeze our common use cases
+into Python packages, some of them open-sourced, like
+`FeatureForge <https://github.com/machinalis/featureforge>`_ .
+Scikit-learn in one word: Awesome.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Rafael Carrascosa, Lead developer
+
+
+`solido <http://www.solidodesign.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/solido_logo.png
+    :width: 120pt
+    :target: http://www.solidodesign.com
+
+.. raw:: html
+
+   </div>
+
+Scikit-learn is helping to drive Moore’s Law, via Solido. Solido creates
+computer-aided design tools used by the majority of top-20 semiconductor
+companies and fabs, to design the bleeding-edge chips inside smartphones,
+automobiles, and more. Scikit-learn helps to power Solido’s algorithms for
+rare-event estimation, worst-case verification, optimization, and more. At
+Solido, we are particularly fond of scikit-learn’s libraries for Gaussian
+Process models, large-scale regularized linear regression, and classification.
+Scikit-learn has increased our productivity, because for many ML problems we no
+longer need to “roll our own” code. `This PyData 2014 talk <https://www.youtube.com/watch?v=Jm-eBD9xR3w>`_ has details.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Trent McConaghy, founder, Solido Design Automation Inc.
+
+.. raw:: html
+
+  </span>
+
+
+
+`INFONEA <http://www.infonea.com/en/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/infonea.jpg
+    :width: 120pt
+    :target: http://www.infonea.com/en
+
+.. raw:: html
+
+   </div>
+
+We employ scikit-learn for rapid prototyping and custom-made Data Science
+solutions within our in-memory based Business Intelligence Software
+INFONEA®. As a well-documented and comprehensive collection of
+state-of-the-art algorithms and pipelining methods, scikit-learn enables
+us to provide flexible and scalable scientific analysis solutions. Thus,
+scikit-learn is immensely valuable in realizing a powerful integration of
+Data Science technology within self-service business analytics.
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Thorsten Kranz, Data Scientist, Coma Soft AG.
+
+.. raw:: html
+
+  </span>
+
+
+`Dataiku <http://www.dataiku.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/dataiku_logo.png
+    :width: 120pt
+    :target: http://www.dataiku.com
+
+.. raw:: html
+
+   </div>
+
+Our software, Data Science Studio (DSS), enables users to create data services 
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
+Machine Learning. Our Machine Learning module integrates 
+many scikit-learn algorithms. The scikit-learn library is a perfect integration 
+with DSS because it offers algorithms for virtually all business cases. Our goal 
+is to offer a transparent and flexible tool that makes it easier to optimize 
+time consuming aspects of building a data service, preparing data, and training 
+machine learning algorithms on all types of data.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Florian Douetteau, CEO, Dataiku
+
+.. raw:: html
+
+  </span>
+

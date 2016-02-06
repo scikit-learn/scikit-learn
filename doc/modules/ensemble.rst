@@ -65,7 +65,9 @@ taking as input a user-specified base estimator along with parameters
 specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
-samples and features are drawn with or without replacement. As an example, the
+samples and features are drawn with or without replacement. When using a subset
+of the available samples the generalization accuracy can be estimated with the
+out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
 :class:`KNeighborsClassifier` base estimators, each built on random subsets of
 50% of the samples and 50% of the features.
@@ -108,7 +110,7 @@ construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
 As other classifiers, forest classifiers have to be fitted with two
-arrays: an array X of size ``[n_samples, n_features]`` holding the
+arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
 training samples, and an array Y of size ``[n_samples]`` holding the
 target values (class labels) for the training samples::
 
@@ -154,7 +156,7 @@ picked as the splitting rule. This usually allows to reduce the variance
 of the model a bit more, at the expense of a slightly greater increase
 in bias::
 
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import ExtraTreesClassifier
@@ -163,25 +165,25 @@ in bias::
     >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100,
     ...     random_state=0)
 
-    >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=1,
+    >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.97...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
-    ...     min_samples_split=1, random_state=0)
+    ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
-    ...     min_samples_split=1, random_state=0)
+    ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean() > 0.999
     True
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
     :align: center
     :scale: 75%
@@ -199,13 +201,17 @@ greater the reduction of variance, but also the greater the increase in
 bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
-in the data). The best results are also usually reached when setting
-``max_depth=None`` in combination with ``min_samples_split=1`` (i.e.,
-when fully developing the trees). Bear in mind though that these values
-are usually not optimal. The best parameter values should always be cross-
-validated. In addition, note that bootstrap samples are used by default
-in random forests (``bootstrap=True``) while the default strategy is to
-use the original dataset for building extra-trees (``bootstrap=False``).
+in the data). Good results are often achieved when setting ``max_depth=None``
+in combination with ``min_samples_split=1`` (i.e., when fully developing the
+trees). Bear in mind though that these values are usually not optimal, and
+might result in models that consume a lot of ram. The best parameter values
+should always be cross-validated. In addition, note that in random forests,
+bootstrap samples are used by default (``bootstrap=True``)
+while the default strategy for extra-trees is to use the whole dataset
+(``bootstrap=False``).
+When using bootstrap sampling the generalization accuracy can be estimated
+on the left out or out-of-bag samples. This can be enabled by
+setting ``oob_score=True``.
 
 Parallelization
 ---------------
@@ -257,7 +263,7 @@ The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_001.png
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
@@ -300,6 +306,9 @@ the transformation performs an implicit, non-parametric density estimation.
  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
    dimensionality reduction techniques on handwritten digits.
 
+ * :ref:`example_ensemble_plot_feature_transformation.py` compares
+   supervised and unsupervised tree based feature transformations.
+
 .. seealso::
 
    :ref:`manifold` techniques can also be useful to derive non-linear
@@ -333,7 +342,7 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_001.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
    :align: center
    :scale: 75
@@ -351,7 +360,7 @@ Usage
 The following example shows how to fit an AdaBoost classifier with 100 weak
 learners::
 
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import AdaBoostClassifier
 
@@ -434,7 +443,7 @@ Classification
 ---------------
 
 :class:`GradientBoostingClassifier` supports both binary and multi-class
-classification via the deviance loss function (``loss='deviance'``).
+classification.
 The following example shows how to fit a gradient boosting classifier
 with 100 decision stumps as weak learners::
 
@@ -497,7 +506,7 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
 The plot on the right shows the feature importances which can be obtained via
 the ``feature_importances_`` property.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
@@ -649,6 +658,10 @@ the parameter ``loss``:
       prior probability of each class. At each iteration ``n_classes``
       regression trees have to be constructed which makes GBRT rather
       inefficient for data sets with a large number of classes.
+    * Exponential loss (``'exponential'``): The same loss function
+      as :class:`AdaBoostClassifier`. Less robust to mislabeled
+      examples than ``'deviance'``; can only be used for binary
+      classification.
 
 Regularization
 ----------------
@@ -694,7 +707,7 @@ outperforms no-shrinkage. Subsampling with shrinkage can further increase
 the accuracy of the model. Subsampling without shrinkage, on the other hand,
 does poorly.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
@@ -722,6 +735,7 @@ is too time consuming.
 
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
  * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`example_ensemble_plot_ensemble_oob.py`
 
 Interpretation
 --------------
@@ -769,6 +783,8 @@ accessed via the ``feature_importances_`` property::
 
 .. currentmodule:: sklearn.ensemble.partial_dependence
 
+.. _partial_dependence:
+
 Partial dependence
 ..................
 
@@ -785,7 +801,7 @@ usually chosen among the most important features.
 The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset:
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_001.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -889,3 +905,162 @@ averaged.
 
  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
 
+
+ .. _voting_classifier:
+
+VotingClassifier
+========================
+
+The idea behind the voting classifier implementation is to combine
+conceptually different machine learning classifiers and use a majority vote
+or the average predicted probabilities (soft vote) to predict the class labels.
+Such a classifier can be useful for a set of equally well performing model
+in order to balance out their individual weaknesses.
+
+
+Majority Class Labels (Majority/Hard Voting)
+--------------------------------------------
+
+In majority voting, the predicted class label for a particular sample is
+the class label that represents the majority (mode) of the class labels
+predicted by each individual classifier.
+
+E.g., if the prediction for a given sample is
+
+- classifier 1 -> class 1
+- classifier 2 -> class 1
+- classifier 3 -> class 2
+
+the VotingClassifier (with ``voting='hard'``) would classify the sample
+as "class 1" based on the majority class label.
+
+In the cases of a tie, the `VotingClassifier` will select the class based
+on the ascending sort order. E.g., in the following scenario
+
+- classifier 1 -> class 2
+- classifier 2 -> class 1
+
+the class label 1 will be assigned to the sample.
+
+Usage
+.....
+
+The following example shows how to fit the majority rule classifier::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.model_selection import cross_val_score
+   >>> from sklearn.linear_model import LogisticRegression
+   >>> from sklearn.naive_bayes import GaussianNB
+   >>> from sklearn.ensemble import RandomForestClassifier
+   >>> from sklearn.ensemble import VotingClassifier
+
+   >>> iris = datasets.load_iris()
+   >>> X, y = iris.data[:, 1:3], iris.target
+
+   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf3 = GaussianNB()
+
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
+
+   >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
+   ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+   ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
+   Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
+   Accuracy: 0.93 (+/- 0.05) [Random Forest]
+   Accuracy: 0.91 (+/- 0.04) [naive Bayes]
+   Accuracy: 0.95 (+/- 0.05) [Ensemble]
+
+
+Weighted Average Probabilities (Soft Voting)
+--------------------------------------------
+
+In contrast to majority voting (hard voting), soft voting
+returns the class label as argmax of the sum of predicted probabilities.
+
+Specific weights can be assigned to each classifier via the ``weights``
+parameter. When weights are provided, the predicted class probabilities
+for each classifier are collected, multiplied by the classifier weight,
+and averaged. The final class label is then derived from the class label
+with the highest average probability.
+
+To illustrate this with a simple example, let's assume we have 3
+classifiers and a 3-class classification problems where we assign
+equal weights to all classifiers: w1=1, w2=1, w3=1.
+
+The weighted average probabilities for a sample would then be
+calculated as follows:
+
+================  ==========    ==========      ==========
+classifier        class 1       class 2         class 3
+================  ==========    ==========      ==========
+classifier 1	  w1 * 0.2      w1 * 0.5        w1 * 0.3
+classifier 2	  w2 * 0.6      w2 * 0.3        w2 * 0.1
+classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
+weighted average  0.37	        0.4             0.3
+================  ==========    ==========      ==========
+
+Here, the predicted class label is 2, since it has the
+highest average probability.
+
+The following example illustrates how the decision regions may change
+when a soft `VotingClassifier` is used based on an linear Support
+Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.tree import DecisionTreeClassifier
+   >>> from sklearn.neighbors import KNeighborsClassifier
+   >>> from sklearn.svm import SVC
+   >>> from itertools import product
+   >>> from sklearn.ensemble import VotingClassifier
+
+   >>> # Loading some example data
+   >>> iris = datasets.load_iris()
+   >>> X = iris.data[:, [0,2]]
+   >>> y = iris.target
+
+   >>> # Training classifiers
+   >>> clf1 = DecisionTreeClassifier(max_depth=4)
+   >>> clf2 = KNeighborsClassifier(n_neighbors=7)
+   >>> clf3 = SVC(kernel='rbf', probability=True)
+   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+
+   >>> clf1 = clf1.fit(X,y)
+   >>> clf2 = clf2.fit(X,y)
+   >>> clf3 = clf3.fit(X,y)
+   >>> eclf = eclf.fit(X,y)
+
+.. figure:: ../auto_examples/ensemble/images/plot_voting_decision_regions_001.png
+    :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
+    :align: center
+    :scale: 75%
+
+Using the `VotingClassifier` with `GridSearch`
+----------------------------------------------
+
+The `VotingClassifier` can also be used together with `GridSearch` in order
+to tune the hyperparameters of the individual estimators::
+
+   >>> from sklearn.model_selection import GridSearchCV
+   >>> clf1 = LogisticRegression(random_state=1)
+   >>> clf2 = RandomForestClassifier(random_state=1)
+   >>> clf3 = GaussianNB()
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+
+   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200],}
+
+   >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+   >>> grid = grid.fit(iris.data, iris.target)
+
+Usage
+.....
+
+In order to predict the class labels based on the predicted
+class-probabilities (scikit-learn estimators in the VotingClassifier
+must support ``predict_proba`` method)::
+
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+
+Optionally, weights can be provided for the individual classifiers::
+
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])

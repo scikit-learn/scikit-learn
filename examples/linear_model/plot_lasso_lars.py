@@ -17,7 +17,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import linear_model
 from sklearn import datasets
@@ -32,11 +32,11 @@ alphas, _, coefs = linear_model.lars_path(X, y, method='lasso', verbose=True)
 xx = np.sum(np.abs(coefs.T), axis=1)
 xx /= xx[-1]
 
-pl.plot(xx, coefs.T)
-ymin, ymax = pl.ylim()
-pl.vlines(xx, ymin, ymax, linestyle='dashed')
-pl.xlabel('|coef| / max|coef|')
-pl.ylabel('Coefficients')
-pl.title('LASSO Path')
-pl.axis('tight')
-pl.show()
+plt.plot(xx, coefs.T)
+ymin, ymax = plt.ylim()
+plt.vlines(xx, ymin, ymax, linestyle='dashed')
+plt.xlabel('|coef| / max|coef|')
+plt.ylabel('Coefficients')
+plt.title('LASSO Path')
+plt.axis('tight')
+plt.show()

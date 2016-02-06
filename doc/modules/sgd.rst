@@ -46,7 +46,7 @@ The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
 penalties for classification.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_1.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_separating_hyperplane_001.png
    :target: ../auto_examples/linear_model/plot_sgd_separating_hyperplane.html
    :align: center
    :scale: 75
@@ -61,10 +61,11 @@ for the training samples::
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
-    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-           fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
-           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=False, verbose=0, warm_start=False)
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
+           eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+           penalty='l2', power_t=0.5, random_state=None, shuffle=True,
+           verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -75,21 +76,21 @@ After being fitted, the model can then be used to predict new values::
 SGD fits a linear model to the training data. The member ``coef_`` holds
 the model parameters::
 
-    >>> clf.coef_
-    array([[ 9.91080278,  9.91080278]])
+    >>> clf.coef_                                         # doctest: +ELLIPSIS
+    array([[ 9.9...,  9.9...]])
 
 Member ``intercept_`` holds the intercept (aka offset or bias)::
 
     >>> clf.intercept_                                    # doctest: +ELLIPSIS
-    array([-9.990...])
+    array([-9.9...])
 
 Whether or not the model should use an intercept, i.e. a biased
 hyperplane, is controlled by the parameter ``fit_intercept``.
 
 To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
 
-    >>> clf.decision_function([[2., 2.]])
-    array([ 29.65318117])
+    >>> clf.decision_function([[2., 2.]])                 # doctest: +ELLIPSIS
+    array([ 29.6...])
 
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
@@ -109,15 +110,16 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
-    >>> clf.predict_proba([[1., 1.]])
-    array([[ 0.0000005,  0.9999995]])
+    >>> clf.predict_proba([[1., 1.]])                      # doctest: +ELLIPSIS
+    array([[ 0.00...,  0.99...]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
 
   * ``penalty="l2"``: L2 norm penalty on ``coef_``.
   * ``penalty="l1"``: L1 norm penalty on ``coef_``.
-  * ``penalty="elasticnet"``: Convex combination of L2 and L1; `(1 - l1_ratio) * L2 + l1_ratio * L1`.
+  * ``penalty="elasticnet"``: Convex combination of L2 and L1;
+    ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
 The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
@@ -127,15 +129,15 @@ of L1 and L2 penalty.
 
 :class:`SGDClassifier` supports multi-class classification by combining
 multiple binary classifiers in a "one versus all" (OVA) scheme. For each
-of the `K` classes, a binary classifier is learned that discriminates
-between that and all other `K-1` classes. At testing time, we compute the
+of the :math:`K` classes, a binary classifier is learned that discriminates
+between that and all other :math:`K-1` classes. At testing time, we compute the
 confidence score (i.e. the signed distances to the hyperplane) for each
 classifier and choose the class with the highest confidence. The Figure
 below illustrates the OVA approach on the iris dataset.  The dashed
 lines represent the three OVA classifiers; the background colors show
 the decision surface induced by the three classifiers.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris_1.png
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_iris_001.png
    :target: ../auto_examples/linear_model/plot_sgd_iris.html
    :align: center
    :scale: 75
@@ -159,7 +161,18 @@ further information.
  - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
  - :ref:`example_linear_model_plot_sgd_iris.py`
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`example_linear_model_plot_sgd_comparison.py`
  - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+
+:class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
+by setting ```average=True```. ASGD works by averaging the coefficients
+of the plain SGD over each iteration over a sample. When using ASGD
+the learning rate can be larger and even constant leading on some
+datasets to a speed up in training time.
+
+For classification with a logistic loss, another variant of SGD with an
+averaging strategy is available with Stochastic Average Gradient (SAG)
+algorithm, available as a solver in :class:`LogisticRegression`.
 
 Regression
 ==========
@@ -183,6 +196,13 @@ robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
+:class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
+Averaging can be enabled by setting ```average=True```.
+
+For regression with a squared loss and a l2 penalty, another variant of
+SGD with an averaging strategy is available with Stochastic Average
+Gradient (SAG) algorithm, available as a solver in :class:`Ridge`.
+
 
 Stochastic Gradient Descent for sparse data
 ===========================================
@@ -198,7 +218,7 @@ matrix format as defined in `scipy.sparse.csr_matrix
 
 .. topic:: Examples:
 
- - :ref:`example_document_classification_20newsgroups.py`
+ - :ref:`example_text_document_classification_20newsgroups.py`
 
 Complexity
 ==========
@@ -244,10 +264,12 @@ Tips on Practical Use
     it is often wise to scale the feature values by some constant `c`
     such that the average L2 norm of the training data equals one.
 
+  * We found that Averaged SGD works best with a larger number of features
+    and a higher eta0
 
 .. topic:: References:
 
- * `"Efficient BackProp" <yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
+ * `"Efficient BackProp" <http://yann.lecun.com/exdb/publis/pdf/lecun-98b.pdf>`_
    Y. LeCun, L. Bottou, G. Orr, K. Müller - In Neural Networks: Tricks
    of the Trade 1998.
 
@@ -282,9 +304,10 @@ Different choices for :math:`L` entail different classifiers such as
 All of the above loss functions can be regarded as an upper bound on the
 misclassification error (Zero-one loss) as shown in the Figure below.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_1.png
-   :align: center
-   :scale: 75
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_loss_functions_001.png
+    :target: ../auto_examples/linear_model/plot_sgd_loss_functions.html
+    :align: center
+    :scale: 75
 
 Popular choices for the regularization term :math:`R` include:
 
@@ -296,9 +319,10 @@ Popular choices for the regularization term :math:`R` include:
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_1.png
-   :align: center
-   :scale: 75
+.. figure:: ../auto_examples/linear_model/images/plot_sgd_penalties_001.png
+    :target: ../auto_examples/linear_model/plot_sgd_penalties.html
+    :align: center
+    :scale: 75
 
 SGD
 ---
@@ -367,6 +391,11 @@ The model parameters can be accessed through the members ``coef_`` and
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
    H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
    67 (2), 301-320.
+
+ * `"Towards Optimal One Pass Large Scale Learning with
+   Averaged Stochastic Gradient Descent"
+   <http://arxiv.org/pdf/1107.2490v2.pdf>`_
+   Xu, Wei
 
 
 Implementation details
