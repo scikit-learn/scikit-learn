@@ -1359,7 +1359,7 @@ def check_cv(cv=3, y=None, classifier=False):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError("Expected cv as an integer, cross-validation "
                              "object (from sklearn.model_selection) "
-                             "or and iterable. Got %s." % cv)
+                             "or an iterable. Got %s." % cv)
         return _CVIterableWrapper(cv)
 
     return cv  # New style cv objects are passed without any modification
