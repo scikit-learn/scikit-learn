@@ -38,7 +38,7 @@ is an estimator object::
     >>> from sklearn.svm import SVC
     >>> from sklearn.decomposition import PCA
     >>> estimators = [('reduce_dim', PCA()), ('svm', SVC())]
-    >>> clf = Pipeline(estimators)   
+    >>> clf = Pipeline(estimators)
     >>> clf # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
@@ -150,19 +150,19 @@ and ``value`` is an estimator object::
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.decomposition import KernelPCA
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
-    >>> combined = FeatureUnion(estimators)   
+    >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
         n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
-        coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
-        gamma=None, kernel='linear', kernel_params=None, max_iter=None,
-        n_components=None, n_jobs=1, random_state=None, remove_zero_eig=False, tol=0))],
-        transformer_weights=None)
+        coef0=1, copy=True, degree=3, eigen_solver='auto',
+        fit_inverse_transform=False, gamma=None, kernel='linear',
+        kernel_params=None, max_iter=None, n_components=None, random_state=None,
+        remove_zero_eig=False, tol=0, n_jobs=1))], transformer_weights=None)
 
 Like pipelines, feature unions have a shorthand constructor called
 :func:`make_union` that does not require explicit naming of the components.
 
-                                                                       
+
 .. topic:: Examples:
 
  * :ref:`example_feature_stacker.py`

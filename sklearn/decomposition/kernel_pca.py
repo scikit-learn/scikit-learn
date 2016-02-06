@@ -58,7 +58,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Default: False
 
     eigen_solver: string ['auto'|'dense'|'arpack']
-        Select eigensolver to use.  If n_components is much less than
+        Select eigensolver to use. If n_components is much less than
         the number of training samples, arpack may be more efficient
         than the dense eigensolver.
 
@@ -81,9 +81,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         A pseudo random number generator used for the initialization of the
         residuals when eigen_solver == 'arpack'.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int, default=1
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
+
+    copy : boolean, default=True
+        If True, input X is copied and stored by the model.
 
     Attributes
     ----------
@@ -117,7 +120,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, n_jobs=1):
+                 random_state=None, copy=True, n_jobs=1):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -136,6 +139,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._centerer = KernelCenterer()
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.copy = copy
 
     @property
     def _pairwise(self):
@@ -230,7 +234,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             X_transformed = np.dot(self.alphas_, sqrt_lambdas)
             self._fit_inverse_transform(X_transformed, X)
 
-        self.X_fit_ = X.copy()
+        self.X_fit_ = X.copy() if self.copy else X
         return self
 
     def fit_transform(self, X, y=None, **params):
