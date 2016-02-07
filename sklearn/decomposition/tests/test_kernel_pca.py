@@ -56,6 +56,7 @@ def test_kernel_pca_invalid_parameters():
     assert_raises(ValueError, KernelPCA, 10, fit_inverse_transform=True,
                   kernel='precomputed')
 
+
 def test_kernel_pca_consistent_transform():
     # X_fit_ needs to retain the old, unmodified copy of X
     state = np.random.RandomState(0)

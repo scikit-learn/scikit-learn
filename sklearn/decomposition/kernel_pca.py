@@ -86,7 +86,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     copy : boolean, default=True
-        If True, input X is copied and stored by the model.
+        If True, input X is copied and stored by the model. If no further
+        changes will be done to X, setting `copy=False` saves memory by
+        storing a reference.
 
     Attributes
     ----------
