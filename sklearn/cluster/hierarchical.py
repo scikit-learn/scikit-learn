@@ -7,6 +7,8 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
+import bisect
+from collections import deque
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
 import sys
@@ -201,85 +203,159 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
                              % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
-    # create inertia matrix
-    coord_row = []
-    coord_col = []
+    # create structure matrix
     A = []
     for ind, row in enumerate(connectivity.rows):
         A.append(row)
-        # We keep only the upper triangular for the moments
-        # Generator expressions are faster than arrays on the following
-        row = [i for i in row if i < ind]
-        coord_row.extend(len(row) * [ind, ])
-        coord_col.extend(row)
-
-    coord_row = np.array(coord_row, dtype=np.intp, order='C')
-    coord_col = np.array(coord_col, dtype=np.intp, order='C')
 
     # build moments as a list
     moments_1 = np.zeros(n_nodes, order='C')
     moments_1[:n_samples] = 1
     moments_2 = np.zeros((n_nodes, n_features), order='C')
     moments_2[:n_samples] = X
-    inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
-    _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
-                                    inertia)
-    inertia = list(six.moves.zip(inertia, coord_row, coord_col))
-    heapify(inertia)
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
-    if return_distance:
-        distances = np.empty(n_nodes - n_samples)
+    #XXX: we keep the distances for now to reorder children
+    distances = np.empty(n_nodes - n_samples)
 
     not_visited = np.empty(n_nodes, dtype=np.int8, order='C')
 
+    node_stack = deque()
+    node_set = set([i for i in range(n_samples)])
+    k = n_samples
+
     # recursive merge loop
-    for k in range(n_samples, n_nodes):
-        # identify the merge
-        while True:
-            inert, i, j = heappop(inertia)
-            if used_node[i] and used_node[j]:
-                break
-        parent[i], parent[j] = k, k
-        children.append((i, j))
+    # Implemented using nearest neighbor chaining
+    # (see https://en.wikipedia.org/wiki/Nearest-neighbor_chain_algorithm)
+    if n_clusters == None:
+      n_clusters = 1
+    while len(node_set) > n_clusters:
+      if not node_stack:
+	# get an element from s without popping
+	for e in node_set:
+	  break
+        next_node = e
+      else:
+        next_node = node_stack.pop()
+      if not used_node[next_node]:
+	continue
+      node_stack.append(next_node)
+
+      coord_col = [n for n in A[next_node] if used_node[n] and n != next_node]
+      coord_row = len(coord_col)*[next_node,]
+      if not coord_col:
+	continue
+      coord_col = np.array(coord_col, dtype=np.intp, order='C')
+      coord_row = np.array(coord_row, dtype=np.intp, order='C')
+      inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
+      _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
+                                    inertia)
+      nearest_ind = coord_col[np.argmin(inertia)]
+      nearest_dist = np.min(inertia)
+      if len(node_stack) > 1: 
+	# i is top, j is second from top
+        i = node_stack.pop()
+        j = node_stack.pop()
+	if j != nearest_ind:
+	  # Restore 
+	  node_stack.append(j)
+	  node_stack.append(i)
+          node_stack.append(nearest_ind)
+	  continue
+	# Merge and add a new cluster
+	node_set.remove(i)
+        node_set.remove(j)
+        node_set.add(k)
         used_node[i] = used_node[j] = False
-        if return_distance:  # store inertia value
-            distances[k - n_samples] = inert
+      else:
+        node_stack.append(nearest_ind)
+        continue
 
-        # update the moments
-        moments_1[k] = moments_1[i] + moments_1[j]
-        moments_2[k] = moments_2[i] + moments_2[j]
+      parent[i], parent[j] = k, k
+      children.append((i, j))
+      if return_distance:  # store inertia value
+          distances[k - n_samples] = nearest_dist
 
-        # update the structure matrix A and the inertia matrix
-        coord_col = []
-        not_visited.fill(1)
-        not_visited[k] = 0
-        _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
-        _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
-        # List comprehension is faster than a for loop
-        [A[l].append(k) for l in coord_col]
-        A.append(coord_col)
-        coord_col = np.array(coord_col, dtype=np.intp, order='C')
-        coord_row = np.empty(coord_col.shape, dtype=np.intp, order='C')
-        coord_row.fill(k)
-        n_additions = len(coord_row)
-        ini = np.empty(n_additions, dtype=np.float64, order='C')
+      #XXX: we keep the distances for now to reorder children
+      distances[k - n_samples] = nearest_dist
 
-        _hierarchical.compute_ward_dist(moments_1, moments_2,
-                                        coord_row, coord_col, ini)
+      # update the moments
+      moments_1[k] = moments_1[i] + moments_1[j]
+      moments_2[k] = moments_2[i] + moments_2[j]
 
-        # List comprehension is faster than a for loop
-        [heappush(inertia, (ini[idx], k, coord_col[idx]))
-            for idx in range(n_additions)]
+      # update the structure matrix A and the inertia matrix
+      coord_col = []
+      not_visited.fill(1)
+      not_visited[k] = 0
+      _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
+      _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
+
+      # List comprehension is faster than a for loop
+      [A[l].append(k) for l in coord_col]
+      A.append(coord_col)
+      k += 1
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
     # sort children to get consistent output with unstructured version
-    children = [c[::-1] for c in children]
+    #children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
+    # TODO: return proper format
+    children = list(children)
+
+    # One issue with using neighbor chaining is that the nodes
+    # are not joined in the same order. We need to relabel
+    # the nodes appropriately, using reducibility
+    # to sort by distance.
+    '''
+    children_indices = [i for i in range(len(children))]
+    sorted_indices = sorted(children_indices, key = lambda i : distances[i])
+    sorted_children = [children[i] for i in sorted_indices]
+    new_children = [-1 for i in range(len(children)*2)]
+    is_marked = [False for _ in range(len(children))]
+    index_lookup = [0 for i in range(len(children))]
+    for i in range(len(children)):
+      index_lookup[sorted_indices[i]] = i
+    # TODO make sure there are children
+    next_index = 0
+    while next_index != -1:
+      print("index loop", next_index, is_marked.count(True))
+      is_marked[next_index] = True
+      old_parent = n_samples + sorted_indices[next_index]
+      new_parent = n_samples + next_index
+      # Here we check whether we need to change the nodes
+      # listed in other children, based on the new location
+      # of this child in the sorted array
+      for i, child in enumerate([i for c in sorted_children for i in c]):
+	if child == old_parent:
+	  # If we already have an updated tuple, we should use that one.
+	  new_children[i] = new_parent
+      next_index = index_lookup[next_index]
+      # If the next index has already been visited, we attempt to
+      # find a new index
+      if is_marked[next_index]:
+	next_index = -1
+	for i in range(len(is_marked)):
+	  if not is_marked[i]:
+	    next_index = i
+
+    
+    children_tmp = [i for c in sorted_children for i in c]
+    for i in range(len(new_children)):
+      if new_children[i] == -1:
+	new_children[i] = children_tmp[i]
+    children = zip(new_children[::2], new_children[1::2])
+    # make sure each pair is in sorted order
+    for i in range(len(children)):
+      child = children[i]
+      if child[0] > child[1]:
+	children[i] = (child[1], child[0])
+    '''
+
+    distances = np.array(sorted(distances))
 
     if return_distance:
         # 2 is scaling factor to compare w/ unstructured version
