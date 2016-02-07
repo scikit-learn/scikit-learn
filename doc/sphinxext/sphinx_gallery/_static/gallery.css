@@ -1,3 +1,8 @@
+/*
+Sphinx-Gallery is has compatible CSS to fix default sphinx themes
+Tested for Sphinx 1.3.1 for all themes: default, alabaster, sphinxdoc,
+scrolls, agogo, traditional, nature, haiku, pyramid
+Tested for Read the docs theme 0.1.7 */
 .sphx-glr-thumbcontainer {
   background: #fff;
   border: solid #fff 1px;
@@ -24,6 +29,12 @@
   right: 0;
   top: 0;
 }
+/* Next one is to avoid Sphinx traditional theme to cover all the
+thumbnail with its default link Background color */
+.sphx-glr-thumbcontainer a.internal:hover {
+  background-color: transparent;
+}
+
 .sphx-glr-thumbcontainer p {
   margin: 0 0 .1em 0;
 }
@@ -34,7 +45,7 @@
 .sphx-glr-thumbcontainer img {
   display: inline;
   max-height: 160px;
-  max-width: 100%;
+  width: 160px;
 }
 .sphx-glr-thumbcontainer[tooltip]:hover:after {
   background: rgba(0, 0, 0, 0.8);

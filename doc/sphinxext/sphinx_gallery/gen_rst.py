@@ -552,7 +552,7 @@ def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
     example_nb = Notebook(fname, target_dir)
 
     filename_pattern = gallery_conf.get('filename_pattern')
-    if re.search(filename_pattern, src_file):
+    if re.search(filename_pattern, src_file) and gallery_conf['plot_gallery']:
         # A lot of examples contains 'print(__doc__)' for example in
         # scikit-learn so that running the example prints some useful
         # information. Because the docstring has been separated from
