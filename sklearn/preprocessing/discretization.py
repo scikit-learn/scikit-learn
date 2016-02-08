@@ -8,7 +8,7 @@ from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.sparsefuncs import csr_csc_min_axis0, csr_csc_max_axis0
 from _discretization import binsearch
-from six.moves import xrange
+from ..externals.six.moves import xrange
 
 __all__ = [
     "Discretizer"
