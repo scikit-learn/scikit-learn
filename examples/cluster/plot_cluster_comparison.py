@@ -27,7 +27,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import cluster, datasets
+from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
 
@@ -48,7 +48,7 @@ colors = np.hstack([colors] * 20)
 clustering_names = [
     'MiniBatchKMeans', 'AffinityPropagation', 'MeanShift',
     'SpectralClustering', 'Ward', 'AgglomerativeClustering',
-    'DBSCAN', 'Birch']
+    'DBSCAN', 'Birch', 'GMM']
 
 plt.figure(figsize=(len(clustering_names) * 2 + 3, 9.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
@@ -72,10 +72,10 @@ for i_dataset, dataset in enumerate(datasets):
 
     # create clustering estimators
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(n_clusters=2)
-    ward = cluster.AgglomerativeClustering(n_clusters=2, linkage='ward',
+    two_means = cluster.MiniBatchKMeans(n_clusters=3)
+    ward = cluster.AgglomerativeClustering(n_clusters=3, linkage='ward',
                                            connectivity=connectivity)
-    spectral = cluster.SpectralClustering(n_clusters=2,
+    spectral = cluster.SpectralClustering(n_clusters=3,
                                           eigen_solver='arpack',
                                           affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=.2)
@@ -83,13 +83,15 @@ for i_dataset, dataset in enumerate(datasets):
                                                        preference=-200)
 
     average_linkage = cluster.AgglomerativeClustering(
-        linkage="average", affinity="cityblock", n_clusters=2,
+        linkage="average", affinity="cityblock", n_clusters=3,
         connectivity=connectivity)
 
-    birch = cluster.Birch(n_clusters=2)
+    birch = cluster.Birch(n_clusters=3)
+
+    gmm = mixture.GMM(n_components=3, covariance_type='full')
     clustering_algorithms = [
         two_means, affinity_propagation, ms, spectral, ward, average_linkage,
-        dbscan, birch]
+        dbscan, birch, gmm]
 
     for name, algorithm in zip(clustering_names, clustering_algorithms):
         # predict cluster memberships
