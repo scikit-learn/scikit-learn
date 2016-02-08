@@ -183,7 +183,6 @@ class GaussianNB(BaseNB):
 
 
     def _update_class_prior(self):
-        n_classes = len(self.classes_)
         # We update only if fit_prior is True and that no class_prior is provided
         if self.class_prior is None and self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -425,8 +424,6 @@ class GaussianNB(BaseNB):
             self.theta_[i, :] = new_theta
             self.sigma_[i, :] = new_sigma
             self.class_count_[i] += N_i
-
-        class_prior = self.class_prior
 
         self.sigma_[:, :] += epsilon
         self._update_class_prior()
