@@ -1,7 +1,6 @@
+# Author: Henry Lin <hlin117@gmail.com>
+
 from __future__ import division
-
-__author__ = "Henry Lin <hlin117@gmail.com>"
-
 import numpy as np
 import scipy.sparse as sp
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -39,7 +38,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
     max_ : float
         The maximum value of the input data.
 
-    cut_points_ : array, shape [numBins - 1, n_continuous_features]
+    cut_points_ : array, shape [n_bins - 1, n_continuous_features]
         Contains the boundaries for which the data lies. Each interval
         has a closed left boundary, and an open right boundary.
 
@@ -67,7 +66,7 @@ class Discretizer(BaseEstimator, TransformerMixin):
 
     Example
     -------
-    X has two examples, with X[:, 2] as categorical
+    X has three examples, with X[:, 2] as categorical
 
     >>> X = [[-3, 1, 0, 5  ], \
              [-2, 7, 8, 4.5], \

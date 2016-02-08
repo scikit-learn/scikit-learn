@@ -6,6 +6,7 @@ from sklearn.preprocessing.discretization import Discretizer
 from sklearn.preprocessing._discretization import binsearch
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal
+from nose.tools import assert_raises
 
 X = [[0, 0, 1],
      [1, 1, 2],
@@ -86,13 +87,7 @@ def test_discretizer_1d():
     pass # TODO
 
 def test_discretizer_bad_n_bins():
-    try:
-        dis = Discretizer(n_bins=1).fit(X)
-    except:
-        return
-    else:
-        raise ValueError("Discretizer needs to raise error when number of "
-                         "bins is too low.")
+    assert_raises(ValueError, Discretizer(n_bins=1).fit, X)
 
 def test_discretizer_fit_transform():
     dis = Discretizer(n_bins=2)

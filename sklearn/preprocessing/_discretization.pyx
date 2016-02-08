@@ -30,11 +30,10 @@ def binsearch(contcolumn, zero_interval, search_points):
         for value_index in range(values.shape[0]):
             value = values[value_index]
             if lower <= value < upper:
-                output[i] = 0
+                output[value_index] = 0
             else:
                 keyindex = binary_search(value, _search_points)
-                output[i] = keys[keyindex]
-            i += 1
+                output[value_index] = keys[keyindex]
     return output
 
 @cython.boundscheck(False)
