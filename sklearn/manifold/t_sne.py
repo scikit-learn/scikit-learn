@@ -694,9 +694,10 @@ class TSNE(BaseEstimator):
                             'the array is small enough for it to fit in '
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
-            X = check_array(X, dtype=np.float32)
+            X = check_array(X, dtype=np.float32, ensure_min_samples=2)
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=np.float64, ensure_min_samples=2)
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
