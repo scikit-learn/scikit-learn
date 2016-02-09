@@ -663,6 +663,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        Note that regressors are always centered no matter what and no
+        transformation is required for prediction once the model is trained.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
         Solver to use in the computational routines:
