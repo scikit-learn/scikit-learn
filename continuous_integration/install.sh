@@ -29,17 +29,16 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Configure the conda environment and put it in the path using the
     # provided versions
-    conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-        numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION
+    if [[ "$INSTALL_MKL" == "true" ]]; then
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
+            libgfortran mkl
+    else
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION libgfortran
+    fi
     source activate testenv
 
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        # Make sure that MKL is used
-        conda install --yes mkl
-    else
-        # Make sure that MKL is not used
-        conda remove --yes --features mkl || echo "MKL not installed"
-    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis

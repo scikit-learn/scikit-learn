@@ -9,6 +9,9 @@ addons:
       - libatlas-dev
       - python-scipy
 env:
+  global:
+     - OMP_NUM_THREADS=4
+     - OPENBLAS_NUM_THREADS=4
   matrix:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
@@ -18,7 +21,7 @@ env:
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
     # This environment tests the newest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.1" SCIPY_VERSION="0.16.0"
+      NUMPY_VERSION="1.10.2" SCIPY_VERSION="0.16.1"
 install: source continuous_integration/install.sh
 script: bash continuous_integration/test_script.sh
 after_success:
