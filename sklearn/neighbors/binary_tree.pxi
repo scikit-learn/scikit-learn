@@ -375,7 +375,7 @@ cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
 ######################################################################
 # Kernel functions
 #
-# Note: Kernels assume dist is non-negative and and h is positive
+# Note: Kernels assume dist is non-negative and h is positive
 #       All kernel functions are normalized such that K(0, h) = 1.
 #       The fully normalized kernel is:
 #         K = exp[kernel_norm(h, d, kernel) + compute_kernel(dist, h, kernel)]
