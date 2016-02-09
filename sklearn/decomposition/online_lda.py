@@ -520,7 +520,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 # check perplexity
                 if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
                     doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
-                                                       random_init=False)
+                                                       random_init=False,
+                                                       parallel=parallel)
                     bound = self.perplexity(X, doc_topics_distr,
                                             sub_sampling=False)
                     if self.verbose:
