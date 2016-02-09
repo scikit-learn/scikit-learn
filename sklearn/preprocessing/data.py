@@ -1755,8 +1755,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self
         """
         if self.handle_unknown not in ['error', 'ignore']:
-            template = ("handle_unknown should be either error or "
-                        "ignore, got %s")
+            template = ("handle_unknown should be either 'error' or "
+                        "'ignore', got %s")
             raise ValueError(template % self.handle_unknown)
         self.fit_transform(X)
         return self
