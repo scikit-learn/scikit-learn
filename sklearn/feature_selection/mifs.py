@@ -34,7 +34,7 @@ class MutualInformationFeatureSelector(object):
         - 'MRMR' : Max-Relevance Min-Redundancy [3]
 
     k : int, default = 5
-        Sets the number of samples to use for the kernel density estimation 
+        Sets the number of samples to use for the kernel density estimation
         with the kNN method. Kraskov et al. recommend a small integer between
         3 and 10.
 
@@ -67,12 +67,12 @@ class MutualInformationFeatureSelector(object):
         The feature ranking of the selected features, with the first being
         the first feature selected with largest marginal MI with y, followed by
         the others with decreasing MI.
-    
+
     mi_ : array of shape n_features
         The JMIM of the selected features. Usually this a monotone decreasing
-        array of numbers converging to 0. One can use this to estimate the 
+        array of numbers converging to 0. One can use this to estimate the
         number of features to select. In fact this is what n_features='auto'
-        tries to do heuristically. 
+        tries to do heuristically.
 
     Examples
     --------
@@ -136,7 +136,6 @@ class MutualInformationFeatureSelector(object):
         """
 
         return self._fit(X, y)
-
 
     def transform(self, X):
         """
@@ -202,10 +201,10 @@ class MutualInformationFeatureSelector(object):
         # check a range of ks (3-10), and choose the one with the max median MI
         k_min = 3
         k_max = 11
-        xy_MI = np.zeros((k_max-k_min, p))
+        xy_MI = np.zeros((k_max - k_min, p))
         xy_MI[:] = np.nan
         for i, k in enumerate(range(k_min, k_max)):
-            xy_MI [i, :] = mi.get_first_mi_vector(self, k)
+            xy_MI[i, :] = mi.get_first_mi_vector(self, k)
         xy_MI = bn.nanmedian(xy_MI, axis=0)
 
         # choose the best, add it to S, remove it from F
@@ -226,7 +225,7 @@ class MutualInformationFeatureSelector(object):
             feature_mi_matrix[s, F] = mi.get_mi_vector(self, F, s)
 
             # make decision based on the chosen FS algorithm
-            fmm = feature_mi_matrix[:len(S),F]
+            fmm = feature_mi_matrix[:len(S), F]
             if self.method == 'JMI':
                 selected = F[bn.nanargmax(bn.nansum(fmm, axis=0))]
             elif self.method == 'JMIM':
@@ -246,7 +245,7 @@ class MutualInformationFeatureSelector(object):
             # if n_features == 'auto', let's check the S_mi to stop
             if self.n_features == 'auto' and len(S) > 10:
                 # smooth the 1st derivative of the MI values of previously sel
-                MI_dd = signal.savgol_filter(S_mi[1:],9,2,1)
+                MI_dd = signal.savgol_filter(S_mi[1:], 9, 2, 1)
                 # does the mean of the last 5 converge to 0?
                 if np.abs(np.mean(MI_dd[-5:])) < 1e-3:
                     break
@@ -254,7 +253,7 @@ class MutualInformationFeatureSelector(object):
         # ----------------------------------------------------------------------
         # SAVE RESULTS
         # ----------------------------------------------------------------------
-        
+
         self.n_features_ = len(S)
         self.support_ = np.zeros(p, dtype=np.bool)
         self.support_[S] = 1
@@ -278,7 +277,7 @@ class MutualInformationFeatureSelector(object):
     def _check_params(self, X, y):
         # checking input data and scaling it if y is continuous
         X, y = check_X_y(X, y)
-        
+
         if not self.categorical:
             ss = StandardScaler()
             X = ss.fit_transform(X)
@@ -312,7 +311,7 @@ class MutualInformationFeatureSelector(object):
         """
         Helper function: removes ith element from F and adds it to S.
         """
-        
+
         S.append(i)
         F.remove(i)
         return S, F

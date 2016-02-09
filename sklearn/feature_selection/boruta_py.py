@@ -13,30 +13,31 @@ from statsmodels.sandbox.stats.multicomp import multipletests as multicor
 from ..utils import check_X_y
 from bottleneck import nanrankdata
 
+
 class BorutaPy(object):
     """
     Improved Python implementation of the Boruta R package.
-    
+
     The improvements of this implementation include:
     - Faster run times:
         Thanks to scikit-learn's fast implementation of the ensemble methods.
     - Scikit-learn like interface:
         Use BorutaPy just like any other scikit learner: fit, fit_transform and
         transform are all implemented in a similar fashion.
-    - Modularity: 
-        Any ensemble method could be used: random forest, extra trees 
+    - Modularity:
+        Any ensemble method could be used: random forest, extra trees
         classifier, even gradient boosted trees.
     - Automatic tree number:
         Setting the n_estimator to 'auto' will calculate the number of trees
-        in each itartion based on the number of features under investigation. 
+        in each itartion based on the number of features under investigation.
         This way more trees are used when the training data has many feautres
         and less when most of the features have been rejected.
     - Ranking of features:
         After fitting BorutaPy it provides the user with ranking of features.
-        Confirmed ones are 1, Tentatives are 2, and the rejected are ranked 
-        starting from 3, based on their feautre importance history through 
+        Confirmed ones are 1, Tentatives are 2, and the rejected are ranked
+        starting from 3, based on their feautre importance history through
         the iterations.
-    
+
     We highly recommend using pruned trees with a depth between 3-7.
 
     For more, see the docs of these functions, and the examples below.
@@ -133,7 +134,7 @@ class BorutaPy(object):
 
     # define Boruta feature selection method
     feat_selector = boruta_py.BorutaPy(rf, n_estimators='auto', verbose=2)
-    
+
     # find all relevant features
     feat_selector.fit(X, y)
 
@@ -257,7 +258,7 @@ class BorutaPy(object):
                 self.estimator.set_params(n_estimators=n_tree)
 
             # make sure we start with a new tree in each iteration
-            rnd_st = np.random.randint(1,1e6,1)[0]
+            rnd_st = np.random.randint(1, 1e6, 1)[0]
             self.estimator.set_params(random_state=rnd_st)
 
             # add shadow attributes, shuffle them and train estimator, get imps
@@ -315,7 +316,7 @@ class BorutaPy(object):
         # set smallest rank to 3 if there are tentative feats
         if tentative.shape[0] > 0:
             ranks = ranks - np.min(ranks) + 3
-        else:            
+        else:
             # and 2 otherwise
             ranks = ranks - np.min(ranks) + 2
         self.ranking_[not_selected] = ranks
@@ -350,7 +351,6 @@ class BorutaPy(object):
         if self.multi_alpha <= 0 or self.multi_alpha > 1:
             raise ValueError('Multi_alpha should be between 0 and 1.')
 
-
     def _print_results(self, dec_reg, iter, flag):
         n_iter = str(iter) + ' / ' + str(self.max_iter)
         n_confirmed = np.where(dec_reg == 1)[0].shape[0]
@@ -360,29 +360,30 @@ class BorutaPy(object):
         # still in feature selection
         if flag == 0:
             n_tentative = np.where(dec_reg == 0)[0].shape[0]
-            content = map(str,[n_iter,n_confirmed,n_tentative,n_rejected])
+            content = map(str, [n_iter, n_confirmed, n_tentative, n_rejected])
             if self.verbose == 1:
                 output = cols[0] + n_iter
             elif self.verbose > 1:
-                output = '\n'.join([x[0]+'\t'+x[1] for x in zip(cols,content)])
+                output = '\n'.join([x[0] + '\t' + x[1]
+                                    for x in zip(cols, content)])
 
         # Boruta finished running and tentatives have been filtered
         else:
             n_tentative = np.sum(self.support_weak_)
             content = map(str, [n_iter, n_confirmed, n_tentative, n_rejected])
-            result = '\n'.join([x[0] +'\t' + x[1] for x in zip(cols, content)])
+            result = '\n'.join([x[0] + '\t' + x[1]
+                                for x in zip(cols, content)])
             output = "\n\nBorutaPy finished running.\n\n" + result
         print output
 
-
     def _get_tree_num(self, n_feat):
         depth = self.estimator.get_params()['max_depth']
-        if depth == None:
+        if depth is None:
             depth = 10
         # how many times a feature should be considered on average
         f_repr = 100
-        # 2 because the training matrix is extended with n shadow features        
-        multi = ((n_feat * 2) / float(np.sqrt(n_feat * 2) * depth)) 
+        # 2 because the training matrix is extended with n shadow features
+        multi = ((n_feat * 2) / float(np.sqrt(n_feat * 2) * depth))
         n_estimators = int(multi * f_repr)
         return int(n_estimators)
 
@@ -421,18 +422,16 @@ class BorutaPy(object):
 
         # separate importances of real and shadow features
         imp_sha = imp[x_cur_w:]
-        imp_real = np.zeros(X.shape[1])        
+        imp_real = np.zeros(X.shape[1])
         imp_real[:] = np.nan
         imp_real[x_cur_ind] = imp[:x_cur_w]
         return (imp_real, imp_sha)
-
 
     def _assign_hits(self, hit_reg, cur_imp, imp_sha_max):
         # register hits for feautres that did better than the best of shadows
         hits = np.where(cur_imp[0] > imp_sha_max)[0]
         hit_reg[hits] += 1
         return hit_reg
-
 
     def _do_tests(self, dec_reg, hit_reg, iter):
         # get uncorrected p values based on hit_reg

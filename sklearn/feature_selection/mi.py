@@ -14,6 +14,7 @@ import multiprocessing
 
 num_cores = multiprocessing.cpu_count()
 
+
 def get_mi_vector(MI_FS, F, s):
     """
     Calculates the Mututal Information between each feature in F and s.
@@ -28,9 +29,9 @@ def get_mi_vector(MI_FS, F, s):
 
 def _get_mi(f, s, MI_FS):
     n, p = MI_FS.X.shape
-    if MI_FS.method in ['JMI','JMIM']:
+    if MI_FS.method in ['JMI', 'JMIM']:
         # JMI & JMIM
-        joint = MI_FS.X[:,(s, f)]
+        joint = MI_FS.X[:, (s, f)]
         if MI_FS.categorical:
             MI = _mi_dc(joint, MI_FS.y, MI_FS.k)
         else:
@@ -55,7 +56,10 @@ def get_first_mi_vector(MI_FS, k):
     This function is for when |S| = 0. We select the first feautre in S.
     """
     n, p = MI_FS.X.shape
-    MIs = Parallel(n_jobs=num_cores)(delayed(_get_first_mi)(i, k, MI_FS) for i in xrange(p))
+    MIs = Parallel(
+        n_jobs=num_cores)(
+        delayed(_get_first_mi)(
+            i, k, MI_FS) for i in xrange(p))
     return MIs
 
 
@@ -99,14 +103,14 @@ def _mi_dc(x, y, k):
     Nx = []
     for yi in y:
         Nx.append(np.sum(y == yi))
-    
+
     # find the distance of the kth in-class point
     for c in classes:
         mask = np.where(y == c)[0]
-        knn.fit(x[mask,:])
-        d2k[mask] = knn.kneighbors()[0][:,-1]
-    
-    # find the number of points within the distance of the kth in-class point    
+        knn.fit(x[mask, :])
+        d2k[mask] = knn.kneighbors()[0][:, -1]
+
+    # find the number of points within the distance of the kth in-class point
     knn.fit(x)
     m = knn.radius_neighbors(radius=d2k, return_distance=False)
     m = [i.shape[0] for i in m]
