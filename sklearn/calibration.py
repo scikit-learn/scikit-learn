@@ -49,7 +49,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach. It is not advised to use isotonic calibration
+        non-parametric approach. It is not advised to use isotonic calibration
         with too few calibration samples ``(<<1000)`` since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 
@@ -204,7 +204,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
-        # classfiers
+        # classifiers
         mean_proba = np.zeros((X.shape[0], len(self.classes_)))
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
@@ -250,7 +250,7 @@ class _CalibratedClassifier(object):
     method : 'sigmoid' | 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach based on isotonic regression.
+        non-parametric approach based on isotonic regression.
 
     References
     ----------

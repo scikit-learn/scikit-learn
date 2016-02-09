@@ -65,27 +65,32 @@ optimized file format such as HDF5 to reduce data load times. Various libraries
 such as H5Py, PyTables and pandas provides a Python interface for reading and
 writing data in that format.
 
-Can I add this new algorithm that I (or someone else) just published?
--------------------------------------------------------------------------
-No. As a rule we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 200+ citations and wide use and usefullness. A
-technique that provides a clear-cut improvement (e.g. an enhanced  data
-structure or efficient approximation) on a widely-used method will also be
-considered for inclusion.
-Your implementation doesn't need to be in scikit-learn to be used together
-with scikit-learn tools, though. Implement your favorite algorithm
-in a scikit-learn compatible way, upload it to github and we will list
-it under :ref:`related_projects`.
-Also see selectiveness_.
+What are the inclusion criteria for new algorithms ?
+----------------------------------------------------
 
+We only consider well-established algorithms for inclusion. A rule of thumb is
+at least 3 years since publication, 200+ citations and wide use and
+usefulness. A technique that provides a clear-cut improvement (e.g. an
+enhanced data structure or a more efficient approximation technique) on
+a widely-used method will also be considered for inclusion.
 
-Can I add this classical algorithm from the 80s?
----------------------------------------------------
-Depends. If there is a common usecase within the scope of scikit-learn, such
-as classification, regression or clustering, where it outperforms methods
-that are already implemented in scikit-learn, we will consider it.
+From the algorithms or techniques that meet the above criteria, only those
+which fit well within the current API of scikit-learn, that is a ``fit``,
+``predict/transform`` interface and ordinarily having input/output that is a
+numpy array or sparse matrix, are accepted.
 
-.. _selectiveness:
+The contributor should support the importance of the proposed addition with
+research papers and/or implementations in other similar packages, demonstrate
+its usefulness via common use-cases/applications and corroborate performance
+improvements, if any, with benchmarks and/or plots. It is expected that the 
+proposed algorithm should outperform the methods that are already implemented
+in scikit-learn at least in some areas.
+
+Also note that your implementation need not be in scikit-learn to be used
+together with scikit-learn tools. You can implement your favorite algorithm in
+a scikit-learn compatible way, upload it to github and let us know. We will
+list it under :ref:`related_projects`.
+
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------

@@ -78,7 +78,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, sparse matrix shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training data.
 
         y : array-like, shape = [n_samples]

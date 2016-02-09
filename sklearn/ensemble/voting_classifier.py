@@ -19,6 +19,8 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..externals import six
+from ..exceptions import NotFittedError
+from ..utils.validation import check_is_fitted
 
 
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -38,11 +40,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
-        the sums of the predicted probalities, which is recommended for
+        the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
-        Sequence of weights (`float` or `int`) to weight the occurances of
+        Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
@@ -112,6 +114,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
 
+        if self.estimators is None or len(self.estimators) == 0:
+            raise AttributeError('Invalid `estimators` attribute, `estimators`'
+                                 ' should be a list of (string, estimator)'
+                                 ' tuples')
+
         if self.weights and len(self.weights) != len(self.estimators):
             raise ValueError('Number of classifiers and weights must be equal'
                              '; got %d weights, %d estimators'
@@ -142,6 +149,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         maj : array-like, shape = [n_samples]
             Predicted class labels.
         """
+
+        check_is_fitted(self, 'estimators_')
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
 
@@ -163,6 +172,10 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
+        if self.voting == 'hard':
+            raise AttributeError("predict_proba is not available when"
+                                 " voting=%r" % self.voting)
+        check_is_fitted(self, 'estimators_')
         avg = np.average(self._collect_probas(X), axis=0, weights=self.weights)
         return avg
 
@@ -181,9 +194,6 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         avg : array-like, shape = [n_samples, n_classes]
             Weighted average probability for each class per sample.
         """
-        if self.voting == 'hard':
-            raise AttributeError("predict_proba is not available when"
-                                 " voting=%r" % self.voting)
         return self._predict_proba
 
     def transform(self, X):
@@ -199,11 +209,12 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         If `voting='soft'`:
           array-like = [n_classifiers, n_samples, n_classes]
-            Class probabilties calculated by each classifier.
+            Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_classifiers, n_samples]
             Class labels predicted by each classifier.
         """
+        check_is_fitted(self, 'estimators_')
         if self.voting == 'soft':
             return self._collect_probas(X)
         else:

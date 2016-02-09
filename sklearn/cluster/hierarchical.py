@@ -322,7 +322,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         This option is valid only when specifying a connectivity matrix.
 
     linkage : {"average", "complete"}, optional, default: "complete"
-        Which linkage critera to use. The linkage criterion determines which
+        Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
             - average uses the average of the distances of each observation of
               the two sets
@@ -542,10 +542,13 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_clusters : int or ndarray
         The number of clusters to form.
 
-    children : list of pairs. Length of n_nodes
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children[i - n_samples]`.
+    children : 2D array, shape (n_nodes-1, 2)
+        The children of each non-leaf node. Values less than `n_samples`
+        correspond to leaves of the tree which are the original samples.
+        A node `i` greater than or equal to `n_samples` is a non-leaf
+        node and has children `children_[i - n_samples]`. Alternatively
+        at the i-th iteration, children[i][0] and children[i][1]
+        are merged to form node `n_samples + i`
 
     n_leaves : int
         Number of leaves of the tree.

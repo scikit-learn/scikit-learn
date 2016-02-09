@@ -477,7 +477,7 @@ class LabelKFold(_BaseKFold):
                              " than the number of labels: %d."
                              % (self.n_folds, n_labels))
 
-        # Weight labels by their number of occurences
+        # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
 
         # Distribute the most frequent labels first
@@ -564,6 +564,10 @@ class StratifiedKFold(_BaseKFold):
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = bincount(y_inversed)
         min_labels = np.min(y_counts)
+        if np.all(self.n_folds > y_counts):
+            raise ValueError("All the n_labels for individual classes"
+                             " are less than %d folds."
+                             % (self.n_folds))
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
@@ -1321,9 +1325,9 @@ def check_cv(cv=3, y=None, classifier=False):
           - An object to be used as a cross-validation generator.
           - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If classifier is False or if ``y`` is
-        neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if classifier is True and ``y`` is either
+        binary or multiclass, :class:`StratifiedKFold` used. In all other
+        cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

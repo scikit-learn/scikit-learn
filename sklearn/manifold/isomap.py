@@ -94,11 +94,11 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
-        self.nbrs_ = NearestNeighbors(n_neighbors=n_neighbors,
-                                      algorithm=neighbors_algorithm)
 
     def _fit_transform(self, X):
         X = check_array(X)
+        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                      algorithm=self.neighbors_algorithm)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
@@ -196,9 +196,9 @@ class Isomap(BaseEstimator, TransformerMixin):
         X = check_array(X)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
-        #Create the graph of shortest distances from X to self.training_data_
+        # Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.
-        #This can be done as a single array operation, but it potentially
+        # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
         G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
         for i in range(X.shape[0]):

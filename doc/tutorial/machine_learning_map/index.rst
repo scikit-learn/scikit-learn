@@ -17,7 +17,7 @@ The flowchart below is designed to give users a bit of
 a rough guide on how to approach problems with regard to
 which estimators to try on your data.
 
-Click on any estimator in the chart below to see it's documentation.
+Click on any estimator in the chart below to see its documentation.
 
 
 

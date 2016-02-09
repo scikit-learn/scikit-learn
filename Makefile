@@ -1,4 +1,4 @@
-# simple makefile to simplify repetetive build env management tasks under posix
+# simple makefile to simplify repetitive build env management tasks under posix
 
 # caution: testing won't work on windows, see README
 

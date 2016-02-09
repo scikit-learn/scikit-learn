@@ -15,6 +15,13 @@ Changelog
 New features
 ............
 
+   - Added two functions for mutual information estimation:
+     :func:`feature_selection.mutual_info_classif` and
+     :func:`feature_selection.mutual_info_regression`. These functions can be
+     used in :class:`feature_selection.SelectKBest` and
+     :class:`feature_selection.SelectPercentile` as score functions.
+     By `Andrea Bravi`_ and `Nikolay Mayorov`_.
+
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
      and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new
@@ -70,8 +77,36 @@ Enhancements
      :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
      parameter. By `Brian McFee`_.
 
+   - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
+     now support ``partial_fit``. By `Asish Panda`_ and `Philipp Dowling`_.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
+     By `Jatin Shah`_ and `Raghav R V`_.
+
+   - :class:`linear_model.RANSACRegressor` now supports ``sample_weights``.
+     By `Imaculate`_.
+
+   - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
+     error on the samples for every trial. By `Manoj Kumar`_.
+
+   - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
+     By `Manoj Kumar`_.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.confusion_matrix`.
+     By `Bernardo Stein`_.
+
+   - :class:`feature_selection.SelectKBest` and :class:`feature_selection.SelectPercentile`
+     now accept score functions that take X, y as input and return only the scores.
+     By `Nikolay Mayorov`_.
+
+   - Prediction of out-of-sample events with Isotonic Regression is now much
+     faster (over 1000x in tests with synthetic data). By `Jonathan Arfa`_.
+
 Bug fixes
 .........
+
+    - :class:`StratifiedKFold` now raises error if all n_labels for individual classes is less than n_folds.
+      (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
 
     - :class:`RandomizedPCA` default number of `iterated_power` is 2 instead of 3.
       This is a speed up with a minor precision decrease. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
@@ -86,16 +121,20 @@ Bug fixes
       Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
-      Laplacian matrix was incorrectly set to 1. By `Peter Fischer`_.
+      Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
 
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding`. By `Peter Fischer`_.
+      and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
 
     - Random forest, extra trees, decision trees and gradient boosting
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
       are required to split a decision tree node. By `Arnaud Joly`_
+
+    - :class:`VotingClassifier` now raises ``NotFittedError`` if ``predict``,
+      ``transform`` or ``predict_proba`` are called on the non-fitted estimator.
+      by `Sebastian Raschka`_.
 
 API changes summary
 -------------------
@@ -105,6 +144,47 @@ API changes summary
      the :mod:`model_selection` module.
      (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
 
+   - ``residual_metric`` has been deprecated in :class:`linear_model.RANSACRegressor`.
+     Use ``loss`` instead. By `Manoj Kumar`_.
+
+   - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
+     :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
+
+
+.. _changes_0_17_1:
+
+Version 0.17.1
+==============
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+
+    - Upgrade vendored joblib to version 0.9.4 that fixes an important bug in
+      ``joblib.Parallel`` that can silently yield to wrong results when working
+      on datasets larger than 1MB:
+      https://github.com/joblib/joblib/blob/0.9.4/CHANGES.rst
+
+    - Fixed reading of Bunch pickles generated with scikit-learn
+      version <= 0.16. This can affect users who have already
+      downloaded a dataset with scikit-learn 0.16 and are loading it
+      with scikit-learn 0.17. See `#6196
+      <https://github.com/scikit-learn/scikit-learn/issues/6196>`_ for
+      how this affected :func:`datasets.fetch_20newsgroups`. By `Loic
+      Esteve`_.
+
+    - Fixed a bug that prevented using ROC AUC score to perform grid search on
+      several CPU / cores on large arrays. See `#6147
+      <https://github.com/scikit-learn/scikit-learn/issues/6147>`_
+      By `Olivier Grisel`_.
+
+    - Fixed a bug that prevented to properly set the ``presort`` parameter
+      in :class:`ensemble.GradientBoostingRegressor`. See #5857`
+      <https://github.com/scikit-learn/scikit-learn/issues/5857>`_
+      By Andrew McCulloh.
 
 .. _changes_0_17:
 
@@ -3922,7 +4002,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
-.. _Raghav R V: https://github.com/ragv
+.. _Raghav R V: https://github.com/rvraghav93
 
 .. _Trevor Stephens: http://trevorstephens.com/
 
@@ -3989,3 +4069,17 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Elvis Dohmatob: https://github.com/dohmatob
 .. _yelite: https://github.com/yelite
 .. _Issam H. Laradji: https://github.com/IssamLaradji
+
+.. _Asish Panda: https://github.com/kaichogami
+
+.. _Philipp Dowling: https://github.com/phdowling
+
+.. _Imaculate: https://github.com/Imaculate
+
+.. _Bernardo Stein: https://github.com/DanielSidhion
+
+.. _Andrea Bravi: https://github.com/AndreaBravi
+
+.. _Devashish Deshpande: https://github.com/dsquareindia
+
+.. _Jonathan Arfa: https://github.com/jarfa

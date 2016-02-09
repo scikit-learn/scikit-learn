@@ -79,7 +79,7 @@ def test_libsvm_iris():
     assert_greater(np.mean(pred == iris.target), .95)
 
     # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
-    # we should get deteriministic results (assuming that there is no other
+    # we should get deterministic results (assuming that there is no other
     # thread calling this wrapper calling `srand` concurrently).
     pred2 = svm.libsvm.cross_validation(iris.data,
                                         iris.target.astype(np.float64), 5,

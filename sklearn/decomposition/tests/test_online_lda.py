@@ -20,7 +20,7 @@ from sklearn.externals.six.moves import xrange
 
 
 def _build_sparse_mtx():
-    # Create 3 topics and each topic has 3 disticnt words.
+    # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_topics = 3
     block = n_topics * np.ones((3, 3))

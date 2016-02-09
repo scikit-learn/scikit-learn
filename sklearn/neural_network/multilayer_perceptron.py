@@ -409,7 +409,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("beta_2 must be >= 0 and < 1, got %s" %
                              self.beta_2)
         if self.epsilon <= 0.0:
-            raise ValueError("epsilon must be > 0, got %s." % self.max_iter)
+            raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
 
         # raise ValueError if not registered
         supported_activations = ['logistic', 'tanh', 'relu']
@@ -842,8 +842,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     It can also have a regularization term added to the loss function
     that shrinks model parameters to prevent overfitting.
 
-    This implementation works with data represented as dense and sparse numpy
-    arrays of floating point values.
+    This implementation works with data represented as dense numpy arrays or
+    sparse scipy arrays of floating point values.
 
     References
     ----------
@@ -1074,7 +1074,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
 
-        -'constant', is a constant learnign rate given by
+        -'constant', is a constant learning rate given by
          'learning_rate_init'.
 
         -'invscaling' gradually decreases the learning rate ``learning_rate_`` at

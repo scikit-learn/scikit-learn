@@ -23,12 +23,12 @@ scikit-learn, :class:`PCA` is implemented as a *transformer* object
 that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
-The optional parameter ``whiten=True`` parameter make it possible to
+The optional parameter ``whiten=True`` makes it possible to
 project the data onto the singular space while scaling each component
 to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example
 the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm. 
+clustering algorithm.
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
@@ -61,13 +61,13 @@ data based on the amount of variance it explains. As such it implements a
 Incremental PCA
 ---------------
 
-The :class:`PCA` object is very useful, but has certain limitations for 
-large datasets. The biggest limitation is that :class:`PCA` only supports 
+The :class:`PCA` object is very useful, but has certain limitations for
+large datasets. The biggest limitation is that :class:`PCA` only supports
 batch processing, which means all of the data to be processed must fit in main
 memory. The :class:`IncrementalPCA` object uses a different form of
 processing and allows for partial computations which almost
 exactly match the results of :class:`PCA` while processing the data in a
-minibatch fashion. :class:`IncrementalPCA` makes it possible to implement 
+minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
 out-of-core Principal Component Analysis either by:
 
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
@@ -77,7 +77,7 @@ out-of-core Principal Component Analysis either by:
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
-memory usage depends on the number of samples per batch, rather than the 
+memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
 
 .. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_001.png
@@ -176,8 +176,8 @@ Kernel PCA
 ----------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It 
-has many applications including denoising, compression and structured 
+dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
@@ -795,7 +795,7 @@ to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi
   log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
     E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
 
-Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence 
+Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 

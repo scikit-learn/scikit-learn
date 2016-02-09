@@ -1,4 +1,5 @@
 """Base classes for all estimators."""
+
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
@@ -10,16 +11,13 @@ from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
 from .utils.deprecation import deprecated
-from .exceptions import ChangedBehaviorWarning as ChangedBehaviorWarning_
+from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
 
 
-class ChangedBehaviorWarning(ChangedBehaviorWarning_):
+@deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class ChangedBehaviorWarning(_ChangedBehaviorWarning):
     pass
-
-ChangedBehaviorWarning = deprecated("ChangedBehaviorWarning has been moved "
-                                    "into the sklearn.exceptions module. "
-                                    "It will not be available here from "
-                                    "version 0.19")(ChangedBehaviorWarning)
 
 
 ##############################################################################

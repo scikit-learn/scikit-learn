@@ -3,9 +3,11 @@ from nose.tools import assert_equal
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
 from scipy.linalg import eigh
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
 
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
@@ -48,12 +50,50 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
     return True
 
 
+def test_sparse_graph_connected_component():
+    rng = np.random.RandomState(42)
+    n_samples = 300
+    boundaries = [0, 42, 121, 200, n_samples]
+    p = rng.permutation(n_samples)
+    connections = []
+
+    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+        group = p[start:stop]
+        # Connect all elements within the group at least once via an
+        # arbitrary path that spans the group.
+        for i in range(len(group) - 1):
+            connections.append((group[i], group[i + 1]))
+
+        # Add some more random connections within the group
+        min_idx, max_idx = 0, len(group) - 1
+        n_random_connections = 1000
+        source = rng.randint(min_idx, max_idx, size=n_random_connections)
+        target = rng.randint(min_idx, max_idx, size=n_random_connections)
+        connections.extend(zip(group[source], group[target]))
+
+    # Build a symmetric affinity matrix
+    row_idx, column_idx = tuple(np.array(connections).T)
+    data = rng.uniform(.1, 42, size=len(connections))
+    affinity = coo_matrix((data, (row_idx, column_idx)))
+    affinity = 0.5 * (affinity + affinity.T)
+
+    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+        component_1 = _graph_connected_component(affinity, p[start])
+        component_size = stop - start
+        assert_equal(component_1.sum(), component_size)
+
+        # We should retrieve the same component mask by starting by both ends
+        # of the group
+        component_2 = _graph_connected_component(affinity, p[stop - 1])
+        assert_equal(component_2.sum(), component_size)
+        assert_array_equal(component_1, component_2)
+
+
 def test_spectral_embedding_two_components(seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
-    affinity = np.zeros(shape=[n_sample * 2,
-                               n_sample * 2])
+    affinity = np.zeros(shape=[n_sample * 2, n_sample * 2])
     # first component
     affinity[0:n_sample,
              0:n_sample] = np.abs(random_state.randn(n_sample, n_sample)) + 2
@@ -208,7 +248,8 @@ def test_spectral_embedding_deterministic():
 
 
 def test_spectral_embedding_unnormalized():
-    # Test that spectral_embedding is also processing unnormalized laplacian correctly
+    # Test that spectral_embedding is also processing unnormalized laplacian
+    # correctly
     random_state = np.random.RandomState(36)
     data = random_state.randn(10, 30)
     sims = rbf_kernel(data)

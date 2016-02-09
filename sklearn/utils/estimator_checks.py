@@ -109,7 +109,7 @@ def _yield_non_meta_checks(name, Estimator):
 
 
 def _yield_classifier_checks(name, Classifier):
-    # test classfiers can handle non-array data
+    # test classifiers can handle non-array data
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
@@ -1317,7 +1317,7 @@ def check_estimators_overwrite_params(name, Estimator):
     set_testing_parameters(estimator)
     set_random_state(estimator)
 
-    # Make a physical copy of the orginal estimator parameters before fitting.
+    # Make a physical copy of the original estimator parameters before fitting.
     params = estimator.get_params()
     original_params = deepcopy(params)
 
@@ -1473,7 +1473,7 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 def check_non_transformer_estimators_n_iter(name, estimator,
                                             multi_output=False):
-    # Check if all iterative solvers, run for more than one iteratiom
+    # Check if all iterative solvers, run for more than one iteration
 
     iris = load_iris()
     X, y_ = iris.data, iris.target

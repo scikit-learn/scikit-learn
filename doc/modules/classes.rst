@@ -534,6 +534,8 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
+   feature_selection.mutual_info_classif
+   feature_selection.mutual_info_regression
 
 
 .. _gaussian_process_ref:
@@ -915,11 +917,18 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
+   metrics.pairwise.sigmoid_kernel
+   metrics.pairwise.cosine_similarity
+   metrics.pairwise.cosine_distances
    metrics.pairwise.laplacian_kernel
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
-
+   metrics.pairwise.paired_euclidean_distances
+   metrics.pairwise.paired_manhattan_distances
+   metrics.pairwise.paired_cosine_distances
+   metrics.pairwise.paired_distances
+   
 
 .. _mixture_ref:
 
