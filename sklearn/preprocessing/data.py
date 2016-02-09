@@ -1791,33 +1791,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         indices = np.cumsum(n_values)
         self.feature_indices_ = indices
 
-        column_indices = (X + indices[:-1]).ravel()
-        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                n_features)
-        max_col = indices[-1]
-        # the column numbers which will exceed the dimensions of the coo_matrix
-        # we construct. This means that the feature exceeded its bound
-        # specified in ``n_values``
-        wrong_indices = column_indices >= max_col
-        num_wrong = np.count_nonzero(wrong_indices)
-        data = np.ones(n_samples * n_features - num_wrong)
-        if num_wrong > 0:
-            if self.handle_unknown == 'ignore':
-                corrected_indices = ~wrong_indices
-                # Delete the problematic columns and the corresponding rows
-                column_indices = column_indices[corrected_indices]
-                row_indices = row_indices[corrected_indices]
-
-            else:
-                for feature in range(n_features):
-                    mx = np.max(X[:, feature])
-                    if mx >= self.n_values[feature]:
-                        msg = "The value %d exceeds its limit of %d"
-                        raise ValueError(msg % (mx, self.n_values[feature]))
-
-        out = sparse.coo_matrix((data, (row_indices, column_indices)),
-                                shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+        out = self._encode_safely(X)
 
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
@@ -1851,9 +1825,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def _transform(self, X):
         """Assumes X contains only categorical features."""
         X = check_array(X, dtype=np.int)
+        n_samples, n_features = X.shape
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
-        n_samples, n_features = X.shape
 
         if (self.n_values == 'auto'):
             for i in range(n_features):
@@ -1868,17 +1842,44 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                "during transform : %s" % str(new_classes))
                         raise ValueError(msg)
 
-        indices = self.feature_indices_
-        if n_features != indices.shape[0] - 1:
+        if n_features != self.feature_indices_.shape[0] - 1:
             raise ValueError("X has different shape than during fitting."
                              " Expected %d, got %d."
-                             % (indices.shape[0] - 1, n_features))
+                             % (self.feature_indices_.shape[0] - 1,
+                                n_features))
 
         # We use only those categorical features of X that are known using fit.
         # i.e lesser than n_values_ using mask.
         # This means, if self.handle_unknown is "ignore", the row_indices and
         # col_indices corresponding to the unknown categorical feature are
         # ignored.
+        out = self._encode_safely(X)
+
+        if self.n_values == 'auto':
+            out = out[:, self.active_features_]
+
+        return out if self.sparse else out.toarray()
+
+    def _encode_safely(self, X):
+        """Encode `X` while performing all necessary error checking.
+
+        This method checks whether each value in `X` does not exceed the
+        specified limit for that feature. It also checks the `handle_unknown`
+        property and decided whether or not to raise an error.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_feature]
+            Input array of type int.
+
+        Returns
+        -------
+        out : csr array
+            The one hot encoded array.
+        """
+
+        n_samples, n_features = X.shape
+        indices = self.feature_indices_
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
 
@@ -1893,10 +1894,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if self.n_values == 'auto':
-            out = out[:, self.active_features_]
-
-        return out if self.sparse else out.toarray()
+        return out
 
     def transform(self, X):
         """Transform X using one-hot encoding.

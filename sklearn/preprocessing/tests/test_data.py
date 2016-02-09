@@ -1549,9 +1549,13 @@ def test_one_hot_unknown_fit():
 
     X = np.array([[1, 7]])
     oh = OneHotEncoder(n_values=[2, 4], handle_unknown='error')
-    assert_raises_regex(ValueError, "The value 7 exceeds its limit of 4",
-                      oh.fit_transform, X)
+    msg = "unknown categorical feature present \[7\] during transform"
+    assert_raises_regex(ValueError, msg, oh.fit_transform, X)
 
+    X = np.array([[2, 0]])
+    oh = OneHotEncoder(n_values=[2, 4], handle_unknown='error')
+    msg = "unknown categorical feature present \[2\] during transform"
+    assert_raises_regex(ValueError, msg, oh.fit_transform, X)
 
 def test_fit_cold_start():
     X = iris.data
