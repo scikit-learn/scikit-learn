@@ -199,6 +199,7 @@ def test_lda_multi_jobs():
         rng = np.random.RandomState(0)
         lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=2,
                                         learning_method=method,
+                                        evaluate_every=1,
                                         random_state=rng)
         lda.fit(X)
 
