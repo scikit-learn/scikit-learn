@@ -562,6 +562,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
                                           random_init=False)
+        # normalize doc_topic_distr
+        doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
