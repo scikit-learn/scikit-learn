@@ -22,8 +22,6 @@ export CXX=g++
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
-echo 'download'
-ls $HOME/download
 
 
 if [[ "$DISTRIB" == "conda" ]]; then
@@ -78,8 +76,23 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer
-    pip install cython
+    pip install nose nose-timer cython
+
+elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
+    # Set up our own virtualenv environment to avoid travis' numpy
+    virtualenv --python=python ~/venv
+    source ~/venv/bin/activate
+    pip install --upgrade pip setuptools
+
+    # We use the default Python virtualenv provided by travis
+    echo "Installing numpy master wheel"
+    pip install --pre --upgrade --no-index --timeout=60 \
+        --trusted-host travis-dev-wheels.scipy.org \
+        -f https://travis-dev-wheels.scipy.org/ numpy scipy
+    pip install nose nose-timer cython
+
+    # Install nose-timer via pip
+    pip install nose-timer
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
