@@ -182,9 +182,14 @@ Bug fixes
       By `Olivier Grisel`_.
 
     - Fixed a bug that prevented to properly set the ``presort`` parameter
-      in :class:`ensemble.GradientBoostingRegressor`. See #5857`
+      in :class:`ensemble.GradientBoostingRegressor`. See `#5857
       <https://github.com/scikit-learn/scikit-learn/issues/5857>`_
       By Andrew McCulloh.
+
+    - Fixed a joblib error when evaluating the perplexity of a
+      :class:`decomposition.LatentDirichletAllocation` model. See `#6258
+      <https://github.com/scikit-learn/scikit-learn/issues/6258>`_
+      By Chyi-Kwei Yau.
 
 .. _changes_0_17:
 
