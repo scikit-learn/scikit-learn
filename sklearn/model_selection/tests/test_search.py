@@ -84,7 +84,7 @@ class MockClassifier(object):
         if self.foo_param > 1:
             score = 1.
         else:
-            score = 0.
+            score = -1.
         return score
 
     def get_params(self, deep=False):
@@ -868,7 +868,7 @@ def test_gp_search():
     clf = MockClassifier()
     for acquisition_function in ('EI', 'UCB'):
         gp_search = SequentialSearchCV(
-            clf, {'foo_param': {'bounds': (1, 4), 'type': int}},
+            clf, {'foo_param': {'bounds': (0, 3), 'type': int}},
             acquisition_function=acquisition_function,
             random_state=0, n_init=3)
         # make sure it selects the smallest parameter in case of ties
@@ -881,11 +881,11 @@ def test_gp_search():
         gp_search = SequentialSearchCV(
             clf, {'foo_param': {'bounds': (-1, 1)}},
             acquisition_function=acquisition_function,
-            random_state=0, n_init=1, n_iter=4)
+            random_state=0)
         # make sure it selects the smallest parameter in case of ties
         gp_search.fit(X, y)
         # test that it is close to zero
-        assert_less_equal(np.abs(gp_search.best_estimator_.foo_param),  0.1)
+        assert_less_equal(np.abs(gp_search.best_estimator_.foo_param), 0.1)
         assert_less_equal(gp_search.best_score_, 1)
 
     # Smoke test the score etc:
@@ -930,7 +930,7 @@ def test_gp_no_refit():
     clf = MockClassifier()
     grid_search = SequentialSearchCV(
         clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
-        n_init=1, n_iter=4)
+        n_init=1, n_iter=4, random_state=0)
     grid_search.fit(X, y)
     assert_true(hasattr(grid_search, "best_params_"))
     assert_true(hasattr(grid_search, "best_score_"))
@@ -943,7 +943,7 @@ def test_gp_search_error():
     clf = LinearSVC()
     grid_search = SequentialSearchCV(
         clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
-        n_init=1, n_iter=4)
+        n_init=1, n_iter=4, random_state=0)
     assert_raises(ValueError, grid_search.fit, X[:3], y)
 
 
@@ -990,7 +990,7 @@ def test_bounds():
     clf = MockContinuousClassifier()
     grid_search = SequentialSearchCV(
         clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
-        n_init=2, n_iter=5)
+        n_init=2, n_iter=5, random_state=0)
     grid_search.fit(X, y)
     check_grid_scores_parameters(
         grid_search.grid_scores_, 'foo_param', float, (0, 3))
@@ -998,7 +998,7 @@ def test_bounds():
     clf = MockClassifier()
     grid_search = SequentialSearchCV(
         clf, {'foo_param': {'bounds': (0, 3), 'type': int}}, refit=False,
-        n_init=2, n_iter=5)
+        n_init=2, n_iter=5, random_state=0)
     grid_search.fit(X, y)
     check_grid_scores_parameters(
         grid_search.grid_scores_, 'foo_param', int, (0, 3))

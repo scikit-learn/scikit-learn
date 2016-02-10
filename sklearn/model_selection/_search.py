@@ -1228,7 +1228,7 @@ class SequentialSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_distributions, scale=list(), n_init=3, n_iter=10,
+    def __init__(self, estimator, param_distributions, n_init=3, n_iter=10,
                  scoring=None, fit_params=None, acquisition_function='UCB',
                  n_jobs=1, iid=True, refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
@@ -1244,7 +1244,6 @@ class SequentialSearchCV(BaseSearchCV):
         self.xi = xi
         self.kappa = kappa
         self.n_candidates = n_candidates
-        self.scale = scale
         self.n_local_candidates = n_local_candidates
 
         super(SequentialSearchCV, self).__init__(
@@ -1252,7 +1251,7 @@ class SequentialSearchCV(BaseSearchCV):
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
 
-    def _evaluate_params(self, candidates, cv, X, y, labels, scale):
+    def _evaluate_params(self, candidates, cv, X, y, labels):
 
         # Use the context-manager API to reuse processes for every
         # call to Parallel.
@@ -1306,16 +1305,15 @@ class SequentialSearchCV(BaseSearchCV):
             scale = self._param_distributions[param]['scale']
             param_type = self._param_distributions[param]['type']
 
-            if scale == "logscale":
+            if scale == "log":
                 bounds = np.log10(bounds)
             scaled_values = val * (bounds[-1] - bounds[0]) + bounds[0]
 
-            if scale == "logscale":
+            if scale == "log":
                 scaled_values = 10**scaled_values
 
             if param_type == int:
                 scaled_values = int(scaled_values)
-
             scaled_candidates[param] = scaled_values
         return scaled_candidates
 
@@ -1423,13 +1421,15 @@ class SequentialSearchCV(BaseSearchCV):
 
         tested_parameters, cv_scores, grid_scores, params_list = \
             self._evaluate_params(
-                init_candidates, cv, X, y, labels, self.scale)
+                init_candidates, cv, X, y, labels)
 
         gp_scores = (-np.asarray(cv_scores)).tolist()
         gp_params = self.gp_params
         if not gp_params:
             length_scale = np.ones_like(tested_parameters[0])
-            gp_params = {'kernel': RBF(length_scale=length_scale), 'normalize_y':True}
+            gp_params = {
+                'kernel': RBF(length_scale=length_scale), 'normalize_y':True,
+                'random_state': self.random_state}
 
         rng = check_random_state(self.random_state)
         for i in range(self.n_iter - self.n_init):
@@ -1441,7 +1441,7 @@ class SequentialSearchCV(BaseSearchCV):
             # acquisition values
             candidates = ParameterSampler(
                 samples_uniform, self.n_candidates,
-                random_state=rng)
+                random_state=self.random_state)
             candidate_values = []
             for s in candidates:
                 candidate_values.append(list(s.values()))
@@ -1480,7 +1480,7 @@ class SequentialSearchCV(BaseSearchCV):
             best_candidate = dict(zip(params_list, new_candidates[best_idx]))
 
             best_param, best_score, best_grid_score, _ = self._evaluate_params(
-                [best_candidate], cv, X, y, labels, self.scale)
+                [best_candidate], cv, X, y, labels)
             tested_parameters.append(best_param[0])
             gp_scores.append(-best_score[0])
             grid_scores.append(best_grid_score[0])
@@ -1494,8 +1494,17 @@ class SequentialSearchCV(BaseSearchCV):
         # Find the best parameters by comparing on the mean validation score:
         # note that `sorted` is deterministic in the way it breaks ties
         # that is, it picks the smallest parameter.
-        best = sorted(grid_scores, key=lambda x: x.mean_validation_score,
-                      reverse=True)[0]
+        # XXX: The second key should be the standard deviation of the validation
+        # scores but the current best_scores_ method of scoring does not allow
+        # that.
+
+        best = sorted(
+            grid_scores,
+            key=lambda x: (
+                x.mean_validation_score,
+                -np.asarray(list(x.parameters.values()))
+                )
+            )[-1]
 
         self.best_params_ = best.parameters
         self.best_score_ = best.mean_validation_score
