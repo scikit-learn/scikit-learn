@@ -1108,6 +1108,23 @@ class NMF(BaseEstimator, TransformerMixin):
         self.n_iter_ = n_iter_
         return W
 
+    def inverse_transform(self, W):
+        """
+        Parameters
+        ----------
+        W: {array-like, sparse matrix}, shape (n_samples, n_components)
+            Transformed Data matrix
+
+        Returns
+        -------
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix of original shape
+
+        .. versionadded:: 0.18
+        """
+        check_is_fitted(self, 'n_components_')
+        return np.dot(W, self.components_)
+
 
 @deprecated("It will be removed in release 0.19. Use NMF instead."
             "'pg' solver is still available until release 0.19.")

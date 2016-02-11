@@ -121,6 +121,19 @@ def test_nmf_transform():
 
 
 @ignore_warnings
+def test_nmf_inverse_transform():
+    # Test that NMF.inverse_transform returns close values
+    random_state = np.random.RandomState(0)
+    A = np.abs(random_state.randn(6, 4))
+    for solver in ('pg', 'cd'):
+        m = NMF(solver=solver, n_components=4, init='random', random_state=0)
+        ft = m.fit_transform(A)
+        t = m.transform(A)
+        A_new = m.inverse_transform(t)
+        assert_array_almost_equal(A, A_new, decimal=2)
+
+
+@ignore_warnings
 def test_n_components_greater_n_features():
     # Smoke test for the case of more components than features.
     A = np.abs(random_state.randn(30, 10))
