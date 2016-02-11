@@ -368,7 +368,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     similarity matrix that is well suited for the algorithm by
     applying the Gaussian (RBF, heat) kernel::
 
-        np.exp(- X ** 2 / (2. * delta ** 2))
+        np.exp(- dist_matrix ** 2 / (2. * delta ** 2))
+
+    Where ``delta`` is a free parameter representing the width of the Gaussian
+    kernel.
 
     Another alternative is to take a symmetric version of the k
     nearest neighbors connectivity matrix of the points.
