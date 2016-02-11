@@ -388,7 +388,7 @@ class SelectPercentile(_BaseFilter):
 
     def __init__(self, score_func=f_classif, percentile=10):
         super(SelectPercentile, self).__init__(score_func)
-        self.percentile = percentile
+        self.percentile = int(percentile)
 
     def _check_params(self, X, y):
         if not 0 <= self.percentile <= 100:
@@ -409,6 +409,7 @@ class SelectPercentile(_BaseFilter):
                                            100 - self.percentile)
         mask = scores > treshold
         ties = np.where(scores == treshold)[0]
+        self.percentile = int(self.percentile)
         if len(ties):
             max_feats = len(scores) * self.percentile // 100
             kept_ties = ties[:max_feats - mask.sum()]
