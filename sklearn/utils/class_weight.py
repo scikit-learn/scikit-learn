@@ -42,6 +42,9 @@ def compute_class_weight(class_weight, classes, y):
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
 
+    if set(y) - set(classes):
+        raise ValueError("classes should include all valid labels that can "
+                         "be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
