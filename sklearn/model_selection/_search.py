@@ -38,7 +38,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import check_scoring
 from ..preprocessing import LabelEncoder
 from ..gaussian_process import GaussianProcessRegressor
-from ..gaussian_process.kernels import RBF
+from ..gaussian_process.kernels import RBF, Matern
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -1428,7 +1428,8 @@ class SequentialSearchCV(BaseSearchCV):
         if not gp_params:
             length_scale = np.ones_like(tested_parameters[0])
             gp_params = {
-                'kernel': RBF(length_scale=length_scale), 'normalize_y':True,
+                'kernel': Matern(length_scale=length_scale, nu=2.5),
+                'normalize_y':True,
                 'random_state': self.random_state}
 
         rng = check_random_state(self.random_state)
