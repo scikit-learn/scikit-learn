@@ -202,6 +202,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_nodes_ptr : array of size (n_estimators + 1, )
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
+
+        .. versionadded:: 0.18
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
@@ -792,6 +794,9 @@ class RandomForestClassifier(ForestClassifier):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -799,6 +804,9 @@ class RandomForestClassifier(ForestClassifier):
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -985,6 +993,9 @@ class RandomForestRegressor(ForestRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -992,6 +1003,9 @@ class RandomForestRegressor(ForestRegressor):
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -1144,6 +1158,9 @@ class ExtraTreesClassifier(ForestClassifier):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -1151,6 +1168,9 @@ class ExtraTreesClassifier(ForestClassifier):
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -1337,6 +1357,9 @@ class ExtraTreesRegressor(ForestRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -1344,6 +1367,9 @@ class ExtraTreesRegressor(ForestRegressor):
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -1482,6 +1508,9 @@ class RandomTreesEmbedding(BaseForest):
           `ceil(min_samples_split * n_samples)` is the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -1489,6 +1518,9 @@ class RandomTreesEmbedding(BaseForest):
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` is the minimum
           number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a

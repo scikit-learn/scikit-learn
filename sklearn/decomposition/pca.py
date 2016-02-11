@@ -150,6 +150,8 @@ class PCA(BaseEstimator, TransformerMixin):
     explained_variance_ : array, [n_components]
         The amount of variance explained by each of the selected components.
 
+        .. versionadded:: 0.18
+
     explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components.
 

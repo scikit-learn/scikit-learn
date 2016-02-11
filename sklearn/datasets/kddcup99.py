@@ -156,6 +156,8 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
            Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
            Michael Prerau, Leonid Portnoy, Sal Stolfo
+
+    .. versionadded:: 0.18
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
                                      download_if_missing=download_if_missing)
@@ -253,6 +255,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         dataset.DESCR : string
             Description of the kddcup99 dataset.
 
+    .. versionadded:: 0.18
     """
 
     data_home = get_data_home(data_home=data_home)

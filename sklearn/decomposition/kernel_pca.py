@@ -81,6 +81,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         A pseudo random number generator used for the initialization of the
         residuals when eigen_solver == 'arpack'.
 
+        .. versionadded:: 0.18
+
     Attributes
     ----------
 

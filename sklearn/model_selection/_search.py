@@ -79,6 +79,9 @@ class ParameterGrid(object):
     :class:`GridSearchCV`:
         Uses :class:`ParameterGrid` to perform a full parallelized parameter
         search.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.grid_search.
     """
 
     def __init__(self, param_grid):
@@ -213,6 +216,9 @@ class ParameterSampler(object):
     ...                  {'b': 1.878964, 'a': 2},
     ...                  {'b': 1.038159, 'a': 2}]
     True
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.grid_search.
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
@@ -313,6 +319,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
 
     n_samples_test : int
         Number of test samples in this split.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.grid_search.
     """
     score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
                                               test, verbose, parameters,
@@ -362,7 +371,11 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
-    """Base class for hyper parameter search with cross-validation."""
+    """Base class for hyper parameter search with cross-validation.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.grid_search.
+    """
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
@@ -773,6 +786,9 @@ class GridSearchCV(BaseSearchCV):
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
 
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.grid_search.
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
@@ -961,6 +977,9 @@ class RandomizedSearchCV(BaseSearchCV):
         A generator over parameter settins, constructed from
         param_distributions.
 
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.grid_search.
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
