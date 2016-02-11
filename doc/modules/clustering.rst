@@ -1399,3 +1399,35 @@ Drawbacks
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
 
+.. _contingency_matrix:
+Contingency Matrix
+----------------------
+
+Contingency matrix is a format describing the relationship between 
+discrete-valued random variables.
+It shows the multivariate frequency distribution of the variables.
+
+Let the first random variable be :math:`X`, and the and the second random 
+variable be :math:`Y`. 
+In a contingency matrix :math:`M`, entry :math:`M(i, j)` is the number of 
+observations with :math:`X=X_i` and :math:`Y=Y_j`. 
+
+Here is an example:
+
+
+	>>> from sklearn.metrics.cluster import contingency_matrix
+	>>> x=["male","male","male","female","female","female"]
+	>>> y=["right_handed","right_handed","left_handed","left_handed",
+	... "ambidextrous","ambidextrous"]
+	>>> contingency_matrix(x,y) # doctest: +ELLIPSIS
+	array([[2, 1, 0],
+	       [0, 1, 2]])
+
+The Contingency Matrix is different from the Confusion Matrix
+(:func:`confusion_matrix`) in that the :math:`X` and :math:`Y` 
+random variables are different and are not predictions of each other.
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_
