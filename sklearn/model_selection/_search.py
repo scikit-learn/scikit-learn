@@ -47,27 +47,28 @@ __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
 
 def _acquisition_func(x0, gp, prev_best, func, xi, kappa):
 
-    x0 = np.reshape(x0, (1, 1))
+    x0 = np.asarray(x0)
+    if x0.ndim == 1:
+        x0 = np.reshape(x0, (1, 1))
+    predictions, std = gp.predict(x0, return_std=True)
+
     if func == 'UCB':
-        predictions, std = gp.predict(x0, return_std=True)
         acquisition_func = predictions + kappa * std
     elif func == 'EI':
-        predictions, std = gp.predict(x0, return_std=True)
-        improvement = predictions - prev_best - xi
-        if std != 0:
-            Z = improvement / std
-            acquisition_func = std * (
-                Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
-        # In this case Z is huge, safe to say the pdf at Z is 0.0
+        # When std is 0.0, Z is huge, safe to say the pdf at Z is 0.0
         # and cdf at Z is 1.0
-        else:
-            acquisition_func = improvement
-
+        std_mask = std != 0.0
+        acquisition_func = predictions - prev_best - xi
+        Z = acquisition_func[std_mask] / std[std_mask]
+        acquisition_func[std_mask] = std[std_mask] * (
+            Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
     else:
         raise ValueError(
             'acquisition_function not implemented yet : '
             + func)
-    return acquisition_func[0]
+    if acquisition_func.shape == (1, 1):
+        return acquisition_func[0]
+    return acquisition_func
 
 
 class ParameterGrid(object):
@@ -1317,28 +1318,6 @@ class SequentialSearchCV(BaseSearchCV):
             scaled_candidates[param] = scaled_values
         return scaled_candidates
 
-
-    def acquisition_values(self, grid_points, gp, prev_best):
-        if self.acquisition_function == 'UCB':
-            predictions, std = gp.predict(
-                grid_points, return_std=True)
-            acquisition_func = predictions + self.kappa * std
-        elif self.acquisition_function == 'EI':
-            predictions, std = gp.predict(
-                grid_points, return_std=True)
-            std_mask = std != 0.0
-            acquisition_func = np.zeros_like(std)
-            improvement = predictions - prev_best - self.xi
-            acquisition_func[~std_mask] = improvement[~std_mask]
-            Z = improvement[std_mask] / std[std_mask]
-            acquisition_func[std_mask] = std[std_mask] * (
-                Z * stats.norm.cdf(Z) + stats.norm.pdf(Z))
-        else:
-            raise ValueError(
-                'acquisition_function not implemented yet : '
-                + self.acquisition_function)
-        return acquisition_func
-
     def fit(self, X, y=None, labels=None):
         """
         Run the hyper-parameter optimization process
@@ -1429,7 +1408,7 @@ class SequentialSearchCV(BaseSearchCV):
             length_scale = np.ones_like(tested_parameters[0])
             gp_params = {
                 'kernel': Matern(length_scale=length_scale, nu=2.5),
-                'normalize_y':True,
+                'normalize_y': True,
                 'random_state': self.random_state}
 
         rng = check_random_state(self.random_state)
@@ -1442,7 +1421,7 @@ class SequentialSearchCV(BaseSearchCV):
             # acquisition values
             candidates = ParameterSampler(
                 samples_uniform, self.n_candidates,
-                random_state=self.random_state)
+                random_state=rng)
             candidate_values = []
             for s in candidates:
                 candidate_values.append(list(s.values()))
@@ -1460,7 +1439,9 @@ class SequentialSearchCV(BaseSearchCV):
                 self.n_local_candidates, n_dims) * 10**-3
             all_points = np.vstack((candidate_values, local_points))
 
-            acquisition_vals = self.acquisition_values(all_points, gp, best_score)
+            acquisition_vals = _acquisition_func(
+                all_points, gp, best_score, self.acquisition_function,
+                self.xi, self.kappa)
 
             top_grid = acquisition_vals.argsort()[:20]
             opt_points = all_points[top_grid]
