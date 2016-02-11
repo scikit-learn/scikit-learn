@@ -56,6 +56,11 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
 
+    def __init__(self):
+        # We need this for the build_repr to work properly in py2.7
+        # see #6304
+        pass
+
     def split(self, X, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
