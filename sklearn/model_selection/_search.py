@@ -1447,16 +1447,22 @@ class SequentialSearchCV(BaseSearchCV):
             opt_points = all_points[top_grid]
             opt_vals = acquisition_vals[top_grid]
 
-            # TODO: In Parallel
-            new_candidates = []
-            func_values = []
-            for candidate in opt_points:
-                new_val, new_func, _ = optimize.fmin_l_bfgs_b(_acquisition_func,
+            # Use the context-manager API to reuse processes for every
+            # call to Parallel.
+            with Parallel(
+                n_jobs=self.n_jobs, verbose=self.verbose,
+                pre_dispatch=self.pre_dispatch) as parallel:
+
+                opt_func = delayed(optimize.fmin_l_bfgs_b)
+
+                all_values = parallel(delayed(optimize.fmin_l_bfgs_b)(
+                    _acquisition_func,
                     np.asfortranarray([candidate]),
                     args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
                     bounds=[(0.0, 1.0),], approx_grad=True)
-                new_candidates.append(new_val)
-                func_values.append(new_func)
+                for candidate in opt_points)
+                new_candidates = [values[0] for values in all_values]
+                func_values = [values[1] for values in all_values]
 
             best_idx = np.argmin(func_values)
             best_candidate = dict(zip(params_list, new_candidates[best_idx]))
