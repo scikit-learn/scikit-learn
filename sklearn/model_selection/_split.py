@@ -261,7 +261,7 @@ class LeavePOut(BaseCrossValidator):
 
 
 class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
-    """Base class for KFold and StratifiedKFold"""
+    """Base class for KFold, LabelKFold, and StratifiedKFold"""
 
     @abstractmethod
     def __init__(self, n_folds, shuffle, random_state):
