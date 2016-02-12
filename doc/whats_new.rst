@@ -102,6 +102,9 @@ Enhancements
    - Prediction of out-of-sample events with Isotonic Regression is now much
      faster (over 1000x in tests with synthetic data). By `Jonathan Arfa`_.
 
+   - Added ``inverse_transform`` function to :class:`decomposition.nmf` to compute
+     data matrix of original shape. By `Anish Shah`_.
+
 Bug fixes
 .........
 
@@ -4088,3 +4091,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Devashish Deshpande: https://github.com/dsquareindia
 
 .. _Jonathan Arfa: https://github.com/jarfa
+
+.. _Anish Shah: https://github.com/AnishShah
