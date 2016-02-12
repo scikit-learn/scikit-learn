@@ -325,32 +325,54 @@ floating point values instead of integer values::
  * :ref:`example_svm_plot_svm_regression.py`
 
 
-
 .. _svm_outlier_detection:
 
-Density estimation, novelty detection
-=======================================
+Novelty and outlier detection
+=============================
 
-One-class SVM is used for novelty detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to
-classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`.
+Support vector machines can be used for detecting novelty and outliers in
+unlabeled data sets. That is, given a set of samples, detect the soft boundary
+of that set so as to classify new points as belonging to that set or not.
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
+There are two SVM-based approaches to this problem:
 
-See, section :ref:`outlier_detection` for more details on this usage.
+1. :class:`OneClassSVM` finds a hyperplane which separates the data from
+   the origin by the largest margin.
+2. :class:`SVDD` finds a sphere with a minimum radius which encloses
+   the data.
+
+Both methods can be tuned for the optimal trade-off between number of outliers
+and the margin/radius of a separation bound.
+
+See section :ref:`outlier_detection` for more details on their usage.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
 
+.. figure:: ../auto_examples/svm/images/plot_oneclass_vs_svdd_001.png
+   :target: ../auto_examples/svm/plot_oneclass_vs_svdd.html
+   :align: center
+   :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_oneclass.py`
- * :ref:`example_applications_plot_species_distribution_modeling.py`
+   * See :ref:`example_svm_plot_oneclass.py` for visualizing the
+     frontier learned around some data by :class:`OneClassSVM`.
+   * See :ref:`example_svm_plot_oneclass_vs_svdd.py` to get the idea about
+     the difference between the two approaches.
+   * :ref:`example_applications_plot_species_distribution_modeling.py`
+
+.. topic:: References:
+
+    * Bernhard Schölkopf et al, `Estimating the Support of a High-Dimensional
+      Distribution <http://dl.acm.org/citation.cfm?id=1119749>`_, Neural
+      computation 13.7 (2001): 1443-1471.
+    * David M. J. Tax and Robert P. W. Duin, `Support Vector Data Description
+      <http://dl.acm.org/citation.cfm?id=960109>`_, Machine Learning,
+      54(1):45-66, 2004.
+
 
 
 Complexity
@@ -707,5 +729,3 @@ computations. These libraries are wrapped using C and Cython.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
       <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
-
-

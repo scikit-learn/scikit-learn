@@ -49,8 +49,10 @@ clusters_separation = [0, 1, 2]
 classifiers = {
     "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
                                      kernel="rbf", gamma=0.1),
-    "robust covariance estimator": EllipticEnvelope(contamination=.1),
-    "Isolation Forest": IsolationForest(max_samples=n_samples, random_state=rng)}
+    "Robust Covariance Estimator": EllipticEnvelope(contamination=0.1),
+    "Isolation Forest": IsolationForest(max_samples=n_samples,
+                                        random_state=rng)
+}
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
@@ -83,7 +85,6 @@ for i, offset in enumerate(clusters_separation):
         Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
         subplot = plt.subplot(1, 3, i + 1)
-        subplot.set_title("Outlier detection")
         subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
                          cmap=plt.cm.Blues_r)
         a = subplot.contour(xx, yy, Z, levels=[threshold],
@@ -95,11 +96,12 @@ for i, offset in enumerate(clusters_separation):
         subplot.axis('tight')
         subplot.legend(
             [a.collections[0], b, c],
-            ['learned decision function', 'true inliers', 'true outliers'],
+            ['Decision function', 'True inliers', 'True outliers'],
             prop=matplotlib.font_manager.FontProperties(size=11))
-        subplot.set_xlabel("%d. %s (errors: %d)" % (i + 1, clf_name, n_errors))
+        subplot.set_xlabel("%s (errors: %d)" % (clf_name, n_errors))
         subplot.set_xlim((-7, 7))
         subplot.set_ylim((-7, 7))
+    plt.suptitle("Outlier detection")
     plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
 
 plt.show()

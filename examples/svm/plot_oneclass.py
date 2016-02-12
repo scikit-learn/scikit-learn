@@ -40,8 +40,8 @@ n_error_outliers = y_pred_outliers[y_pred_outliers == 1].size
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
-plt.title("Novelty Detection")
-plt.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=plt.cm.PuBu)
+plt.title("Novelty Detection by One-class SVM")
+plt.contourf(xx , yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=plt.cm.PuBu)
 a = plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred')
 plt.contourf(xx, yy, Z, levels=[0, Z.max()], colors='palevioletred')
 

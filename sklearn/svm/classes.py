@@ -991,6 +991,10 @@ class OneClassSVM(BaseLibSVM):
     intercept_ : array, shape = [n_classes-1]
         Constants in decision function.
 
+    See also
+    --------
+    SVDD
+        Build a compact envelope around the data.
     """
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
@@ -1043,3 +1047,151 @@ class OneClassSVM(BaseLibSVM):
         """
         dec = self._decision_function(X)
         return dec
+
+
+class SVDD(BaseLibSVM):
+    """Support Vector Data Description.
+
+    Build a compact envelope around the data.
+
+    The implementation is based on libsvm.
+
+    Parameters
+    ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C in the error term.
+        Should be within [1/n_samples, 1].
+
+    kernel : string, optional (default='linear')
+         Specifies the kernel type to be used in the algorithm.
+         It must be one of 'linear', 'poly', 'rbf' or 'sigmoid'.
+         If none is given, 'linear' will be used, note that it is different
+         from all other classes based on libsvm.
+         Precomputed and callable kernels are not supported.
+
+    degree : int, optional (default=3)
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
+
+    gamma : float, optional (default='auto')
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 'auto' then 1/n_features will be used instead.
+
+    coef0 : float, optional (default=0.0)
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
+
+    tol : float, optional
+        Tolerance for stopping criterion.
+
+    shrinking : boolean, optional
+        Whether to use the shrinking heuristic.
+
+    cache_size : float, optional
+        Specify the size of the kernel cache (in MB)
+
+    verbose : bool, default: False
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in libsvm that, if enabled, may not work
+        properly in a multithreaded context.
+
+    max_iter : int, optional (default=-1)
+        Hard limit on iterations within solver, or -1 for no limit.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimation.
+
+    Attributes
+    ----------
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
+
+    `support_vectors_` : array-like, shape = [n_SV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [1, n_SV]
+        Coefficient of the support vector in the decision function.
+
+    `coef_` : array, shape = [1, n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
+    `intercept_` : array, shape = [1]
+        Constants in decision function.
+
+    See also
+    --------
+    OneClassSVM
+        Estimate the support of a high-dimensional distribution.
+
+    References
+    ----------
+    David M. J. Tax and Robert P. W. Duin, `Support vector data description
+    <http://dl.acm.org/citation.cfm?id=960109>`_, Machine Learning,
+    54(1):45-66, 2004.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVDD
+    >>> import numpy as np
+    >>> X_train = np.array([[1, 1], [1, -1], [-1, 1], [-1, -1]])
+    >>> clf = SVDD()
+    >>> clf.fit(X_train)
+    SVDD(C=1, cache_size=200, coef0=0.0, degree=3, gamma='auto',
+         kernel='linear', max_iter=-1, random_state=None, shrinking=True,
+         tol=0.001, verbose=False)
+    >>> X_test = np.array([[0, 0], [4, 4]])
+    >>> clf.predict(X_test)
+    array([ 1., -1.])
+    """
+    def __init__(self, kernel='linear', degree=3, gamma='auto', coef0=0.0,
+                 tol=1e-3, C=1, shrinking=True, cache_size=200,
+                 verbose=False, max_iter=-1, random_state=None):
+        super(SVDD, self).__init__(
+            'svdd', kernel, degree, gamma, coef0, tol, C, 0.0, 0.0, shrinking,
+            False, cache_size, None, verbose, max_iter, random_state)
+
+    def fit(self, X, y=None, sample_weight=None, **params):
+        """
+        Builds data envelope.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Set of samples, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Rescale C per sample. Higher weights
+            force the classifier to put more emphasis on these points.
+
+        Returns
+        -------
+        self : object
+
+        Notes
+        -----
+        If X is not a C-ordered contiguous array it is copied.
+        """
+        super(SVDD, self).fit(X, np.ones(_num_samples(X)),
+                              sample_weight=sample_weight, **params)
+        return self
+
+    def decision_function(self, X):
+        """Compute distances from samples to the separation bound.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Samples to evaluate.
+
+        Returns
+        -------
+        df : ndarray, shape (n_samples,)
+            The decision function for each sample.
+        """
+        return self._decision_function(X).ravel()

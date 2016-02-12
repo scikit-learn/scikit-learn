@@ -1,8 +1,8 @@
 .. _outlier_detection:
 
-===================================================
+=============================
 Novelty and Outlier Detection
-===================================================
+=============================
 
 .. currentmodule:: sklearn
 
@@ -49,37 +49,56 @@ In general, it is about to learn a rough, close frontier delimiting
 the contour of the initial observations distribution, plotted in
 embedding :math:`p`-dimensional space. Then, if further observations
 lay within the frontier-delimited subspace, they are considered as
-coming from the same population than the initial
-observations. Otherwise, if they lay outside the frontier, we can say
-that they are abnormal with a given confidence in our assessment.
+coming from the same population than the initial observations. Otherwise,
+if they lay outside the frontier, we can say that they are abnormal with a
+given confidence in our assessment.
 
-The One-Class SVM has been introduced by Schölkopf et al. for that purpose 
-and implemented in the :ref:`svm` module in the
-:class:`svm.OneClassSVM` object. It requires the choice of a
-kernel and a scalar parameter to define a frontier.  The RBF kernel is
-usually chosen although there exists no exact formula or algorithm to
-set its bandwidth parameter. This is the default in the scikit-learn
-implementation. The :math:`\nu` parameter, also known as the margin of
-the One-Class SVM, corresponds to the probability of finding a new,
-but regular, observation outside the frontier.
+There are two SVM-based approaches for that purpose:
 
-.. topic:: References:
+1. :class:`svm.OneClassSVM` finds a hyperplane which separates the data from
+   the origin by the largest margin.
+2. :class:`svm.SVDD` finds a sphere with a minimum radius which encloses
+   the data.
 
-    * `Estimating the support of a high-dimensional distribution
-      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf, 
-      Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
-      
-.. topic:: Examples:
+Both methods can implicitly work in a transformed high-dimensional space using
+the kernel trick. :class:`svm.OneClassSVM` provides :math:`\nu` parameter for
+controlling the trade off between the margin and the number of outliers during
+training, namely it is an upper bound on the fraction of outliers in a training
+set or probability of finding a new, but regular, observation outside the
+frontier. :clss:`svm.SVDD` provides a similar parameter
+:math:`C = 1 / (\nu l)`, where :math:`l` is the number of samples, such that
+:math:`1/C` approximately equals the number of outliers in a training set.
 
-   * See :ref:`example_svm_plot_oneclass.py` for visualizing the
-     frontier learned around some data by a
-     :class:`svm.OneClassSVM` object.
+Both methods are equivalent if a) the kernel used depends only on the
+difference between two vectors, one example is RBF kernel, and
+b) :math:`C = 1 / (\nu l)`.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclasse.html
    :align: center
    :scale: 75%
-   
+
+.. figure:: ../auto_examples/svm/images/plot_oneclass_vs_svdd_001.png
+   :target: ../auto_examples/svm/plot_oneclass_vs_svdd.html
+   :align: center
+   :scale: 75
+
+.. topic:: Examples:
+
+   * See :ref:`example_svm_plot_oneclass.py` for visualizing the
+     frontier learned around some data by :class:`svm.OneClassSVM`.
+   * See :ref:`example_svm_plot_oneclass_vs_svdd.py` to get the idea about
+     the difference between the two approaches.
+
+.. topic:: References:
+
+    * Bernhard Schölkopf et al, `Estimating the Support of a High-Dimensional
+      Distribution <http://dl.acm.org/citation.cfm?id=1119749>`_, Neural
+      computation 13.7 (2001): 1443-1471.
+    * David M. J. Tax and Robert P. W. Duin, `Support Vector Data Description
+      <http://dl.acm.org/citation.cfm?id=960109>`_, Machine Learning,
+      54(1):45-66, 2004.
+
 
 Outlier Detection
 =================
@@ -131,7 +150,7 @@ This strategy is illustrated below.
 
 
 Isolation Forest
-----------------------------
+----------------
 
 One efficient way of performing outlier detection in high-dimensional datasets
 is to use random forests.
@@ -187,7 +206,11 @@ results in these situations.
 The examples below illustrate how the performance of the
 :class:`covariance.EllipticEnvelope` degrades as the data is less and
 less unimodal. The :class:`svm.OneClassSVM` works better on data with
-multiple modes and :class:`ensemble.IsolationForest` performs well in every cases.
+multiple modes and :class:`ensemble.IsolationForest` performs well in all
+cases.
+
+:class:`svm.SVDD` is not presented in comparison as it works the same as
+:class:`svm.OneClassSVM` when using RBF kernel.
 
 .. |outlier1| image:: ../auto_examples/covariance/images/plot_outlier_detection_001.png
    :target: ../auto_examples/covariance/plot_outlier_detection.html
@@ -213,9 +236,9 @@ multiple modes and :class:`ensemble.IsolationForest` performs well in every case
         :class:`covariance.EllipticEnvelope` learns an ellipse, which
         fits well the inlier distribution. The :class:`ensemble.IsolationForest`
 	performs as well.
-      - |outlier1| 
+      - |outlier1|
 
-   * 
+   *
       - As the inlier distribution becomes bimodal, the
         :class:`covariance.EllipticEnvelope` does not fit well the
         inliers. However, we can see that both :class:`ensemble.IsolationForest`
@@ -223,10 +246,10 @@ multiple modes and :class:`ensemble.IsolationForest` performs well in every case
 	and that the :class:`svm.OneClassSVM`
         tends to overfit: because it has not model of inliers, it
         interprets a region where, by chance some outliers are
-        clustered, as inliers. 
-      - |outlier2| 
+        clustered, as inliers.
+      - |outlier2|
 
-   * 
+   *
       - If the inlier distribution is strongly non Gaussian, the
         :class:`svm.OneClassSVM` is able to recover a reasonable
         approximation as well as :class:`ensemble.IsolationForest`,
