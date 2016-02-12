@@ -365,19 +365,19 @@ cdef int free_tree(Tree* tree) nogil:
     for i in range(3):
         cnt[i] = 0
     free_recursive(tree, tree.root_node, cnt)
-    if not tree.root_node.is_leaf:
-        free(tree.root_node.children)
-    free(tree.root_node.width)
-    free(tree.root_node.left_edge)
-    free(tree.root_node.center)
-    free(tree.root_node.barycenter)
-    free(tree.root_node.leaf_point_position)
-    free(tree.root_node)
     check = cnt[0] == tree.n_cells
     check &= cnt[2] == tree.n_points
     free(tree)
     free(cnt)
     return check
+
+cdef void free_post_children(Node *node) nogil:
+    free(node.width)
+    free(node.left_edge)
+    free(node.center)
+    free(node.barycenter)
+    free(node.leaf_point_position)
+    free(node)
 
 cdef void free_recursive(Tree* tree, Node *root, long* counts) nogil:
     # Free up all of the tree nodes recursively
@@ -396,13 +396,14 @@ cdef void free_recursive(Tree* tree, Node *root, long* counts) nogil:
                     counts[2] +=1
             else:
                 free(child.children)
-            free(child.width)
-            free(child.left_edge)
-            free(child.center)
-            free(child.barycenter)
-            free(child.leaf_point_position)
-            free(child)
 
+            free_post_children(child)
+
+    if root == tree.root_node:
+        if not root.is_leaf:
+            free(root.children)
+
+        free_post_children(root)
 
 cdef long count_points(Node* root, long count) nogil:
     # Walk through the whole tree and count the number 
