@@ -1048,12 +1048,6 @@ class SequentialSearchCV(BaseSearchCV):
     ``n_init`` and the total number parameter settings that are tried for
     is given by ``n_iter``.
 
-    If all parameters are presented as a list,
-    sampling without replacement is performed. If at least one parameter
-    is given as a distribution, sampling with replacement is used.
-    It is highly recommended to use continuous distributions for continuous
-    parameters.
-
     Read more in the :ref:`User Guide <gp_search>`.
 
     Parameters
@@ -1064,11 +1058,23 @@ class SequentialSearchCV(BaseSearchCV):
         The estimator must implement a ``fit`` method and can either
         provide a ``score`` function, or ``scoring`` must be passed.
 
-    param_distributions : dict
-        Dictionary with parameters names (string) as keys and distributions
-        or lists of parameters to try. Distributions must provide a ``rvs``
-        method for sampling (such as those from scipy.stats.distributions).
-        If a list is given, it is sampled uniformly.
+    param_distributions : dict of dicts
+        Dictionary with parameters names (string) as keys and a dict
+        containing "bounds", "scale" and "type" as values.
+
+        - "scale": If scale is set to be "log", then sample uniformly from
+           (log(upper_bound), log(lower_bounds)). This is useful in
+           hyperparameters like `alpha` in `Ridge` where search has to
+           be done on a log scale.
+
+        - "bounds": Tuple containing the lower bounds and the upper bound.
+           By default, the bounds are taken to be from 0.0 to 1.0
+           If the scale is specified to be logscale, then the default
+           bounds are set to be (10**-5, 10**5)
+
+        - "type: int or float, specifying what type each parameter is.
+           If the type is not specified, the default is assumed to
+           be float.
 
     n_init : int, optional
         Number of random iterations to perform before the smart search.
@@ -1155,6 +1161,11 @@ class SequentialSearchCV(BaseSearchCV):
         Number of random candidates to sample for each GP iteration
         Default is 500.
 
+    n_local_candidates: int, default=10
+        After every iteration that gives us the best predicted value
+        from the GP posterior, the number of local candidates to sample
+        and add to the grid which are very close to this best candidate.
+
     gp_params : dict, default={}
         Parameters to pass to the GaussianProcessRegressor object.
 
@@ -1169,7 +1180,6 @@ class SequentialSearchCV(BaseSearchCV):
         confidence bound acquisition function. The default value of
         1.96 corresponds to the 95% confidence bound on the predicted
         objective function.
-
 
     Attributes
     ----------
@@ -1443,6 +1453,7 @@ class SequentialSearchCV(BaseSearchCV):
                 all_points, gp, best_score, self.acquisition_function,
                 self.xi, self.kappa)
 
+            # Do local searches on the top 20 candidates.
             top_grid = acquisition_vals.argsort()[:20]
             opt_points = all_points[top_grid]
             opt_vals = acquisition_vals[top_grid]
@@ -1483,7 +1494,7 @@ class SequentialSearchCV(BaseSearchCV):
         # note that `sorted` is deterministic in the way it breaks ties
         # that is, it picks the smallest parameter.
         # XXX: The second key should be the standard deviation of the validation
-        # scores but the current best_scores_ method of scoring does not allow
+        # scores but the current grid_scores_ attribute does not allow
         # that.
 
         best = sorted(
