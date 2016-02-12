@@ -62,7 +62,7 @@ full covariance.
 
 .. topic:: Examples:
 
-    * See :ref:`sphx_glr_example_mixture_plot_gmm_covariances.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py` for an example of
       using the Gaussian mixture as clustering on the iris dataset.
 
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py` for an example on plotting the

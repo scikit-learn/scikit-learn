@@ -947,9 +947,8 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
 
     Notes
     -----
-    See
-    :ref:`examples/model_selection/plot_validation_curve.py
-    <sphx_glr_auto_examples_model_selection_plot_validation_curve.py>`
+    See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+
     """
     X, y, labels = indexable(X, y, labels)
 
