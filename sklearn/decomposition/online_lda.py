@@ -214,6 +214,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         The number of jobs to use in the E-step. If -1, all CPUs are used. For
         ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used.
 
+    parallel_opts : dict, optional (default={})
+        Other options to pass to the parallel execution library. Especially
+        useful for specifying ``temp_folder``, where intermediate computation
+        results are stored, as this directory can grow to quite large sizes.
+
     verbose : int, optional (default=0)
         Verbosity level.
 
@@ -250,7 +255,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
-                 n_jobs=1, verbose=0, random_state=None):
+                 n_jobs=1, parallel_opts={}, verbose=0, random_state=None):
         self.n_topics = n_topics
         self.doc_topic_prior = doc_topic_prior
         self.topic_word_prior = topic_word_prior
@@ -265,6 +270,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.mean_change_tol = mean_change_tol
         self.max_doc_update_iter = max_doc_update_iter
         self.n_jobs = n_jobs
+        self.parallel_opts = parallel_opts
         self.verbose = verbose
         self.random_state = random_state
 
@@ -350,7 +356,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # TODO: make Parallel._effective_n_jobs public instead?
         n_jobs = _get_n_jobs(self.n_jobs)
         if parallel is None:
-            parallel = Parallel(n_jobs=n_jobs, verbose=self.verbose)
+            parallel = self._get_parallel()
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
@@ -440,6 +446,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         check_non_negative(X, whom)
         return X
 
+    def _get_parallel(self):
+        return Parallel(n_jobs=_get_n_jobs(self.n_jobs),
+                        verbose=self.verbose,
+                        **self.parallel_opts)
+
     def partial_fit(self, X, y=None):
         """Online VB with Mini-Batch update.
 
@@ -468,8 +479,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "the model was trained with feature size %d." %
                 (n_features, self.components_.shape[1]))
 
-        n_jobs = _get_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=self.verbose) as parallel:
+        with self._get_parallel() as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(X[idx_slice, :],
                               total_samples=self.total_samples,
@@ -505,8 +515,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self._init_latent_vars(n_features)
         # change to perplexity later
         last_bound = None
-        n_jobs = _get_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=self.verbose) as parallel:
+        with self._get_parallel() as parallel:
             for i in xrange(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
