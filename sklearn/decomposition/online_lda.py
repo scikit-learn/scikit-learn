@@ -518,9 +518,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         with self._get_parallel() as parallel:
             for i in xrange(max_iter):
                 if learning_method == 'online':
-                    for idx_slice in gen_batches(n_samples, batch_size):
+                    for i, idx_slice in enumerate(gen_batches(n_samples, batch_size)):
                         self._em_step(X[idx_slice, :], total_samples=n_samples,
                                       batch_update=False, parallel=parallel)
+                        if self.verbose:
+                            print('online em step {:.2f}% done'.format(
+                                  100.0*(i + 1)*batch_size/n_samples))
                 else:
                     # batch update
                     self._em_step(X, total_samples=n_samples,
