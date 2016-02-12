@@ -487,7 +487,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Minimizes the objective function::
 
-            1 / (2 * n_samples) * ||y - Xw||^2_2
+            1 / (2 * n_samples) * ||y - Xw||^2_2 +
             + alpha * l1_ratio * ||w||_1
             + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
@@ -531,7 +531,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
 
-    precompute : True | False | array-like
+    precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
@@ -642,6 +642,12 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
+        if (isinstance(self.precompute, six.string_types)
+                and self.precompute == 'auto'):
+            warnings.warn("Setting precompute to 'auto', was found to be "
+                          "slower even when n_samples > n_features. Hence "
+                          "it will be removed in 0.18.",
+                          DeprecationWarning, stacklevel=2)
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
@@ -782,11 +788,13 @@ class Lasso(ElasticNet):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    precompute : True | False | array-like, default=False
+    precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
+        WARNING : The ``'auto'`` option is deprecated and will
+        be removed in 0.18.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -1150,6 +1158,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
+
         if self.alphas is None:
             self.alphas_ = np.asarray(alphas)
             if n_l1_ratio == 1:
@@ -1157,6 +1166,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         # Remove duplicate alphas in case alphas is provided.
         else:
             self.alphas_ = np.asarray(alphas[0])
+
+        self.best_score_ = best_mse
+        self.best_params_ = {'alpha': best_alpha, 'l1_ratio': best_l1_ratio}
 
         # Refit the model with the parameters selected
         common_params = dict((name, value)
@@ -1174,6 +1186,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.intercept_ = model.intercept_
         self.dual_gap_ = model.dual_gap_
         self.n_iter_ = model.n_iter_
+        self.best_estimator_ = model
         return self
 
 
@@ -1218,11 +1231,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
-        - None, to use the default 3-fold cross-validation,
-        - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1286,6 +1298,20 @@ class LassoCV(LinearModelCV, RegressorMixin):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    ``best_estimator_`` : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave the lowest mean squared error on the left out data. The
+        estimator will be of type ElasticNet.
+
+    ``best_score_`` : float
+        Score of ``best_estimator_`` on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -1301,6 +1327,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLars
     Lasso
     LassoLarsCV
+    ElasticNetCV
+    ElasticNet
     """
     path = staticmethod(lasso_path)
 
@@ -1365,11 +1393,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
-        - None, to use the default 3-fold cross-validation,
-        - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1434,6 +1461,19 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    ``best_estimator_`` : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave the lowest mean squared error on the left out data.
+
+    ``best_score_`` : float
+        Score of ``best_estimator_`` on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -1446,7 +1486,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     while alpha corresponds to the lambda parameter in glmnet.
     More specifically, the optimization objective is::
 
-        1 / (2 * n_samples) * ||y - Xw||^2_2
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
@@ -1463,6 +1503,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     --------
     enet_path
     ElasticNet
+    LassoCV
 
     """
     path = staticmethod(enet_path)
@@ -1634,7 +1675,7 @@ class MultiTaskElasticNet(Lasso):
         # X and y must be of type float64
         X = check_array(X, dtype=np.float64, order='F',
                         copy=self.copy_X and self.fit_intercept)
-        y = check_array(y, dtype=np.float64, ensure_2d=False)
+        y = check_array(y, dtype=np.float64)
 
         if hasattr(self, 'l1_ratio'):
             model_str = 'ElasticNet'
@@ -1854,11 +1895,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
-        - None, to use the default 3-fold cross-validation,
-        - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1984,7 +2024,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
     alphas : array-like, optional
         List of alphas where to compute the models.
-        If not provided, set automatically.
+        If not provided, set automaticlly.
 
     n_alphas : int, optional
         Number of alphas along the regularization path
@@ -2012,11 +2052,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-
-        - None, to use the default 3-fold cross-validation,
-        - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - An object to be used as a cross-validation generator.
+          - An iterable yielding train/test splits.
 
         For integer/None inputs, :class:`KFold` is used.
 

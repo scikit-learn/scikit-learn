@@ -557,8 +557,10 @@ def test_class_weights_cv():
 
 
 def test_ridgecv_store_cv_values():
-    # Test _RidgeCV's store_cv_values attribute.
-    rng = rng = np.random.RandomState(42)
+    """
+    Test _RidgeCV's store_cv_values attribute.
+    """
+    rng = np.random.RandomState(42)
 
     n_samples = 8
     n_features = 5
