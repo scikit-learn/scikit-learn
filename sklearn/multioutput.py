@@ -145,7 +145,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         score : float
             R^2 of self.predict(X) wrt. y.
         """
-
+        # XXX remove in 0.19 when 2_score default for multioutput changes
         from .metrics import r2_score
         return r2_score(y, self.predict(X), sample_weight=sample_weight,
                         multioutput='uniform_average')
