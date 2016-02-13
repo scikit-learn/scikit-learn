@@ -402,7 +402,6 @@ class KFold(_BaseKFold):
     def __init__(self, n_folds=3, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n_folds, shuffle, random_state)
-        self.shuffle = shuffle
 
     def _iter_test_indices(self, X, y=None, labels=None):
         n_samples = _num_samples(X)
@@ -557,7 +556,6 @@ class StratifiedKFold(_BaseKFold):
 
     def __init__(self, n_folds=3, shuffle=False, random_state=None):
         super(StratifiedKFold, self).__init__(n_folds, shuffle, random_state)
-        self.shuffle = shuffle
 
     def _make_test_folds(self, X, y=None, labels=None):
         if self.shuffle:
