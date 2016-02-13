@@ -429,7 +429,7 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
               copy=False, force_all_finite=True, ensure_2d=True,
               allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None):
+              warn_on_dtype=False, estimator=None, sample_weight=False):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
@@ -524,6 +524,14 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
         y = y.astype(np.float64)
 
     check_consistent_length(X, y)
+
+    if sample_weight is None:
+        return X, y, sample_weight
+
+    elif sample_weight is not False:
+        sample_weight = check_array(sample_weight, ensure_2d=False)
+        check_consistent_length(y, sample_weight)
+        return X, y, sample_weight
 
     return X, y
 
