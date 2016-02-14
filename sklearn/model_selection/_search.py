@@ -1224,7 +1224,7 @@ class SequentialSearchCV(BaseSearchCV):
     >>> from scipy import stats
     >>> X, y = datasets.make_regression()
     >>> clf = linear_model.Ridge()
-    >>> parameters = {"alpha": stats.expon(scale=100)}
+    >>> parameters = {"alpha": {'bounds': (10**-5, 10**5), 'scale': 'log'}}
     >>> search = SequentialSearchCV(clf, parameters)
     >>> search.fit(X, y)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
