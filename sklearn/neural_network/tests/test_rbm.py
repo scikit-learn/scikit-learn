@@ -31,19 +31,16 @@ def test_fit():
 
 
 def test_partial_fit():
-    X = Xdigits.copy()
+    data = Xdigits.copy()
+
     rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
-                       batch_size=20, random_state=9)
-    n_samples = X.shape[0]
-    n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
-    batch_slices = np.array_split(X, n_batches)
+                       batch_size=10, n_iter=7, random_state=9)
 
-    for i in range(7):
-        for batch in batch_slices:
-            rbm.partial_fit(batch)
+    for X in np.array_split(data, 20):
+        rbm.partial_fit(X)
 
-    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
-    assert_array_equal(X, Xdigits)
+    assert_almost_equal(rbm.score_samples(data).mean(), -21., decimal=0)
+    assert_array_equal(data, Xdigits)
 
 
 def test_transform():
