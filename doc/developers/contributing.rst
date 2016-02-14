@@ -210,56 +210,6 @@ and Cython optimizations.
 Rebasing and squashing commits
 ------------------------------
 
-Rebasing
-^^^^^^^^
-
-You should generally use ``rebase`` over ``merge`` to integrate changes from one branch into
-another branch. Merging creates a "merge commit" every time you incorporate upstream changes.
-This pollutes the feature branch's history and makes it hard for other developers to understand
-the history of the project. Whereas ``rebase`` effectively rewrites the project history by creating
-brand new commits for each commit in the original branch. This creates a much cleaner project history.
-To rebase:
-
-	1. Update your master branch::
-
-		$ git checkout master
-		$ git pull upstream master
-
-	2. Switch to feature branch::
-
-		$ git checkout my-feature-branch
-
-	3. Rebase on master::
-
-		$ git rebase master
-
-.. note::
-
-  This can create merge conflicts and you might need to resolve them. If you encounter any other
-  problem or wish to undo any changes, you can use `git reflog
-  <https://www.atlassian.com/git/tutorials/rewriting-history/git-reflog>`_. Detailed information on
-  this can be found `here
-  <https://git-scm.com/docs/git-reflog>`_.
-
-Resolving merge conflicts
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If you changed the same part of the same file differently in the two branches you’re merging
-together, Git won’t be able to merge them cleanly. This is called a merge conflict. To resolve a
-merge conflict you can either:
-
-  * Open the files manually and resolve them as git adds standard resolution markers to the
-    files that have conflicts.
-
-  * Use a graphical tool by running ``git mergetool``. This tool will walk you through all the
-    conflicts.
-
-.. note::
-
-  Detailed guide on solving merge conflicts can be found on `git-scm.com
-  <http://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts>`_
-
-
 Squashing commits
 ^^^^^^^^^^^^^^^^^
 
@@ -368,6 +318,55 @@ be found out by typing ``$ git log --oneline``):
 
 	* On `atlassian.com
 	  <https://www.atlassian.com/git/tutorials/merging-vs-rebasing/conceptual-overview>`_.
+
+Rebasing
+^^^^^^^^
+
+You should generally use ``rebase`` over ``merge`` to integrate changes from one branch into
+another branch. Merging creates a "merge commit" every time you incorporate upstream changes.
+This pollutes the feature branch's history and makes it hard for other developers to understand
+the history of the project. Whereas ``rebase`` effectively rewrites the project history by creating
+brand new commits for each commit in the original branch. This creates a much cleaner project history.
+To rebase:
+
+	1. Update your master branch::
+
+		$ git checkout master
+		$ git pull upstream master
+
+	2. Switch to feature branch::
+
+		$ git checkout my-feature-branch
+
+	3. Rebase on master::
+
+		$ git rebase master
+
+.. note::
+
+  This can create merge conflicts and you might need to resolve them. If you encounter any other
+  problem or wish to undo any changes, you can use `git reflog
+  <https://www.atlassian.com/git/tutorials/rewriting-history/git-reflog>`_. Detailed information on
+  this can be found `here
+  <https://git-scm.com/docs/git-reflog>`_.
+
+Resolving merge conflicts
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you changed the same part of the same file differently in the two branches you’re merging
+together, Git won’t be able to merge them cleanly. This is called a merge conflict. To resolve a
+merge conflict you can either:
+
+  * Open the files manually and resolve them as git adds standard resolution markers to the
+    files that have conflicts.
+
+  * Use a graphical tool by running ``git mergetool``. This tool will walk you through all the
+    conflicts.
+
+.. note::
+
+  Detailed guide on solving merge conflicts can be found on `git-scm.com
+  <http://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts>`_
 
 .. _easy_issues:
 
