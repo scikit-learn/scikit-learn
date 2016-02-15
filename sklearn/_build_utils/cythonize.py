@@ -74,7 +74,7 @@ def process_pyx(fromfile, tofile):
                 raise Exception('Cython failed')
         except OSError:
             # There are ways of installing Cython that don't result in a cython
-            # executable on the path, see gh-2397.
+            # executable on the path, see scipy issue gh-2397.
             r = subprocess.call([sys.executable, '-c',
                                  'import sys; from Cython.Compiler.Main '
                                  'import setuptools_main as main;'
