@@ -28,7 +28,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    strategy : str
+    strategy : str, default="stratified"
         Strategy to use to generate predictions.
 
         * "stratified": generates predictions by respecting the training
