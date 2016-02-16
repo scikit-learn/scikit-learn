@@ -40,7 +40,7 @@ Classification
 .. warning::
 
   Make sure you permute (shuffle) your training data before fitting the
-  model or use ``shuffle=True`` to shuffle after each iterations.
+  model or use ``shuffle=True`` to shuffle after each iteration.
 
 The class :class:`SGDClassifier` implements a plain stochastic gradient
 descent learning routine which supports different loss functions and
