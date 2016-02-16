@@ -37,6 +37,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
+    However, note that this transformer will only do a binary one-hot encoding
+    when feature values are of type string. If categorical features are
+    represented as numeric values such as int, the DictVectorizer can be
+    followed by OneHotEncoder to complete binary one-hot encoding.
+
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
 
@@ -116,9 +121,16 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             for f, v in six.iteritems(x):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
-                if f not in vocab:
-                    feature_names.append(f)
-                    vocab[f] = len(vocab)
+                if hasattr(v, '__iter__'):
+                    for vv in v:
+                        feature_name="%s%s%s" % (f, self.separator, vv)
+                        if feature_name not in vocab:
+                            feature_names.append(feature_name)
+                            vocab[feature_name] = len(vocab)
+                else:
+                    if f not in vocab:
+                        feature_names.append(f)
+                        vocab[f] = len(vocab)
 
         if self.sort:
             feature_names.sort()
@@ -163,15 +175,29 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
-                if f in vocab:
-                    indices.append(vocab[f])
-                    values.append(dtype(v))
+                if hasattr(v, '__iter__'):
+                    for vv in v:
+                        feature_name="%s%s%s" % (f, self.separator, vv)
+                        vv = 1
+                        if feature_name in vocab:
+                            indices.append(vocab[feature_name])
+                            values.append(dtype(v))  
+                        else:
+                            if fitting:
+                                feature_names.append(feature_name)
+                                vocab[feature_name] = len(vocab)
+                                indices.append(vocab[feature_name])
+                                values.append(dtype(vv))                                
                 else:
-                    if fitting:
-                        feature_names.append(f)
-                        vocab[f] = len(vocab)
+                    if f in vocab:
                         indices.append(vocab[f])
                         values.append(dtype(v))
+                    else:
+                        if fitting:
+                            feature_names.append(f)
+                            vocab[f] = len(vocab)
+                            indices.append(vocab[f])
+                            values.append(dtype(v))
 
             indptr.append(len(indices))
 
@@ -298,10 +324,19 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                     if isinstance(v, six.string_types):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
-                    try:
-                        Xa[i, vocab[f]] = dtype(v)
-                    except KeyError:
-                        pass
+                    if hasattr(v, '__iter__'):
+                        for vv in v:
+                            feature_name = "%s%s%s" % (f, self.separator, vv)
+                            vv = 1                            
+                            try:
+                                Xa[i, vocab[feature_name]] = dtype(vv)
+                            except KeyError:
+                                pass  
+                    else:
+                        try:
+                            Xa[i, vocab[f]] = dtype(v)
+                        except KeyError:
+                            pass
 
             return Xa
 
