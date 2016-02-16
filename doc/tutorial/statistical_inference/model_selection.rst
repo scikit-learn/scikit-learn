@@ -108,7 +108,7 @@ scoring method.
 
     - :class:`KFold` **(n_folds, shuffle, random_state)**
 
-    - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
+    - :class:`StratifiedKFold` **(n_iter, test_size, random_state)**
 
     - :class:`LabelKFold` **(n_folds, shuffle, random_state)**
 
@@ -126,7 +126,7 @@ scoring method.
 
    *
 
-    - :class:`ShuffleSplit` **(n_iter, test_size, train_size, random_state)**
+    - :class:`ShuffleSplit` **(n_iter, test_size, random_state)**
 
     - :class:`StratifiedShuffleSplit`
 
