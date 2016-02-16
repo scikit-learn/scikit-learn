@@ -134,7 +134,7 @@ def test_sample_statistics():
         samples = gpr.sample_y(X2, 300000)
 
         # More digits accuracy would require many more samples
-        assert_almost_equal(y_mean, np.mean(samples, 1), 2)
+        assert_almost_equal(y_mean, np.mean(samples, 1), 1)
         assert_almost_equal(np.diag(y_cov) / np.diag(y_cov).max(),
                             np.var(samples, 1) / np.diag(y_cov).max(), 1)
 
@@ -227,7 +227,7 @@ def test_y_normalization():
 
 def test_y_multioutput():
     """ Test that GPR can deal with multi-dimensional target values"""
-    y_2d = np.vstack((y, y*2)).T
+    y_2d = np.vstack((y, y * 2)).T
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
     # of 1d GP and that second dimension is twice as large

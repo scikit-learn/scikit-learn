@@ -22,11 +22,11 @@ export CXX=g++
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
-echo 'download'
-ls $HOME/download
 
 
 if [[ "$DISTRIB" == "conda" ]]; then
+    echo 'download'
+    ls $HOME/download
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
     deactivate
@@ -71,6 +71,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
+    echo 'download'
+    ls $HOME/download
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to used numpy installed through apt-get
     # install.
@@ -78,9 +80,49 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # Create a new virtualenv using system site packages for numpy and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer
-    pip install cython
+    pip install nose nose-timer cython
+
+elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
+    # Deactivate the travis-provided virtual environment and setup a
+    # conda-based environment instead
+    deactivate
+
+    # Use the miniconda installer for faster download / install of conda
+    # itself
+    pushd .
+    cd
+    mkdir -p download
+    cd download
+    echo "Cached in $HOME/download :"
+    ls -l
+    echo
+    if [[ ! -f miniconda.sh ]]
+        then
+        wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
+            -O miniconda.sh
+        fi
+    chmod +x miniconda.sh && ./miniconda.sh -b
+    cd ..
+    export PATH=/home/travis/miniconda/bin:$PATH
+    conda update --yes conda
+    popd
+
+    # Configure the conda environment and put it in the path using the
+    # provided versions
+    conda create -n testenv --yes python=$PYTHON_VERSION pip nose cython=$CYTHON_VERSION \
+        libgfortran
+    source activate testenv
+
+    echo "install numpy master wheel"
+    sudo apt-get install gfortran-4.6 libatlas3gf-base gfortran
+    pip install --pre --upgrade --no-index --timeout=60 --trusted-host travis-dev-wheels.scipy.org -f https://travis-dev-wheels.scipy.org/ numpy
+    pip install --pre --upgrade --no-index --timeout=60 --trusted-host travis-dev-wheels.scipy.org -f https://travis-dev-wheels.scipy.org/ scipy
+    pip install nose nose-timer cython
+
+    # Install nose-timer via pip
+    pip install nose-timer
 fi
+
 
 if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage coveralls
@@ -90,10 +132,12 @@ if [ ! -d "$CACHED_BUILD_DIR" ]; then
     mkdir -p $CACHED_BUILD_DIR
 fi
 
-rsync -av --exclude '.git/' --exclude='testvenv/' \
-      $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
+if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
+    rsync -av --exclude '.git/' --exclude='testvenv/' \
+          $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
 
-cd $CACHED_BUILD_DIR/scikit-learn
+    cd $CACHED_BUILD_DIR/scikit-learn
+fi
 
 # Build scikit-learn in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
