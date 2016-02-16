@@ -121,7 +121,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             for f, v in six.iteritems(x):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
-                if hasattr(v, '__iter__'):
+                if isinstance(v, Mapping):
+                    raise TypeError("DictVectorizer does not support objects as values.")
+                if hasattr(v, '__iter__') and not isinstance(v, Mapping):
                     for vv in v:
                         feature_name="%s%s%s" % (f, self.separator, vv)
                         if feature_name not in vocab:
@@ -175,13 +177,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                 if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
-                if hasattr(v, '__iter__'):
+                if isinstance(v, Mapping):
+                    raise TypeError("DictVectorizer does not support objects as values.")                
+                if hasattr(v, '__iter__') and not isinstance(v, Mapping):
                     for vv in v:
                         feature_name="%s%s%s" % (f, self.separator, vv)
                         vv = 1
                         if feature_name in vocab:
                             indices.append(vocab[feature_name])
-                            values.append(dtype(v))  
+                            values.append(dtype(vv))  
                         else:
                             if fitting:
                                 feature_names.append(feature_name)
@@ -324,7 +328,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                     if isinstance(v, six.string_types):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
-                    if hasattr(v, '__iter__'):
+                    if isinstance(v, Mapping):
+                        raise TypeError("DictVectorizer does not support objects as values.")                        
+                    if hasattr(v, '__iter__') and not isinstance(v, Mapping):
                         for vv in v:
                             feature_name = "%s%s%s" % (f, self.separator, vv)
                             vv = 1                            
