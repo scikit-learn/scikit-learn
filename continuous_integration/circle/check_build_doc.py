@@ -51,13 +51,15 @@ if not pr_url:
 # ci
 git_range = "origin/master..%s" % commit
 try:
+    check_output("git fetch origin master".split())
     filenames = check_output("git diff --name-only".split() + [git_range])
 except CalledProcessError:
     exit("git introspection failed.")
 filenames = filenames.decode('utf-8').split()
 for filename in filenames:
     if filename.startswith(u'doc/') or filename.startswith(u'examples/'):
-        exit("detected doc impacting file modified by PR at %s" % filename)
+        exit("detected doc impacting file modified by PR in range %s: %s"
+             % (git_range, filename))
 
 # This PR does not seem to have any documentation related file changed.
 msg = "no doc impacting files detected:\n" + u"\n".join(filenames)
