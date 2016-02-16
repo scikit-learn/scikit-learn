@@ -17,14 +17,16 @@ from sklearn.model_selection import SequentialSearchCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.datasets import load_iris, make_classification
+from sklearn.datasets import load_iris, make_classification, load_digits
 from sklearn.gaussian_process.kernels import Matern
 
 
 # Make synthetic dataset where not all the features are explanatory
-iris = load_iris()
-rng = np.random.RandomState(0)
-X, y = iris.data, iris.target
+# iris = load_iris()
+# rng = np.random.RandomState(0)
+# X, y = iris.data, iris.target
+digits = load_digits()
+X, y = digits.data, digits.target
 
 clf = LogisticRegression()
 
@@ -39,6 +41,16 @@ gp_search.fit(X, y)
 gp_cum_scores = [np.max(
       [gp_search.grid_scores_[j].mean_validation_score for j in range(i)])
       for i in range(1, len(gp_search.grid_scores_))]
+
+gp_ext = SequentialSearchCV(
+  clf, params, n_iter=20, random_state=0, n_init=3, search='extensive')
+gp_ext.fit(X, y)
+
+# Retrieve the maximum score at each iteration
+gp_ext_cum_scores = [np.max(
+      [gp_ext.grid_scores_[j].mean_validation_score for j in range(i)])
+      for i in range(1, len(gp_ext.grid_scores_))]
+
 
 # Do the same experiment with randomized search cv
 params = {'C': stats.expon(scale=10**-1)}
@@ -60,9 +72,10 @@ grid_cum_scores = [np.max(
       [grid_search.grid_scores_[j].mean_validation_score for j in range(i)])
       for i in range(1, len(grid_search.grid_scores_))]
 
-plt.plot(gp_cum_scores, label='GP', lw=3)
+plt.plot(gp_cum_scores, label='GP local', lw=3)
 plt.plot(rdm_cum_scores, label='Random Search', lw=3)
 plt.plot(grid_cum_scores, label='Grid Search', lw=3)
+plt.plot(gp_ext_cum_scores, label='GP ext', lw=3)
 
 plt.legend(loc='lower right')
 plt.ylabel('Score (higher is better)')
