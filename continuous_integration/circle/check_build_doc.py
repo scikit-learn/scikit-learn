@@ -49,7 +49,7 @@ if not pr_url:
 # Hardcode the assumption that this is a PR to origin/master of this repo
 # as apparently there is way to reliably get the target of a PR with circle
 # ci
-git_range = "origin/master..%s" % commit
+git_range = "origin/master...%s" % commit
 try:
     check_output("git fetch origin master".split())
     filenames = check_output("git diff --name-only".split() + [git_range])
