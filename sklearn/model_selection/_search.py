@@ -46,10 +46,9 @@ __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
 
 
 def _acquisition_func(x0, gp, prev_best, func, xi, kappa):
-
     x0 = np.asarray(x0)
     if x0.ndim == 1:
-        x0 = np.reshape(x0, (1, 1))
+        x0 = np.expand_dims(x0, axis=0)
     predictions, std = gp.predict(x0, return_std=True)
 
     if func == 'UCB':
@@ -66,6 +65,7 @@ def _acquisition_func(x0, gp, prev_best, func, xi, kappa):
         raise ValueError(
             'acquisition_function not implemented yet : '
             + func)
+
     if acquisition_func.shape == (1, 1):
         return acquisition_func[0]
     return acquisition_func
@@ -1434,12 +1434,14 @@ class SequentialSearchCV(BaseSearchCV):
                     samples_uniform, self.n_candidates,
                     random_state=rng)
                 candidate = list(list(candidates)[0].values())
+                n_dims = len(candidate)
+                bounds = np.tile([0.0, 1.0], (n_dims, 1))
 
                 res = optimize.fmin_l_bfgs_b(
                     _acquisition_func,
                     np.asfortranarray(candidate),
                     args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
-                    bounds=[(0.0, 1.0),], approx_grad=True)
+                    bounds=bounds, approx_grad=True)
 
                 best_candidate = dict(zip(params_list, res[0]))
                 # best_param, best_score, best_grid_score, _ = self._evaluate_params(
@@ -1477,6 +1479,7 @@ class SequentialSearchCV(BaseSearchCV):
                 opt_vals = acquisition_vals[top_grid]
 
                 nop = np.min(gp_scores)
+                bounds = np.tile([0.0, 1.0], (n_dims, 1))
                 # Use the context-manager API to reuse processes for every
                 # call to Parallel.
                 with Parallel(
@@ -1489,7 +1492,7 @@ class SequentialSearchCV(BaseSearchCV):
                         _acquisition_func,
                         np.asfortranarray([candidate]),
                         args=(gp, nop, self.acquisition_function, self.xi, self.kappa),
-                        bounds=[(0.0, 1.0),], approx_grad=True)
+                        bounds=bounds, approx_grad=True)
                     for candidate in opt_points)
                     new_candidates = [values[0] for values in all_values]
                     func_values = [values[1] for values in all_values]
@@ -1519,8 +1522,7 @@ class SequentialSearchCV(BaseSearchCV):
         best = sorted(
             grid_scores,
             key=lambda x: (
-                x.mean_validation_score,
-                -np.asarray(list(x.parameters.values()))
+                x.mean_validation_score
                 )
             )[-1]
 
