@@ -260,20 +260,9 @@ def make_carousel_thumbs(app, exception):
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
 
 
-def generate_example_rst(app, what, name, obj, options, lines):
-    # generate empty examples files, so that we don't get
-    # inclusion errors if there are no examples for a class / module
-    examples_path = os.path.join(app.srcdir, "modules", "generated",
-                                 "%s.examples" % name)
-    if not os.path.exists(examples_path):
-        # touch file
-        open(examples_path, 'w').close()
-
-
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
-    app.connect('autodoc-process-docstring', generate_example_rst)
     app.connect('build-finished', make_carousel_thumbs)
 
 
