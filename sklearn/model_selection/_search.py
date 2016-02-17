@@ -1437,7 +1437,7 @@ class SequentialSearchCV(BaseSearchCV):
                     _acquisition_func,
                     np.asfortranarray(candidate),
                     args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
-                    bounds=bounds, approx_grad=True)
+                    bounds=bounds, approx_grad=True, maxiter=10)
                 best_candidate = dict(zip(params_list, res[0]))
             elif self.search == "sampling":
                 # Sample candidates and predict their corresponding
