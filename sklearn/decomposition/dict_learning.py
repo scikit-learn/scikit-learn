@@ -304,7 +304,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
 
 def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
-                 random_state=None):
+                 random_state=None, atom_norm_min=None):
     """Update the dense dictionary factor in place.
 
     Parameters
@@ -328,12 +328,19 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     random_state: int or RandomState
         Pseudo number generator state used for random sampling.
 
+    atom_norm_min: float
+        Atom norm below which it is pruned and replaced by a random vector.
+
     Returns
     -------
     dictionary: array of shape (n_features, n_components)
         Updated dictionary.
 
     """
+    if atom_norm_min is None:
+        atom_norm_min = 1e-10
+
+    atom_norm_min_square = atom_norm_min**2
     n_components = len(code)
     n_samples = Y.shape[0]
     random_state = check_random_state(random_state)
@@ -348,7 +355,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         dictionary[:, k] = np.dot(R, code[k, :].T)
         # Scale k'th atom
         atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
-        if atom_norm_square < 1e-20:
+        if atom_norm_square < atom_norm_min_square:
             if verbose == 1:
                 sys.stdout.write("+")
                 sys.stdout.flush()
@@ -378,7 +385,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
-                  return_n_iter=False):
+                  return_n_iter=False, atom_norm_min=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -451,6 +458,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     n_iter : int
         Number of iterations run. Returned only if `return_n_iter` is
         set to True.
+
+    atom_norm_min: float
+        Atom norm below which it is pruned and replaced by a random vector.
 
     See also
     --------
@@ -551,7 +561,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
                          return_inner_stats=False, inner_stats=None,
-                         return_n_iter=False):
+                         return_n_iter=False, atom_norm_min=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -631,6 +641,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
+
+    atom_norm_min: float
+        Atom norm below which it is pruned and replaced by a random vector.
 
     Returns
     -------
@@ -1000,6 +1013,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
+    atom_norm_min: float
+        Atom norm below which it is pruned and replaced by a random vector.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1029,7 +1045,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None):
+                 split_sign=False, random_state=None, atom_norm_min=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1042,6 +1058,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.dict_init = dict_init
         self.verbose = verbose
         self.random_state = random_state
+        self.atom_norm_min = atom_norm_min
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1073,7 +1090,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             dict_init=self.dict_init,
             verbose=self.verbose,
             random_state=random_state,
-            return_n_iter=True)
+            return_n_iter=True,
+            atom_norm_min=self.atom_norm_min)
         self.components_ = U
         self.error_ = E
         return self
@@ -1160,6 +1178,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
+    atom_norm_min: float
+        Atom norm below which it is pruned and replaced by a random vector.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1195,7 +1216,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None):
+                 verbose=False, split_sign=False, random_state=None,
+                 atom_norm_min=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1209,6 +1231,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.batch_size = batch_size
         self.split_sign = split_sign
         self.random_state = random_state
+        self.atom_norm_min = atom_norm_min
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1235,7 +1258,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
             return_inner_stats=True,
-            return_n_iter=True)
+            return_n_iter=True,
+            atom_norm_min=self.atom_norm_min)
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1280,7 +1304,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats)
+            return_inner_stats=True, inner_stats=inner_stats,
+            atom_norm_min=self.atom_norm_min)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do
