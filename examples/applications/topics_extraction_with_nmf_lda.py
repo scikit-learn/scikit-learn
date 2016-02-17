@@ -1,6 +1,7 @@
 """
 =======================================================================================
-Topic extraction with Non-negative Matrix Factorization and Latent Dirichlet Allocation
+Topic extraction with Non-negative Matrix Factorization and Latent 
+Dirichlet Allocation
 =======================================================================================
 
 This is an example of applying Non-negative Matrix Factorization

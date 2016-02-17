@@ -58,7 +58,9 @@ for i in range(5):
 
     print('Iteration %i %s' % (i, 70 * '_'))
     print("Label Spreading model: %d labeled & %d unlabeled (%d total)"
-          % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
+          % (n_labeled_points,
+             n_total_samples - n_labeled_points,
+             n_total_samples))
 
     print(classification_report(true_labels, predicted_labels))
 

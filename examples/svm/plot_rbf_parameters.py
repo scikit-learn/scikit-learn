@@ -51,11 +51,11 @@ vectors (larger ``C`` values) hence the diagonal of good performing models.
 
 Finally one can also observe that for some intermediate values of ``gamma`` we
 get equally performing models when ``C`` becomes very large: it is not
-necessary to regularize by limiting the number of support vectors. The radius of
-the RBF kernel alone acts as a good structural regularizer. In practice though
-it might still be interesting to limit the number of support vectors with a
-lower value of ``C`` so as to favor models that use less memory and that are
-faster to predict.
+necessary to regularize by limiting the number of support vectors. The
+radius of the RBF kernel alone acts as a good structural regularizer. In
+practice though it might still be interesting to limit the number of
+support vectors with a lower value of ``C`` so as to favor models that use
+less memory and that are faster to predict.
 
 We should also note that small differences in scores results from the random
 splits of the cross-validation procedure. Those spurious variations can be

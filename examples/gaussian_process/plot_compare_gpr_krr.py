@@ -110,8 +110,8 @@ plt.plot(X_plot, y_kr, color='turquoise', lw=lw,
          label='KRR (%s)' % kr.best_params_)
 plt.plot(X_plot, y_gpr, color='darkorange', lw=lw,
          label='GPR (%s)' % gpr.kernel_)
-plt.fill_between(X_plot[:, 0], y_gpr - y_std, y_gpr + y_std, color='darkorange',
-                 alpha=0.2)
+plt.fill_between(X_plot[:, 0], y_gpr - y_std, y_gpr + y_std,
+                 color='darkorange', alpha=0.2)
 plt.xlabel('data')
 plt.ylabel('target')
 plt.xlim(0, 20)

@@ -192,8 +192,8 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
 
         # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
-        pred_test = clf.decision_function((species.cov_test - mean)
-                                          / std)[:, 0]
+        pred_test = clf.decision_function(
+            (species.cov_test - mean) / std)[:, 0]
         scores = np.r_[pred_test, pred_background]
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)

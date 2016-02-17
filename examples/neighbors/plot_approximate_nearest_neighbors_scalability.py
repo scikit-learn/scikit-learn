@@ -9,9 +9,9 @@ when varying the number of samples in the dataset.
 
 The first plot demonstrates the relationship between query time and index size
 of LSHForest. Query time is compared with the brute force method in exact
-nearest neighbor search for the same index sizes. The brute force queries have a
-very predictable linear scalability with the index (full scan). LSHForest index
-have sub-linear scalability profile but can be slower for small datasets.
+nearest neighbor search for the same index sizes. The brute force queries have
+a very predictable linear scalability with the index (full scan). LSHForest
+index have sub-linear scalability profile but can be slower for small datasets.
 
 The second plot shows the speedup when using approximate queries vs brute force
 exact queries. The speedup tends to increase with the dataset size but should
@@ -61,8 +61,8 @@ n_samples_values = np.logspace(np.log10(n_samples_min),
 # Generate some structured data
 rng = np.random.RandomState(42)
 all_data, _ = make_blobs(n_samples=n_samples_max + n_queries,
-                         n_features=n_features, centers=n_centers, shuffle=True,
-                         random_state=0)
+                         n_features=n_features, centers=n_centers,
+                         shuffle=True, random_state=0)
 queries = all_data[:n_queries]
 index_data = all_data[n_queries:]
 

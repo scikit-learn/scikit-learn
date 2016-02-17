@@ -72,8 +72,8 @@ for kernel in ('linear', 'poly', 'rbf'):
     Z = Z.reshape(XX.shape)
     plt.figure(fignum, figsize=(4, 3))
     plt.pcolormesh(XX, YY, Z > 0, cmap=plt.cm.Paired)
-    plt.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
-                levels=[-.5, 0, .5])
+    plt.contour(XX, YY, Z, colors=['k', 'k', 'k'],
+                linestyles=['--', '-', '--'], levels=[-.5, 0, .5])
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

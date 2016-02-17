@@ -58,7 +58,7 @@ def plot_figs(fig_num, elev, azim, X_train, clf):
     ax.w_yaxis.set_ticklabels([])
     ax.w_zaxis.set_ticklabels([])
 
-#Generate the three different figures from different views
+# Generate the three different figures from different views
 elev = 43.5
 azim = -110
 plot_figs(1, elev, azim, X_train, ols)

@@ -74,7 +74,6 @@ for i in range(n_faces):
         sub = plt.subplot(n_faces, n_cols, i * n_cols + 1,
                           title="true faces")
 
-
     sub.axis("off")
     sub.imshow(true_face.reshape(image_shape),
                cmap=plt.cm.gray,

@@ -39,7 +39,7 @@ n_samples, n_features = X.shape
 n_neighbors = 30
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Scale and visualize the embedding vectors
 def plot_embedding(X, title=None):
     x_min, x_max = np.min(X, 0), np.max(X, 0)
@@ -70,7 +70,7 @@ def plot_embedding(X, title=None):
         plt.title(title)
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Plot images of the digits
 n_img_per_row = 20
 img = np.zeros((10 * n_img_per_row, 10 * n_img_per_row))
@@ -86,7 +86,7 @@ plt.yticks([])
 plt.title('A selection from the 64-dimensional digits dataset')
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
 print("Computing random projection")
 rp = random_projection.SparseRandomProjection(n_components=2, random_state=42)
@@ -94,7 +94,7 @@ X_projected = rp.fit_transform(X)
 plot_embedding(X_projected, "Random Projection of the digits")
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Projection on to the first 2 principal components
 
 print("Computing PCA projection")
@@ -104,20 +104,21 @@ plot_embedding(X_pca,
                "Principal Components projection of the digits (time %.2fs)" %
                (time() - t0))
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Projection on to the first 2 linear discriminant components
 
 print("Computing Linear Discriminant Analysis projection")
 X2 = X.copy()
 X2.flat[::X.shape[1] + 1] += 0.01  # Make X invertible
 t0 = time()
-X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2).fit_transform(X2, y)
+X_lda = discriminant_analysis.LinearDiscriminantAnalysis(n_components=2).\
+        fit_transform(X2, y)
 plot_embedding(X_lda,
                "Linear Discriminant projection of the digits (time %.2fs)" %
                (time() - t0))
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Isomap projection of the digits dataset
 print("Computing Isomap embedding")
 t0 = time()
@@ -128,7 +129,7 @@ plot_embedding(X_iso,
                (time() - t0))
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Locally linear embedding of the digits dataset
 print("Computing LLE embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
@@ -141,7 +142,7 @@ plot_embedding(X_lle,
                (time() - t0))
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Modified Locally linear embedding of the digits dataset
 print("Computing modified LLE embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
@@ -154,7 +155,7 @@ plot_embedding(X_mlle,
                (time() - t0))
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # HLLE embedding of the digits dataset
 print("Computing Hessian LLE embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
@@ -167,7 +168,7 @@ plot_embedding(X_hlle,
                (time() - t0))
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # LTSA embedding of the digits dataset
 print("Computing LTSA embedding")
 clf = manifold.LocallyLinearEmbedding(n_neighbors, n_components=2,
@@ -179,7 +180,7 @@ plot_embedding(X_ltsa,
                "Local Tangent Space Alignment of the digits (time %.2fs)" %
                (time() - t0))
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # MDS  embedding of the digits dataset
 print("Computing MDS embedding")
 clf = manifold.MDS(n_components=2, n_init=1, max_iter=100)
@@ -190,7 +191,7 @@ plot_embedding(X_mds,
                "MDS embedding of the digits (time %.2fs)" %
                (time() - t0))
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Random Trees embedding of the digits dataset
 print("Computing Totally Random Trees embedding")
 hasher = ensemble.RandomTreesEmbedding(n_estimators=200, random_state=0,
@@ -204,7 +205,7 @@ plot_embedding(X_reduced,
                "Random forest embedding of the digits (time %.2fs)" %
                (time() - t0))
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Spectral embedding of the digits dataset
 print("Computing Spectral embedding")
 embedder = manifold.SpectralEmbedding(n_components=2, random_state=0,
@@ -216,7 +217,7 @@ plot_embedding(X_se,
                "Spectral embedding of the digits (time %.2fs)" %
                (time() - t0))
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # t-SNE embedding of the digits dataset
 print("Computing t-SNE embedding")
 tsne = manifold.TSNE(n_components=2, init='pca', random_state=0)

@@ -22,7 +22,8 @@ from sklearn.linear_model import LassoCV
 boston = load_boston()
 X, y = boston['data'], boston['target']
 
-# We use the base estimator LassoCV since the L1 norm promotes sparsity of features.
+# We use the base estimator LassoCV since the L1 norm promotes
+# sparsity of features.
 clf = LassoCV()
 
 # Set a minimum threshold of 0.25
@@ -43,7 +44,7 @@ plt.title(
     "Features selected from Boston using SelectFromModel with "
     "threshold %0.3f." % sfm.threshold)
 feature1 = X_transform[:, 0]
-feature2 = X_transform[:, 1] 
+feature2 = X_transform[:, 1]
 plt.plot(feature1, feature2, 'r.')
 plt.xlabel("Feature number 1")
 plt.ylabel("Feature number 2")

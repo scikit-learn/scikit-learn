@@ -105,7 +105,8 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     plt.axvline(n_components_pca, color='b',
                 label='PCA CV: %d' % n_components_pca, linestyle='--')
     plt.axvline(n_components_fa, color='r',
-                label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
+                label='FactorAnalysis CV: %d' % n_components_fa,
+                linestyle='--')
     plt.axvline(n_components_pca_mle, color='k',
                 label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
 

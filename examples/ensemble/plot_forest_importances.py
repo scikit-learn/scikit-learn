@@ -48,7 +48,7 @@ for f in range(X.shape[1]):
 plt.figure()
 plt.title("Feature importances")
 plt.bar(range(X.shape[1]), importances[indices],
-       color="r", yerr=std[indices], align="center")
+        color="r", yerr=std[indices], align="center")
 plt.xticks(range(X.shape[1]), indices)
 plt.xlim([-1, X.shape[1]])
 plt.show()

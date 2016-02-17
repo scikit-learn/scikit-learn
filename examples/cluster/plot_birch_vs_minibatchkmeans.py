@@ -39,7 +39,7 @@ n_centres = np.hstack((np.ravel(xx)[:, np.newaxis],
 
 # Generate blobs to do a comparison between MiniBatchKMeans and Birch.
 X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
-   
+
 
 # Use all colors that matplotlib provides by default.
 colors_ = cycle(colors.cnames.keys())
@@ -72,7 +72,8 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
         ax.plot(X[mask, 0], X[mask, 1], 'w',
                 markerfacecolor=col, marker='.')
         if birch_model.n_clusters is None:
-            ax.plot(this_centroid[0], this_centroid[1], '+', markerfacecolor=col,
+            ax.plot(this_centroid[0], this_centroid[1],
+                    '+', markerfacecolor=col,
                     markeredgecolor='k', markersize=5)
     ax.set_ylim([-25, 25])
     ax.set_xlim([-25, 25])

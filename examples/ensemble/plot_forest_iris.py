@@ -15,15 +15,16 @@ length features only, on the second row using the petal length and sepal length
 only, and on the third row using the petal width and the petal length only.
 
 In descending order of quality, when trained (outside of this example) on all
-4 features using 30 estimators and scored using 10 fold cross validation, we see::
+4 features using 30 estimators and scored using 10 fold cross validation,
+we see::
 
     ExtraTreesClassifier()  # 0.95 score
     RandomForestClassifier()  # 0.94 score
     AdaBoost(DecisionTree(max_depth=3))  # 0.94 score
     DecisionTree(max_depth=None)  # 0.94 score
 
-Increasing `max_depth` for AdaBoost lowers the standard deviation of the scores (but
-the average score does not improve).
+Increasing `max_depth` for AdaBoost lowers the standard deviation of the
+scores (but the average score does not improve).
 
 See the console's output for further details about each model.
 
@@ -98,8 +99,10 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         model_title = str(type(model)).split(".")[-1][:-2][:-len("Classifier")]
         model_details = model_title
         if hasattr(model, "estimators_"):
-            model_details += " with {} estimators".format(len(model.estimators_))
-        print( model_details + " with features", pair, "has a score of", scores )
+            model_details += " with {} estimators"\
+                             .format(len(model.estimators_))
+        print(model_details + " with features",
+              pair, "has a score of", scores)
 
         plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
@@ -131,11 +134,18 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         # Build a coarser grid to plot a set of ensemble classifications
         # to show how these are different to what we see in the decision
-        # surfaces. These points are regularly space and do not have a black outline
-        xx_coarser, yy_coarser = np.meshgrid(np.arange(x_min, x_max, plot_step_coarser),
-                                             np.arange(y_min, y_max, plot_step_coarser))
-        Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(), yy_coarser.ravel()]).reshape(xx_coarser.shape)
-        cs_points = plt.scatter(xx_coarser, yy_coarser, s=15, c=Z_points_coarser, cmap=cmap, edgecolors="none")
+        # surfaces. These points are regularly space and do not have a
+        # black outline
+        xx_coarser, yy_coarser = np.meshgrid(np.arange(x_min, x_max,
+                                                       plot_step_coarser),
+                                             np.arange(y_min, y_max,
+                                                       plot_step_coarser))
+        Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(),
+                                               yy_coarser.ravel()])\
+                                .reshape(xx_coarser.shape)
+        cs_points = plt.scatter(xx_coarser, yy_coarser, s=15,
+                                c=Z_points_coarser, cmap=cmap,
+                                edgecolors="none")
 
         # Plot the training points, these are clustered together and have a
         # black outline

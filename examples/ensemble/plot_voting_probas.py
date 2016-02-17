@@ -57,7 +57,8 @@ fig, ax = plt.subplots()
 
 # bars for classifier 1-3
 p1 = ax.bar(ind, np.hstack(([class1_1[:-1], [0]])), width, color='green')
-p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width, color='lightgreen')
+p2 = ax.bar(ind + width, np.hstack(([class2_1[:-1], [0]])), width,
+            color='lightgreen')
 
 # bars for VotingClassifier
 p3 = ax.bar(ind, [0, 0, 0, class1_1[-1]], width, color='blue')

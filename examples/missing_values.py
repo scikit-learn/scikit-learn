@@ -5,7 +5,8 @@ Imputing missing values before building an estimator
 
 This example shows that imputing the missing values can give better results
 than discarding the samples containing any missing value.
-Imputing does not always improve the predictions, so please check via cross-validation.
+Imputing does not always improve the predictions, so please check
+via cross-validation.
 Sometimes dropping rows or using marker values is more effective.
 
 Missing values can be replaced by the mean, the median or the most frequent
@@ -20,7 +21,7 @@ Script output::
   Score after imputation of the missing values = 0.55
 
 In this case, imputing helps the classifier get close to the original score.
-  
+
 """
 import numpy as np
 

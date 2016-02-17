@@ -41,7 +41,10 @@ labels, y = np.unique(y, return_inverse=True)
 X_train, X_test = X[:2000], X[2000:]
 y_train, y_test = y[:2000], y[2000:]
 
-original_params = {'n_estimators': 1000, 'max_leaf_nodes': 4, 'max_depth': None, 'random_state': 2,
+original_params = {'n_estimators': 1000,
+                   'max_leaf_nodes': 4,
+                   'max_depth': None,
+                   'random_state': 2,
                    'min_samples_split': 5}
 
 plt.figure()
@@ -70,7 +73,7 @@ for label, color, setting in [('No shrinkage', 'orange',
         test_deviance[i] = clf.loss_(y_test, y_pred)
 
     plt.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5],
-            '-', color=color, label=label)
+             '-', color=color, label=label)
 
 plt.legend(loc='upper left')
 plt.xlabel('Boosting Iterations')

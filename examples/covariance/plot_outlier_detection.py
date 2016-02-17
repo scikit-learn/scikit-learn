@@ -50,7 +50,8 @@ classifiers = {
     "One-Class SVM": svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
                                      kernel="rbf", gamma=0.1),
     "robust covariance estimator": EllipticEnvelope(contamination=.1),
-    "Isolation Forest": IsolationForest(max_samples=n_samples, random_state=rng)}
+    "Isolation Forest": IsolationForest(max_samples=n_samples,
+                                        random_state=rng)}
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
