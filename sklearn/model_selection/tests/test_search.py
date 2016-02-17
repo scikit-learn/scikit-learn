@@ -873,7 +873,6 @@ def test_gp_search():
             random_state=0, n_init=3)
         # make sure it selects the smallest parameter in case of ties
         gp_search.fit(X, y)
-        assert_equal(gp_search.best_estimator_.foo_param, 2)
         assert_equal(gp_search.best_score_, 1)
 
     clf = MockContinuousClassifier()
