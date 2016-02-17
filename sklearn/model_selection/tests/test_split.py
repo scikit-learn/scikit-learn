@@ -771,7 +771,7 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, ShuffleSplit, test_size=1.0)
     assert_raises(ValueError, ShuffleSplit, test_size=1j)
 
-    # When the {test|train}_size is an int, validation is based on the input X
+    # When the test_size is an int, validation is based on the input X
     # and happens at split(...)
     assert_raises(ValueError, next, ShuffleSplit(test_size=11).split(X))
     assert_raises(ValueError, next, ShuffleSplit(test_size=10).split(X))
