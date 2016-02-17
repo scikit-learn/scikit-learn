@@ -1229,7 +1229,7 @@ def cross_val_apply(estimator, X, y=None, cv=None, n_jobs=1,
         'all CPUs'.
 
     apply_func : string, optional, default: 'predict'
-        Invokes the passed function on the passed estimator.
+        Invokes the passed method name of the passed estimator.
 
     verbose : integer, optional
         The verbosity level.
