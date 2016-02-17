@@ -8,7 +8,12 @@ This module defines export functions for decision trees.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Trevor Stephens <trev.stephens@gmail.com>
+<<<<<<< 59bf211789d29d70642fd64d6d4bef95ff518e8d
 # License: BSD 3 clause
+=======
+#          nvdv <modestdev@gmail.com>
+# Licence: BSD 3 clause
+>>>>>>> Add decision tree plotting.
 
 import numpy as np
 
@@ -415,3 +420,108 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     finally:
         if own_file:
             out_file.close()
+
+
+def plot(decision_tree, width=1000, height=1000, max_depth=None,
+         feature_names=None, class_names=None, label='all',
+         filled=False, leaves_parallel=False, impurity=True,
+         node_ids=False, proportion=False, rotate=False,
+         rounded=False, special_characters=False, out='matplotlib'):
+    """Plots decision tree.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be plotted.
+
+    width : width of resulting tree.
+
+    height : height of resulting tree.
+
+    max_depth : int, optional (default=None)
+        The maximum depth of the representation. If None, the tree is fully
+        generated.
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    class_names : list of strings, bool or None, optional (default=None)
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
+        If ``True``, shows a symbolic representation of the class name.
+
+    label : {'all', 'root', 'none'}, optional (default='all')
+        Whether to show informative labels for impurity, etc.
+        Options include 'all' to show at every node, 'root' to show only at
+        the top root node, or 'none' to not show at any node.
+
+    filled : bool, optional (default=False)
+        When set to ``True``, paint nodes to indicate majority class for
+        classification, extremity of values for regression, or purity of node
+        for multi-output.
+
+    leaves_parallel : bool, optional (default=False)
+        When set to ``True``, draw all leaf nodes at the bottom of the tree.
+
+    impurity : bool, optional (default=True)
+        When set to ``True``, show the impurity at each node.
+
+    node_ids : bool, optional (default=False)
+        When set to ``True``, show the ID number on each node.
+
+    proportion : bool, optional (default=False)
+        When set to ``True``, change the display of 'values' and/or 'samples'
+        to be proportions and percentages respectively.
+
+    rotate : bool, optional (default=False)
+        When set to ``True``, orient tree left to right rather than top-down.
+
+    rounded : bool, optional (default=False)
+        When set to ``True``, draw node boxes with rounded corners and use
+        Helvetica fonts instead of Times-Roman.
+
+    special_characters : bool, optional (default=False)
+        When set to ``False``, ignore special characters for PostScript
+        compatibility.
+
+    out : {'matplotlib', 'jupyter'}, optional (default='matplotlib')
+        Options include 'matplotlib' to plot using matplotlib library,
+        'jupyter' to plot to Jupyter Notebook environment.
+    """
+    if out not in ('matplotlib', 'jupyter'):
+        raise ValueError(
+            "Incorrect 'out' value passed (%s). "
+            "Use 'jupyter' or 'matplotlib'." % out)
+    try:
+        import graphviz
+    except ImportError:
+        raise ImportError('Plotting requires graphviz to be installed.')
+
+    in_memory_dot_file = six.StringIO()
+    export_graphviz(
+        decision_tree, out_file=in_memory_dot_file, max_depth=max_depth,
+        feature_names=feature_names, class_names=class_names, label=label,
+        filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
+        node_ids=node_ids, proportion=proportion, rotate=rotate,
+        rounded=rounded, special_characters=special_characters)
+    src = graphviz.Source(in_memory_dot_file.getvalue())
+    image = src.pipe(format='png')
+    if out == 'jupyter':
+        try:
+            from IPython.display import Image
+        except ImportError:
+            raise ImportError(
+                'Plotting to Jupyter Notebook requires Jupyter Notebook.')
+        return Image(image, height=height, width=width)
+    elif out == 'matplotlib':
+        from scipy.misc import imread
+        try:
+            from matplotlib import pyplot
+        except ImportError:
+            raise ImportError(
+                'Plotting using matplotlib requires matplotlib.')
+        img = imread(six.BytesIO(image))
+        figure = pyplot.figure()
+        figure.set_size_inches(height / figure.dpi, width / figure.dpi)
+        pyplot.imshow(img)
+        pyplot.show()
