@@ -21,7 +21,8 @@ from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
-from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
+from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars, \
+    ElasticNet
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -47,7 +48,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     cov: array, shape=(n_components, n_samples)
         Precomputed covariance, dictionary * X'
 
-    algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold', \
+                'elastic_net_cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -56,18 +58,22 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than regularization
         from the projection dictionary * data'
+        elastic_net_cd: uses the coordinate descent method to compute the
+        Elastic Net solution (linear_model.ElasticNet).
 
-    regularization : int | float
+    regularization : int | float | float, float
         The regularization parameter. It corresponds to alpha when
-        algorithm is 'lasso_lars', 'lasso_cd' or 'threshold'.
-        Otherwise it corresponds to n_nonzero_coefs.
+        algorithm is 'lasso_lars', 'lasso_cd', 'threshold', or
+        'elastic_net_cd'. With 'elastic_net_cd', it corresponds to alpha and
+        the l1_ratio. Otherwise it corresponds to n_nonzero_coefs.
 
     init: array of shape (n_samples, n_components)
         Initialization value of the sparse code. Only used if
-        `algorithm='lasso_cd'`.
+        `algorithm in ('lasso_cd', 'elastic_net_cd')`.
 
     max_iter: int, 1000 by default
-        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
+        Maximum number of iterations to perform if
+        `algorithm in ('lasso_cd', 'elastic_net_cd')`.
 
     copy_cov: boolean, optional
         Whether to copy the precomputed covariance matrix; if False, it may be
@@ -114,17 +120,25 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         finally:
             np.seterr(**err_mgt)
 
-    elif algorithm == 'lasso_cd':
-        alpha = float(regularization) / n_features  # account for scaling
+    elif algorithm in ('elastic_net_cd', 'lasso_cd'):
+        if algorithm == 'lasso_cd':
+            regularization = (regularization, 1.)
 
-        # TODO: Make verbosity argument for Lasso?
-        # sklearn.linear_model.coordinate_descent.enet_path has a verbosity
-        # argument that we could pass in from Lasso.
-        clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
-                    precompute=gram, max_iter=max_iter, warm_start=True)
-        clf.coef_ = init
-        clf.fit(dictionary.T, X.T, check_input=check_input)
-        new_code = clf.coef_
+        alpha = float(regularization[0]) / n_features  # account for scaling
+        l1_ratio = float(regularization[1])
+        try:
+            err_mgt = np.seterr(all='ignore')
+
+            # TODO: ake verbosity argument for ElasticNet?
+            elastic_net = ElasticNet(alpha=alpha, l1_ratio=l1_ratio,
+                                     fit_intercept=False, normalize=False,
+                                     precompute=gram, max_iter=max_iter,
+                                     warm_start=True)
+            elastic_net.coef_ = init
+            elastic_net.fit(dictionary.T, X.T, check_input=check_input)
+            new_code = elastic_net.coef_
+        finally:
+            np.seterr(**err_mgt)
 
     elif algorithm == 'lars':
         try:
@@ -150,9 +164,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
             tol=None, norms_squared=row_norms(X, squared=True),
             copy_Xy=copy_cov).T
+
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
-                         '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
+                         '"lasso_cd",  "lasso", "threshold", "omp" or '
+                         '"elastic_net_cd", got %s.'
                          % algorithm)
     return new_code
 
@@ -160,7 +176,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=1, check_input=True, verbose=0):
+                  max_iter=1000, n_jobs=1, check_input=True, verbose=0,
+                  l1_ratio=None):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -186,7 +203,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     cov: array, shape=(n_components, n_samples)
         Precomputed covariance, dictionary' * X
 
-    algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+    algorithm: {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold', \
+                'elastic_net_cd'}
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -195,6 +213,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
+        elastic_net_cd: use the elastic net constraint.
 
     n_nonzero_coefs: int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
@@ -230,6 +249,10 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     verbose : int, optional
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
+    l1_ratio: float, 1. by default
+        Only if `algorithm='elastic_net_cd'`, this can be used to set the
+        weight between l1 and l2 regularization terms.
+
     Returns
     -------
     code: array of shape (n_samples, n_components)
@@ -250,13 +273,20 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
             dictionary = check_array(dictionary)
             X = check_array(X)
 
+    if algorithm != 'elastic_net_cd' and l1_ratio is not None:
+        raise ValueError(
+            "The \"l1_ratio\" parameter can only be set when the"
+            " \"elastic_net_cd\" algorithm is selected. Currently, the \"%s\""
+            " algorithm is selected." % algorithm
+        )
+
     n_samples, n_features = X.shape
     n_components = dictionary.shape[0]
 
     if gram is None and algorithm != 'threshold':
         gram = np.dot(dictionary, dictionary.T)
 
-    if cov is None and algorithm != 'lasso_cd':
+    if cov is None and (algorithm not in ('lasso_cd', 'elastic_net_cd')):
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
@@ -264,6 +294,11 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         regularization = n_nonzero_coefs
         if regularization is None:
             regularization = min(max(n_features / 10, 1), n_components)
+    elif algorithm == 'elastic_net_cd':
+        regularization = (
+            alpha if alpha is not None else 1.0,
+            l1_ratio if l1_ratio is not None else 1.0,
+        )
     else:
         regularization = alpha
         if regularization is None:
@@ -378,7 +413,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
-                  return_n_iter=False):
+                  return_n_iter=False, l1_ratio=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -409,12 +444,14 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     tol: float,
         Tolerance for the stopping condition.
 
-    method: {'lars', 'cd'}
+    method: {'lars', 'cd', 'elastic_net_cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
+        elastic_net_cd: uses the coordinate descent method to compute the
+        Elastic Net solution (linear_model.ElasticNet).
 
     n_jobs: int,
         Number of parallel jobs to run, or -1 to autodetect.
@@ -436,6 +473,10 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
+
+    l1_ratio: float, 1. by default
+        Only if `algorithm='elastic_net_cd'`, this can be used to set the
+        weight between l1 and l2 regularization terms.
 
     Returns
     -------
@@ -460,10 +501,11 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     SparsePCA
     MiniBatchSparsePCA
     """
-    if method not in ('lars', 'cd'):
+    if method not in ('lars', 'cd', 'elastic_net_cd'):
         raise ValueError('Coding method %r not supported as a fit algorithm.'
                          % method)
-    method = 'lasso_' + method
+    if method != "elastic_net_cd":
+        method = 'lasso_' + method
 
     t0 = time.time()
     # Avoid integer division problems
@@ -516,7 +558,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
-                             init=code, n_jobs=n_jobs)
+                             init=code, n_jobs=n_jobs, l1_ratio=l1_ratio)
         # Update dictionary
         dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
@@ -551,7 +593,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
                          method='lars', iter_offset=0, random_state=None,
                          return_inner_stats=False, inner_stats=None,
-                         return_n_iter=False):
+                         return_n_iter=False, l1_ratio=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -602,12 +644,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     n_jobs : int,
         Number of parallel jobs to run, or -1 to autodetect.
 
-    method : {'lars', 'cd'}
+    method: {'lars', 'cd', 'elastic_net_cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
+        elastic_net_cd: uses the coordinate descent method to compute the
+        Elastic Net solution (linear_model.ElasticNet).
 
     iter_offset : int, default 0
         Number of previous iterations completed on the dictionary used for
@@ -631,6 +675,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
+
+    l1_ratio: float, 1. by default
+        Only if `algorithm='elastic_net_cd'`, this can be used to set the
+        weight between l1 and l2 regularization terms.
 
     Returns
     -------
@@ -656,9 +704,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if n_components is None:
         n_components = X.shape[1]
 
-    if method not in ('lars', 'cd'):
+    if method not in ('lars', 'cd', 'elastic_net_cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
-    method = 'lasso_' + method
+    if method != "elastic_net_cd":
+        method = 'lasso_' + method
 
     t0 = time.time()
     n_samples, n_features = X.shape
@@ -723,7 +772,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                        % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
-                                  alpha=alpha, n_jobs=n_jobs).T
+                                  alpha=alpha, n_jobs=n_jobs,
+                                  l1_ratio=l1_ratio).T
 
         # Update the auxiliary variables
         if ii < batch_size - 1:
@@ -758,7 +808,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         elif verbose == 1:
             print('|', end=' ')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
-                             n_jobs=n_jobs, check_input=False)
+                             n_jobs=n_jobs, check_input=False,
+                             l1_ratio=l1_ratio)
         if verbose > 1:
             dt = (time.time() - t0)
             print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
@@ -780,13 +831,14 @@ class SparseCodingMixin(TransformerMixin):
                                   transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
                                   transform_alpha=None, split_sign=False,
-                                  n_jobs=1):
+                                  n_jobs=1, transform_l1_ratio=None):
         self.n_components = n_components
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
         self.transform_alpha = transform_alpha
         self.split_sign = split_sign
         self.n_jobs = n_jobs
+        self.transform_l1_ratio = transform_l1_ratio
 
     def transform(self, X, y=None):
         """Encode the data as a sparse combination of the dictionary atoms.
@@ -815,7 +867,8 @@ class SparseCodingMixin(TransformerMixin):
         code = sparse_encode(
             X, self.components_, algorithm=self.transform_algorithm,
             n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, n_jobs=self.n_jobs)
+            alpha=self.transform_alpha, n_jobs=self.n_jobs,
+            l1_ratio=self.transform_l1_ratio)
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
@@ -848,7 +901,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         normalized to unit norm.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}
+    'threshold', 'elastic_net_cd'}
         Algorithm used to transform the data:
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -858,6 +911,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
+        elastic_net_cd: uses the coordinate descent method to compute the
+        Elastic Net solution (linear_model.ElasticNet).
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
@@ -881,6 +936,10 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     n_jobs : int,
         number of parallel jobs to run
 
+    transform_l1_ratio: float, 1. by default
+        Only if `transform_algorithm='elastic_net_cd'`, this can be used to set
+        the weight between l1 and l2 regularization terms.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -897,11 +956,12 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 split_sign=False, n_jobs=1):
+                 split_sign=False, n_jobs=1, transform_l1_ratio=None):
         self._set_sparse_coding_params(dictionary.shape[0],
                                        transform_algorithm,
                                        transform_n_nonzero_coefs,
-                                       transform_alpha, split_sign, n_jobs)
+                                       transform_alpha, split_sign, n_jobs,
+                                       transform_l1_ratio)
         self.components_ = dictionary
 
     def fit(self, X, y=None):
@@ -952,8 +1012,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
            *cd* coordinate descent method to improve speed.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}
-        Algorithm used to transform the data
+    'threshold', 'elastic_net_cd'}
+        Algorithm used to transform the data:
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -962,6 +1022,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
+        elastic_net_cd: uses the coordinate descent method to compute the
+        Elastic Net solution (linear_model.ElasticNet).
 
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
@@ -1000,6 +1062,14 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
+    fit_l1_ratio: float, 1. by default
+        Only if `fit_algorithm='elastic_net_cd'`, this can be used to set the
+        weight between l1 and l2 regularization terms.
+
+    transform_l1_ratio: float, 1. by default
+        Only if `transform_algorithm='elastic_net_cd'`, this can be used to set
+        the weight between l1 and l2 regularization terms.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1029,11 +1099,13 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None):
+                 split_sign=False, random_state=None, fit_l1_ratio=None,
+                 transform_l1_ratio=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
-                                       transform_alpha, split_sign, n_jobs)
+                                       transform_alpha, split_sign, n_jobs,
+                                       transform_l1_ratio)
         self.alpha = alpha
         self.max_iter = max_iter
         self.tol = tol
@@ -1042,6 +1114,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.dict_init = dict_init
         self.verbose = verbose
         self.random_state = random_state
+        self.fit_l1_ratio = fit_l1_ratio
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1073,7 +1146,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             dict_init=self.dict_init,
             verbose=self.verbose,
             random_state=random_state,
-            return_n_iter=True)
+            return_n_iter=True,
+            l1_ratio=self.fit_l1_ratio)
         self.components_ = U
         self.error_ = E
         return self
@@ -1112,8 +1186,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         the estimated components are sparse.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}
-        Algorithm used to transform the data.
+    'threshold', 'elastic_net_cd'}
+        Algorithm used to transform the data:
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -1121,7 +1195,9 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         the estimated components are sparse.
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
-        the projection dictionary * X'
+        the projection ``dictionary * X'``
+        elastic_net_cd: uses the coordinate descent method to compute the
+        Elastic Net solution (linear_model.ElasticNet).
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
@@ -1160,6 +1236,14 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
+    fit_l1_ratio: float, 1. by default
+        Only if `fit_algorithm='elastic_net_cd'`, this can be used to set the
+        weight between l1 and l2 regularization terms.
+
+    transform_l1_ratio: float, 1. by default
+        Only if `transform_algorithm='elastic_net_cd'`, this can be used to set
+        the weight between l1 and l2 regularization terms.
+
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -1195,11 +1279,13 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None):
+                 verbose=False, split_sign=False, random_state=None,
+                 fit_l1_ratio=None, transform_l1_ratio=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
-                                       transform_alpha, split_sign, n_jobs)
+                                       transform_alpha, split_sign, n_jobs,
+                                       transform_l1_ratio)
         self.alpha = alpha
         self.n_iter = n_iter
         self.fit_algorithm = fit_algorithm
@@ -1209,6 +1295,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.batch_size = batch_size
         self.split_sign = split_sign
         self.random_state = random_state
+        self.fit_l1_ratio = fit_l1_ratio
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1235,7 +1322,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
             return_inner_stats=True,
-            return_n_iter=True)
+            return_n_iter=True,
+            l1_ratio=self.fit_l1_ratio)
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1280,7 +1368,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats)
+            return_inner_stats=True, inner_stats=inner_stats,
+            l1_ratio=self.transform_l1_ratio)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do
