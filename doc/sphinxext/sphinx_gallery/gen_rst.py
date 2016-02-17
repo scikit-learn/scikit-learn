@@ -553,13 +553,18 @@ def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
 
     filename_pattern = gallery_conf.get('filename_pattern')
     if re.search(filename_pattern, src_file) and gallery_conf['plot_gallery']:
-        # A lot of examples contains 'print(__doc__)' for example in
-        # scikit-learn so that running the example prints some useful
-        # information. Because the docstring has been separated from
-        # the code blocks in sphinx-gallery, __doc__ is actually
-        # __builtin__.__doc__ in the execution context and we do not
-        # want to print it
-        example_globals = {'__doc__': ''}
+        example_globals = {
+            # A lot of examples contains 'print(__doc__)' for example in
+            # scikit-learn so that running the example prints some useful
+            # information. Because the docstring has been separated from
+            # the code blocks in sphinx-gallery, __doc__ is actually
+            # __builtin__.__doc__ in the execution context and we do not
+            # want to print it
+            '__doc__': '',
+            # Examples may contain if __name__ == '__main__' guards
+            # for in example scikit-learn if the example uses multiprocessing
+            '__name__': '__main__'}
+
         fig_count = 0
         # A simple example has two blocks: one for the
         # example introduction/explanation and one for the code
@@ -581,6 +586,9 @@ def generate_file_rst(fname, target_dir, src_dir, gallery_conf):
                     example_rst += code_output
                 else:
                     example_rst += code_output
+                    if 'sphx-glr-script-out' in code_output:
+                        # Add some vertical space after output
+                        example_rst += "\n\n|\n\n"
                     example_rst += codestr2rst(bcontent) + '\n'
 
             else:

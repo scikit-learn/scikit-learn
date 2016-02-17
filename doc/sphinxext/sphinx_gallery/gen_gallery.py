@@ -20,6 +20,7 @@ from .docs_resolv import embed_code_links
 
 
 def clean_gallery_out(build_dir):
+    """Deletes images under the sphx_glr namespace in the build directory"""
     # Sphinx hack: sphinx copies generated images to the build directory
     #  each time the docs are made.  If the desired image name already
     #  exists, it appends a digit to prevent overwrites.  The problem is,
@@ -30,10 +31,11 @@ def clean_gallery_out(build_dir):
     #  was no response: http://osdir.com/ml/sphinx-dev/2011-02/msg00123.html
     #
     # The following is a hack that prevents this behavior by clearing the
-    #  image build directory each time the docs are built.  If sphinx
-    #  changes their layout between versions, this will not work (though
-    #  it should probably not cause a crash).  Tested successfully
-    #  on Sphinx 1.0.7
+    #  image build directory from gallery images each time the docs are built.
+    #  If sphinx changes their layout between versions, this will not
+    #  work (though it should probably not cause a crash).
+    # Tested successfully on Sphinx 1.0.7
+
     build_image_dir = os.path.join(build_dir, '_images')
     if os.path.exists(build_image_dir):
         filelist = os.listdir(build_image_dir)
@@ -101,11 +103,26 @@ def generate_gallery_rst(app):
         fhindex.flush()
 
 
+def touch_empty_backreferences(app, what, name, obj, options, lines):
+    """Generate empty back-reference example files
+
+    This avoids inclusion errors/warnings if there are no gallery
+    examples for a class / module that is being parsed by autodoc"""
+
+    examples_path = os.path.join(app.srcdir,
+                                 app.config.sphinx_gallery_conf["mod_example_dir"],
+                                 "%s.examples" % name)
+
+    if not os.path.exists(examples_path):
+        # touch file
+        open(examples_path, 'w').close()
+
+
 gallery_conf = {
     'filename_pattern': re.escape(os.sep) + 'plot',
     'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
-    'mod_example_dir': 'modules/generated',
+    'mod_example_dir': os.path.join('modules', 'generated'),
     'doc_module': (),
     'reference_url': {},
 }
@@ -117,6 +134,9 @@ def setup(app):
     app.add_config_value('abort_on_example_error', False, 'html')
     app.add_config_value('sphinx_gallery_conf', gallery_conf, 'html')
     app.add_stylesheet('gallery.css')
+
+    if 'sphinx.ext.autodoc' in app._extensions:
+        app.connect('autodoc-process-docstring', touch_empty_backreferences)
 
     app.connect('builder-inited', generate_gallery_rst)
 
