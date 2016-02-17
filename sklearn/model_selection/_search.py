@@ -1161,11 +1161,6 @@ class SequentialSearchCV(BaseSearchCV):
         Number of random candidates to sample for each GP iteration
         Default is 500.
 
-    n_local_candidates: int, default=10
-        After every iteration that gives us the best predicted value
-        from the GP posterior, the number of local candidates to sample
-        and add to the grid which are very close to this best candidate.
-
     gp_params : dict, default={}
         Parameters to pass to the GaussianProcessRegressor object.
 
@@ -1245,7 +1240,7 @@ class SequentialSearchCV(BaseSearchCV):
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score='raise', n_candidates=500,
                  gp_params={}, xi=0.01, kappa=1.96,
-                 n_local_candidates=10, search='local'):
+                 search='local'):
         self.acquisition_function = acquisition_function
         self.param_distributions = param_distributions
         self.n_init = n_init
@@ -1255,7 +1250,6 @@ class SequentialSearchCV(BaseSearchCV):
         self.xi = xi
         self.kappa = kappa
         self.n_candidates = n_candidates
-        self.n_local_candidates = n_local_candidates
         self.search = search
 
         super(SequentialSearchCV, self).__init__(
@@ -1412,6 +1406,10 @@ class SequentialSearchCV(BaseSearchCV):
         tested_parameters, cv_scores, grid_scores, params_list = \
             self._evaluate_params(
                 init_candidates, cv, X, y, labels)
+        n_hyperparam_dims = len(params_list)
+        bounds = np.tile(
+            [0.0, 1.0],
+            (n_hyperparam_dims, 1))
 
         gp_scores = (-np.asarray(cv_scores)).tolist()
         gp_params = self.gp_params
@@ -1434,19 +1432,14 @@ class SequentialSearchCV(BaseSearchCV):
                     samples_uniform, self.n_candidates,
                     random_state=rng)
                 candidate = list(list(candidates)[0].values())
-                n_dims = len(candidate)
-                bounds = np.tile([0.0, 1.0], (n_dims, 1))
 
                 res = optimize.fmin_l_bfgs_b(
                     _acquisition_func,
                     np.asfortranarray(candidate),
                     args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
                     bounds=bounds, approx_grad=True)
-
                 best_candidate = dict(zip(params_list, res[0]))
-                # best_param, best_score, best_grid_score, _ = self._evaluate_params(
-                #     [candidate], cv, X, y, labels)
-            else:
+            elif self.search == "sampling":
                 # Sample candidates and predict their corresponding
                 # acquisition values
                 candidates = ParameterSampler(
@@ -1455,50 +1448,17 @@ class SequentialSearchCV(BaseSearchCV):
                 candidate_values = []
                 for s in candidates:
                     candidate_values.append(list(s.values()))
-
                 candidate_values = np.asarray(candidate_values)
-                predictions = gp.predict(candidate_values)
-                max_ind = predictions.argmin()
-                best_score = predictions[max_ind]
-                best_params = candidate_values[max_ind]
-                n_dims = candidate_values.shape[1]
-
-                # Spray some points closer to the candidates that give the
-                # best score.
-                local_points = best_params + rng.randn(
-                    self.n_local_candidates, n_dims) * 10**-3
-                all_points = np.vstack((candidate_values, local_points))
 
                 acquisition_vals = _acquisition_func(
-                    all_points, gp, best_score, self.acquisition_function,
+                    candidate_values, gp, best_score,
+                    self.acquisition_function,
                     self.xi, self.kappa)
 
-                # Do local searches on the top 20 candidates.
-                top_grid = acquisition_vals.argsort()[:20]
-                opt_points = all_points[top_grid]
-                opt_vals = acquisition_vals[top_grid]
-
-                nop = np.min(gp_scores)
-                bounds = np.tile([0.0, 1.0], (n_dims, 1))
-                # Use the context-manager API to reuse processes for every
-                # call to Parallel.
-                with Parallel(
-                    n_jobs=self.n_jobs, verbose=self.verbose,
-                    pre_dispatch=self.pre_dispatch) as parallel:
-
-                    opt_func = delayed(optimize.fmin_l_bfgs_b)
-
-                    all_values = parallel(delayed(optimize.fmin_l_bfgs_b)(
-                        _acquisition_func,
-                        np.asfortranarray([candidate]),
-                        args=(gp, nop, self.acquisition_function, self.xi, self.kappa),
-                        bounds=bounds, approx_grad=True)
-                    for candidate in opt_points)
-                    new_candidates = [values[0] for values in all_values]
-                    func_values = [values[1] for values in all_values]
-
-                best_idx = np.argmin(func_values)
-                best_candidate = dict(zip(params_list, new_candidates[best_idx]))
+                best_idx = np.argmin(acquisition_vals)
+                best_candidate = dict(zip(params_list, candidate_values[best_idx]))
+            else:
+                raise ValueError("Search not supported.")
 
             best_param, best_score, best_grid_score, _ = self._evaluate_params(
                 [best_candidate], cv, X, y, labels)
