@@ -37,6 +37,11 @@ def test_compute_class_weight_not_present():
     y = np.asarray([0, 0, 0, 1, 1, 2])
     assert_raises(ValueError, compute_class_weight, "auto", classes, y)
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    # Raise error when y has items not in classes
+    classes = np.arange(2)
+    assert_raises(ValueError, compute_class_weight, "auto", classes, y)
+    assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    assert_raises(ValueError, compute_class_weight, {0: 1., 1: 2.}, classes, y)
 
 
 def test_compute_class_weight_dict():

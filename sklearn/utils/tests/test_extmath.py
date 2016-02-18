@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
@@ -326,6 +327,37 @@ def test_randomized_svd_sign_flip():
         assert_almost_equal(np.dot(u2 * s2, v2), a)
         assert_almost_equal(np.dot(u2.T, u2), np.eye(2))
         assert_almost_equal(np.dot(v2.T, v2), np.eye(2))
+
+
+def test_randomized_svd_sign_flip_with_transpose():
+    # Check if the randomized_svd sign flipping is always done based on u
+    # irrespective of transpose.
+    # See https://github.com/scikit-learn/scikit-learn/issues/5608
+    # for more details.
+    def max_loading_is_positive(u, v):
+        """
+        returns bool tuple indicating if the values maximising np.abs
+        are positive across all rows for u and across all columns for v.
+        """
+        u_based = (np.abs(u).max(axis=0) == u.max(axis=0)).all()
+        v_based = (np.abs(v).max(axis=1) == v.max(axis=1)).all()
+        return u_based, v_based
+
+    mat = np.arange(10 * 8).reshape(10, -1)
+
+    # Without transpose
+    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
+    u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
+    assert_true(u_based)
+    assert_false(v_based)
+
+    # With transpose
+    u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
+        mat, 3, flip_sign=True, transpose=True)
+    u_based, v_based = max_loading_is_positive(
+        u_flipped_with_transpose, v_flipped_with_transpose)
+    assert_true(u_based)
+    assert_false(v_based)
 
 
 def test_cartesian():

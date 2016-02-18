@@ -33,8 +33,8 @@ Scikit-learn implements different classes to estimate Gaussian
 mixture models, that correspond to different estimation strategies,
 detailed below.
 
-GMM classifier
-===============
+Gaussian Mixture Model
+======================
 
 The :class:`GMM` object implements the 
 :ref:`expectation-maximization <expectation_maximization>` (EM)
@@ -43,7 +43,7 @@ confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
 data. A :meth:`GMM.fit` method is provided that learns a Gaussian
 Mixture Model from train data. Given test data, it can assign to each
-sample the class of the Gaussian it mostly probably belong to using
+sample the Gaussian it mostly probably belong to using
 the :meth:`GMM.predict` method.
 
 ..  
@@ -55,15 +55,15 @@ The :class:`GMM` comes with different options to constrain the covariance
 of the difference classes estimated: spherical, diagonal, tied or full
 covariance.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_001.png
-   :target: ../auto_examples/mixture/plot_gmm_classifier.html
+.. figure:: ../auto_examples/mixture/images/plot_gmm_covariances_001.png
+   :target: ../auto_examples/mixture/plot_gmm_covariances.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
-      using a GMM as a classifier on the iris dataset.
+    * See :ref:`example_mixture_plot_gmm_covariances.py` for an example of
+      using a GMM for clustering on the iris dataset.
 
     * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
       density estimation.
@@ -135,8 +135,8 @@ to a local optimum.
 
 .. _vbgmm:
 
-VBGMM classifier: variational Gaussian mixtures
-================================================
+VBGMM: variational Gaussian mixtures
+====================================
 
 The :class:`VBGMM` object implements a variant of the Gaussian mixture
 model with :ref:`variational inference <variational_inference>` algorithms. The API is identical to
@@ -145,7 +145,7 @@ and :class:`DPGMM`, as it has some of the properties of the Dirichlet
 process.
 
 Pros and cons of class :class:`VBGMM`: variational inference
--------------------------------------------------------------
+------------------------------------------------------------
 
 Pros
 .....
@@ -200,8 +200,8 @@ points.
 
 .. _dpgmm:
 
-DPGMM classifier: Infinite Gaussian mixtures
-============================================
+DPGMM: Infinite Gaussian mixtures
+=================================
 
 The :class:`DPGMM` object implements a variant of the Gaussian mixture
 model with a variable (but bounded) number of components using the

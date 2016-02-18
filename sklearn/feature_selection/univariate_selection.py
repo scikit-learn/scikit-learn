@@ -232,12 +232,12 @@ def f_regression(X, y, center=True):
     Quick linear model for testing the effect of a single regressor,
     sequentially for many regressors.
 
-    This is done in 3 steps:
+    This is done in 2 steps:
 
-    1. The regressor of interest and the data are orthogonalized
-       wrt constant regressors.
-    2. The cross correlation between data and regressors is computed.
-    3. It is converted to an F score then to a p-value.
+    1. The cross correlation between each regressor and the target is computed,
+       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+       std(y)).
+    2. It is converted to an F score then to a p-value.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -410,7 +410,7 @@ class SelectPercentile(_BaseFilter):
         mask = scores > treshold
         ties = np.where(scores == treshold)[0]
         if len(ties):
-            max_feats = len(scores) * self.percentile // 100
+            max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask

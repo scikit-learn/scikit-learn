@@ -56,6 +56,11 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
 
+    def __init__(self):
+        # We need this for the build_repr to work properly in py2.7
+        # see #6304
+        pass
+
     def split(self, X, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
@@ -65,7 +70,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples
             The target variable for supervised learning problems.
 
         labels : array-like, with shape (n_samples,), optional
@@ -290,7 +295,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,), optional
+        y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
         labels : array-like, with shape (n_samples,), optional
@@ -606,6 +611,31 @@ class StratifiedKFold(_BaseKFold):
         for i in range(self.n_folds):
             yield test_folds == i
 
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedKFold, self).split(X, y, labels)
 
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
@@ -1093,6 +1123,32 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             yield train, test
 
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedShuffleSplit, self).split(X, y, labels)
+
 
 def _validate_shuffle_split_init(test_size, train_size):
     """Validation helper to check the test_size and train_size at init
@@ -1359,7 +1415,7 @@ def check_cv(cv=3, y=None, classifier=False):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError("Expected cv as an integer, cross-validation "
                              "object (from sklearn.model_selection) "
-                             "or and iterable. Got %s." % cv)
+                             "or an iterable. Got %s." % cv)
         return _CVIterableWrapper(cv)
 
     return cv  # New style cv objects are passed without any modification
