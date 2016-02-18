@@ -126,8 +126,6 @@ def get_redirects(redirects_filename):
     return redirects
 
 
-# disabling joblib as the pickling of large dicts seems much too slow
-# @memory.cache
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     """Extract the adjacency graph as a scipy sparse matrix
 

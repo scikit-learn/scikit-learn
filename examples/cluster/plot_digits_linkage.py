@@ -39,8 +39,8 @@ np.random.seed(0)
 
 def shift(x):
     return ndimage.shift(x.reshape((8, 8)),
-                  .3 * np.random.normal(size=2),
-                  mode='constant').ravel()
+                         .3 * np.random.normal(size=2),
+                         mode='constant').ravel()
 
 
 def nudge_images(X, y):
@@ -56,7 +56,6 @@ def nudge_images(X, y):
 X, y = nudge_images(X, y)
 
 
-# ----------------------------------------------------------------------
 # Visualize the clustering
 def plot_clustering(X_red, X, labels, title=None):
     x_min, x_max = np.min(X_red, axis=0), np.max(X_red, axis=0)
@@ -75,7 +74,6 @@ def plot_clustering(X_red, X, labels, title=None):
     plt.axis('off')
     plt.tight_layout()
 
-# ----------------------------------------------------------------------
 # 2D embedding of the digits dataset
 print("Computing embedding")
 X_red = manifold.SpectralEmbedding(n_components=2).fit_transform(X)
