@@ -152,8 +152,11 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             # Classification tree
             color = list(colors['rgb'][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
-            alpha = 0 if len(sorted_values) == 1 else int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
-                                 (1 - sorted_values[1]), 0))
+            if len(sorted_values) == 1:
+                alpha = 0
+            else:
+                alpha = int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
+                                           (1 - sorted_values[1]), 0))
         else:
             # Regression tree or multi-output
             color = list(colors['rgb'][0])
