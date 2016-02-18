@@ -1427,9 +1427,11 @@ class SequentialSearchCV(BaseSearchCV):
             gp.fit(tested_parameters, gp_scores)
             best_score = np.min(gp_scores)
 
+            # XXX: Iterate directly after we decide whether random sampling
+            # is relevant or not.
             if self.search == "local":
                 candidates = ParameterSampler(
-                    samples_uniform, self.n_candidates,
+                    samples_uniform, 1,
                     random_state=rng)
                 candidate = list(list(candidates)[0].values())
 
