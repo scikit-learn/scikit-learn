@@ -153,11 +153,12 @@ and ``value`` is an estimator object::
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
-        n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
-        coef0=1, copy=True, degree=3, eigen_solver='auto',
-        fit_inverse_transform=False, gamma=None, kernel='linear',
-        kernel_params=None, max_iter=None, n_components=None, random_state=None,
-        remove_zero_eig=False, tol=0, n_jobs=1))], transformer_weights=None)
+           n_components=None, whiten=False)), ('kernel_pca',
+           KernelPCA(alpha=1.0, coef0=1, copy_X=True, degree=3,
+           eigen_solver='auto', fit_inverse_transform=False, gamma=None,
+           kernel='linear', kernel_params=None, max_iter=None,
+           n_components=None, n_jobs=1, random_state=None,
+           remove_zero_eig=False, tol=0))], transformer_weights=None)
 
 Like pipelines, feature unions have a shorthand constructor called
 :func:`make_union` that does not require explicit naming of the components.

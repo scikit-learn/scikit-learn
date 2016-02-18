@@ -83,11 +83,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     n_jobs : int, default=1
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        If `-1`, then the number of jobs is set to the number of CPU cores.
 
-    copy : boolean, default=True
+    copy_X : boolean, default=True
         If True, input X is copied and stored by the model. If no further
-        changes will be done to X, setting `copy=False` saves memory by
+        changes will be done to X, setting `copy_X=False` saves memory by
         storing a reference.
 
     Attributes
@@ -106,7 +106,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Projection of the fitted data on the kernel principal components
 
     X_fit_ : (n_samples, n_features)
-        A copy of the original fitted data.
+        A copy of the original fitted data. If `copy_X=False`, X_fit_=None.
 
 
     References
@@ -122,7 +122,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, copy=True, n_jobs=1):
+                 random_state=None, copy_X=True, n_jobs=1):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -141,7 +141,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._centerer = KernelCenterer()
         self.random_state = random_state
         self.n_jobs = n_jobs
-        self.copy = copy
+        self.copy_X = copy_X
 
     @property
     def _pairwise(self):
@@ -236,7 +236,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             X_transformed = np.dot(self.alphas_, sqrt_lambdas)
             self._fit_inverse_transform(X_transformed, X)
 
-        self.X_fit_ = X.copy() if self.copy else X
+        self.X_fit_ = X.copy() if self.copy_X else X
         return self
 
     def fit_transform(self, X, y=None, **params):
