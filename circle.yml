@@ -6,7 +6,7 @@ dependencies:
   # Check whether the doc build is required, install build dependencies and
   # run sphinx to build the doc.
   override:
-    - ./continuous_integration/circle/build_doc.sh
+    - ./build_tools/circle/build_doc.sh
 test:
   # Grep error on the documentation
   override:
@@ -15,7 +15,7 @@ deployment:
  push:
    branch: master
    commands:
-     - bash continuous_integration/circle/push_doc.sh
+     - bash build_tools/circle/push_doc.sh
 general:
   # Open the doc to the API
   artifacts:
