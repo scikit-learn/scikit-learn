@@ -92,18 +92,21 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    lambdas_ : array, (n_components,)
+        Eigenvalues of the centered kernel matrix in decreasing order.
+        If `n_components` and `remove_zero_eig` are not set,
+        then all values are stored.
 
-    lambdas_ :
-        Eigenvalues of the centered kernel matrix
+    alphas_ : array, (n_samples, n_components)
+        Eigenvectors of the centered kernel matrix. If `n_components` and
+        `remove_zero_eig` are not set, then all components are stored.
 
-    alphas_ :
-        Eigenvectors of the centered kernel matrix
+    dual_coef_ : array, (n_samples, n_features)
+        Inverse transform matrix. If `fit_inverse_transform=False`,
+        dual_coef_=None
 
-    dual_coef_ :
-        Inverse transform matrix
-
-    X_transformed_fit_ :
-        Projection of the fitted data on the kernel principal components
+    X_transformed_fit_ : array, (n_samples, n_components)
+        Projection of the fitted data on the kernel principal components.
 
     X_fit_ : (n_samples, n_features)
         A copy of the original fitted data. If `copy_X=False`, X_fit_=None.
