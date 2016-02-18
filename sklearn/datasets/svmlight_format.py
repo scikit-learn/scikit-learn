@@ -276,7 +276,8 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
 
 def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
-    is_sp = int(hasattr(X, "tocsr"))
+    X_is_sp = int(hasattr(X, "tocsr"))
+    y_is_sp = int(hasattr(y, "tocsr"))
     if X.dtype.kind == 'i':
         value_pattern = u("%d:%d")
     else:
@@ -302,7 +303,7 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.writelines(b("# %s\n" % line) for line in comment.splitlines())
 
     for i in range(X.shape[0]):
-        if is_sp:
+        if X_is_sp:
             span = slice(X.indptr[i], X.indptr[i + 1])
             row = zip(X.indices[span], X.data[span])
         else:
@@ -312,10 +313,16 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
 
         if multilabel:
-            nz_labels = np.where(y[i] != 0)[0]
+            if y_is_sp:
+                nz_labels = y[i].nonzero()[1]
+            else:
+                nz_labels = np.where(y[i] != 0)[0]
             labels_str = ",".join(label_pattern % j for j in nz_labels)
         else:
-            labels_str = label_pattern % y[i]
+            if y_is_sp:
+                labels_str = label_pattern % y.data[i]
+            else:
+                labels_str = label_pattern % y[i]
 
         if query_id is not None:
             feat = (labels_str, query_id[i], s)
@@ -341,9 +348,10 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_labels]
-        Target values. Class labels must be an integer or float, or array-like
-        objects of integer or float for multilabel classifications.
+    y : {array-like, sparse matrix}, shape = [n_samples (, n_labels)]
+        Target values. Class labels must be an
+        integer or float, or array-like objects of integer or float for
+        multilabel classifications.
 
     f : string or file-like in binary mode
         If string, specifies the path that will contain the data.
@@ -385,19 +393,31 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         if six.b("\0") in comment:
             raise ValueError("comment string contains NUL byte")
 
-    y = np.asarray(y)
-    if y.ndim != 1 and not multilabel:
-        raise ValueError("expected y of shape (n_samples,), got %r"
-                         % (y.shape,))
+    yval = check_array(y, accept_sparse='csr', ensure_2d=False)
+    if sp.issparse(yval):
+        if yval.shape[1] != 1 and not multilabel:
+            raise ValueError("expected y of shape (n_samples, 1),"
+                             " got %r" % (yval.shape,))
+    else:
+        if yval.ndim != 1 and not multilabel:
+            raise ValueError("expected y of shape (n_samples,), got %r"
+                             % (yval.shape,))
 
     Xval = check_array(X, accept_sparse='csr')
-    if Xval.shape[0] != y.shape[0]:
+    if Xval.shape[0] != yval.shape[0]:
         raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
-                         " %r and %r instead." % (Xval.shape[0], y.shape[0]))
+                         " %r and %r instead." % (Xval.shape[0], yval.shape[0]))
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),
     # so sort them here, but first make sure we don't modify the user's X.
     # TODO We can do this cheaper; sorted_indices copies the whole matrix.
+    if yval is y and hasattr(yval, "sorted_indices"):
+        y = yval.sorted_indices()
+    else:
+        y = yval
+        if hasattr(y, "sort_indices"):
+            y.sort_indices()
+
     if Xval is X and hasattr(Xval, "sorted_indices"):
         X = Xval.sorted_indices()
     else:
