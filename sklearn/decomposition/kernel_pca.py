@@ -227,7 +227,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', copy=self.copy_X)
         K = self._get_kernel(X)
         self._fit_transform(K)
 
@@ -236,7 +236,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             X_transformed = np.dot(self.alphas_, sqrt_lambdas)
             self._fit_inverse_transform(X_transformed, X)
 
-        self.X_fit_ = X.copy() if self.copy_X else X
+        self.X_fit_ = X
         return self
 
     def fit_transform(self, X, y=None, **params):
