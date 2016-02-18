@@ -9,6 +9,7 @@ from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -98,6 +99,19 @@ def test_lle_manifold():
             assert_less(np.abs(clf.reconstruction_error_ -
                                reconstruction_error),
                         tol * reconstruction_error, msg=details)
+
+
+# Test the error raised when parameter passed to lle is invalid
+def test_lle_init_parameters():
+    X = np.random.rand(5, 3)
+
+    clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
+    msg = "unrecognized eigen_solver 'error'"
+    assert_raise_message(ValueError, msg, clf.fit, X)
+
+    clf = manifold.LocallyLinearEmbedding(method="error")
+    msg = "unrecognized method 'error'"
+    assert_raise_message(ValueError, msg, clf.fit, X)
 
 
 def test_pipeline():
