@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import pickle
 
@@ -166,7 +167,12 @@ def test_isotonic_regression_auto_decreasing():
 
     # Create model and fit_transform
     ir = IsotonicRegression(increasing='auto')
-    y_ = assert_no_warnings(ir.fit_transform, x, y)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        y_ = ir.fit_transform(x, y)
+        # work-around for pearson divide warnings in scipy <= 0.17.0
+        assert_true(all(["invalid value encountered in "
+                         in str(warn.message) for warn in w]))
 
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
@@ -180,7 +186,12 @@ def test_isotonic_regression_auto_increasing():
 
     # Create model and fit_transform
     ir = IsotonicRegression(increasing='auto')
-    y_ = assert_no_warnings(ir.fit_transform, x, y)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        y_ = ir.fit_transform(x, y)
+        # work-around for pearson divide warnings in scipy <= 0.17.0
+        assert_true(all(["invalid value encountered in "
+                         in str(warn.message) for warn in w]))
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
