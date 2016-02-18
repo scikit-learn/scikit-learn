@@ -1421,55 +1421,79 @@ class SequentialSearchCV(BaseSearchCV):
                 'random_state': self.random_state}
 
         rng = check_random_state(self.random_state)
-        for i in range(self.n_iter - self.n_init):
-            # Model with a Gaussian Process
-            gp = GaussianProcessRegressor(**self.gp_params)
-            gp.fit(tested_parameters, gp_scores)
-            best_score = np.min(gp_scores)
 
-            # XXX: Iterate directly after we decide whether random sampling
-            # is relevant or not.
-            if self.search == "local":
-                candidates = ParameterSampler(
-                    samples_uniform, 1,
-                    random_state=rng)
-                candidate = list(list(candidates)[0].values())
 
-                res = optimize.fmin_l_bfgs_b(
-                    _acquisition_func,
-                    np.asfortranarray(candidate),
-                    args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
-                    bounds=bounds, approx_grad=True, maxiter=10)
-                best_candidate = dict(zip(params_list, res[0]))
-            elif self.search == "sampling":
-                # Sample candidates and predict their corresponding
-                # acquisition values
-                candidates = ParameterSampler(
-                    samples_uniform, self.n_candidates,
-                    random_state=rng)
-                candidate_values = []
-                for s in candidates:
-                    candidate_values.append(list(s.values()))
-                candidate_values = np.asarray(candidate_values)
+        with Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose,
+            pre_dispatch=self.pre_dispatch) as parallel:
 
-                acquisition_vals = _acquisition_func(
-                    candidate_values, gp, best_score,
-                    self.acquisition_function,
-                    self.xi, self.kappa)
+            for i in range(self.n_iter - self.n_init):
 
-                best_idx = np.argmin(acquisition_vals)
-                best_candidate = dict(zip(params_list, candidate_values[best_idx]))
-            else:
-                raise ValueError("Search not supported.")
+                # Model with a Gaussian Process
+                gp = GaussianProcessRegressor(**self.gp_params)
+                gp.fit(tested_parameters, gp_scores)
+                best_score = np.min(gp_scores)
 
-            best_param, best_score, best_grid_score, _ = self._evaluate_params(
-                [best_candidate], cv, X, y, labels)
-            tested_parameters.append(best_param[0])
-            gp_scores.append(-best_score[0])
-            grid_scores.append(best_grid_score[0])
-            if self.verbose > 0:
-                print('Step ' + str(i+self.n_init) + ' - Hyperparameter '
-                      + str(best_candidate) + ', score: ' + str(best_score))
+                # XXX: Iterate directly after we decide whether random sampling
+                # is relevant or not.
+                if self.search == "local":
+                    candidates = ParameterSampler(
+                        samples_uniform, 1,
+                        random_state=rng)
+                    candidate = list(list(candidates)[0].values())
+
+                    res = optimize.fmin_l_bfgs_b(
+                        _acquisition_func,
+                        np.asfortranarray(candidate),
+                        args=(gp, best_score, self.acquisition_function, self.xi, self.kappa),
+                        bounds=bounds, approx_grad=True, maxiter=10)
+                    best_candidate = dict(zip(params_list, res[0]))
+                elif self.search == "sampling":
+                    # Sample candidates and predict their corresponding
+                    # acquisition values
+                    candidates = ParameterSampler(
+                        samples_uniform, self.n_candidates,
+                        random_state=rng)
+                    candidate_values = []
+                    for s in candidates:
+                        candidate_values.append(list(s.values()))
+                    candidate_values = np.asarray(candidate_values)
+
+                    acquisition_vals = _acquisition_func(
+                        candidate_values, gp, best_score,
+                        self.acquisition_function,
+                        self.xi, self.kappa)
+
+                    best_idx = np.argmin(acquisition_vals)
+                    best_candidate = dict(zip(params_list, candidate_values[best_idx]))
+                else:
+                    raise ValueError("Search not supported.")
+
+                scaled_candidates = self.scale_candidates(best_candidate)
+                all_scores = parallel(delayed(_fit_and_score)(
+                    clone(self.estimator), X, y, self.scorer_,
+                    train, test, self.verbose, scaled_candidates,
+                    self.fit_params, return_parameters=False,
+                    error_score=self.error_score)
+                    for train, test in cv.split(X, y, labels))
+
+                all_scores = np.asarray(all_scores)
+                fold_scores = all_scores[:, 0]
+                n_test_samples = all_scores[:, 1]
+
+                if self.iid:
+                    score = np.sum(
+                        fold_scores * n_test_samples) / np.sum(n_test_samples)
+                else:
+                    score = np.mean(fold_scores)
+
+                tested_parameters.append(list(best_candidate.values()))
+                gp_scores.append(-score)
+                grid_scores.append(
+                    _CVScoreTuple(scaled_candidates, score, fold_scores))
+                if self.verbose > 0:
+                    print('Step ' + str(i+self.n_init) + ' - Hyperparameter '
+                          + str(best_candidate) + ', score: ' + str(best_score))
 
         # Store the computed scores
         self.grid_scores_ = grid_scores
