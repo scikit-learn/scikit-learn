@@ -1391,9 +1391,10 @@ class SequentialSearchCV(BaseSearchCV):
 
         self._param_distributions = param_distributions
 
+        sampling_object = stats.uniform()
         samples_uniform = dict()
         for param, _ in param_distributions.items():
-            samples_uniform[param] = stats.uniform()
+            samples_uniform[param] = sampling_object
 
         cv_scores, grid_scores, tested_parameters = [], [], []
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
@@ -1422,7 +1423,6 @@ class SequentialSearchCV(BaseSearchCV):
 
         rng = check_random_state(self.random_state)
 
-
         with Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=self.pre_dispatch) as parallel:
@@ -1434,13 +1434,15 @@ class SequentialSearchCV(BaseSearchCV):
                 gp.fit(tested_parameters, gp_scores)
                 best_score = np.min(gp_scores)
 
-                # XXX: Iterate directly after we decide whether random sampling
-                # is relevant or not.
+                # Using ParameterSampler here has some non-negligible
+                # overhead of converting views of a dict into a list.
                 if self.search == "local":
-                    candidates = ParameterSampler(
-                        samples_uniform, 1,
-                        random_state=rng)
-                    candidate = list(list(candidates)[0].values())
+                    if sp_version < (0, 16):
+                        candidate = sampling_object.rvs(
+                            (1, n_hyperparam_dims))
+                    else:
+                        candidate = sampling_object.rvs(
+                            (1, n_hyperparam_dims), random_state=rng)
 
                     res = optimize.fmin_l_bfgs_b(
                         _acquisition_func,
@@ -1449,15 +1451,14 @@ class SequentialSearchCV(BaseSearchCV):
                         bounds=bounds, approx_grad=True, maxiter=10)
                     best_candidate = dict(zip(params_list, res[0]))
                 elif self.search == "sampling":
-                    # Sample candidates and predict their corresponding
-                    # acquisition values
-                    candidates = ParameterSampler(
-                        samples_uniform, self.n_candidates,
-                        random_state=rng)
-                    candidate_values = []
-                    for s in candidates:
-                        candidate_values.append(list(s.values()))
-                    candidate_values = np.asarray(candidate_values)
+
+                    if sp_version < (0, 16):
+                        candidate_values = sampling_object.rvs(
+                            (self.n_candidates, n_hyperparam_dims))
+                    else:
+                        candidate_values = sampling_object.rvs(
+                            (self.n_candidates, n_hyperparam_dims),
+                            random_state=rng)
 
                     acquisition_vals = _acquisition_func(
                         candidate_values, gp, best_score,

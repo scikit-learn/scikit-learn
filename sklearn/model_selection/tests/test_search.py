@@ -865,33 +865,34 @@ def test_parameters_sampler_replacement():
 
 def test_gp_search():
     # Test that the best estimator contains the right value for foo_param
-    clf = MockClassifier()
-    for acquisition_function in ('EI', 'UCB'):
-        gp_search = SequentialSearchCV(
-            clf, {'foo_param': {'bounds': (0, 3), 'type': int}},
-            acquisition_function=acquisition_function,
-            random_state=0, n_init=3)
-        # make sure it selects the smallest parameter in case of ties
-        gp_search.fit(X, y)
-        assert_equal(gp_search.best_score_, 1)
+    for search in ['sampling', 'local']:
+        clf = MockClassifier()
+        for acquisition_function in ('EI', 'UCB'):
+            gp_search = SequentialSearchCV(
+                clf, {'foo_param': {'bounds': (0, 3), 'type': int}},
+                acquisition_function=acquisition_function,
+                random_state=0, n_init=3, search=search)
+            # make sure it selects the smallest parameter in case of ties
+            gp_search.fit(X, y)
+            assert_equal(gp_search.best_score_, 1)
 
-    clf = MockContinuousClassifier()
-    for acquisition_function in ('UCB', 'EI'):
-        gp_search = SequentialSearchCV(
-            clf, {'foo_param': {'bounds': (-1, 1)}},
-            acquisition_function=acquisition_function,
-            random_state=0)
-        # make sure it selects the smallest parameter in case of ties
-        gp_search.fit(X, y)
-        # test that it is close to zero
-        assert_less_equal(np.abs(gp_search.best_estimator_.foo_param), 0.1)
-        assert_less_equal(gp_search.best_score_, 1)
+        clf = MockContinuousClassifier()
+        for acquisition_function in ('UCB', 'EI'):
+            gp_search = SequentialSearchCV(
+                clf, {'foo_param': {'bounds': (-1, 1)}},
+                acquisition_function=acquisition_function,
+                random_state=0, search=search)
+            # make sure it selects the smallest parameter in case of ties
+            gp_search.fit(X, y)
+            # test that it is close to zero
+            assert_less_equal(np.abs(gp_search.best_estimator_.foo_param), 0.1)
+            assert_less_equal(gp_search.best_score_, 1)
 
-    # Smoke test the score etc:
-    gp_search.score(X, y)
-    gp_search.predict_proba(X)
-    gp_search.decision_function(X)
-    gp_search.transform(X)
+        # Smoke test the score etc:
+        gp_search.score(X, y)
+        gp_search.predict_proba(X)
+        gp_search.decision_function(X)
+        gp_search.transform(X)
 
     # Test exception handling on scoring
     gp_search.scoring = 'sklearn'
@@ -986,18 +987,19 @@ def check_grid_scores_parameters(grid_scores, param, type_, bounds):
 
 
 def test_bounds():
-    clf = MockContinuousClassifier()
-    grid_search = SequentialSearchCV(
-        clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
-        n_init=2, n_iter=5, random_state=0)
-    grid_search.fit(X, y)
-    check_grid_scores_parameters(
-        grid_search.grid_scores_, 'foo_param', float, (0, 3))
+    for search in ['sampling', 'local']:
+        clf = MockContinuousClassifier()
+        grid_search = SequentialSearchCV(
+            clf, {'foo_param': {'bounds': (0, 3)}}, refit=False,
+            n_init=2, n_iter=5, random_state=0)
+        grid_search.fit(X, y)
+        check_grid_scores_parameters(
+            grid_search.grid_scores_, 'foo_param', float, (0, 3))
 
-    clf = MockClassifier()
-    grid_search = SequentialSearchCV(
-        clf, {'foo_param': {'bounds': (0, 3), 'type': int}}, refit=False,
-        n_init=2, n_iter=5, random_state=0)
-    grid_search.fit(X, y)
-    check_grid_scores_parameters(
-        grid_search.grid_scores_, 'foo_param', int, (0, 3))
+        clf = MockClassifier()
+        grid_search = SequentialSearchCV(
+            clf, {'foo_param': {'bounds': (0, 3), 'type': int}}, refit=False,
+            n_init=2, n_iter=5, random_state=0)
+        grid_search.fit(X, y)
+        check_grid_scores_parameters(
+            grid_search.grid_scores_, 'foo_param', int, (0, 3))
