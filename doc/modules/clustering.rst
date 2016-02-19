@@ -767,6 +767,20 @@ by black points below.
     The possibility to use custom metrics is retained;
     for details, see :class:`NearestNeighbors`.
 
+    This implementation is by default not memory efficient because it constructs
+    a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
+    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    A couple of mechanisms for getting around this are:
+
+    - A sparse radius neighborhood graph (where missing
+      entries are presumed to be out of eps) can be precomputed in a memory-efficient
+      way and dbscan can be run over this with ``metric='precomputed'``.
+
+    - The dataset can be compressed, either by removing exact duplicates if
+      these occur in your data, or by using BIRCH. Then you only have a
+      relatively small number of representatives for a large number of points.
+      You can then provide a ``sample_weight`` when fitting DBSCAN.
+
 .. topic:: References:
 
  * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
