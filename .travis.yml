@@ -59,9 +59,9 @@ matrix:
        before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
 
 
-install: source continuous_integration/install.sh
-script: bash continuous_integration/test_script.sh
-after_success: source continuous_integration/after_success.sh
+install: source build_tools/travis/install.sh
+script: bash build_tools/travis/test_script.sh
+after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:
     urls:

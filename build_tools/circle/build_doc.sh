@@ -5,7 +5,7 @@ set -e
 # documentation: a pull request that does not change any file in doc/ or
 # examples/ folder should be skipped unless the "[doc: build]" is found the
 # commit message.
-BUILD_DOC=`python continuous_integration/circle/check_build_doc.py`
+BUILD_DOC=`python build_tools/circle/check_build_doc.py`
 echo -e $BUILD_DOC
 if [[ $BUILD_DOC == "SKIP:"* ]]; then
     touch ~/log.txt  # the "test" segment needs that file

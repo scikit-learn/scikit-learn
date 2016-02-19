@@ -176,8 +176,9 @@ def get_numpy_status():
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
-    p = subprocess.call([sys.executable, os.path.join(cwd, 'sklearn',
-                                        '_build_utils', 'cythonize.py'),
+    p = subprocess.call([sys.executable, os.path.join(cwd,
+                                                      'build_tools',
+                                                      'cythonize.py'),
                          'sklearn'],
                         cwd=cwd)
     if p != 0:
