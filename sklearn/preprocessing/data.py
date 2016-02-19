@@ -1182,6 +1182,35 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         return np.vstack(np.bincount(c, minlength=self.n_input_features_)
                          for c in combinations)
 
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length n_output_features
+
+        """
+        powers = self.powers_
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(len(powers))]
+        feature_names = []
+        for row in powers:
+            inds = np.where(row)[0]
+            if len(inds):
+                name = " ".join("%s^%d" % (input_features[ind], exp)
+                                for ind, exp in zip(inds, row[inds]))
+            else:
+                name = "1"
+            feature_names.append(name)
+        return feature_names
+
     def fit(self, X, y=None):
         """
         Compute number of output features.
