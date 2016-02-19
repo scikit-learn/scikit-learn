@@ -33,9 +33,11 @@ from sklearn.metrics import roc_curve
 
 from sklearn.exceptions import UndefinedMetricWarning
 
+from sklearn.dummy import DummyClassifier
 
 ###############################################################################
 # Utilities for testing
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -126,6 +128,29 @@ def _average_precision(y_true, y_score):
 def test_roc_curve():
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
+    expected_auc = _auc(y_true, probas_pred)
+
+    for drop in [True, False]:
+        fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+                                         drop_intermediate=drop)
+        roc_auc = auc(fpr, tpr)
+        assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
+        assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+        assert_equal(fpr.shape, tpr.shape)
+        assert_equal(fpr.shape, thresholds.shape)
+
+
+def test_roc_curve_dummy_classifier():
+    # Test that AUC makes sense for the corner case of constant predictions
+    n_samples = 10
+    n_features = 5
+    rng = np.random.RandomState(0)
+    X = rng.randn(n_samples, 200 * n_features)
+    y_true = np.ones(n_samples)
+    y_true[:3] = -1  # some negatives
+
+    cl = DummyClassifier(strategy='most_frequent').fit(X, y_true)
+    probas_pred = cl.predict_proba(X)[:, 1]
     expected_auc = _auc(y_true, probas_pred)
 
     for drop in [True, False]:
