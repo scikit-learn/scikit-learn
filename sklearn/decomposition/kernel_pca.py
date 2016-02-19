@@ -25,12 +25,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int or None
+    n_components : int, default=None
         Number of components. If None, all non-zero components are kept.
 
-    kernel: "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
-        Kernel.
-        Default: "linear"
+    kernel : "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
+        Kernel. Default: "linear"
 
     degree : int, default=3
         Degree for poly kernels. Ignored by other kernels.
@@ -47,28 +46,26 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
-    alpha: int
+    alpha : int, default=1.0
         Hyperparameter of the ridge regression that learns the
         inverse transform (when fit_inverse_transform=True).
-        Default: 1.0
 
-    fit_inverse_transform: bool
+    fit_inverse_transform : bool, default=False
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
-        Default: False
 
-    eigen_solver: string ['auto'|'dense'|'arpack']
+    eigen_solver : string ['auto'|'dense'|'arpack']
         Select eigensolver to use. If n_components is much less than
         the number of training samples, arpack may be more efficient
         than the dense eigensolver.
 
-    tol: float
-        convergence tolerance for arpack.
-        Default: 0 (optimal value will be chosen by arpack)
+    tol : float, default=0
+        Convergence tolerance for arpack. If zero, optimal value will be
+        chosen by arpack.
 
-    max_iter : int
-        maximum number of iterations for arpack
-        Default: None (optimal value will be chosen by arpack)
+    max_iter : int, default=None
+        Maximum number of iterations for arpack. If None, optimal value will
+        be chosen by arpack
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
@@ -77,7 +74,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int seed, RandomState instance, or None, default : None
+    random_state : int seed, RandomState instance, or None, default=None
         A pseudo random number generator used for the initialization of the
         residuals when eigen_solver == 'arpack'.
 
