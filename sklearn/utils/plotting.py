@@ -7,10 +7,9 @@ Utility function for plotting the decision regions of a classifier.
 # Licence: BSD 3 clause
 
 from itertools import cycle
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import colors as mcolors
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 
 def plot_decision_regions(X, y, clf, X_highlight=None,
@@ -70,9 +69,9 @@ def plot_decision_regions(X, y, clf, X_highlight=None,
     marker_gen = cycle(['s', '^', 'o', 'x', 'v', '<', '>'])
 
     # make color map
-    n_classes = len(np.unique(y))
+    n_classes = len(np.unique(y.astype(int)))
     colors = ['red', 'blue', 'limegreen', 'gray', 'cyan']
-    cmap = matplotlib.colors.ListedColormap(colors[:n_classes])
+    cmap = ListedColormap(colors[:n_classes])
 
     # plot the decision surface
     if dim == '2d':
@@ -98,13 +97,13 @@ def plot_decision_regions(X, y, clf, X_highlight=None,
 
     # plot class samples
 
-    for c in np.unique(y):
+    for c in np.unique(y.astype(int)):
         if dim == '2d':
-            y_data = X[y == c, 1]
+            y_data = X[y.astype(int) == c, 1]
         else:
-            y_data = [0 for i in X[y == c]]
+            y_data = [0 for i in X[y.astype(int) == c]]
 
-        plt.scatter(x=X[y == c, 0],
+        plt.scatter(x=X[y.astype(int) == c, 0],
                     y=y_data,
                     alpha=0.8,
                     c=cmap(c),
