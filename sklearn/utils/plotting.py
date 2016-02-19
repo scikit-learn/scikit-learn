@@ -7,8 +7,8 @@ Utility function for plotting the decision regions of a classifier.
 # Licence: BSD 3 clause
 
 from itertools import cycle
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import ListedColormap
 
 
@@ -16,7 +16,7 @@ def plot_decision_regions(X, y, clf, X_highlight=None,
                           res=0.02, legend=1,
                           hide_spines=True,
                           markers='s^oxv<>',
-                          colors=['red', 'blue', 'limegreen', 'gray', 'cyan']):
+                          colors='red,blue,limegreen,gray,cyan'):
     """Plot decision regions of a classifier.
 
     Parameters
@@ -39,8 +39,8 @@ def plot_decision_regions(X, y, clf, X_highlight=None,
         No legend if legend is 0.
     markers : list
         Scatterplot markers.
-    colors : list
-        Colors.
+    colors : str (default 'red,blue,limegreen,gray,cyan')
+        Comma separated list of colors.
 
     Returns
     ---------
@@ -66,11 +66,11 @@ def plot_decision_regions(X, y, clf, X_highlight=None,
     else:
         dim = '1d'
 
-    marker_gen = cycle(['s', '^', 'o', 'x', 'v', '<', '>'])
+    marker_gen = cycle(list(markers))
 
     # make color map
     n_classes = len(np.unique(y.astype(int)))
-    colors = ['red', 'blue', 'limegreen', 'gray', 'cyan']
+    colors = colors.split(',')
     cmap = ListedColormap(colors[:n_classes])
 
     # plot the decision surface
