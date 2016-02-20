@@ -30,13 +30,12 @@ import sphinx_gallery
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx_gallery.gen_gallery',
-              'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
-              'sphinx.ext.linkcode', 'sphinx.ext.doctest',
-              ]
-
-autosummary_generate = True
+extensions = [
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
+    'sphinx.ext.linkcode', 'sphinx.ext.doctest',
+    'sphinx_gallery.gen_gallery',
+]
 
 autodoc_default_flags = ['members', 'inherited-members']
 
@@ -227,13 +226,13 @@ trim_doctests_flags = True
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
-    'reference_url'     : {
+    'reference_url': {
         'sklearn': None,
         'matplotlib': 'http://matplotlib.org',
         'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
         'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
         'nibabel': 'http://nipy.org/nibabel'}
-    }
+}
 
 
 # The following dictionary contains the information used to create the
@@ -246,6 +245,7 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}
 
+
 def make_carousel_thumbs(app, exception):
     """produces the final resized carousel images"""
     if exception is not None:
@@ -256,7 +256,7 @@ def make_carousel_thumbs(app, exception):
     for glr_plot, max_width in carousel_thumbs.items():
         image = os.path.join(image_dir, glr_plot)
         if os.path.exists(image):
-            c_thumb = os.path.join(image_dir, glr_plot[:-4]+'_carousel.png')
+            c_thumb = os.path.join(image_dir, glr_plot[:-4] + '_carousel.png')
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
 
 
