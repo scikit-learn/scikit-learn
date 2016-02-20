@@ -29,7 +29,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Number of components. If None, all non-zero components are kept.
 
     kernel : "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
-        Kernel. Default: "linear"
+        Kernel. Default="linear".
 
     degree : int, default=3
         Degree for poly kernels. Ignored by other kernels.
@@ -65,7 +65,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     max_iter : int, default=None
         Maximum number of iterations for arpack. If None, optimal value will
-        be chosen by arpack
+        be chosen by arpack.
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
@@ -106,8 +106,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Projection of the fitted data on the kernel principal components.
 
     X_fit_ : (n_samples, n_features)
-        The data used to fit the model.
-
+        The data used to fit the model. If `copy_X=False`, then `X_fit_` is
+        a reference.
 
     References
     ----------
