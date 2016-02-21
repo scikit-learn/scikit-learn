@@ -100,7 +100,11 @@ def auc(x, y, reorder=False):
                                  "the x array is not increasing: %s" % x)
 
     area = direction * np.trapz(y, x)
-
+    if isinstance(area, np.memmap):
+        # Reductions such as .sum used internally in np.trapz do not return a
+        # scalar by default for numpy.memmap instances contrary to
+        # regular numpy.ndarray instances.
+        area = area.dtype.type(area)
     return area
 
 
@@ -122,7 +126,8 @@ def average_precision_score(y_true, y_score, average="macro",
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -193,7 +198,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -431,7 +437,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
-        class or confidence values.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     pos_label : int
         Label considered as positive and others are considered negative.
@@ -561,7 +568,8 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     Returns
     -------
@@ -633,7 +641,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -691,7 +700,8 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.

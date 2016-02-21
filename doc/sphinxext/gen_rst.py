@@ -419,7 +419,7 @@ SINGLE_IMAGE = """
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'plot_classifier_comparison_001.png': (1, 600),
                    'plot_outlier_detection_001.png': (3, 372),
-                   'plot_gp_regression_001.png': (2, 250),
+                   'plot_gpr_co2_001.png': (1, 350),
                    'plot_adaboost_twoclass_001.png': (1, 372),
                    'plot_compare_methods_001.png': (1, 349)}
 

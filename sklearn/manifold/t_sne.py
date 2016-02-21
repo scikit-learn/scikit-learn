@@ -520,7 +520,7 @@ class TSNE(BaseEstimator):
     perplexity : float, optional (default: 30)
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
-        usually require a larger perplexity. Consider selcting a value
+        usually require a larger perplexity. Consider selecting a value
         between 5 and 50. The choice is not extremely critical since t-SNE
         is quite insensitive to this parameter.
 
@@ -607,6 +607,9 @@ class TSNE(BaseEstimator):
     embedding_ : array-like, shape (n_samples, n_components)
         Stores the embedding vectors.
 
+    kl_divergence_ : float
+        Kullback-Leibler divergence after optimization.
+
     Examples
     --------
 
@@ -664,7 +667,7 @@ class TSNE(BaseEstimator):
         Note that sparse arrays can only be handled by method='exact'.
         It is recommended that you convert your sparse array to dense
         (e.g. `X.toarray()`) if it fits in memory, or otherwise using a
-        dimensionality reduction technique (e.g. TrucnatedSVD).
+        dimensionality reduction technique (e.g. TruncatedSVD).
 
         Parameters
         ----------
@@ -691,7 +694,6 @@ class TSNE(BaseEstimator):
                             'the array is small enough for it to fit in '
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
-            X = check_array(X, dtype=np.float32)
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=np.float64)
         random_state = check_random_state(self.random_state)
@@ -713,6 +715,7 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise distances...")
+
             if self.metric == "euclidean":
                 distances = pairwise_distances(X, metric=self.metric,
                                                squared=True)
@@ -825,14 +828,17 @@ class TSNE(BaseEstimator):
 
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         opt_args['n_iter'] = 100
         opt_args['momentum'] = 0.8
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
         if self.verbose:
-            print("[t-SNE] Error after %d iterations with early "
-                  "exaggeration: %f" % (it + 1, error))
+            print("[t-SNE] KL divergence after %d iterations with early "
+                  "exaggeration: %f" % (it + 1, kl_divergence))
         # Save the final number of iterations
         self.n_iter_final = it
 
@@ -841,10 +847,13 @@ class TSNE(BaseEstimator):
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
         params, error, it = _gradient_descent(obj_func, params, **opt_args)
+
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
+            print("[t-SNE] Error after %d iterations: %f"
+                  % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)
+        self.kl_divergence_ = kl_divergence
 
         return X_embedded
 

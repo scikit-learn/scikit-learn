@@ -218,7 +218,7 @@ def test_sparse_regression():
 
 
 def test_bootstrap_samples():
-    # Test that bootstraping samples generate non-perfect base estimators.
+    # Test that bootstrapping samples generate non-perfect base estimators.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -246,7 +246,7 @@ def test_bootstrap_samples():
 
 
 def test_bootstrap_features():
-    # Test that bootstraping features may generate dupplicate features.
+    # Test that bootstrapping features may generate duplicate features.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,

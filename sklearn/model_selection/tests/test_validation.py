@@ -125,7 +125,9 @@ class MockEstimatorWithParameter(BaseEstimator):
 # check_consistent_length
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
-y = np.arange(10) // 2
+y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
+# The number of samples per class needs to be > n_folds, for StratifiedKFold(3)
+y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 
 
 def test_cross_val_score():
@@ -134,38 +136,38 @@ def test_cross_val_score():
     for a in range(-10, 10):
         clf.a = a
         # Smoke test
-        scores = cross_val_score(clf, X, y)
-        assert_array_equal(scores, clf.score(X, y))
+        scores = cross_val_score(clf, X, y2)
+        assert_array_equal(scores, clf.score(X, y2))
 
         # test with multioutput y
-        scores = cross_val_score(clf, X_sparse, X)
-        assert_array_equal(scores, clf.score(X_sparse, X))
+        multioutput_y = np.column_stack([y2, y2[::-1]])
+        scores = cross_val_score(clf, X_sparse, multioutput_y)
+        assert_array_equal(scores, clf.score(X_sparse, multioutput_y))
 
-        scores = cross_val_score(clf, X_sparse, y)
-        assert_array_equal(scores, clf.score(X_sparse, y))
+        scores = cross_val_score(clf, X_sparse, y2)
+        assert_array_equal(scores, clf.score(X_sparse, y2))
 
         # test with multioutput y
-        scores = cross_val_score(clf, X_sparse, X)
-        assert_array_equal(scores, clf.score(X_sparse, X))
+        scores = cross_val_score(clf, X_sparse, multioutput_y)
+        assert_array_equal(scores, clf.score(X_sparse, multioutput_y))
 
     # test with X and y as list
     list_check = lambda x: isinstance(x, list)
     clf = CheckingClassifier(check_X=list_check)
-    scores = cross_val_score(clf, X.tolist(), y.tolist())
+    scores = cross_val_score(clf, X.tolist(), y2.tolist())
 
     clf = CheckingClassifier(check_y=list_check)
-    scores = cross_val_score(clf, X, y.tolist())
+    scores = cross_val_score(clf, X, y2.tolist())
 
-    assert_raises(ValueError, cross_val_score, clf, X, y,
-                  scoring="sklearn")
+    assert_raises(ValueError, cross_val_score, clf, X, y2, scoring="sklearn")
 
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
     clf = MockClassifier(allow_nd=True)
-    scores = cross_val_score(clf, X_3d, y)
+    scores = cross_val_score(clf, X_3d, y2)
 
     clf = MockClassifier(allow_nd=False)
-    assert_raises(ValueError, cross_val_score, clf, X_3d, y)
+    assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
 
 
 def test_cross_val_score_predict_labels():
@@ -197,7 +199,8 @@ def test_cross_val_score_pandas():
         pass
     for TargetType, InputFeatureType in types:
         # X dataframe, y series
-        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        # 3 fold cross val is used so we need atleast 3 samples per class
+        X_df, y_ser = InputFeatureType(X), TargetType(y2)
         check_df = lambda x: isinstance(x, InputFeatureType)
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
@@ -476,21 +479,27 @@ def test_cross_val_predict():
 
 
 def test_cross_val_predict_input_types():
-    clf = Ridge()
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X_sparse = coo_matrix(X)
+    multioutput_y = np.column_stack([y, y[::-1]])
+
+    clf = Ridge(fit_intercept=False, random_state=0)
+    # 3 fold cv is used --> atleast 3 samples per class
     # Smoke test
     predictions = cross_val_predict(clf, X, y)
-    assert_equal(predictions.shape, (10,))
+    assert_equal(predictions.shape, (150,))
 
     # test with multioutput y
-    predictions = cross_val_predict(clf, X_sparse, X)
-    assert_equal(predictions.shape, (10, 2))
+    predictions = cross_val_predict(clf, X_sparse, multioutput_y)
+    assert_equal(predictions.shape, (150, 2))
 
     predictions = cross_val_predict(clf, X_sparse, y)
-    assert_array_equal(predictions.shape, (10,))
+    assert_array_equal(predictions.shape, (150,))
 
     # test with multioutput y
-    predictions = cross_val_predict(clf, X_sparse, X)
-    assert_array_equal(predictions.shape, (10, 2))
+    predictions = cross_val_predict(clf, X_sparse, multioutput_y)
+    assert_array_equal(predictions.shape, (150, 2))
 
     # test with X and y as list
     list_check = lambda x: isinstance(x, list)
@@ -505,7 +514,7 @@ def test_cross_val_predict_input_types():
     check_3d = lambda x: x.ndim == 3
     clf = CheckingClassifier(check_X=check_3d)
     predictions = cross_val_predict(clf, X_3d, y)
-    assert_array_equal(predictions.shape, (10,))
+    assert_array_equal(predictions.shape, (150,))
 
 
 def test_cross_val_predict_pandas():
@@ -518,7 +527,7 @@ def test_cross_val_predict_pandas():
         pass
     for TargetType, InputFeatureType in types:
         # X dataframe, y series
-        X_df, y_ser = InputFeatureType(X), TargetType(y)
+        X_df, y_ser = InputFeatureType(X), TargetType(y2)
         check_df = lambda x: isinstance(x, InputFeatureType)
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)

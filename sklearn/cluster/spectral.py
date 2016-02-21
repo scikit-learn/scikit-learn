@@ -351,6 +351,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
     affinity_matrix_ : array-like, shape (n_samples, n_samples)
@@ -368,7 +372,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     similarity matrix that is well suited for the algorithm by
     applying the Gaussian (RBF, heat) kernel::
 
-        np.exp(- X ** 2 / (2. * delta ** 2))
+        np.exp(- dist_matrix ** 2 / (2. * delta ** 2))
+
+    Where ``delta`` is a free parameter representing the width of the Gaussian
+    kernel.
 
     Another alternative is to take a symmetric version of the k
     nearest neighbors connectivity matrix of the points.
@@ -395,7 +402,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
                  eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
-                 kernel_params=None):
+                 kernel_params=None, n_jobs=1):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.random_state = random_state
@@ -408,6 +415,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.degree = degree
         self.coef0 = coef0
         self.kernel_params = kernel_params
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         """Creates an affinity matrix for X using the selected affinity,
@@ -428,7 +436,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           "set ``affinity=precomputed``.")
 
         if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True)
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True,
+                                            n_jobs=self.n_jobs)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X

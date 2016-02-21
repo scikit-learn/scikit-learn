@@ -395,7 +395,7 @@ def r2_score(y_true, y_pred,
 
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
-        Default value correponds to 'variance_weighted', this behaviour is
+        Default value corresponds to 'variance_weighted', this behaviour is
         deprecated since version 0.17 and will be changed to 'uniform_average'
         starting from 0.19.
 

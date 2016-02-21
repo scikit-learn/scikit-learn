@@ -498,11 +498,11 @@ In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
 .. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_001.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
 .. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|

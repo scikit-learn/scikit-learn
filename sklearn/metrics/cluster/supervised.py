@@ -45,7 +45,7 @@ def check_clusterings(labels_true, labels_pred):
 
 
 def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000):
-    """Build a contengency matrix describing the relationship between labels.
+    """Build a contingency matrix describing the relationship between labels.
 
     Parameters
     ----------

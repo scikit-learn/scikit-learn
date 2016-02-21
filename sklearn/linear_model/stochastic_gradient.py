@@ -533,7 +533,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             Weights applied to individual samples.
             If not provided, uniform weights are assumed. These weights will
             be multiplied with class_weight (passed through the
-            contructor) if class_weight is specified
+            constructor) if class_weight is specified
 
         Returns
         -------

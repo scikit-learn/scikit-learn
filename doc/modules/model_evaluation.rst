@@ -48,7 +48,7 @@ Common cases: predefined values
 
 For the most common use cases, you can designate a scorer object with the
 ``scoring`` parameter; the table below shows all possible values.
-All scorer ojects follow the convention that higher return values are better
+All scorer objects follow the convention that higher return values are better
 than lower return values.  Thus the returns from mean_absolute_error
 and mean_squared_error, which measure the distance between the model
 and the data, are negated.
