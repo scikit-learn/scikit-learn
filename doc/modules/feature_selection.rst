@@ -265,7 +265,7 @@ of features non zero.
 
    * N. Meinshausen, P. Buhlmann, "Stability selection",
      Journal of the Royal Statistical Society, 72 (2010)
-     http://arxiv.org/pdf/0809.2932.pdf
+     http://arxiv.org/abs/0809.2932
 
    * F. Bach, "Model-Consistent Sparse Estimation through the Bootstrap"
      https://hal.inria.fr/hal-00354771/
