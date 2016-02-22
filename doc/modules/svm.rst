@@ -620,7 +620,7 @@ term :math:`\rho` :
 
  * `"Support-vector networks"
    <http://www.springerlink.com/content/k238jx04hm87j80g/>`_,
-   C. Cortes, V. Vapnik - Machine Leaming, 20, 273-297 (1995).
+   C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
 
@@ -703,9 +703,9 @@ computations. These libraries are wrapped using C and Cython.
   used, please refer to
 
     - `LIBSVM: a library for Support Vector Machines
-      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
-    - `LIBLINEAR: a library for Large Linear Classification
-      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_
+    - `LIBLINEAR -- a library for Large Linear Classification
+      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 
