@@ -209,6 +209,11 @@ Enhancements
      (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
      `Raghav R V`_.
 
+   - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
+     with ``np.float32`` and ``np.float64`` input data without converting it.
+     This allows to reduce the memory consumption by using ``np.float32``.
+     (`#6430 <https://github.com/scikit-learn/scikit-learn/pull/6430>`_)
+     By `Sebastian Säger`_.
 
 Bug fixes
 .........
@@ -1769,7 +1774,7 @@ List of contributors for release 0.15 by number of commits.
 *   4	Alexis Metaireau
 *   4	Ignacio Rossi
 *   4	Virgile Fritsch
-*   4	Sebastian Saeger
+*   4	Sebastian Säger
 *   4	Ilambharathi Kanniah
 *   4	sdenton4
 *   4	Robert Layton
@@ -4266,4 +4271,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Wenhua Yang: https://github.com/geekoala
 
+<<<<<<< HEAD
 .. _Arnaud Fouchet: https://github.com/afouchet
+=======
+.. _Sebastian Säger: https://github.com/ssaeger
+>>>>>>> Adds support and tests for KMeans/MiniBatchKMeans to work with float32 to save memory
