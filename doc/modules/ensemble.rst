@@ -414,7 +414,7 @@ decision trees).
 Gradient Tree Boosting
 ======================
 
-`Gradient Tree Boosting <http://en.wikipedia.org/wiki/Gradient_boosting>`_
+`Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Regression Trees (GBRT) is a generalization
 of boosting to arbitrary
 differentiable loss functions. GBRT is an accurate and effective

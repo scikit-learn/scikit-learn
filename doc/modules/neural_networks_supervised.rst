@@ -129,7 +129,7 @@ of probability estimates :math:`P(y|x)` per sample :math:`x`::
            [ 0.,  1.]])
 
 :class:`MLPClassifier` supports multi-class classification by
-applying `Softmax <http://en.wikipedia.org/wiki/Softmax_activation_function>`_
+applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_
 as the output function.
 
 Further, the algorithm supports :ref:`multi-label classification <multiclass>`
@@ -198,9 +198,9 @@ Algorithms
 ==========
 
 MLP trains using `Stochastic Gradient Descent
-<http://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_,
+<https://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_,
 `Adam <http://arxiv.org/abs/1412.6980>`_, or
-`L-BFGS <http://en.wikipedia.org/wiki/Limited-memory_BFGS>`__.
+`L-BFGS <https://en.wikipedia.org/wiki/Limited-memory_BFGS>`__.
 Stochastic Gradient Descent (SGD) updates parameters using the gradient of the
 loss function with respect to a parameter that needs adaptation, i.e.
 

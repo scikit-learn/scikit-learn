@@ -225,7 +225,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
 .. _randomized_l1:
 
@@ -265,10 +265,10 @@ of features non zero.
 
    * N. Meinshausen, P. Buhlmann, "Stability selection",
      Journal of the Royal Statistical Society, 72 (2010)
-     http://arxiv.org/pdf/0809.2932
+     http://arxiv.org/abs/0809.2932
 
    * F. Bach, "Model-Consistent Sparse Estimation through the Bootstrap"
-     http://hal.inria.fr/hal-00354771/
+     https://hal.inria.fr/hal-00354771/
 
 Tree-based feature selection
 ----------------------------

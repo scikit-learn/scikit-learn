@@ -552,7 +552,7 @@ For an introduction to Unicode and character encodings in general,
 see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
 About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
 
-.. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
+.. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
 
 Applications and examples
@@ -748,7 +748,7 @@ An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
 does not fit into the computer's main memory.
 
-.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm
+.. _out-of-core: https://en.wikipedia.org/wiki/Out-of-core_algorithm
 
 A strategy to implement out-of-core scaling is to stream data to the estimator
 in mini-batches. Each mini-batch is vectorized using :class:`HashingVectorizer`

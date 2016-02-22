@@ -29,7 +29,7 @@ very well, i.e. it is very sensitive to varying training data (high variance).
 Bias and variance are inherent properties of estimators and we usually have to
 select learning algorithms and hyperparameters so that both bias and variance
 are as low as possible (see `Bias-variance dilemma
-<http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_). Another way to reduce
+<https://en.wikipedia.org/wiki/Bias-variance_dilemma>`_). Another way to reduce
 the variance of a model is to use more training data. However, you should only
 collect more training data if the true function is too complex to be
 approximated by an estimator with a lower variance.

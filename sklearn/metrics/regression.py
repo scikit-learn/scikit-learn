@@ -425,7 +425,7 @@ def r2_score(y_true, y_pred,
     References
     ----------
     .. [1] `Wikipedia entry on the Coefficient of determination
-            <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
+            <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_
 
     Examples
     --------

@@ -13,7 +13,7 @@ Supervised learning: predicting an output variable from high-dimensional observa
    are trying to predict, usually called "target" or "labels". Most often,
    ``y`` is a 1D array of length ``n_samples``.
 
-   All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_
+   All supervised `estimators <https://en.wikipedia.org/wiki/Estimator>`_
    in scikit-learn implement a ``fit(X, y)`` method to fit the model
    and a ``predict(X)`` method that, given unlabeled observations ``X``,
    returns the predicted labels ``y``.
@@ -59,7 +59,7 @@ k-Nearest neighbors classifier
 -------------------------------
 
 The simplest possible classifier is the
-`nearest neighbor <http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
+`nearest neighbor <https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
 given a new observation ``X_test``, find in the training set (i.e. the data
 used to train the estimator) the observation with the closest feature vector.
 (Please see the :ref:`Nearest Neighbors section<neighbors>` of the online
@@ -128,7 +128,7 @@ require more training data than the current estimated size of the entire
 internet (±1000 Exabytes or so).
 
 This is called the
-`curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
+`curse of dimensionality  <https://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
 and is a core problem that machine learning addresses.
 
 Linear model: from regression to sparsity
@@ -265,9 +265,9 @@ diabetes dataset rather than our synthetic data::
 
     Capturing in the fitted parameters noise that prevents the model to
     generalize to new data is called
-    `overfitting <http://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
+    `overfitting <https://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
     by the ridge regression is called a
-    `regularization <http://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
+    `regularization <https://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
 
 .. _sparsity:
 
@@ -339,7 +339,7 @@ application of Occam's razor: *prefer simpler models*.
     Different algorithms can be used to solve the same mathematical
     problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
-    `coordinate decent <http://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
+    `coordinate decent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
     provides the :class:`LassoLars` object using the *LARS* algorthm,
     which is very efficient for problems in which the weight vector estimated
@@ -356,7 +356,7 @@ Classification
    :align: right
 
 For classification, as in the labeling
-`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
+`iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
 regression is not the right approach as it will give too much weight to
 data far from the decision frontier. A linear approach is to fit a sigmoid
 function or **logistic** function:

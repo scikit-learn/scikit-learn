@@ -111,7 +111,7 @@ components by sample in a more than 30000-dimensional space
 ready-to-use tfidf features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
-.. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
+.. _`TF-IDF`: https://en.wikipedia.org/wiki/Tf-idf
 
 
 Filtering text for more realistic training
