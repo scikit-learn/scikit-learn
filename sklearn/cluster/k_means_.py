@@ -76,7 +76,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """
     n_samples, n_features = X.shape
 
-    centers = np.empty((n_clusters, n_features))
+    centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
     assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
 
@@ -435,7 +435,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
-    distances = np.zeros(shape=(X.shape[0],), dtype=np.float64)
+    distances = np.zeros(shape=(X.shape[0],), dtype=X.dtype)
 
     # iterations
     for i in range(max_iter):
@@ -542,13 +542,13 @@ def _labels_inertia(X, x_squared_norms, centers,
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers: float64 array, shape (k, n_features)
+    centers: float array, shape (k, n_features)
         The cluster centers.
 
     precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    distances: float64 array, shape (n_samples,)
+    distances: float array, shape (n_samples,)
         Pre-allocated array to be filled in with each sample's distance
         to the closest center.
 
@@ -565,7 +565,7 @@ def _labels_inertia(X, x_squared_norms, centers,
     # easily
     labels = -np.ones(n_samples, np.int32)
     if distances is None:
-        distances = np.zeros(shape=(0,), dtype=np.float64)
+        distances = np.zeros(shape=(0,), dtype=X.dtype)
     # distances will be changed in-place
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
@@ -642,7 +642,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
-        centers = init
+        # ensure that the centers have the same dtype as X
+        # this is a requirement of fused types of cython
+        centers = np.array(init, dtype=X.dtype)
     elif callable(init):
         centers = init(X, k, random_state=random_state)
     else:
@@ -783,7 +785,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        # to handle sparse data which only works as float64 at the moment
+        if sp.issparse(X):
+            X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        else:
+            X = check_array(X, dtype=None)
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 X.shape[0], self.n_clusters))
@@ -933,7 +939,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances : array, dtype float64, shape (n_samples), optional
+    distances : array, dtype float, shape (n_samples), optional
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
@@ -1034,7 +1040,9 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             counts[center_idx] += count
 
             # inplace rescale to compute mean of all points (old and new)
-            centers[center_idx] /= counts[center_idx]
+            # Note: numpy >= 1.10 does not support '/=' for the following
+            # expression for a mixture of int and float (see numpy issue #6464)
+            centers[center_idx] = centers[center_idx]/counts[center_idx]
 
             # update the squared diff if necessary
             if compute_squared_diff:
@@ -1232,7 +1240,12 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X, accept_sparse="csr", order='C', dtype=np.float64)
+        # to handle sparse data which only works as float64 at the moment
+        if sp.issparse(X):
+            X = check_array(X, accept_sparse="csr", order='C',
+                            dtype=np.float64)
+        else:
+            X = check_array(X, accept_sparse="csr", order='C')
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
             raise ValueError("Number of samples smaller than number "
@@ -1240,7 +1253,7 @@ class MiniBatchKMeans(KMeans):
 
         n_init = self.n_init
         if hasattr(self.init, '__array__'):
-            self.init = np.ascontiguousarray(self.init, dtype=np.float64)
+            self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
             if n_init != 1:
                 warnings.warn(
                     'Explicit initial center position passed: '
@@ -1264,7 +1277,7 @@ class MiniBatchKMeans(KMeans):
             # disabled
             old_center_buffer = np.zeros(0, np.double)
 
-        distances = np.zeros(self.batch_size, dtype=np.float64)
+        distances = np.zeros(self.batch_size, dtype=X.dtype)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
@@ -1397,7 +1410,7 @@ class MiniBatchKMeans(KMeans):
         X = check_array(X, accept_sparse="csr")
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
-            self.init = np.ascontiguousarray(self.init, dtype=np.float64)
+            self.init = np.ascontiguousarray(self.init, dtype=X.dtype)
 
         if n_samples == 0:
             return self
@@ -1423,7 +1436,7 @@ class MiniBatchKMeans(KMeans):
             # reassignment too often, to allow for building up counts
             random_reassign = self.random_state_.randint(
                 10 * (1 + self.counts_.min())) == 0
-            distances = np.zeros(X.shape[0], dtype=np.float64)
+            distances = np.zeros(X.shape[0], dtype=X.dtype)
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
