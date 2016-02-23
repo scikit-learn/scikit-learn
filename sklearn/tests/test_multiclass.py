@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
@@ -494,8 +495,10 @@ def test_ovo_partial_fit_predict():
 
     #raises error when mini-batch does not have classes from all_classes
     ovo = OneVsOneClassifier(MultinomialNB())
-    assert_raises(ValueError, ovo.partial_fit, X[:7], [0, 1, 2, 3, 4, 5, 2], 
-                            np.unique(y))
+    error_y = [0, 1, 2, 3, 4, 5, 2]
+    assert_raises_regexp(ValueError, "Mini-batch contains {0} while it must be "
+                         "subset of {1}".format(np.unique(error_y), np.unique(y)),
+                         ovo.partial_fit, X[:7], error_y, np.unique(y))
 
 
 def test_ovo_decision_function():

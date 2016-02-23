@@ -514,9 +514,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                 range(self.n_classes_ *
                                 (self.n_classes_-1) // 2)]
 
-        if not set(self.classes_).issuperset(y):
-            raise ValueError("Mini-batch contains {0} while classes "
-                             "must be subset of {1}".format(np.unique(y),
+        unique_y = np.unique(y)
+        if not all(np.in1d(np.unique(y), self.classes_)):
+            raise ValueError("Mini-batch contains {0} while it "
+                             "must be subset of {1}".format(unique_y,
                                                             self.classes_))
 
         y = np.asarray(y)
