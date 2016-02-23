@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
- 
+
 
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
@@ -358,3 +358,9 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+
+def test_imputation_feature_names():
+    imputer = Imputer()
+    feature_names = imputer.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)

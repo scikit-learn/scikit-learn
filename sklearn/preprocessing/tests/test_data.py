@@ -160,6 +160,12 @@ def test_standard_scaler_1d():
     assert_equal(scaler.n_samples_seen_, X.shape[0])
 
 
+def test_standard_scaler_get_feature_names():
+    scaler = StandardScaler()
+    feature_names = scaler.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)
+
+
 def test_scale_1d():
     # 1-d inputs
     X_list = [1., 3., 5., 0.]
@@ -577,6 +583,12 @@ def test_min_max_scaler_1d():
                               minmax_scale(X_1d, copy=True))
 
 
+def test_minmax_scaler_get_feature_names():
+    scaler = MinMaxScaler()
+    feature_names = scaler.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)
+
+
 def test_scaler_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
@@ -812,6 +824,12 @@ def test_robust_scaler_iris():
     assert_array_almost_equal(iqr, 1)
 
 
+def test_robust_scaler_get_feature_names():
+    scaler = RobustScaler()
+    feature_names = scaler.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)
+
+
 def test_scale_function_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
@@ -963,6 +981,12 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
+
+
+def test_maxabs_scaler_get_feature_names():
+    scaler = MaxAbsScaler()
+    feature_names = scaler.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)
 
 
 @ignore_warnings
@@ -1233,6 +1257,12 @@ def test_normalizer_max():
         for i in range(3):
             assert_almost_equal(row_maxs[i], 1.0)
         assert_almost_equal(la.norm(X_norm[3]), 0.0)
+
+
+def test_normalizer_feature_names():
+    normalizer = Normalizer()
+    feature_names = normalizer.get_feature_names(["a", "b", "c"])
+    assert_array_equal(['a', 'b', 'c'], feature_names)
 
 
 def test_normalize():

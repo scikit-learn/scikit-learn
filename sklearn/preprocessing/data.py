@@ -273,6 +273,23 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             del self.data_max_
             del self.data_range_
 
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        return input_features
+
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
 
@@ -533,6 +550,23 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             del self.mean_
             del self.var_
 
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        return input_features
+
     def fit(self, X, y=None):
         """Compute the mean and std to be used for later scaling.
 
@@ -735,6 +769,23 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
             del self.scale_
             del self.n_samples_seen_
             del self.max_abs_
+
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        return input_features
 
     def fit(self, X, y=None):
         """Compute the maximum absolute value to be used for later scaling.
@@ -963,6 +1014,23 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
         return X
+
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        return input_features
 
     def fit(self, X, y=None):
         """Compute the median and quantiles to be used for scaling.
@@ -1349,6 +1417,23 @@ class Normalizer(BaseEstimator, TransformerMixin):
     def __init__(self, norm='l2', copy=True):
         self.norm = norm
         self.copy = copy
+
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        return input_features
 
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged
