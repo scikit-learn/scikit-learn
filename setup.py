@@ -182,7 +182,7 @@ def generate_cython():
                          'sklearn'],
                         cwd=cwd)
     if p != 0:
-        raise RuntimeError("Running cythonize failed!")
+        raise RuntimeError("Cython either isn't installed or it failed.")
 
 
 def setup_package():
