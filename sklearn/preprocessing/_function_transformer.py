@@ -64,11 +64,31 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             check_array(X, self.accept_sparse)
         return self
 
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length len(input_features), optional
+            String names for input features if available. By default,
+            None is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length len(input_features)
+
+        """
+        if input_features is not None:
+            input_features = list(map(lambda input_feature: 'f(' +
+                                 input_feature + ')',
+                                 input_features))
+        return input_features
+
     def transform(self, X, y=None):
         if self.validate:
             X = check_array(X, self.accept_sparse)
         func = self.func if self.func is not None else _identity
-
 
         return func(X, *((y,) if self.pass_y else ()),
                     **(self.kw_args if self.kw_args else {}))
