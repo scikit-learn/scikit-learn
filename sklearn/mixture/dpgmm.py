@@ -492,7 +492,7 @@ class DPGMM(GMM):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when when creating
+        argument init_params to the empty string '' when creating
         the object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 

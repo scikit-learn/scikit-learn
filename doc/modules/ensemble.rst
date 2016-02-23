@@ -679,7 +679,7 @@ the contribution of each weak learner by a factor :math:`\nu`:
     F_m(x) = F_{m-1}(x) + \nu \gamma_m h_m(x)
 
 The parameter :math:`\nu` is also called the **learning rate** because
-it scales the step length the the gradient descent procedure; it can
+it scales the step length the gradient descent procedure; it can
 be set via the ``learning_rate`` parameter.
 
 The parameter ``learning_rate`` strongly interacts with the parameter

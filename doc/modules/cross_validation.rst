@@ -464,7 +464,7 @@ Here is a usage example::
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
-the proportion of samples in on each side of the train / test split.
+the proportion of samples on each side of the train / test split.
 
 
 Label-Shuffle-Split

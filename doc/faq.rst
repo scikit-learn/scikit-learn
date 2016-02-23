@@ -235,7 +235,7 @@ anymore. The version of joblib shipped with scikit-learn automatically uses
 that setting by default (under Python 3.4 and later).
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
-it via joblib you can enable the the 'forkserver' mode globally for your
+it via joblib you can enable the 'forkserver' mode globally for your
 program: Insert the following instructions in your main script::
 
     import multiprocessing

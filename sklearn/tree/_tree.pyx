@@ -537,7 +537,7 @@ cdef class Tree:
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
-    # must not be be freed by a subsequent memory allocation.
+    # must not be freed by a subsequent memory allocation.
     # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):

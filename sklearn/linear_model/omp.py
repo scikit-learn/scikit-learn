@@ -145,7 +145,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
               copy_Gram=True, copy_Xy=True, return_path=False):
     """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
 
-    This function uses the the Cholesky decomposition method.
+    This function uses the Cholesky decomposition method.
 
     Parameters
     ----------

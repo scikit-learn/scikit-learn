@@ -181,7 +181,7 @@ for these classifiers.
 
 This might be made more clear by an example:
 
-Consider a three class problem with with class 0 having three support vectors
+Consider a three class problem with class 0 having three support vectors
 :math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
 :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_2, v^{1}_2` respectively.  For each
 support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call

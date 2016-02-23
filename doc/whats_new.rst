@@ -2812,7 +2812,7 @@ Other changes
 
    - :class:`svm.SVC` members ``coef_`` and ``intercept_`` changed sign for
      consistency with ``decision_function``; for ``kernel==linear``,
-     ``coef_`` was fixed in the the one-vs-one case, by `Andreas Müller`_.
+     ``coef_`` was fixed in the one-vs-one case, by `Andreas Müller`_.
 
    - Performance improvements to efficient leave-one-out cross-validated
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
@@ -2993,7 +2993,7 @@ Changelog
 
    - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
 
-   - Fixed a memory leak in in :ref:`svm` module by `Brian Holt`_ (issue #367).
+   - Fixed a memory leak in :ref:`svm` module by `Brian Holt`_ (issue #367).
 
    - Faster tests by `Fabian Pedregosa`_ and others.
 
