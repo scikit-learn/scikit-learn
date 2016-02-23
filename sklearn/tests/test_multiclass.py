@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 
+from re import escape
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -496,9 +498,10 @@ def test_ovo_partial_fit_predict():
     #raises error when mini-batch does not have classes from all_classes
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
-    assert_raises_regexp(ValueError, "Mini-batch contains {0} while it must be "
-                         "subset of {1}".format(np.unique(error_y), np.unique(y)),
-                         ovo.partial_fit, X[:7], error_y, np.unique(y))
+    assert_raises_regexp(ValueError, escape("Mini-batch contains {0} while "
+                         "it must be subset of {1}".format(np.unique(error_y),
+                         np.unique(y))), ovo.partial_fit, X[:7], error_y,
+                         np.unique(y))
 
 
 def test_ovo_decision_function():
