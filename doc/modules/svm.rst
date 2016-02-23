@@ -611,10 +611,10 @@ holds the support vectors, and ``intercept_`` which holds the independent
 term :math:`\rho` :
 
 .. topic:: References:
-,
+
  * `"Automatic Capacity Tuning of Very Large VC-dimension Classifiers"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.17.7215>`_,
-   I Guyon, B Boser, V Vapnik - Advances in neural information
+   I. Guyon, B. Boser, V. Vapnik - Advances in neural information
    processing 1993.
 
 
