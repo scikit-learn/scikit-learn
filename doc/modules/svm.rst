@@ -702,10 +702,10 @@ computations. These libraries are wrapped using C and Cython.
   For a description of the implementation and details of the algorithms
   used, please refer to
 
-    - `LIBSVM: a library for Support Vector Machines
+    - `LIBSVM: A Library for Support Vector Machines
       <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
-    - `LIBLINEAR -- a library for Large Linear Classification
+    - `LIBLINEAR -- A Library for Large Linear Classification
       <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 
