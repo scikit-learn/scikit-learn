@@ -610,7 +610,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         the mean predicted class probabilities of the base estimators in the
         ensemble. If base estimators do not implement a ``predict_proba``
         method, then it resorts to voting and the predicted class probabilities
-        of a an input sample represents the proportion of estimators predicting
+        of an input sample represents the proportion of estimators predicting
         each class.
 
         Parameters

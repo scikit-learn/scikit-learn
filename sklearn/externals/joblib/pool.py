@@ -534,7 +534,7 @@ class MemmapingPool(PicklingPool):
                         os.makedirs(pool_folder)
                     use_shared_mem = True
                 except IOError:
-                    # Missing rights in the the /dev/shm partition,
+                    # Missing rights in the /dev/shm partition,
                     # fallback to regular temp folder.
                     temp_folder = None
         if temp_folder is None:

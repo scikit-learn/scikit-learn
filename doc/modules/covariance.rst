@@ -280,7 +280,7 @@ empirical covariance matrix is then rescaled to compensate the
 performed selection of observations ("consistency step").  Having
 computed the Minimum Covariance Determinant estimator, one can give
 weights to observations according to their Mahalanobis distance,
-leading the a reweighted estimate of the covariance matrix of the data
+leading to a reweighted estimate of the covariance matrix of the data
 set ("reweighting step").
 
 Rousseeuw and Van Driessen [4] developed the FastMCD algorithm in order
