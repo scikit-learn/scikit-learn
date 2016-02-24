@@ -268,7 +268,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     return CM
 
 
-def cohen_kappa_score(y1, y2, labels=None):
+def cohen_kappa_score(y1, y2, labels=None, weights=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1], a score that expresses the level
@@ -298,6 +298,10 @@ def cohen_kappa_score(y1, y2, labels=None):
         subset of labels. If None, all labels that appear at least once in
         ``y1`` or ``y2`` are used.
 
+    weights : str, optional
+        List of weighting type to calculate the score. None means no weighted;
+        "linear" means linear weighted; "quadratic" means quadratic weighted.
+
     Returns
     -------
     kappa : float
@@ -313,10 +317,34 @@ def cohen_kappa_score(y1, y2, labels=None):
            computational linguistics". Computational Linguistic 34(4):555-596.
     """
     confusion = confusion_matrix(y1, y2, labels=labels)
-    P = confusion / float(confusion.sum())
-    p_observed = np.trace(P)
-    p_expected = np.dot(P.sum(axis=0), P.sum(axis=1))
-    return (p_observed - p_expected) / (1 - p_expected)
+    n = confusion.shape[0]
+    sum0 = np.sum(confusion, axis=0)
+    sum1 = np.sum(confusion, axis=1)
+    sum = np.sum(sum0)
+
+    expected = np.outer(sum0, sum1) / sum
+
+    if weights == None:
+        w_mat = np.ones([n, n]) - np.diag(np.ones([n, ]))
+    elif weights == "linear":
+        w_mat = np.zeros([n, n])
+        for i in range(n):
+            for j in range(i, n):
+                w = abs(i - j)
+                w_mat[i, j] = w
+                w_mat[j, i] = w
+    elif weights == "quadratic":
+        w_mat = np.zeros([n, n])
+        for i in range(n):
+            for j in range(i, n):
+                w = (i - j) ** 2
+                w_mat[i, j] = w
+                w_mat[j, i] = w
+    else:
+        raise ValueError("Unknown kappa weighting type.")
+
+    k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
+    return 1 - k
 
 
 def jaccard_similarity_score(y_true, y_pred, normalize=True,
