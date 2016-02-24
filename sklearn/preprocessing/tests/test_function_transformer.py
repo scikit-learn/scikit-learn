@@ -74,6 +74,14 @@ def test_delegate_to_func():
     )
 
 
+def test_get_feature_names():
+    F = FunctionTransformer()
+    feature_names = F.get_feature_names(["a", "b", "c"])
+    testing.assert_array_equal(['f(a)', 'f(b)', 'f(c)'], feature_names)
+    feature_names_default = F.get_feature_names()
+    testing.assert_array_equal(None, feature_names_default)
+
+
 def test_np_log():
     X = np.arange(10).reshape((5, 2))
 
@@ -91,7 +99,7 @@ def test_kw_arg():
 
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                                  np.around(X, decimals=3))
+                               np.around(X, decimals=3))
 
 
 def test_kw_arg_update():
@@ -100,10 +108,9 @@ def test_kw_arg_update():
     F = FunctionTransformer(np.around, kw_args=dict(decimals=3))
 
     F.kw_args['decimals'] = 1
-
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                                  np.around(X, decimals=1))
+                               np.around(X, decimals=1))
 
 
 def test_kw_arg_reset():
@@ -115,4 +122,4 @@ def test_kw_arg_reset():
 
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                                  np.around(X, decimals=1))
+                               np.around(X, decimals=1))
