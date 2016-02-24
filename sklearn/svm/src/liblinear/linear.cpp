@@ -1427,7 +1427,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 // To support weights for instances, use GETI(i) (i)
 
 static int solve_l1r_l2_svc(
-	problem *prob_col, double *w, double eps,
+	const problem *prob_col, double *w, double eps,
 	double Cp, double Cn, int max_iter)
 {
 	int l = prob_col->l;
@@ -2079,28 +2079,17 @@ static int solve_l1r_lr(
 }
 
 // transpose matrix X from row format to column format
-static void transpose(const problem *prob, feature_node **x_space_ret, problem *prob_col)
+static void transpose(feature_node **prob_x, int l, int n, feature_node **x_space, feature_node **x_transposed)
 {
 	int i;
-	int l = prob->l;
-	int n = prob->n;
 	size_t nnz = 0;
-	size_t *col_ptr = new size_t [n+1];
-	feature_node *x_space;
-	prob_col->l = l;
-	prob_col->n = n;
-	prob_col->y = new double[l];
-	prob_col->x = new feature_node*[n];
-	prob_col->sample_weight=prob->sample_weight;
-
-	for(i=0; i<l; i++)
-		prob_col->y[i] = prob->y[i];
+	size_t *col_ptr = new size_t[n+1];
 
 	for(i=0; i<n+1; i++)
 		col_ptr[i] = 0;
 	for(i=0; i<l; i++)
 	{
-		feature_node *x = prob->x[i];
+		feature_node *x = prob_x[i];
 		while(x->index != -1)
 		{
 			nnz++;
@@ -2111,26 +2100,24 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 	for(i=1; i<n+1; i++)
 		col_ptr[i] += col_ptr[i-1] + 1;
 
-	x_space = new feature_node[nnz+n];
+	*x_space = Malloc(feature_node,nnz+n);
 	for(i=0; i<n; i++)
-		prob_col->x[i] = &x_space[col_ptr[i]];
+		x_transposed[i] = &(*x_space)[col_ptr[i]];
 
 	for(i=0; i<l; i++)
 	{
-		feature_node *x = prob->x[i];
+		feature_node *x = prob_x[i];
 		while(x->index != -1)
 		{
 			int ind = x->index-1;
-			x_space[col_ptr[ind]].index = i+1; // starts from 1
-			x_space[col_ptr[ind]].value = x->value;
+			(*x_space)[col_ptr[ind]].index = i+1; // starts from 1
+			(*x_space)[col_ptr[ind]].value = x->value;
 			col_ptr[ind]++;
 			x++;
 		}
 	}
 	for(i=0; i<n; i++)
-		x_space[col_ptr[i]].index = -1;
-
-	*x_space_ret = x_space;
+		(*x_space)[col_ptr[i]].index = -1;
 
 	delete [] col_ptr;
 }
@@ -2309,24 +2296,12 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			break;
 		case L1R_L2LOSS_SVC:
 		{
-			problem prob_col;
-			feature_node *x_space = NULL;
-			transpose(prob, &x_space ,&prob_col);
-			n_iter=solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
-			delete [] prob_col.y;
-			delete [] prob_col.x;
-			delete [] x_space;
+			n_iter=solve_l1r_l2_svc(prob, w, primal_solver_tol, Cp, Cn, max_iter);
 			break;
 		}
 		case L1R_LR:
 		{
-			problem prob_col;
-			feature_node *x_space = NULL;
-			transpose(prob, &x_space ,&prob_col);
-			n_iter=solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
-			delete [] prob_col.y;
-			delete [] prob_col.x;
-			delete [] x_space;
+			n_iter=solve_l1r_lr(prob, w, primal_solver_tol, Cp, Cn, max_iter);
 			break;
 		}
 		case L2R_LR_DUAL:
@@ -2456,6 +2431,7 @@ model* train(const problem *prob, const parameter *param)
 		int *start = NULL;
 		int *count = NULL;
 		int *perm = Malloc(int,l);	// Indirect index into samples
+        feature_node *extra = NULL;
 
 		// group training data of the same class
 		group_classes(prob,&nr_class,&label,&start,&count,perm);
@@ -2489,10 +2465,19 @@ model* train(const problem *prob, const parameter *param)
 			sample_weight[i] = prob->sample_weight[perm[i]];
 		}
 
+        if (param->solver_type == L1R_L2LOSS_SVC || param->solver_type == L1R_LR)
+        {
+            // Transpose x for L1 solvers
+            feature_node **x_transposed = Malloc(feature_node *,n);
+            transpose(x, l, n, &extra, x_transposed);
+            free(x);
+            x = x_transposed;
+        }
+
         if (true && param->solver_type != MCSVM_CS && nr_class != 2) {
 
             // Parallel training by class
-            int n_jobs = 32;
+            int n_jobs = 48;
             _LL_WorkInfo workInfo;
             (void)_LL_MutexInit(&workInfo.mutex);
             workInfo.model_ = model_;
@@ -2509,8 +2494,7 @@ model* train(const problem *prob, const parameter *param)
 
             // Number of iterations per class
             model_->n_iter=Malloc(int, nr_class);
-            
-            int k;
+
             _LL_ThreadInfo *threadInfos = Malloc(_LL_ThreadInfo, n_jobs);
             for(i=0;i<n_jobs;i++)
             {
@@ -2519,11 +2503,9 @@ model* train(const problem *prob, const parameter *param)
                 problem *sub_prob = &threadInfo->sub_prob;
                 sub_prob->l = l;
                 sub_prob->n = n;
-                sub_prob->x = Malloc(feature_node *,l);	// Copy (pointers) of samples
+                sub_prob->x = x;
                 sub_prob->y = Malloc(double,l);			// +1/-1 values for samples while solving
                 sub_prob->sample_weight = sample_weight;
-                for(k=0; k<l; k++)
-                    sub_prob->x[k] = x[k];	// Copy permutated samples (grouped by label)
 
                 threadInfo->w = Malloc(double, w_size);
 
@@ -2536,13 +2518,10 @@ model* train(const problem *prob, const parameter *param)
                 _LL_ThreadInfo *threadInfo = &threadInfos[i];
                 (void)_LL_ThreadJoin(threadInfo->threadHandle);
                 problem *sub_prob = &threadInfo->sub_prob;
-                free(sub_prob->x);
                 free(sub_prob->y);
                 free(threadInfo->w);
             }
-            info("Destroy mutex\n");
             (void)_LL_MutexDestroy(&workInfo.mutex);
-            info("Destroy thread infos\n");
             free(threadInfos);
         }
         else {
@@ -2616,6 +2595,8 @@ model* train(const problem *prob, const parameter *param)
             free(sub_prob.y);
         }
 
+        if (extra)
+            free(extra);
         free(x);
         free(label);
         free(start);
