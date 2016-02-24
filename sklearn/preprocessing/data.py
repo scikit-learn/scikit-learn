@@ -1141,7 +1141,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    powers_ : array, shape (n_input_features, n_output_features)
+    powers_ : array, shape (n_output_features, n_input_features)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
@@ -1200,7 +1200,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         """
         powers = self.powers_
         if input_features is None:
-            input_features = ['x%d' % i for i in range(len(powers))]
+            input_features = ['x%d' % i for i in range(powers.shape[1])]
         feature_names = []
         for row in powers:
             inds = np.where(row)[0]
