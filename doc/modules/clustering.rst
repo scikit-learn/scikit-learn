@@ -767,6 +767,8 @@ by black points below.
     The possibility to use custom metrics is retained;
     for details, see :class:`NearestNeighbors`.
 
+.. topic:: Memory consumption for large sample sizes
+
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
