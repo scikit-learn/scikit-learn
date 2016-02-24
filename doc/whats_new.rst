@@ -581,7 +581,7 @@ API changes summary
     - Classifier and Regressor models are now tagged as such using the
       ``_estimator_type`` attribute.
 
-    - Cross-validation iterators allways provide indices into training and test set,
+    - Cross-validation iterators always provide indices into training and test set,
       not boolean masks.
 
     - The ``decision_function`` on all regressors was deprecated and will be
