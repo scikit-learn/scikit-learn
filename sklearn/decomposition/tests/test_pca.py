@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_array_equal
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -507,3 +508,18 @@ def test_deprecation_randomized_pca():
     assert_warns_message(DeprecationWarning, depr_message, fit_deprecated, X)
     Y_pca = PCA(svd_solver='randomized', random_state=0).fit_transform(X)
     assert_array_almost_equal(Y, Y_pca)
+
+
+def test_get_feature_names():
+    X1 = np.array([[-1, -1, 3], [-2, -1, 1], [-3, -2, -1], [1, 1, 2]])
+    pca = PCA(n_components=2).fit(X1)
+    assert_array_equal(pca.get_feature_names(), ['pc0', 'pc1'])
+    assert_array_equal(pca.get_feature_names(show_coef=True),
+        ['-0.66*x0 - 0.46*x1 - 0.59*x2', '-0.38*x0 - 0.47*x1 + 0.79*x2'])
+    assert_array_equal(pca.get_feature_names(show_coef=1),
+        ['-0.66*x0', '0.79*x2'])
+    # Raise error when len(input_features) != n_features
+    assert_raises(ValueError, pca.get_feature_names, ['a']);
+    # Raise error when show_coef is greater than n_features
+    assert_raises(ValueError, pca.get_feature_names, None, 4)
+

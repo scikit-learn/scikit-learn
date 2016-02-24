@@ -278,6 +278,80 @@ class PCA(_BasePCA):
         self.iterated_power = iterated_power
         self.random_state = random_state
 
+    def get_feature_names(self, input_features=None, show_coef=False):
+        """
+        Return dominant feature names for each component
+
+        Parameters
+        ----------
+        input_features : list of string, shape (n_features), optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        show_coef : boolean or integer, default False
+            When it is "True", return the principal components as the
+            combination of the input features. If "False", will be just
+            the component names. If it is an integer n, it returns the
+            sorted top n contributions to each component.
+
+
+        Returns
+        -------
+        output_feature_names : list of string, shape (n_components)
+            When show_coef is "True", it is represented by the contribution
+            of input features and show_coef is "False", it just represents
+            the component names
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> from sklearn.decomposition import PCA
+        >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+        >>> pca = PCA(n_components=2).fit(X)
+        >>> pca.get_feature_names(show_coef=True)
+        ['0.84*x0 + 0.54*x1', '0.54*x0 - 0.84*x1']
+        >>> pca.get_feature_names(show_coef=1)
+        ['0.84*x0', '-0.84*x1']
+        >>> pca.get_feature_names()
+        ['pc0', 'pc1']
+        """
+        check_is_fitted(self, 'components_')
+
+        n_features = self.components_.shape[1]
+        components = self.components_
+
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(n_features)]
+        else:
+            if len(input_features) != n_features:
+                raise ValueError("Length of input_features is {0} but it must"
+                    "equal number of features when fitted: {1}.".format
+                    (len(input_features), n_features))
+
+        def name_generator(coefficients, names):
+            yield "{0:.2g}*{1}".format(coefficients[0], names[0])
+            for c, n in zip(coefficients[1:], names[1:]):
+                yield "{0:s} {1:.2g}*{2}".format('-' if c < 0 else '+', abs(c), n)
+
+        if show_coef is True:
+            feature_names = [' '.join(name_generator(components[i],input_features))
+                            for i in range(self.n_components)]
+        elif show_coef is False:
+            feature_names = ['pc{0}'.format(i) for i in range(self.n_components)]
+        elif isinstance(show_coef, six.integer_types):
+            if show_coef < 0 or show_coef > n_features:
+                raise ValueError("show_coef is {0} but it must be between 1 and"
+                    "number of features {1}".format(show_coef, n_features))
+            contribution = np.argsort(np.abs(components), axis=1)[:, ::-1]
+            required = contribution[:,:show_coef]
+            input_features = np.asarray(input_features)
+            feature_names = [' '.join(name_generator(components[i][required[i]], input_features[required[i]]))
+                            for i in range(self.n_components)]
+        else:
+            raise ValueError("show_coef must be integer or boolean")
+        return feature_names
+        
+
     def fit(self, X, y=None):
         """Fit the model with X.
 
