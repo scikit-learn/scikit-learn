@@ -331,15 +331,13 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
         for i in range(n):
             for j in range(i, n):
                 w = abs(i - j)
-                w_mat[i, j] = w
-                w_mat[j, i] = w
+                w_mat[i, j] = w_mat[j, i] = w
     elif weights == "quadratic":
         w_mat = np.zeros([n, n])
         for i in range(n):
             for j in range(i, n):
                 w = (i - j) ** 2
-                w_mat[i, j] = w
-                w_mat[j, i] = w
+                w_mat[i, j] = w_mat[j, i] = w
     else:
         raise ValueError("Unknown kappa weighting type.")
 
