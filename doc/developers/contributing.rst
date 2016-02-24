@@ -325,8 +325,9 @@ Rebasing
 You should generally use ``rebase`` over ``merge`` to integrate changes from one branch into
 another branch. Merging creates a "merge commit" every time you incorporate upstream changes.
 This pollutes the feature branch's history and makes it hard for other developers to understand
-the history of the project. Whereas ``rebase`` effectively rewrites the project history by creating
-brand new commits for each commit in the original branch. This creates a much cleaner project history.
+the history of the project. On the other hand ``rebase`` effectively rewrites the project history
+by creating brand new commits for each commit in the original branch. This creates a much cleaner
+project history.
 To rebase:
 
 	1. Update your master branch::
@@ -365,7 +366,7 @@ merge conflict you can either:
 
 .. note::
 
-  Detailed guide on solving merge conflicts can be found on `git-scm.com
+  A detailed guide on solving merge conflicts can be found on `git-scm.com
   <http://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts>`_
 
 .. _easy_issues:
