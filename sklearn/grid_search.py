@@ -386,6 +386,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    @property
+    def classes_(self):
+        return self.best_estimator_.classes_
+
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
