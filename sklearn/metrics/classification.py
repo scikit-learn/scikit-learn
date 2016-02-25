@@ -320,9 +320,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     n = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
-    sum = np.sum(sum0)
-
-    expected = np.outer(sum0, sum1) / sum
+    expected = np.outer(sum0, sum1) / np.sum(sum0)
 
     if weights == None:
         w_mat = np.ones([n, n]) - np.diag(np.ones([n, ]))
