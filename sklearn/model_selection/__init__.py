@@ -21,6 +21,7 @@ from ._validation import validation_curve
 
 from ._search import GridSearchCV
 from ._search import RandomizedSearchCV
+from ._search import SequentialSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import fit_grid_point
@@ -38,6 +39,7 @@ __all__ = ('BaseCrossValidator',
            'ParameterSampler',
            'PredefinedSplit',
            'RandomizedSearchCV',
+           'SequentialSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
