@@ -93,10 +93,10 @@ to work on scikit-learn through the
 `Google Summer of Code <http://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
-- 2007 - `David Cournapeau <https://github.com/cournape>`_.
-- 2011 - `Vlad Niculae <http://vene.ro/>`_.
-- 2012 - `Vlad Niculae <http://vene.ro/>`_, `Immanuel Bayer <http://www.informatik.uni-konstanz.de/rendle/members/bayer0/>`_.
-- 2013 - `Kemal Eren <http://www.kemaleren.com/>`_, `Nicolas Trésegnie <https://www.linkedin.com/in/nicolastr>`_.
+- 2007 - `David Cournapeau`_.
+- 2011 - `Vlad Niculae`_.
+- 2012 - `Vlad Niculae`_, `Immanuel Bayer`_.
+- 2013 - `Kemal Eren`_, `Nicolas Trésegnie`_.
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 
 It also provided funding for sprints and events around scikit-learn. If
