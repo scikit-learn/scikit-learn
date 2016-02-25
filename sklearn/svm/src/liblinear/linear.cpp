@@ -2474,6 +2474,8 @@ model* train(const problem *prob, const parameter *param)
             x = x_transposed;
         }
 
+#ifdef _LL_THREADS
+
         if (param->n_threads > 1 && param->solver_type != MCSVM_CS && nr_class != 2) {
 
             // Parallel training by class
@@ -2524,7 +2526,11 @@ model* train(const problem *prob, const parameter *param)
             (void)_LL_MutexDestroy(&workInfo.mutex);
             free(threadInfos);
         }
-        else {
+        else
+
+#endif // _LL_THREADS
+            
+        {
 
             int k;
             problem sub_prob;
