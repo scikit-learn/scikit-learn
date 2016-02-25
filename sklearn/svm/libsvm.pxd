@@ -45,7 +45,7 @@ cdef extern from "libsvm_helper.c":
     void set_parameter (svm_parameter *, int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *, int,
-                                  int)
+                                  int, int)
     void set_problem (svm_problem *, char *, char *, char *, np.npy_intp *, int)
 
     svm_model *set_model (svm_parameter *, int, char *, np.npy_intp *,

@@ -2474,10 +2474,10 @@ model* train(const problem *prob, const parameter *param)
             x = x_transposed;
         }
 
-        if (true && param->solver_type != MCSVM_CS && nr_class != 2) {
+        if (param->n_threads > 1 && param->solver_type != MCSVM_CS && nr_class != 2) {
 
             // Parallel training by class
-            int n_jobs = 48;
+            int n_threads = param->n_threads;
             _LL_WorkInfo workInfo;
             (void)_LL_MutexInit(&workInfo.mutex);
             workInfo.model_ = model_;
@@ -2495,8 +2495,8 @@ model* train(const problem *prob, const parameter *param)
             // Number of iterations per class
             model_->n_iter=Malloc(int, nr_class);
 
-            _LL_ThreadInfo *threadInfos = Malloc(_LL_ThreadInfo, n_jobs);
-            for(i=0;i<n_jobs;i++)
+            _LL_ThreadInfo *threadInfos = Malloc(_LL_ThreadInfo, n_threads);
+            for(i=0;i<n_threads;i++)
             {
                 _LL_ThreadInfo *threadInfo = &threadInfos[i];
                 threadInfo->workInfo = &workInfo;
@@ -2513,7 +2513,7 @@ model* train(const problem *prob, const parameter *param)
             }
 
             // Free allocations for each job
-            for(i=0;i<n_jobs;i++)
+            for(i=0;i<n_threads;i++)
             {
                 _LL_ThreadInfo *threadInfo = &threadInfos[i];
                 (void)_LL_ThreadJoin(threadInfo->threadHandle);

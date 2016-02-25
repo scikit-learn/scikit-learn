@@ -62,6 +62,7 @@ struct svm_parameter
 	int shrinking;	/* use the shrinking heuristics */
 	int probability; /* do probability estimates */
 	int max_iter; /* ceiling on Solver runtime */
+    int n_threads; /* threading if > 1, for L1 one-vs-rest > 2 classes */
     int random_seed; /* seed for random number generator */
 };
 

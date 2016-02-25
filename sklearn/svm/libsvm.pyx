@@ -20,7 +20,7 @@ Notes
 -----
 Maybe we could speed it a bit further by decorating functions with
 @cython.boundscheck(False), but probably it is not worth since all
-work is done in lisvm_helper.c
+work is done in libsvm_helper.c
 Also, the signature mode='c' is somewhat superficial, since we already
 check that arrays are C-contiguous in svm.py
 
@@ -64,6 +64,7 @@ def fit(
     int shrinking=1, int probability=0,
     double cache_size=100.,
     int max_iter=-1,
+    int n_threads=1,
     int random_seed=0):
     """
     Train the model using libsvm (low-level method)
@@ -126,6 +127,10 @@ def fit(
         (XXX Currently there is no API to know whether this kicked in.)
         -1 by default.
 
+    n_threads : int, default: 1
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
+        classification. If given a value of -1, all cores are used.
+
     random_seed : int, optional
         Seed for the random number generator used for probability estimates.
         0 by default.
@@ -178,7 +183,7 @@ def fit(
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
-        class_weight_label.data, class_weight.data, max_iter, random_seed)
+        class_weight_label.data, class_weight.data, max_iter, n_threads, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
@@ -255,6 +260,7 @@ cdef void set_predict_params(
     cdef double C = .0
     cdef double epsilon = .1
     cdef int max_iter = 0
+    cdef int n_threads = 1
     cdef double nu = .5
     cdef int shrinking = 0
     cdef double tol = .1
@@ -264,7 +270,7 @@ cdef void set_predict_params(
 
     set_parameter(param, svm_type, kernel_index, degree, gamma, coef0, nu,
                          cache_size, C, tol, epsilon, shrinking, probability,
-                         nr_weight, weight_label, weight, max_iter, random_seed)
+                         nr_weight, weight_label, weight, max_iter, n_threads, random_seed)
 
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
@@ -470,6 +476,7 @@ def cross_validation(
         sample_weight=np.empty(0),
     int shrinking=0, int probability=0, double cache_size=100.,
     int max_iter=-1,
+    int n_threads=1,
     int random_seed=0):
     """
     Binding of the cross-validation routine (low-level routine)
@@ -552,7 +559,7 @@ def cross_validation(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
-        class_weight.data, max_iter, random_seed)
+        class_weight.data, max_iter, n_threads, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param);
     if error_msg:
