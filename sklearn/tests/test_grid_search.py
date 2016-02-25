@@ -42,7 +42,6 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.exceptions import FitFailedWarning
 from sklearn.exceptions import ChangedBehaviorWarning
 
 with warnings.catch_warnings():
@@ -50,6 +49,7 @@ with warnings.catch_warnings():
     from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
     from sklearn.grid_search import ParameterGrid, ParameterSampler
     from sklearn.cross_validation import KFold, StratifiedKFold
+    from sklearn.cross_validation import FitFailedWarning
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline

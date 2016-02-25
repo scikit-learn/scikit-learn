@@ -61,10 +61,10 @@ __all__ = ['KFold',
            'permutation_test_score',
            'train_test_split']
 
-@deprecated("FitFailedWarning has been moved into the sklearn.exceptions"
-            " module. It will not be available here from version 0.19")
-class FitFailedWarning(_FitFailedWarning):
-    pass
+FitFailedWarning = deprecated(
+    "FitFailedWarning has been moved into the sklearn.exceptions"
+    " module. It will not be available here from version 0.19")(
+            _FitFailedWarning)
 
 
 class _PartitionIterator(with_metaclass(ABCMeta)):
