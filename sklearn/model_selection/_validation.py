@@ -144,7 +144,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
     [ 0.33150734  0.08022311  0.03531764]
 
     See Also
@@ -384,8 +384,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_predict(lasso, X, y))  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    [ 0.33150734  0.08022311  0.03531764]
+    >>> y_pred = cross_val_predict(lasso, X, y)
     """
     X, y, labels = indexable(X, y, labels)
 
