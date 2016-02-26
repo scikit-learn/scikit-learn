@@ -1110,13 +1110,18 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # Because of rounding issues (as n_train and n_test are not
             # dividers of the number of elements per class), we may end
             # up here with less samples in train and test than asked for.
-            if len(train) < n_train or len(test) < n_test:
+            if len(train) + len(test) < n_train + n_test:
                 # We complete by affecting randomly the missing indexes
                 missing_indices = np.where(bincount(train + test,
                                                     minlength=len(y)) == 0)[0]
                 missing_indices = rng.permutation(missing_indices)
-                train.extend(missing_indices[:(n_train - len(train))])
-                test.extend(missing_indices[-(n_test - len(test)):])
+                n_missing_train = n_train - len(train)
+                n_missing_test = n_test - len(test)
+
+                if n_missing_train > 0:
+                    train.extend(missing_indices[:n_missing_train])
+                if n_missing_test > 0:
+                    test.extend(missing_indices[-n_missing_test:])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
