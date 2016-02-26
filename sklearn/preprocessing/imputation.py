@@ -281,7 +281,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # Most frequent
         elif strategy == "most_frequent":
             # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if it's frequency
+            # properly if the first element is masked and if its frequency
             # is equal to the frequency of the most frequent valid element
             # See https://github.com/scipy/scipy/issues/2636
 

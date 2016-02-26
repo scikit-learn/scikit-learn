@@ -108,7 +108,7 @@ div.navbar ul li a:hover {
     /*The min-height is added here, to prevent the element from shrinking
     too much, while the scripts are still loading the search-bar.
     Without it, layout glitches occur, as the element keeps dynamically
-    changing it's size while its loading-contents adjusts into position.*/
+    changing its size while its loading-contents adjusts into position.*/
     min-height: 42px;
 }
 
