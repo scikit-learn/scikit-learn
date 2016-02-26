@@ -42,6 +42,19 @@ noisy_moons = datasets.make_moons(n_samples=n_samples, noise=.05)
 blobs = datasets.make_blobs(n_samples=n_samples, random_state=8)
 no_structure = np.random.rand(n_samples, 2), None
 
+# Anisotropicly distributed data
+random_state = 170
+X, y = datasets.make_blobs(n_samples=n_samples, random_state=random_state)
+transformation = [[ 0.6, -0.6], [-0.4, 0.8]]
+X_aniso = np.dot(X, transformation)
+aniso = (X_aniso,y)
+
+# Different variance
+varied = datasets.make_blobs(n_samples=n_samples,
+                                cluster_std=[1.0, 2.5, 0.5],
+                                random_state=random_state)
+
+
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
 
@@ -50,13 +63,13 @@ clustering_names = [
     'SpectralClustering', 'Ward', 'AgglomerativeClustering',
     'DBSCAN', 'Birch', 'GMM']
 
-plt.figure(figsize=(len(clustering_names) * 2 + 3, 9.5))
+plt.figure(figsize=(len(clustering_names) * 2 + 3, 12.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 
 plot_num = 1
-
-datasets = [noisy_circles, noisy_moons, blobs, no_structure]
+# noisy_circles, noisy_moons, blobs, no_structure, varied
+datasets = [noisy_circles, noisy_moons, blobs, no_structure, varied,aniso]
 for i_dataset, dataset in enumerate(datasets):
     X, y = dataset
     # normalize dataset for easier parameter selection
@@ -104,7 +117,7 @@ for i_dataset, dataset in enumerate(datasets):
             y_pred = algorithm.predict(X)
 
         # plot
-        plt.subplot(4, len(clustering_algorithms), plot_num)
+        plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
         if i_dataset == 0:
             plt.title(name, size=18)
         plt.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist(), s=10)
@@ -113,8 +126,8 @@ for i_dataset, dataset in enumerate(datasets):
             centers = algorithm.cluster_centers_
             center_colors = colors[:len(centers)]
             plt.scatter(centers[:, 0], centers[:, 1], s=100, c=center_colors)
-        plt.xlim(-2, 2)
-        plt.ylim(-2, 2)
+        plt.xlim(-2.5, 2.5)
+        plt.ylim(-2.5, 2.5)
         plt.xticks(())
         plt.yticks(())
         plt.text(.99, .01, ('%.2fs' % (t1 - t0)).lstrip('0'),
