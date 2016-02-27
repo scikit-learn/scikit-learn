@@ -748,8 +748,27 @@ class GridSearchTransductive(BaseSearch, SearchTransductiveMixin):
 
     Examples
     --------
-    # TODO: Add examples here
-
+    >>> from sklearn import datasets, cluster
+    >>> from sklearn.metrics import silhouette_score, make_scorer
+    >>> from sklearn.model_selection import GridSearchTransductive
+    >>> def silhouette_scorer(estimator, X, y=None):
+    ...     return silhouette_score(X, estimator.labels_)
+    >>> X, _ = datasets.make_blobs(random_state=8, centers=3, n_samples=1000)
+    >>> parameters = {'n_clusters': [2,3,4]}
+    >>> km = cluster.KMeans()
+    >>> scorer = silhouette_scorer
+    >>> grid_search = GridSearchTransductive(km, parameters, scoring=scorer)
+    >>> grid_search.fit(X)
+    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    GridSearchTransductive(error_score=...,
+                estimator=KMeans(copy_x=..., init=..., max_iter=300, 
+                n_clusters=8, n_init=10,
+        n_jobs=1, precompute_distances='auto', random_state=None, tol=0.0001,
+        verbose=0),
+                fit_params={}, n_jobs=1, param_grid={'n_clusters': [2, 3, 4]},
+                pre_dispatch='2*n_jobs', refit=True,
+                scoring=...,
+                verbose=0)
 
     Attributes
     ----------
