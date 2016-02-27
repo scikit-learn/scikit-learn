@@ -1470,6 +1470,27 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
+def test_one_hot_encoder_feature_names():
+    X = [[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]]
+    enc = OneHotEncoder()
+
+    # check error is raised when get_feature_names() is called
+    # befor OneHotEncoder is fitted
+    assert_raises(ValueError, enc.get_feature_names)
+
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+    assert_array_equal(['x0=0', 'x0=1', 'x1=0', 'x1=1', 'x1=2',
+                        'x2=0', 'x2=1', 'x2=2', 'x2=3'], feature_names)
+
+    # check error is raised when len(input_features) doesn't equal n_features
+    assert_raises(ValueError, enc.get_feature_names, ['a'])
+
+    feature_names = enc.get_feature_names(['a', 'b', 'c'])
+    assert_array_equal(['a=0', 'a=1', 'b=0', 'b=1', 'b=2',
+                        'c=0', 'c=1', 'c=2', 'c=3'], feature_names)
+
+
 def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
         Xtr = _transform_selected(M, Binarizer().transform, sel)
