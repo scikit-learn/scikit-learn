@@ -77,7 +77,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         """
         X, y = check_X_y(X, y,
                          multi_output=True,
-                         accept_sparse=['csr', 'csc', 'coo', 'dok', 'lil'])
+                         accept_sparse=True)
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
@@ -85,7 +85,8 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
 
         if (sample_weight is not None and
             not has_fit_parameter(self.estimator, 'sample_weight')):
-            raise ValueError("Underlying regressor does not support sample weights.")
+            raise ValueError("Underlying regressor does not support"
+                             " sample weights.")
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_regression)(
             self.estimator, X, y[:, i], sample_weight) for i in range(y.shape[1]))
@@ -106,7 +107,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         """
         check_is_fitted(self, 'estimators_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo', 'dok', 'lil'])
+        X = check_array(X, accept_sparse=True)
 
         pred = Parallel(n_jobs=self.n_jobs)(delayed(parallel_helper)(e, 'predict', X)
                                             for e in self.estimators_)
@@ -127,7 +128,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         Note
         ----
         R^2 is calculated by weighting all the targets equally using
-        multioutput=uniform_average.
+        `multioutput='uniform_average'`.
 
         Parameters
         ----------
@@ -145,7 +146,7 @@ class MultiOutputRegressor(BaseEstimator, RegressorMixin, MetaEstimatorMixin):
         score : float
             R^2 of self.predict(X) wrt. y.
         """
-        # XXX remove in 0.19 when 2_score default for multioutput changes
+        # XXX remove in 0.19 when r2_score default for multioutput changes
         from .metrics import r2_score
         return r2_score(y, self.predict(X), sample_weight=sample_weight,
                         multioutput='uniform_average')
