@@ -83,4 +83,5 @@ def test_multi_target_sample_weights():
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     rgr.fit(X, y)
 
-    assert_almost_equal(rgr.predict(X), rgr_w.predict(X))
+    X_test = [[1.5,2.5,3.5], [3.5,4.5,5.5]]
+    assert_almost_equal(rgr.predict(X_test), rgr_w.predict(X_test))
