@@ -1378,6 +1378,37 @@ function::
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
+.. _root_mean_squared_error:
+
+Root mean squared error
+-------------------
+
+The :func:`root_mean_squared_error` function computes `root mean square
+error <https://en.wikipedia.org/wiki/Root-mean-square_deviation>`_, a risk
+metric corresponding to the expected value of the root mean squared error loss or
+loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the root mean squared error
+(RMSE) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{RMSE}(y, \hat{y}) = \sqrt{\frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2}.
+
+Here is a small example of usage of the :func:`root_mean_squared_error`
+function::
+
+  >>> from sklearn.metrics import root_mean_squared_error
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> root_mean_squared_error(y_true, y_pred)
+  0.612...
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+  >>> root_mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.8416...
+
 .. _median_absolute_error:
 
 Median absolute error
