@@ -66,7 +66,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
-    # virtualenv but we want to used numpy installed through apt-get
+    # virtualenv but we want to use the numpy installed through apt-get
     # install.
     deactivate
     # Create a new virtualenv using system site packages for python, numpy
