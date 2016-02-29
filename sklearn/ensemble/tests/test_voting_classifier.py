@@ -28,6 +28,17 @@ def test_estimator_init():
            ' a list of (string, estimator) tuples')
     assert_raise_message(AttributeError, msg, eclf.fit, X, y)
 
+    clf = LogisticRegression(random_state=1)
+
+    eclf = VotingClassifier(estimators=[('lr', clf)], voting='error')
+    msg = ('Voting must be \'soft\' or \'hard\'; got (voting=\'error\')')
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
+    eclf = VotingClassifier(estimators=[('lr', clf)], weights=[1, 2])
+    msg = ('Number of classifiers and weights must be equal'
+           '; got 2 weights, 1 estimators')
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
 
 def test_predictproba_hardvoting():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
