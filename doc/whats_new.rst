@@ -142,6 +142,11 @@ Bug fixes
       ``transform`` or ``predict_proba`` are called on the non-fitted estimator.
       by `Sebastian Raschka`_.
 
+    - Fixed bug in :class:`model_selection.StratifiedShuffleSplit`
+      where train and test sample could overlap in some edge cases,
+      see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
+      more details. By `Loic Esteve`_.
+
 API changes summary
 -------------------
 
