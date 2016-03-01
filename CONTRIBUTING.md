@@ -47,11 +47,37 @@ review. This will send an email to the committers.
 (If any of the above seems like magic to you, then look up the 
 [Git documentation](http://git-scm.com/documentation) on the web.)
 
+Contributing Pull Requests
+--------------------------
+
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
+-  Follow the
+   [coding-guidelines](http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines).
+
+-  When applicable, use the validation tools and other code in the
+   `sklearn.utils` submodule.  A list of utility routines available
+   for developers can be found in the
+   [Utilities for Developers](http://scikit-learn.org/dev/developers/utilities.html#developers-utils)
+   page.
+
+-  If your pull request addresses an issue, please use the title to describe
+   the issue and mention the issue number in the pull request description to
+   ensure a link is created to the original issue.
+
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
+
+-  Please prefix the title of your pull request with `[MRG]` if the
+   contribution is complete and should be subjected to a detailed review.
+   Incomplete contributions should be prefixed `[WIP]` to indicate a work
+   in progress (and changed to `[MRG]` when it matures). WIPs may be useful
+   to: indicate you are working on something to avoid duplicated work,
+   request broad review of functionality or API, or seek collaborators.
+   WIPs often benefit from the inclusion of a
+   [task list](https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments)
+   in the PR description.
 
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder):
@@ -63,6 +89,9 @@ following rules before submitting a pull request:
    examples for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it
    to other methods available in scikit-learn.
+
+-  Documentation and high-coverage tests are necessary for enhancements
+   to be accepted.
 
 -  At least one paragraph of narrative documentation with links to
    references in the literature (with PDF links when possible) and
@@ -100,6 +129,44 @@ tools:
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
 list or on the GitHub issue).
+
+Filing bugs
+-----------
+We use Github issues to track all bugs and feature requests; feel free to
+open an issue if you have found a bug or wish to see a feature implemented.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   [issues](https://github.com/scikit-learn/scikit-learn/issues?q=)
+   or [pull requests](https://github.com/scikit-learn/scikit-learn/pulls?q=).
+
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   [new algorithm requirements](http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published).
+
+-  Please ensure all code snippets and error messages are formatted in
+   appropriate code blocks.
+   See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
+
+-  Please include your operating system type and version number, as well
+   as your Python, scikit-learn, numpy, and scipy versions. This information
+   can be found by runnning the following code snippet:
+
+   ```python
+   import platform; print(platform.platform())
+   import sys; print("Python", sys.version)
+   import numpy; print("NumPy", numpy.__version__)
+   import scipy; print("SciPy", scipy.__version__)
+   import sklearn; print("Scikit-Learn", sklearn.__version__)
+   ```
+   
+-  Please be specific about what estimators and/or functions are involved
+   and the shape of the data, as appropriate; please include a
+   [reproducible](http://stackoverflow.com/help/mcve) code snippet
+   or link to a [gist](https://gist.github.com). If an exception is raised,
+   please provide the traceback.
 
 Easy Issues
 -----------
