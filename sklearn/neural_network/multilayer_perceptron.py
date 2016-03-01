@@ -50,7 +50,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon):
+                 validation_fraction, beta_1, beta_2, epsilon, dropout):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -73,6 +73,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
+        self.dropout = dropout
 
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
@@ -83,7 +84,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             start, end = self._intercept_indptr[i]
             self.intercepts_[i] = packed_parameters[start:end]
 
-    def _forward_pass(self, activations):
+    def _forward_pass(self, activations, training_time=True,
+                      dropout_masks=None):
         """Perform a forward pass on the network by computing the values
         of the neurons in the hidden layers and the output layer.
 
@@ -92,16 +94,28 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         activations: list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
 
-        with_output_activation : bool, default True
-            If True, the output passes through the output activation
-            function, which is either the softmax function or the
-            logistic function
+        training_time : bool, default True
+            If False, it is considered to be test time and dropout won't be
+            applied.
+
+        dropout_masks : dict, optional
+            Mapping from layer index to mask for dropout. It won't be used when
+            training_time=False, otherwise it should be provided.
         """
         hidden_activation = ACTIVATIONS[self.activation]
+
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
-            activations[i + 1] = safe_sparse_dot(activations[i],
-                                                 self.coefs_[i])
+            if training_time and self.dropout and self.dropout[i] > 0:
+                retain_prob = 1 - self.dropout[i]
+                dropout_masks[i] = self._random_state.binomial(
+                    1, retain_prob, activations[i].shape) / retain_prob
+                dropout_input = activations[i] * dropout_masks[i]
+                activations[i + 1] = safe_sparse_dot(dropout_input,
+                                                     self.coefs_[i])
+            else:
+                activations[i + 1] = safe_sparse_dot(activations[i],
+                                                     self.coefs_[i])
             activations[i + 1] += self.intercepts_[i]
 
             # For the hidden layers
@@ -115,13 +129,18 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         return activations
 
     def _compute_loss_grad(self, layer, n_samples, activations, deltas,
-                           coef_grads, intercept_grads):
+                           coef_grads, intercept_grads, dropout_masks):
         """Compute the gradient of loss with respect to coefs and intercept for
         specified layer.
 
         This function does backpropagation for the specified one layer.
         """
-        coef_grads[layer] = safe_sparse_dot(activations[layer].T,
+        if layer in dropout_masks:
+            activation = activations[layer] * dropout_masks[layer]
+        else:
+            activation = activations[layer]
+
+        coef_grads[layer] = safe_sparse_dot(activation.T,
                                             deltas[layer])
         coef_grads[layer] += (self.alpha * self.coefs_[layer])
         coef_grads[layer] /= n_samples
@@ -131,7 +150,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         return coef_grads, intercept_grads
 
     def _loss_grad_lbfgs(self, packed_coef_inter, X, y, activations, deltas,
-                         coef_grads, intercept_grads):
+                         coef_grads, intercept_grads, dropout_masks):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to the different parameters given in the initialization.
 
@@ -140,7 +159,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        packed_parameters : array-like
+        packed_coef_inter : array-like
             A vector comprising the flattened coefficients and intercepts.
 
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -167,6 +186,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             The ith element contains the amount of change used to update the
             intercept parameters of the ith layer in an iteration.
 
+        dropout_masks : dict
+            A mapping from layer index to mask for dropout.
+
         Returns
         -------
         loss : float
@@ -175,13 +197,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
-            X, y, activations, deltas, coef_grads, intercept_grads)
+            X, y, activations, deltas, coef_grads, intercept_grads,
+            dropout_masks)
         self.n_iter_ += 1
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
     def _backprop(self, X, y, activations, deltas, coef_grads,
-                  intercept_grads):
+                  intercept_grads, dropout_masks):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to each parameter: weights and bias vectors.
 
@@ -220,7 +243,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         n_samples = X.shape[0]
 
         # Forward propagate
-        activations = self._forward_pass(activations)
+        activations = self._forward_pass(
+            activations, dropout_masks=dropout_masks)
 
         # Get loss
         loss_func_name = self.loss
@@ -243,17 +267,20 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Compute gradient for the last layer
         coef_grads, intercept_grads = self._compute_loss_grad(
-            last, n_samples, activations, deltas, coef_grads, intercept_grads)
+            last, n_samples, activations, deltas, coef_grads, intercept_grads,
+            dropout_masks)
 
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
             inplace_derivative = DERIVATIVES[self.activation]
             inplace_derivative(activations[i], deltas[i - 1])
+            if self.dropout and self.dropout[i] > 0:
+                deltas[i - 1] *= dropout_masks[i]
 
             coef_grads, intercept_grads = self._compute_loss_grad(
                 i - 1, n_samples, activations, deltas, coef_grads,
-                intercept_grads)
+                intercept_grads, dropout_masks)
 
         return loss, coef_grads, intercept_grads
 
@@ -326,6 +353,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
+        if self.dropout and (len(self.dropout) != len(hidden_layer_sizes) + 1):
+            raise ValueError("Length of dropout must be n_layers - 1 = %s, "
+                             "got %s." %
+                             (len(hidden_layer_sizes) + 1, len(self.dropout)))
 
         X, y = self._validate_input(X, y, incremental)
         n_samples, n_features = X.shape
@@ -370,16 +401,18 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         intercept_grads = [np.empty(n_fan_out_) for n_fan_out_ in
                            layer_units[1:]]
+        dropout_masks = {}
 
         # Run the Stochastic optimization solver
         if self.solver in _STOCHASTIC_SOLVERS:
-            self._fit_stochastic(X, y, activations, deltas, coef_grads,
-                                 intercept_grads, layer_units, incremental)
+            self._fit_stochastic(
+                X, y, activations, deltas, coef_grads, intercept_grads,
+                layer_units, incremental, dropout_masks)
 
         # Run the LBFGS solver
         elif self.solver == 'lbfgs':
             self._fit_lbfgs(X, y, activations, deltas, coef_grads,
-                            intercept_grads, layer_units)
+                            intercept_grads, layer_units, dropout_masks)
         return self
 
     def _validate_hyperparameters(self):
@@ -414,6 +447,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                              self.beta_2)
         if self.epsilon <= 0.0:
             raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
+        if self.dropout and (np.any(np.array(self.dropout) < 0) or
+                             np.any(np.array(self.dropout) >= 1)):
+            raise ValueError("Values for `dropout` must be in [0, 1), got "
+                             "%s." % self.dropout)
 
         # raise ValueError if not registered
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
@@ -431,7 +468,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                              (self.solver, ", ".join(supported_solvers)))
 
     def _fit_lbfgs(self, X, y, activations, deltas, coef_grads,
-                   intercept_grads, layer_units):
+                   intercept_grads, layer_units, dropout_masks):
         # Store meta information for the parameters
         self._coef_indptr = []
         self._intercept_indptr = []
@@ -466,13 +503,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             maxfun=self.max_iter,
             iprint=iprint,
             pgtol=self.tol,
-            args=(X, y, activations, deltas, coef_grads, intercept_grads))
+            args=(X, y, activations, deltas, coef_grads, intercept_grads,
+                  dropout_masks))
 
         self._unpack(optimal_parameters)
 
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
-                        intercept_grads, layer_units, incremental):
-
+                        intercept_grads, layer_units, incremental,
+                        dropout_masks):
         if not incremental or not hasattr(self, '_optimizer'):
             params = self.coefs_ + self.intercepts_
 
@@ -512,7 +550,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     activations[0] = X[batch_slice]
                     batch_loss, coef_grads, intercept_grads = self._backprop(
                         X[batch_slice], y[batch_slice], activations, deltas,
-                        coef_grads, intercept_grads)
+                        coef_grads, intercept_grads, dropout_masks)
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
 
@@ -673,7 +711,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             activations.append(np.empty((X.shape[0],
                                          layer_units[i + 1])))
         # forward propagate
-        self._forward_pass(activations)
+        self._forward_pass(activations, training_time=False)
         y_pred = activations[-1]
 
         return y_pred
@@ -816,6 +854,14 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
 
+    dropout : list, length = n_layers - 1, default None
+        Probabilities of dropout for inputs at each layer. Value of each
+        element should be in [0, 1). The first element corresponds to dropout
+        from input layer to the first hidden layer, and second element
+        correponds to dropout from first hidden layer to the second hidden
+        layer, and so on. If None, it is equivalent to a list of all zeros,
+        which adds no dropout.
+
     Attributes
     ----------
     `classes_` : array or list of array of shape (n_classes,)
@@ -873,6 +919,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
 
+    Srivastava, Nitish, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever,
+        and Ruslan Salakhutdinov. "Dropout: A simple way to prevent neural
+        networks from overfitting." The Journal of Machine Learning Research
+        15, no. 1 (2014): 1929-1958.
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -882,7 +932,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 epsilon=1e-8, dropout=None):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -894,8 +944,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      warm_start=warm_start, momentum=momentum,
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
-                     validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
+                     validation_fraction=validation_fraction, beta_1=beta_1,
+                     beta_2=beta_2, epsilon=epsilon, dropout=dropout)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1161,6 +1211,14 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
 
+    dropout : list, length = n_layers - 1, default None
+        Probabilities of dropout for inputs at each layer. Value of each
+        element should be in [0, 1). The first element corresponds to dropout
+        from input layer to the first hidden layer, and second element
+        correponds to dropout from first hidden layer to the second hidden
+        layer, and so on. If None, it is equivalent to a list of all zeros,
+        which adds no dropout.
+
     Attributes
     ----------
     `loss_` : float
@@ -1215,6 +1273,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
 
+    Srivastava, Nitish, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever,
+        and Ruslan Salakhutdinov. "Dropout: A simple way to prevent neural
+        networks from overfitting." The Journal of Machine Learning Research
+        15, no. 1 (2014): 1929-1958.
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -1225,7 +1287,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 epsilon=1e-8, dropout=None):
 
         sup = super(MLPRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -1237,8 +1299,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      warm_start=warm_start, momentum=momentum,
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
-                     validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
+                     validation_fraction=validation_fraction, beta_1=beta_1,
+                     beta_2=beta_2, epsilon=epsilon, dropout=dropout)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.
