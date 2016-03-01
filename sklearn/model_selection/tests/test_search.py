@@ -22,6 +22,7 @@ from sklearn.externals.six.moves import zip
 from sklearn.manifold.t_sne import TSNE, trustworthiness
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import normalized_mutual_info_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import silhouette_score
 from sklearn.model_selection import GridSearchCV, UnsupervisedGridSearch
@@ -507,9 +508,8 @@ def test_grid_search_one_grid_point():
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
 
 
-@nottest
 def test_unsupervised_grid_search_one_grid_point():
-    X_, y_ = make_blobs(random_state=0, centers=3)
+    X_, y_ = make_blobs(random_state=13, centers=3)
     param_dict = {"n_clusters": [3], "tol": [0.1]}
 
     clf = KMeans()
@@ -518,8 +518,10 @@ def test_unsupervised_grid_search_one_grid_point():
 
     clf = KMeans(n_clusters=3, tol=0.1)
     clf.fit(X_)
-    # TODO: Clusters are the same but with different label numbers. Why?
-    assert_array_equal(clf.labels_, cv.best_estimator_.labels_)
+
+    mutual_info = normalized_mutual_info_score(
+        clf.labels_, cv.best_estimator_.labels_)
+    assert_equal(mutual_info, 1)
 
 
 def test_grid_search_bad_param_grid():
@@ -764,7 +766,7 @@ def test_pandas_input():
         assert_true(hasattr(grid_search, "grid_scores_"))
 
 
-def test_unsupervised_grid_search():
+def test_unsupervised_grid_search_cv():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
@@ -1049,7 +1051,7 @@ def test_grid_search_failing_classifier():
 
 
 def test_grid_search_failing_clusterer():
-    # UnsupervisedGridSearch with on_error != 'raise'
+    # UnsupervisedGridSearch with error_score != 'raise'
     # Ensures that a warning is raised and score reset where appropriate.
 
     X, _y = make_blobs(random_state=0, centers=3)
@@ -1099,7 +1101,7 @@ def test_grid_search_failing_classifier_raise():
 
 
 def test_grid_search_failing_clusterer_raise():
-    # UnsupervisedGridSearch with on_error == 'raise' raises the error
+    # UnsupervisedGridSearch with error_score == 'raise' raises the error
 
     X, _y = make_blobs(random_state=0, centers=3)
 
