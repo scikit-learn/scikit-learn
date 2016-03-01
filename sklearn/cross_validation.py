@@ -268,8 +268,8 @@ class KFold(_BaseKFold):
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling by default).
 
-    Each fold is then used a validation set once while the k - 1 remaining
-    fold form the training set.
+    Each fold is then used as a validation set once while the k - 1 remaining
+    fold(s) form the training set.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
