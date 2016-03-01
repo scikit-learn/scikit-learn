@@ -24,7 +24,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import silhouette_score
-from sklearn.model_selection import GridSearchCV, GridSearchTransductive
+from sklearn.model_selection import GridSearchCV, UnsupervisedGridSearch
 from sklearn.model_selection import KFold
 from sklearn.model_selection import LabelKFold
 from sklearn.model_selection import LabelShuffleSplit
@@ -32,7 +32,7 @@ from sklearn.model_selection import LeaveOneLabelOut
 from sklearn.model_selection import LeavePLabelOut
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection import RandomizedSearchCV, RandomizedSearchTransductive
+from sklearn.model_selection import RandomizedSearchCV, UnsupervisedRandomizedSearch
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection._validation import FitFailedWarning
@@ -219,10 +219,10 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
-def test_grid_search_transductive():
+def test_unsupervised_grid_search():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClusterer()
-    grid_search = GridSearchTransductive(
+    grid_search = UnsupervisedGridSearch(
         clf, {'foo_param': [1, 2, 3]}, verbose=3)
     # make sure it selects the smallest parameter in case of ties
     old_stdout = sys.stdout
@@ -276,18 +276,18 @@ def silhouette_scorer(estimator, X, y=None):
 
 
 @ignore_warnings
-def test_grid_search_transductive_clusterer_no_score():
+def test_unsupervised_grid_search_clusterer_no_score():
     # Test grid-search on clusterer that has no score function.
     clf = KMeans(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     n_clusters = [2, 3, 4]
     clf_no_score = KMeansNoScore(random_state=0)
     scorer = silhouette_scorer
-    grid_search = GridSearchTransductive(clf, {'n_clusters': n_clusters},
+    grid_search = UnsupervisedGridSearch(clf, {'n_clusters': n_clusters},
                                          scoring=scorer)
     grid_search.fit(X)
 
-    grid_search_no_score = GridSearchTransductive(clf_no_score,
+    grid_search_no_score = UnsupervisedGridSearch(clf_no_score,
                                                   {'n_clusters': n_clusters},
                                                   scoring=scorer)
     # smoketest grid search
@@ -299,7 +299,7 @@ def test_grid_search_transductive_clusterer_no_score():
     assert_equal(grid_search.score(X), grid_search_no_score.score(X))
 
     # giving no scoring function raises an error
-    grid_search_no_score = GridSearchTransductive(clf_no_score,
+    grid_search_no_score = UnsupervisedGridSearch(clf_no_score,
                                                   {'n_clusters': n_clusters})
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
@@ -310,19 +310,19 @@ def trustworthiness_scorer(estimator, X, y=None):
 
 
 @ignore_warnings
-def test_grid_search_transductive_no_score():
-    # Test grid-search on non-clustering transductive model that has no score
+def test_unsupervised_grid_search_no_score():
+    # Test grid-search on non-clustering unsupervised model that has no score
     # function.
     clf = TSNE(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     learning_rate = [100, 500, 1000]
     clf_no_score = TSNENoScore(random_state=0)
     scorer = trustworthiness_scorer
-    grid_search = GridSearchTransductive(clf, {'learning_rate': learning_rate},
+    grid_search = UnsupervisedGridSearch(clf, {'learning_rate': learning_rate},
                                          scoring=scorer)
     grid_search.fit(X)
 
-    grid_search_no_score = GridSearchTransductive(
+    grid_search_no_score = UnsupervisedGridSearch(
         clf_no_score,
         {'learning_rate': learning_rate},
         scoring=scorer)
@@ -412,16 +412,16 @@ def test_trivial_grid_scores():
     assert_true(hasattr(random_search, "grid_scores_"))
 
 
-def test_trivial_grid_scores_transductive():
+def test_trivial_unsupervised_grid_scores():
     # Test search over a "grid" with only one point.
     # Non-regression test: grid_scores_ wouldn't be set by
-    # GridSearchTransductive.
+    # UnsupervisedGridSearch.
     clf = MockClusterer()
-    grid_search = GridSearchTransductive(clf, {'foo_param': [1]})
+    grid_search = UnsupervisedGridSearch(clf, {'foo_param': [1]})
     grid_search.fit(X)
     assert_true(hasattr(grid_search, "grid_scores_"))
 
-    random_search = RandomizedSearchTransductive(
+    random_search = UnsupervisedRandomizedSearch(
         clf, {'foo_param': [0]}, n_iter=1)
     random_search.fit(X)
     assert_true(hasattr(random_search, "grid_scores_"))
@@ -435,10 +435,10 @@ def test_no_refit():
     assert_true(hasattr(grid_search, "best_params_"))
 
 
-def test_no_refit_transductive():
+def test_unsupervised_no_refit():
     # Test that grid search can be used for model selection only
     clf = MockClusterer()
-    grid_search = GridSearchTransductive(
+    grid_search = UnsupervisedGridSearch(
         clf, {'foo_param': [1, 2, 3]}, refit=False)
     grid_search.fit(X)
     assert_true(hasattr(grid_search, "best_params_"))
@@ -508,12 +508,12 @@ def test_grid_search_one_grid_point():
 
 
 @nottest
-def test_grid_search_one_grid_point_transductive():
+def test_unsupervised_grid_search_one_grid_point():
     X_, y_ = make_blobs(random_state=0, centers=3)
     param_dict = {"n_clusters": [3], "tol": [0.1]}
 
     clf = KMeans()
-    cv = GridSearchTransductive(clf, param_dict)
+    cv = UnsupervisedGridSearch(clf, param_dict)
     cv.fit(X_)
 
     clf = KMeans(n_clusters=3, tol=0.1)
@@ -536,18 +536,18 @@ def test_grid_search_bad_param_grid():
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
-def test_grid_search_bad_param_grid_transductive():
+def test_unsupervised_grid_search_bad_param_grid():
     param_dict = {"n_clusters": 3}
     clf = KMeans()
-    assert_raises(ValueError, GridSearchTransductive, clf, param_dict)
+    assert_raises(ValueError, UnsupervisedGridSearch, clf, param_dict)
 
     param_dict = {"n_clusters": []}
     clf = KMeans()
-    assert_raises(ValueError, GridSearchTransductive, clf, param_dict)
+    assert_raises(ValueError, UnsupervisedGridSearch, clf, param_dict)
 
     param_dict = {"n_clusters": np.ones(6).reshape(3, 2)}
     clf = KMeans()
-    assert_raises(ValueError, GridSearchTransductive, clf, param_dict)
+    assert_raises(ValueError, UnsupervisedGridSearch, clf, param_dict)
 
 
 def test_grid_search_sparse():
@@ -571,19 +571,19 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
-def test_grid_search_transductive_sparse():
+def test_unsupervised_grid_search_sparse():
     # Test that grid search works with both dense and sparse matrices
     X_, y_ = make_blobs(random_state=0, centers=3)
 
     clf = KMeans()
-    clf = GridSearchTransductive(clf, {'n_clusters': [2, 3]})
+    clf = UnsupervisedGridSearch(clf, {'n_clusters': [2, 3]})
     clf.fit(X_)
     labels = clf.predict(X_)
     n = clf.best_estimator_.n_clusters
 
     X_ = sp.csr_matrix(X_)
     clf = KMeans()
-    clf = GridSearchTransductive(clf, {'n_clusters': [2, 3]})
+    clf = UnsupervisedGridSearch(clf, {'n_clusters': [2, 3]})
     clf.fit(X_.tocoo())
     labels2 = clf.predict(X_)
     n2 = clf.best_estimator_.n_clusters
@@ -780,7 +780,7 @@ def test_unsupervised_grid_search():
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
-def test_unsupervised_grid_search_transductive():
+def test_unsupervised_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, _y = make_blobs(random_state=0)
     clf = KMeans(random_state=0)
@@ -911,15 +911,15 @@ def test_pickle():
     pickle.dumps(random_search)  # smoke test
 
 
-def test_pickle_transductive():
+def test_pickle_unsupervised():
     # Test that a fit search can be pickled
     clf = MockClusterer()
-    grid_search = GridSearchTransductive(
+    grid_search = UnsupervisedGridSearch(
         clf, {'foo_param': [1, 2, 3]}, refit=True)
     grid_search.fit(X)
     pickle.dumps(grid_search)  # smoke test
 
-    random_search = RandomizedSearchTransductive(clf, {'foo_param': [1, 2, 3]},
+    random_search = UnsupervisedRandomizedSearch(clf, {'foo_param': [1, 2, 3]},
                                                  refit=True, n_iter=3)
     random_search.fit(X)
     pickle.dumps(random_search)  # smoke test
@@ -1049,7 +1049,7 @@ def test_grid_search_failing_classifier():
 
 
 def test_grid_search_failing_clusterer():
-    # GridSearchTransductive with on_error != 'raise'
+    # UnsupervisedGridSearch with on_error != 'raise'
     # Ensures that a warning is raised and score reset where appropriate.
 
     X, _y = make_blobs(random_state=0, centers=3)
@@ -1060,7 +1060,7 @@ def test_grid_search_failing_clusterer():
     # will be caught and warnings raised instead. If refit was done, then an
     # exception would be raised on refit and not caught by grid_search
     # (expected behavior), and this would cause an error in this test.
-    gs = GridSearchTransductive(clf, [{'parameter': [0, 1, 2]}],
+    gs = UnsupervisedGridSearch(clf, [{'parameter': [0, 1, 2]}],
                                 scoring=silhouette_scorer, refit=False,
                                 error_score=0.0)
 
@@ -1073,7 +1073,7 @@ def test_grid_search_failing_clusterer():
                if this_point.parameters['parameter'] ==
                FailingClusterer.FAILING_PARAMETER)
 
-    gs = GridSearchTransductive(clf, [{'parameter': [0, 1, 2]}],
+    gs = UnsupervisedGridSearch(clf, [{'parameter': [0, 1, 2]}],
                                 scoring=silhouette_scorer, refit=False,
                                 error_score=float('nan'))
     assert_warns(FitFailedWarning, gs.fit, X)
@@ -1099,14 +1099,14 @@ def test_grid_search_failing_classifier_raise():
 
 
 def test_grid_search_failing_clusterer_raise():
-    # GridSearchTransductive with on_error == 'raise' raises the error
+    # UnsupervisedGridSearch with on_error == 'raise' raises the error
 
     X, _y = make_blobs(random_state=0, centers=3)
 
     clf = FailingClusterer()
 
     # refit=False because we want to test the behaviour of the grid search part
-    gs = GridSearchTransductive(clf, [{'parameter': [0, 1, 2]}],
+    gs = UnsupervisedGridSearch(clf, [{'parameter': [0, 1, 2]}],
                                 scoring=silhouette_scorer,
                                 refit=False, error_score='raise')
 

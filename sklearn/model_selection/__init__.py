@@ -1,9 +1,9 @@
 from ._search import GridSearchCV
-from ._search import GridSearchTransductive
+from ._search import UnsupervisedGridSearch
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 from ._search import RandomizedSearchCV
-from ._search import RandomizedSearchTransductive
+from ._search import UnsupervisedRandomizedSearch
 from ._search import fit_grid_point
 from ._split import BaseCrossValidator
 from ._split import KFold
@@ -28,7 +28,7 @@ from ._validation import validation_curve
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
-           'GridSearchTransductive',
+           'UnsupervisedGridSearch',
            'KFold',
            'LabelKFold',
            'LabelShuffleSplit',
@@ -40,7 +40,7 @@ __all__ = ('BaseCrossValidator',
            'ParameterSampler',
            'PredefinedSplit',
            'RandomizedSearchCV',
-           'RandomizedSearchTransductive',
+           'UnsupervisedRandomizedSearch',
            'ShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',

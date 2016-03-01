@@ -36,9 +36,9 @@ from ._validation import _fit_and_score
 from ..exceptions import FitFailedWarning
 
 
-__all__ = ['GridSearchCV', 'GridSearchTransductive', 'ParameterGrid',
+__all__ = ['GridSearchCV', 'UnsupervisedGridSearch', 'ParameterGrid',
            'fit_grid_point', 'ParameterSampler', 'RandomizedSearchCV',
-           'RandomizedSearchTransductive']
+           'UnsupervisedRandomizedSearch']
 
 
 class ParameterGrid(object):
@@ -549,7 +549,7 @@ class BaseSearch(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.transform(Xt)
 
 
-class SearchTransductiveMixin(object):
+class UnsupervisedSearchMixin(object):
 
     """Adds unsupervised search to BaseSearch."""
 
@@ -562,7 +562,7 @@ class SearchTransductiveMixin(object):
         grid_scores = list()
         out = Parallel(n_jobs=1
                        )(
-            delayed(fit_and_score_transductive)(clone(estimator),
+            delayed(fit_and_score_unsupervised)(clone(estimator),
                                                 X, scorer=self.scorer_,
                                                 verbose=self.verbose,
                                                 parameters=parameters,
@@ -597,7 +597,7 @@ class SearchTransductiveMixin(object):
         return self
 
 
-def fit_and_score_transductive(estimator, X, scorer, verbose, parameters,
+def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
                                fit_params, y=None, error_score='raise'):
     """Fit estimator and compute scores for a given dataset.
 
@@ -656,7 +656,7 @@ def fit_and_score_transductive(estimator, X, scorer, verbose, parameters,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
-            warnings.warn("Transductive model score failed. "
+            warnings.warn("Unsupervised model score failed. "
                           "The score will be set to %f. "
                           "Details: \n%r" % (error_score, e), FitFailedWarning)
 
@@ -672,7 +672,7 @@ def fit_and_score_transductive(estimator, X, scorer, verbose, parameters,
     return score, parameters, scoring_time
 
 
-class GridSearchTransductive(BaseSearch, SearchTransductiveMixin):
+class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
 
     """Exhaustive search over specified parameter values for an estimator.
 
@@ -750,17 +750,17 @@ class GridSearchTransductive(BaseSearch, SearchTransductiveMixin):
     --------
     >>> from sklearn import datasets, cluster
     >>> from sklearn.metrics import silhouette_score, make_scorer
-    >>> from sklearn.model_selection import GridSearchTransductive
+    >>> from sklearn.model_selection import UnsupervisedGridSearch
     >>> def silhouette_scorer(estimator, X, y=None):
     ...     return silhouette_score(X, estimator.labels_)
     >>> X, _ = datasets.make_blobs(random_state=8, centers=3, n_samples=1000)
     >>> parameters = {'n_clusters': [2,3,4]}
     >>> km = cluster.KMeans()
     >>> scorer = silhouette_scorer
-    >>> grid_search = GridSearchTransductive(km, parameters, scoring=scorer)
+    >>> grid_search = UnsupervisedGridSearch(km, parameters, scoring=scorer)
     >>> grid_search.fit(X)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchTransductive(error_score=...,
+    UnsupervisedGridSearch(error_score=...,
                 estimator=KMeans(copy_x=..., init=..., max_iter=300, 
                 n_clusters=8, n_init=10,
         n_jobs=1, precompute_distances='auto', random_state=None, tol=0.0001,
@@ -821,7 +821,7 @@ class GridSearchTransductive(BaseSearch, SearchTransductiveMixin):
                  n_jobs=1, refit=True, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise'):
 
-        super(GridSearchTransductive, self).__init__(
+        super(UnsupervisedGridSearch, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, refit=refit, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
@@ -846,7 +846,7 @@ class GridSearchTransductive(BaseSearch, SearchTransductiveMixin):
         return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
-class RandomizedSearchTransductive(BaseSearch, SearchTransductiveMixin):
+class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
 
     """Randomized search on hyper parameters.
 
@@ -858,7 +858,7 @@ class RandomizedSearchTransductive(BaseSearch, SearchTransductiveMixin):
     The parameters of the estimator used to apply these methods are optimized
     by random search over parameter settings.
 
-    In contrast to GridSearchTransductive, not all parameter values are tried out,
+    In contrast to UnsupervisedGridSearch, not all parameter values are tried out,
     but rather a fixed number of parameter settings is sampled from the
     specified distributions. The number of parameter settings that are tried
     is given by n_iter.
@@ -972,7 +972,7 @@ class RandomizedSearchTransductive(BaseSearch, SearchTransductiveMixin):
 
     See Also
     --------
-    :class:`GridSearchTransductive`:
+    :class:`UnsupervisedGridSearch`:
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
@@ -989,7 +989,7 @@ class RandomizedSearchTransductive(BaseSearch, SearchTransductiveMixin):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
-        super(RandomizedSearchTransductive, self).__init__(
+        super(UnsupervisedRandomizedSearch, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, refit=refit, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
