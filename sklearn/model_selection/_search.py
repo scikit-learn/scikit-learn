@@ -557,7 +557,7 @@ class UnsupervisedSearchMixin(object):
         estimator = self.estimator
 
         grid_scores = list()
-        out = Parallel(n_jobs=1
+        out = Parallel(n_jobs=self.n_jobs
                        )(
             delayed(fit_and_score_unsupervised)(clone(estimator),
                                                 X, scorer=self.scorer_,
