@@ -8,6 +8,7 @@ from __future__ import print_function
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Jamie Bull <jamie.bull@oco-carbon.com>
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -42,7 +43,6 @@ __all__ = ['GridSearchCV', 'UnsupervisedGridSearch', 'ParameterGrid',
 
 
 class ParameterGrid(object):
-
     """Grid of parameters with a discrete number of values for each.
 
     Can be used to iterate over parameter value combinations with the
@@ -163,7 +163,6 @@ class ParameterGrid(object):
 
 
 class ParameterSampler(object):
-
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
@@ -241,8 +240,8 @@ class ParameterSampler(object):
             if grid_size < self.n_iter:
                 raise ValueError(
                     "The total space of parameters %d is smaller "
-                    "than n_iter=%d." % (grid_size, self.n_iter) +
-                    " For exhaustive searches, use GridSearchCV.")
+                    "than n_iter=%d." % (grid_size, self.n_iter)
+                    + " For exhaustive searches, use GridSearchCV.")
             for i in sample_without_replacement(grid_size, self.n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
@@ -389,7 +388,6 @@ class _ScoreTuple (namedtuple('_ScoreTuple',
 
 class BaseSearch(six.with_metaclass(ABCMeta, BaseEstimator,
                                     MetaEstimatorMixin)):
-
     """Base class for hyper parameter search."""
 
     @abstractmethod
@@ -550,7 +548,6 @@ class BaseSearch(six.with_metaclass(ABCMeta, BaseEstimator,
 
 
 class UnsupervisedSearchMixin(object):
-
     """Adds unsupervised search to BaseSearch."""
 
     def _fit(self, X, y=None, parameter_iterable=None):
@@ -673,7 +670,6 @@ def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
 
 
 class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
-
     """Exhaustive search over specified parameter values for an estimator.
 
     Important members are fit, predict.
@@ -842,13 +838,12 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-                        """
+        """
         return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
 class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
-
-    """Randomized search on hyper parameters.
+    """Randomized search on hyper parameters for unsupervised methods.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
     It also implements "predict", "predict_proba", "decision_function",
@@ -976,7 +971,7 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
+        A generator over parameter settings, constructed from
         param_distributions.
 
     """
@@ -1014,7 +1009,6 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
 
 
 class SearchCVMixin(object):
-
     """Implements cross-validation for adding to BaseSearch."""
 
     def _fit(self, X, y, labels, parameter_iterable):
@@ -1104,7 +1098,6 @@ class SearchCVMixin(object):
 
 
 class GridSearchCV(BaseSearch, SearchCVMixin):
-
     """Exhaustive search over specified parameter values for an estimator.
 
     Important members are fit, predict.
@@ -1305,7 +1298,6 @@ class GridSearchCV(BaseSearch, SearchCVMixin):
 
 
 class RandomizedSearchCV(BaseSearch, SearchCVMixin):
-
     """Randomized search on hyper parameters.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
