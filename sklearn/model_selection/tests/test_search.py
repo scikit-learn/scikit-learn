@@ -1,63 +1,71 @@
 """Test the search module"""
 
 from collections import Iterable, Sized
+from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
 import sys
 
-from scipy.stats import bernoulli, expon, uniform
-
 import numpy as np
 import scipy.sparse as sp
-from sklearn.base import BaseEstimator
-from sklearn.base import ChangedBehaviorWarning
-from sklearn.cluster import KMeans
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
-from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.externals.six.moves import xrange
-from sklearn.externals.six.moves import zip
-from sklearn.manifold.t_sne import TSNE, trustworthiness
-from sklearn.metrics import f1_score
-from sklearn.metrics import make_scorer
-from sklearn.metrics import normalized_mutual_info_score
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import silhouette_score
-from sklearn.model_selection import GridSearchCV, UnsupervisedGridSearch
-from sklearn.model_selection import KFold
-from sklearn.model_selection import LabelKFold
-from sklearn.model_selection import LabelShuffleSplit
-from sklearn.model_selection import LeaveOneLabelOut
-from sklearn.model_selection import LeavePLabelOut
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection import RandomizedSearchCV, UnsupervisedRandomizedSearch
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection._validation import FitFailedWarning
-from sklearn.neighbors import KernelDensity
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
-from sklearn.svm import LinearSVC, SVC
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
+
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false, assert_true
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_false, assert_true
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
+from scipy.stats import bernoulli, expon, uniform
+
+from sklearn.externals.six.moves import zip
+from sklearn.base import BaseEstimator
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_multilabel_classification
+
+from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import LeaveOneLabelOut
+from sklearn.model_selection import LeavePLabelOut
+from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import LabelShuffleSplit
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection import UnsupervisedGridSearch
+from sklearn.model_selection import UnsupervisedRandomizedSearch
 
 # TODO Import from sklearn.exceptions once merged.
+from sklearn.base import ChangedBehaviorWarning
+from sklearn.model_selection._validation import FitFailedWarning
+
+from sklearn.svm import LinearSVC, SVC
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KernelDensity
+from sklearn.manifold import TSNE
+from sklearn.manifold.t_sne import trustworthiness
+from sklearn.metrics import f1_score
+from sklearn.metrics import make_scorer
+from sklearn.metrics import roc_auc_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics.cluster import silhouette_score
+from sklearn.preprocessing import Imputer
+from sklearn.pipeline import Pipeline
+
+
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
 class MockClassifier(object):
