@@ -22,6 +22,13 @@ import threading
 import atexit
 import tempfile
 import shutil
+import warnings
+from time import sleep
+
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
 
 try:
     # Python 2 compat
@@ -177,13 +184,6 @@ class ArrayMemmapReducer(object):
         If verbose > 0, memmap creations are logged.
         If verbose > 1, both memmap creations, reuse and array pickling are
         logged.
-    context_id: int, optional, None by default
-        Set to a value identifying a call context to spare costly hashing of
-        the content of the input arrays when it is safe to assume that each
-        array will not be mutated by the parent process for the duration of the
-        dispatch process. This is the case when using the high level Parallel
-        API. It might not be the case when using the MemmapingPool API
-        directly.
     prewarm: bool, optional, False by default.
         Force a read on newly memmaped array to make sure that OS pre-cache it
         memory. This can be useful to avoid concurrent disk access when the
@@ -196,8 +196,11 @@ class ArrayMemmapReducer(object):
         self._temp_folder = temp_folder
         self._mmap_mode = mmap_mode
         self.verbose = int(verbose)
-        self._context_id = context_id
         self._prewarm = prewarm
+        if context_id is not None:
+            warnings.warn('context_id is deprecated and ignored in joblib'
+                          ' 0.9.4 and will be removed in 0.11',
+                          DeprecationWarning)
 
     def __call__(self, a):
         m = _get_backing_memmap(a)
@@ -219,12 +222,8 @@ class ArrayMemmapReducer(object):
 
             # Find a unique, concurrent safe filename for writing the
             # content of this array only once.
-            if self._context_id is not None:
-                marker = self._context_id
-            else:
-                marker = hash(a)
-            basename = "%d-%d-%d-%s.pkl" % (
-                os.getpid(), id(threading.current_thread()), id(a), marker)
+            basename = "%d-%d-%s.pkl" % (
+                os.getpid(), id(threading.current_thread()), hash(a))
             filename = os.path.join(self._temp_folder, basename)
 
             # In case the same array with the same content is passed several
@@ -248,8 +247,8 @@ class ArrayMemmapReducer(object):
                 print("Memmaping (shape=%s, dtype=%s) to old file %s" % (
                     a.shape, a.dtype, filename))
 
-            # Let's use the memmap reducer
-            return reduce_memmap(load(filename, mmap_mode=self._mmap_mode))
+            # The worker process will use joblib.load to memmap the data
+            return (load, (filename, self._mmap_mode))
         else:
             # do not convert a into memmap, let pickler do its usual copy with
             # the default system pickler
@@ -430,8 +429,11 @@ class PicklingPool(Pool):
 
 def delete_folder(folder_path):
     """Utility function to cleanup a temporary folder if still existing"""
-    if os.path.exists(folder_path):
-        shutil.rmtree(folder_path)
+    try:
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path)
+    except WindowsError:
+        warnings.warn("Failed to clean temporary folder: %s" % folder_path)
 
 
 class MemmapingPool(PicklingPool):
@@ -486,12 +488,6 @@ class MemmapingPool(PicklingPool):
     verbose: int, optional
         Make it possible to monitor how the communication of numpy arrays
         with the subprocess is handled (pickling or memmaping)
-    context_id: int, optional, None by default
-        Set to a value identifying a call context to spare costly hashing of
-        the content of the input arrays when it is safe to assume that each
-        array will not be mutated by the parent process for the duration of the
-        dispatch process. This is the case when using the high level Parallel
-        API.
     prewarm: bool or str, optional, "auto" by default.
         If True, force a read on newly memmaped array to make sure that OS pre-
         cache it in memory. This can be useful to avoid concurrent disk access
@@ -516,6 +512,10 @@ class MemmapingPool(PicklingPool):
             forward_reducers = dict()
         if backward_reducers is None:
             backward_reducers = dict()
+        if context_id is not None:
+            warnings.warn('context_id is deprecated and ignored in joblib'
+                          ' 0.9.4 and will be removed in 0.11',
+                          DeprecationWarning)
 
         # Prepare a sub-folder name for the serialization of this particular
         # pool instance (do not create in advance to spare FS write access if
@@ -534,7 +534,7 @@ class MemmapingPool(PicklingPool):
                         os.makedirs(pool_folder)
                     use_shared_mem = True
                 except IOError:
-                    # Missing rights in the the /dev/shm partition,
+                    # Missing rights in the /dev/shm partition,
                     # fallback to regular temp folder.
                     temp_folder = None
         if temp_folder is None:
@@ -559,7 +559,7 @@ class MemmapingPool(PicklingPool):
                 prewarm = not use_shared_mem
             forward_reduce_ndarray = ArrayMemmapReducer(
                 max_nbytes, pool_folder, mmap_mode, verbose,
-                context_id=context_id, prewarm=prewarm)
+                prewarm=prewarm)
             forward_reducers[np.ndarray] = forward_reduce_ndarray
             forward_reducers[np.memmap] = reduce_memmap
 

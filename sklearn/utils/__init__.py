@@ -16,17 +16,14 @@ from .validation import (as_float_array,
 from .deprecation import deprecated
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
-from ..exceptions import ConvergenceWarning as ConvergenceWarning_
-from ..exceptions import DataConversionWarning as DataConversionWarning_
+from ..exceptions import ConvergenceWarning as _ConvergenceWarning
+from ..exceptions import DataConversionWarning
 
 
-class ConvergenceWarning(ConvergenceWarning_):
+@deprecated("ConvergenceWarning has been moved into the sklearn.exceptions "
+            "module. It will not be available here from version 0.19")
+class ConvergenceWarning(_ConvergenceWarning):
     pass
-
-ConvergenceWarning = deprecated("ConvergenceWarning has been moved "
-                                "into the sklearn.exceptions module. "
-                                "It will not be available here from "
-                                "version 0.19")(ConvergenceWarning)
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -63,6 +60,26 @@ def safe_mask(X, mask):
     return mask
 
 
+def axis0_safe_slice(X, mask, len_mask):
+    """
+    This mask is safer than safe_mask since it returns an
+    empty array, when a sparse matrix is sliced with a boolean mask
+    with all False, instead of raising an unhelpful error in older
+    versions of SciPy.
+
+    See: https://github.com/scipy/scipy/issues/5361
+
+    Also note that we can avoid doing the dot product by checking if
+    the len_mask is not zero in _huber_loss_and_gradient but this
+    is not going to be the bottleneck, since the number of outliers
+    and non_outliers are typically non-zero and it makes the code
+    tougher to follow.
+    """
+    if len_mask != 0:
+        return X[safe_mask(X, mask), :]
+    return np.zeros(shape=(0, X.shape[1]))
+
+
 def safe_indexing(X, indices):
     """Return items or rows from X using indices.
 
@@ -84,7 +101,7 @@ def safe_indexing(X, indices):
             # Cython typed memoryviews internally used in pandas do not support
             # readonly buffers.
             warnings.warn("Copying input dataframe for slicing.",
-                          DataConversionWarning_)
+                          DataConversionWarning)
             return X.copy().iloc[indices]
     elif hasattr(X, "shape"):
         if hasattr(X, 'take') and (hasattr(indices, 'dtype') and

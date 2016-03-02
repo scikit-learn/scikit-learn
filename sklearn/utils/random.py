@@ -39,7 +39,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
 
     p : 1-D array-like, optional
         The probabilities associated with each entry in a.
-        If not given the sample assumes a uniform distribtion over all
+        If not given the sample assumes a uniform distribution over all
         entries in a.
 
     random_state : int, RandomState instance or None, optional (default=None)

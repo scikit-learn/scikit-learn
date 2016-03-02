@@ -28,16 +28,14 @@ import sys
 import time
 import tokenize
 import traceback
-import types
+
 try:                           # Python 2
     generate_tokens = tokenize.generate_tokens
 except AttributeError:         # Python 3
     generate_tokens = tokenize.tokenize
 
-PY3 = (sys.version[0] == '3')
 INDENT = ' ' * 8
 
-from ._compat import _basestring
 
 ###############################################################################
 # some internal-use functions
@@ -195,14 +193,13 @@ def format_records(records):   # , print_globals=False):
             # the abspath call will throw an OSError.  Just ignore it and
             # keep the original file string.
             pass
+
+        if file.endswith('.pyc'):
+            file = file[:-4] + '.py'
+
         link = file
-        try:
-            args, varargs, varkw, locals = inspect.getargvalues(frame)
-        except:
-            # This can happen due to a bug in python2.3.  We should be
-            # able to remove this try/except when 2.4 becomes a
-            # requirement.  Bug details at http://python.org/sf/1005466
-            print("\nJoblib's exception reporting continues...\n")
+
+        args, varargs, varkw, locals = inspect.getargvalues(frame)
 
         if func == '?':
             call = ''
@@ -350,13 +347,11 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
     date = time.ctime(time.time())
     pid = 'PID: %i' % os.getpid()
 
-    head = '%s%s%s\n%s%s%s' % (etype, ' ' * (75 - len(str(etype)) - len(date)),
-                           date, pid, ' ' * (75 - len(str(pid)) - len(pyver)),
-                           pyver)
+    head = '%s%s%s\n%s%s%s' % (
+        etype, ' ' * (75 - len(str(etype)) - len(date)),
+        date, pid, ' ' * (75 - len(str(pid)) - len(pyver)),
+        pyver)
 
-    # Flush cache before calling inspect.  This helps alleviate some of the
-    # problems with python 2.3's inspect.py.
-    linecache.checkcache()
     # Drop topmost frames if requested
     try:
         records = _fixed_getframes(etb, context, tb_offset)

@@ -379,7 +379,7 @@ testing scikit-learn once installed
 -----------------------------------
 
 testing requires having the `nose
-<http://somethingaboutorange.com/mrl/projects/nose/>`_ library. after
+<https://nose.readthedocs.org/en/latest/>`_ library. after
 installation, the package can be tested by executing *from outside* the
 source directory::
 

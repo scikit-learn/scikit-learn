@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
@@ -226,7 +227,7 @@ def test_randomized_svd_infinite_rank():
 
 
 def test_randomized_svd_transpose_consistency():
-    # Check that transposing the design matrix has limit impact
+    # Check that transposing the design matrix has limited impact
     n_samples = 100
     n_features = 500
     rank = 4
@@ -262,7 +263,7 @@ def test_randomized_svd_power_iteration_normalizer():
     # randomized_svd with power_iteration_normalized='none' diverges for
     # large number of power iterations on this dataset
     rng = np.random.RandomState(42)
-    X = make_low_rank_matrix(300, 1000, effective_rank=50, random_state=rng)
+    X = make_low_rank_matrix(100, 500, effective_rank=50, random_state=rng)
     X += 3 * rng.randint(0, 2, size=X.shape)
     n_components = 50
 
@@ -275,7 +276,6 @@ def test_randomized_svd_power_iteration_normalizer():
                              power_iteration_normalizer='none')
     A = X - U.dot(np.diag(s).dot(V))
     error_20 = linalg.norm(A, ord='fro')
-    print(error_2 - error_20)
     assert_greater(np.abs(error_2 - error_20), 100)
 
     for normalizer in ['LU', 'QR', 'auto']:
@@ -289,7 +289,6 @@ def test_randomized_svd_power_iteration_normalizer():
                                      power_iteration_normalizer=normalizer)
             A = X - U.dot(np.diag(s).dot(V))
             error = linalg.norm(A, ord='fro')
-            print(error_2 - error)
             assert_greater(15, np.abs(error_2 - error))
 
 
@@ -330,6 +329,37 @@ def test_randomized_svd_sign_flip():
         assert_almost_equal(np.dot(v2.T, v2), np.eye(2))
 
 
+def test_randomized_svd_sign_flip_with_transpose():
+    # Check if the randomized_svd sign flipping is always done based on u
+    # irrespective of transpose.
+    # See https://github.com/scikit-learn/scikit-learn/issues/5608
+    # for more details.
+    def max_loading_is_positive(u, v):
+        """
+        returns bool tuple indicating if the values maximising np.abs
+        are positive across all rows for u and across all columns for v.
+        """
+        u_based = (np.abs(u).max(axis=0) == u.max(axis=0)).all()
+        v_based = (np.abs(v).max(axis=1) == v.max(axis=1)).all()
+        return u_based, v_based
+
+    mat = np.arange(10 * 8).reshape(10, -1)
+
+    # Without transpose
+    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
+    u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
+    assert_true(u_based)
+    assert_false(v_based)
+
+    # With transpose
+    u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
+        mat, 3, flip_sign=True, transpose=True)
+    u_based, v_based = max_loading_is_positive(
+        u_flipped_with_transpose, v_flipped_with_transpose)
+    assert_true(u_based)
+    assert_false(v_based)
+
+
 def test_cartesian():
     # Check if cartesian product delivers the right results
 
@@ -358,8 +388,8 @@ def test_cartesian():
 
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
-    naive_logistic = lambda x: 1 / (1 + np.exp(-x))
-    naive_log_logistic = lambda x: np.log(naive_logistic(x))
+    def naive_log_logistic(x):
+        return np.log(1 / (1 + np.exp(-x)))
 
     x = np.linspace(-2, 2, 50)
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))

@@ -131,9 +131,9 @@ class PCA(BaseEstimator, TransformerMixin):
         use fit_transform(X) instead.
 
     whiten : bool, optional
-        When True (False by default) the `components_` vectors are divided
-        by n_samples times singular values to ensure uncorrelated outputs
-        with unit component-wise variances.
+        When True (False by default) the `components_` vectors are multiplied
+        by the square root of n_samples and then divided by the singular values
+        to ensure uncorrelated outputs with unit component-wise variances.
 
         Whitening will remove some information from the transformed signal
         (the relative variance scales of the components) but can sometime
@@ -504,9 +504,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         .. versionchanged:: 0.18
 
     whiten : bool, optional
-        When True (False by default) the `components_` vectors are divided
-        by the singular values to ensure uncorrelated outputs with unit
-        component-wise variances.
+        When True (False by default) the `components_` vectors are multiplied by
+        the square root of (n_samples) and divided by the singular values to
+        ensure uncorrelated outputs with unit component-wise variances.
 
         Whitening will remove some information from the transformed signal
         (the relative variance scales of the components) but can sometime

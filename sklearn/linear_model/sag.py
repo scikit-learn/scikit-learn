@@ -102,6 +102,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         -'multinomial' is the multinomial logistic loss, as used in
          LogisticRegression.
 
+        .. versionadded:: 0.18
+           *loss='multinomial'*
+
     alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 1.
 

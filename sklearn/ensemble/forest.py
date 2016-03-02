@@ -81,7 +81,7 @@ def _generate_sample_indices(random_state, n_samples):
     return sample_indices
 
 def _generate_unsampled_indices(random_state, n_samples):
-    """Private function used to forest._set_oob_score fuction."""
+    """Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples)
     sample_counts = bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0

@@ -65,7 +65,7 @@ def wishart_logz(v, s, dets, n_features):
 
 def _bound_wishart(a, B, detB):
     """Returns a function of the dof, scale matrix and its determinant
-    used as an upper bound in variational approcimation of the evidence"""
+    used as an upper bound in variational approximation of the evidence"""
     n_features = B.shape[0]
     logprior = wishart_logz(a, B, detB, n_features)
     logprior -= wishart_logz(n_features,
@@ -492,7 +492,7 @@ class DPGMM(GMM):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when when creating
+        argument init_params to the empty string '' when creating
         the object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 

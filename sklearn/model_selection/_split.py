@@ -30,6 +30,7 @@ from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import bincount
+from ..utils.fixes import signature
 from ..base import _pprint
 from ..gaussian_process.kernels import Kernel as GPKernel
 
@@ -55,6 +56,11 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
 
+    def __init__(self):
+        # We need this for the build_repr to work properly in py2.7
+        # see #6304
+        pass
+
     def split(self, X, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
@@ -64,7 +70,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples
             The target variable for supervised learning problems.
 
         labels : array-like, with shape (n_samples,), optional
@@ -289,7 +295,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples,), optional
+        y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
         labels : array-like, with shape (n_samples,), optional
@@ -396,7 +402,6 @@ class KFold(_BaseKFold):
     def __init__(self, n_folds=3, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n_folds, shuffle, random_state)
-        self.shuffle = shuffle
 
     def _iter_test_indices(self, X, y=None, labels=None):
         n_samples = _num_samples(X)
@@ -476,7 +481,7 @@ class LabelKFold(_BaseKFold):
                              " than the number of labels: %d."
                              % (self.n_folds, n_labels))
 
-        # Weight labels by their number of occurences
+        # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
 
         # Distribute the most frequent labels first
@@ -551,7 +556,6 @@ class StratifiedKFold(_BaseKFold):
 
     def __init__(self, n_folds=3, shuffle=False, random_state=None):
         super(StratifiedKFold, self).__init__(n_folds, shuffle, random_state)
-        self.shuffle = shuffle
 
     def _make_test_folds(self, X, y=None, labels=None):
         if self.shuffle:
@@ -563,6 +567,10 @@ class StratifiedKFold(_BaseKFold):
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = bincount(y_inversed)
         min_labels = np.min(y_counts)
+        if np.all(self.n_folds > y_counts):
+            raise ValueError("All the n_labels for individual classes"
+                             " are less than %d folds."
+                             % (self.n_folds))
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
@@ -601,6 +609,31 @@ class StratifiedKFold(_BaseKFold):
         for i in range(self.n_folds):
             yield test_folds == i
 
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedKFold, self).split(X, y, labels)
 
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
@@ -1075,18 +1108,49 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # Because of rounding issues (as n_train and n_test are not
             # dividers of the number of elements per class), we may end
             # up here with less samples in train and test than asked for.
-            if len(train) < n_train or len(test) < n_test:
+            if len(train) + len(test) < n_train + n_test:
                 # We complete by affecting randomly the missing indexes
                 missing_indices = np.where(bincount(train + test,
                                                     minlength=len(y)) == 0)[0]
                 missing_indices = rng.permutation(missing_indices)
-                train.extend(missing_indices[:(n_train - len(train))])
-                test.extend(missing_indices[-(n_test - len(test)):])
+                n_missing_train = n_train - len(train)
+                n_missing_test = n_test - len(test)
+
+                if n_missing_train > 0:
+                    train.extend(missing_indices[:n_missing_train])
+                if n_missing_test > 0:
+                    test.extend(missing_indices[-n_missing_test:])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
 
             yield train, test
+
+    def split(self, X, y, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(StratifiedShuffleSplit, self).split(X, y, labels)
 
 
 def _validate_shuffle_split_init(test_size, train_size):
@@ -1320,9 +1384,9 @@ def check_cv(cv=3, y=None, classifier=False):
           - An object to be used as a cross-validation generator.
           - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If classifier is False or if ``y`` is
-        neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if classifier is True and ``y`` is either
+        binary or multiclass, :class:`StratifiedKFold` used. In all other
+        cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1354,7 +1418,7 @@ def check_cv(cv=3, y=None, classifier=False):
         if not isinstance(cv, Iterable) or isinstance(cv, str):
             raise ValueError("Expected cv as an integer, cross-validation "
                              "object (from sklearn.model_selection) "
-                             "or and iterable. Got %s." % cv)
+                             "or an iterable. Got %s." % cv)
         return _CVIterableWrapper(cv)
 
     return cv  # New style cv objects are passed without any modification
@@ -1509,13 +1573,13 @@ def _build_repr(self):
     cls = self.__class__
     init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
     # Ignore varargs, kw and default values and pop self
+    init_signature = signature(init)
+    # Consider the constructor parameters excluding 'self'
     if init is object.__init__:
-        # No explicit constructor to introspect
         args = []
     else:
-        args = sorted(inspect.getargspec(init)[0])
-    if 'self' in args:
-        args.remove('self')
+        args = sorted([p.name for p in init_signature.parameters.values()
+                       if p.name != 'self' and p.kind != p.VAR_KEYWORD])
     class_name = self.__class__.__name__
     params = dict()
     for key in args:

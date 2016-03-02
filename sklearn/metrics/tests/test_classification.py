@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -52,6 +53,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 ###############################################################################
 # Utilities for testing
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -242,7 +244,7 @@ def test_average_precision_score_duplicate_values():
     # Duplicate values with precision-recall require a different
     # processing than when computing the AUC of a ROC, because the
     # precision-recall curve is a decreasing curve
-    # The following situtation corresponds to a perfect
+    # The following situation corresponds to a perfect
     # test statistic, the average_precision_score should be 1
     y_true = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
     y_score = [0, .1, .1, .4, .5, .6, .6, .9, .9, 1, 1]
@@ -327,6 +329,58 @@ def test_cohen_kappa():
 def test_matthews_corrcoef_nan():
     assert_equal(matthews_corrcoef([0], [1]), 0.0)
     assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
+
+
+def test_matthews_corrcoef_against_numpy_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=20)
+    y_pred = rng.randint(0, 2, size=20)
+
+    assert_almost_equal(matthews_corrcoef(y_true, y_pred),
+                        np.corrcoef(y_true, y_pred)[0, 1], 10)
+
+
+def test_matthews_corrcoef():
+    rng = np.random.RandomState(0)
+    y_true = ["a" if i == 0 else "b" for i in rng.randint(0, 2, size=20)]
+
+    # corrcoef of same vectors must be 1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
+
+    # corrcoef, when the two vectors are opposites of each other, should be -1
+    y_true_inv = ["b" if i == "a" else "a" for i in y_true]
+
+    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv), -1)
+    y_true_inv2 = label_binarize(y_true, ["a", "b"]) * -1
+    assert_almost_equal(matthews_corrcoef(y_true, y_true_inv2), -1)
+
+    # For the zero vector case, the corrcoef cannot be calculated and should
+    # result in a RuntimeWarning
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, [0, 0, 0, 0], [0, 0, 0, 0])
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+    # And also for any other vector with 0 variance
+    mcc = assert_warns_message(RuntimeWarning, 'invalid value encountered',
+                               matthews_corrcoef, y_true,
+                               rng.randint(-100, 100) * np.ones(20, dtype=int))
+
+    # But will output 0
+    assert_almost_equal(mcc, 0.)
+
+    # These two vectors have 0 correlation and hence mcc should be 0
+    y_1 = [1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
+    y_2 = [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1]
+    assert_almost_equal(matthews_corrcoef(y_1, y_2), 0.)
+
+    # Check that sample weight is able to selectively exclude
+    mask = [1] * 10 + [0] * 10
+    # Now the first half of the vector elements are alone given a weight of 1
+    # and hence the mcc will not be a perfect 0 as in the previous case
+    assert_raises(AssertionError, assert_almost_equal,
+                  matthews_corrcoef(y_1, y_2, sample_weight=mask), 0.)
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -455,6 +509,24 @@ def test_confusion_matrix_multiclass():
     test(list(str(y) for y in y_true),
          list(str(y) for y in y_pred),
          string_type=True)
+
+
+def test_confusion_matrix_sample_weight():
+    """Test confusion matrix - case with sample_weight"""
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    weights = [.1] * 25 + [.2] * 25 + [.3] * 25
+
+    cm = confusion_matrix(y_true, y_pred, sample_weight=weights)
+
+    true_cm = (.1 * confusion_matrix(y_true[:25], y_pred[:25]) +
+               .2 * confusion_matrix(y_true[25:50], y_pred[25:50]) +
+               .3 * confusion_matrix(y_true[50:], y_pred[50:]))
+
+    assert_array_almost_equal(cm, true_cm)
+    assert_raises(
+        ValueError, confusion_matrix, y_true, y_pred,
+        sample_weight=weights[:-1])
 
 
 def test_confusion_matrix_multiclass_subset_labels():
@@ -595,6 +667,27 @@ avg / total       0.51      0.53      0.47        75
     else:
         report = classification_report(y_true, y_pred)
         assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_long_string_label():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array(["blue", "green"*5, "red"])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = """\
+                           precision    recall  f1-score   support
+
+                     blue       0.83      0.79      0.81        24
+greengreengreengreengreen       0.33      0.10      0.15        31
+                      red       0.42      0.90      0.57        20
+
+              avg / total       0.51      0.53      0.47        75
+"""
+
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
 
 
 def test_multilabel_classification_report():
@@ -1273,6 +1366,23 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+
+def test_log_loss_pandas_input():
+    # case when input is a pandas series and dataframe gh-5715
+    y_tr = np.array(["ham", "spam", "spam", "ham"])
+    y_pr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    types = [(MockDataFrame, MockDataFrame)]
+    try:
+        from pandas import Series, DataFrame
+        types.append((Series, DataFrame))
+    except ImportError:
+        pass
+    for TrueInputType, PredInputType in types:
+        # y_pred dataframe, y_true series
+        y_true, y_pred = TrueInputType(y_tr), PredInputType(y_pr)
+        loss = log_loss(y_true, y_pred)
+        assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
 def test_brier_score_loss():

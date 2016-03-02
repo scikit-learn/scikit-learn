@@ -195,7 +195,7 @@ cdef inline void index2offset(int* offset, int index, int n_dimensions) nogil:
     # Quite likely there's a fancy bitshift way of doing this
     # since the offset is equivalent to the binary representation
     # of the integer index
-    # We read the the offset array left-to-right 
+    # We read the offset array left-to-right
     # such that the least significat bit is on the right
     cdef int rem, k, shift
     for k in range(n_dimensions):
@@ -212,7 +212,7 @@ cdef inline void index2offset(int* offset, int index, int n_dimensions) nogil:
 
 cdef inline int offset2index(int* offset, int n_dimensions) nogil:
     # Calculate the 1:1 index for a given offset array
-    # We read the the offset array right-to-left
+    # We read the offset array right-to-left
     # such that the least significat bit is on the right
     cdef int dim
     cdef int index = 0
@@ -365,12 +365,19 @@ cdef int free_tree(Tree* tree) nogil:
     for i in range(3):
         cnt[i] = 0
     free_recursive(tree, tree.root_node, cnt)
-    free(tree.root_node)
-    free(tree)
     check = cnt[0] == tree.n_cells
     check &= cnt[2] == tree.n_points
+    free(tree)
     free(cnt)
     return check
+
+cdef void free_post_children(Node *node) nogil:
+    free(node.width)
+    free(node.left_edge)
+    free(node.center)
+    free(node.barycenter)
+    free(node.leaf_point_position)
+    free(node)
 
 cdef void free_recursive(Tree* tree, Node *root, long* counts) nogil:
     # Free up all of the tree nodes recursively
@@ -389,13 +396,14 @@ cdef void free_recursive(Tree* tree, Node *root, long* counts) nogil:
                     counts[2] +=1
             else:
                 free(child.children)
-            free(child.width)
-            free(child.left_edge)
-            free(child.center)
-            free(child.barycenter)
-            free(child.leaf_point_position)
-            free(child)
 
+            free_post_children(child)
+
+    if root == tree.root_node:
+        if not root.is_leaf:
+            free(root.children)
+
+        free_post_children(root)
 
 cdef long count_points(Node* root, long count) nogil:
     # Walk through the whole tree and count the number 

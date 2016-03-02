@@ -468,11 +468,11 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
     HHt = fast_dot(Ht.T, Ht)
     XHt = safe_sparse_dot(X, Ht)
 
-    # L2 regularization corresponds to increase the diagonal of HHt
+    # L2 regularization corresponds to increase of the diagonal of HHt
     if l2_reg != 0.:
         # adds l2_reg only on the diagonal
         HHt.flat[::n_components + 1] += l2_reg
-    # L1 regularization correponds to decrease each element of XHt
+    # L1 regularization corresponds to decrease of each element of XHt
     if l1_reg != 0.:
         XHt -= l1_reg
 
@@ -1107,6 +1107,23 @@ class NMF(BaseEstimator, TransformerMixin):
 
         self.n_iter_ = n_iter_
         return W
+
+    def inverse_transform(self, W):
+        """
+        Parameters
+        ----------
+        W: {array-like, sparse matrix}, shape (n_samples, n_components)
+            Transformed Data matrix
+
+        Returns
+        -------
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix of original shape
+
+        .. versionadded:: 0.18
+        """
+        check_is_fitted(self, 'n_components_')
+        return np.dot(W, self.components_)
 
 
 @deprecated("It will be removed in release 0.19. Use NMF instead."

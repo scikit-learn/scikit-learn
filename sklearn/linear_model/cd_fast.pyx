@@ -134,9 +134,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
         We minimize
 
-        1 norm(y - X w, 2)^2 + alpha norm(w, 1) + beta norm(w, 2)^2
-        -                                         ----
-        2                                           2
+        (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) norm(w, 2)^2
 
     """
 
@@ -299,9 +297,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 
     We minimize:
 
-        1 norm(y - X w, 2)^2 + alpha norm(w, 1) + beta norm(w, 2)^2
-        -                                         ----
-        2                                           2
+        (1/2) * norm(y - X w, 2)^2 + alpha norm(w, 1) + (beta/2) * norm(w, 2)^2
 
     """
 
@@ -498,9 +494,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
 
         We minimize
 
-        1 w^T Q w - q^T w + alpha norm(w, 1) + beta norm(w, 2)^2
-        -                                      ----
-        2                                        2
+        (1/2) * w^T Q w - q^T w + alpha norm(w, 1) + (beta/2) * norm(w, 2)^2
 
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
@@ -640,9 +634,7 @@ def enet_coordinate_descent_multi_task(double[::1, :] W, double l1_reg,
 
         We minimize
 
-        1 norm(y - X w, 2)^2 + l1_reg ||w||_21 + l2_reg norm(w, 2)^2
-        -                                       ----
-        2                                        2
+        (1/2) * norm(y - X w, 2)^2 + l1_reg ||w||_21 + (1/2) * l2_reg norm(w, 2)^2
 
     """
     # get the data information into easy vars

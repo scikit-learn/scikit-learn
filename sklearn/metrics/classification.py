@@ -1,4 +1,4 @@
-"""Metrics to assess performance on classification task given classe prediction
+"""Metrics to assess performance on classification task given class prediction
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
 the better
@@ -17,6 +17,7 @@ the lower the better
 #          Noel Dawe <noel@dawe.me>
 #          Jatin Shah <jatindshah@gmail.com>
 #          Saurabh Jha <saurabh.jhaa@gmail.com>
+#          Bernardo Stein <bernardovstein@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -26,7 +27,6 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
-from scipy.spatial.distance import hamming as sp_hamming
 
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
@@ -178,7 +178,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None):
+def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -201,6 +201,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
 
     Returns
     -------
@@ -239,6 +241,13 @@ def confusion_matrix(y_true, y_pred, labels=None):
     else:
         labels = np.asarray(labels)
 
+    if sample_weight is None:
+        sample_weight = np.ones(y_true.shape[0], dtype=np.int)
+    else:
+        sample_weight = np.asarray(sample_weight)
+
+    check_consistent_length(sample_weight, y_true, y_pred)
+
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
     # convert yt, yp into index
@@ -249,8 +258,10 @@ def confusion_matrix(y_true, y_pred, labels=None):
     ind = np.logical_and(y_pred < n_labels, y_true < n_labels)
     y_pred = y_pred[ind]
     y_true = y_true[ind]
+    # also eliminate weights of eliminated items
+    sample_weight = sample_weight[ind]
 
-    CM = coo_matrix((np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
+    CM = coo_matrix((sample_weight, (y_true, y_pred)),
                     shape=(n_labels, n_labels)
                     ).toarray()
 
@@ -398,7 +409,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def matthews_corrcoef(y_true, y_pred):
+def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC) for binary classes
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -422,6 +433,9 @@ def matthews_corrcoef(y_true, y_pred):
 
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], default None
+        Sample weights.
 
     Returns
     -------
@@ -457,8 +471,17 @@ def matthews_corrcoef(y_true, y_pred):
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    with np.errstate(invalid='ignore'):
-        mcc = np.corrcoef(y_true, y_pred)[0, 1]
+    mean_yt = np.average(y_true, weights=sample_weight)
+    mean_yp = np.average(y_pred, weights=sample_weight)
+
+    y_true_u_cent = y_true - mean_yt
+    y_pred_u_cent = y_pred - mean_yp
+
+    cov_ytyp = np.average(y_true_u_cent * y_pred_u_cent, weights=sample_weight)
+    var_yt = np.average(y_true_u_cent ** 2, weights=sample_weight)
+    var_yp = np.average(y_pred_u_cent ** 2, weights=sample_weight)
+
+    mcc = cov_ytyp / np.sqrt(var_yt * var_yp)
 
     if np.isnan(mcc):
         return 0.
@@ -616,7 +639,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     References
     ----------
-    .. [1] `Wikipedia entry for the F1-score <http://en.wikipedia.org/wiki/F1_score>`_
+    .. [1] `Wikipedia entry for the F1-score
+            <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -1362,11 +1386,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     last_line_heading = 'avg / total'
 
     if target_names is None:
-        width = len(last_line_heading)
         target_names = ['%s' % l for l in labels]
-    else:
-        width = max(len(cn) for cn in target_names)
-        width = max(width, len(last_line_heading), digits)
+    name_width = max(len(cn) for cn in target_names)
+    width = max(name_width, len(last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     fmt = '%% %ds' % width  # first column: class name
@@ -1484,8 +1506,10 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         weight_average = np.mean(sample_weight)
 
     if y_type.startswith('multilabel'):
-        n_differences = count_nonzero(y_true - y_pred, sample_weight=sample_weight)
-        return (n_differences / (y_true.shape[0] * len(classes) * weight_average))
+        n_differences = count_nonzero(y_true - y_pred,
+                                      sample_weight=sample_weight)
+        return (n_differences /
+                (y_true.shape[0] * len(classes) * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -1550,6 +1574,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
 
+    y_pred = check_array(y_pred, ensure_2d=False)
     # Clipping
     Y = np.clip(y_pred, eps, 1 - eps)
 

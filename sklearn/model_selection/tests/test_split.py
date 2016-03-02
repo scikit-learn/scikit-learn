@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
@@ -41,7 +42,7 @@ from sklearn.model_selection import check_cv
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 
-from sklearn.svm import LinearSVC
+from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _safe_split
 from sklearn.model_selection._split import _validate_shuffle_split
@@ -128,7 +129,7 @@ class MockClassifier(object):
 
 
 @ignore_warnings
-def test_cross_validator_with_default_indices():
+def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_labels = 4
     n_folds = 2
@@ -148,10 +149,23 @@ def test_cross_validator_with_default_indices():
     ss = ShuffleSplit(random_state=0)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
 
+    loo_repr = "LeaveOneOut()"
+    lpo_repr = "LeavePOut(p=2)"
+    kf_repr = "KFold(n_folds=2, random_state=None, shuffle=False)"
+    skf_repr = "StratifiedKFold(n_folds=2, random_state=None, shuffle=False)"
+    lolo_repr = "LeaveOneLabelOut()"
+    lopo_repr = "LeavePLabelOut(n_labels=2)"
+    ss_repr = ("ShuffleSplit(n_iter=10, random_state=0, test_size=0.1, "
+               "train_size=None)")
+    ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
+
     n_splits = [n_samples, comb(n_samples, p), n_folds, n_folds,
                 n_unique_labels, comb(n_unique_labels, p), n_iter, 2]
 
-    for i, cv in enumerate([loo, lpo, kf, skf, lolo, lopo, ss, ps]):
+    for i, (cv, cv_repr) in enumerate(zip(
+            [loo, lpo, kf, skf, lolo, lopo, ss, ps],
+            [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
+             ss_repr, ps_repr])):
         # Test if get_n_splits works correctly
         assert_equal(n_splits[i], cv.get_n_splits(X, y, labels))
 
@@ -163,6 +177,9 @@ def test_cross_validator_with_default_indices():
         for train, test in cv.split(X, y, labels):
             assert_equal(np.asarray(train).dtype.kind, 'i')
             assert_equal(np.asarray(train).dtype.kind, 'i')
+
+        # Test if the repr works without any errors
+        assert_equal(cv_repr, repr(cv))
 
 
 def check_valid_split(train, test, n_samples=None):
@@ -206,7 +223,7 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
-    y = np.array([3, 3, -1, -1, 2])
+    y = np.array([3, 3, -1, -1, 3])
 
     skf_3 = StratifiedKFold(3)
     assert_warns_message(Warning, "The least populated class",
@@ -216,13 +233,24 @@ def test_kfold_valueerrors():
     # though all the classes are not necessarily represented at on each
     # side of the split at each split
     with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         check_cv_coverage(skf_3, X2, y, labels=None, expected_n_iter=3)
+
+    # Check that errors are raised if all n_labels for individual
+    # classes are less than n_folds.
+    y = np.array([3, 3, -1, -1, 2])
+
+    assert_raises(ValueError, next, skf_3.split(X2, y))
 
     # Error when number of folds is <= 1
     assert_raises(ValueError, KFold, 0)
     assert_raises(ValueError, KFold, 1)
-    assert_raises(ValueError, StratifiedKFold, 0)
-    assert_raises(ValueError, StratifiedKFold, 1)
+    error_string = ("k-fold cross-validation requires at least one"
+                    " train/test split")
+    assert_raise_message(ValueError, error_string,
+                         StratifiedKFold, 0)
+    assert_raise_message(ValueError, error_string,
+                         StratifiedKFold, 1)
 
     # When n_folds is not integer:
     assert_raises(ValueError, KFold, 1.5)
@@ -419,31 +447,33 @@ def test_shuffle_stratifiedkfold():
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # The digits samples are dependent: they are apparently grouped by authors
     # although we don't have any information on the groups segment locations
-    # for this data. We can highlight this fact be computing k-fold cross-
+    # for this data. We can highlight this fact by computing k-fold cross-
     # validation with and without shuffling: we observe that the shuffling case
     # wrongly makes the IID assumption and is therefore too optimistic: it
-    # estimates a much higher accuracy (around 0.96) than than the non
-    # shuffling variant (around 0.86).
+    # estimates a much higher accuracy (around 0.93) than that the non
+    # shuffling variant (around 0.81).
 
-    X, y = digits.data[:800], digits.target[:800]
+    X, y = digits.data[:600], digits.target[:600]
     model = SVC(C=10, gamma=0.005)
 
-    cv = KFold(n_folds=5, shuffle=False)
+    n_folds = 3
+
+    cv = KFold(n_folds=n_folds, shuffle=False)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
-    assert_greater(0.88, mean_score)
-    assert_greater(mean_score, 0.85)
+    assert_greater(0.92, mean_score)
+    assert_greater(mean_score, 0.80)
 
     # Shuffling the data artificially breaks the dependency and hides the
     # overfitting of the model with regards to the writing style of the authors
     # by yielding a seriously overestimated score:
 
-    cv = KFold(5, shuffle=True, random_state=0)
+    cv = KFold(n_folds, shuffle=True, random_state=0)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
-    assert_greater(mean_score, 0.95)
+    assert_greater(mean_score, 0.92)
 
-    cv = KFold(5, shuffle=True, random_state=1)
+    cv = KFold(n_folds, shuffle=True, random_state=1)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
-    assert_greater(mean_score, 0.95)
+    assert_greater(mean_score, 0.92)
 
     # Similarly, StratifiedKFold should try to shuffle the data as little
     # as possible (while respecting the balanced class constraints)
@@ -452,10 +482,10 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # the estimated mean score is close to the score measured with
     # non-shuffled KFold
 
-    cv = StratifiedKFold(5)
+    cv = StratifiedKFold(n_folds)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
-    assert_greater(0.88, mean_score)
-    assert_greater(mean_score, 0.85)
+    assert_greater(0.93, mean_score)
+    assert_greater(mean_score, 0.80)
 
 
 def test_shuffle_split():
@@ -517,10 +547,12 @@ def test_stratified_shuffle_split_iter():
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = (np.bincount(np.unique(y[train], return_inverse=True)[1])
-                       / float(len(y[train])))
-            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1])
-                      / float(len(y[test])))
+            p_train = (np.bincount(np.unique(y[train],
+                                   return_inverse=True)[1]) /
+                       float(len(y[train])))
+            p_test = (np.bincount(np.unique(y[test],
+                                  return_inverse=True)[1]) /
+                      float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
@@ -576,6 +608,20 @@ def test_stratified_shuffle_split_even():
 
         assert_counts_are_ok(train_counts, ex_train_p)
         assert_counts_are_ok(test_counts, ex_test_p)
+
+
+def test_stratified_shuffle_split_overlap_train_test_bug():
+    # See https://github.com/scikit-learn/scikit-learn/issues/6121 for
+    # the original bug report
+    y = [0, 1, 2, 3] * 3 + [4, 5] * 5
+    X = np.ones_like(y)
+
+    splits = StratifiedShuffleSplit(n_iter=1,
+                                    test_size=0.5, random_state=0)
+
+    train, test = next(iter(splits.split(X=X, y=y)))
+
+    assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_predefinedsplit_with_kfold_split():
@@ -893,13 +939,13 @@ def test_label_kfold():
         assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
 
     # Construct the test data
-    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
-              'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
-              'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
-              'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
-              'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
-              'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
-              'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+    labels = np.array(['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+                       'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+                       'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+                       'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+                       'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+                       'Madmood', 'Cary', 'Mary', 'Alexandre', 'David',
+                       'Francis', 'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia'])
 
     n_labels = len(np.unique(labels))
     n_samples = len(labels)
@@ -946,10 +992,10 @@ def test_nested_cv():
     labels = rng.randint(0, 5, 15)
 
     cvs = [LeaveOneLabelOut(), LeaveOneOut(), LabelKFold(), StratifiedKFold(),
-           StratifiedShuffleSplit(n_iter=10, random_state=0)]
+           StratifiedShuffleSplit(n_iter=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
-        gs = GridSearchCV(LinearSVC(random_state=0), param_grid={'C': [1, 10]},
+        gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
                           cv=inner_cv)
         cross_val_score(gs, X=X, y=y, labels=labels, cv=outer_cv,
                         fit_params={'labels': labels})

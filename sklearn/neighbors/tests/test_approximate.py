@@ -265,7 +265,7 @@ def test_radius_neighbors_boundary_handling():
     assert_array_almost_equal(np.sort(exact_dists[0]), dists[:-1])
     assert_array_almost_equal(np.sort(approx_dists[0]), dists[:-1])
 
-    # If we perform the same query with a slighltly lower radius, the third
+    # If we perform the same query with a slightly lower radius, the third
     # point of the dataset that lay on the boundary of the previous query
     # is now rejected:
     eps = np.finfo(np.float64).eps
@@ -332,7 +332,7 @@ def test_fit():
 
 
 def test_partial_fit():
-    # Checks whether inserting array is consitent with fitted data.
+    # Checks whether inserting array is consistent with fitted data.
     # `partial_fit` method should set all attribute values correctly.
     n_samples = 12
     n_samples_partial_fit = 3

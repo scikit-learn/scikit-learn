@@ -1,3 +1,4 @@
+
 """
 The :mod:`sklearn.cross_validation` module includes utilities for cross-
 validation and performance evaluation.
@@ -267,8 +268,8 @@ class KFold(_BaseKFold):
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling by default).
 
-    Each fold is then used a validation set once while the k - 1 remaining
-    fold form the training set.
+    Each fold is then used as a validation set once while the k - 1 remaining
+    fold(s) form the training set.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -417,7 +418,7 @@ class LabelKFold(_BaseKFold):
                      " than the number of labels: {1}.").format(n_folds,
                                                                 n_labels))
 
-        # Weight labels by their number of occurences
+        # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
 
         # Distribute the most frequent labels first
@@ -518,6 +519,10 @@ class StratifiedKFold(_BaseKFold):
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
         label_counts = bincount(y_inversed)
         min_labels = np.min(label_counts)
+        if np.all(self.n_folds > label_counts):
+            raise ValueError("All the n_labels for individual classes"
+                             " are less than %d folds."
+                             % (self.n_folds))
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
@@ -1005,14 +1010,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # Because of rounding issues (as n_train and n_test are not
             # dividers of the number of elements per class), we may end
             # up here with less samples in train and test than asked for.
-            if len(train) < self.n_train or len(test) < self.n_test:
+            if len(train) + len(test) < self.n_train + self.n_test:
                 # We complete by affecting randomly the missing indexes
                 missing_idx = np.where(bincount(train + test,
                                                 minlength=len(self.y)) == 0,
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)
-                train.extend(missing_idx[:(self.n_train - len(train))])
-                test.extend(missing_idx[-(self.n_test - len(test)):])
+                n_missing_train = self.n_train - len(train)
+                n_missing_test = self.n_test - len(test)
+
+                if n_missing_train > 0:
+                    train.extend(missing_idx[:n_missing_train])
+                if n_missing_test > 0:
+                    test.extend(missing_idx[-n_missing_test:])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1215,9 +1225,9 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         - An object to be used as a cross-validation generator.
         - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1390,9 +1400,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         - An object to be used as a cross-validation generator.
         - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1652,9 +1662,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
         - An object to be used as a cross-validation generator.
         - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if classifier is True and ``y`` is binary or
+        multiclass, :class:`StratifiedKFold` used. In all other cases,
+        :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1726,9 +1736,9 @@ def permutation_test_score(estimator, X, y, cv=None,
         - An object to be used as a cross-validation generator.
         - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

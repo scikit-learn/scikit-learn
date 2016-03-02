@@ -686,9 +686,9 @@ class GridSearchCV(BaseSearchCV):
         - An object to be used as a cross-validation generator.
         - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -771,7 +771,7 @@ class GridSearchCV(BaseSearchCV):
     See Also
     ---------
     :class:`ParameterGrid`:
-        generates all the combinations of a an hyperparameter grid.
+        generates all the combinations of a hyperparameter grid.
 
     :func:`sklearn.cross_validation.train_test_split`:
         utility function to split the data into a development set usable
@@ -897,9 +897,9 @@ class RandomizedSearchCV(BaseSearchCV):
         - An object to be used as a cross-validation generator.
         - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -965,7 +965,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
+        A generator over parameter settings, constructed from
         param_distributions.
 
     """

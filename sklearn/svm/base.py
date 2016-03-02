@@ -716,7 +716,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     which solver to use.
     """
     # nested dicts containing level 1: available loss functions,
-    # level2: available penalties for the given loss functin,
+    # level2: available penalties for the given loss function,
     # level3: wether the dual solver is available for the specified
     # combination of loss function and penalty
     _solver_type_dict = {
@@ -848,7 +848,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     Returns
     -------
     coef_ : ndarray, shape (n_features, n_features + 1)
-        The coefficent vector got by minimizing the objective function.
+        The coefficient vector got by minimizing the objective function.
 
     intercept_ : float
         The intercept term added to the vector.

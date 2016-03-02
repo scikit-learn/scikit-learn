@@ -677,13 +677,12 @@ class GridSearchCV(BaseSearchCV):
           - An object to be used as a cross-validation generator.
           - An iterable yielding train, test splits.
 
-        For integer/None inputs, ``StratifiedKFold`` is used for classification
-        tasks, when ``y`` is binary or multiclass.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
-        See the :mod:`sklearn.model_selection` module for the list of
+        Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
@@ -764,7 +763,7 @@ class GridSearchCV(BaseSearchCV):
     See Also
     ---------
     :class:`ParameterGrid`:
-        generates all the combinations of a an hyperparameter grid.
+        generates all the combinations of a hyperparameter grid.
 
     :func:`sklearn.model_selection.train_test_split`:
         utility function to split the data into a development set usable
@@ -892,13 +891,12 @@ class RandomizedSearchCV(BaseSearchCV):
           - An object to be used as a cross-validation generator.
           - An iterable yielding train, test splits.
 
-        For integer/None inputs, ``StratifiedKFold`` is used for classification
-        tasks, when ``y`` is binary or multiclass.
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
 
-        See the :mod:`sklearn.model_selection` module for the list of
+        Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        Also refer :ref:`cross-validation documentation <cross_validation>`
 
     refit : boolean, default=True
         Refit the best estimator with the entire dataset.
