@@ -5,7 +5,6 @@ from itertools import chain, product
 import pickle
 import sys
 
-from nose.tools import nottest
 from scipy.stats import bernoulli, expon, uniform
 
 import numpy as np
