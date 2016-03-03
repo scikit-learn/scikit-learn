@@ -29,9 +29,9 @@ cdef double euclidian_dist(double* a, double* b, int n_features) nogil:
 
 
 cdef update_labels_distances_inplace(
-        double* X, double* centers, double[:, :] center_distances, int[:] labels,
-        double[:, :] lower_bounds, double[:] upper_bounds, int n_samples, int
-        n_features, int n_clusters):
+        double* X, double* centers, double[:, :] center_half_distances,
+        int[:] labels, double[:, :] lower_bounds, double[:] upper_bounds,
+        int n_samples, int n_features, int n_clusters):
     """
     Calculate upper and lower bounds for each sample.
 
@@ -44,7 +44,7 @@ cdef update_labels_distances_inplace(
     For each sample i assume that the previously assigned cluster is c1 and the
     previous closest distance is dist, for a new cluster c2, the
     lower_bound[i][c2] is set to distance between the sample and this new
-    cluster, if and only if dist > center_distances[c1][c2]. This prevents
+    cluster, if and only if dist > center_half_distances[c1][c2]. This prevents
     computation of unnecessary distances for each sample to the clusters that
     it is unlikely to be assigned to.
     """
@@ -61,7 +61,7 @@ cdef update_labels_distances_inplace(
         d_c = euclidian_dist(x, centers, n_features)
         lower_bounds[sample, 0] = d_c
         for j in range(1, n_clusters):
-            if d_c > center_distances[c_x, j]:
+            if d_c > center_half_distances[c_x, j]:
                 c = centers + j * n_features
                 dist = euclidian_dist(x, c, n_features)
                 lower_bounds[sample, j] = dist
@@ -91,7 +91,7 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
         The relative increment in cluster means before declaring convergence.
 
     max_iter : int, default=30
-        Maximum number of passes over the dataset.
+    Maximum number of iterations of the k-means algorithm.
 
     verbose : bool, default=False
         Whether to be verbose.
@@ -106,7 +106,7 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
     cdef Py_ssize_t n_features = X_.shape[1]
     cdef int point_index, center_index, label
     cdef float upper_bound, distance
-    cdef double[:, :] center_distances = euclidean_distances(centers_) / 2.
+    cdef double[:, :] center_half_distances = euclidean_distances(centers_) / 2.
     cdef double[:, :] lower_bounds = np.zeros((n_samples, n_clusters))
     cdef double[:] distance_next_center
     labels_ = np.empty(n_samples, dtype=np.int32)
@@ -115,9 +115,9 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
     cdef double[:] upper_bounds = upper_bounds_
 
     # Get the inital set of upper bounds and lower bounds for each sample.
-    update_labels_distances_inplace(X_p, centers_p, center_distances, labels,
-                                    lower_bounds, upper_bounds, n_samples,
-                                    n_features, n_clusters)
+    update_labels_distances_inplace(X_p, centers_p, center_half_distances,
+                                    labels, lower_bounds, upper_bounds,
+                                    n_samples, n_features, n_clusters)
     cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
     cdef np.uint8_t[:] points_to_update = np.zeros(n_samples, dtype=np.uint8)
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] new_centers
@@ -126,12 +126,12 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
         raise ValueError('Number of iterations should be a positive number'
         ', got %d instead' % max_iter)
 
-    col_indices = np.arange(center_distances.shape[0], dtype=np.int)
+    col_indices = np.arange(center_half_distances.shape[0], dtype=np.int)
     for iteration in range(max_iter):
         if verbose:
             print("start iteration")
 
-        cd =  np.asarray(center_distances)
+        cd =  np.asarray(center_half_distances)
         distance_next_center = partition(cd, kth=1, axis=0)[1]
 
         if verbose:
@@ -156,7 +156,7 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
                 # recomputing the upper and lower bounds.
                 if (center_index != label
                         and (upper_bound > lower_bounds[point_index, center_index])
-                        and (upper_bound > center_distances[center_index, label])):
+                        and (upper_bound > center_half_distances[center_index, label])):
 
                     # Recompute the upper bound by calculating the actual distance
                     # between the sample and label.
@@ -169,7 +169,7 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
                     # the sample and center_index. If this is still lesser than the previous
                     # distance, reassign labels.
                     if (upper_bound > lower_bounds[point_index, center_index]
-                            or (upper_bound > center_distances[label, center_index])):
+                            or (upper_bound > center_half_distances[label, center_index])):
                         distance = euclidian_dist(x_p, centers_p + center_index * n_features, n_features)
                         lower_bounds[point_index, center_index] = distance
                         if distance < upper_bound:
@@ -198,7 +198,7 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
         centers_p = <double*>new_centers.data
 
         # update between-center distances
-        center_distances = euclidean_distances(centers_) / 2.
+        center_half_distances = euclidean_distances(centers_) / 2.
         if verbose:
             print('Iteration %i, inertia %s'
                   % (iteration, np.sum((X_ - centers_[labels]) ** 2)))
@@ -212,7 +212,7 @@ def k_means_elkan(np.ndarray[np.float64_t, ndim=2, mode='c'] X_, int n_clusters,
     # We need this to make sure that the labels give the same output as
     # predict(X)
     if center_shift_total > 0:
-        update_labels_distances_inplace(X_p, centers_p, center_distances,
+        update_labels_distances_inplace(X_p, centers_p, center_half_distances,
                                         labels, lower_bounds, upper_bounds,
                                         n_samples, n_features, n_clusters)
     return centers_, labels_, iteration
