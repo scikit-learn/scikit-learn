@@ -1098,6 +1098,21 @@ class LabelShuffleSplit(ShuffleSplit):
             yield train, test
 
 
+def _approximate_mode(class_counts, n_draws):
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = n_draws * class_counts / class_counts.sum()
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    remainder = continuous - floored
+    sorting = np.argsort(remainder)[::-1]
+    need_to_add = int(n_draws - floored.sum())
+    floored[sorting[:need_to_add]] += 1
+    return floored.astype(np.int)
+
+
 class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross-validator
 
@@ -1181,10 +1196,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              (n_test, n_classes))
 
         rng = check_random_state(self.random_state)
-        p_i = class_counts / float(n_samples)
-        n_i = np.round(n_train * p_i).astype(int)
-        t_i = np.minimum(class_counts - n_i,
-                         np.round(n_test * p_i).astype(int))
+        n_i = _approximate_mode(class_counts, n_train)
+        class_counts_remaining = class_counts - n_i
+        t_i = _approximate_mode(class_counts_remaining, n_test)
 
         for _ in range(self.n_splits):
             train = []
@@ -1196,23 +1210,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
-
-            # Because of rounding issues (as n_train and n_test are not
-            # dividers of the number of elements per class), we may end
-            # up here with less samples in train and test than asked for.
-            if len(train) + len(test) < n_train + n_test:
-                # We complete by affecting randomly the missing indexes
-                missing_indices = np.where(bincount(train + test,
-                                                    minlength=len(y)) == 0)[0]
-                missing_indices = rng.permutation(missing_indices)
-                n_missing_train = n_train - len(train)
-                n_missing_test = n_test - len(test)
-
-                if n_missing_train > 0:
-                    train.extend(missing_indices[:n_missing_train])
-                if n_missing_test > 0:
-                    test.extend(missing_indices[-n_missing_test:])
-
             train = rng.permutation(train)
             test = rng.permutation(test)
 
