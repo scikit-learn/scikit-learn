@@ -47,6 +47,37 @@ cdef update_labels_distances_inplace(
     cluster, if and only if dist > center_half_distances[c1][c2]. This prevents
     computation of unnecessary distances for each sample to the clusters that
     it is unlikely to be assigned to.
+
+    Parameters
+    ----------
+    X : nd-array, shape (n_samples, n_features)
+        The input data.
+
+    centers : nd-array, shape (n_clusters, n_features)
+        The cluster centers.
+
+    center_half_distances : nd-array, shape (n_clusters, n_clusters)
+        The half of the distance between any 2 clusters centers.
+
+    labels : nd-array, shape(n_samples)
+        The label for each sample. This array is modified in place.
+
+    lower_bounds : nd-array, shape(n_samples, n_clusters)
+        The lower bound on the distance between a sample and each cluster
+        center. It is modified in place.
+
+    upper_bounds : nd-array, shape(n_samples,)
+        The distance of each sample from its closest cluster center.  This is
+        modified in place by the function.
+
+    n_samples : int
+        The number of samples.
+
+    n_features : int
+        The number of features.
+
+    n_clusters : int
+        The number of clusters.
     """
     # assigns closest center to X
     # uses triangle inequality

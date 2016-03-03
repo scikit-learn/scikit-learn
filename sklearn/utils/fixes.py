@@ -196,7 +196,7 @@ except ImportError:
 try:
     from numpy import partition
 except ImportError:
-    warnings.warn('Using `sort` instead of parition.'
+    warnings.warn('Using `sort` instead of partition.'
                   'Upgrade numpy to 1.8 for better performace on large number'
                   'of clusters')
     def partition(a, kth, axis=-1, kind='introselect', order=None):
