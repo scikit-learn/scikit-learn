@@ -796,10 +796,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
         If not provided, then a fixed set of values for Cs are used.
 
-    scoring : callable
-        For a list of scoring functions that can be used, look at
-        :mod:`sklearn.metrics`. The default scoring option used is
-        accuracy_score.
+    scoring : callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``. For a list of scoring functions
+        that can be used, look at :mod:`sklearn.metrics`. The
+        default scoring option used is accuracy_score.
 
     fit_intercept : bool
         If False, then the bias term is set to zero. Else the last
