@@ -13,7 +13,7 @@ from scipy import linalg
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet, pinvh
-from ..utils import check_X_y
+from ..utils import check_X_y, check_array
 
 
 ###############################################################################
@@ -434,3 +434,152 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.lambda_ = lambda_
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
+
+
+##############################################################################
+# Bayesian Linear Regression
+
+class BayesLinearRegression(LinearModel, RegressorMixin):
+    """Bayesian Linear Regression.
+
+    Fits the full posterior over the weights and variance assuming the variance
+    is unknown. The weights are assumed to follow Guassian Distributions while
+    the variance is assumed to follow the Inverse Guassian Distribution. Estimation
+    is computed directly.
+
+    Please refer to: Murphy, K. P. (2012). Machine learning: a probabilistic
+    perspective. MIT press.
+
+    Parameters
+    ----------
+
+    a_0 : float, optional
+          First hyperparameter over the variance, corresponding to the mean.
+          0 is the uninformative prior. Default is 0.
+    b_0 : float, optional
+          Second hyperparameter over the variance, corresponding to the variance.
+          0 is the uninformative prior. Default is 0.
+
+    fit_intercept : boolean, optional
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+        Default is True.
+
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
+
+    copy_X : boolean, optional, default True.
+        If True, X will be copied; else, it may be overwritten.
+
+
+    Attributes
+    ----------
+    coef_ : array, shape = (n_features)
+        Coefficients of the regression model (mean of distribution)
+
+    a_n_ : float
+           a_0 plus the number of samples divided by two. The mean over
+           the variance.
+
+    b_n_ : float
+           b_0 plus sum of square terms and error on w. The variance 
+           over the variance
+
+    Vn_ :  array, shape = (n_features, n_features)
+        estimated variance-covariance matrix of the weights
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.BayesLinearRegression()
+    >>> clf.fit([[1,1],[1,3],[2,4]], [4, 5, 7])
+    BayesLinearRegression(V_0=None, a_0=0.0, b_0=0.0, copy_X=True,
+             fit_intercept=True, normalize=False, w_0=array([ 0.,  0.]))
+    >>> clf.predict([[4, 5]])
+    array([ 9.20833333])
+    >>> clf.prediction_variance([[4,5]])
+    array([[ 14.35340712]])
+
+    """
+
+    def __init__(self, w_0=None, V_0=None, a_0=0, b_0=0, fit_intercept=True, normalize=False, copy_X=True):
+        self.fit_intercept=fit_intercept
+        self.normalize=normalize
+        self.copy_X=True
+        self.w_0 = w_0
+        self.V_0 = V_0
+        self.a_0 = float(a_0)
+        self.b_0 = float(b_0)
+
+    def fit(self, X, y):
+        """Fit the BayesLinearRegression model according to the given training data
+        and parameters.
+
+        Computes the exact solution
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array, shape = [n_samples]
+            Target values (floats)
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
+        n_samples, n_features = X.shape
+
+        if self.w_0 is None:           ## use a uniformative prior
+            self.w_0 = np.zeros(n_features)
+        elif self.w_0.shape != (n_features,):
+            raise ValueError("Shape of w_0 must be (n_features,)")
+
+        sigma_0_ = np.ones(n_features)
+        if self.V_0 is None:
+            V0_inv = X.T.dot(X)/n_samples   ## use a uniformative prior
+        elif self.V_0.shape == (n_features, n_features):
+            V0_inv = np.linalg.inv(self.V_0)
+            print(V0_inv)
+        else:
+            raise ValueError("V_0 must be an array with shape (n_features,n_features)")
+
+        Vn = np.linalg.inv(V0_inv + X.T.dot(X))
+        coef_ = Vn.dot(V0_inv.dot(self.w_0) + X.T.dot(y))
+        self.a_n_ = self.a_0 + n_samples / 2.
+        self.b_n_ = self.b_0 + (self.w_0.T.dot(V0_inv).dot(self.w_0) + y.T.dot(y) - 
+                          coef_.T.dot(Vn).dot(coef_))/2.
+        self.coef_ = coef_
+        self.Vn_ = Vn
+        self._set_intercept(X_offset, y_offset, X_scale)
+        return self 
+
+    def prediction_variance(self, X):
+        """
+        Compute the variance around the prediction
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        Returns
+        ----------
+        y : array, shape=[n_samples]
+            Variance around each prediction
+        """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        return self.b_n_ / self.a_n_ * (np.eye(X.shape[0]) + X.dot(self.Vn_).dot(X.T))

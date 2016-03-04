@@ -11,7 +11,7 @@ implements Stochastic Gradient Descent related algorithms.
 
 from .base import LinearRegression
 
-from .bayes import BayesianRidge, ARDRegression
+from .bayes import BayesianRidge, ARDRegression, BayesLinearRegression
 from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
                           LassoLarsIC)
 from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
@@ -36,6 +36,7 @@ from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
 
 __all__ = ['ARDRegression',
+           'BayesLinearRegression',
            'BayesianRidge',
            'ElasticNet',
            'ElasticNetCV',

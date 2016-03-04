@@ -7,11 +7,24 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import SkipTest
-from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model.bayes import BayesianRidge, ARDRegression, BayesLinearRegression
 from sklearn import datasets
 
 from sklearn.utils.testing import assert_array_almost_equal
 
+
+def test_blr_toy():
+    # Test BayesianRidge on toy
+    X = np.array([[1], [2], [6], [8], [10]])
+    Y = np.array([1, 2, 6, 8, 10])
+    w_0 = np.random.normal(size=X.shape[1])
+    V_0 = 1e10 * np.eye(X.shape[1])
+    clf = BayesLinearRegression(w_0=w_0, V_0=V_0, a_0=0, b_0=0)
+    clf.fit(X, Y)
+
+    # Check that the model could approximately learn the identity function
+    test = [[1], [3], [4]]
+    assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 def test_bayesian_on_diabetes():
     # Test BayesianRidge on diabetes
@@ -33,7 +46,6 @@ def test_bayesian_on_diabetes():
     # Test that scores are increasing at each iteration
     assert_array_equal(np.diff(clf.scores_) > 0, True)
 
-
 def test_toy_bayesian_ridge_object():
     # Test BayesianRidge on toy
     X = np.array([[1], [2], [6], [8], [10]])
@@ -44,7 +56,6 @@ def test_toy_bayesian_ridge_object():
     # Check that the model could approximately learn the identity function
     test = [[1], [3], [4]]
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
-
 
 def test_toy_ard_object():
     # Test BayesianRegression ARD classifier
