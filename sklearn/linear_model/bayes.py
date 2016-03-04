@@ -506,7 +506,7 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
     >>> clf.predict([[4, 5]])
     array([ 9.20833333])
     >>> clf.prediction_variance([[4,5]])
-    array([[ 14.35340712]])
+    array([ 14.35340712])
 
     """
 
