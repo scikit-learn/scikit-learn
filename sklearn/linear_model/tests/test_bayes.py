@@ -14,7 +14,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 
 def test_blr_toy():
-    # Test BayesianRidge on toy
+    # Test BayesLinearRegression on toy
     X = np.array([[1], [2], [6], [8], [10]])
     Y = np.array([1, 2, 6, 8, 10])
     w_0 = np.random.normal(size=X.shape[1])
