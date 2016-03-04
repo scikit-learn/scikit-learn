@@ -500,7 +500,7 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.BayesLinearRegression()
-    >>> clf.fit([[1,1],[1,3],[2,4]], [4, 5, 7])
+    >>> clf.fit([[1,1],[1,3],[2,4]], [4, 5, 7]])
     BayesLinearRegression(V_0=None, a_0=0.0, b_0=0.0, copy_X=True,
              fit_intercept=True, normalize=False, w_0=array([ 0.,  0.]))
     >>> clf.predict([[4, 5]])
@@ -541,25 +541,31 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
+        sigma_0_ = np.ones(n_features)
 
         if self.w_0 is None:           ## use a uniformative prior
-            self.w_0 = np.zeros(n_features)
+            w_0_ = np.zeros(n_features)
         elif self.w_0.shape != (n_features,):
             raise ValueError("Shape of w_0 must be (n_features,)")
+        else:
+            w_0_ = self.w_0
 
-        sigma_0_ = np.ones(n_features)
         if self.V_0 is None:
             V0_inv = X.T.dot(X)/n_samples   ## use a uniformative prior
         elif self.V_0.shape == (n_features, n_features):
             V0_inv = np.linalg.inv(self.V_0)
-            print(V0_inv)
         else:
             raise ValueError("V_0 must be an array with shape (n_features,n_features)")
 
-        Vn = np.linalg.inv(V0_inv + X.T.dot(X))
+        try:
+            Vn = np.linalg.inv(V0_inv + X.T.dot(X))
+        except np.linalg.LinAlgError:
+            warnings.warn("Singular Matrix when solving for Vn, setting Vn close to zero.")
+            Vn = np.eye(n_features) * 1e-10
+
         coef_ = Vn.dot(V0_inv.dot(self.w_0) + X.T.dot(y))
         self.a_n_ = self.a_0 + n_samples / 2.
-        self.b_n_ = self.b_0 + (self.w_0.T.dot(V0_inv).dot(self.w_0) + y.T.dot(y) - 
+        self.b_n_ = self.b_0 + (w_0_.T.dot(V0_inv).dot(w_0_) + y.T.dot(y) - 
                           coef_.T.dot(Vn).dot(coef_))/2.
         self.coef_ = coef_
         self.Vn_ = Vn
@@ -578,8 +584,9 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
 
         Returns
         ----------
-        y : array, shape=[n_samples]
+        y : array, shape=(n_samples,)
             Variance around each prediction
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
-        return self.b_n_ / self.a_n_ * (np.eye(X.shape[0]) + X.dot(self.Vn_).dot(X.T))
+        return np.diagonal(self.b_n_ / self.a_n_ * (np.eye(X.shape[0]) +
+                                                   X.dot(self.Vn_).dot(X.T)))
