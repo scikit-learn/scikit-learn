@@ -500,9 +500,9 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.BayesLinearRegression()
-    >>> clf.fit([[1,1],[1,3],[2,4]], [4, 5, 7]])
+    >>> clf.fit([[1,1],[1,3],[2,4]], [4, 5, 7])
     BayesLinearRegression(V_0=None, a_0=0.0, b_0=0.0, copy_X=True,
-             fit_intercept=True, normalize=False, w_0=array([ 0.,  0.]))
+         fit_intercept=True, normalize=False, w_0=array([ 0.,  0.]))
     >>> clf.predict([[4, 5]])
     array([ 9.20833333])
     >>> clf.prediction_variance([[4,5]])
@@ -560,7 +560,6 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
         try:
             Vn = np.linalg.inv(V0_inv + X.T.dot(X))
         except np.linalg.LinAlgError:
-            warnings.warn("Singular Matrix when solving for Vn, setting Vn close to zero.")
             Vn = np.eye(n_features) * 1e-10
 
         coef_ = Vn.dot(V0_inv.dot(w_0_) + X.T.dot(y))
