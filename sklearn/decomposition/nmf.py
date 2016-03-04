@@ -1,7 +1,7 @@
 """ Non-negative matrix factorization
 """
 # Author: Vlad Niculae
-#         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Lars Buitinck
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Tom Dupre la Tour
 # Author: Chih-Jen Lin, National Taiwan University (original projected gradient

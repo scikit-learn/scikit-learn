@@ -3,7 +3,7 @@
 # cython: wraparound=False
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck <larsmans@gmail.com>
+#         Lars Buitinck
 #         Danny Sullivan <dsullivan7@hotmail.com>
 #
 # Licence: BSD 3 clause
