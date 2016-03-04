@@ -563,7 +563,7 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
             warnings.warn("Singular Matrix when solving for Vn, setting Vn close to zero.")
             Vn = np.eye(n_features) * 1e-10
 
-        coef_ = Vn.dot(V0_inv.dot(self.w_0) + X.T.dot(y))
+        coef_ = Vn.dot(V0_inv.dot(w_0_) + X.T.dot(y))
         self.a_n_ = self.a_0 + n_samples / 2.
         self.b_n_ = self.b_0 + (w_0_.T.dot(V0_inv).dot(w_0_) + y.T.dot(y) - 
                           coef_.T.dot(Vn).dot(coef_))/2.
