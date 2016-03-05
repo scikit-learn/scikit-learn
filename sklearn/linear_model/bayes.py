@@ -502,7 +502,7 @@ class BayesLinearRegression(LinearModel, RegressorMixin):
     >>> clf = linear_model.BayesLinearRegression()
     >>> clf.fit([[1,1],[1,3],[2,4]], [4, 5, 7])
     BayesLinearRegression(V_0=None, a_0=0.0, b_0=0.0, copy_X=True,
-         fit_intercept=True, normalize=False, w_0=array([ 0.,  0.]))
+         fit_intercept=True, normalize=False, w_0=None)
     >>> clf.predict([[4, 5]])
     array([ 9.20833333])
     >>> clf.prediction_variance([[4,5]])
