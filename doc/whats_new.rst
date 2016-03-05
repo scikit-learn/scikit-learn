@@ -38,6 +38,10 @@ New features
    - Added :class:`linear_model.HuberRegressor`, a linear model robust to outliers.
      (`#5291 <https://github.com/scikit-learn/scikit-learn/pull/5291>`_) by `Manoj Kumar`_.
 
+   - Added the :class:`UnsupervisedGridSearch` and :class:`UnsupervisedRandomizedSearch`
+     to provide a similar API to that of the existing cross-validated hyperparameter
+     search methods. By `Jamie Bull`_.
+
 Enhancements
 ............
 
