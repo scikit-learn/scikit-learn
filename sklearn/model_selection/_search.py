@@ -241,7 +241,8 @@ class ParameterSampler(object):
                 raise ValueError(
                     "The total space of parameters %d is smaller "
                     "than n_iter=%d." % (grid_size, self.n_iter)
-                    + " For exhaustive searches, use GridSearchCV.")
+                    + " For exhaustive searches, use GridSearchCV "
+                    + "or UnsupervisedGridSearch.")
             for i in sample_without_replacement(grid_size, self.n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
@@ -607,12 +608,11 @@ def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
         The data to fit.
 
     y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
             None for unsupervised learning.
 
     scorer : callable
         A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        ``scorer(estimator, X, y)`` with y being None for unsupervised learning.
 
     verbose : integer
         The verbosity level.
@@ -672,8 +672,6 @@ def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
 class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
     """Exhaustive search over specified parameter values for an estimator.
 
-    Important members are fit, predict.
-
     GridSearch implements a "fit" and a "score" method.
     It also implements "predict", "predict_proba", "decision_function",
     "transform" and "inverse_transform" if they are implemented in the
@@ -682,13 +680,16 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
     The parameters of the estimator used to apply these methods are optimized
     by grid-search over a parameter grid.
 
-    Read more in the :ref:`User Guide <grid_search>`.
+    Unlike GridSearchCV, no cross-validation is carried out. The parameters
+    found are the best for the input data and may not generalise to new examples.  
+
+    Read more in the :ref:`User Guide <unsupervised grid_search>`.
 
     Parameters
     ----------
     estimator : estimator object.
         This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
+        Either the estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
 
     param_grid : dict or list of dictionaries
@@ -808,6 +809,10 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
     :class:`ParameterGrid`:
         generates all the combinations of a an hyperparameter grid.
 
+    :class:`GridSearchCV`:
+        Does exhaustive search with cross-validation over a grid of parameters
+        which is more appropriate for supervised learning algorithms.
+
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
 
@@ -835,7 +840,6 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
             n_features is the number of features.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """
@@ -857,6 +861,9 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
     but rather a fixed number of parameter settings is sampled from the
     specified distributions. The number of parameter settings that are tried
     is given by n_iter.
+    
+    Unlike RandomizedSearchCV, no cross-validation is carried out. The parameters
+    found are the best for the input data and may not generalise to new examples.  
 
     If all parameters are presented as a list,
     sampling without replacement is performed. If at least one parameter
@@ -967,12 +974,15 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
 
     See Also
     --------
-    :class:`UnsupervisedGridSearch`:
-        Does exhaustive search over a grid of parameters.
-
     :class:`ParameterSampler`:
         A generator over parameter settings, constructed from
         param_distributions.
+
+    :class:`UnsupervisedGridSearch`:
+        Does exhaustive search over a grid of parameters.
+
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
 
     """
 
@@ -999,8 +1009,8 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
             n_features is the number of features.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
             None for unsupervised learning.
+
         """
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
