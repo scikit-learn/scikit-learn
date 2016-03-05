@@ -282,6 +282,9 @@ def test_grid_search_no_score():
 def silhouette_scorer(estimator, X, y=None):
     return silhouette_score(X, estimator.labels_)
 
+#def rand_scorer(estimator, X, y=None):
+#    return silhouette_score(X, estimator.labels_)
+
 
 @ignore_warnings
 def test_unsupervised_grid_search_clusterer_no_score():
@@ -791,11 +794,19 @@ def test_unsupervised_grid_search_cv():
 
 def test_unsupervised_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
-    X, _y = make_blobs(random_state=0)
-    clf = KMeans(random_state=0)
+    X, y = make_blobs(random_state=0)
+    km = KMeans(random_state=0)
+    # test with y, to be used in adjusted_rand_score
+    grid_search = UnsupervisedGridSearch(
+        km, param_grid=dict(n_clusters=[2, 3, 4]),
+        scoring='adjusted_rand_score')
+    grid_search.fit(X, y)
+    # ARI can find the right number :)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
 
     # Now without a score, and without y
-    grid_search = GridSearchCV(clf, param_grid=dict(n_clusters=[2, 3, 4]))
+    grid_search = UnsupervisedGridSearch(
+        km, param_grid=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 

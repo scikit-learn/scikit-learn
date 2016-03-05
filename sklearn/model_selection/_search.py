@@ -561,7 +561,7 @@ class UnsupervisedSearchMixin(object):
         out = Parallel(n_jobs=self.n_jobs
                        )(
             delayed(fit_and_score_unsupervised)(clone(estimator),
-                                                X, scorer=self.scorer_,
+                                                X, y, scorer=self.scorer_,
                                                 verbose=self.verbose,
                                                 parameters=parameters,
                                                 fit_params=self.fit_params,
@@ -595,8 +595,8 @@ class UnsupervisedSearchMixin(object):
         return self
 
 
-def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
-                               fit_params, y=None, error_score='raise'):
+def fit_and_score_unsupervised(estimator, X, y, scorer, verbose, parameters,
+                               fit_params, error_score='raise'):
     """Fit estimator and compute scores for a given dataset.
 
     Parameters
@@ -608,11 +608,11 @@ def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
         The data to fit.
 
     y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            None for unsupervised learning.
+            None for unsupervised learning unless used in scorer.
 
     scorer : callable
         A scorer callable object / function with signature
-        ``scorer(estimator, X, y)`` with y being None for unsupervised learning.
+        ``scorer(estimator, X[, y])``.
 
     verbose : integer
         The verbosity level.
@@ -647,8 +647,8 @@ def fit_and_score_unsupervised(estimator, X, scorer, verbose, parameters,
     start_time = time.time()
 
     try:
-        estimator.fit(X, y, **fit_params)
-        score = scorer(estimator, X)
+        estimator.fit(X, **fit_params)
+        score = scorer(estimator, X, y)
     except Exception as e:
         if error_score == 'raise':
             raise
@@ -702,7 +702,7 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
     scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X)``.
+        ``scorer(estimator, X[, y])``.
         If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
@@ -729,9 +729,9 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
               as in '2*n_jobs'
 
     refit : boolean, default=True
-        Refit the best estimator with the entire dataset.
+        Refit the best estimator with the dataset.
         If "False", it is impossible to make predictions using
-        this GridSearchCV instance after fitting.
+        this UnsupervisedGridSearch instance after fitting.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -840,7 +840,7 @@ class UnsupervisedGridSearch(BaseSearch, UnsupervisedSearchMixin):
             n_features is the number of features.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            None for unsupervised learning.
+            None for unsupervised learning unless used in scorer.
 
         """
         return self._fit(X, y, ParameterGrid(self.param_grid))
@@ -894,7 +894,7 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
     scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X)``.
+        ``scorer(estimator, X[, y])``.
         If ``None``, the ``score`` method of the estimator is used.
 
     fit_params : dict, optional
@@ -921,9 +921,9 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
               as in '2*n_jobs'
 
     refit : boolean, default=True
-        Refit the best estimator with the entire dataset.
+        Refit the best estimator with the dataset.
         If "False", it is impossible to make predictions using
-        this RandomizedSearchCV instance after fitting.
+        this UnsupervisedRandomizedSearch instance after fitting.
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
@@ -1009,7 +1009,7 @@ class UnsupervisedRandomizedSearch(BaseSearch, UnsupervisedSearchMixin):
             n_features is the number of features.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            None for unsupervised learning.
+            None for unsupervised learning unless used in scorer.
 
         """
         sampled_params = ParameterSampler(self.param_distributions,
