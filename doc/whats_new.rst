@@ -28,6 +28,10 @@ New features
    - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
      (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
 
+   - Added the :class:`UnsupervisedGridSearch` and :class:`UnsupervisedRandomizedSearch`
+     to provide a similar API to that of the existing cross-validated hyperparameter
+     search methods. By `Jamie Bull`_.
+
 Enhancements
 ............
 
