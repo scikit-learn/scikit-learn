@@ -28,7 +28,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
+def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+                       n_jobs=1):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -49,6 +50,10 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Returns
     -------
     bandwidth : float
@@ -58,7 +63,8 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
+    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile),
+                            n_jobs=n_jobs)
     nbrs.fit(X)
 
     bandwidth = 0.
@@ -166,7 +172,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     """
 
     if bandwidth is None:
-        bandwidth = estimate_bandwidth(X)
+        bandwidth = estimate_bandwidth(X, n_jobs=n_jobs)
     elif bandwidth <= 0:
         raise ValueError("bandwidth needs to be greater than zero or None,\
             got %f" % bandwidth)
@@ -177,7 +183,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth).fit(X)
+    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
@@ -203,7 +209,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                                  key=lambda tup: tup[1], reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
-    nbrs = NearestNeighbors(radius=bandwidth).fit(sorted_centers)
+    nbrs = NearestNeighbors(radius=bandwidth,
+                            n_jobs=n_jobs).fit(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
             neighbor_idxs = nbrs.radius_neighbors([center],
@@ -213,7 +220,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
+    nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
     labels = np.zeros(n_samples, dtype=np.int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:

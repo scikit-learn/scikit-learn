@@ -393,7 +393,7 @@ with computer graphics.
   has many samples.
 
   By setting ``loss="hinge"`` and ``penalty="l2"`` we are configuring
-  the classifier model to tune it's parameters for the linear Support
+  the classifier model to tune its parameters for the linear Support
   Vector Machine cost function.
 
   Alternatively we could have used ``sklearn.svm.LinearSVC`` (Linear

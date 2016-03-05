@@ -7,7 +7,7 @@
 #          Brian Holt <bdholt1@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
@@ -537,7 +537,7 @@ cdef class Tree:
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
-    # must not be be freed by a subsequent memory allocation.
+    # must not be freed by a subsequent memory allocation.
     # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):

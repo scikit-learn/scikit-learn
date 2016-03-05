@@ -4,7 +4,9 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn.metrics.cluster.unsupervised import silhouette_score
 from sklearn.metrics import pairwise_distances
-from sklearn.utils.testing import assert_false, assert_almost_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 
 
@@ -68,3 +70,19 @@ def test_correct_labelsize():
                          'Number of labels is %d\. Valid values are 2 '
                          'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
                          silhouette_score, X, y)
+
+
+def test_non_encoded_labels():
+    dataset = datasets.load_iris()
+    X = dataset.data
+    labels = dataset.target
+    assert_equal(
+        silhouette_score(X, labels + 10), silhouette_score(X, labels))
+
+
+def test_non_numpy_labels():
+    dataset = datasets.load_iris()
+    X = dataset.data
+    y = dataset.target
+    assert_equal(
+        silhouette_score(list(X), list(y)), silhouette_score(X, y))

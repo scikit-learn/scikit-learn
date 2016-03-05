@@ -270,7 +270,7 @@ def test_paired_distances():
         S3 = func(csr_matrix(X), csr_matrix(Y))
         assert_array_almost_equal(S, S3)
         if metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            # Check the the pairwise_distances implementation
+            # Check the pairwise_distances implementation
             # gives the same value
             distances = PAIRWISE_DISTANCE_FUNCTIONS[metric](X, Y)
             distances = np.diag(distances)

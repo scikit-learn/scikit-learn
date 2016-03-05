@@ -35,7 +35,7 @@ Each sample can be identified by its ID, ranging (with gaps) from 2286 to 810596
     array([2286, 2287, 2288], dtype=int32)
 
 ``target_names``:
-The target values are the topics of each sample. Each sample belongs to at least one topic, and to up to 17 topics. 
+The target values are the topics of each sample. Each sample belongs to at least one topic, and to up to 17 topics.
 There are 103 topics, each represented by a string. Their corpus frequencies span five orders of magnitude, from 5 occurrences for 'GMIL', to 381327 for 'CCAT'::
 
     >>> rcv1.target_names[:3].tolist()  # doctest: +SKIP

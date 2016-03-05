@@ -534,6 +534,8 @@ From text
    feature_selection.chi2
    feature_selection.f_classif
    feature_selection.f_regression
+   feature_selection.mutual_info_classif
+   feature_selection.mutual_info_regression
 
 
 .. _gaussian_process_ref:
@@ -687,6 +689,7 @@ Kernels:
    linear_model.BayesianRidge
    linear_model.ElasticNet
    linear_model.ElasticNetCV
+   linear_model.HuberRegressor
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso

@@ -14,7 +14,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 """
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 

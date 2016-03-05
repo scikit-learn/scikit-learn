@@ -1,6 +1,8 @@
 Maintainer / core-developer information
 ========================================
 
+For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
+
 Making a release
 ------------------
 

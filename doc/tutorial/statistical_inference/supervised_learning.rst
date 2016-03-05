@@ -155,7 +155,7 @@ Linear regression
 .. currentmodule:: sklearn.linear_model
 
 :class:`LinearRegression`,
-in it's simplest form, fits a linear model to the data set by adjusting
+in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 

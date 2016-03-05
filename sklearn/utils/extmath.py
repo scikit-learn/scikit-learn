@@ -363,7 +363,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=2,
     U = np.dot(Q, Uhat)
 
     if flip_sign:
-        U, V = svd_flip(U, V)
+        if not transpose:
+            U, V = svd_flip(U, V)
+        else:
+            # In case of transpose u_based_decision=false
+            # to actually flip based on u and not v.
+            U, V = svd_flip(U, V, u_based_decision=False)
 
     if transpose:
         # transpose back the results according to the input convention

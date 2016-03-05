@@ -2,7 +2,7 @@
 
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_
 
-.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
+.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
 
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true

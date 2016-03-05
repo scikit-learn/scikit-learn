@@ -20,6 +20,7 @@ from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import combinations_with_replacement as combinations_w_r
+from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -1140,7 +1141,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    powers_ : array, shape (n_input_features, n_output_features)
+    powers_ : array, shape (n_output_features, n_input_features)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
@@ -1179,8 +1180,38 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
+        return np.vstack(bincount(c, minlength=self.n_input_features_)
                          for c in combinations)
+
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length n_output_features
+
+        """
+        powers = self.powers_
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(powers.shape[1])]
+        feature_names = []
+        for row in powers:
+            inds = np.where(row)[0]
+            if len(inds):
+                name = " ".join("%s^%d" % (input_features[ind], exp)
+                                if exp != 1 else input_features[ind]
+                                for ind, exp in zip(inds, row[inds]))
+            else:
+                name = "1"
+            feature_names.append(name)
+        return feature_names
 
     def fit(self, X, y=None):
         """
@@ -1228,7 +1259,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         return XP
 
 
-def normalize(X, norm='l2', axis=1, copy=True):
+def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
     Read more in the :ref:`User Guide <preprocessing_normalization>`.
@@ -1252,6 +1283,9 @@ def normalize(X, norm='l2', axis=1, copy=True):
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
+
+    return_norm : boolean, default False
+        whether to return the computed norms
 
     See also
     --------
@@ -1297,7 +1331,10 @@ def normalize(X, norm='l2', axis=1, copy=True):
     if axis == 0:
         X = X.T
 
-    return X
+    if return_norm:
+        return X, norms
+    else:
+        return X
 
 
 class Normalizer(BaseEstimator, TransformerMixin):

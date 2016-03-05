@@ -1196,7 +1196,8 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         The size of the random matrix to generate.
 
     alpha: float between 0 and 1, optional (default=0.95)
-        The probability that a coefficient is non zero (see notes).
+        The probability that a coefficient is zero (see notes). Larger values 
+        enforce more sparsity.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

@@ -4,7 +4,7 @@
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
-#         Lars Buitinck <larsmans@gmail.com>
+#         Lars Buitinck
 #
 # Licence: BSD 3 clause
 

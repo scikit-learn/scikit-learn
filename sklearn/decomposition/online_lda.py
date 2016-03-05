@@ -193,7 +193,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     evaluate_every : int optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
-        set it to 0 or and negative number to not evalute perplexity in
+        set it to 0 or negative number to not evalute perplexity in
         training at all. Evaluating perplexity can help you check convergence
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time
@@ -520,7 +520,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 # check perplexity
                 if evaluate_every > 0 and (i + 1) % evaluate_every == 0:
                     doc_topics_distr, _ = self._e_step(X, cal_sstats=False,
-                                                       random_init=False)
+                                                       random_init=False,
+                                                       parallel=parallel)
                     bound = self.perplexity(X, doc_topics_distr,
                                             sub_sampling=False)
                     if self.verbose:
@@ -562,6 +563,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         doc_topic_distr, _ = self._e_step(X, cal_sstats=False,
                                           random_init=False)
+        # normalize doc_topic_distr
+        doc_topic_distr /= doc_topic_distr.sum(axis=1)[:, np.newaxis]
         return doc_topic_distr
 
     def _approx_bound(self, X, doc_topic_distr, sub_sampling):
