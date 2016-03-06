@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_in
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
 from sklearn.manifold.t_sne import _joint_probabilities_nn
@@ -560,3 +561,67 @@ def test_index_offset():
     # Make sure translating between 1D and N-D indices are preserved
     assert_equal(_barnes_hut_tsne.test_index2offset(), 1)
     assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
+
+
+def test_n_iter_without_progress():
+    # Make sure that the parameter n_iter_without_progress is used correctly
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    tsne = TSNE(n_iter_without_progress=2, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # The output needs to contain the value of n_iter_without_progress
+    assert_in("did not make any progress during the "
+              "last 2 episodes. Finished.", out)
+
+
+def test_min_grad_norm():
+    # Make sure that the parameter min_grad_norm is used correctly
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    min_grad_norm = 0.002
+    tsne = TSNE(min_grad_norm=min_grad_norm, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    lines_out = out.split('\n')
+
+    # extract the gradient norm from the verbose output
+    gradient_norm_values = []
+    for line in lines_out:
+        # When the computation is Finished just an old gradient norm value
+        # is repeated that we do not need to store
+        if 'Finished' in line:
+            break
+
+        start_grad_norm = line.find('gradient norm')
+        if start_grad_norm >= 0:
+            line = line[start_grad_norm:]
+            line = line.replace('gradient norm = ', '')
+            gradient_norm_values.append(float(line))
+
+    # Compute how often the gradient norm is smaller than min_grad_norm
+    gradient_norm_values = np.array(gradient_norm_values)
+    n_smaller_gradient_norms = \
+        len(gradient_norm_values[gradient_norm_values <= min_grad_norm])
+
+    # The gradient norm can be smaller than min_grad_norm at most once,
+    # because in the moment it becomes smaller the optimization stops
+    assert_less_equal(n_smaller_gradient_norms, 1)
