@@ -62,10 +62,10 @@ New features
      shuffling step in the ``cd`` solver.
      By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
-   - The new function :func:`cross_validation.cross_val_apply` provides a
-     generalized alternative to :func:`cross_validation.cross_val_predict` where 
-     one can pass functions such as `predict_proba` into the cross validation framework. 
-     By `Sears Merritt`_.
+   - Generalization of :func:`cross_validation.cross_val_predict` where
+     one can pass method names such as `predict_proba` to be used in the cross
+     validation framework instead of the default `predict`.
+     By `Sears Merritt`_ and `Ori Ziv`_.
 
 
 Enhancements
