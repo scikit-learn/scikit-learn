@@ -42,6 +42,7 @@ class IsolationForest(BaseBagging):
     Hence, when a forest of random trees collectively produce shorter path
     lengths for particular samples, they are highly likely to be anomalies.
 
+    Read more in the :ref:`User Guide <isolation_forest>`.
 
     Parameters
     ----------
