@@ -917,9 +917,9 @@ def test_cross_val_score_with_score_func_regression():
     expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
     assert_array_almost_equal(neg_mse_scores, expected_neg_mse, 2)
 
-    # Root mean squared error; same as Mean squared error.
+    # (negated) Root mean squared error; same as mean squared.
     rmse_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                      scoring="root_mean_squared_error")
+                                      scoring="negated_rmse")
     expected_rmse = np.array([-27.62, -23.52, -16.56, -16.53, -41.01])
     assert_array_almost_equal(rmse_scores, expected_rmse, 2)
 
