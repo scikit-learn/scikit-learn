@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_
+|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Gitter|_ 
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
@@ -14,7 +14,9 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
-
+.. |Gitter| image:: https://badges.gitter.im/Join%20Chat.svg
+.. _Gitter: https://gitter.im/scikit-learn/scikit-learn?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+	    
 scikit-learn
 ============
 
@@ -39,6 +41,7 @@ Important links
 - Download releases: http://sourceforge.net/projects/scikit-learn/files/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 - Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- Gitter chat room: https://gitter.im/scikit-learn/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
 
 Dependencies

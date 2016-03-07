@@ -79,7 +79,8 @@ IRC
 ===
 
 Some developers like to hang out on channel ``#scikit-learn`` on
-``irc.freenode.net``.
+``irc.freenode.net`` and in our
+`Gitter room  <https://gitter.im/scikit-learn/scikit-learn>`_.
 
 If you do not have an IRC client or are behind a firewall this web
 client works fine: http://webchat.freenode.net
