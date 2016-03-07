@@ -248,7 +248,7 @@ has been scaled.  Specifically, given a subsample of the data :math:`(y_i,
 x_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a random subset
 of the data of size :math:`n_I`, the following modified Lasso fit is obtained:
 
-.. math::   \hat{w_I} = \mathrm{arg}\min_{w} \frac{1}{2n_I} \sum_{i \in I} (y_i - x_i^T w)^2 + \alpha \sum_{j=1}^p \frac{|w_j|}{s_j},
+.. math::   \hat{w_I} = \mathrm{arg}\min_{w} \frac{1}{2n_I} \sum_{i \in I} (y_i - x_i^T w)^2 + \alpha \sum_{j=1}^p \frac{ \vert w_j \vert}{s_j},
 
 where :math:`s_j \in \{s, 1\}` are independent trials of a fair Bernoulli
 random variable, and :math:`0<s<1` is the scaling factor.  By repeating this

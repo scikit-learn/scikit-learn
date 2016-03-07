@@ -187,13 +187,13 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 class RandomizedLasso(BaseRandomizedLinearModel):
     """Randomized Lasso.
 
-    Randomized Lasso works by subsampling the train data and computing a
-    Lasso estimate where the penalty of a random subset of coefficients
-    has been scaled.  By performing this double randomization several
-    times, the method assigns high scores to features that are
-    repeatedly selected across randomizations.  This is known as
-    stability selection.  In short, features selected more often are
-    considered good features.
+    Randomized Lasso works by subsampling the training data and
+    computing a Lasso estimate where the penalty of a random subset of
+    coefficients has been scaled. By performing this double
+    randomization several times, the method assigns high scores to
+    features that are repeatedly selected across randomizations. This
+    is known as stability selection. In short, features selected more
+    often are considered good features.
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
@@ -205,8 +205,9 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         article which is scaling.
 
     scaling : float, optional
-        The alpha parameter in the stability selection article used to
-        randomly scale the features. Should be between 0 and 1.
+        The s parameter used to randomly scale the penalty of different
+        features (See :ref:`User Guide <randomized_l1>` for details ).
+        Should be between 0 and 1.
 
     sample_fraction : float, optional
         The fraction of samples to be used in each randomized design.
@@ -230,11 +231,11 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         If True, the regressors X will be normalized before regression.
         This parameter is ignored when `fit_intercept` is set to False.
         When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        hyperparameters learned more robust and almost independent of
+        the number of samples. The same property is not valid for
+        standardized data. However, if you wish to standardize, please
+        use `preprocessing.StandardScaler` before calling `fit` on an
+        estimator with `normalize=False`.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -382,12 +383,12 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
 class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     """Randomized Logistic Regression
 
-    Randomized Logistic Regression works by subsampling the train data
-    and fitting a L1-penalized LogisticRegression model where the
-    penalty of a random subset of coefficients has been scaled.  By
+    Randomized Logistic Regression works by subsampling the training
+    data and fitting a L1-penalized LogisticRegression model where the
+    penalty of a random subset of coefficients has been scaled. By
     performing this double randomization several times, the method
     assigns high scores to features that are repeatedly selected across
-    randomizations.  This is known as stability selection.  In short,
+    randomizations. This is known as stability selection. In short,
     features selected more often are considered good features.
 
     Read more in the :ref:`User Guide <randomized_l1>`.
@@ -398,8 +399,9 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         The regularization parameter C in the LogisticRegression.
 
     scaling : float, optional, default=0.5
-        The alpha parameter in the stability selection article used to
-        randomly scale the features. Should be between 0 and 1.
+        The s parameter used to randomly scale the penalty of different
+        features (See :ref:`User Guide <randomized_l1>` for details ).
+        Should be between 0 and 1.
 
     sample_fraction : float, optional, default=0.75
         The fraction of samples to be used in each randomized design.
@@ -492,7 +494,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLasso, LogisticRegression, ElasticNet
+    RandomizedLasso, LogisticRegression
     """
     def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
