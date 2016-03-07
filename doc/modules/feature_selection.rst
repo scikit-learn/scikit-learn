@@ -173,8 +173,8 @@ L1-based feature selection
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
 they can be used along with :class:`feature_selection.SelectFromModel`
-to select the non-zero coefficients. In particular, sparse estimators useful for
-this purpose are the :class:`linear_model.Lasso` for regression, and
+to select the non-zero coefficients. In particular, sparse estimators useful
+for this purpose are the :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
 
@@ -234,11 +234,27 @@ Randomized sparse models
 
 .. currentmodule:: sklearn.linear_model
 
-The limitation of L1-based sparse models is that faced with a group of
-very correlated features, they will select only one. To mitigate this
-problem, it is possible to use randomization techniques, reestimating the
-sparse model many times perturbing the design matrix or sub-sampling data
-and counting how many times a given regressor is selected.
+In terms of feature selection, there are some well-known limitations of
+L1-penalized models for regression and classification.  For example, it is
+known that the Lasso will tend to select an individual variable out of a group
+of highly correlated features.  Furthermore, even when the correlation between
+features is not too high, the conditions under which L1-penalized methods
+consistently select "good" features can be restrictive in general.
+
+To mitigate this problem, it is possible to use a randomization technique
+known as stability selection.  In this method, a subsample of the data is fit
+to a L1-penalized model where the penalty of a random subset of coefficients
+has been scaled.  Specifically, given a subsample of the data :math:`(y_i,
+x_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a random subset
+of the data of size :math:`n_I`, the following modified Lasso fit is obtained:
+
+.. math::   \hat{w_I} = \mathrm{arg}\min_{w} \frac{1}{2n_I} \sum_{i \in I} (y_i - x_i^T w)^2 + \alpha \sum_{j=1}^p \frac{|w_j|}{s_j},
+
+where :math:`s_j \in \{s, 1\}` are independent trials of a fair Bernoulli
+random variable, and :math:`0<s<1` is the scaling factor.  By repeating this
+procedure across different random subsamples and Bernoulli trials, one can
+count the fraction of times the randomized procedure selected each feature,
+and used these fractions as scores for feature selection.
 
 :class:`RandomizedLasso` implements this strategy for regression
 settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
@@ -266,9 +282,6 @@ of features non zero.
    * N. Meinshausen, P. Buhlmann, "Stability selection",
      Journal of the Royal Statistical Society, 72 (2010)
      http://arxiv.org/pdf/0809.2932
-
-   * F. Bach, "Model-Consistent Sparse Estimation through the Bootstrap"
-     http://hal.inria.fr/hal-00354771/
 
 Tree-based feature selection
 ----------------------------

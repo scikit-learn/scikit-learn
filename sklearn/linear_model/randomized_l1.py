@@ -187,9 +187,13 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 class RandomizedLasso(BaseRandomizedLinearModel):
     """Randomized Lasso.
 
-    Randomized Lasso works by resampling the train data and computing
-    a Lasso on each resampling. In short, the features selected more
-    often are good features. It is also known as stability selection.
+    Randomized Lasso works by subsampling the train data and computing a
+    Lasso estimate where the penalty of a random subset of coefficients
+    has been scaled.  By performing this double randomization several
+    times, the method assigns high scores to features that are
+    repeatedly selected across randomizations.  This is known as
+    stability selection.  In short, features selected more often are
+    considered good features.
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
@@ -307,7 +311,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLogisticRegression, LogisticRegression
+    RandomizedLogisticRegression, Lasso, ElasticNet
     """
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
@@ -378,9 +382,13 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
 class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     """Randomized Logistic Regression
 
-    Randomized Regression works by resampling the train data and computing
-    a LogisticRegression on each resampling. In short, the features selected
-    more often are good features. It is also known as stability selection.
+    Randomized Logistic Regression works by subsampling the train data
+    and fitting a L1-penalized LogisticRegression model where the
+    penalty of a random subset of coefficients has been scaled.  By
+    performing this double randomization several times, the method
+    assigns high scores to features that are repeatedly selected across
+    randomizations.  This is known as stability selection.  In short,
+    features selected more often are considered good features.
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 
@@ -484,7 +492,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     See also
     --------
-    RandomizedLasso, Lasso, ElasticNet
+    RandomizedLasso, LogisticRegression, ElasticNet
     """
     def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
