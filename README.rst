@@ -1,5 +1,9 @@
 .. -*- mode: rst -*-
 
+.. image:: http://scikit-learn.org/stable/_static/scikit-learn-logo-small.png
+   :align: center
+-----------------
+
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
