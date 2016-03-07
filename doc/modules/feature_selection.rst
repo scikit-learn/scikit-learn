@@ -247,7 +247,7 @@ stability selection, is implemented in the module :mod:`sklearn.linear_model`.
 In the stability selection method, a subsample of the data is fit to a
 L1-penalized model where the penalty of a random subset of coefficients has
 been scaled. Specifically, given a subsample of the data
-:math:`(y_i, x_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a
+:math:`(x_i, y_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a
 random subset of the data of size :math:`n_I`, the following modified Lasso
 fit is obtained:
 
@@ -283,11 +283,11 @@ of features non zero.
 .. topic:: References:
 
   .. [B2009] F. Bach, "Model-Consistent Sparse Estimation through the
-        Bootstrap", arXiv:0901.3202v1 [cs.LG].
+        Bootstrap." http://hal.inria.fr/hal-00354771/
 
-  .. [M2010] N. Meinshausen, P. Buhlmann (2010). "Stability selection",
-        Journal of the Royal Statistical Society. Ser. B., 72(4), 417-473.
-        http://arxiv.org/abs/0809.2932
+  .. [M2010] N. Meinshausen, P. Buhlmann, "Stability selection",
+       Journal of the Royal Statistical Society, 72 (2010)
+       http://arxiv.org/pdf/0809.2932
 
 Tree-based feature selection
 ----------------------------
