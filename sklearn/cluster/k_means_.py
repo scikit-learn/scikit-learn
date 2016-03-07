@@ -626,8 +626,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
                 "Setting it to 3*k" % (init_size, k),
                 RuntimeWarning, stacklevel=2)
             init_size = 3 * k
-        init_indices = random_state.random_integers(
-            0, n_samples - 1, init_size)
+        init_indices = random_state.randint(
+            0, n_samples, init_size)
         X = X[init_indices]
         x_squared_norms = x_squared_norms[init_indices]
         n_samples = X.shape[0]
@@ -1275,8 +1275,8 @@ class MiniBatchKMeans(KMeans):
             init_size = n_samples
         self.init_size_ = init_size
 
-        validation_indices = random_state.random_integers(
-            0, n_samples - 1, init_size)
+        validation_indices = random_state.randint(
+            0, n_samples, init_size)
         X_valid = X[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
@@ -1324,8 +1324,8 @@ class MiniBatchKMeans(KMeans):
         # criterion
         for iteration_idx in range(n_iter):
             # Sample a minibatch from the full dataset
-            minibatch_indices = random_state.random_integers(
-                0, n_samples - 1, self.batch_size)
+            minibatch_indices = random_state.randint(
+                0, n_samples, self.batch_size)
 
             # Perform the actual update step on the minibatch data
             batch_inertia, centers_squared_diff = _mini_batch_step(
