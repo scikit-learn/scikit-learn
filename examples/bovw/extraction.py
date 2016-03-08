@@ -100,7 +100,7 @@ for it, (train_idx, test_idx) in enumerate(skf):
     # Define the number of words to create the codebook
     nb_words = 1000
     vq = MiniBatchKMeans(n_clusters=nb_words, verbose=1, init='random',
-                         batch_size=100 * nb_words, compute_labels=False,
+                         batch_size=10 * nb_words, compute_labels=False,
                          reassignment_ratio=0.0, random_state=1, n_init=3)
     # vq = KMeans(n_clusters=nb_words, verbose=10, n_init=4, n_jobs=-1)
     # Stack the training example
@@ -116,6 +116,7 @@ for it, (train_idx, test_idx) in enumerate(skf):
         train_data.append(np.histogram(vq.predict(patch_arr[tr_im]),
                                   bins=range(nb_words+1),
                                   density=True))
+    train_data = np.array(train_data)
     train_data = np.vstack(train_data[:, 0])
     train_label = labels[train_idx]
 
@@ -124,6 +125,7 @@ for it, (train_idx, test_idx) in enumerate(skf):
         test_data.append(np.histogram(vq.predict(patch_arr[te_im]),
                                       bins=range(nb_words+1),
                                       density=True))
+    test_data = np.array(test_data)
     test_data = np.vstack(test_data[:, 0])
     test_label = labels[test_idx]
 
@@ -134,4 +136,4 @@ for it, (train_idx, test_idx) in enumerate(skf):
     print 'Classification performed'
     print confusion_matrix(test_label, pred)
 
-print 'It took', time.time()-start, 'seconds.'
+    print 'It took', time.time()-start, 'seconds.'
