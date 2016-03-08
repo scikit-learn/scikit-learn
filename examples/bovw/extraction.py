@@ -100,7 +100,7 @@ for it, (train_idx, test_idx) in enumerate(skf):
     # Define the number of words to create the codebook
     nb_words = 1000
     vq = MiniBatchKMeans(n_clusters=nb_words, verbose=1, init='random',
-                         batch_size=2 * nb_words, compute_labels=False,
+                         batch_size=100 * nb_words, compute_labels=False,
                          reassignment_ratio=0.0, random_state=1, n_init=3)
     # vq = KMeans(n_clusters=nb_words, verbose=10, n_init=4, n_jobs=-1)
     # Stack the training example
