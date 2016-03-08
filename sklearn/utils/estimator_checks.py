@@ -536,7 +536,8 @@ def check_transformers_unfitted(name, Transformer):
     with warnings.catch_warnings(record=True):
         transformer = Transformer()
 
-    assert_raises((AttributeError, ValueError), transformer.transform, X)
+    if hasattr(transformer, "transform"):
+        assert_raises((AttributeError, ValueError), transformer.transform, X)
 
 
 def _check_transformer(name, Transformer, X, y):
