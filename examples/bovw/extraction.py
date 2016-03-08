@@ -116,7 +116,7 @@ for it, (train_idx, test_idx) in enumerate(skf):
         train_data.append(np.histogram(vq.predict(patch_arr[tr_im]),
                                   bins=range(nb_words+1),
                                   density=True))
-    train_data = np.array(train_data)
+    train_data = np.vstack(train_data[:, 0])
     train_label = labels[train_idx]
 
     test_data = []
@@ -124,7 +124,7 @@ for it, (train_idx, test_idx) in enumerate(skf):
         test_data.append(np.histogram(vq.predict(patch_arr[te_im]),
                                       bins=range(nb_words+1),
                                       density=True))
-    test_data = np.array(test_data)
+    test_data = np.vstack(test_data[:, 0])
     test_label = labels[test_idx]
 
     ##### Time for classification #####
