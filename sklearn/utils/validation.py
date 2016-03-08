@@ -297,7 +297,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order='A',
 
     order : 'F', 'C' or 'A' (default='A')
         Whether an array will be forced to be fortran or c-style. If
-        `order='A'`, then the returned array might be in any order, unless a
+        `order='A'`, then the returned array might be in any order, unless
         `copy=True` in which case a C-style array will be returned.
 
     copy : boolean (default=False)
