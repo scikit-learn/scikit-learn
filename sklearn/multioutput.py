@@ -26,7 +26,7 @@ __all__ = ["MultiOutputRegressor"]
 def _fit_regression(estimator, X, y, sample_weight):
     estimator = clone(estimator)
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight)
     else:
         estimator.fit(X, y)
     return estimator
