@@ -47,7 +47,7 @@ max_patches = 100
 n_jobs = -1
 n_components = 9
 max_patches_classify = 20000
-nb_words = 80
+nb_words = 50
 rng = np.random.RandomState(0)
 
 # Load the data
