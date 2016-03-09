@@ -52,7 +52,6 @@ from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
 from .rcv1 import fetch_rcv1
-from .tudarmstadt import fetch_tu_darmstadt
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',
@@ -102,5 +101,4 @@ __all__ = ['clear_data_home',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
            'make_swiss_roll',
-           'mldata_filename',
-           'fetch_tu_darmstadt']
+           'mldata_filename']

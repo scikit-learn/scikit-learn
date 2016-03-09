@@ -19,12 +19,7 @@ except ImportError:
 import numpy as np
 import tarfile
 
-from .base import get_data_home, Bunch
-
-from .base import _pkl_filepath
-from ..utils import check_random_state
-from ..externals import joblib
-
+from sklearn.datasets import get_data_home
 
 DATA_URL = "http://host.robots.ox.ac.uk/pascal/VOC/download/tud.tar.gz"
 TARGET_FILENAME = "tud.pkz"
