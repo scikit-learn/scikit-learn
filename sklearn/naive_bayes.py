@@ -173,8 +173,8 @@ class GaussianNB(BaseNB):
                 raise ValueError("Priors must be non-negative.")
             self.class_prior_ = class_prior
         else:
-            self.class_prior_ = np.ones(n_classes,
-                                        dtype=np.float64) / float(n_classes)
+            # empirical prior, with sample_weight taken into account
+            self.class_prior_ = self.class_count_ / self.class_count_.sum()
 
     def _update_class_prior(self):
         # Update only no class_prior is provided
