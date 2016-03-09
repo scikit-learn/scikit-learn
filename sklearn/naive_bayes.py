@@ -117,10 +117,6 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
-    fit_prior : boolean
-        Whether to learn class prior probabilities or not.
-        If false, a uniform prior will be used.
-
     class_prior : array-like, size=(n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
@@ -147,18 +143,17 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(class_prior=None, fit_prior=True)
+    GaussianNB(class_prior=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(class_prior=None, fit_prior=True)
+    GaussianNB(class_prior=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, fit_prior=True, class_prior=None):
-        self.fit_prior = fit_prior
+    def __init__(self, class_prior=None):
         self.class_prior = class_prior
 
     def _init_class_prior(self):
@@ -173,17 +168,17 @@ class GaussianNB(BaseNB):
             # Check that the sum is 1
             if class_prior.sum() != 1.0:
                 raise ValueError("The sum of the priors should be 1.")
+            # Check that the prior are non-negative
+            if (class_prior < 0).any():
+                raise ValueError("Priors must be non-negative.")
             self.class_prior_ = class_prior
-        elif self.fit_prior:
-            # empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
         else:
             self.class_prior_ = np.ones(n_classes,
                                         dtype=np.float64) / float(n_classes)
 
     def _update_class_prior(self):
-        # Update only if fit_prior is True and that no class_prior is provided
-        if self.class_prior is None and self.fit_prior:
+        # Update only no class_prior is provided
+        if self.class_prior is None:
             # Empirical prior, with sample_weight taken into account
             self.class_prior_ = self.class_count_ / self.class_count_.sum()
 
