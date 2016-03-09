@@ -117,13 +117,13 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
-    class_prior : array-like, size=(n_classes,)
+    priors : array-like, size=(n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
     Attributes
     ----------
-    class_prior_ : array, shape (n_classes,)
+    priors_ : array, shape (n_classes,)
         probability of each class.
 
     class_count_ : array, shape (n_classes,)
@@ -143,44 +143,44 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(class_prior=None)
+    GaussianNB(priors=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(class_prior=None)
+    GaussianNB(priors=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, class_prior=None):
-        self.class_prior = class_prior
+    def __init__(self, priors=None):
+        self.priors = priors
 
-    def _init_class_prior(self):
+    def _init_priors(self):
         n_classes = len(self.classes_)
-        # Take into account the class_prior
-        if self.class_prior is not None:
-            class_prior = np.asarray(self.class_prior)
+        # Take into account the priors
+        if self.priors is not None:
+            priors = np.asarray(self.priors)
             # Check that the provide prior match the number of classes
-            if len(class_prior) != n_classes:
+            if len(priors) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
             # Check that the sum is 1
-            if class_prior.sum() != 1.0:
+            if priors.sum() != 1.0:
                 raise ValueError("The sum of the priors should be 1.")
             # Check that the prior are non-negative
-            if (class_prior < 0).any():
+            if (priors < 0).any():
                 raise ValueError("Priors must be non-negative.")
-            self.class_prior_ = class_prior
+            self.priors_ = priors
         else:
-            # empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+            # Initialize the priors to zeros for each class
+            self.priors_ = np.zeros(len(self.classes_), dtype=np.float64)
 
-    def _update_class_prior(self):
-        # Update only no class_prior is provided
-        if self.class_prior is None:
+    def _update_priors(self):
+        # Update only no priors is provided
+        if self.priors is None:
             # Empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+            self.priors_ = self.class_count_ / self.class_count_.sum()
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -380,7 +380,7 @@ class GaussianNB(BaseNB):
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
 
             # Initialise the class prior
-            self._init_class_prior()
+            self._init_priors()
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -418,7 +418,7 @@ class GaussianNB(BaseNB):
             self.class_count_[i] += N_i
 
         self.sigma_[:, :] += epsilon
-        self._update_class_prior()
+        self._update_priors()
 
         return self
 
@@ -428,7 +428,7 @@ class GaussianNB(BaseNB):
         X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
-            jointi = np.log(self.class_prior_[i])
+            jointi = np.log(self.priors_[i])
             n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
