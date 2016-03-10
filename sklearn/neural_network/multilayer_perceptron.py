@@ -48,7 +48,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon):
+                 validation_fraction, variation_stop, beta_1, beta_2, epsilon):
         self.activation = activation
         self.algorithm = algorithm
         self.alpha = alpha
@@ -68,6 +68,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.nesterovs_momentum = nesterovs_momentum
         self.early_stopping = early_stopping
         self.validation_fraction = validation_fraction
+        self.variation_stop = variation_stop
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
@@ -404,6 +405,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.validation_fraction < 0 or self.validation_fraction >= 1:
             raise ValueError("validation_fraction must be >= 0 and < 1, "
                              "got %s" % self.validation_fraction)
+        if self.variation_stop <= 1:
+            raise ValueError("variation_stop must be >= 2, "
+                             "got %s" % self.variation_stop)
         if self.beta_1 < 0 or self.beta_1 >= 1:
             raise ValueError("beta_1 must be >= 0 and < 1, got %s" %
                              self.beta_1)
@@ -533,7 +537,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # for learning rate that needs to be updated at iteration end
                 self._optimizer.iteration_ends(self.t_)
 
-                if self._no_improvement_count > 2:
+                if self._no_improvement_count > self.variation_stop:
                     # not better than last two iterations by tol.
                     # stop or decrease learning rate
                     if early_stopping:
@@ -798,6 +802,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
+    variation_stop : int, optional, default 2
+        Count of interations to attempt before stopping if score 
+        is not improving on the train set or on the validation fraction
+        if early_stopping is True.
+        Shold be 2 or more
+
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
         should be in [0, 1). Only used when algorithm='adam'
@@ -876,8 +886,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  shuffle=True, random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
-                 validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 validation_fraction=0.1, variation_stop=2,
+                 beta_1=0.9, beta_2=0.999, epsilon=1e-8):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -890,6 +900,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
+                     variation_stop=variation_stop,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
 
         self.label_binarizer_ = LabelBinarizer()
@@ -1152,6 +1163,12 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
+    variation_stop : int, optional, default 2
+        Count of interations to attempt before stopping if score 
+        is not improving on the train set or on the validation fraction
+        if early_stopping is True.
+        Shold be 2 or more
+
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
         should be in [0, 1). Only used when algorithm='adam'
@@ -1225,8 +1242,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
-                 validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 validation_fraction=0.1, variation_stop=2,
+                 beta_1=0.9, beta_2=0.999, epsilon=1e-8):
 
         sup = super(MLPRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -1239,6 +1256,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
+                     variation_stop=variation_stop,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
 
     def predict(self, X):
