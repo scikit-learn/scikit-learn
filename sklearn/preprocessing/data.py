@@ -240,6 +240,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.17
            *data_range_* instead of deprecated *data_range*.
+           
+    See also
+    --------
+    :func:`sklearn.preprocessing.minmax_scale` equivalent function
+    without the object oriented API
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -719,6 +724,11 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
+        
+    See also
+    --------
+    :func:`sklearn.preprocessing.maxabs_scale` equivalent function
+    without the object oriented API
     """
 
     def __init__(self, copy=True):
@@ -936,7 +946,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     :class:`sklearn.decomposition.RandomizedPCA` with `whiten=True`
     to further remove the linear correlation across features.
-
+ 
+    :func:`sklearn.preprocessing.robust_scale` equivalent function
+    without the object oriented API
     Notes
     -----
     See examples/preprocessing/plot_robust_scaling.py for an example.
@@ -1483,6 +1495,11 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
+    
+    See also
+    --------
+    :func:`sklearn.preprocessing.binarize` equivalent function
+    without the object oriented API
     """
 
     def __init__(self, threshold=0.0, copy=True):
