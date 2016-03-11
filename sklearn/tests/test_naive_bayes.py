@@ -56,10 +56,10 @@ def test_gnb_prior():
     # Test whether class priors are properly set.
     clf = GaussianNB().fit(X, y)
     assert_array_almost_equal(np.array([3, 3]) / 6.0,
-                              clf.priors_, 8)
+                              clf.class_prior_, 8)
     clf.fit(X1, y1)
     # Check that the class priors sum to 1
-    assert_array_almost_equal(clf.priors_.sum(), 1)
+    assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
 
 def test_gnb_sample_weight():
@@ -100,7 +100,7 @@ def test_gnb_priors():
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
                                          0.174696337838317]]), 8)
-    assert_array_equal(clf.priors_, np.array([0.3, 0.7]))
+    assert_array_equal(clf.class_prior_, np.array([0.3, 0.7]))
 
 
 def test_gnb_prior_greater_one():
@@ -197,13 +197,13 @@ def test_gnb_partial_fit():
     clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
     assert_array_almost_equal(clf.theta_, clf_pf.theta_)
     assert_array_almost_equal(clf.sigma_, clf_pf.sigma_)
-    assert_array_almost_equal(clf.priors_, clf_pf.priors_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf.class_prior_)
 
     clf_pf2 = GaussianNB().partial_fit(X[0::2, :], y[0::2], np.unique(y))
     clf_pf2.partial_fit(X[1::2], y[1::2])
     assert_array_almost_equal(clf.theta_, clf_pf2.theta_)
     assert_array_almost_equal(clf.sigma_, clf_pf2.sigma_)
-    assert_array_almost_equal(clf.priors_, clf_pf2.priors_)
+    assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
 
 
 def test_discretenb_pickle():

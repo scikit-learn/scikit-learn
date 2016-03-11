@@ -123,7 +123,7 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    priors_ : array, shape (n_classes,)
+    class_prior_ : array, shape (n_classes,)
         probability of each class.
 
     class_count_ : array, shape (n_classes,)
@@ -171,16 +171,16 @@ class GaussianNB(BaseNB):
             # Check that the prior are non-negative
             if (priors < 0).any():
                 raise ValueError("Priors must be non-negative.")
-            self.priors_ = priors
+            self.class_prior_ = priors
         else:
             # Initialize the priors to zeros for each class
-            self.priors_ = np.zeros(len(self.classes_), dtype=np.float64)
+            self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
 
     def _update_priors(self):
         # Update only no priors is provided
         if self.priors is None:
             # Empirical prior, with sample_weight taken into account
-            self.priors_ = self.class_count_ / self.class_count_.sum()
+            self.class_prior_ = self.class_count_ / self.class_count_.sum()
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -428,7 +428,7 @@ class GaussianNB(BaseNB):
         X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
-            jointi = np.log(self.priors_[i])
+            jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
