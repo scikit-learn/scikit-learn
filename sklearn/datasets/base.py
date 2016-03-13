@@ -9,6 +9,7 @@ Base IO code for all datasets
 
 import os
 import csv
+import sys
 import shutil
 from os import environ
 from os.path import dirname
@@ -16,6 +17,7 @@ from os.path import join
 from os.path import exists
 from os.path import expanduser
 from os.path import isdir
+from os.path import splitext
 from os import listdir
 from os import makedirs
 
@@ -44,7 +46,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        dict.__init__(self, kwargs)
+        super(Bunch, self).__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -55,8 +57,16 @@ class Bunch(dict):
         except KeyError:
             raise AttributeError(key)
 
-    def __getstate__(self):
-        return self.__dict__
+    def __setstate__(self, state):
+        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # empty __dict__. This causes a surprising behaviour when
+        # loading these pickles scikit-learn 0.17: reading bunch.key
+        # uses __dict__ but assigning to bunch.key use __setattr__ and
+        # only changes bunch['key']. More details can be found at:
+        # https://github.com/scikit-learn/scikit-learn/issues/6196.
+        # Overriding __setstate__ to be a noop has the effect of
+        # ignoring the pickled __dict__
+        pass
 
 
 def get_data_home(data_home=None):
@@ -277,7 +287,7 @@ def load_iris():
         target = np.empty((n_samples,), dtype=np.int)
 
         for i, ir in enumerate(data_file):
-            data[i] = np.asarray(ir[:-1], dtype=np.float)
+            data[i] = np.asarray(ir[:-1], dtype=np.float64)
             target[i] = np.asarray(ir[-1], dtype=np.int)
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
@@ -288,6 +298,84 @@ def load_iris():
                  DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
                                 'petal length (cm)', 'petal width (cm)'])
+
+
+def load_breast_cancer():
+    """Load and return the breast cancer wisconsin dataset (classification).
+
+    The breast cancer dataset is a classic and very easy binary classification
+    dataset.
+
+    =================   ==============
+    Classes                          2
+    Samples per class    212(M),357(B)
+    Samples total                  569
+    Dimensionality                  30
+    Features            real, positive
+    =================   ==============
+
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
+        full description of the dataset.
+
+    The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
+    downloaded from:
+    https://goo.gl/U2Uwz2
+
+    Examples
+    --------
+    Let's say you are interested in the samples 10, 50, and 85, and want to
+    know their class name.
+
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> data = load_breast_cancer()
+    >>> data.target[[10, 50, 85]]
+    array([0, 1, 0])
+    >>> list(data.target_names)
+    ['malignant', 'benign']
+    """
+    module_path = dirname(__file__)
+    with open(join(module_path, 'data', 'breast_cancer.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        first_line = next(data_file)
+        n_samples = int(first_line[0])
+        n_features = int(first_line[1])
+        target_names = np.array(first_line[2:4])
+        data = np.empty((n_samples, n_features))
+        target = np.empty((n_samples,), dtype=np.int)
+
+        for count, value in enumerate(data_file):
+            data[count] = np.asarray(value[:-1], dtype=np.float64)
+            target[count] = np.asarray(value[-1], dtype=np.int)
+
+    with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    feature_names = np.array(['mean radius', 'mean texture',
+                              'mean perimeter', 'mean area',
+                              'mean smoothness', 'mean compactness',
+                              'mean concavity', 'mean concave points',
+                              'mean symmetry', 'mean fractal dimension',
+                              'radius error', 'texture error',
+                              'perimeter error', 'area error',
+                              'smoothness error', 'compactness error',
+                              'concavity error', 'concave points error',
+                              'symmetry error', 'fractal dimension error',
+                              'worst radius', 'worst texture',
+                              'worst perimeter', 'worst area',
+                              'worst smoothness', 'worst compactness',
+                              'worst concavity', 'worst concave points',
+                              'worst symmetry', 'worst fractal dimension'])
+
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 DESCR=fdescr,
+                 feature_names=feature_names)
 
 
 def load_digits(n_class=10):
@@ -456,8 +544,8 @@ def load_boston():
         feature_names = np.array(temp)
 
         for i, d in enumerate(data_file):
-            data[i] = np.asarray(d[:-1], dtype=np.float)
-            target[i] = np.asarray(d[-1], dtype=np.float)
+            data[i] = np.asarray(d[:-1], dtype=np.float64)
+            target[i] = np.asarray(d[-1], dtype=np.float64)
 
     return Bunch(data=data,
                  target=target,
@@ -553,3 +641,32 @@ def load_sample_image(image_name):
     if index is None:
         raise AttributeError("Cannot find sample image: %s" % image_name)
     return images.images[index]
+
+
+def _pkl_filepath(*args, **kwargs):
+    """Ensure different filenames for Python 2 and Python 3 pickles
+
+    An object pickled under Python 3 cannot be loaded under Python 2.
+    An object pickled under Python 2 can sometimes not be loaded loaded
+    correctly under Python 3 because some Python 2 strings are decoded as
+    Python 3 strings which can be problematic for objects that use Python 2
+    strings as byte buffers for numerical data instead of "real" strings.
+
+    Therefore, dataset loaders in scikit-learn use different files for pickles
+    manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so
+    as to avoid conflicts.
+
+    args[-1] is expected to be the ".pkl" filename. Under Python 3, a
+    suffix is inserted before the extension to s
+
+    _pkl_filepath('/path/to/folder', 'filename.pkl') returns:
+      - /path/to/folder/filename.pkl under Python 2
+      - /path/to/folder/filename_py3.pkl under Python 3+
+
+    """
+    py3_suffix = kwargs.get("py3_suffix", "_py3")
+    basename, ext = splitext(args[-1])
+    if sys.version_info[0] >= 3:
+        basename += py3_suffix
+    new_args = args[:-1] + (basename + ext,)
+    return join(*new_args)

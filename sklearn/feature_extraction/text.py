@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Roman Sinayev <roman.sinayev@gmail.com>
@@ -88,8 +88,10 @@ def _check_stop_list(stop):
         return ENGLISH_STOP_WORDS
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
+    elif stop is None:
+        return None
     else:               # assume it's a collection
-        return stop
+        return frozenset(stop)
 
 
 class VectorizerMixin(object):
@@ -242,6 +244,8 @@ class VectorizerMixin(object):
     def _validate_vocabulary(self):
         vocabulary = self.vocabulary
         if vocabulary is not None:
+            if isinstance(vocabulary, set):
+                vocabulary = sorted(vocabulary)
             if not isinstance(vocabulary, Mapping):
                 vocab = {}
                 for i, t in enumerate(vocabulary):
@@ -546,7 +550,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
-        Only applies if ``analyzer == 'word'``.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
@@ -664,7 +667,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_df = max_df
         self.min_df = min_df
         if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df of min_df")
+            raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
@@ -1175,6 +1178,9 @@ class TfidfVectorizer(CountVectorizer):
 
     Attributes
     ----------
+    vocabulary_ : dict
+        A mapping of terms to feature indices.
+
     idf_ : array, shape = [n_features], or None
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.

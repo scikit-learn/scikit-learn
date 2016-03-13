@@ -10,11 +10,10 @@ The dataset page is available from UCI Machine Learning Repository
 Courtesy of Jock A. Blackard and Colorado State University.
 """
 
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
-import sys
 from gzip import GzipFile
 from io import BytesIO
 import logging
@@ -28,6 +27,7 @@ import numpy as np
 
 from .base import get_data_home
 from .base import Bunch
+from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from ..utils import check_random_state
@@ -83,17 +83,9 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     """
 
     data_home = get_data_home(data_home=data_home)
-    if sys.version_info[0] == 3:
-        # The zlib compression format use by joblib is not compatible when
-        # switching from Python 2 to Python 3, let us use a separate folder
-        # under Python 3:
-        dir_suffix = "-py3"
-    else:
-        # Backward compat for Python 2 users
-        dir_suffix = ""
-    covtype_dir = join(data_home, "covertype" + dir_suffix)
-    samples_path = join(covtype_dir, "samples")
-    targets_path = join(covtype_dir, "targets")
+    covtype_dir = join(data_home, "covertype")
+    samples_path = _pkl_filepath(covtype_dir, "samples")
+    targets_path = _pkl_filepath(covtype_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:

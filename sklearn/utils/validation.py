@@ -1,4 +1,5 @@
 """Utilities for input validation"""
+
 # Authors: Olivier Grisel
 #          Gael Varoquaux
 #          Andreas Mueller
@@ -6,6 +7,7 @@
 #          Alexandre Gramfort
 #          Nicolas Tresegnie
 # License: BSD 3 clause
+
 import warnings
 import numbers
 
@@ -13,33 +15,35 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..externals import six
-from inspect import getargspec
+from ..utils.fixes import signature
+from .deprecation import deprecated
+from ..exceptions import DataConversionWarning as _DataConversionWarning
+from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
+from ..exceptions import NotFittedError as _NotFittedError
+
+
+@deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class DataConversionWarning(_DataConversionWarning):
+    pass
+
+
+@deprecated("NonBLASDotWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class NonBLASDotWarning(_NonBLASDotWarning):
+    pass
+
+
+@deprecated("NotFittedError has been moved into the sklearn.exceptions module."
+            " It will not be available here from version 0.19")
+class NotFittedError(_NotFittedError):
+    pass
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
-
-class DataConversionWarning(UserWarning):
-    """A warning on implicit data conversions happening in the code"""
-    pass
-
-warnings.simplefilter("always", DataConversionWarning)
-
-
-class NonBLASDotWarning(UserWarning):
-    """A warning on implicit dispatch to numpy.dot"""
-
-
-class NotFittedError(ValueError, AttributeError):
-    """Exception class to raise if estimator is used before fitting
-
-    This class inherits from both ValueError and AttributeError to help with
-    exception handling and backward compatibility.
-    """
-
-
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning)
+warnings.simplefilter('ignore', _NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -126,7 +130,7 @@ def _num_samples(x):
 
 
 def _shape_repr(shape):
-    """Return a platform independent reprensentation of an array shape
+    """Return a platform independent representation of an array shape
 
     Under Python 2, the `long` type introduces an 'L' suffix when using the
     default %r format for tuples of integers (typically used to store the shape
@@ -357,20 +361,43 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
             # list of accepted types.
             dtype = dtype[0]
 
+    if estimator is not None:
+        if isinstance(estimator, six.string_types):
+            estimator_name = estimator
+        else:
+            estimator_name = estimator.__class__.__name__
+    else:
+        estimator_name = "Estimator"
+    context = " by %s" % estimator_name if estimator is not None else ""
+
     if sp.issparse(array):
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        if ensure_2d:
-            array = np.atleast_2d(array)
-
         array = np.array(array, dtype=dtype, order=order, copy=copy)
+
+        if ensure_2d:
+            if array.ndim == 1:
+                if ensure_min_samples >= 2:
+                    raise ValueError("%s expects at least 2 samples provided "
+                                     "in a 2 dimensional array-like input"
+                                     % estimator_name)
+                warnings.warn(
+                    "Passing 1d arrays as data is deprecated in 0.17 and will "
+                    "raise ValueError in 0.19. Reshape your data either using "
+                    "X.reshape(-1, 1) if your data has a single feature or "
+                    "X.reshape(1, -1) if it contains a single sample.",
+                    DeprecationWarning)
+            array = np.atleast_2d(array)
+            # To ensure that array flags are maintained
+            array = np.array(array, dtype=dtype, order=order, copy=copy)
+
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:
-            raise ValueError("Found array with dim %d. Expected <= 2" %
-                             array.ndim)
+            raise ValueError("Found array with dim %d. %s expected <= 2."
+                             % (array.ndim, estimator_name))
         if force_all_finite:
             _assert_all_finite(array)
 
@@ -379,39 +406,37 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
             raise ValueError("Found array with %d sample(s) (shape=%s) while a"
-                             " minimum of %d is required."
-                             % (n_samples, shape_repr, ensure_min_samples))
+                             " minimum of %d is required%s."
+                             % (n_samples, shape_repr, ensure_min_samples,
+                                context))
 
     if ensure_min_features > 0 and array.ndim == 2:
         n_features = array.shape[1]
         if n_features < ensure_min_features:
             raise ValueError("Found array with %d feature(s) (shape=%s) while"
-                             " a minimum of %d is required."
-                             % (n_features, shape_repr, ensure_min_features))
+                             " a minimum of %d is required%s."
+                             % (n_features, shape_repr, ensure_min_features,
+                                context))
 
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
-        msg = ("Data with input dtype %s was converted to %s"
-               % (dtype_orig, array.dtype))
-        if estimator is not None:
-            if not isinstance(estimator, six.string_types):
-                estimator = estimator.__class__.__name__
-            msg += " by %s" % estimator
-        warnings.warn(msg, DataConversionWarning)
+        msg = ("Data with input dtype %s was converted to %s%s."
+               % (dtype_orig, array.dtype, context))
+        warnings.warn(msg, _DataConversionWarning)
     return array
 
 
-def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
-              force_all_finite=True, ensure_2d=True, allow_nd=False,
-              multi_output=False, ensure_min_samples=1,
+def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
+              copy=False, force_all_finite=True, ensure_2d=True,
+              allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
               warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
-    Standard input checks are only applied to y. For multi-label y,
-    set multi_output=True to allow 2d and sparse y.
-    If the dtype of X is object, attempt converting to float,
-    raising on failure.
+    Standard input checks are only applied to y, such as checking that y
+    does not have np.nan or np.inf targets. For multi-label y, set
+    multi_output=True to allow 2d and sparse y.  If the dtype of X is
+    object, attempt converting to float, raising on failure.
 
     Parameters
     ----------
@@ -441,7 +466,8 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
         be triggered by a conversion.
 
     force_all_finite : boolean (default=True)
-        Whether to raise an error on np.inf and np.nan in X.
+        Whether to raise an error on np.inf and np.nan in X. This parameter
+        does not influence whether y can have np.inf or np.nan values.
 
     ensure_2d : boolean (default=True)
         Whether to make X at least 2d.
@@ -451,7 +477,8 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
 
     multi_output : boolean (default=False)
         Whether to allow 2-d y (array or sparse matrix). If false, y will be
-        validated as a vector.
+        validated as a vector. y cannot have np.nan or np.inf values if
+        multi_output=True.
 
     ensure_min_samples : int (default=1)
         Make sure that X has a minimum number of samples in its first
@@ -480,6 +507,9 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
     -------
     X_converted : object
         The converted and validated X.
+
+    y_converted : object
+        The converted and validated y.
     """
     X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
                     ensure_2d, allow_nd, ensure_min_samples,
@@ -521,7 +551,7 @@ def column_or_1d(y, warn=False):
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
-                          DataConversionWarning, stacklevel=2)
+                          _DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
@@ -555,7 +585,7 @@ def has_fit_parameter(estimator, parameter):
     True
 
     """
-    return parameter in getargspec(estimator.fit)[0]
+    return parameter in signature(estimator.fit).parameters
 
 
 def check_symmetric(array, tol=1E-10, raise_warning=True,
@@ -651,4 +681,22 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        raise NotFittedError(msg % {'name': type(estimator).__name__})
+        # FIXME NotFittedError_ --> NotFittedError in 0.19
+        raise _NotFittedError(msg % {'name': type(estimator).__name__})
+
+
+def check_non_negative(X, whom):
+    """
+    Check if there is any negative value in an array.
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix
+        Input data.
+
+    whom : string
+        Who passed X to this function.
+    """
+    X = X.data if sp.issparse(X) else X
+    if (X < 0).any():
+        raise ValueError("Negative values in data passed to %s" % whom)

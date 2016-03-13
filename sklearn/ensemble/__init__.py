@@ -1,6 +1,6 @@
 """
 The :mod:`sklearn.ensemble` module includes ensemble-based methods for
-classification and regression.
+classification, regression and anomaly detection.
 """
 
 from .base import BaseEnsemble
@@ -11,6 +11,7 @@ from .forest import ExtraTreesClassifier
 from .forest import ExtraTreesRegressor
 from .bagging import BaggingClassifier
 from .bagging import BaggingRegressor
+from .iforest import IsolationForest
 from .weight_boosting import AdaBoostClassifier
 from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
@@ -27,7 +28,7 @@ __all__ = ["BaseEnsemble",
            "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "BaggingClassifier",
-           "BaggingRegressor", "GradientBoostingClassifier",
+           "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier",
            "bagging", "forest", "gradient_boosting",

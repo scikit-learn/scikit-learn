@@ -27,7 +27,7 @@ Two feature extraction methods can be used in this example:
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
-Additionally, latent sematic analysis can also be used to reduce dimensionality
+Additionally, latent semantic analysis can also be used to reduce dimensionality
 and discover latent patterns in the data. 
 
 It can be noted that k-means (and minibatch k-means) are very sensitive to
@@ -50,7 +50,7 @@ necessary to get a good convergence.
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Lars Buitinck
 # License: BSD 3 clause
 
 from __future__ import print_function

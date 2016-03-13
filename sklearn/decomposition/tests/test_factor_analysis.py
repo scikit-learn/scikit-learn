@@ -11,10 +11,13 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
+from sklearn.utils.testing import ignore_warnings
 
 
+# Ignore warnings from switching to more power iterations in randomized_svd
+@ignore_warnings
 def test_factor_analysis():
     # Test FactorAnalysis ability to recover the data covariance structure
     rng = np.random.RandomState(0)

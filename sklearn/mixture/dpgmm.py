@@ -65,7 +65,7 @@ def wishart_logz(v, s, dets, n_features):
 
 def _bound_wishart(a, B, detB):
     """Returns a function of the dof, scale matrix and its determinant
-    used as an upper bound in variational approcimation of the evidence"""
+    used as an upper bound in variational approximation of the evidence"""
     n_features = B.shape[0]
     logprior = wishart_logz(a, B, detB, n_features)
     logprior -= wishart_logz(n_features,
@@ -200,11 +200,11 @@ class DPGMM(GMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=0,
-                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
+                 random_state=None, tol=1e-3, verbose=0, min_covar=None,
+                 n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
         super(DPGMM, self).__init__(n_components, covariance_type,
-                                    random_state=random_state, thresh=thresh,
+                                    random_state=random_state,
                                     tol=tol, min_covar=min_covar,
                                     n_iter=n_iter, params=params,
                                     init_params=init_params, verbose=verbose)
@@ -492,7 +492,7 @@ class DPGMM(GMM):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when when creating
+        argument init_params to the empty string '' when creating
         the object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 
@@ -578,10 +578,6 @@ class DPGMM(GMM):
         # reset self.converged_ to False
         self.converged_ = False
 
-        # this line should be removed when 'thresh' is removed in v0.18
-        tol = (self.tol if self.thresh is None
-               else self.thresh / float(n_samples))
-
         for i in range(self.n_iter):
             prev_log_likelihood = current_log_likelihood
             # Expectation step
@@ -591,11 +587,9 @@ class DPGMM(GMM):
                 curr_logprob.mean() + self._logprior(z) / n_samples)
 
             # Check for convergence.
-            # (should compare to self.tol when dreprecated 'thresh' is
-            # removed in v0.18)
             if prev_log_likelihood is not None:
                 change = abs(current_log_likelihood - prev_log_likelihood)
-                if change < tol:
+                if change < self.tol:
                     self.converged_ = True
                     break
 
@@ -698,11 +692,11 @@ class VBGMM(DPGMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=None, tol=1e-3, verbose=0,
+                 random_state=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
-            thresh=thresh, tol=tol, verbose=verbose, min_covar=min_covar,
+            tol=tol, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
 

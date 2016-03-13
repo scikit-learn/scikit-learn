@@ -15,7 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
-from ..cross_validation import check_cv
+from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 
 import scipy
@@ -145,7 +145,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
               copy_Gram=True, copy_Xy=True, return_path=False):
     """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
 
-    This function uses the the Cholesky decomposition method.
+    This function uses the Cholesky decomposition method.
 
     Parameters
     ----------
@@ -557,8 +557,15 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If False, the regressors X are assumed to be already normalized.
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
@@ -629,7 +636,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
-        X, y, X_mean, y_mean, X_std, Gram, Xy = \
+        X, y, X_offset, y_offset, X_scale, Gram, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
 
@@ -657,7 +664,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                 copy_Gram=True, copy_Xy=True,
                 return_n_iter=True)
         self.coef_ = coef_.T
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
 
@@ -690,6 +697,13 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -748,16 +762,33 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If False, the regressors X are assumed to be already normalized.
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
 
-    cv : cross-validation generator, optional
-        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
-        a 5-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -823,9 +854,10 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = check_X_y(X, y, y_numeric=True, ensure_min_features=2,
+                         estimator=self)
         X = as_float_array(X, copy=False, force_all_finite=False)
-        cv = check_cv(self.cv, X, y, classifier=False)
+        cv = check_cv(self.cv, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter
                     else self.max_iter)
@@ -833,7 +865,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             delayed(_omp_path_residues)(
                 X[train], y[train], X[test], y[test], self.copy,
                 self.fit_intercept, self.normalize, max_iter)
-            for train, test in cv)
+            for train, test in cv.split(X))
 
         min_early_stop = min(fold.shape[0] for fold in cv_paths)
         mse_folds = np.array([(fold[:min_early_stop] ** 2).mean(axis=1)

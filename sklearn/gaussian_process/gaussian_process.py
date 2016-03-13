@@ -15,10 +15,12 @@ from ..utils import check_random_state, check_array, check_X_y
 from ..utils.validation import check_is_fitted
 from . import regression_models as regression
 from . import correlation_models as correlation
+from ..utils import deprecated
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
+@deprecated("l1_cross_distances is deprecated and will be removed in 0.20.")
 def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
@@ -56,8 +58,13 @@ def l1_cross_distances(X):
     return D, ij
 
 
+@deprecated("GaussianProcess is deprecated and will be removed in 0.20. "
+            "Use the GaussianProcessRegressor instead.")
 class GaussianProcess(BaseEstimator, RegressorMixin):
-    """The Gaussian Process model class.
+    """The legacy Gaussian Process model class.
+
+    Note that this class is deprecated and will be removed in 0.20.
+    Use the GaussianProcessRegressor instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -617,7 +624,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # 0.7. The economy transform will then be available through the
             # mode='economic' argument.
             Q, G = linalg.qr(Ft, mode='economic')
-            pass
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]
@@ -758,7 +764,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         elif self.optimizer == 'Welch':
 
-            # Backup of the given atrributes
+            # Backup of the given attributes
             theta0, thetaL, thetaU = self.theta0, self.thetaL, self.thetaU
             corr = self.corr
             verbose = self.verbose
@@ -798,7 +804,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
                     self._arg_max_reduced_likelihood_function()
 
-            # Restore the given atrributes
+            # Restore the given attributes
             self.theta0, self.thetaL, self.thetaU = theta0, thetaL, thetaU
             self.corr = corr
             self.optimizer = 'Welch'
@@ -825,7 +831,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
-            self.beta0 = check_array(self.beta0)
+            self.beta0 = np.atleast_2d(self.beta0)
             if self.beta0.shape[1] != 1:
                 # Force to column vector
                 self.beta0 = self.beta0.T
@@ -845,12 +851,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                              "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
-        self.theta0 = check_array(self.theta0)
+        self.theta0 = np.atleast_2d(self.theta0)
         lth = self.theta0.size
 
         if self.thetaL is not None and self.thetaU is not None:
-            self.thetaL = check_array(self.thetaL)
-            self.thetaU = check_array(self.thetaU)
+            self.thetaL = np.atleast_2d(self.thetaL)
+            self.thetaU = np.atleast_2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
                                  "same length.")

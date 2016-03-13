@@ -42,6 +42,9 @@ def compute_class_weight(class_weight, classes, y):
     # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
 
+    if set(y) - set(classes):
+        raise ValueError("classes should include all valid labels that can "
+                         "be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
@@ -57,8 +60,9 @@ def compute_class_weight(class_weight, classes, y):
             recip_freq = 1. / bincount(y_ind)
             weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
             warnings.warn("The class_weight='auto' heuristic is deprecated in"
-                          " favor of a new heuristic class_weight='balanced'."
-                          " 'auto' will be removed in 0.18", DeprecationWarning)
+                          " 0.17 in favor of a new heuristic "
+                          "class_weight='balanced'. 'auto' will be removed in"
+                          " 0.19", DeprecationWarning)
         else:
             recip_freq = len(y) / (len(le.classes_) *
                                    bincount(y_ind).astype(np.float64))
@@ -71,7 +75,7 @@ def compute_class_weight(class_weight, classes, y):
                              " got: %r" % class_weight)
         for c in class_weight:
             i = np.searchsorted(classes, c)
-            if classes[i] != c:
+            if i >= len(classes) or classes[i] != c:
                 raise ValueError("Class label %d not present." % c)
             else:
                 weight[i] = class_weight[c]

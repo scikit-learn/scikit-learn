@@ -4,7 +4,7 @@ RBF SVM parameters
 ==================
 
 This example illustrates the effect of the parameters ``gamma`` and ``C`` of
-the Radius Basis Function (RBF) kernel SVM.
+the Radial Basis Function (RBF) kernel SVM.
 
 Intuitively, the ``gamma`` parameter defines how far the influence of a single
 training example reaches, with low values meaning 'far' and high values meaning
@@ -74,8 +74,8 @@ from matplotlib.colors import Normalize
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
-from sklearn.cross_validation import StratifiedShuffleSplit
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import GridSearchCV
 
 
 # Utility function to move the midpoint of a colormap to be around
@@ -128,7 +128,7 @@ X_2d = scaler.fit_transform(X_2d)
 C_range = np.logspace(-2, 10, 13)
 gamma_range = np.logspace(-9, 3, 13)
 param_grid = dict(gamma=gamma_range, C=C_range)
-cv = StratifiedShuffleSplit(y, n_iter=5, test_size=0.2, random_state=42)
+cv = StratifiedShuffleSplit(n_iter=5, test_size=0.2, random_state=42)
 grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
 grid.fit(X, y)
 

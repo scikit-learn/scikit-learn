@@ -3,20 +3,58 @@
 import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raise_message
+from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
-from sklearn import cross_validation
+from sklearn.model_selection import cross_val_score
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 
+
 # Load the iris dataset and randomly permute it
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
+
+
+def test_estimator_init():
+    eclf = VotingClassifier(estimators=[])
+    msg = ('Invalid `estimators` attribute, `estimators` should be'
+           ' a list of (string, estimator) tuples')
+    assert_raise_message(AttributeError, msg, eclf.fit, X, y)
+
+    clf = LogisticRegression(random_state=1)
+
+    eclf = VotingClassifier(estimators=[('lr', clf)], voting='error')
+    msg = ('Voting must be \'soft\' or \'hard\'; got (voting=\'error\')')
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
+    eclf = VotingClassifier(estimators=[('lr', clf)], weights=[1, 2])
+    msg = ('Number of classifiers and weights must be equal'
+           '; got 2 weights, 1 estimators')
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
+
+def test_predictproba_hardvoting():
+    eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
+                                        ('lr2', LogisticRegression())],
+                            voting='hard')
+    msg = "predict_proba is not available when voting='hard'"
+    assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
+
+
+def test_notfitted():
+    eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
+                                        ('lr2', LogisticRegression())],
+                            voting='soft')
+    msg = ("This VotingClassifier instance is not fitted yet. Call \'fit\'"
+           " with appropriate arguments before using this method.")
+    assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
 
 
 def test_majority_label_iris():
@@ -27,11 +65,7 @@ def test_majority_label_iris():
     eclf = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                 voting='hard')
-    scores = cross_validation.cross_val_score(eclf,
-                                              X,
-                                              y,
-                                              cv=5,
-                                              scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
@@ -55,11 +89,7 @@ def test_weights_iris():
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 2, 10])
-    scores = cross_validation.cross_val_score(eclf,
-                                              X,
-                                              y,
-                                              cv=5,
-                                              scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
 
@@ -151,7 +181,6 @@ def test_multilabel():
     """Check if error is raised for multilabel classification."""
     X, y = make_multilabel_classification(n_classes=2, n_labels=1,
                                           allow_unlabeled=False,
-                                          return_indicator=True,
                                           random_state=123)
     clf = OneVsRestClassifier(SVC(kernel='linear'))
 

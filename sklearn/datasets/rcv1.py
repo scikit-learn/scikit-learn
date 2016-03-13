@@ -21,6 +21,7 @@ import scipy.sparse as sp
 
 from .base import get_data_home
 from .base import Bunch
+from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -49,6 +50,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     ==============     =====================
 
     Read more in the :ref:`User Guide <datasets>`.
+
+    .. versionadded:: 0.17
 
     Parameters
     ----------
@@ -96,8 +99,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     dataset.DESCR : string
         Description of the RCV1 dataset.
 
-    Reference
-    ---------
+    References
+    ----------
     Lewis, D. D., Yang, Y., Rose, T. G., & Li, F. (2004). RCV1: A new
     benchmark collection for text categorization research. The Journal of
     Machine Learning Research, 5, 361-397.
@@ -113,10 +116,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing:
         makedirs(rcv1_dir, exist_ok=True)
 
-    samples_path = join(rcv1_dir, "samples.pkl")
-    sample_id_path = join(rcv1_dir, "sample_id.pkl")
-    sample_topics_path = join(rcv1_dir, "sample_topics.pkl")
-    topics_path = join(rcv1_dir, "topics_names.pkl")
+    samples_path = _pkl_filepath(rcv1_dir, "samples.pkl")
+    sample_id_path = _pkl_filepath(rcv1_dir, "sample_id.pkl")
+    sample_topics_path = _pkl_filepath(rcv1_dir, "sample_topics.pkl")
+    topics_path = _pkl_filepath(rcv1_dir, "topics_names.pkl")
 
     # load data (X) and sample_id
     if download_if_missing and (not exists(samples_path) or

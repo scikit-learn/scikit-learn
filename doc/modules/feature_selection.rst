@@ -67,8 +67,8 @@ as objects that implement the ``transform`` method:
    :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
  * :class:`GenericUnivariateSelect` allows to perform univariate feature
-    selection with a configurable strategy. This allows to select the best
-    univariate selection strategy with hyper-parameter search estimator.
+   selection with a configurable strategy. This allows to select the best
+   univariate selection strategy with hyper-parameter search estimator.
 
 For instance, we can perform a :math:`\chi^2` test to the samples
 to retrieve only the two best features as follows:
@@ -84,17 +84,24 @@ to retrieve only the two best features as follows:
   >>> X_new.shape
   (150, 2)
 
-These objects take as input a scoring function that returns
-univariate p-values:
+These objects take as input a scoring function that returns univariate scores
+and p-values (or only scores for :class:`SelectKBest` and
+:class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`
+ * For regression: :func:`f_regression`, :func:`mutual_info_regression`
 
- * For classification: :func:`chi2` or :func:`f_classif`
+ * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
+
+The methods based on F-test estimate the degree of linear dependency between
+two random variables. On the other hand, mutual information methods can capture
+any kind of statistical dependency, but being nonparametric, they require more
+samples for accurate estimation.
 
 .. topic:: Feature selection with sparse data
 
    If you use sparse data (i.e. data represented as sparse matrices),
-   only :func:`chi2` will deal with the data without making it dense.
+   :func:`chi2`, :func:`mutual_info_regression`, :func:`mutual_info_classif`
+   will deal with the data without making it dense.
 
 .. warning::
 
@@ -103,7 +110,9 @@ univariate p-values:
 
 .. topic:: Examples:
 
-    :ref:`example_feature_selection_plot_feature_selection.py`
+    * :ref:`example_feature_selection_plot_feature_selection.py`
+
+    * :ref:`example_feature_selection_plot_f_test_vs_mi.py`
 
 .. _rfe:
 
@@ -131,33 +140,54 @@ number of features.
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
+.. _select_from_model:
+
+Feature selection using SelectFromModel
+=======================================
+
+:class:`SelectFromModel` is a meta-transformer that can be used along with any
+estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
+The features are considered unimportant and removed, if the corresponding
+``coef_`` or ``feature_importances_`` values are below the provided
+``threshold`` parameter. Apart from specifying the threshold numerically,
+there are build-in heuristics for finding a threshold using a string argument.
+Available heuristics are "mean", "median" and float multiples of these like
+"0.1*mean".
+
+For examples on how it is to be used refer to the sections below.
+
+.. topic:: Examples
+
+    * :ref:`example_feature_selection_plot_select_from_model_boston.py`: Selecting the two
+      most important features from the Boston dataset without knowing the
+      threshold beforehand.
 
 .. _l1_feature_selection:
 
 L1-based feature selection
-==========================
+--------------------------
 
 .. currentmodule:: sklearn
-
-Selecting non-zero coefficients
----------------------------------
 
 :ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
-they expose a ``transform`` method to select the non-zero coefficient. In
-particular, sparse estimators useful for this purpose are the
-:class:`linear_model.Lasso` for regression, and
+they can be used along with :class:`feature_selection.SelectFromModel`
+to select the non-zero coefficients. In particular, sparse estimators useful for
+this purpose are the :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
 
   >>> from sklearn.svm import LinearSVC
   >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectFromModel
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> X_new = LinearSVC(C=0.01, penalty="l1", dual=False).fit_transform(X, y)
+  >>> lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X, y)
+  >>> model = SelectFromModel(lsvc, prefit=True)
+  >>> X_new = model.transform(X)
   >>> X_new.shape
   (150, 3)
 
@@ -241,23 +271,27 @@ of features non zero.
      http://hal.inria.fr/hal-00354771/
 
 Tree-based feature selection
-============================
+----------------------------
 
 Tree-based estimators (see the :mod:`sklearn.tree` module and forest
 of trees in the :mod:`sklearn.ensemble` module) can be used to compute
 feature importances, which in turn can be used to discard irrelevant
-features::
+features (when coupled with the :class:`sklearn.feature_selection.SelectFromModel`
+meta-transformer)::
 
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectFromModel
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
   >>> clf = ExtraTreesClassifier()
-  >>> X_new = clf.fit(X, y).transform(X)
+  >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  >>> model = SelectFromModel(clf, prefit=True)
+  >>> X_new = model.transform(X)
   >>> X_new.shape               # doctest: +SKIP
   (150, 2)
 
@@ -278,12 +312,13 @@ the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`sklearn.pipeline.Pipeline`::
 
   clf = Pipeline([
-    ('feature_selection', LinearSVC(penalty="l1")),
+    ('feature_selection', SelectFromModel(LinearSVC(penalty="l1"))),
     ('classification', RandomForestClassifier())
   ])
   clf.fit(X, y)
 
 In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
+coupled with :class:`sklearn.feature_selection.SelectFromModel`
 to evaluate feature importances and select the most relevant features.
 Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the
 transformed output, i.e. using only relevant features. You can perform

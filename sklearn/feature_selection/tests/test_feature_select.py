@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from scipy import stats, sparse
 
+from numpy.testing import run_module_suite
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -24,10 +25,10 @@ from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
-from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
-                                       SelectPercentile, SelectKBest,
-                                       SelectFpr, SelectFdr, SelectFwe,
-                                       GenericUnivariateSelect)
+from sklearn.feature_selection import (
+    chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
+    mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
+    SelectFdr, SelectFwe, GenericUnivariateSelect)
 
 
 ##############################################################################
@@ -491,7 +492,7 @@ def test_tied_scores():
 
     for n_features in [1, 2, 3]:
         sel = SelectKBest(chi2, k=n_features).fit(X_train, y_train)
-        X_test = sel.transform([0, 1, 2])
+        X_test = sel.transform([[0, 1, 2]])
         assert_array_equal(X_test[0], np.arange(3)[-n_features:])
 
 
@@ -556,3 +557,65 @@ def test_no_feature_selected():
         X_selected = assert_warns_message(
             UserWarning, 'No features were selected', selector.transform, X)
         assert_equal(X_selected.shape, (40, 0))
+
+
+def test_mutual_info_classif():
+    X, y = make_classification(n_samples=100, n_features=5,
+                               n_informative=1, n_redundant=1,
+                               n_repeated=0, n_classes=2,
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
+    # Test in KBest mode.
+    univariate_filter = SelectKBest(mutual_info_classif, k=2)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info_classif, mode='k_best', param=2).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(5)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+    # Test in Percentile mode.
+    univariate_filter = SelectPercentile(mutual_info_classif, percentile=40)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info_classif, mode='percentile', param=40).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(5)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+
+def test_mutual_info_regression():
+    X, y = make_regression(n_samples=100, n_features=10, n_informative=2,
+                           shuffle=False, random_state=0, noise=10)
+
+    # Test in KBest mode.
+    univariate_filter = SelectKBest(mutual_info_regression, k=2)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info_regression, mode='k_best', param=2).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(10)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+    # Test in Percentile mode.
+    univariate_filter = SelectPercentile(mutual_info_regression, percentile=20)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(mutual_info_regression, mode='percentile',
+                                   param=20).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(10)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+
+if __name__ == '__main__':
+    run_module_suite()

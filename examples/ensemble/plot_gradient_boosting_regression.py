@@ -33,7 +33,7 @@ X_test, y_test = X[offset:], y[offset:]
 
 ###############################################################################
 # Fit regression model
-params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 1,
+params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
           'learning_rate': 0.01, 'loss': 'ls'}
 clf = ensemble.GradientBoostingRegressor(**params)
 
@@ -47,7 +47,7 @@ print("MSE: %.4f" % mse)
 # compute test set deviance
 test_score = np.zeros((params['n_estimators'],), dtype=np.float64)
 
-for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
+for i, y_pred in enumerate(clf.staged_predict(X_test)):
     test_score[i] = clf.loss_(y_test, y_pred)
 
 plt.figure(figsize=(12, 6))

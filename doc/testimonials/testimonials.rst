@@ -19,6 +19,7 @@ Who is using scikit-learn?
     <div class="logo">
 
 .. image:: images/spotify.png
+    :width: 120pt
     :target: http://www.spotify.com
 
 .. raw:: html
@@ -49,7 +50,8 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
   <div class="logo">
 
 .. image:: images/inria.png
-   :target: http://www.inria.fr
+    :width: 120pt
+    :target: http://www.inria.fr
 
 .. raw:: html
 
@@ -88,7 +90,8 @@ Gaël Varoquaux, research at Parietal
   <div class="logo">
 
 .. image:: images/evernote.png
-   :target: https://evernote.com
+    :width: 120pt
+    :target: https://evernote.com
 
 .. raw:: html
 
@@ -121,7 +124,8 @@ Mark Ayzenshtat, VP, Augmented Intelligence
   <div class="logo">
 
 .. image:: images/telecomparistech.jpg
-   :target: https://www.telecom-paristech.fr
+    :width: 120pt
+    :target: https://www.telecom-paristech.fr
 
 .. raw:: html
 
@@ -153,7 +157,8 @@ Alexandre Gramfort, Assistant Professor
   <div class="logo">
 
 .. image:: images/aweber.png
-   :target: http://aweber.com/
+    :width: 120pt
+    :target: http://aweber.com/
 
 .. raw:: html
 
@@ -191,7 +196,8 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
   <div class="logo">
 
 .. image:: images/yhat.png
-   :target: http://yhathq.com/
+    :width: 120pt
+    :target: http://yhathq.com/
 
 .. raw:: html
 
@@ -223,7 +229,8 @@ Greg Lamp, Co-founder Yhat
   <div class="logo">
 
 .. image:: images/rangespan.png
-   :target: https://www.rangespan.com
+    :width: 120pt
+    :target: https://www.rangespan.com
 
 .. raw:: html
 
@@ -255,7 +262,8 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
   <div class="logo">
 
 .. image:: images/birchbox.jpg
-   :target: https://www.birchbox.com
+    :width: 120pt
+    :target: https://www.birchbox.com
 
 .. raw:: html
 
@@ -289,7 +297,8 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
   <div class="logo">
 
 .. image:: images/bestofmedia-logo.png
-   :target: http://www.bestofmedia.com
+    :width: 120pt
+    :target: http://www.bestofmedia.com
 
 .. raw:: html
 
@@ -321,7 +330,8 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
   <div class="logo">
 
 .. image:: images/change-logo.png
-   :target: http://www.change.org
+    :width: 120pt
+    :target: http://www.change.org
 
 .. raw:: html
 
@@ -351,7 +361,8 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
   <div class="logo">
 
 .. image:: images/phimeca.png
-   :target: http://www.phimeca.com/?lang=en
+    :width: 120pt
+    :target: http://www.phimeca.com/?lang=en
 
 .. raw:: html
 
@@ -385,7 +396,8 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
   <div class="logo">
 
 .. image:: images/howaboutwe.png
-   :target: http://www.howaboutwe.com/
+    :width: 120pt
+    :target: http://www.howaboutwe.com/
 
 .. raw:: html
 
@@ -419,7 +431,8 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
   <div class="logo">
 
 .. image:: images/peerindex.png
-   :target: http://www.peerindex.com/
+    :width: 120pt
+    :target: http://www.peerindex.com/
 
 .. raw:: html
 
@@ -454,6 +467,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
     <div class="logo">
 
 .. image:: images/datarobot.png
+    :width: 120pt
     :target: http://www.datarobot.com
 
 .. raw:: html
@@ -481,6 +495,7 @@ Jeremy Achin, CEO & Co-founder DataRobot Inc.
     <div class="logo">
 
 .. image:: images/okcupid.png
+    :width: 120pt
     :target: https://www.okcupid.com
 
 .. raw:: html
@@ -512,6 +527,7 @@ David Koh - Senior Data Scientist at OkCupid
     <div class="logo">
 
 .. image:: images/lovely.png
+    :width: 120pt
     :target: https://www.livelovely.com
 
 .. raw:: html
@@ -546,6 +562,7 @@ Simon Frid - Data Scientist, Lead at Lovely
     <div class="logo">
 
 .. image:: images/datapublica.png
+    :width: 120pt
     :target: http://www.data-publica.com/
 
 .. raw:: html
@@ -578,7 +595,8 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
    <div class="logo">
 
 .. image:: images/machinalis.png
-   :target: http://www.machinalis.com
+    :width: 120pt
+    :target: http://www.machinalis.com
 
 .. raw:: html
 
@@ -611,7 +629,8 @@ Rafael Carrascosa, Lead developer
    <div class="logo">
 
 .. image:: images/solido_logo.png
-   :target: http://www.solidodesign.com
+    :width: 120pt
+    :target: http://www.solidodesign.com
 
 .. raw:: html
 
@@ -648,7 +667,8 @@ Trent McConaghy, founder, Solido Design Automation Inc.
    <div class="logo">
 
 .. image:: images/infonea.jpg
-   :target: http://www.infonea.com/en
+    :width: 120pt
+    :target: http://www.infonea.com/en
 
 .. raw:: html
 
@@ -673,4 +693,38 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
   </span>
 
 
+`Dataiku <http://www.dataiku.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/dataiku_logo.png
+    :width: 120pt
+    :target: http://www.dataiku.com
+
+.. raw:: html
+
+   </div>
+
+Our software, Data Science Studio (DSS), enables users to create data services 
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
+Machine Learning. Our Machine Learning module integrates 
+many scikit-learn algorithms. The scikit-learn library is a perfect integration 
+with DSS because it offers algorithms for virtually all business cases. Our goal 
+is to offer a transparent and flexible tool that makes it easier to optimize 
+time consuming aspects of building a data service, preparing data, and training 
+machine learning algorithms on all types of data.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Florian Douetteau, CEO, Dataiku
+
+.. raw:: html
+
+  </span>
 

@@ -8,7 +8,7 @@ from numpy.testing import (assert_array_almost_equal, assert_array_equal,
 from sklearn import datasets, svm, linear_model, base
 from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import assert_warns, assert_raise_message
 
@@ -59,9 +59,12 @@ def check_svm_model_equal(dense_svm, sparse_svm, X_train, y_train, X_test):
                               sparse_svm.decision_function(X_test))
     assert_array_almost_equal(dense_svm.decision_function(X_test_dense),
                               sparse_svm.decision_function(X_test_dense))
-    assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
-                              sparse_svm.predict_proba(X_test), 4)
-    msg = "cannot use sparse input in 'SVC' trained on dense data"
+    if isinstance(dense_svm, svm.OneClassSVM):
+        msg = "cannot use sparse input in 'OneClassSVM' trained on dense data"
+    else:
+        assert_array_almost_equal(dense_svm.predict_proba(X_test_dense),
+                                  sparse_svm.predict_proba(X_test), 4)
+        msg = "cannot use sparse input in 'SVC' trained on dense data"
     if sparse.isspmatrix(X_test):
         assert_raise_message(ValueError, msg, dense_svm.predict, X_test)
 
@@ -78,8 +81,10 @@ def test_svc():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
-            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0)
+            clf = svm.SVC(kernel=kernel, probability=True, random_state=0,
+                          decision_function_shape='ovo')
+            sp_clf = svm.SVC(kernel=kernel, probability=True, random_state=0,
+                             decision_function_shape='ovo')
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 
@@ -145,7 +150,8 @@ def test_sparse_decision_function():
     #returns the same as the one in libsvm
 
     # multi class:
-    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
+    svc = svm.SVC(kernel='linear', C=0.1, decision_function_shape='ovo')
+    clf = svc.fit(iris.data, iris.target)
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
 
@@ -243,11 +249,11 @@ def test_sample_weights():
     # Test weights on individual samples
     clf = svm.SVC()
     clf.fit(X_sp, Y)
-    assert_array_equal(clf.predict(X[2]), [1.])
+    assert_array_equal(clf.predict([X[2]]), [1.])
 
     sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X_sp, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict(X[2]), [2.])
+    assert_array_equal(clf.predict([X[2]]), [2.])
 
 
 def test_sparse_liblinear_intercept_handling():
@@ -255,9 +261,26 @@ def test_sparse_liblinear_intercept_handling():
     test_svm.test_dense_liblinear_intercept_handling(svm.LinearSVC)
 
 
+def test_sparse_oneclasssvm():
+    """Check that sparse OneClassSVM gives the same result as dense OneClassSVM"""
+    # many class dataset:
+    X_blobs, _ = make_blobs(n_samples=100, centers=10, random_state=0)
+    X_blobs = sparse.csr_matrix(X_blobs)
+
+    datasets = [[X_sp, None, T], [X2_sp, None, T2],
+                [X_blobs[:80], None, X_blobs[80:]],
+                [iris.data, None, iris.data]]
+    kernels = ["linear", "poly", "rbf", "sigmoid"]
+    for dataset in datasets:
+        for kernel in kernels:
+            clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+            sp_clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+            check_svm_model_equal(clf, sp_clf, *dataset)
+
+
 def test_sparse_realdata():
     # Test on a subset from the 20newsgroups dataset.
-    # This catchs some bugs if input is not correctly converted into
+    # This catches some bugs if input is not correctly converted into
     # sparse format or weights are not correctly initialized.
 
     data = np.array([0.03771744, 0.1003567, 0.01174647, 0.027069])

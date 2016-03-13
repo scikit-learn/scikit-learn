@@ -12,6 +12,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -89,43 +90,6 @@ def test_label_binarizer_unseen_labels():
     assert_array_equal(expected, got)
 
 
-@ignore_warnings
-def test_label_binarizer_column_y():
-    # first for binary classification vs multi-label with 1 possible class
-    # lists are multi-label, array is multi-class :-/
-    inp_list = [[1], [2], [1]]
-    inp_array = np.array(inp_list)
-
-    multilabel_indicator = np.array([[1, 0], [0, 1], [1, 0]])
-    binaryclass_array = np.array([[0], [1], [0]])
-
-    lb_1 = LabelBinarizer()
-    out_1 = lb_1.fit_transform(inp_list)
-
-    lb_2 = LabelBinarizer()
-    out_2 = lb_2.fit_transform(inp_array)
-
-    assert_array_equal(out_1, multilabel_indicator)
-    assert_array_equal(out_2, binaryclass_array)
-
-    # second for multiclass classification vs multi-label with multiple
-    # classes
-    inp_list = [[1], [2], [1], [3]]
-    inp_array = np.array(inp_list)
-
-    # the indicator matrix output is the same in this case
-    indicator = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]])
-
-    lb_1 = LabelBinarizer()
-    out_1 = lb_1.fit_transform(inp_list)
-
-    lb_2 = LabelBinarizer()
-    out_2 = lb_2.fit_transform(inp_array)
-
-    assert_array_equal(out_1, out_2)
-    assert_array_equal(out_2, indicator)
-
-
 def test_label_binarizer_set_label_encoding():
     lb = LabelBinarizer(neg_label=-2, pos_label=0)
 
@@ -174,6 +138,10 @@ def test_label_binarizer_errors():
                   y=csr_matrix([[1, 2], [2, 1]]), output_type="foo",
                   classes=[1, 2], threshold=0)
 
+    # Sequence of seq type should raise ValueError
+    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
+    assert_raises(ValueError, LabelBinarizer().fit_transform, y_seq_of_seqs)
+
     # Fail on the number of classes
     assert_raises(ValueError, _inverse_binarize_thresholding,
                   y=csr_matrix([[1, 2], [2, 1]]), output_type="foo",
@@ -200,6 +168,10 @@ def test_label_encoder():
     assert_array_equal(le.inverse_transform([1, 2, 3, 3, 4, 0, 0]),
                        [0, 1, 4, 4, 5, -1, -1])
     assert_raises(ValueError, le.transform, [0, 6])
+
+    le.fit(["apple", "orange"])
+    msg = "bad input shape"
+    assert_raise_message(ValueError, msg, le.transform, "apple")
 
 
 def test_label_encoder_fit_transform():

@@ -1,3 +1,4 @@
+
 # Author: Arnaud Joly, Joel Nothman, Hamzeh Alsalhi
 #
 # License: BSD 3 clause
@@ -9,7 +10,6 @@ Multi-class / multi-label utility function
 from __future__ import division
 from collections import Sequence
 from itertools import chain
-import warnings
 
 from scipy.sparse import issparse
 from scipy.sparse.base import spmatrix
@@ -19,10 +19,9 @@ from scipy.sparse import lil_matrix
 import numpy as np
 
 from ..externals.six import string_types
-
 from .validation import check_array
-
 from ..utils.fixes import bincount
+from ..utils.fixes import array_equal
 
 
 def _unique_multiclass(y):
@@ -32,12 +31,6 @@ def _unique_multiclass(y):
         return set(y)
 
 
-def _unique_sequence_of_sequence(y):
-    if hasattr(y, '__array__'):
-        y = np.asarray(y)
-    return set(chain.from_iterable(y))
-
-
 def _unique_indicator(y):
     return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
 
@@ -45,7 +38,6 @@ def _unique_indicator(y):
 _FN_UNIQUE_LABELS = {
     'binary': _unique_multiclass,
     'multiclass': _unique_multiclass,
-    'multilabel-sequences': _unique_sequence_of_sequence,
     'multilabel-indicator': _unique_indicator,
 }
 
@@ -96,14 +88,15 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1] for y in ys)) > 1):
+            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
+                    for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
     # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
-        raise ValueError("Unknown label type: %r" % ys)
+        raise ValueError("Unknown label type: %s" % repr(ys))
 
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
@@ -118,95 +111,13 @@ def _is_integral_float(y):
     return y.dtype.kind == 'f' and np.all(y.astype(int) == y)
 
 
-def is_label_indicator_matrix(y):
-    """ Check if ``y`` is in the label indicator matrix format (multilabel).
-
-    Parameters
-    ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
-
-    Returns
-    -------
-    out : bool,
-        Return ``True``, if ``y`` is in a label indicator matrix format,
-        else ``False``.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils.multiclass import is_label_indicator_matrix
-    >>> is_label_indicator_matrix([0, 1, 0, 1])
-    False
-    >>> is_label_indicator_matrix([[1], [0, 2], []])
-    False
-    >>> is_label_indicator_matrix(np.array([[1, 0], [0, 0]]))
-    True
-    >>> is_label_indicator_matrix(np.array([[1], [0], [0]]))
-    False
-    >>> is_label_indicator_matrix(np.array([[1, 0, 0]]))
-    True
-
-    """
-    if hasattr(y, '__array__'):
-        y = np.asarray(y)
-    if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
-        return False
-
-    if issparse(y):
-        if isinstance(y, (dok_matrix, lil_matrix)):
-            y = y.tocsr()
-        return (len(y.data) == 0 or np.ptp(y.data) == 0 and
-                (y.dtype.kind in 'biu' or  # bool, int, uint
-                 _is_integral_float(np.unique(y.data))))
-    else:
-        labels = np.unique(y)
-
-        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
-                                    _is_integral_float(labels))
-
-
-def is_sequence_of_sequences(y):
-    """ Check if ``y`` is in the sequence of sequences format (multilabel).
-
-    This format is DEPRECATED.
-
-    Parameters
-    ----------
-    y : sequence or array.
-
-    Returns
-    -------
-    out : bool,
-        Return ``True``, if ``y`` is a sequence of sequences else ``False``.
-    """
-    # the explicit check for ndarray is for forward compatibility; future
-    # versions of Numpy might want to register ndarray as a Sequence
-    try:
-        if hasattr(y, '__array__'):
-            y = np.asarray(y)
-        out = (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-               and not isinstance(y[0], string_types))
-    except (IndexError, TypeError):
-        return False
-    if out:
-        warnings.warn('Direct support for sequence of sequences multilabel '
-                      'representation will be unavailable from version 0.17. '
-                      'Use sklearn.preprocessing.MultiLabelBinarizer to '
-                      'convert to a label indicator representation.',
-                      DeprecationWarning)
-    return out
-
-
 def is_multilabel(y):
     """ Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
+    y : numpy array of shape [n_samples]
+        Target values.
 
     Returns
     -------
@@ -219,15 +130,48 @@ def is_multilabel(y):
     >>> from sklearn.utils.multiclass import is_multilabel
     >>> is_multilabel([0, 1, 0, 1])
     False
+    >>> is_multilabel([[1], [0, 2], []])
+    False
     >>> is_multilabel(np.array([[1, 0], [0, 0]]))
     True
     >>> is_multilabel(np.array([[1], [0], [0]]))
     False
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
-
     """
-    return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
+    if hasattr(y, '__array__'):
+        y = np.asarray(y)
+    if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
+        return False
+
+    if issparse(y):
+        if isinstance(y, (dok_matrix, lil_matrix)):
+            y = y.tocsr()
+        return (len(y.data) == 0 or np.unique(y.data).size == 1 and
+                (y.dtype.kind in 'biu' or  # bool, int, uint
+                 _is_integral_float(np.unique(y.data))))
+    else:
+        labels = np.unique(y)
+
+        return len(labels) < 3 and (y.dtype.kind in 'biu' or  # bool, int, uint
+                                    _is_integral_float(labels))
+
+def check_classification_targets(y):
+    """Ensure that target y is of a non-regression type.
+
+    Only the following target types (as defined in type_of_target) are allowed:
+        'binary', 'multiclass', 'multiclass-multioutput', 
+        'multilabel-indicator', 'multilabel-sequences'
+
+    Parameters
+    ----------
+    y : array-like
+    """
+    y_type = type_of_target(y)
+    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput', 
+            'multilabel-indicator', 'multilabel-sequences']:
+        raise ValueError("Unknown label type: %r" % y_type)
+
 
 
 def type_of_target(y):
@@ -252,13 +196,11 @@ def type_of_target(y):
         * 'multiclass-multioutput': `y` is a 2d array that contains more
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
-        * 'multilabel-sequences': `y` is a sequence of sequences, a 1d
-          array-like of objects that are sequences of labels.
         * 'multilabel-indicator': `y` is a label indicator matrix, an array
           of two dimensions with at least two columns, and at most 2 unique
           values.
         * 'unknown': `y` is array-like but none of the above, such as a 3d
-          array, or an array of non-sequence objects.
+          array, sequence of sequences, or an array of non-sequence objects.
 
     Examples
     --------
@@ -269,11 +211,17 @@ def type_of_target(y):
     'binary'
     >>> type_of_target(['a', 'b', 'a'])
     'binary'
+    >>> type_of_target([1.0, 2.0])
+    'binary'
     >>> type_of_target([1, 0, 2])
+    'multiclass'
+    >>> type_of_target([1.0, 0.0, 3.0])
     'multiclass'
     >>> type_of_target(['a', 'b', 'c'])
     'multiclass'
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
+    'multiclass-multioutput'
+    >>> type_of_target([[1, 2]])
     'multiclass-multioutput'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
@@ -282,39 +230,53 @@ def type_of_target(y):
     """
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
              and not isinstance(y, string_types))
+
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    if is_sequence_of_sequences(y):
-        return 'multilabel-sequences'
-    elif is_label_indicator_matrix(y):
+    if is_multilabel(y):
         return 'multilabel-indicator'
 
     try:
         y = np.asarray(y)
     except ValueError:
-        # known to fail in numpy 1.3 for array of arrays
+        # Known to fail in numpy 1.3 for array of arrays
         return 'unknown'
+
+    # The old sequence of sequences format
+    try:
+        if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
+                and not isinstance(y[0], string_types)):
+            raise ValueError('You appear to be using a legacy multi-label data'
+                             ' representation. Sequence of sequences are no'
+                             ' longer supported; use a binary array or sparse'
+                             ' matrix instead.')
+    except IndexError:
+        pass
+
+    # Invalid inputs
     if y.ndim > 2 or (y.dtype == object and len(y) and
                       not isinstance(y.flat[0], string_types)):
-        return 'unknown'
-    if y.ndim == 2 and y.shape[1] == 0:
-        return 'unknown'
-    elif y.ndim == 2 and y.shape[1] > 1:
-        suffix = '-multioutput'
-    else:
-        # column vector or 1d
-        suffix = ''
+        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
-    # check float and contains non-integer float values:
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
-        return 'continuous' + suffix
-    if len(np.unique(y)) <= 2:
-        assert not suffix, "2d binary array-like should be multilabel"
-        return 'binary'
+    if y.ndim == 2 and y.shape[1] == 0:
+        return 'unknown'  # [[]]
+
+    if y.ndim == 2 and y.shape[1] > 1:
+        suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
-        return 'multiclass' + suffix
+        suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
+
+    # check float and contains non-integer float values
+    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+        # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+        return 'continuous' + suffix
+
+    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
+        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+    else:
+        return 'binary'  # [1, 2] or [["a"], ["b"]]
 
 
 def _check_partial_fit_first_call(clf, classes=None):
@@ -337,7 +299,7 @@ def _check_partial_fit_first_call(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not np.all(clf.classes_ == unique_labels(classes)):
+            if not array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))
@@ -368,7 +330,7 @@ def class_distribution(y, sample_weight=None):
     classes : list of size n_outputs of arrays of size (n_classes,)
         List of classes for each column.
 
-    n_classes : list of integrs of size n_outputs
+    n_classes : list of integers of size n_outputs
         Number of classes in each column
 
     class_prior : list of size n_outputs of arrays of size (n_classes,)
@@ -400,12 +362,12 @@ def class_distribution(y, sample_weight=None):
                                        return_inverse=True)
             class_prior_k = bincount(y_k, weights=nz_samp_weight)
 
-            # An explicit zero was found, combine its wieght with the wieght
+            # An explicit zero was found, combine its weight with the weight
             # of the implicit zeros
             if 0 in classes_k:
                 class_prior_k[classes_k == 0] += zeros_samp_weight_sum
 
-            # If an there is an implict zero and it is not in classes and
+            # If an there is an implicit zero and it is not in classes and
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)

@@ -1,0 +1,23 @@
+dependencies:
+  cache_directories:
+    - "~/scikit_learn_data"
+    - "~/scikit-learn.github.io"
+    - "~/download"
+  # Check whether the doc build is required, install build dependencies and
+  # run sphinx to build the doc.
+  override:
+    - ./build_tools/circle/build_doc.sh
+test:
+  # Grep error on the documentation
+  override:
+    - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
+deployment:
+ push:
+   branch: master
+   commands:
+     - bash build_tools/circle/push_doc.sh
+general:
+  # Open the doc to the API
+  artifacts:
+    - "doc/_build/html"
+    - "~/log.txt"

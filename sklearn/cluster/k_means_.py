@@ -31,6 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
+from ..externals.six import string_types
 
 from . import _k_means
 
@@ -95,7 +96,8 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
-        centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
+        centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
+        squared=True)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -138,6 +140,18 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
 ###############################################################################
 # K-means batch estimation by EM (expectation maximization)
+
+def _validate_center_shape(X, n_centers, centers):
+    """Check if centers is compatible with X and n_centers"""
+    if len(centers) != n_centers:
+        raise ValueError('The shape of the initial centers (%s) '
+                         'does not match the number of clusters %i'
+                         % (centers.shape, n_centers))
+    if centers.shape[1] != X.shape[1]:
+        raise ValueError(
+            "The number of features of the initial centers %s "
+            "does not match the number of features of the data %s."
+            % (centers.shape[1], X.shape[1]))
 
 
 def _tolerance(X, tol):
@@ -254,6 +268,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                          " n_init=%d must be bigger than zero." % n_init)
     random_state = check_random_state(random_state)
 
+    if max_iter <= 0:
+        raise ValueError('Number of iterations should be a positive number,'
+                         ' got %d instead' % max_iter)
+
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
@@ -280,7 +298,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         X -= X_mean
 
     if hasattr(init, '__array__'):
-        init = np.asarray(init).copy()
+        init = check_array(init, dtype=np.float64, copy=True)
+        _validate_center_shape(X, n_clusters, init)
+
         init -= X_mean
         if n_init != 1:
             warnings.warn(
@@ -441,10 +461,21 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             best_centers = centers.copy()
             best_inertia = inertia
 
-        if squared_norm(centers_old - centers) <= tol:
+        shift = squared_norm(centers_old - centers)
+        if shift <= tol:
             if verbose:
                 print("Converged at iteration %d" % i)
+
             break
+
+    if shift > 0:
+        # rerun E-step in case of non-convergence so that predicted labels
+        # match cluster centers
+        best_labels, best_inertia = \
+            _labels_inertia(X, x_squared_norms, best_centers,
+                            precompute_distances=precompute_distances,
+                            distances=distances)
+
     return best_labels, best_inertia, best_centers, i + 1
 
 
@@ -585,6 +616,9 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     random_state = check_random_state(random_state)
     n_samples = X.shape[0]
 
+    if x_squared_norms is None:
+        x_squared_norms = row_norms(X, squared=True)
+
     if init_size is not None and init_size < n_samples:
         if init_size < k:
             warnings.warn(
@@ -601,10 +635,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         raise ValueError(
             "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
-    if init == 'k-means++':
+    if isinstance(init, string_types) and init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
                           x_squared_norms=x_squared_norms)
-    elif init == 'random':
+    elif isinstance(init, string_types) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
     elif hasattr(init, '__array__'):
@@ -619,11 +653,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     if sp.issparse(centers):
         centers = centers.toarray()
 
-    if len(centers) != k:
-        raise ValueError('The shape of the initial centers (%s) '
-                         'does not match the number of clusters %i'
-                         % (centers.shape, k))
-
+    _validate_center_shape(X, k, centers)
     return centers
 
 
@@ -739,10 +769,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True, n_jobs=1):
-
-        if hasattr(init, '__array__'):
-            n_clusters = init.shape[0]
-            init = np.asarray(init, dtype=np.float64)
 
         self.n_clusters = n_clusters
         self.init = init
@@ -1021,7 +1047,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
                             n_samples, centers_squared_diff, batch_inertia,
                             context, verbose=0):
-    """Helper function to encapsulte the early stopping logic"""
+    """Helper function to encapsulate the early stopping logic"""
     # Normalize inertia to be able to compare values when
     # batch_size changes
     batch_inertia /= model.batch_size

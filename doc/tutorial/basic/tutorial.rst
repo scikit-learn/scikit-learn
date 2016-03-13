@@ -5,7 +5,7 @@ An introduction to machine learning with scikit-learn
 
 .. topic:: Section contents
 
-    In this section, we introduce the `machine learning 
+    In this section, we introduce the `machine learning
     <http://en.wikipedia.org/wiki/Machine_learning>`_
     vocabulary that we use throughout scikit-learn and give a
     simple learning example.
@@ -14,30 +14,30 @@ An introduction to machine learning with scikit-learn
 Machine learning: the problem setting
 -------------------------------------
 
-In general, a learning problem considers a set of n 
+In general, a learning problem considers a set of n
 `samples <http://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
 data and then tries to predict properties of unknown data. If each sample is
 more than a single number and, for instance, a multi-dimensional entry
-(aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_ 
-data), is it said to have several attributes or **features**.
+(aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_
+data), it is said to have several attributes or **features**.
 
 We can separate learning problems in a few large categories:
 
- * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_, 
-   in which the data comes with additional attributes that we want to predict 
+ * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_,
+   in which the data comes with additional attributes that we want to predict
    (:ref:`Click here <supervised-learning>`
-   to go to the scikit-learn supervised learning page).This problem 
+   to go to the scikit-learn supervised learning page).This problem
    can be either:
 
-    * `classification 
+    * `classification
       <http://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
       samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
       of unlabeled data. An example of classification problem would
-      be the handwritten digit recognition example, in which the aim is 
+      be the handwritten digit recognition example, in which the aim is
       to assign each input vector to one of a finite number of discrete
-      categories.  Another way to think of classification is as a discrete 
-      (as opposed to continuous) form of supervised learning where one has a 
+      categories.  Another way to think of classification is as a discrete
+      (as opposed to continuous) form of supervised learning where one has a
       limited number of categories and for each of the n samples provided,
       one is to try to label them with the correct category or class.
 
@@ -48,15 +48,15 @@ We can separate learning problems in a few large categories:
       length of a salmon as a function of its age and weight.
 
  * `unsupervised learning <http://en.wikipedia.org/wiki/Unsupervised_learning>`_,
-   in which the training data consists of a set of input vectors x 
-   without any corresponding target values. The goal in such problems 
-   may be to discover groups of similar examples within the data, where 
-   it is called `clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_, 
-   or to determine the distribution of data within the input space, known as 
-   `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or 
-   to project the data from a high-dimensional space down to two or three 
-   dimensions for the purpose of *visualization* 
-   (:ref:`Click here <unsupervised-learning>` 
+   in which the training data consists of a set of input vectors x
+   without any corresponding target values. The goal in such problems
+   may be to discover groups of similar examples within the data, where
+   it is called `clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_,
+   or to determine the distribution of data within the input space, known as
+   `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or
+   to project the data from a high-dimensional space down to two or three
+   dimensions for the purpose of *visualization*
+   (:ref:`Click here <unsupervised-learning>`
    to go to the Scikit-Learn unsupervised learning page).
 
 .. topic:: Training set and testing set
@@ -143,7 +143,7 @@ Learning and predicting
 
 In the case of the digits dataset, the task is to predict, given an image,
 which digit it represents. We are given samples of each of the 10
-possible classes (the digits zero through nine) on which we *fit* an 
+possible classes (the digits zero through nine) on which we *fit* an
 `estimator <http://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
 the classes to which unseen samples belong.
 
@@ -185,7 +185,7 @@ Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the ``digits`` dataset,
 which we have not used to train the classifier::
 
-  >>> clf.predict(digits.data[-1])
+  >>> clf.predict(digits.data[-1:])
   array([8])
 
 The corresponding image is the following:
@@ -223,7 +223,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> import pickle
   >>> s = pickle.dumps(clf)
   >>> clf2 = pickle.loads(s)
-  >>> clf2.predict(X[0])
+  >>> clf2.predict(X[0:1])
   array([0])
   >>> y[0]
   0
@@ -235,10 +235,10 @@ and not to a string::
 
   >>> from sklearn.externals import joblib
   >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
-  
+
 Later you can load back the pickled model (possibly in another Python process)
 with::
-  
+
   >>> clf = joblib.load('filename.pkl') # doctest:+SKIP
 
 .. note::
@@ -284,6 +284,7 @@ In this example, ``X`` is ``float32``, which is cast to ``float64`` by
 
 Regression targets are cast to ``float64``, classification targets are
 maintained::
+
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
     >>> iris = datasets.load_iris()

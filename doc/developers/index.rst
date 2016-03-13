@@ -13,4 +13,5 @@ Developer's Guide
    debugging
    utilities
    performance
+   advanced_installation
    maintainer

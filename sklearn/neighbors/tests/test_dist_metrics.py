@@ -104,6 +104,30 @@ class TestMetrics:
         D12 = dm.pairwise(self.X1_bool)
         assert_array_almost_equal(D12, D_true)
 
+    def test_pickle(self):
+        for metric, argdict in self.metrics.items():
+            keys = argdict.keys()
+            for vals in itertools.product(*argdict.values()):
+                kwargs = dict(zip(keys, vals))
+                yield self.check_pickle, metric, kwargs
+
+        for metric in self.bool_metrics:
+            yield self.check_pickle_bool, metric
+
+    def check_pickle_bool(self, metric):
+        dm = DistanceMetric.get_metric(metric)
+        D1 = dm.pairwise(self.X1_bool)
+        dm2 = pickle.loads(pickle.dumps(dm))
+        D2 = dm2.pairwise(self.X1_bool)
+        assert_array_almost_equal(D1, D2)
+
+    def check_pickle(self, metric, kwargs):
+        dm = DistanceMetric.get_metric(metric, **kwargs)
+        D1 = dm.pairwise(self.X1)
+        dm2 = pickle.loads(pickle.dumps(dm))
+        D2 = dm2.pairwise(self.X1)
+        assert_array_almost_equal(D1, D2)
+
 
 def test_haversine_metric():
     def haversine_slow(x1, x2):

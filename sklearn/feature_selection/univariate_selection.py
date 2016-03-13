@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
-from ..utils.extmath import norm, safe_sparse_dot
+from ..utils.extmath import norm, safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
 
@@ -126,7 +126,7 @@ def f_classif(X, y):
     Parameters
     ----------
     X : {array-like, sparse matrix} shape = [n_samples, n_features]
-        The set of regressors that will tested sequentially.
+        The set of regressors that will be tested sequentially.
 
     y : array of shape(n_samples)
         The data matrix.
@@ -203,7 +203,7 @@ def chi2(X, y):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     """
 
@@ -219,8 +219,8 @@ def chi2(X, y):
 
     observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
 
-    feature_count = check_array(X.sum(axis=0))
-    class_prob = check_array(Y.mean(axis=0))
+    feature_count = X.sum(axis=0).reshape(1, -1)
+    class_prob = Y.mean(axis=0).reshape(1, -1)
     expected = np.dot(class_prob.T, feature_count)
 
     return _chisquare(observed, expected)
@@ -232,19 +232,19 @@ def f_regression(X, y, center=True):
     Quick linear model for testing the effect of a single regressor,
     sequentially for many regressors.
 
-    This is done in 3 steps:
+    This is done in 2 steps:
 
-    1. The regressor of interest and the data are orthogonalized
-       wrt constant regressors.
-    2. The cross correlation between data and regressors is computed.
-    3. It is converted to an F score then to a p-value.
+    1. The cross correlation between each regressor and the target is computed,
+       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+       std(y)).
+    2. It is converted to an F score then to a p-value.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}  shape = (n_samples, n_features)
-        The set of regressors that will tested sequentially.
+        The set of regressors that will be tested sequentially.
 
     y : array of shape(n_samples).
         The data matrix
@@ -262,12 +262,12 @@ def f_regression(X, y, center=True):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     if issparse(X) and center:
         raise ValueError("center=True only allowed for dense data")
-    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float)
+    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)
     if center:
         y = y - np.mean(y)
         X = X.copy('F')  # faster in fortran
@@ -275,8 +275,7 @@ def f_regression(X, y, center=True):
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
-    # XXX could use corr /= row_norms(X.T) here, but the test doesn't pass
-    corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
+    corr /= row_norms(X.T)
     corr /= norm(y)
 
     # convert to p-value
@@ -296,7 +295,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single array with scores.
     """
 
     def __init__(self, score_func):
@@ -319,7 +318,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'])
+        X, y = check_X_y(X, y, ['csr', 'csc'])
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -327,10 +326,16 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
                             % (self.score_func, type(self.score_func)))
 
         self._check_params(X, y)
+        score_func_ret = self.score_func(X, y)
+        if isinstance(score_func_ret, (list, tuple)):
+            self.scores_, self.pvalues_ = score_func_ret
+            self.pvalues_ = np.asarray(self.pvalues_)
+        else:
+            self.scores_ = score_func_ret
+            self.pvalues_ = None
 
-        self.scores_, self.pvalues_ = self.score_func(X, y)
         self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
+
         return self
 
     def _check_params(self, X, y):
@@ -349,7 +354,7 @@ class SelectPercentile(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single array with scores.
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -360,7 +365,7 @@ class SelectPercentile(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned only scores.
 
     Notes
     -----
@@ -369,9 +374,11 @@ class SelectPercentile(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -403,7 +410,7 @@ class SelectPercentile(_BaseFilter):
         mask = scores > treshold
         ties = np.where(scores == treshold)[0]
         if len(ties):
-            max_feats = len(scores) * self.percentile // 100
+            max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
@@ -418,7 +425,7 @@ class SelectKBest(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single array with scores.
 
     k : int or "all", optional, default=10
         Number of top features to select.
@@ -430,7 +437,7 @@ class SelectKBest(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned only scores.
 
     Notes
     -----
@@ -439,9 +446,11 @@ class SelectKBest(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information for a continious target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -503,9 +512,11 @@ class SelectFpr(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
+    mutual_info_classif:
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -555,9 +566,11 @@ class SelectFdr(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information for a contnuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
@@ -605,7 +618,7 @@ class SelectFwe(_BaseFilter):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     SelectPercentile: Select features based on percentile of the highest scores.
@@ -640,7 +653,8 @@ class GenericUnivariateSelect(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues). For modes 'percentile' or 'kbest' it can return
+        a single array scores.
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
         Feature selection mode.
@@ -654,13 +668,15 @@ class GenericUnivariateSelect(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned scores only.
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
+    mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.

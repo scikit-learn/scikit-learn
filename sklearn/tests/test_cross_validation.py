@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
 from scipy import stats
 
 from sklearn.utils.testing import assert_true
@@ -12,32 +13,38 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn import cross_validation as cval
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn import cross_validation as cval
+
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
-
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
 from sklearn.linear_model import Ridge
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
-from sklearn.preprocessing import Imputer, LabelBinarizer
+from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
 
@@ -108,7 +115,9 @@ X_sparse = coo_matrix(X)
 W_sparse = coo_matrix((np.array([1]), (np.array([1]), np.array([0]))),
                       shape=(10, 1))
 P_sparse = coo_matrix(np.eye(5))
-y = np.arange(10) // 2
+
+# avoid StratifiedKFold's Warning about least populated class in y
+y = np.arange(10) % 3
 
 ##############################################################################
 # Tests
@@ -152,7 +161,7 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
-    y = [3, 3, -1, -1, 2]
+    y = [3, 3, -1, -1, 3]
 
     cv = assert_warns_message(Warning, "The least populated class",
                               cval.StratifiedKFold, y, 3)
@@ -162,11 +171,21 @@ def test_kfold_valueerrors():
     # side of the split at each split
     check_cv_coverage(cv, expected_n_iter=3, n_samples=len(y))
 
+    # Check that errors are raised if all n_labels for individual
+    # classes are less than n_folds.
+    y = [3, 3, -1, -1, 2]
+
+    assert_raises(ValueError, cval.StratifiedKFold, y, 3)
+
     # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
     assert_raises(ValueError, cval.KFold, 2, 1)
-    assert_raises(ValueError, cval.StratifiedKFold, y, 0)
-    assert_raises(ValueError, cval.StratifiedKFold, y, 1)
+    error_string = ("k-fold cross validation requires at least one"
+                    " train / test split")
+    assert_raise_message(ValueError, error_string,
+                         cval.StratifiedKFold, y, 0)
+    assert_raise_message(ValueError, error_string,
+                         cval.StratifiedKFold, y, 1)
 
     # When n is not integer:
     assert_raises(ValueError, cval.KFold, 2.5, 2)
@@ -286,12 +305,10 @@ def test_shuffle_kfold():
 
     all_folds = None
     for train, test in kf:
-        sorted_array = np.arange(100)
-        assert_true(np.any(sorted_array != ind[train]))
-        sorted_array = np.arange(101, 200)
-        assert_true(np.any(sorted_array != ind[train]))
-        sorted_array = np.arange(201, 300)
-        assert_true(np.any(sorted_array != ind[train]))
+        assert_true(np.any(np.arange(100) != ind[test]))
+        assert_true(np.any(np.arange(100, 200) != ind[test]))
+        assert_true(np.any(np.arange(200, 300) != ind[test]))
+
         if all_folds is None:
             all_folds = ind[test].copy()
         else:
@@ -356,6 +373,71 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
 
+def test_label_kfold():
+    rng = np.random.RandomState(0)
+
+    # Parameters of the test
+    n_labels = 15
+    n_samples = 1000
+    n_folds = 5
+
+    # Construct the test data
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    labels = rng.randint(0, n_labels, n_samples)
+    folds = cval.LabelKFold(labels, n_folds=n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    labels = np.asarray(labels, dtype=object)
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Construct the test data
+    labels = ['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+              'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
+              'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
+              'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
+              'Robert', 'Marion', 'David', 'Tony', 'Abel', 'Becky',
+              'Madmood', 'Cary', 'Mary', 'Alexandre', 'David', 'Francis',
+              'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia']
+    labels = np.asarray(labels, dtype=object)
+
+    n_labels = len(np.unique(labels))
+    n_samples = len(labels)
+    n_folds = 5
+    tolerance = 0.05 * n_samples  # 5 percent error allowed
+    folds = cval.LabelKFold(labels, n_folds=n_folds).idxs
+    ideal_n_labels_per_fold = n_samples // n_folds
+
+    # Check that folds have approximately the same size
+    assert_equal(len(folds), len(labels))
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+
+    # Check that each label appears only in 1 fold
+    for label in np.unique(labels):
+        assert_equal(len(np.unique(folds[labels == label])), 1)
+
+    # Check that no label is on both sides of the split
+    for train, test in cval.LabelKFold(labels, n_folds=n_folds):
+        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+
+    # Should fail if there are more folds than labels
+    labels = np.array([1, 1, 1, 2, 2])
+    assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
+
+
 def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
@@ -413,7 +495,7 @@ def test_stratified_shuffle_split_iter():
                       / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+            assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -464,6 +546,18 @@ def test_stratified_shuffle_split_even():
         assert_counts_are_ok(test_counts, ex_test_p)
 
 
+def test_stratified_shuffle_split_overlap_train_test_bug():
+    # See https://github.com/scikit-learn/scikit-learn/issues/6121 for
+    # the original bug report
+    labels = [0, 1, 2, 3] * 3 + [4, 5] * 5
+
+    splits = cval.StratifiedShuffleSplit(labels, n_iter=1,
+                                         test_size=0.5, random_state=0)
+    train, test = next(iter(splits))
+
+    assert_array_equal(np.intersect1d(train, test), [])
+
+
 def test_predefinedsplit_with_kfold_split():
     # Check that PredefinedSplit can reproduce a split generated by Kfold.
     folds = -1 * np.ones(10)
@@ -481,6 +575,48 @@ def test_predefinedsplit_with_kfold_split():
         ps_test.append(test_ind)
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
+
+
+def test_label_shuffle_split():
+    ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+          np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+          ]
+
+    for y in ys:
+        n_iter = 6
+        test_size = 1. / 3
+        slo = cval.LabelShuffleSplit(y, n_iter, test_size=test_size,
+                                     random_state=0)
+
+        # Make sure the repr works
+        repr(slo)
+
+        # Test that the length is correct
+        assert_equal(len(slo), n_iter)
+
+        y_unique = np.unique(y)
+
+        for train, test in slo:
+            # First test: no train label is in the test set and vice versa
+            y_train_unique = np.unique(y[train])
+            y_test_unique = np.unique(y[test])
+            assert_false(np.any(np.in1d(y[train], y_test_unique)))
+            assert_false(np.any(np.in1d(y[test], y_train_unique)))
+
+            # Second test: train and test add up to all the data
+            assert_equal(y[train].size + y[test].size, y.size)
+
+            # Third test: train and test are disjoint
+            assert_array_equal(np.intersect1d(train, test), [])
+
+            # Fourth test: # unique train and test labels are correct,
+            #              +- 1 for rounding error
+            assert_true(abs(len(y_test_unique) -
+                            round(test_size * len(y_unique))) <= 1)
+            assert_true(abs(len(y_train_unique) -
+                            round((1.0 - test_size) * len(y_unique))) <= 1)
 
 
 def test_leave_label_out_changing_labels():
@@ -676,7 +812,7 @@ def test_train_test_split():
 
     # conversion of lists to arrays (deprecated?)
     with warnings.catch_warnings(record=True):
-        split = cval.train_test_split(X, X_s, y.tolist(), allow_lists=False)
+        split = cval.train_test_split(X, X_s, y.tolist())
     X_train, X_test, X_s_train, X_s_test, y_train, y_test = split
     assert_array_equal(X_train, X_s_train.toarray())
     assert_array_equal(X_test, X_s_test.toarray())
@@ -725,16 +861,12 @@ def train_test_split_pandas():
         assert_true(isinstance(X_train, InputFeatureType))
         assert_true(isinstance(X_test, InputFeatureType))
 
-
 def train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
     X_train, X_test = cval.train_test_split(X_df)
     assert_true(isinstance(X_train, MockDataFrame))
     assert_true(isinstance(X_test, MockDataFrame))
-    X_train_arr, X_test_arr = cval.train_test_split(X_df, allow_lists=False)
-    assert_true(isinstance(X_train_arr, np.ndarray))
-    assert_true(isinstance(X_test_arr, np.ndarray))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -962,15 +1094,8 @@ def test_check_cv_return_types():
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
     X = np.ones((5, 2))
-    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
-
-    with warnings.catch_warnings(record=True):
-        # deprecated sequence of sequence format
-        cv = cval.check_cv(3, X, y_seq_of_seqs, classifier=True)
-    assert_true(isinstance(cv, cval.KFold))
-
-    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
-    cv = cval.check_cv(3, X, y_indicator_matrix, classifier=True)
+    y_multilabel = [[1, 0, 1], [1, 1, 0], [0, 0, 0], [0, 1, 1], [1, 0, 0]]
+    cv = cval.check_cv(3, X, y_multilabel, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
 
     y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
@@ -1101,3 +1226,18 @@ def test_check_is_partition():
 
     p[0] = 23
     assert_false(cval._check_is_partition(p, 100))
+
+
+def test_cross_val_predict_sparse_prediction():
+    # check that cross_val_predict gives same result for sparse and dense input
+    X, y = make_multilabel_classification(n_classes=2, n_labels=1,
+                                          allow_unlabeled=False,
+                                          return_indicator=True,
+                                          random_state=1)
+    X_sparse = csr_matrix(X)
+    y_sparse = csr_matrix(y)
+    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    preds = cval.cross_val_predict(classif, X, y, cv=10)
+    preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
+    preds_sparse = preds_sparse.toarray()
+    assert_array_almost_equal(preds_sparse, preds)

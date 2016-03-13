@@ -8,20 +8,15 @@ Utilities for fast persistence of big data, with optional compression.
 
 import pickle
 import traceback
-import sys
 import os
 import zlib
 import warnings
-import struct
-import codecs
-
-from ._compat import _basestring
-
 from io import BytesIO
 
-PY3 = sys.version_info[0] >= 3
+from ._compat import _basestring, PY3_OR_LATER
 
-if PY3:
+
+if PY3_OR_LATER:
     Unpickler = pickle._Unpickler
     Pickler = pickle._Pickler
 
@@ -205,7 +200,7 @@ class NumpyPickler(Pickler):
     """
     dispatch = Pickler.dispatch.copy()
 
-    def __init__(self, filename, compress=0, cache_size=10):
+    def __init__(self, filename, compress=0, cache_size=10, protocol=None):
         self._filename = filename
         self._filenames = [filename, ]
         self.cache_size = cache_size
@@ -215,10 +210,15 @@ class NumpyPickler(Pickler):
         else:
             self.file = BytesIO()
         # Count the number of npy files that we have created:
-        self._npy_counter = 0
-        highest_python_2_3_compatible_protocol = 2
+        self._npy_counter = 1
+        # By default we want a pickle protocol that only changes with
+        # the major python version and not the minor one
+        if protocol is None:
+            protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
+                        else pickle.HIGHEST_PROTOCOL)
+
         Pickler.__init__(self, self.file,
-                         protocol=highest_python_2_3_compatible_protocol)
+                         protocol=protocol)
         # delayed import of numpy, to avoid tight coupling
         try:
             import numpy as np
@@ -252,8 +252,8 @@ class NumpyPickler(Pickler):
             files, rather than pickling them. Of course, this is a
             total abuse of the Pickler class.
         """
-        if self.np is not None and type(obj) in (self.np.ndarray,
-                                            self.np.matrix, self.np.memmap):
+        if (self.np is not None and type(obj) in
+                (self.np.ndarray, self.np.matrix, self.np.memmap)):
             size = obj.size * obj.itemsize
             if self.compress and size < self.cache_size * _MEGA:
                 # When compressing, as we are not writing directly to the
@@ -262,42 +262,22 @@ class NumpyPickler(Pickler):
                     # Pickling doesn't work with memmaped arrays
                     obj = self.np.asarray(obj)
                 return Pickler.save(self, obj)
-            self._npy_counter += 1
-            try:
-                filename = '%s_%02i.npy' % (self._filename,
-                                            self._npy_counter)
-                # This converts the array in a container
-                obj, filename = self._write_array(obj, filename)
-                self._filenames.append(filename)
-            except:
-                self._npy_counter -= 1
-                # XXX: We should have a logging mechanism
-                print('Failed to save %s to .npy file:\n%s' % (
+
+            if not obj.dtype.hasobject:
+                try:
+                    filename = '%s_%02i.npy' % (self._filename,
+                                                self._npy_counter)
+                    # This converts the array in a container
+                    obj, filename = self._write_array(obj, filename)
+                    self._filenames.append(filename)
+                    self._npy_counter += 1
+                except Exception:
+                    # XXX: We should have a logging mechanism
+                    print('Failed to save %s to .npy file:\n%s' % (
                         type(obj),
                         traceback.format_exc()))
+
         return Pickler.save(self, obj)
-
-    def save_bytes(self, obj):
-        """Strongly inspired from python 2.7 pickle.Pickler.save_string"""
-        if self.bin:
-            n = len(obj)
-            if n < 256:
-                self.write(pickle.SHORT_BINSTRING + asbytes(chr(n)) + obj)
-            else:
-                self.write(pickle.BINSTRING + struct.pack("<i", n) + obj)
-            self.memoize(obj)
-        else:
-            Pickler.save_bytes(self, obj)
-
-    # We need to override save_bytes for python 3. We are using
-    # protocol=2 for python 2/3 compatibility and save_bytes for
-    # protocol < 3 ends up creating a unicode string which is very
-    # inefficient resulting in pickles up to 1.5 times the size you
-    # would get with protocol=4 or protocol=2 with python 2.7. This
-    # cause severe slowdowns in joblib.dump and joblib.load. See
-    # https://github.com/joblib/joblib/issues/194 for more details.
-    if PY3:
-        dispatch[bytes] = save_bytes
 
     def close(self):
         if self.compress:
@@ -322,54 +302,6 @@ class NumpyUnpickler(Unpickler):
             np = None
         self.np = np
 
-        if PY3:
-            self.encoding = 'bytes'
-
-    # Python 3.2 and 3.3 do not support encoding=bytes so I copied
-    # _decode_string, load_string, load_binstring and
-    # load_short_binstring from python 3.4 to emulate this
-    # functionality
-    if PY3 and sys.version_info.minor < 4:
-        def _decode_string(self, value):
-            """Copied from python 3.4 pickle.Unpickler._decode_string"""
-            # Used to allow strings from Python 2 to be decoded either as
-            # bytes or Unicode strings.  This should be used only with the
-            # STRING, BINSTRING and SHORT_BINSTRING opcodes.
-            if self.encoding == "bytes":
-                return value
-            else:
-                return value.decode(self.encoding, self.errors)
-
-        def load_string(self):
-            """Copied from python 3.4 pickle.Unpickler.load_string"""
-            data = self.readline()[:-1]
-            # Strip outermost quotes
-            if len(data) >= 2 and data[0] == data[-1] and data[0] in b'"\'':
-                data = data[1:-1]
-            else:
-                raise pickle.UnpicklingError(
-                    "the STRING opcode argument must be quoted")
-            self.append(self._decode_string(codecs.escape_decode(data)[0]))
-        dispatch[pickle.STRING[0]] = load_string
-
-        def load_binstring(self):
-            """Copied from python 3.4 pickle.Unpickler.load_binstring"""
-            # Deprecated BINSTRING uses signed 32-bit length
-            len, = struct.unpack('<i', self.read(4))
-            if len < 0:
-                raise pickle.UnpicklingError(
-                    "BINSTRING pickle has negative byte count")
-            data = self.read(len)
-            self.append(self._decode_string(data))
-        dispatch[pickle.BINSTRING[0]] = load_binstring
-
-        def load_short_binstring(self):
-            """Copied from python 3.4 pickle.Unpickler.load_short_binstring"""
-            len = self.read(1)[0]
-            data = self.read(len)
-            self.append(self._decode_string(data))
-        dispatch[pickle.SHORT_BINSTRING[0]] = load_short_binstring
-
     def _open_pickle(self, file_handle):
         return file_handle
 
@@ -391,7 +323,7 @@ class NumpyUnpickler(Unpickler):
             self.stack.append(array)
 
     # Be careful to register our new method.
-    if PY3:
+    if PY3_OR_LATER:
         dispatch[pickle.BUILD[0]] = load_build
     else:
         dispatch[pickle.BUILD] = load_build
@@ -413,9 +345,9 @@ class ZipNumpyUnpickler(NumpyUnpickler):
 ###############################################################################
 # Utility functions
 
-def dump(value, filename, compress=0, cache_size=100):
-    """Fast persistence of an arbitrary Python object into a files, with
-    dedicated storage for numpy arrays.
+def dump(value, filename, compress=0, cache_size=100, protocol=None):
+    """Fast persistence of an arbitrary Python object into one or multiple
+    files, with dedicated storage for numpy arrays.
 
     Parameters
     -----------
@@ -433,6 +365,8 @@ def dump(value, filename, compress=0, cache_size=100):
         for in-memory compression. Note that this is just an order of
         magnitude estimate and that for big arrays, the code will go
         over this value at dump and at load time.
+    protocol: positive int
+        Pickle protocol, see pickle.dump documentation for more details.
 
     Returns
     -------
@@ -462,9 +396,10 @@ def dump(value, filename, compress=0, cache_size=100):
               'Second argument should be a filename, %s (type %s) was given'
               % (filename, type(filename))
             )
+
     try:
         pickler = NumpyPickler(filename, compress=compress,
-                               cache_size=cache_size)
+                               cache_size=cache_size, protocol=protocol)
         pickler.dump(value)
         pickler.close()
     finally:
@@ -522,6 +457,15 @@ def load(filename, mmap_mode=None):
 
         try:
             obj = unpickler.load()
+        except UnicodeDecodeError as exc:
+            # More user-friendly error message
+            if PY3_OR_LATER:
+                new_exc = ValueError(
+                    'You may be trying to read with '
+                    'python 3 a joblib pickle generated with python 2. '
+                    'This feature is not supported by joblib.')
+                new_exc.__cause__ = exc
+                raise new_exc
         finally:
             if hasattr(unpickler, 'file_handle'):
                 unpickler.file_handle.close()

@@ -15,8 +15,8 @@ model:
 
 * **Scoring parameter**: Model-evaluation tools using
   :ref:`cross-validation <cross_validation>` (such as
-  :func:`cross_validation.cross_val_score` and
-  :class:`grid_search.GridSearchCV`) rely on an internal *scoring* strategy.
+  :func:`model_selection.cross_val_score` and
+  :class:`model_selection.GridSearchCV`) rely on an internal *scoring* strategy.
   This is discussed in the section :ref:`scoring_parameter`.
 
 * **Metric functions**: The :mod:`metrics` module implements functions
@@ -39,8 +39,8 @@ The ``scoring`` parameter: defining model evaluation rules
 ==========================================================
 
 Model selection and evaluation using tools, such as
-:class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score`, take a ``scoring`` parameter that
+:class:`model_selection.GridSearchCV` and
+:func:`model_selection.cross_val_score`, take a ``scoring`` parameter that
 controls what metric they apply to the estimators evaluated.
 
 Common cases: predefined values
@@ -48,7 +48,7 @@ Common cases: predefined values
 
 For the most common use cases, you can designate a scorer object with the
 ``scoring`` parameter; the table below shows all possible values.
-All scorer ojects follow the convention that higher return values are better
+All scorer objects follow the convention that higher return values are better
 than lower return values.  Thus the returns from mean_absolute_error
 and mean_squared_error, which measure the distance between the model
 and the data, are negated.
@@ -82,16 +82,17 @@ Scoring                      Function                                    Comment
 
 Usage examples:
 
-    >>> from sklearn import svm, cross_validation, datasets
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.model_selection import cross_val_score
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
+    >>> clf = svm.SVC(probability=True, random_state=0)
+    >>> cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
+    array([-0.07..., -0.16..., -0.06...])
     >>> model = svm.SVC()
-    >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
+    >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
     ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
-    >>> clf = svm.SVC(probability=True, random_state=0)
-    >>> cross_validation.cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
-    array([-0.07..., -0.16..., -0.06...])
 
 .. note::
 
@@ -135,7 +136,7 @@ the :func:`fbeta_score` function::
 
     >>> from sklearn.metrics import fbeta_score, make_scorer
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
@@ -170,7 +171,7 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [1, 1]
+    >>> ground_truth = [[1, 1]]
     >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
@@ -1404,7 +1405,7 @@ Dummy estimators
 
 When doing supervised learning, a simple sanity check consists of comparing
 one's estimator against simple rules of thumb. :class:`DummyClassifier`
-implements three such simple strategies for classification:
+implements several such simple strategies for classification:
 
 - ``stratified`` generates random predictions by respecting the training
   set class distribution.
@@ -1423,7 +1424,7 @@ To illustrate :class:`DummyClassifier`, first let's create an imbalanced
 dataset::
 
   >>> from sklearn.datasets import load_iris
-  >>> from sklearn.cross_validation import train_test_split
+  >>> from sklearn.model_selection import train_test_split
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> y[y != 1] = -1

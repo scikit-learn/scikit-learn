@@ -5,12 +5,15 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises, assert_raises_regex, assert_raise_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -19,7 +22,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
@@ -62,6 +65,9 @@ class TransfT(T):
     def transform(self, X, y=None):
         return X
 
+    def inverse_transform(self, X):
+        return X
+
 
 class FitParamT(object):
     """Mock classifier
@@ -69,7 +75,6 @@ class FitParamT(object):
 
     def __init__(self):
         self.successful = False
-        pass
 
     def fit(self, X, y, should_succeed=False):
         self.successful = should_succeed
@@ -89,8 +94,7 @@ def test_pipeline_init():
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf,
-                     **pipe.get_params(deep=False)
-                     ))
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -123,13 +127,13 @@ def test_pipeline_init():
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
     params2 = pipe2.get_params(deep=True)
-    
+
     for x in pipe.get_params(deep=False):
         params.pop(x)
-    
+
     for x in pipe2.get_params(deep=False):
         params2.pop(x)
-    
+
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
@@ -193,7 +197,7 @@ def test_pipeline_methods_pca_svm():
     y = iris.target
     # Test with PCA + SVC
     clf = SVC(probability=True, random_state=0)
-    pca = PCA(n_components='mle', whiten=True)
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
@@ -210,8 +214,8 @@ def test_pipeline_methods_preprocessing_svm():
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
-    pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC(probability=True, random_state=0)
+    pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -256,7 +260,7 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     # tests that a pipeline does not have fit_predict method when final
     # step of pipeline does not have fit_predict defined
     scaler = StandardScaler()
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     pipe = Pipeline([('scaler', scaler), ('pca', pca)])
     assert_raises_regex(AttributeError,
                         "'PCA' object has no attribute 'fit_predict'",
@@ -299,7 +303,7 @@ def test_feature_union():
 
 
 def test_make_union():
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     mock = TransfT()
     fu = make_union(pca, mock)
     names, transformers = zip(*fu.transformer_list)
@@ -312,7 +316,7 @@ def test_pipeline_transform():
     # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2, svd_solver='full')
     pipeline = Pipeline([('pca', pca)])
 
     # test transform and fit_transform:
@@ -362,7 +366,7 @@ def test_feature_union_weights():
     iris = load_iris()
     X = iris.data
     y = iris.target
-    pca = RandomizedPCA(n_components=2, random_state=0)
+    pca = PCA(n_components=2, svd_solver='randomized', random_state=0)
     select = SelectKBest(k=1)
     # test using fit followed by transform
     fs = FeatureUnion([("pca", pca), ("select", select)],
@@ -460,3 +464,11 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
+
+
+def test_X1d_inverse_transform():
+    transformer = TransfT()
+    pipeline = make_pipeline(transformer)
+    X = np.ones(10)
+    msg = "1d X will not be reshaped in pipeline.inverse_transform"
+    assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)

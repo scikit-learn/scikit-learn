@@ -69,7 +69,7 @@ def test_no_collision_on_byte_range():
 
 def test_uniform_distribution():
     n_bins, n_samples = 10, 100000
-    bins = np.zeros(n_bins, dtype=np.float)
+    bins = np.zeros(n_bins, dtype=np.float64)
 
     for i in range(n_samples):
         bins[murmurhash3_32(i, positive=True) % n_bins] += 1

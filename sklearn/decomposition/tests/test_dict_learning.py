@@ -1,5 +1,5 @@
 import numpy as np
-
+from sklearn.utils import check_array
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -75,11 +75,11 @@ def test_dict_learning_nonzero_coefs():
     n_components = 4
     dico = DictionaryLearning(n_components, transform_algorithm='lars',
                               transform_n_nonzero_coefs=3, random_state=0)
-    code = dico.fit(X).transform(X[1])
+    code = dico.fit(X).transform(X[np.newaxis, 1])
     assert_true(len(np.flatnonzero(code)) == 3)
 
     dico.set_params(transform_algorithm='omp')
-    code = dico.transform(X[1])
+    code = dico.transform(X[np.newaxis, 1])
     assert_equal(len(np.flatnonzero(code)), 3)
 
 
@@ -173,7 +173,7 @@ def test_dict_learning_online_partial_fit():
                                         random_state=0)
     for i in range(10):
         for sample in X:
-            dict2.partial_fit(sample)
+            dict2.partial_fit(sample[np.newaxis, :])
 
     assert_true(not np.all(sparse_encode(X, dict1.components_, alpha=1) ==
                            0))
@@ -189,6 +189,18 @@ def test_sparse_encode_shapes():
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
         code = sparse_encode(X, V, algorithm=algo)
         assert_equal(code.shape, (n_samples, n_components))
+
+
+def test_sparse_encode_input():
+    n_components = 100
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    Xf = check_array(X, order='F')
+    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
+        a = sparse_encode(X, V, algorithm=algo)
+        b = sparse_encode(Xf, V, algorithm=algo)
+        assert_array_almost_equal(a, b)
 
 
 def test_sparse_encode_error():

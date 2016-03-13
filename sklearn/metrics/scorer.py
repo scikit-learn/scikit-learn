@@ -4,9 +4,9 @@ interface for model selection and evaluation using
 arbitrary score functions.
 
 A scorer object is a callable that can be passed to
-:class:`sklearn.grid_search.GridSearchCV` or
-:func:`sklearn.cross_validation.cross_val_score` as the ``scoring`` parameter,
-to specify how a model should be evaluated.
+:class:`sklearn.model_selection.GridSearchCV` or
+:func:`sklearn.model_selection.cross_val_score` as the ``scoring``
+parameter, to specify how a model should be evaluated.
 
 The signature of the call is ``(estimator, X, y)`` where ``estimator``
 is the model to be evaluated, ``X`` is the test data and ``y`` is the
@@ -14,12 +14,11 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 """
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
-from functools import partial
 
 import numpy as np
 
@@ -294,7 +293,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> ftwo_scorer
     make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
@@ -354,5 +353,5 @@ for name, metric in [('precision', precision_score),
     SCORERS[name] = make_scorer(metric)
     for average in ['macro', 'micro', 'samples', 'weighted']:
         qualified_name = '{0}_{1}'.format(name, average)
-        SCORERS[qualified_name] = make_scorer(partial(metric, pos_label=None,
-                                                      average=average))
+        SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
+                                              average=average)

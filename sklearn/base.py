@@ -1,17 +1,22 @@
 """Base classes for all estimators."""
+
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
 import copy
-import inspect
 import warnings
 
 import numpy as np
 from scipy import sparse
 from .externals import six
+from .utils.fixes import signature
+from .utils.deprecation import deprecated
+from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
 
 
-class ChangedBehaviorWarning(UserWarning):
+@deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class ChangedBehaviorWarning(_ChangedBehaviorWarning):
     pass
 
 
@@ -181,19 +186,20 @@ class BaseEstimator(object):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        args, varargs, kw, default = inspect.getargspec(init)
-        if varargs is not None:
-            raise RuntimeError("scikit-learn estimators should always "
-                               "specify their parameters in the signature"
-                               " of their __init__ (no varargs)."
-                               " %s doesn't follow this convention."
-                               % (cls, ))
-        # Remove 'self'
-        # XXX: This is going to fail if the init is a staticmethod, but
-        # who would do this?
-        args.pop(0)
-        args.sort()
-        return args
+        init_signature = signature(init)
+        # Consider the constructor parameters excluding 'self'
+        parameters = [p for p in init_signature.parameters.values()
+                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        for p in parameters:
+            if p.kind == p.VAR_POSITIONAL:
+                raise RuntimeError("scikit-learn estimators should always "
+                                   "specify their parameters in the signature"
+                                   " of their __init__ (no varargs)."
+                                   " %s with constructor %s doesn't "
+                                   " follow this convention."
+                                   % (cls, init_signature))
+        # Extract and sort argument names excluding 'self'
+        return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -254,7 +260,7 @@ class BaseEstimator(object):
                 # nested objects case
                 name, sub_name = split
                 if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. ' 
+                    raise ValueError('Invalid parameter %s for estimator %s. '
                                      'Check the list of available parameters '
                                      'with `estimator.get_params().keys()`.' %
                                      (name, self))
@@ -343,7 +349,8 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight)
+        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+                        multioutput='variance_weighted')
 
 
 ###############################################################################

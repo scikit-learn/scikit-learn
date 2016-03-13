@@ -12,8 +12,8 @@ Clustering: grouping observations together
     **clustering task**: split the observations into well-separated group
     called *clusters*.
 
-..   
-   >>> # Set the PRNG   
+..
+   >>> # Set the PRNG
    >>> import numpy as np
    >>> np.random.seed(1)
 
@@ -21,7 +21,7 @@ K-means clustering
 -------------------
 
 Note that there exist a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is 
+algorithms. The simplest clustering algorithm is
 :ref:`k_means`.
 
 .. image:: ../../auto_examples/cluster/images/plot_cluster_iris_002.png
@@ -30,7 +30,7 @@ algorithms. The simplest clustering algorithm is
     :align: right
 
 
-:: 
+::
 
     >>> from sklearn import cluster, datasets
     >>> iris = datasets.load_iris()
@@ -57,8 +57,8 @@ algorithms. The simplest clustering algorithm is
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. warning:: 
-   
+.. warning::
+
     There is absolutely no guarantee of recovering a ground truth. First,
     choosing the right number of clusters is hard. Second, the algorithm
     is sensitive to initialization, and can fall into local minima,
@@ -66,75 +66,75 @@ algorithms. The simplest clustering algorithm is
 
     .. list-table::
         :class: centered
-        
-        * 
-        
+
+        *
+
             - |k_means_iris_bad_init|
 
             - |k_means_iris_8|
 
             - |cluster_iris_truth|
 
-        * 
-        
+        *
+
             - **Bad initialization**
-            
+
             - **8 clusters**
-            
+
             - **Ground truth**
 
     **Don't over-interpret clustering results**
 
-.. |lena| image:: ../../auto_examples/cluster/images/plot_lena_compress_001.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face| image:: ../../auto_examples/cluster/images/plot_face_compress_001.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |lena_regular| image:: ../../auto_examples/cluster/images/plot_lena_compress_002.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face_regular| image:: ../../auto_examples/cluster/images/plot_face_compress_002.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |lena_compressed| image:: ../../auto_examples/cluster/images/plot_lena_compress_003.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face_compressed| image:: ../../auto_examples/cluster/images/plot_face_compress_003.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |lena_histogram| image:: ../../auto_examples/cluster/images/plot_lena_compress_004.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face_histogram| image:: ../../auto_examples/cluster/images/plot_face_compress_004.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
 .. topic:: **Application example: vector quantization**
 
     Clustering in general and KMeans, in particular, can be seen as a way
     of choosing a small number of exemplars to compress the information.
-    The problem is sometimes known as 
-    `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
+    The problem is sometimes known as
+    `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_.
     For instance, this can be used to posterize an image::
 
         >>> import scipy as sp
         >>> try:
-        ...    lena = sp.lena()
+        ...    face = sp.face(gray=True)
         ... except AttributeError:
         ...    from scipy import misc
-        ...    lena = misc.lena()
-    	>>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
+        ...    face = misc.face(gray=True)
+    	>>> X = face.reshape((-1, 1)) # We need an (n_sample, n_feature) array
     	>>> k_means = cluster.KMeans(n_clusters=5, n_init=1)
     	>>> k_means.fit(X) # doctest: +ELLIPSIS
     	KMeans(copy_x=True, init='k-means++', ...
     	>>> values = k_means.cluster_centers_.squeeze()
     	>>> labels = k_means.labels_
-    	>>> lena_compressed = np.choose(labels, values)
-    	>>> lena_compressed.shape = lena.shape
+    	>>> face_compressed = np.choose(labels, values)
+    	>>> face_compressed.shape = face.shape
 
     .. list-table::
-      :class: centered 
+      :class: centered
 
       *
-        - |lena|
+        - |face|
 
-        - |lena_compressed|
+        - |face_compressed|
 
-        - |lena_regular|
+        - |face_regular|
 
-        - |lena_histogram|
+        - |face_histogram|
 
       *
 
@@ -177,17 +177,17 @@ This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
 clustering an image:
 
-.. image:: ../../auto_examples/cluster/images/plot_lena_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_lena_ward_segmentation.html
+.. image:: ../../auto_examples/cluster/images/plot_face_ward_segmentation_001.png
+    :target: ../../auto_examples/cluster/plot_face_ward_segmentation.html
     :scale: 40
     :align: right
 
-.. literalinclude:: ../../auto_examples/cluster/plot_lena_ward_segmentation.py
+.. literalinclude:: ../../auto_examples/cluster/plot_face_ward_segmentation.py
     :lines: 21-45
 
 ..
     >>> from sklearn.feature_extraction.image import grid_to_graph
-    >>> connectivity = grid_to_graph(*lena.shape)
+    >>> connectivity = grid_to_graph(*face.shape)
 
 
 Feature agglomeration
@@ -275,7 +275,8 @@ data by projecting on a principal subspace.
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
-    PCA(copy=True, n_components=None, whiten=False)
+    PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
+      svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
 
@@ -320,4 +321,3 @@ a maximum amount of independent information. It is able to recover
     >>> A_ = ica.mixing_.T
     >>> np.allclose(X,  np.dot(S_, A_) + ica.mean_)
     True
-

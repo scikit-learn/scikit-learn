@@ -10,6 +10,7 @@ estimator, as a chain of transforms and estimators.
 # Licence: BSD
 
 from collections import defaultdict
+from warnings import warn
 
 import numpy as np
 from scipy import sparse
@@ -88,7 +89,8 @@ class Pipeline(BaseEstimator):
     def __init__(self, steps):
         names, estimators = zip(*steps)
         if len(dict(steps)) != len(steps):
-            raise ValueError("Provided step names are not unique: %s" % (names,))
+            raise ValueError("Provided step names are not unique: %s"
+                             % (names,))
 
         # shallow copy of steps
         self.steps = tosequence(steps)
@@ -194,8 +196,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -231,8 +233,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -248,8 +250,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -265,8 +267,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -282,8 +284,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps:
@@ -293,8 +295,8 @@ class Pipeline(BaseEstimator):
     @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
         """Applies inverse transform to the data.
-        Starts with the last step of the pipeline and applies ``inverse_transform`` in
-        inverse order of the pipeline steps.
+        Starts with the last step of the pipeline and applies
+        ``inverse_transform`` in inverse order of the pipeline steps.
         Valid only if all steps of the pipeline implement inverse_transform.
 
         Parameters
@@ -304,6 +306,8 @@ class Pipeline(BaseEstimator):
             last step of the pipeline.
         """
         if X.ndim == 1:
+            warn("From version 0.19, a 1d X will not be reshaped in"
+                 " pipeline.inverse_transform any more.", FutureWarning)
             X = X[None, :]
         Xt = X
         for name, step in self.steps[::-1]:
@@ -323,8 +327,8 @@ class Pipeline(BaseEstimator):
             pipeline.
 
         y : iterable, default=None
-            Targets used for scoring. Must fulfill label requirements for all steps of
-            the pipeline.
+            Targets used for scoring. Must fulfill label requirements for all
+            steps of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -366,8 +370,8 @@ def make_pipeline(*steps):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
-    does not permit, naming the estimators. Instead, they will be given names
-    automatically based on their types.
+    does not permit, naming the estimators. Instead, their names will be set
+    to the lowercase of their types automatically.
 
     Examples
     --------
@@ -391,7 +395,7 @@ def _fit_one_transformer(transformer, X, y):
 
 def _transform_one(transformer, name, X, transformer_weights):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         return transformer.transform(X) * transformer_weights[name]
     return transformer.transform(X)
 
@@ -399,7 +403,7 @@ def _transform_one(transformer, name, X, transformer_weights):
 def _fit_transform_one(transformer, name, X, y, transformer_weights,
                        **fit_params):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         if hasattr(transformer, 'fit_transform'):
             X_transformed = transformer.fit_transform(X, y, **fit_params)
             return X_transformed * transformer_weights[name], transformer
@@ -556,13 +560,16 @@ def make_union(*transformers):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
-                 transformer_list=[('pca', PCA(copy=True, n_components=None,
-                                               whiten=False)),
-                                   ('truncatedsvd',
-                                    TruncatedSVD(algorithm='randomized',
-                                                 n_components=2, n_iter=5,
-                                                 random_state=None, tol=0.0))],
-                 transformer_weights=None)
+           transformer_list=[('pca',
+                              PCA(copy=True, iterated_power=4,
+                                  n_components=None, random_state=None,
+                                  svd_solver='auto', tol=0.0, whiten=False)),
+                             ('truncatedsvd',
+                              TruncatedSVD(algorithm='randomized',
+                              n_components=2, n_iter=5,
+                              random_state=None, tol=0.0))],
+           transformer_weights=None)
+
 
     Returns
     -------

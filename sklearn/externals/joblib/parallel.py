@@ -49,6 +49,17 @@ MIN_IDEAL_BATCH_DURATION = .2
 # on a single worker while other workers have no work to process any more.
 MAX_IDEAL_BATCH_DURATION = 2
 
+# Under Linux or OS X the default start method of multiprocessing
+# can cause third party libraries to crash. Under Python 3.4+ it is possible
+# to set an environment variable to switch the default start method from
+# 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
+# of causing semantic changes and some additional pool instanciation overhead.
+if hasattr(mp, 'get_context'):
+    method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
+    DEFAULT_MP_CONTEXT = mp.get_context(method=method)
+else:
+    DEFAULT_MP_CONTEXT = None
+
 
 class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
@@ -126,10 +137,7 @@ class SafeFunction(object):
             e_type, e_value, e_tb = sys.exc_info()
             text = format_exc(e_type, e_value, e_tb, context=10,
                               tb_offset=1)
-            if issubclass(e_type, TransportableException):
-                raise
-            else:
-                raise TransportableException(text, e_type)
+            raise TransportableException(text, e_type)
 
 
 ###############################################################################
@@ -406,10 +414,10 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
     '''
     def __init__(self, n_jobs=1, backend='multiprocessing', verbose=0,
-                 pre_dispatch='2 * n_jobs', batch_size='auto', temp_folder=None,
-                 max_nbytes='1M', mmap_mode='r'):
+                 pre_dispatch='2 * n_jobs', batch_size='auto',
+                 temp_folder=None, max_nbytes='1M', mmap_mode='r'):
         self.verbose = verbose
-        self._mp_context = None
+        self._mp_context = DEFAULT_MP_CONTEXT
         if backend is None:
             # `backend=None` was supported in 0.8.2 with this effect
             backend = "multiprocessing"
@@ -522,7 +530,6 @@ class Parallel(Logger):
                     mmap_mode=self._mmap_mode,
                     temp_folder=self._temp_folder,
                     verbose=max(0, self.verbose - 50),
-                    context_id=0,  # the pool is used only for one call
                 )
                 if self._mp_context is not None:
                     # Use Python 3.4+ multiprocessing context isolation
@@ -740,14 +747,13 @@ Sub-process traceback:
                 # Kill remaining running processes without waiting for
                 # the results as we will raise the exception we got back
                 # to the caller instead of returning any result.
-                with self._lock:
-                    self._terminate_pool()
-                    if self._managed_pool:
-                        # In case we had to terminate a managed pool, let
-                        # us start a new one to ensure that subsequent calls
-                        # to __call__ on the same Parallel instance will get
-                        # a working pool as they expect.
-                        self._initialize_pool()
+                self._terminate_pool()
+                if self._managed_pool:
+                    # In case we had to terminate a managed pool, let
+                    # us start a new one to ensure that subsequent calls
+                    # to __call__ on the same Parallel instance will get
+                    # a working pool as they expect.
+                    self._initialize_pool()
                 raise exception
 
     def __call__(self, iterable):
@@ -788,10 +794,13 @@ Sub-process traceback:
         self.n_completed_tasks = 0
         self._smoothed_batch_duration = 0.0
         try:
-            self._iterating = True
-
+            # Only set self._iterating to True if at least a batch
+            # was dispatched. In particular this covers the edge
+            # case of Parallel used with an exhausted iterator.
             while self.dispatch_one_batch(iterator):
-                pass
+                self._iterating = True
+            else:
+                self._iterating = False
 
             if pre_dispatch == "all" or n_jobs == 1:
                 # The iterable was consumed all at once by the above for loop.

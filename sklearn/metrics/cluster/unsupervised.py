@@ -7,7 +7,9 @@
 import numpy as np
 
 from ...utils import check_random_state
+from ...utils import check_X_y
 from ..pairwise import pairwise_distances
+from ...preprocessing import LabelEncoder
 
 
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
@@ -79,8 +81,12 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    n_labels = len(np.unique(labels))
+    X, labels = check_X_y(X, labels)
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    n_labels = len(le.classes_)
     n_samples = X.shape[0]
+
     if not 1 < n_labels < n_samples:
         raise ValueError("Number of labels is %d. Valid values are 2 "
                          "to n_samples - 1 (inclusive)" % n_labels)
@@ -155,66 +161,43 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+
     distances = pairwise_distances(X, metric=metric, **kwds)
-    n = labels.shape[0]
-    A = np.array([_intra_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    sil_samples = (B - A) / np.maximum(A, B)
+    unique_labels = le.classes_
+
+    # For sample i, store the mean distance of the cluster to which
+    # it belongs in intra_clust_dists[i]
+    intra_clust_dists = np.ones(distances.shape[0], dtype=distances.dtype)
+
+    # For sample i, store the mean distance of the second closest
+    # cluster in inter_clust_dists[i]
+    inter_clust_dists = np.inf * intra_clust_dists
+
+    for curr_label in unique_labels:
+
+        # Find inter_clust_dist for all samples belonging to the same
+        # label.
+        mask = labels == curr_label
+        current_distances = distances[mask]
+
+        # Leave out current sample.
+        n_samples_curr_lab = np.sum(mask) - 1
+        if n_samples_curr_lab != 0:
+            intra_clust_dists[mask] = np.sum(
+                current_distances[:, mask], axis=1) / n_samples_curr_lab
+
+        # Now iterate over all other labels, finding the mean
+        # cluster distance that is closest to every sample.
+        for other_label in unique_labels:
+            if other_label != curr_label:
+                other_mask = labels == other_label
+                other_distances = np.mean(
+                    current_distances[:, other_mask], axis=1)
+                inter_clust_dists[mask] = np.minimum(
+                    inter_clust_dists[mask], other_distances)
+
+    sil_samples = inter_clust_dists - intra_clust_dists
+    sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
     return sil_samples
-
-
-def _intra_cluster_distance(distances_row, labels, i):
-    """Calculate the mean intra-cluster distance for sample i.
-
-    Parameters
-    ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
-
-    labels : array, shape = [n_samples]
-        label values for each sample
-
-    i : int
-        Sample index being calculated. It is excluded from calculation and
-        used to determine the current label
-
-    Returns
-    -------
-    a : float
-        Mean intra-cluster distance for sample i
-    """
-    mask = labels == labels[i]
-    mask[i] = False
-    if not np.any(mask):
-        # cluster of size 1
-        return 0
-    a = np.mean(distances_row[mask])
-    return a
-
-
-def _nearest_cluster_distance(distances_row, labels, i):
-    """Calculate the mean nearest-cluster distance for sample i.
-
-    Parameters
-    ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
-
-    labels : array, shape = [n_samples]
-        label values for each sample
-
-    i : int
-        Sample index being calculated. It is used to determine the current
-        label.
-
-    Returns
-    -------
-    b : float
-        Mean nearest-cluster distance for sample i
-    """
-    label = labels[i]
-    b = np.min([np.mean(distances_row[labels == cur_label])
-               for cur_label in set(labels) if not cur_label == label])
-    return b

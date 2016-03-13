@@ -8,6 +8,7 @@ from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
+from .utils import deprecated
 from .utils.fixes import astype
 from ._isotonic import _isotonic_regression, _make_unique
 import warnings
@@ -119,11 +120,11 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    y = np.asarray(y, dtype=np.float)
+    y = np.asarray(y, dtype=np.float64)
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
     else:
-        sample_weight = np.asarray(sample_weight, dtype=np.float)
+        sample_weight = np.asarray(sample_weight, dtype=np.float64)
     if not increasing:
         y = y[::-1]
         sample_weight = sample_weight[::-1]
@@ -193,12 +194,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Attributes
     ----------
-    X_ : ndarray (n_samples, )
-        A copy of the input X.
-
-    y_ : ndarray (n_samples, )
-        Isotonic fit of y.
-
     X_min_ : float
         Minimum value of input array `X_` for left bound.
 
@@ -234,6 +229,34 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
 
+    @property
+    @deprecated("Attribute ``X_`` is deprecated in version 0.18 and will be"
+                " removed in version 0.20.")
+    def X_(self):
+        return self._X_
+
+    @X_.setter
+    def X_(self, value):
+        self._X_ = value
+
+    @X_.deleter
+    def X_(self):
+        del self._X_
+
+    @property
+    @deprecated("Attribute ``y_`` is deprecated in version 0.18 and will"
+                " be removed in version 0.20.")
+    def y_(self):
+        return self._y_
+
+    @y_.setter
+    def y_(self, value):
+        self._y_ = value
+
+    @y_.deleter
+    def y_(self):
+        del self._y_
+
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
             raise ValueError("X should be a 1d array")
@@ -252,10 +275,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             # single y, constant prediction
             self.f_ = lambda x: y.repeat(x.shape)
         else:
-            self.f_ = interpolate.interp1d(X, y, kind='slinear',
+            self.f_ = interpolate.interp1d(X, y, kind='linear',
                                            bounds_error=bounds_error)
 
-    def _build_y(self, X, y, sample_weight):
+    def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
         check_consistent_length(X, y, sample_weight)
         X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
@@ -269,7 +292,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         else:
             self.increasing_ = self.increasing
 
-        # If sample_weights is passed, removed zero-weight values and clean order
+        # If sample_weights is passed, removed zero-weight values and clean
+        # order
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             mask = sample_weight > 0
@@ -278,15 +302,37 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = np.ones(len(y))
 
         order = np.lexsort((y, X))
-        order_inv = np.argsort(order)
         X, y, sample_weight = [astype(array[order], np.float64, copy=False)
                                for array in [X, y, sample_weight]]
-        unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
-        self.X_ = unique_X
-        self.y_ = isotonic_regression(unique_y, unique_sample_weight, self.y_min,
-                                      self.y_max, increasing=self.increasing_)
+        unique_X, unique_y, unique_sample_weight = _make_unique(
+            X, y, sample_weight)
 
-        return order_inv
+        # Store _X_ and _y_ to maintain backward compat during the deprecation
+        # period of X_ and y_
+        self._X_ = X = unique_X
+        self._y_ = y = isotonic_regression(unique_y, unique_sample_weight,
+                                           self.y_min, self.y_max,
+                                           increasing=self.increasing_)
+
+        # Handle the left and right bounds on X
+        self.X_min_, self.X_max_ = np.min(X), np.max(X)
+
+        if trim_duplicates:
+            # Remove unnecessary points for faster prediction
+            keep_data = np.ones((len(y),), dtype=bool)
+            # Aside from the 1st and last point, remove points whose y values
+            # are equal to both the point before and the point after it.
+            keep_data[1:-1] = np.logical_or(
+                np.not_equal(y[1:-1], y[:-2]),
+                np.not_equal(y[1:-1], y[2:])
+            )
+            return X[keep_data], y[keep_data]
+        else:
+            # The ability to turn off trim_duplicates is only used to it make
+            # easier to unit test that removing duplicates in y does not have
+            # any impact the resulting interpolation function (besides
+            # prediction speed).
+            return X, y
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
@@ -313,16 +359,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
-        # Build y_
-        self._build_y(X, y, sample_weight)
+        # Transform y by running the isotonic regression algorithm and
+        # transform X accordingly.
+        X, y = self._build_y(X, y, sample_weight)
 
-        # Handle the left and right bounds on X
-        self.X_min_ = np.min(self.X_)
-        self.X_max_ = np.max(self.X_)
+        # It is necessary to store the non-redundant part of the training set
+        # on the model to make it possible to support model persistence via
+        # the pickle module as the object built by scipy.interp1d is not
+        # picklable directly.
+        self._necessary_X_, self._necessary_y_ = X, y
 
-        # Build f_
-        self._build_f(self.X_, self.y_)
-
+        # Build the interpolation function
+        self._build_f(X, y)
         return self
 
     def transform(self, T):
@@ -381,4 +429,4 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         We need to rebuild the interpolation function.
         """
         self.__dict__.update(state)
-        self._build_f(self.X_, self.y_)
+        self._build_f(self._necessary_X_, self._necessary_y_)
