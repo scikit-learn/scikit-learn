@@ -257,7 +257,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
-                     positive=positive, **params)
+                     positive=positive, return_n_iter=return_n_iter, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
