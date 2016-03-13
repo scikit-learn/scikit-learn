@@ -67,6 +67,7 @@ Classes
    cluster.DBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
+   cluster.KMedoids
    cluster.MiniBatchKMeans
    cluster.MeanShift
    cluster.SpectralClustering
