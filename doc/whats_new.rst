@@ -117,6 +117,18 @@ Enhancements
    - Added ``inverse_transform`` function to :class:`decomposition.nmf` to compute
      data matrix of original shape. By `Anish Shah`_.
 
+   - Enhanced MLP with Adams, Nesterov's momentum, and early stopping
+     (`#5214 <https://github.com/scikit-learn/scikit-learn/pull/5214>`_) by `Jiyuan Qian`_
+
+   - Enhanced with colorblind compatibility to various examples for issue
+     (`#5435 <https://github.com/scikit-learn/scikit-learn/issues/5435>`_) by `Johanna Hansen`_
+
+   - Made scaling a sparse matrix along axis 0 to accept a CSR format by default by `Manoj Kumar`_
+
+   - Improve tests checking sample_weight in LinearRegression and Ridge by `Giorgio Patrini`_
+
+   - Added the learning curve documentation to model_selection.rst by `Raghav R V`_
+
 Bug fixes
 .........
 
@@ -165,6 +177,19 @@ Bug fixes
       see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
       more details. By `Loic Esteve`_.
 
+    - Resets the internal state of scaler before fitting
+      (`#5416 <https://github.com/scikit-learn/scikit-learn/pull/5416>`_) by `Giorgio Patrini`_
+
+    - Regression models now raises errors when targets are nan/inf
+      (`#5431 <https://github.com/scikit-learn/scikit-learn/pull/5431>`_) by `Henry Lin`_
+
+    - Fixed serialization in the implementation of the pickle protocol
+      (`#5560 <https://github.com/scikit-learn/scikit-learn/pull/5560>`_) by `Arnaud Joly`_
+
+    - Fixed a test failure when using a development install of scipy. The error
+      was: `ValueError: invalid literal for int() with base 10: 'dev0+1072f2e'`
+      by `CJ Carey`_
+
 API changes summary
 -------------------
 
@@ -178,6 +203,9 @@ API changes summary
 
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
+
+   - Deprecated `residues_` in LinearRegression.
+     (`#5452 <https://github.com/scikit-learn/scikit-learn/pull/5452>`_)
 
 
 .. _changes_0_17_1:
@@ -219,6 +247,7 @@ Bug fixes
       :class:`decomposition.LatentDirichletAllocation` model. See `#6258
       <https://github.com/scikit-learn/scikit-learn/issues/6258>`_
       By Chyi-Kwei Yau.
+
 
 .. _changes_0_17:
 
@@ -4121,3 +4150,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jonathan Arfa: https://github.com/jarfa
 
 .. _Anish Shah: https://github.com/AnishShah
+
+.. _Johanna Hansen: https://github.com/johannah
+
+.. _Jiyuan Qian: https://github.com/glennq
+
+.. _Henry Lin: https://github.com/hlin117
