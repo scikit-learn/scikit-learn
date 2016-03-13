@@ -16,6 +16,8 @@ from .univariate_selection import SelectFpr
 from .univariate_selection import SelectFdr
 from .univariate_selection import SelectFwe
 from .univariate_selection import GenericUnivariateSelect
+from .mutual_info_ import mutual_info_classif
+from .mutual_info_ import mutual_info_regression
 
 from .variance_threshold import VarianceThreshold
 
@@ -39,4 +41,6 @@ __all__ = ['GenericUnivariateSelect',
            'f_classif',
            'f_oneway',
            'f_regression',
+           'mutual_info_classif',
+           'mutual_info_regression',
            'SelectFromModel']
