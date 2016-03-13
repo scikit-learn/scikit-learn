@@ -5,6 +5,8 @@ recursive feature elimination algorithm.
 """
 
 from .univariate_selection import chi2
+from .univariate_selection import ig
+from .univariate_selection import igr
 from .univariate_selection import f_classif
 from .univariate_selection import f_oneway
 from .univariate_selection import f_regression
@@ -22,9 +24,6 @@ from .rfe import RFECV
 
 from .from_model import SelectFromModel
 
-from .mutual_info_ import mutual_info_regression, mutual_info_classif
-
-
 __all__ = ['GenericUnivariateSelect',
            'RFE',
            'RFECV',
@@ -32,12 +31,12 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFpr',
            'SelectFwe',
            'SelectKBest',
-           'SelectFromModel',
            'SelectPercentile',
            'VarianceThreshold',
            'chi2',
+           'ig',
+           'igr',
            'f_classif',
            'f_oneway',
            'f_regression',
-           'mutual_info_classif',
-           'mutual_info_regression']
+           'SelectFromModel']
