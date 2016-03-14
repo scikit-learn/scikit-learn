@@ -233,6 +233,8 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     mi : ndarray, shape (n_features,)
         Estimated mutual information between each feature and the target.
         A negative value will be replaced by 0.
+    pvals: an empty list to conform to the output of other feature selection
+        functions
 
     References
     ----------
@@ -284,7 +286,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     mi = [_compute_mi(x, y, discrete_feature, discrete_target) for
           x, discrete_feature in moves.zip(_iterate_columns(X), discrete_mask)]
 
-    return np.array(mi)
+    return np.array(mi), []
 
 
 def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
