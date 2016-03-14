@@ -135,6 +135,12 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     -------
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
+
+    See Also
+    ---------
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
     """
     X, y, labels = indexable(X, y, labels)
 
