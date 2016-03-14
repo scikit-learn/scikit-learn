@@ -18,6 +18,7 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
 from ..utils.extmath import norm, safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
+from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
 
 def _clean_nans(scores):
@@ -507,9 +508,14 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 
         self._check_params(X, y)
 
-        self.scores_, self.pvalues_ = self.score_func(X, y)
-        self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
+        if self.score_func not in [mutual_info_regression, mutual_info_classif]:
+            self.scores_, self.pvalues_ = self.score_func(X, y)
+            self.scores_ = np.asarray(self.scores_)
+            self.pvalues_ = np.asarray(self.pvalues_)
+        else:
+            self.scores_ = self.score_func(X, y)
+            self.scores_ = np.asarray(self.scores_)
+            self.pvalues_ = np.asarray([])
         return self
 
     def _check_params(self, X, y):
