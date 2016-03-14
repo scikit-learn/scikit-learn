@@ -419,7 +419,7 @@ SINGLE_IMAGE = """
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'plot_classifier_comparison_001.png': (1, 600),
                    'plot_outlier_detection_001.png': (3, 372),
-                   'plot_gp_regression_001.png': (2, 250),
+                   'plot_gpr_co2_001.png': (1, 350),
                    'plot_adaboost_twoclass_001.png': (1, 372),
                    'plot_compare_methods_001.png': (1, 349)}
 
@@ -564,7 +564,7 @@ def line_count_sort(file_list, target_dir):
     return np.array(unsorted[index][:, 0]).tolist()
 
 
-def _thumbnail_div(subdir, full_dir, fname, snippet):
+def _thumbnail_div(subdir, full_dir, fname, snippet, is_backref=False):
     """Generates RST to place a thumbnail in a gallery"""
     thumb = os.path.join(full_dir, 'images', 'thumb', fname[:-3] + '.png')
     link_name = os.path.join(full_dir, fname).replace(os.path.sep, '_')
@@ -576,19 +576,19 @@ def _thumbnail_div(subdir, full_dir, fname, snippet):
 
 .. raw:: html
 
-
     <div class="thumbnailContainer" tooltip="{}">
 
 """.format(snippet))
 
-    out.append('.. figure:: %s\n' % thumb)
+    out.append('.. only:: html\n\n')
+    out.append('  .. figure:: %s\n' % thumb)
     if link_name.startswith('._'):
         link_name = link_name[2:]
     if full_dir != '.':
-        out.append('   :target: ./%s/%s.html\n\n' % (full_dir, fname[:-3]))
+        out.append('    :target: ./%s/%s.html\n\n' % (full_dir, fname[:-3]))
     else:
-        out.append('   :target: ./%s.html\n\n' % link_name[:-3])
-    out.append("""   :ref:`example_%s`
+        out.append('    :target: ./%s.html\n\n' % link_name[:-3])
+    out.append("""    :ref:`example_%s`
 
 
 .. raw:: html
@@ -596,6 +596,8 @@ def _thumbnail_div(subdir, full_dir, fname, snippet):
     </div>
 
 """ % (ref_name))
+    if is_backref:
+        out.append('.. only:: not html\n\n  * :ref:`example_%s`' % ref_name)
     return ''.join(out)
 
 
@@ -651,7 +653,7 @@ def generate_dir_rst(directory, fhindex, example_dir, root_dir, plot_gallery, se
                               file=ex_file)
                         print(file=ex_file)
                     rel_dir = os.path.join('../../auto_examples', directory)
-                    ex_file.write(_thumbnail_div(directory, rel_dir, fname, snippet))
+                    ex_file.write(_thumbnail_div(directory, rel_dir, fname, snippet, is_backref=True))
                     seen_backrefs.add(backref)
     fhindex.write("""
 .. raw:: html

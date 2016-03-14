@@ -312,10 +312,13 @@ total cost over the entire trees (by summing the cost at each node) of
 Scikit-learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. By presorting the feature over all
-relevant samples, and retaining a running label count, we reduce the complexity
+new split point along a given feature. Presorting the feature over all
+relevant samples, and retaining a running label count, will reduce the complexity
 at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`.
+total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
+for all tree based algorithms. By default it is turned on for gradient boosting,
+where in general it makes training faster, but turned off for all other algorithms as
+it tends to slow down training when training deep trees.
 
 
 Tips on practical use
@@ -340,7 +343,8 @@ Tips on practical use
   * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
     samples at a leaf node.  A very small number will usually mean the tree
     will overfit, whereas a large number will prevent the tree from learning
-    the data.  Try ``min_samples_leaf=5`` as an initial value.
+    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
+    varies greatly, a float number can be used as percentage in these two parameters.
     The main difference between the two is that ``min_samples_leaf`` guarantees
     a minimum number of samples in a leaf, while ``min_samples_split`` can
     create arbitrary small leaves, though ``min_samples_split`` is more common
@@ -364,7 +368,7 @@ Tips on practical use
     If training data is not in this format, a copy of the dataset will be made.
 
   * If the input matrix X is very sparse, it is recommended to convert to sparse
-    ``csc_matrix` before calling fit and sparse ``csr_matrix`` before calling
+    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
     predict. Training time can be orders of magnitude faster for a sparse
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.
@@ -472,7 +476,7 @@ Cross-Entropy
 
 .. math::
 
-    H(X_m) = \sum_k p_{mk} \log(p_{mk})
+    H(X_m) = - \sum_k p_{mk} \log(p_{mk})
 
 and Misclassification
 

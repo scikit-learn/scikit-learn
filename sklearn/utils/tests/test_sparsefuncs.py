@@ -2,10 +2,13 @@ import numpy as np
 import scipy.sparse as sp
 
 from scipy import linalg
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import (assert_array_almost_equal,
+                           assert_array_equal,
+                           assert_equal)
 
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis,
+                                       incr_mean_variance_axis,
                                        inplace_column_scale,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
@@ -49,18 +52,6 @@ def test_mean_variance_axis0():
     assert_raises(TypeError, mean_variance_axis, X_lil, axis=0)
 
 
-def test_mean_variance_illegal_axis():
-    X, _ = make_classification(5, 4, random_state=0)
-    # Sparsify the array a little bit
-    X[0, 0] = 0
-    X[2, 1] = 0
-    X[4, 3] = 0
-    X_csr = sp.csr_matrix(X)
-    assert_raises(ValueError, mean_variance_axis, X_csr, axis=-3)
-    assert_raises(ValueError, mean_variance_axis, X_csr, axis=2)
-    assert_raises(ValueError, mean_variance_axis, X_csr, axis=-1)
-
-
 def test_mean_variance_axis1():
     X, _ = make_classification(5, 4, random_state=0)
     # Sparsify the array a little bit
@@ -95,18 +86,113 @@ def test_mean_variance_axis1():
     assert_raises(TypeError, mean_variance_axis, X_lil, axis=1)
 
 
+def test_incr_mean_variance_axis():
+    for axis in [0, 1]:
+        rng = np.random.RandomState(0)
+        n_features = 50
+        n_samples = 10
+        data_chunks = [rng.random_integers(0, 1, size=n_features)
+                       for i in range(n_samples)]
+
+        # default params for incr_mean_variance
+        last_mean = np.zeros(n_features)
+        last_var = np.zeros_like(last_mean)
+        last_n = 0
+
+        # Test errors
+        X = np.array(data_chunks[0])
+        X = np.atleast_2d(X)
+        X_lil = sp.lil_matrix(X)
+        X_csr = sp.csr_matrix(X_lil)
+        assert_raises(TypeError, incr_mean_variance_axis, axis,
+                      last_mean, last_var, last_n)
+        assert_raises(TypeError, incr_mean_variance_axis, axis,
+                      last_mean, last_var, last_n)
+        assert_raises(TypeError, incr_mean_variance_axis, X_lil, axis,
+                      last_mean, last_var, last_n)
+
+        # Test _incr_mean_and_var with a 1 row input
+        X_means, X_vars = mean_variance_axis(X_csr, axis)
+        X_means_incr, X_vars_incr, n_incr = \
+            incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
+        assert_array_almost_equal(X_means, X_means_incr)
+        assert_array_almost_equal(X_vars, X_vars_incr)
+        assert_equal(X.shape[axis], n_incr)  # X.shape[axis] picks # samples
+
+        X_csc = sp.csc_matrix(X_lil)
+        X_means, X_vars = mean_variance_axis(X_csc, axis)
+        assert_array_almost_equal(X_means, X_means_incr)
+        assert_array_almost_equal(X_vars, X_vars_incr)
+        assert_equal(X.shape[axis], n_incr)
+
+        # Test _incremental_mean_and_var with whole data
+        X = np.vstack(data_chunks)
+        X_lil = sp.lil_matrix(X)
+        X_csr = sp.csr_matrix(X_lil)
+        X_means, X_vars = mean_variance_axis(X_csr, axis)
+        X_means_incr, X_vars_incr, n_incr = \
+            incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
+        assert_array_almost_equal(X_means, X_means_incr)
+        assert_array_almost_equal(X_vars, X_vars_incr)
+        assert_equal(X.shape[axis], n_incr)
+
+        X_csc = sp.csc_matrix(X_lil)
+        X_means, X_vars = mean_variance_axis(X_csc, axis)
+        assert_array_almost_equal(X_means, X_means_incr)
+        assert_array_almost_equal(X_vars, X_vars_incr)
+        assert_equal(X.shape[axis], n_incr)
+
+        # All data but as float
+        X = X.astype(np.float32)
+        X_csr = X_csr.astype(np.float32)
+        X_means, X_vars = mean_variance_axis(X_csr, axis)
+        X_means_incr, X_vars_incr, n_incr = \
+            incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
+        assert_array_almost_equal(X_means, X_means_incr)
+        assert_array_almost_equal(X_vars, X_vars_incr)
+        assert_equal(X.shape[axis], n_incr)
+
+        X_csc = X_csr.astype(np.float32)
+        X_means, X_vars = mean_variance_axis(X_csc, axis)
+        assert_array_almost_equal(X_means, X_means_incr)
+        assert_array_almost_equal(X_vars, X_vars_incr)
+        assert_equal(X.shape[axis], n_incr)
+
+
+def test_mean_variance_illegal_axis():
+    X, _ = make_classification(5, 4, random_state=0)
+    # Sparsify the array a little bit
+    X[0, 0] = 0
+    X[2, 1] = 0
+    X[4, 3] = 0
+    X_csr = sp.csr_matrix(X)
+    assert_raises(ValueError, mean_variance_axis, X_csr, axis=-3)
+    assert_raises(ValueError, mean_variance_axis, X_csr, axis=2)
+    assert_raises(ValueError, mean_variance_axis, X_csr, axis=-1)
+
+    assert_raises(ValueError, incr_mean_variance_axis, X_csr, axis=-3,
+                  last_mean=None, last_var=None, last_n=None)
+    assert_raises(ValueError, incr_mean_variance_axis, X_csr, axis=2,
+                  last_mean=None, last_var=None, last_n=None)
+    assert_raises(ValueError, incr_mean_variance_axis, X_csr, axis=-1,
+                  last_mean=None, last_var=None, last_n=None)
+
+
 def test_densify_rows():
     X = sp.csr_matrix([[0, 3, 0],
                        [2, 4, 0],
                        [0, 0, 0],
                        [9, 8, 7],
                        [4, 0, 5]], dtype=np.float64)
-    rows = np.array([0, 2, 3], dtype=np.intp)
-    out = np.ones((rows.shape[0], X.shape[1]), dtype=np.float64)
+    X_rows = np.array([0, 2, 3], dtype=np.intp)
+    out = np.ones((6, X.shape[1]), dtype=np.float64)
+    out_rows = np.array([1, 3, 4], dtype=np.intp)
 
-    assign_rows_csr(X, rows,
-                    np.arange(out.shape[0], dtype=np.intp)[::-1], out)
-    assert_array_equal(out, X[rows].toarray()[::-1])
+    expect = np.ones_like(out)
+    expect[out_rows] = X[X_rows, :].toarray()
+
+    assign_rows_csr(X, X_rows, out_rows, out)
+    assert_array_equal(out, expect)
 
 
 def test_inplace_column_scale():

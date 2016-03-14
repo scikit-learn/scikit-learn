@@ -18,6 +18,7 @@ from sklearn.cluster import estimate_bandwidth
 from sklearn.cluster import get_bin_seeds
 from sklearn.datasets.samples_generator import make_blobs
 
+
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
 X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
@@ -44,6 +45,17 @@ def test_mean_shift():
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
+
+
+def test_parallel():
+    ms1 = MeanShift(n_jobs=2)
+    ms1.fit(X)
+
+    ms2 = MeanShift()
+    ms2.fit(X)
+
+    assert_array_equal(ms1.cluster_centers_,ms2.cluster_centers_)
+    assert_array_equal(ms1.labels_,ms2.labels_)
 
 
 def test_meanshift_predict():

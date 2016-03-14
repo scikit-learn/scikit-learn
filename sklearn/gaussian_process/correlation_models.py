@@ -38,8 +38,8 @@ def absolute_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.abs(np.asarray(d, dtype=np.float))
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.abs(np.asarray(d, dtype=np.float64))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -81,8 +81,8 @@ def squared_exponential(theta, d):
         autocorrelation model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -125,8 +125,8 @@ def generalized_exponential(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -174,8 +174,8 @@ def pure_nugget(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     n_eval = d.shape[0]
     r = np.zeros(n_eval)
@@ -211,8 +211,8 @@ def cubic(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -261,8 +261,8 @@ def linear(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]

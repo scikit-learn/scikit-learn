@@ -30,7 +30,7 @@ kernel and its parameters.
 .. NOTE:: while plotting the decision function of classifiers for toy 2D
    datasets can help get an intuitive understanding of their respective
    expressive power, be aware that those intuitions don't always generalize to
-   more realistic high-dimensional problem.
+   more realistic high-dimensional problems.
 
 """
 print(__doc__)

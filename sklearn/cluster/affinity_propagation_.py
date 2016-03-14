@@ -1,7 +1,5 @@
-""" Algorithms for clustering : Meanshift,  Affinity propagation and spectral
-clustering.
+"""Affinity Propagation clustering algorithm."""
 
-"""
 # Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 

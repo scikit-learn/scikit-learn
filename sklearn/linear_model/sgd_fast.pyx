@@ -603,11 +603,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if shuffle:
                 dataset.shuffle(seed)
             for i in range(n_samples):
-                dataset.next(&x_data_ptr,
-                             &x_ind_ptr,
-                             &xnnz,
-                             &y,
-                             &sample_weight)
+                dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
+                             &y, &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
@@ -660,7 +657,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     if fit_intercept == 1:
                         intercept += update * intercept_decay
 
-                if average > 0 and average <= t:
+                if 0 < average <= t:
                     # compute the average for the intercept and update the
                     # average weights, this is done regardless as to whether
                     # the update is 0

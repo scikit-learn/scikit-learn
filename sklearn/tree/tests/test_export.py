@@ -2,24 +2,28 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
+from re import finditer
+
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
+from sklearn.utils.testing import assert_in
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
-y2 = [[-1, 1], [-1, 2], [-1, 3], [1, 1], [1, 2], [1, 3]]
+y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
 w = [1, 1, 1, .5, .5, .5]
 
 
 def test_graphviz_toy():
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
-                                 min_samples_split=1,
+                                 min_samples_split=2,
                                  criterion="gini",
                                  random_state=2)
     clf.fit(X, y)
@@ -138,7 +142,7 @@ def test_graphviz_toy():
 
     # Test multi-output with weighted samples
     clf = DecisionTreeClassifier(max_depth=2,
-                                 min_samples_split=1,
+                                 min_samples_split=2,
                                  criterion="gini",
                                  random_state=2)
     clf = clf.fit(X, y2, sample_weight=w)
@@ -150,36 +154,29 @@ def test_graphviz_toy():
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
                 'value = [[3.0, 1.5, 0.0]\\n' \
-                '[1.5, 1.5, 1.5]]", fillcolor="#e5813900"] ;\n' \
-                '1 [label="X[1] <= -1.5\\nsamples = 3\\n' \
-                'value = [[3, 0, 0]\\n[1, 1, 1]]", ' \
-                'fillcolor="#e5813965"] ;\n' \
+                '[3.0, 1.0, 0.5]]", fillcolor="#e5813900"] ;\n' \
+                '1 [label="samples = 3\\nvalue = [[3, 0, 0]\\n' \
+                '[3, 0, 0]]", fillcolor="#e58139ff"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
                 'headlabel="True"] ;\n' \
-                '2 [label="samples = 1\\nvalue = [[1, 0, 0]\\n' \
-                '[0, 0, 1]]", fillcolor="#e58139ff"] ;\n' \
-                '1 -> 2 ;\n' \
-                '3 [label="samples = 2\\nvalue = [[2, 0, 0]\\n' \
-                '[1, 1, 0]]", fillcolor="#e581398c"] ;\n' \
-                '1 -> 3 ;\n' \
-                '4 [label="X[0] <= 1.5\\nsamples = 3\\n' \
-                'value = [[0.0, 1.5, 0.0]\\n[0.5, 0.5, 0.5]]", ' \
-                'fillcolor="#e5813965"] ;\n' \
-                '0 -> 4 [labeldistance=2.5, labelangle=-45, ' \
+                '2 [label="X[0] <= 1.5\\nsamples = 3\\n' \
+                'value = [[0.0, 1.5, 0.0]\\n' \
+                '[0.0, 1.0, 0.5]]", fillcolor="#e5813986"] ;\n' \
+                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
-                '5 [label="samples = 2\\nvalue = [[0.0, 1.0, 0.0]\\n' \
-                '[0.5, 0.5, 0.0]]", fillcolor="#e581398c"] ;\n' \
-                '4 -> 5 ;\n' \
-                '6 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n' \
+                '3 [label="samples = 2\\nvalue = [[0, 1, 0]\\n' \
+                '[0, 1, 0]]", fillcolor="#e58139ff"] ;\n' \
+                '2 -> 3 ;\n' \
+                '4 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n' \
                 '[0.0, 0.0, 0.5]]", fillcolor="#e58139ff"] ;\n' \
-                '4 -> 6 ;\n' \
+                '2 -> 4 ;\n' \
                 '}'
 
     assert_equal(contents1, contents2)
 
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
-                                min_samples_split=1,
+                                min_samples_split=2,
                                 criterion="mse",
                                 random_state=2)
     clf.fit(X, y)
@@ -195,7 +192,7 @@ def test_graphviz_toy():
                 'edge [fontname=helvetica] ;\n' \
                 'rankdir=LR ;\n' \
                 '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6\\n' \
-                'value = 0.0", fillcolor="#e581397f"] ;\n' \
+                'value = 0.0", fillcolor="#e5813980"] ;\n' \
                 '1 [label="mse = 0.0\\nsamples = 3\\nvalue = -1.0", ' \
                 'fillcolor="#e5813900"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
@@ -213,7 +210,7 @@ def test_graphviz_toy():
 
 def test_graphviz_errors():
     # Check for errors of export_graphviz
-    clf = DecisionTreeClassifier(max_depth=3, min_samples_split=1)
+    clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
     clf.fit(X, y)
 
     # Check feature_names error
@@ -223,3 +220,18 @@ def test_graphviz_errors():
     # Check class_names error
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+
+
+def test_friedman_mse_in_graphviz():
+    clf = DecisionTreeRegressor(criterion="friedman_mse", random_state=0)
+    clf.fit(X, y)
+    dot_data = StringIO()
+    export_graphviz(clf, out_file=dot_data)
+
+    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
+    clf.fit(X, y)
+    for estimator in clf.estimators_:
+        export_graphviz(estimator[0], out_file=dot_data)
+
+    for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
+        assert_in("friedman_mse", finding.group())

@@ -28,7 +28,7 @@ h = .02  # step size in the mesh
 cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
 cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 
-for shrinkage in [None, 0.1]:
+for shrinkage in [None, .2]:
     # we create an instance of Neighbours Classifier and fit the data.
     clf = NearestCentroid(shrink_threshold=shrinkage)
     clf.fit(X, y)

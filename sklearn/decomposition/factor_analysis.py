@@ -30,7 +30,7 @@ from ..externals.six.moves import xrange
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, fast_dot, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -151,7 +151,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float)
+        X = check_array(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components

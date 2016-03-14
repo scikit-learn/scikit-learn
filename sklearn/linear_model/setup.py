@@ -34,6 +34,10 @@ def configuration(parent_package='', top_path=None):
                                                           []),
                          **blas_info)
 
+    config.add_extension('sag_fast',
+                         sources=['sag_fast.c'],
+                         include_dirs=numpy.get_include())
+
     # add other directories
     config.add_subpackage('tests')
 

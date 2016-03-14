@@ -101,13 +101,6 @@ class OutlierDetectionMixin(object):
 
         return is_inlier
 
-    @property
-    def threshold(self):
-        warnings.warn(("The threshold attribute is renamed to threshold_ from "
-                       "0.16 onwards and will be removed in 0.18"),
-                      DeprecationWarning, stacklevel=1)
-        return getattr(self, 'threshold_', None)
-
 
 class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.

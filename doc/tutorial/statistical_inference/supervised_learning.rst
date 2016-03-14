@@ -95,7 +95,8 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-                   metric_params=None, n_neighbors=5, p=2, weights='uniform')
+               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+               weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -154,7 +155,7 @@ Linear regression
 .. currentmodule:: sklearn.linear_model
 
 :class:`LinearRegression`,
-in it's simplest form, fits a linear model to the data set by adjusting
+in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
@@ -371,8 +372,8 @@ function or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0)
+              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
+              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
 
 This is known as :class:`LogisticRegression`.
 

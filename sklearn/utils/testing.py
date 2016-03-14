@@ -7,6 +7,7 @@
 #          Olivier Grisel
 #          Arnaud Joly
 #          Denis Engemann
+#          Giorgio Patrini
 # License: BSD 3 clause
 import os
 import inspect
@@ -15,10 +16,12 @@ import warnings
 import sys
 import re
 import platform
+import struct
 
 import scipy as sp
 import scipy.io
 from functools import wraps
+from operator import itemgetter
 try:
     # Python 2
     from urllib2 import urlopen
@@ -28,8 +31,20 @@ except ImportError:
     from urllib.request import urlopen
     from urllib.error import HTTPError
 
+import tempfile
+import shutil
+import os.path as op
+import atexit
+
+# WindowsError only exist on Windows
+try:
+    WindowsError
+except NameError:
+    WindowsError = None
+
 import sklearn
 from sklearn.base import BaseEstimator
+from sklearn.externals import joblib
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -45,17 +60,20 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing import assert_approx_equal
 import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
+from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal"]
+           "assert_greater", "assert_greater_equal",
+           "assert_approx_equal"]
 
 
 try:
@@ -93,7 +111,7 @@ except ImportError:
                                   callable_obj.__name__))
 
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
-# assert_raises_regex but lets keep the bacward compat in scikit-learn with
+# assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 
@@ -512,12 +530,12 @@ def uninstall_mldata_mock():
 
 
 # Meta estimators need another estimator to be instantiated.
-META_ESTIMATORS = ["OneVsOneClassifier",
+META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputRegressor",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV",
-         "RandomizedSearchCV"]
+OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
+         "SelectFromModel"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
@@ -588,7 +606,7 @@ def all_estimators(include_meta_estimators=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname:
+        if (".tests." in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
@@ -632,11 +650,22 @@ def all_estimators(include_meta_estimators=False,
                              " %s." % repr(type_filter))
 
     # drop duplicates, sort for reproducibility
-    return sorted(set(estimators))
+    # itemgetter is used to ensure the sort does not extend to the 2nd item of
+    # the tuple
+    return sorted(set(estimators), key=itemgetter(0))
 
 
 def set_random_state(estimator, random_state=0):
-    if "random_state" in estimator.get_params().keys():
+    """Set random state of an estimator if it has the `random_state` param.
+
+    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
+    is one such class.
+    """
+
+    if isinstance(estimator, DBSCAN):
+        return
+
+    if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
@@ -658,12 +687,28 @@ def if_matplotlib(func):
     return run_test
 
 
+def skip_if_32bit(func):
+    """Test decorator that skips tests on 32bit platforms."""
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        bits = 8 * struct.calcsize("P")
+        if bits == 32:
+            raise SkipTest('Test skipped on 32bit platforms.')
+        else:
+            return func(*args, **kwargs)
+    return run_test
+
+
 def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
                   message='Multi-process bug in Mac OS X >= 10.7 '
                           '(see issue #636)'):
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
+                  " in 0.19: use the safer and more generic"
+                  " if_safe_multiprocessing_with_blas instead",
+                  DeprecationWarning)
     mac_version, _, _ = platform.mac_ver()
     skip = '.'.join(mac_version.split('.')[:2]) in versions
 
@@ -674,6 +719,35 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
                 raise SkipTest(message)
         return func
     return decorator
+
+
+def if_safe_multiprocessing_with_blas(func):
+    """Decorator for tests involving both BLAS calls and multiprocessing
+
+    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
+    some implementation of BLAS (or other libraries that manage an internal
+    posix thread pool) can cause a crash or a freeze of the Python process.
+
+    In practice all known packaged distributions (from Linux distros or
+    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
+    only impact OSX users.
+
+    This wrapper makes it possible to skip tests that can possibly cause
+    this crash under OS X with.
+
+    Under Python 3.4+ it is possible to use the `forkserver` start method
+    for multiprocessing to avoid this issue. However it can cause pickling
+    errors on interactively defined functions. It therefore not enabled by
+    default.
+
+    """
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        if sys.platform == 'darwin':
+            raise SkipTest(
+                "Possible multi-process bug with some BLAS")
+        return func(*args, **kwargs)
+    return run_test
 
 
 def clean_warning_registry():
@@ -696,6 +770,37 @@ def check_skip_travis():
     """Skip test if being run on Travis."""
     if os.environ.get('TRAVIS') == "true":
         raise SkipTest("This test needs to be skipped on Travis")
+
+
+def _delete_folder(folder_path, warn=False):
+    """Utility function to cleanup a temporary folder if still existing.
+    Copy from joblib.pool (for independence)"""
+    try:
+        if os.path.exists(folder_path):
+            # This can fail under windows,
+            #  but will succeed when called by atexit
+            shutil.rmtree(folder_path)
+    except WindowsError:
+        if warn:
+            warnings.warn("Could not delete temporary folder %s" % folder_path)
+
+
+class TempMemmap(object):
+    def __init__(self, data, mmap_mode='r'):
+        self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
+        self.mmap_mode = mmap_mode
+        self.data = data
+
+    def __enter__(self):
+        fpath = op.join(self.temp_folder, 'data.pkl')
+        joblib.dump(self.data, fpath)
+        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
+        atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
+        return data_read_only
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _delete_folder(self.temp_folder)
+
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)

@@ -17,6 +17,12 @@ from .utils import indexable
 from .utils.fixes import astype
 
 
+warnings.warn("This module has been deprecated in favor of the "
+              "model_selection module into which all the functions are moved."
+              " This module will be removed in 0.20",
+              DeprecationWarning)
+
+
 __all__ = ['learning_curve', 'validation_curve']
 
 
@@ -59,10 +65,21 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         be big enough to contain at least one sample from each class.
         (default: np.linspace(0.1, 1.0, 5))
 
-    cv : integer, cross-validation generator, optional
-        If an integer is passed, it is the number of folds (defaults to 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -261,10 +278,21 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
 
-    cv : integer, cross-validation generator, optional
-        If an integer is passed, it is the number of folds (defaults to 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or

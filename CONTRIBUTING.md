@@ -21,26 +21,26 @@ GitHub:
 
 2. Clone this copy to your local disk:
 
-          $ git clone git@github.com:YourLogin/scikit-learn.git
-          $ cd scikit-learn
+        $ git clone git@github.com:YourLogin/scikit-learn.git
+        $ cd scikit-learn
 
 3. Create a branch to hold your changes:
 
-          $ git checkout -b my-feature
+        $ git checkout -b my-feature
 
    and start making changes. Never work in the ``master`` branch!
 
 4. Work on this copy on your computer using Git to do the version
    control. When you're done editing, do:
 
-          $ git add modified_files
-          $ git commit
+        $ git add modified_files
+        $ git commit
 
    to record your changes in Git, then push them to GitHub with:
 
-          $ git push -u origin my-feature
+        $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the scikit-learn repo,
+Finally, go to the web page of your fork of the scikit-learn repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
@@ -56,7 +56,7 @@ following rules before submitting a pull request:
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder):
 
-          $ make
+        $ make
 
 -  When adding additional functionality, provide at least one
    example script in the ``examples/`` folder. Have a look at other
@@ -79,23 +79,23 @@ tools:
 
 -  Code with good unittest coverage (at least 80%), check with:
 
-          $ pip install nose coverage
-          $ nosetests --with-coverage path/to/tests_for_package
+        $ pip install nose coverage
+        $ nosetests --with-coverage path/to/tests_for_package
 
 -  No pyflakes warnings, check with:
 
-           $ pip install pyflakes
-           $ pyflakes path/to/module.py
+        $ pip install pyflakes
+        $ pyflakes path/to/module.py
 
 -  No PEP8 warnings, check with:
 
-           $ pip install pep8
-           $ pep8 path/to/module.py
+        $ pip install pep8
+        $ pep8 path/to/module.py
 
 -  AutoPEP8 can help you fix some of the easy redundant errors:
 
-           $ pip install autopep8
-           $ autopep8 path/to/pep8.py
+        $ pip install autopep8
+        $ autopep8 path/to/pep8.py
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing

@@ -26,13 +26,14 @@ from time import time
 from operator import itemgetter
 from scipy.stats import randint as sp_randint
 
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.datasets import load_digits
 from sklearn.ensemble import RandomForestClassifier
 
 # get some data
-iris = load_digits()
-X, y = iris.data, iris.target
+digits = load_digits()
+X, y = digits.data, digits.target
 
 # build a classifier
 clf = RandomForestClassifier(n_estimators=20)

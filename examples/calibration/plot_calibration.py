@@ -36,7 +36,7 @@ from sklearn.datasets import make_blobs
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 
 
 n_samples = 50000

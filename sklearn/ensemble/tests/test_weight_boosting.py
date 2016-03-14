@@ -3,13 +3,15 @@
 import numpy as np
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, assert_true
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
+from sklearn.base import BaseEstimator
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import weight_boosting
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
@@ -41,6 +43,35 @@ iris.data, iris.target = shuffle(iris.data, iris.target, random_state=rng)
 boston = datasets.load_boston()
 boston.data, boston.target = shuffle(boston.data, boston.target,
                                      random_state=rng)
+
+
+def test_samme_proba():
+    # Test the `_samme_proba` helper function.
+
+    # Define some example (bad) `predict_proba` output.
+    probs = np.array([[1, 1e-6, 0],
+                      [0.19, 0.6, 0.2],
+                      [-999, 0.51, 0.5],
+                      [1e-6, 1, 1e-9]])
+    probs /= np.abs(probs.sum(axis=1))[:, np.newaxis]
+
+    # _samme_proba calls estimator.predict_proba.
+    # Make a mock object so I can control what gets returned.
+    class MockEstimator(object):
+        def predict_proba(self, X):
+            assert_array_equal(X.shape, probs.shape)
+            return probs
+    mock = MockEstimator()
+
+    samme_proba = weight_boosting._samme_proba(mock, 3, np.ones_like(probs))
+
+    assert_array_equal(samme_proba.shape, probs.shape)
+    assert_true(np.isfinite(samme_proba).all())
+
+    # Make sure that the correct elements come out as smallest --
+    # `_samme_proba` should preserve the ordering in each example.
+    assert_array_equal(np.argmin(samme_proba, axis=1), [2, 0, 0, 2])
+    assert_array_equal(np.argmax(samme_proba, axis=1), [0, 1, 1, 1])
 
 
 def test_classification_toy():
@@ -256,14 +287,8 @@ def test_base_estimator():
 
 
 def test_sample_weight_missing():
-    from sklearn.linear_model import LinearRegression
+    from sklearn.linear_model import LogisticRegression
     from sklearn.cluster import KMeans
-
-    clf = AdaBoostClassifier(LinearRegression(), algorithm="SAMME")
-    assert_raises(ValueError, clf.fit, X, y_regr)
-
-    clf = AdaBoostRegressor(LinearRegression())
-    assert_raises(ValueError, clf.fit, X, y_regr)
 
     clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")
     assert_raises(ValueError, clf.fit, X, y_regr)
@@ -286,7 +311,6 @@ def test_sparse_classification():
 
     X, y = datasets.make_multilabel_classification(n_classes=1, n_samples=15,
                                                    n_features=5,
-                                                   return_indicator=True,
                                                    random_state=42)
     # Flatten y to a 1d array
     y = np.ravel(y)
@@ -419,3 +443,23 @@ def test_sparse_regression():
 
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
+
+
+def test_sample_weight_adaboost_regressor():
+    """
+    AdaBoostRegressor should work without sample_weights in the base estimator
+
+    The random weighted sampling is done internally in the _boost method in
+    AdaBoostRegressor.
+    """
+    class DummyEstimator(BaseEstimator):
+
+        def fit(self, X, y):
+            pass
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
+    boost.fit(X, y_regr)
+    assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))

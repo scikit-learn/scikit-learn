@@ -49,6 +49,17 @@ MIN_IDEAL_BATCH_DURATION = .2
 # on a single worker while other workers have no work to process any more.
 MAX_IDEAL_BATCH_DURATION = 2
 
+# Under Linux or OS X the default start method of multiprocessing
+# can cause third party libraries to crash. Under Python 3.4+ it is possible
+# to set an environment variable to switch the default start method from
+# 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
+# of causing semantic changes and some additional pool instanciation overhead.
+if hasattr(mp, 'get_context'):
+    method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
+    DEFAULT_MP_CONTEXT = mp.get_context(method=method)
+else:
+    DEFAULT_MP_CONTEXT = None
+
 
 class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
@@ -126,10 +137,7 @@ class SafeFunction(object):
             e_type, e_value, e_tb = sys.exc_info()
             text = format_exc(e_type, e_value, e_tb, context=10,
                               tb_offset=1)
-            if issubclass(e_type, TransportableException):
-                raise
-            else:
-                raise TransportableException(text, e_type)
+            raise TransportableException(text, e_type)
 
 
 ###############################################################################
@@ -406,10 +414,10 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
     '''
     def __init__(self, n_jobs=1, backend='multiprocessing', verbose=0,
-                 pre_dispatch='2 * n_jobs', batch_size='auto', temp_folder=None,
-                 max_nbytes='1M', mmap_mode='r'):
+                 pre_dispatch='2 * n_jobs', batch_size='auto',
+                 temp_folder=None, max_nbytes='1M', mmap_mode='r'):
         self.verbose = verbose
-        self._mp_context = None
+        self._mp_context = DEFAULT_MP_CONTEXT
         if backend is None:
             # `backend=None` was supported in 0.8.2 with this effect
             backend = "multiprocessing"
@@ -433,7 +441,6 @@ class Parallel(Logger):
                 % batch_size)
 
         self.pre_dispatch = pre_dispatch
-        self._pool = None
         self._temp_folder = temp_folder
         if isinstance(max_nbytes, _basestring):
             self._max_nbytes = 1024 * memstr_to_kbytes(max_nbytes)
@@ -441,12 +448,108 @@ class Parallel(Logger):
             self._max_nbytes = max_nbytes
         self._mmap_mode = mmap_mode
         # Not starting the pool in the __init__ is a design decision, to be
-        # able to close it ASAP, and not burden the user with closing it.
+        # able to close it ASAP, and not burden the user with closing it
+        # unless they choose to use the context manager API with a with block.
+        self._pool = None
         self._output = None
         self._jobs = list()
-        # A flag used to abort the dispatching of jobs in case an
-        # exception is found
-        self._aborting = False
+        self._managed_pool = False
+
+        # This lock is used coordinate the main thread of this process with
+        # the async callback thread of our the pool.
+        self._lock = threading.Lock()
+
+    def __enter__(self):
+        self._managed_pool = True
+        self._initialize_pool()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._terminate_pool()
+        self._managed_pool = False
+
+    def _effective_n_jobs(self):
+        n_jobs = self.n_jobs
+        if n_jobs == 0:
+            raise ValueError('n_jobs == 0 in Parallel has no meaning')
+        elif mp is None or n_jobs is None:
+            # multiprocessing is not available or disabled, fallback
+            # to sequential mode
+            return 1
+        elif n_jobs < 0:
+            n_jobs = max(mp.cpu_count() + 1 + n_jobs, 1)
+        return n_jobs
+
+    def _initialize_pool(self):
+        """Build a process or thread pool and return the number of workers"""
+        n_jobs = self._effective_n_jobs()
+        # The list of exceptions that we will capture
+        self.exceptions = [TransportableException]
+
+        if n_jobs == 1:
+            # Sequential mode: do not use a pool instance to avoid any
+            # useless dispatching overhead
+            self._pool = None
+        elif self.backend == 'threading':
+            self._pool = ThreadPool(n_jobs)
+        elif self.backend == 'multiprocessing':
+            if mp.current_process().daemon:
+                # Daemonic processes cannot have children
+                self._pool = None
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested,'
+                    ' setting n_jobs=1',
+                    stacklevel=3)
+                return 1
+            elif threading.current_thread().name != 'MainThread':
+                # Prevent posix fork inside in non-main posix threads
+                self._pool = None
+                warnings.warn(
+                    'Multiprocessing backed parallel loops cannot be nested'
+                    ' below threads, setting n_jobs=1',
+                    stacklevel=3)
+                return 1
+            else:
+                already_forked = int(os.environ.get(JOBLIB_SPAWNED_PROCESS, 0))
+                if already_forked:
+                    raise ImportError('[joblib] Attempting to do parallel computing '
+                            'without protecting your import on a system that does '
+                            'not support forking. To use parallel-computing in a '
+                            'script, you must protect your main loop using "if '
+                            "__name__ == '__main__'"
+                            '". Please see the joblib documentation on Parallel '
+                            'for more information'
+                        )
+                # Set an environment variable to avoid infinite loops
+                os.environ[JOBLIB_SPAWNED_PROCESS] = '1'
+
+                # Make sure to free as much memory as possible before forking
+                gc.collect()
+                poolargs = dict(
+                    max_nbytes=self._max_nbytes,
+                    mmap_mode=self._mmap_mode,
+                    temp_folder=self._temp_folder,
+                    verbose=max(0, self.verbose - 50),
+                )
+                if self._mp_context is not None:
+                    # Use Python 3.4+ multiprocessing context isolation
+                    poolargs['context'] = self._mp_context
+                self._pool = MemmapingPool(n_jobs, **poolargs)
+
+                # We are using multiprocessing, we also want to capture
+                # KeyboardInterrupts
+                self.exceptions.extend([KeyboardInterrupt, WorkerInterrupt])
+        else:
+            raise ValueError("Unsupported backend: %s" % self.backend)
+        return n_jobs
+
+    def _terminate_pool(self):
+        if self._pool is not None:
+            self._pool.close()
+            self._pool.terminate()  # terminate does a join()
+            self._pool = None
+            if self.backend == 'multiprocessing':
+                os.environ.pop(JOBLIB_SPAWNED_PROCESS, 0)
 
     def _dispatch(self, batch):
         """Queue the batch for computing, with or without multiprocessing
@@ -455,6 +558,10 @@ class Parallel(Logger):
         indirectly via dispatch_one_batch.
 
         """
+        # If job.get() catches an exception, it closes the queue:
+        if self._aborting:
+            return
+
         if self._pool is None:
             job = ImmediateComputeBatch(batch)
             self._jobs.append(job)
@@ -467,10 +574,6 @@ class Parallel(Logger):
                             short_format_time(time.time() - self._start_time)
                         ))
         else:
-            # If job.get() catches an exception, it closes the queue:
-            if self._aborting:
-                return
-
             dispatch_timestamp = time.time()
             cb = BatchCompletionCallBack(dispatch_timestamp, len(batch), self)
             job = self._pool.apply_async(SafeFunction(batch), callback=cb)
@@ -600,7 +703,7 @@ class Parallel(Logger):
                 if (is_last_item or cursor % frequency):
                     return
             remaining_time = (elapsed_time / (index + 1) *
-                        (self.n_dispatched_tasks - index - 1.))
+                              (self.n_dispatched_tasks - index - 1.))
             self._print('Done %3i out of %3i | elapsed: %s remaining: %s',
                         (index + 1,
                          total_tasks,
@@ -615,127 +718,61 @@ class Parallel(Logger):
                 # Wait for an async callback to dispatch new jobs
                 time.sleep(0.01)
                 continue
-            # We need to be careful: the job queue can be filling up as
-            # we empty it
-            if hasattr(self, '_lock'):
-                self._lock.acquire()
-            job = self._jobs.pop(0)
-            if hasattr(self, '_lock'):
-                self._lock.release()
+            # We need to be careful: the job list can be filling up as
+            # we empty it and Python list are not thread-safe by default hence
+            # the use of the lock
+            with self._lock:
+                job = self._jobs.pop(0)
             try:
                 self._output.extend(job.get())
             except tuple(self.exceptions) as exception:
-                try:
-                    self._aborting = True
-                    self._lock.acquire()
-                    if isinstance(exception,
-                            (KeyboardInterrupt, WorkerInterrupt)):
-                        # We have captured a user interruption, clean up
-                        # everything
-                        if hasattr(self, '_pool'):
-                            self._pool.close()
-                            self._pool.terminate()
-                            # We can now allow subprocesses again
-                            os.environ.pop('__JOBLIB_SPAWNED_PARALLEL__', 0)
-                        raise exception
-                    elif isinstance(exception, TransportableException):
-                        # Capture exception to add information on the local
-                        # stack in addition to the distant stack
-                        this_report = format_outer_frames(context=10,
-                                                          stack_start=1)
-                        report = """Multiprocessing exception:
-    %s
-    ---------------------------------------------------------------------------
-    Sub-process traceback:
-    ---------------------------------------------------------------------------
-    %s""" % (
-                                this_report,
-                                exception.message,
-                            )
-                        # Convert this to a JoblibException
-                        exception_type = _mk_exception(exception.etype)[0]
-                        raise exception_type(report)
-                    raise exception
-                finally:
-                    self._lock.release()
+                # Stop dispatching any new job in the async callback thread
+                self._aborting = True
+
+                if isinstance(exception, TransportableException):
+                    # Capture exception to add information on the local
+                    # stack in addition to the distant stack
+                    this_report = format_outer_frames(context=10,
+                                                      stack_start=1)
+                    report = """Multiprocessing exception:
+%s
+---------------------------------------------------------------------------
+Sub-process traceback:
+---------------------------------------------------------------------------
+%s""" % (this_report, exception.message)
+                    # Convert this to a JoblibException
+                    exception_type = _mk_exception(exception.etype)[0]
+                    exception = exception_type(report)
+
+                # Kill remaining running processes without waiting for
+                # the results as we will raise the exception we got back
+                # to the caller instead of returning any result.
+                self._terminate_pool()
+                if self._managed_pool:
+                    # In case we had to terminate a managed pool, let
+                    # us start a new one to ensure that subsequent calls
+                    # to __call__ on the same Parallel instance will get
+                    # a working pool as they expect.
+                    self._initialize_pool()
+                raise exception
 
     def __call__(self, iterable):
         if self._jobs:
             raise ValueError('This Parallel instance is already running')
-        n_jobs = self.n_jobs
-        if n_jobs == 0:
-            raise ValueError('n_jobs == 0 in Parallel has no meaning')
-        if n_jobs < 0 and mp is not None:
-            n_jobs = max(mp.cpu_count() + 1 + n_jobs, 1)
-
-        # The list of exceptions that we will capture
-        self.exceptions = [TransportableException]
-        self._lock = threading.Lock()
-
-        # Whether or not to set an environment flag to track
-        # multiple process spawning
-        set_environ_flag = False
-        if (n_jobs is None or mp is None or n_jobs == 1):
-            n_jobs = 1
-            self._pool = None
-        elif self.backend == 'threading':
-            self._pool = ThreadPool(n_jobs)
-        elif self.backend == 'multiprocessing':
-            if mp.current_process().daemon:
-                # Daemonic processes cannot have children
-                n_jobs = 1
-                self._pool = None
-                warnings.warn(
-                    'Multiprocessing-backed parallel loops cannot be nested,'
-                    ' setting n_jobs=1',
-                    stacklevel=2)
-            elif threading.current_thread().name != 'MainThread':
-                # Prevent posix fork inside in non-main posix threads
-                n_jobs = 1
-                self._pool = None
-                warnings.warn(
-                    'Multiprocessing backed parallel loops cannot be nested'
-                    ' below threads, setting n_jobs=1',
-                    stacklevel=2)
-            else:
-                already_forked = int(os.environ.get('__JOBLIB_SPAWNED_PARALLEL__', 0))
-                if already_forked:
-                    raise ImportError('[joblib] Attempting to do parallel computing '
-                            'without protecting your import on a system that does '
-                            'not support forking. To use parallel-computing in a '
-                            'script, you must protect your main loop using "if '
-                            "__name__ == '__main__'"
-                            '". Please see the joblib documentation on Parallel '
-                            'for more information'
-                        )
-
-                # Make sure to free as much memory as possible before forking
-                gc.collect()
-
-                # Set an environment variable to avoid infinite loops
-                set_environ_flag = True
-                poolargs = dict(
-                    max_nbytes=self._max_nbytes,
-                    mmap_mode=self._mmap_mode,
-                    temp_folder=self._temp_folder,
-                    verbose=max(0, self.verbose - 50),
-                    context_id=0,  # the pool is used only for one call
-                )
-                if self._mp_context is not None:
-                    # Use Python 3.4+ multiprocessing context isolation
-                    poolargs['context'] = self._mp_context
-                self._pool = MemmapingPool(n_jobs, **poolargs)
-                # We are using multiprocessing, we also want to capture
-                # KeyboardInterrupts
-                self.exceptions.extend([KeyboardInterrupt, WorkerInterrupt])
+        # A flag used to abort the dispatching of jobs in case an
+        # exception is found
+        self._aborting = False
+        if not self._managed_pool:
+            n_jobs = self._initialize_pool()
         else:
-            raise ValueError("Unsupported backend: %s" % self.backend)
+            n_jobs = self._effective_n_jobs()
 
         if self.batch_size == 'auto':
             self._effective_batch_size = 1
 
         iterator = iter(iterable)
         pre_dispatch = self.pre_dispatch
+
         if pre_dispatch == 'all' or n_jobs == 1:
             # prevent further dispatch via multiprocessing callback thread
             self._original_iterator = None
@@ -757,13 +794,13 @@ class Parallel(Logger):
         self.n_completed_tasks = 0
         self._smoothed_batch_duration = 0.0
         try:
-            if set_environ_flag:
-                # Set an environment variable to avoid infinite loops
-                os.environ[JOBLIB_SPAWNED_PROCESS] = '1'
-            self._iterating = True
-
+            # Only set self._iterating to True if at least a batch
+            # was dispatched. In particular this covers the edge
+            # case of Parallel used with an exhausted iterator.
             while self.dispatch_one_batch(iterator):
-                pass
+                self._iterating = True
+            else:
+                self._iterating = False
 
             if pre_dispatch == "all" or n_jobs == 1:
                 # The iterable was consumed all at once by the above for loop.
@@ -774,17 +811,11 @@ class Parallel(Logger):
             # Make sure that we get a last message telling us we are done
             elapsed_time = time.time() - self._start_time
             self._print('Done %3i out of %3i | elapsed: %s finished',
-                        (len(self._output),
-                         len(self._output),
-                            short_format_time(elapsed_time)
-                        ))
-
+                        (len(self._output), len(self._output),
+                         short_format_time(elapsed_time)))
         finally:
-            if n_jobs > 1:
-                self._pool.close()
-                self._pool.terminate()  # terminate does a join()
-                if self.backend == 'multiprocessing':
-                    os.environ.pop(JOBLIB_SPAWNED_PROCESS, 0)
+            if not self._managed_pool:
+                self._terminate_pool()
             self._jobs = list()
         output = self._output
         self._output = None

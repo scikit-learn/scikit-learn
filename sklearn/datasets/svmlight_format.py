@@ -11,7 +11,7 @@ libsvm command line programs.
 """
 
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -225,7 +225,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     dtype : numpy data type, default np.float64
         Data type of dataset to be loaded. This will be the data type of the
         output numpy arrays ``X`` and ``y``.
- 
+
     Returns
     -------
     [X1, y1, ..., Xn, yn]
@@ -275,7 +275,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     return result
 
 
-def _dump_svmlight(X, y, f, one_based, comment, query_id):
+def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
     is_sp = int(hasattr(X, "tocsr"))
     if X.dtype.kind == 'i':
         value_pattern = u("%d:%d")
@@ -283,10 +283,11 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         value_pattern = u("%d:%.16g")
 
     if y.dtype.kind == 'i':
-        line_pattern = u("%d")
+        label_pattern = u("%d")
     else:
-        line_pattern = u("%.16g")
+        label_pattern = u("%.16g")
 
+    line_pattern = u("%s")
     if query_id is not None:
         line_pattern += u(" qid:%d")
     line_pattern += u(" %s\n")
@@ -309,14 +310,23 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
             row = zip(np.where(nz)[0], X[i, nz])
 
         s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
-        if query_id is not None:
-            feat = (y[i], query_id[i], s)
+
+        if multilabel:
+            nz_labels = np.where(y[i] != 0)[0]
+            labels_str = ",".join(label_pattern % j for j in nz_labels)
         else:
-            feat = (y[i], s)
+            labels_str = label_pattern % y[i]
+
+        if query_id is not None:
+            feat = (labels_str, query_id[i], s)
+        else:
+            feat = (labels_str, s)
+
         f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
+def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
+                       multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 
     This format is a text-based format, with one sample per line. It does
@@ -331,8 +341,9 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples]
-        Target values.
+    y : array-like, shape = [n_samples] or [n_samples, n_labels]
+        Target values. Class labels must be an integer or float, or array-like
+        objects of integer or float for multilabel classifications.
 
     f : string or file-like in binary mode
         If string, specifies the path that will contain the data.
@@ -354,6 +365,13 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
     query_id : array-like, shape = [n_samples]
         Array containing pairwise preference constraints (qid in svmlight
         format).
+
+    multilabel: boolean, optional
+        Samples may have several labels each (see
+        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+
+        .. versionadded:: 0.17
+           parameter *multilabel* to support multilabel datasets.
     """
     if comment is not None:
         # Convert comment string to list of lines in UTF-8.
@@ -368,7 +386,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
             raise ValueError("comment string contains NUL byte")
 
     y = np.asarray(y)
-    if y.ndim != 1:
+    if y.ndim != 1 and not multilabel:
         raise ValueError("expected y of shape (n_samples,), got %r"
                          % (y.shape,))
 
@@ -396,7 +414,7 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
     one_based = not zero_based
 
     if hasattr(f, "write"):
-        _dump_svmlight(X, y, f, one_based, comment, query_id)
+        _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id)
     else:
         with open(f, "wb") as f:
-            _dump_svmlight(X, y, f, one_based, comment, query_id)
+            _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id)

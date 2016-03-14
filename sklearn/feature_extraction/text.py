@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Roman Sinayev <roman.sinayev@gmail.com>
@@ -88,8 +88,10 @@ def _check_stop_list(stop):
         return ENGLISH_STOP_WORDS
     elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
+    elif stop is None:
+        return None
     else:               # assume it's a collection
-        return stop
+        return frozenset(stop)
 
 
 class VectorizerMixin(object):
@@ -242,6 +244,8 @@ class VectorizerMixin(object):
     def _validate_vocabulary(self):
         vocabulary = self.vocabulary
         if vocabulary is not None:
+            if isinstance(vocabulary, set):
+                vocabulary = sorted(vocabulary)
             if not isinstance(vocabulary, Mapping):
                 vocab = {}
                 for i, t in enumerate(vocabulary):
@@ -365,6 +369,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
+        Only applies if ``analyzer == 'word'``.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -376,13 +381,14 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
+        Only applies if ``analyzer == 'word'``.
 
     lowercase : boolean, default=True
         Convert all characters to lowercase before tokenizing.
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `analyzer == 'word'`. The default regexp selects tokens of 2
+        if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -552,6 +558,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
+        Only applies if ``analyzer == 'word'``.
 
     ngram_range : tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
@@ -563,6 +570,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
+        Only applies if ``analyzer == 'word'``.
 
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
@@ -573,7 +581,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `tokenize == 'word'`. The default regexp select tokens of 2
+        if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -659,7 +667,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_df = max_df
         self.min_df = min_df
         if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df of min_df")
+            raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
@@ -1090,6 +1098,7 @@ class TfidfVectorizer(CountVectorizer):
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
+        Only applies if ``analyzer == 'word'``.
 
     ngram_range : tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
@@ -1103,6 +1112,7 @@ class TfidfVectorizer(CountVectorizer):
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
+        Only applies if ``analyzer == 'word'``.
 
         If None, no stop words will be used. max_df can be set to a value
         in the range [0.7, 1.0) to automatically detect and filter stop
@@ -1113,21 +1123,22 @@ class TfidfVectorizer(CountVectorizer):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `analyzer == 'word'`. The default regexp selects tokens of 2
+        if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, default=1.0
-        When building the vocabulary ignore terms that have a document frequency
-        strictly higher than the given threshold (corpus specific stop words).
+        When building the vocabulary ignore terms that have a document
+        frequency strictly higher than the given threshold (corpus-specific
+        stop words).
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
     min_df : float in range [0.0, 1.0] or int, default=1
-        When building the vocabulary ignore terms that have a document frequency
-        strictly lower than the given threshold.
-        This value is also called cut-off in the literature.
+        When building the vocabulary ignore terms that have a document
+        frequency strictly lower than the given threshold. This value is also
+        called cut-off in the literature.
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
@@ -1167,6 +1178,9 @@ class TfidfVectorizer(CountVectorizer):
 
     Attributes
     ----------
+    vocabulary_ : dict
+        A mapping of terms to feature indices.
+
     idf_ : array, shape = [n_features], or None
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.

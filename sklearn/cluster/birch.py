@@ -14,13 +14,14 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import NotFittedError, check_is_fitted
+from ..utils.validation import check_is_fitted
+from ..exceptions import NotFittedError
 from .hierarchical import AgglomerativeClustering
 
 
 def _iterate_sparse_X(X):
     """This little hack returns a densified row when iterating over a sparse
-    matrix, insted of constructing a sparse matrix for every row that is
+    matrix, instead of constructing a sparse matrix for every row that is
     expensive.
     """
     n_samples = X.shape[0]
@@ -204,7 +205,7 @@ class _CFNode(object):
 
             # things not too good. we need to redistribute the subclusters in
             # our child node, and add a new subcluster in the parent
-            # subcluster to accomodate the new child.
+            # subcluster to accommodate the new child.
             else:
                 new_subcluster1, new_subcluster2 = _split_node(
                     closest_subcluster.child_, threshold, branching_factor)

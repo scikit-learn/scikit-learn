@@ -20,74 +20,47 @@ been leading the development.
 People
 ------
 
+The following people have been core contributors to scikit-learn's development and maintenance:
+
 .. hlist::
 
-  * David Cournapeau
-
-  * Jarrod Millman
-
-  * `Matthieu Brucher <http://matt.eifelle.com/>`_
-
-  * `Fabian Pedregosa <http://fseoane.net/blog/>`_
-
-  * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
-
-  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
-
-  * `Alexandre Gramfort <http://alexandre.gramfort.net>`_
-
-  * `Olivier Grisel <http://twitter.com/ogrisel>`_
-
-  * Bertrand Thirion
-
-  * Vincent Michel
-
-  * Chris Filo Gorgolewski
-
-  * `Angel Soler Gollonet <http://webylimonada.com>`_
-
-  * `Yaroslav Halchenko <http://www.onerussian.com/>`_
-
-  * Ron Weiss
-
-  * `Virgile Fritsch
-    <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_
-
   * `Mathieu Blondel <http://mblondel.org>`_
-
-  * `Peter Prettenhofer
-    <http://sites.google.com/site/peterprettenhofer/>`_
-
-  * Vincent Dubourg
-
-  * `Alexandre Passos <http://atpassos.posterous.com>`_
-
-  * `Vlad Niculae <http://vene.ro>`_
-
-  * Edouard Duchesnay
-
-  * Thouis (Ray) Jones
-
+  * `Matthieu Brucher <http://matt.eifelle.com/>`_
   * Lars Buitinck
-
-  * Paolo Losi
-
-  * Nelle Varoquaux
-
-  * `Brian Holt <http://info.ee.surrey.ac.uk/Personal/B.Holt/>`_
-
-  * Robert Layton
-
-  * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
-
-  * `Andreas Müller <http://peekaboo-vision.blogspot.com>`_ (release manager)
-
+  * David Cournapeau
+  * `Noel Dawe <http://noel.dawe.me>`_
+  * Vincent Dubourg
+  * Edouard Duchesnay
+  * `Tom Dupré la Tour <https://github.com/TomDLT>`_
+  * Alexander Fabisch
+  * `Virgile Fritsch <http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
-
-  * `Wei Li <http://kuantkid.github.com>`_
-
+  * `Angel Soler Gollonet <http://webylimonada.com>`_
+  * Chris Filo Gorgolewski
+  * `Alexandre Gramfort <http://alexandre.gramfort.net>`_
+  * `Olivier Grisel <http://twitter.com/ogrisel>`_
+  * `Jaques Grobler <https://github.com/jaquesgrobler>`_
+  * `Yaroslav Halchenko <http://www.onerussian.com/>`_
+  * `Brian Holt <http://info.ee.surrey.ac.uk/Personal/B.Holt/>`_
   * `Arnaud Joly <http://www.ajoly.org>`_
-
-  * `Kemal Eren <http://www.kemaleren.com>`_
-
-  * `Michael Becker <http://beckerfuffle.com>`_
+  * Thouis (Ray) Jones
+  * `Kyle Kastner <http://kastnerkyle.github.io>`_
+  * `Manoj Kumar <https://manojbits.wordpress.com>`_
+  * Robert Layton
+  * `Wei Li <http://kuantkid.github.com>`_
+  * Paolo Losi
+  * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
+  * `Jan Hendrik Metzen <https://github.com/jmetzen>`_
+  * Vincent Michel
+  * Jarrod Millman
+  * `Andreas Müller <http://peekaboo-vision.blogspot.com>`_ (release manager)
+  * `Vlad Niculae <http://vene.ro>`_
+  * `Joel Nothman <http://joelnothman.com>`_
+  * `Alexandre Passos <http://atpassos.posterous.com>`_
+  * `Fabian Pedregosa <http://fseoane.net/blog/>`_
+  * `Peter Prettenhofer <http://sites.google.com/site/peterprettenhofer/>`_
+  * Bertrand Thirion
+  * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
+  * Nelle Varoquaux
+  * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
+  * Ron Weiss

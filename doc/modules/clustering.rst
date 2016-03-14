@@ -4,7 +4,7 @@
 Clustering
 ==========
 
-`Clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`__ of
+`Clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`__ of
 unlabeled data can be performed with the module :mod:`sklearn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
@@ -18,17 +18,13 @@ data can be found in the ``labels_`` attribute.
 .. topic:: Input data
 
     One important thing to note is that the algorithms implemented in
-    this module take different kinds of matrix as input.  On one hand,
-    :class:`MeanShift` and :class:`KMeans` take data matrices of shape
-    [n_samples, n_features]. These can be obtained from the classes in
-    the :mod:`sklearn.feature_extraction` module. On the other hand,
-    :class:`AffinityPropagation` and :class:`SpectralClustering` take
-    similarity matrices of shape [n_samples, n_samples].  These can be
-    obtained from the functions in the :mod:`sklearn.metrics.pairwise`
-    module. In other words, :class:`MeanShift` and :class:`KMeans` work
-    with points in a vector space, whereas :class:`AffinityPropagation`
-    and :class:`SpectralClustering` can work with arbitrary objects, as
-    long as a similarity measure exists for such objects.
+    this module can take different kinds of matrix as input. All the
+    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
+    module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
+    and :class:`DBSCAN` one can also input similarity matrices of shape
+    ``[n_samples, n_samples]``. These can be obtained from the functions
+    in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
 ===============================
@@ -124,7 +120,7 @@ K-means
 
 The :class:`KMeans` algorithm clusters data by trying to separate samples
 in n groups of equal variance, minimizing a criterion known as the
-`inertia <inertia>` or within-cluster sum-of-squares.
+`inertia <inertia>`_ or within-cluster sum-of-squares.
 This algorithm requires the number of clusters to be specified.
 It scales well to large number of samples and has been used
 across a large range of application areas in many different fields.
@@ -152,9 +148,14 @@ It suffers from various drawbacks:
   better and zero is optimal. But in very high-dimensional spaces, Euclidean
   distances tend to become inflated
   (this is an instance of the so-called "curse of dimensionality").
-  Running a dimensionality reduction algorithm such as `PCA <PCA>`
+  Running a dimensionality reduction algorithm such as `PCA <PCA>`_
   prior to k-means clustering can alleviate this problem
   and speed up the computations.
+
+.. image:: ../auto_examples/cluster/images/plot_kmeans_assumptions_001.png
+   :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
+   :align: center
+   :scale: 50
 
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
@@ -203,8 +204,8 @@ each job).
 
 .. warning::
 
-    The parallel version of K-Means is broken on OS X when numpy uses the
-    Accelerate Framework. This is expected behavior: Accelerate can be called
+    The parallel version of K-Means is broken on OS X when `numpy` uses the
+    `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
     after a fork but you need to execv the subprocess with the Python binary
     (which multiprocessing does not do under posix).
 
@@ -213,6 +214,8 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
+ * :ref:`example_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+   k-means performs intuitively and when it does not
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 .. topic:: References:
@@ -316,6 +319,7 @@ appropriate for small to medium sized datasets.
  * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
+
 **Algorithm description:**
 The messages sent between points belong to one of two categories. The first is
 the responsibility :math:`r(i, k)`,
@@ -354,9 +358,8 @@ Mean Shift
 :class:`MeanShift` clustering aims to discover *blobs* in a smooth density of
 samples. It is a centroid based algorithm, which works by updating candidates
 for centroids to be the mean of the points within a given region. These
-candidates are then filtered in a
-post-processing stage to eliminate near-duplicates to form the final set of
-centroids.
+candidates are then filtered in a post-processing stage to eliminate
+near-duplicates to form the final set of centroids.
 
 Given a candidate centroid :math:`x_i` for iteration :math:`t`, the candidate
 is updated according to the following equation:
@@ -366,11 +369,10 @@ is updated according to the following equation:
     x_i^{t+1} = x_i^t + m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
-around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed
-for each centroid that
-points towards a region of the maximum increase in the density of points. This
-is computed using the following equation, effectively updating a centroid to be
-the mean of the samples within its neighborhood:
+around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
+centroid that points towards a region of the maximum increase in the density of points.
+This is computed using the following equation, effectively updating a centroid
+to be the mean of the samples within its neighborhood:
 
 .. math::
 
@@ -405,7 +407,7 @@ given sample.
 
  * `"Mean shift: A robust approach toward feature space analysis."
    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
-   D. Comaniciu, & P. Meer *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
+   D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
 
 
 .. _spectral_clustering:
@@ -458,15 +460,15 @@ function of the gradient of the image.
  * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
-   to split the image of lena in regions.
+ * :ref:`example_cluster_plot_face_segmentation.py`: Spectral clustering
+   to split the image of the raccoon face in regions.
 
-.. |lena_kmeans| image:: ../auto_examples/cluster/images/plot_lena_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+.. |face_kmeans| image:: ../auto_examples/cluster/images/plot_face_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
-.. |lena_discretize| image:: ../auto_examples/cluster/images/plot_lena_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+.. |face_discretize| image:: ../auto_examples/cluster/images/plot_face_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
 Different label assignment strategies
@@ -484,7 +486,7 @@ geometrical shape.
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
-|lena_kmeans|                          |lena_discretize|
+|face_kmeans|                          |face_discretize|
 =====================================  =====================================
 
 
@@ -517,7 +519,7 @@ build nested clusters by merging or splitting them successively. This
 hierarchy of clusters is represented as a tree (or dendrogram). The root of the
 tree is the unique cluster that gathers all the samples, the leaves being the
 clusters with only one sample. See the `Wikipedia page
-<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more details.
+<https://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more details.
 
 The :class:`AgglomerativeClustering` object performs a hierarchical clustering
 using a bottom up approach: each observation starts in its own cluster, and
@@ -613,12 +615,12 @@ merging to nearest neighbors as in :ref:`this example
 <example_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
+:ref:`raccoon face <example_cluster_plot_face_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering
-   to split the image of lena in regions.
+ * :ref:`example_cluster_plot_face_ward_segmentation.py`: Ward clustering
+   to split the image of a raccoon face in regions.
 
  * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
@@ -764,6 +766,22 @@ by black points below.
     (as was done in scikit-learn versions before 0.14).
     The possibility to use custom metrics is retained;
     for details, see :class:`NearestNeighbors`.
+
+.. topic:: Memory consumption for large sample sizes
+
+    This implementation is by default not memory efficient because it constructs
+    a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
+    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    A couple of mechanisms for getting around this are:
+
+    - A sparse radius neighborhood graph (where missing
+      entries are presumed to be out of eps) can be precomputed in a memory-efficient
+      way and dbscan can be run over this with ``metric='precomputed'``.
+
+    - The dataset can be compressed, either by removing exact duplicates if
+      these occur in your data, or by using BIRCH. Then you only have a
+      relatively small number of representatives for a large number of points.
+      You can then provide a ``sample_weight`` when fitting DBSCAN.
 
 .. topic:: References:
 
@@ -996,7 +1014,7 @@ random labelings by defining the adjusted Rand index as follows:
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index
-   <http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
+   <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 
 .. _mutual_info_score:
 
@@ -1146,23 +1164,25 @@ calculated using a similar form to that of the adjusted Rand index:
 
  * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles – a
    knowledge reuse framework for combining multiple partitions". Journal of
-   Machine Learning Research 3: 583–617. doi:10.1162/153244303321897735
+   Machine Learning Research 3: 583–617.
+   `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
  * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
-   doi:10.1145/1553374.1553511. ISBN 9781605585161.
+   `doi:10.1145/1553374.1553511 <http://dx.doi.org/10.1145/1553374.1553511>`_.
+   ISBN 9781605585161.
 
  * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance}, JMLR
+   Correction for Chance, JMLR
    http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
 
  * `Wikipedia entry for the (normalized) Mutual Information
-   <http://en.wikipedia.org/wiki/Mutual_Information>`_
+   <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
-   <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+   <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
 .. _homogeneity_completeness:
 
@@ -1233,7 +1253,7 @@ homogeneous but not complete::
 Advantages
 ~~~~~~~~~~
 
-- **Bounded scores**: 0.0 is as bad as it can be, 1.0 is a perfect score
+- **Bounded scores**: 0.0 is as bad as it can be, 1.0 is a perfect score.
 
 - Intuitive interpretation: clustering with bad V-measure can be
   **qualitatively analyzed in terms of homogeneity and completeness**
@@ -1368,7 +1388,8 @@ cluster analysis.
 
  * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
    Interpretation and Validation of Cluster Analysis". Computational
-   and Applied Mathematics 20: 53–65. doi:10.1016/0377-0427(87)90125-7.
+   and Applied Mathematics 20: 53–65.
+   `doi:10.1016/0377-0427(87)90125-7 <http://dx.doi.org/10.1016/0377-0427(87)90125-7>`_.
 
 
 Advantages
@@ -1388,3 +1409,7 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+   the silhouette analysis is used to choose an optimal value for n_clusters.

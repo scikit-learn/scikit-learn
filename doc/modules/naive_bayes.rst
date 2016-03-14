@@ -196,8 +196,8 @@ passed the list of all the expected class labels.
 For an overview of available strategies in scikit-learn, see also the
 :ref:`out-of-core learning <scaling_strategies>` documentation.
 
-note::
+.. note::
 
-  The ``partial_fit`` method call of naive Bayes models introduces some
-  computational overhead. It is recommended to use data chunk sizes that are as
-  large as possible, that is as the available RAM allows.
+   The ``partial_fit`` method call of naive Bayes models introduces some
+   computational overhead. It is recommended to use data chunk sizes that are as
+   large as possible, that is as the available RAM allows.

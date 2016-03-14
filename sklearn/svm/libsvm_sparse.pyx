@@ -2,7 +2,7 @@ import warnings
 import  numpy as np
 cimport numpy as np
 from scipy import sparse
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 cdef extern from *:
     ctypedef char* const_char_p "const char*"

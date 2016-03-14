@@ -7,7 +7,7 @@ Perform binary classification using non-linear SVC
 with RBF kernel. The target to predict is a XOR of the
 inputs.
 
-The color map illustrates the decision function learn by the SVC.
+The color map illustrates the decision function learned by the SVC.
 """
 print(__doc__)
 

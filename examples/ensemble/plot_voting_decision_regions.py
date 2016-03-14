@@ -10,7 +10,7 @@ Plot the class probabilities of the first sample in a toy dataset
 predicted by three different classifiers and averaged by the
 `VotingClassifier`.
 
-First, three examplary classifiers are initialized (`DecisionTreeClassifier`,
+First, three exemplary classifiers are initialized (`DecisionTreeClassifier`,
 `KNeighborsClassifier`, and `SVC`) and used to initialize a
 soft-voting `VotingClassifier` with weights `[2, 1, 2]`, which means that
 the predicted probabilities of the `DecisionTreeClassifier` and `SVC`

@@ -21,7 +21,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.grid_search import GridSearchCV, ParameterGrid
+from sklearn.model_selection import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
@@ -29,7 +29,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 
@@ -111,26 +111,27 @@ def test_sparse_classification():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
+            for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
+                # Trained on sparse format
+                sparse_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    random_state=1,
+                    **params
+                ).fit(X_train_sparse, y_train)
+                sparse_results = getattr(sparse_classifier, f)(X_test_sparse)
 
-            # Trained on sparse format
-            sparse_classifier = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
-
-            # Trained on dense format
-            dense_results = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train, y_train).predict(X_test)
+                # Trained on dense format
+                dense_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    random_state=1,
+                    **params
+                ).fit(X_train, y_train)
+                dense_results = getattr(dense_classifier, f)(X_test)
+                assert_array_equal(sparse_results, dense_results)
 
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
 
 
@@ -217,7 +218,7 @@ def test_sparse_regression():
 
 
 def test_bootstrap_samples():
-    # Test that bootstraping samples generate non-perfect base estimators.
+    # Test that bootstrapping samples generate non-perfect base estimators.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -245,7 +246,7 @@ def test_bootstrap_samples():
 
 
 def test_bootstrap_features():
-    # Test that bootstraping features may generate dupplicate features.
+    # Test that bootstrapping features may generate duplicate features.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -438,7 +439,7 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -448,7 +449,7 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 

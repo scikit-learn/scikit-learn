@@ -19,11 +19,12 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_array, check_random_state, ConvergenceWarning
-from ..utils import check_consistent_length, _get_n_jobs
+from ..utils import check_random_state
+from ..utils import check_X_y, _get_n_jobs
 from ..utils.random import choice
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange as range
+from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -343,9 +344,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
-        y = check_array(y, ensure_2d=False)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

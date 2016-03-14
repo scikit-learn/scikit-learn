@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 
-from sklearn.grid_search import ParameterGrid
+from sklearn.model_selection import ParameterGrid
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal

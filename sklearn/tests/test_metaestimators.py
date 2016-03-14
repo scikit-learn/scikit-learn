@@ -9,7 +9,7 @@ from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
 from sklearn.utils.testing import assert_true, assert_false, assert_raises
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 

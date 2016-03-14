@@ -41,8 +41,9 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, NotFittedError
-from .utils import DataDimensionalityWarning
+from .utils.validation import check_array
+from .exceptions import DataDimensionalityWarning
+from .exceptions import NotFittedError
 
 
 __all__ = ["SparseRandomProjection",

@@ -10,7 +10,7 @@ Probability calibration
 When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
 gives you some kind of confidence on the prediction. Some models can give you
-poor estimates of the class probabilities and some even do not not support
+poor estimates of the class probabilities and some even do not support
 probability prediction. The calibration module allows you to better calibrate
 the probabilities of a given model, or to add support for probability
 prediction.
@@ -145,10 +145,10 @@ intrinsic limitation of sigmoid calibration, whose parametric form assumes a
 sigmoid rather than a transposed-sigmoid curve. The non-parametric isotonic
 calibration model, however, makes no such strong assumptions and can deal with
 either shape, provided that there is sufficient calibration data. In general,
-sigmoid calibration is preferable if the calibration curve is sigmoid and when
-there is few calibration data while isotonic calibration is preferable for non-
-sigmoid calibration curves and in situations where many additional data can be
-used for calibration.
+sigmoid calibration is preferable in cases where the calibration curve is sigmoid
+and where there is limited calibration data, while isotonic calibration is
+preferable for non-sigmoid calibration curves and in situations where large
+amounts of data are available for calibration.
 
 .. currentmodule:: sklearn.calibration
 

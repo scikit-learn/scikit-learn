@@ -1,7 +1,7 @@
 # Optimized inner loop of load_svmlight_file.
 #
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -29,7 +29,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id):
     cdef array.array data, indices, indptr, query
     cdef bytes line
-    cdef char *hash_ptr, *line_cstr
+    cdef char *hash_ptr
+    cdef char *line_cstr
     cdef int idx, prev_idx
     cdef Py_ssize_t i
     cdef bytes qid_prefix = b('qid')

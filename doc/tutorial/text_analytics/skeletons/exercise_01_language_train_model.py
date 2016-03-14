@@ -15,7 +15,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.datasets import load_files
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
 
@@ -28,7 +28,7 @@ docs_train, docs_test, y_train, y_test = train_test_split(
     dataset.data, dataset.target, test_size=0.5)
 
 
-# TASK: Build a an vectorizer that splits strings into sequence of 1 to 3
+# TASK: Build a vectorizer that splits strings into sequence of 1 to 3
 # characters instead of word tokens
 
 # TASK: Build a vectorizer / classifier pipeline using the previous analyzer

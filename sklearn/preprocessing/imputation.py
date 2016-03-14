@@ -10,10 +10,10 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils import as_float_array
 from ..utils.fixes import astype
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 
 from ..externals import six
 
@@ -281,7 +281,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # Most frequent
         elif strategy == "most_frequent":
             # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if it's frequency
+            # properly if the first element is masked and if its frequency
             # is equal to the frequency of the most frequent valid element
             # See https://github.com/scipy/scipy/issues/2636
 
@@ -310,15 +310,12 @@ class Imputer(BaseEstimator, TransformerMixin):
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
 
-        # Copy just once
-        X = as_float_array(X, copy=self.copy, force_all_finite=False)
-
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         if self.axis == 1:
-            X = check_array(X, accept_sparse='csr', force_all_finite=False,
-                            copy=False)
+            X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
+                            force_all_finite=False, copy=self.copy)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -332,8 +329,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.missing_values,
                                              self.axis)
         else:
-            X = check_array(X, accept_sparse='csc', force_all_finite=False,
-                            copy=False)
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite=False, copy=self.copy)
             statistics = self.statistics_
 
         # Delete the invalid rows/columns

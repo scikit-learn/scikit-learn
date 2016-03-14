@@ -12,7 +12,7 @@ from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import cross_val_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
@@ -25,7 +25,7 @@ from sklearn.metrics import get_scorer
 
 class MockClassifier(object):
     """
-    Dummy classifier to test recursive feature ellimination
+    Dummy classifier to test recursive feature elimination
     """
 
     def __init__(self, foo_param=0):
@@ -57,24 +57,6 @@ class MockClassifier(object):
         return self
 
 
-def test_rfe_set_params():
-    generator = check_random_state(0)
-    iris = load_iris()
-    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = iris.target
-    clf = SVC(kernel="linear")
-    rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
-    y_pred = rfe.fit(X, y).predict(X)
-
-    clf = SVC()
-    with warnings.catch_warnings(record=True):
-        # estimator_params is deprecated
-        rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1,
-                  estimator_params={'kernel': 'linear'})
-        y_pred2 = rfe.fit(X, y).predict(X)
-    assert_array_equal(y_pred, y_pred2)
-
-
 def test_rfe_features_importance():
     generator = check_random_state(0)
     iris = load_iris()
@@ -93,29 +75,6 @@ def test_rfe_features_importance():
 
     # Check if the supports are equal
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
-
-
-def test_rfe_deprecation_estimator_params():
-    deprecation_message = ("The parameter 'estimator_params' is deprecated as "
-                           "of version 0.16 and will be removed in 0.18. The "
-                           "parameter is no longer necessary because the "
-                           "value is set via the estimator initialisation or "
-                           "set_params method.")
-    generator = check_random_state(0)
-    iris = load_iris()
-    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = iris.target
-    assert_warns_message(DeprecationWarning, deprecation_message,
-                         RFE(estimator=SVC(), n_features_to_select=4, step=0.1,
-                             estimator_params={'kernel': 'linear'}).fit,
-                         X=X,
-                         y=y)
-
-    assert_warns_message(DeprecationWarning, deprecation_message,
-                         RFECV(estimator=SVC(), step=1, cv=5,
-                               estimator_params={'kernel': 'linear'}).fit,
-                         X=X,
-                         y=y)
 
 
 def test_rfe():
@@ -329,3 +288,20 @@ def test_number_of_subsets_of_features():
                      formula1(n_features, n_features_to_select, step))
         assert_equal(rfecv.grid_scores_.shape[0],
                      formula2(n_features, n_features_to_select, step))
+
+
+def test_rfe_cv_n_jobs():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    rfecv = RFECV(estimator=SVC(kernel='linear'))
+    rfecv.fit(X, y)
+    rfecv_ranking = rfecv.ranking_
+    rfecv_grid_scores = rfecv.grid_scores_
+
+    rfecv.set_params(n_jobs=2)
+    rfecv.fit(X, y)
+    assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
+    assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)

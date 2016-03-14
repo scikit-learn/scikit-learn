@@ -1,4 +1,4 @@
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 # License: BSD 3 clause
 
 import numbers
@@ -25,6 +25,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
     Feature names of type byte string are used as-is. Unicode strings are
     converted to UTF-8 first, but no Unicode normalization is done.
+    Feature values must be (finite) numbers.
 
     This class is a low-memory alternative to DictVectorizer and
     CountVectorizer, intended for large-scale (online) learning and situations
@@ -39,11 +40,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    dtype : numpy type, optional
+    dtype : numpy type, optional, default np.float64
         The type of feature values. Passed to scipy.sparse matrix constructors
         as the dtype argument. Do not set this to bool, np.boolean or any
         unsigned integer type.
-    input_type : string, optional
+    input_type : string, optional, default "dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
         or "string" to accept single strings.
@@ -52,11 +53,21 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-    non_negative : boolean, optional, default np.float64
+    non_negative : boolean, optional, default False
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
         When True, output values can be interpreted as frequencies.
         When False, output values will have expected value zero.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> h = FeatureHasher(n_features=10)
+    >>> D = [{'dog': 1, 'cat':2, 'elephant':4},{'dog': 2, 'run': 5}]
+    >>> f = h.transform(D)
+    >>> f.toarray()
+    array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
+           [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
 
     See also
     --------

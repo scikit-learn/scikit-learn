@@ -12,9 +12,18 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, DataConversionWarning)
+                         check_symmetric)
+from .deprecation import deprecated
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
+from ..exceptions import ConvergenceWarning as _ConvergenceWarning
+from ..exceptions import DataConversionWarning
+
+
+@deprecated("ConvergenceWarning has been moved into the sklearn.exceptions "
+            "module. It will not be available here from version 0.19")
+class ConvergenceWarning(_ConvergenceWarning):
+    pass
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -24,88 +33,6 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric"]
-
-
-class deprecated(object):
-    """Decorator to mark a function or class as deprecated.
-
-    Issue a warning when the function is called/the class is instantiated and
-    adds a warning to the docstring.
-
-    The optional extra argument will be appended to the deprecation message
-    and the docstring. Note: to use this with the default value for extra, put
-    in an empty of parentheses:
-
-    >>> from sklearn.utils import deprecated
-    >>> deprecated() # doctest: +ELLIPSIS
-    <sklearn.utils.deprecated object at ...>
-
-    >>> @deprecated()
-    ... def some_function(): pass
-    """
-
-    # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary,
-    # but with many changes.
-
-    def __init__(self, extra=''):
-        """
-        Parameters
-        ----------
-        extra: string
-          to be added to the deprecation messages
-
-        """
-        self.extra = extra
-
-    def __call__(self, obj):
-        if isinstance(obj, type):
-            return self._decorate_class(obj)
-        else:
-            return self._decorate_fun(obj)
-
-    def _decorate_class(self, cls):
-        msg = "Class %s is deprecated" % cls.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        # FIXME: we should probably reset __new__ for full generality
-        init = cls.__init__
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return init(*args, **kwargs)
-        cls.__init__ = wrapped
-
-        wrapped.__name__ = '__init__'
-        wrapped.__doc__ = self._update_doc(init.__doc__)
-        wrapped.deprecated_original = init
-
-        return cls
-
-    def _decorate_fun(self, fun):
-        """Decorate function fun"""
-
-        msg = "Function %s is deprecated" % fun.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return fun(*args, **kwargs)
-
-        wrapped.__name__ = fun.__name__
-        wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
-
-        return wrapped
-
-    def _update_doc(self, olddoc):
-        newdoc = "DEPRECATED"
-        if self.extra:
-            newdoc = "%s: %s" % (newdoc, self.extra)
-        if olddoc:
-            newdoc = "%s\n\n%s" % (newdoc, olddoc)
-        return newdoc
 
 
 def safe_mask(X, mask):
@@ -131,6 +58,26 @@ def safe_mask(X, mask):
         ind = np.arange(mask.shape[0])
         mask = ind[mask]
     return mask
+
+
+def axis0_safe_slice(X, mask, len_mask):
+    """
+    This mask is safer than safe_mask since it returns an
+    empty array, when a sparse matrix is sliced with a boolean mask
+    with all False, instead of raising an unhelpful error in older
+    versions of SciPy.
+
+    See: https://github.com/scipy/scipy/issues/5361
+
+    Also note that we can avoid doing the dot product by checking if
+    the len_mask is not zero in _huber_loss_and_gradient but this
+    is not going to be the bottleneck, since the number of outliers
+    and non_outliers are typically non-zero and it makes the code
+    tougher to follow.
+    """
+    if len_mask != 0:
+        return X[safe_mask(X, mask), :]
+    return np.zeros(shape=(0, X.shape[1]))
 
 
 def safe_indexing(X, indices):
@@ -351,7 +298,7 @@ def safe_sqr(X, copy=True):
     -------
     X ** 2 : element wise square
     """
-    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+    X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
     if issparse(X):
         if copy:
             X = X.copy()
@@ -409,7 +356,8 @@ def gen_even_slices(n, n_packs, n_samples=None):
     """
     start = 0
     if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" % n_packs)
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1"
+                         % n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -469,11 +417,3 @@ def tosequence(x):
         return x
     else:
         return list(x)
-
-
-class ConvergenceWarning(UserWarning):
-    """Custom warning to capture convergence problems"""
-
-
-class DataDimensionalityWarning(UserWarning):
-    """Custom warning to notify potential issues with data dimensionality"""

@@ -30,7 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import svm, datasets
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 
 # import some data to play with

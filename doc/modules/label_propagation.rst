@@ -55,7 +55,7 @@ data to some degree. The :class:`LabelPropagation` algorithm performs hard
 clamping of input labels, which means :math:`\alpha=1`. This clamping factor
 can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
-change it's confidence of the distribution within 20 percent.
+change its confidence of the distribution within 20 percent.
 
 :class:`LabelPropagation` uses the raw similarity matrix constructed from
 the data with no modifications. In contrast, :class:`LabelSpreading`

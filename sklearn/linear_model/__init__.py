@@ -14,10 +14,11 @@ from .base import LinearRegression
 from .bayes import BayesianRidge, ARDRegression
 from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
                           LassoLarsIC)
-from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
-                                 lasso_path, enet_path, MultiTaskLasso,
-                                 MultiTaskElasticNet, MultiTaskElasticNetCV,
-                                 MultiTaskLassoCV, AdaptiveLasso)
+from .coordinate_descent import (Lasso, ElasticNet, AdaptiveLasso,
+                                 LassoCV, ElasticNetCV, lasso_path, enet_path,
+                                 MultiTaskLasso, MultiTaskElasticNet,
+                                 MultiTaskElasticNetCV, MultiTaskLassoCV)
+from .huber import HuberRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
@@ -35,11 +36,12 @@ from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
 
 __all__ = ['ARDRegression',
+           'AdaptiveLasso',
            'BayesianRidge',
            'ElasticNet',
            'ElasticNetCV',
            'Hinge',
-           'Huber',
+           'HuberRegressor',
            'Lars',
            'LarsCV',
            'Lasso',
