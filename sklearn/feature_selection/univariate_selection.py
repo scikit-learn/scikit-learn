@@ -18,7 +18,6 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
 from ..utils.extmath import norm, safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
 from .base import SelectorMixin
-from .mutual_info_ import mutual_info_regression, mutual_info_classif
 
 
 def _clean_nans(scores):
@@ -414,7 +413,7 @@ def f_regression(X, y, center=True):
 
     This is done in 2 steps:
 
-    1. cross correlation between each regressor and the target is computed,
+    1. The cross correlation between each regressor and the target is computed,
         that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
         std(y)).
     2. It is converted to an F score then to a p-value.
@@ -442,7 +441,7 @@ def f_regression(X, y, center=True):
 
     See also
     --------
-    f_classif: ANOVA F-value between labe/feature for classification tasks.
+    f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     """
     if issparse(X) and center:
@@ -475,7 +474,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single array with scores.
     """
 
     def __init__(self, score_func):
@@ -514,6 +513,8 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         else:
             self.scores_ = score_func_ret
             self.pvalues_ = None
+
+        self.scores_ = np.asarray(self.scores_)
 
         return self
 
@@ -633,7 +634,7 @@ class SelectKBest(_BaseFilter):
     ig: Information Gain of features for classification tasks.
     igr: Information Gain Ratio of features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information between features and the target.
+    mutual_info_regression: Mutual information for a continious target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -701,7 +702,7 @@ class SelectFpr(_BaseFilter):
     ig: Information Gain of features for classification tasks.
     igr: Information Gain Ratio of features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    mutual_info_regression: Mutual information for a contnuous target.
+    mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -840,7 +841,7 @@ class GenericUnivariateSelect(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues) For modes 'percentile' or 'kbest' it can return
+        (scores, pvalues). For modes 'percentile' or 'kbest' it can return
         a single array scores.
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
