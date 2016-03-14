@@ -44,7 +44,7 @@ dimensions ``n_components`` for a given number of samples ``n_samples``
 Empirical validation
 ====================
 
-We validate the above bounds on the the digits dataset or on the 20 newsgroups
+We validate the above bounds on the digits dataset or on the 20 newsgroups
 text document (TF-IDF word frequencies) dataset:
 
 - for the digits dataset, some 8x8 gray level pixels data for 500

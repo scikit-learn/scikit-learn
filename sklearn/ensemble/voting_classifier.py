@@ -50,7 +50,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Attributes
     ----------
+    estimators_ : list of classifiers
+        The collection of fitted sub-estimators.
+
     classes_ : array-like, shape = [n_predictions]
+        The classes labels.
 
     Examples
     --------

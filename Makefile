@@ -52,7 +52,7 @@ trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	python sklearn/_build_utils/cythonize.py sklearn
+	python build_tools/cythonize.py sklearn
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim

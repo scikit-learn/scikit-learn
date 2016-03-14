@@ -763,7 +763,7 @@ class GridSearchCV(BaseSearchCV):
     See Also
     ---------
     :class:`ParameterGrid`:
-        generates all the combinations of a an hyperparameter grid.
+        generates all the combinations of a hyperparameter grid.
 
     :func:`sklearn.model_selection.train_test_split`:
         utility function to split the data into a development set usable

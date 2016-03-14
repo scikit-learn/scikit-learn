@@ -129,7 +129,7 @@ class MockClassifier(object):
 
 
 @ignore_warnings
-def test_cross_validator_with_default_indices():
+def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_labels = 4
     n_folds = 2
@@ -149,10 +149,23 @@ def test_cross_validator_with_default_indices():
     ss = ShuffleSplit(random_state=0)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
 
+    loo_repr = "LeaveOneOut()"
+    lpo_repr = "LeavePOut(p=2)"
+    kf_repr = "KFold(n_folds=2, random_state=None, shuffle=False)"
+    skf_repr = "StratifiedKFold(n_folds=2, random_state=None, shuffle=False)"
+    lolo_repr = "LeaveOneLabelOut()"
+    lopo_repr = "LeavePLabelOut(n_labels=2)"
+    ss_repr = ("ShuffleSplit(n_iter=10, random_state=0, test_size=0.1, "
+               "train_size=None)")
+    ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
+
     n_splits = [n_samples, comb(n_samples, p), n_folds, n_folds,
                 n_unique_labels, comb(n_unique_labels, p), n_iter, 2]
 
-    for i, cv in enumerate([loo, lpo, kf, skf, lolo, lopo, ss, ps]):
+    for i, (cv, cv_repr) in enumerate(zip(
+            [loo, lpo, kf, skf, lolo, lopo, ss, ps],
+            [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
+             ss_repr, ps_repr])):
         # Test if get_n_splits works correctly
         assert_equal(n_splits[i], cv.get_n_splits(X, y, labels))
 
@@ -164,6 +177,9 @@ def test_cross_validator_with_default_indices():
         for train, test in cv.split(X, y, labels):
             assert_equal(np.asarray(train).dtype.kind, 'i')
             assert_equal(np.asarray(train).dtype.kind, 'i')
+
+        # Test if the repr works without any errors
+        assert_equal(cv_repr, repr(cv))
 
 
 def check_valid_split(train, test, n_samples=None):
@@ -592,6 +608,20 @@ def test_stratified_shuffle_split_even():
 
         assert_counts_are_ok(train_counts, ex_train_p)
         assert_counts_are_ok(test_counts, ex_test_p)
+
+
+def test_stratified_shuffle_split_overlap_train_test_bug():
+    # See https://github.com/scikit-learn/scikit-learn/issues/6121 for
+    # the original bug report
+    y = [0, 1, 2, 3] * 3 + [4, 5] * 5
+    X = np.ones_like(y)
+
+    splits = StratifiedShuffleSplit(n_iter=1,
+                                    test_size=0.5, random_state=0)
+
+    train, test = next(iter(splits.split(X=X, y=y)))
+
+    assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_predefinedsplit_with_kfold_split():

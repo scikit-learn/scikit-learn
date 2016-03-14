@@ -228,7 +228,7 @@ def test_preserve_trustworthiness_approximately():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     # The Barnes-Hut approximation uses a different method to estimate
-    # P_ij using only a a number of nearest neighbors instead of all
+    # P_ij using only a number of nearest neighbors instead of all
     # points (so that k = 3 * perplexity). As a result we set the
     # perplexity=5, so that the number of neighbors is 5%.
     n_components = 2

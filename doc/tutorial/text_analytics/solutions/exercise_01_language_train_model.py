@@ -28,7 +28,7 @@ docs_train, docs_test, y_train, y_test = train_test_split(
     dataset.data, dataset.target, test_size=0.5)
 
 
-# TASK: Build a an vectorizer that splits strings into sequence of 1 to 3
+# TASK: Build a vectorizer that splits strings into sequence of 1 to 3
 # characters instead of word tokens
 vectorizer = TfidfVectorizer(ngram_range=(1, 3), analyzer='char',
                              use_idf=False)

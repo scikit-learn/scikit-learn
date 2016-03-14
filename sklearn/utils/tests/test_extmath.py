@@ -111,10 +111,11 @@ def test_randomized_svd_low_rank():
     # compute the singular values of X using the slow exact method
     U, s, V = linalg.svd(X, full_matrices=False)
 
-    for normalizer in ['auto', 'none', 'LU', 'QR']:
+    for normalizer in ['auto', 'LU', 'QR']:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
         Ua, sa, Va = \
-            randomized_svd(X, k, power_iteration_normalizer=normalizer)
+            randomized_svd(X, k, power_iteration_normalizer=normalizer,
+                           random_state=0)
         assert_equal(Ua.shape, (n_samples, k))
         assert_equal(sa.shape, (k,))
         assert_equal(Va.shape, (k, n_features))
@@ -131,7 +132,8 @@ def test_randomized_svd_low_rank():
 
         # compute the singular values of X using the fast approximate method
         Ua, sa, Va = \
-            randomized_svd(X, k, power_iteration_normalizer=normalizer)
+            randomized_svd(X, k, power_iteration_normalizer=normalizer,
+                           random_state=0)
         assert_almost_equal(s[:rank], sa[:rank])
 
 
@@ -178,7 +180,8 @@ def test_randomized_svd_low_rank_with_noise():
         # compute the singular values of X using the fast approximate
         # method without the iterated power method
         _, sa, _ = randomized_svd(X, k, n_iter=0,
-                                  power_iteration_normalizer=normalizer)
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
 
         # the approximation does not tolerate the noise:
         assert_greater(np.abs(s[:k] - sa).max(), 0.01)
@@ -186,7 +189,8 @@ def test_randomized_svd_low_rank_with_noise():
         # compute the singular values of X using the fast approximate
         # method with iterated power method
         _, sap, _ = randomized_svd(X, k,
-                                   power_iteration_normalizer=normalizer)
+                                   power_iteration_normalizer=normalizer,
+                                   random_state=0)
 
         # the iterated power method is helping getting rid of the noise:
         assert_almost_equal(s[:k], sap, decimal=3)
@@ -281,13 +285,15 @@ def test_randomized_svd_power_iteration_normalizer():
 
     for normalizer in ['LU', 'QR', 'auto']:
         U, s, V = randomized_svd(X, n_components, n_iter=2,
-                                 power_iteration_normalizer=normalizer)
+                                 power_iteration_normalizer=normalizer,
+                                 random_state=0)
         A = X - U.dot(np.diag(s).dot(V))
         error_2 = linalg.norm(A, ord='fro')
 
         for i in [5, 10, 50]:
             U, s, V = randomized_svd(X, n_components, n_iter=i,
-                                     power_iteration_normalizer=normalizer)
+                                     power_iteration_normalizer=normalizer,
+                                     random_state=0)
             A = X - U.dot(np.diag(s).dot(V))
             error = linalg.norm(A, ord='fro')
             assert_greater(15, np.abs(error_2 - error))

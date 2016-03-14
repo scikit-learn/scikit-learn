@@ -75,7 +75,7 @@ cdef class Splitter:
     # The 1-d `constant_features` array of size n_features holds in
     # `constant_features[:n_constant_features]` the feature ids with
     # constant values for all the samples that reached a specific node.
-    # The value `n_constant_features` is given by the the parent node to its
+    # The value `n_constant_features` is given by the parent node to its
     # child nodes.  The content of the range `[n_constant_features:]` is left
     # undefined, but preallocated for performance reasons
     # This allows optimization with depth-based tree building.

@@ -5,7 +5,9 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises, assert_raises_regex, assert_raise_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -20,7 +22,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
@@ -195,7 +197,7 @@ def test_pipeline_methods_pca_svm():
     y = iris.target
     # Test with PCA + SVC
     clf = SVC(probability=True, random_state=0)
-    pca = PCA(n_components='mle', whiten=True)
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
@@ -212,7 +214,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
-    pca = RandomizedPCA(n_components=2, whiten=True)
+    pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
     clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
@@ -258,7 +260,7 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     # tests that a pipeline does not have fit_predict method when final
     # step of pipeline does not have fit_predict defined
     scaler = StandardScaler()
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     pipe = Pipeline([('scaler', scaler), ('pca', pca)])
     assert_raises_regex(AttributeError,
                         "'PCA' object has no attribute 'fit_predict'",
@@ -301,7 +303,7 @@ def test_feature_union():
 
 
 def test_make_union():
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     mock = TransfT()
     fu = make_union(pca, mock)
     names, transformers = zip(*fu.transformer_list)
@@ -314,7 +316,7 @@ def test_pipeline_transform():
     # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2, svd_solver='full')
     pipeline = Pipeline([('pca', pca)])
 
     # test transform and fit_transform:
@@ -364,7 +366,7 @@ def test_feature_union_weights():
     iris = load_iris()
     X = iris.data
     y = iris.target
-    pca = RandomizedPCA(n_components=2, random_state=0)
+    pca = PCA(n_components=2, svd_solver='randomized', random_state=0)
     select = SelectKBest(k=1)
     # test using fit followed by transform
     fs = FeatureUnion([("pca", pca), ("select", select)],

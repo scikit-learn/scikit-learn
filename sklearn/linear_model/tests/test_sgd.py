@@ -445,7 +445,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(pred, true_result2)
 
     def test_set_coef_multiclass(self):
-        # Checks coef_init and intercept_init shape for for multi-class
+        # Checks coef_init and intercept_init shape for multi-class
         # problems
         # Provided coef_ does not match dataset
         clf = self.factory()

@@ -200,7 +200,7 @@ section.
     * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`example_model_selection_grid_search_digits.py`,
     * :ref:`example_model_selection_grid_search_text_feature_extraction.py`,
-    * :ref:`example_plot_cv_predict.py`,
+    * :ref:`example_plot_cv_predict.py`.
 
 Cross validation iterators
 ==========================
@@ -316,7 +316,7 @@ Potential users of LOO for model selection should weigh a few known caveats.
 When compared with :math:`k`-fold cross validation, one builds :math:`n` models
 from :math:`n` samples instead of :math:`k` models, where :math:`n > k`.
 Moreover, each is trained on :math:`n - 1` samples rather than
-:math:`(k-1)n / k`. In both ways, assuming :math:`k` is not too large
+:math:`(k-1) n / k`. In both ways, assuming :math:`k` is not too large
 and :math:`k < n`, LOO is more computationally expensive than :math:`k`-fold
 cross validation.
 
@@ -335,17 +335,17 @@ fold cross validation should be preferred to LOO.
 
 .. topic:: References:
 
- * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
+ * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
-   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009;
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
+   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
+   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI;
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
-   <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
+   <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
+   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013.
 
 
 Leave-P-Out - LPO
@@ -384,7 +384,7 @@ cross-validation folds.
 Each training set is thus constituted by all the samples except the ones
 related to a specific label.
 
-For example, in the cases of multiple experiments, *LOLO* can be used to
+For example, in the cases of multiple experiments, LOLO can be used to
 create a cross-validation based on the different experiments: we create
 a training set using the samples of all the experiments except one::
 
@@ -405,9 +405,10 @@ for cross-validation against time-based splits.
 
 .. warning::
 
-  Contrary to :class:`StratifiedKFold`, the ``labels`` of
-  :class:`LeaveOneLabelOut` should not encode the target class to predict:
-  the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
+  Contrary to :class:`StratifiedKFold`,
+  the ``labels`` of :class:`LeaveOneLabelOut` should not encode
+  the target class to predict: the goal of :class:`StratifiedKFold`
+  is to rebalance dataset classes across
   the train / test split to ensure that the train and test folds have
   approximately the same percentage of samples of each class while
   :class:`LeaveOneLabelOut` will do the opposite by ensuring that the samples
@@ -464,7 +465,7 @@ Here is a usage example::
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
-the proportion of samples in on each side of the train / test split.
+the proportion of samples on each side of the train / test split.
 
 
 Label-Shuffle-Split

@@ -235,7 +235,7 @@ anymore. The version of joblib shipped with scikit-learn automatically uses
 that setting by default (under Python 3.4 and later).
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
-it via joblib you can enable the the 'forkserver' mode globally for your
+it via joblib you can enable the 'forkserver' mode globally for your
 program: Insert the following instructions in your main script::
 
     import multiprocessing
@@ -257,3 +257,21 @@ Deep learning requires a rich vocabulary to define an architecture and the
 use of GPUs for efficient computing. However, neither of these fit within
 the design constraints of scikit-learn. As a result, deep learning is
 currently out of scope for what scikit-learn seeks to achieve.
+
+
+Why is my pull request not getting any attention?
+-------------------------------------------------
+The scikit-learn review process takes a significant amount of time, and
+contributors should not be discouraged by a lack of activity or review on
+their pull request. We care a lot about getting things right
+the first time, as maintenance and later change comes at a high cost.
+We rarely release any "experimental" code, so all of our contributions
+will be subject to high use immediately and should be of the highest
+quality possible initially.
+
+Beyond that, scikit-learn is limited in its reviewing bandwidth; many of the
+reviewers and core developers are working on scikit-learn on their own time.
+If a review of your pull request comes slowly, it is likely because the
+reviewers are busy. We ask for your understanding and request that you
+not close your pull request or discontinue your work solely because of
+this reason.

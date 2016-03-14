@@ -5,7 +5,7 @@
 #          Robert Layton <robertlayton@gmail.com>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Philippe Gervais <philippe.gervais@inria.fr>
-#          Lars Buitinck <larsmans@gmail.com>
+#          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 

@@ -610,9 +610,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
             return classes[y[:, 1]]
         else:
             if len(classes) == 1:
-                y = np.empty(len(y), dtype=classes.dtype)
-                y.fill(classes[0])
-                return y
+                return np.repeat(classes[0], len(y))
             else:
                 return classes[y.ravel()]
 

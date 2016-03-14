@@ -10,7 +10,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         Minor fixes by Fabian Pedregosa
 #         Amit Aides <amitibo@tx.technion.ac.il>
 #         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
-#         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Lars Buitinck
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         (parts based on earlier work by Mathieu Blondel)
 #

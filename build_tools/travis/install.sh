@@ -6,7 +6,6 @@
 
 # License: 3-clause BSD
 
-
 # Travis clone scikit-learn/scikit-learn repository in to a local repository.
 # We use a cached directory with three scikit-learn repositories (one for each
 # matrix entry) from which we pull from local Travis repository. This allows
@@ -22,8 +21,6 @@ export CXX=g++
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
-echo 'download'
-ls $HOME/download
 
 
 if [[ "$DISTRIB" == "conda" ]]; then
@@ -60,26 +57,38 @@ if [[ "$DISTRIB" == "conda" ]]; then
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-            libgfortran
+            libgfortran nomkl
     fi
     source activate testenv
 
     # Install nose-timer via pip
     pip install nose-timer
 
-    # Resolve MKL usage
-
-
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
-    # virtualenv but we want to used numpy installed through apt-get
+    # virtualenv but we want to use the numpy installed through apt-get
     # install.
     deactivate
-    # Create a new virtualenv using system site packages for numpy and scipy
+    # Create a new virtualenv using system site packages for python, numpy
+    # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer
-    pip install cython
+    pip install nose nose-timer cython
+
+elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
+    # Set up our own virtualenv environment to avoid travis' numpy.
+    # This venv points to the python interpreter of the travis build
+    # matrix.
+    virtualenv --python=python ~/testvenv
+    source ~/testvenv/bin/activate
+    pip install --upgrade pip setuptools
+
+    # We use the default Python virtualenv provided by travis
+    echo "Installing numpy master wheel"
+    pip install --pre --upgrade --no-index --timeout=60 \
+        --trusted-host travis-dev-wheels.scipy.org \
+        -f https://travis-dev-wheels.scipy.org/ numpy scipy
+    pip install nose nose-timer cython
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

@@ -7,6 +7,13 @@ Neural network models (supervised)
 .. currentmodule:: sklearn.neural_network
 
 
+.. warning::
+
+    This implementation is not intended for large-scale applications. In particular,
+    scikit-learn offers no GPU support. For much faster, GPU-based implementations,
+    as well as frameworks offering much more flexibility to build deep learning
+    architectures, see  :ref:`related_projects`.
+
 .. _multilayer_perceptron:
 
 Multi-layer Perceptron
@@ -82,7 +89,7 @@ training samples::
     >>> clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
-           batch_size=200, beta_1=0.9, beta_2=0.999, early_stopping=False,
+           batch_size='auto', beta_1=0.9, beta_2=0.999, early_stopping=False,
            epsilon=1e-08, hidden_layer_sizes=(5, 2), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
@@ -137,7 +144,7 @@ value is `1` represents the assigned classes of that sample::
     >>> clf = MLPClassifier(algorithm='l-bfgs', alpha=1e-5, hidden_layer_sizes=(15,), random_state=1)
     >>> clf.fit(X, y)
     MLPClassifier(activation='relu', algorithm='l-bfgs', alpha=1e-05,
-           batch_size=200, beta_1=0.9, beta_2=0.999, early_stopping=False,
+           batch_size='auto', beta_1=0.9, beta_2=0.999, early_stopping=False,
            epsilon=1e-08, hidden_layer_sizes=(15,), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
@@ -153,8 +160,8 @@ See the examples below and the doc string of
 
 .. topic:: Examples:
 
- * :ref:`example_neural_networks_plot_mlp_alpha.py`
-
+ * :ref:`example_neural_networks_plot_mlp_training_curves.py`
+ * :ref:`example_neural_networks_plot_mnist_filters.py`
 
 Regression
 ==========
@@ -168,6 +175,24 @@ set of continuous values.
 :class:`MLPRegressor` also supports multi-output regression, in
 which a sample can have more than one target.
 
+Regularization
+==============
+
+Both :class:`MLPRegressor` and class:`MLPClassifier` use parameter ``alpha``
+for regularization (L2 regularization) term which helps in avoiding overfitting
+by penalizing weights with large magnitudes. Following plot displays varying
+decision function with value of alpha.
+
+.. figure:: ../auto_examples/neural_networks/plot_mlp_alpha_001.png
+   :target: ../auto_examples/neural_networks/plot_mlp_alpha.html
+   :align: center
+   :scale: 75
+
+See the examples below for further information.
+
+.. topic:: Examples:
+
+ * :ref:`example_neural_networks_plot_mlp_alpha.py`
 
 Algorithms
 ==========

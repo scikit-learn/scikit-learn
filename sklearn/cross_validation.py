@@ -268,8 +268,8 @@ class KFold(_BaseKFold):
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling by default).
 
-    Each fold is then used a validation set once while the k - 1 remaining
-    fold form the training set.
+    Each fold is then used as a validation set once while the k - 1 remaining
+    fold(s) form the training set.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -1010,14 +1010,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # Because of rounding issues (as n_train and n_test are not
             # dividers of the number of elements per class), we may end
             # up here with less samples in train and test than asked for.
-            if len(train) < self.n_train or len(test) < self.n_test:
+            if len(train) + len(test) < self.n_train + self.n_test:
                 # We complete by affecting randomly the missing indexes
                 missing_idx = np.where(bincount(train + test,
                                                 minlength=len(self.y)) == 0,
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)
-                train.extend(missing_idx[:(self.n_train - len(train))])
-                test.extend(missing_idx[-(self.n_test - len(test)):])
+                n_missing_train = self.n_train - len(train)
+                n_missing_test = self.n_test - len(test)
+
+                if n_missing_train > 0:
+                    train.extend(missing_idx[:n_missing_train])
+                if n_missing_test > 0:
+                    test.extend(missing_idx[-n_missing_test:])
 
             train = rng.permutation(train)
             test = rng.permutation(test)

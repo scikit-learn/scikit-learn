@@ -22,6 +22,15 @@ New features
      :class:`feature_selection.SelectPercentile` as score functions.
      By `Andrea Bravi`_ and `Nikolay Mayorov`_.
 
+   - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
+     and it is available calling with parameter ``svd_solver='randomized'``.
+     The default number of ``n_iter`` for ``'randomized'`` has changed to 4. The old
+     behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
+     calls `arpack` and performs truncated (non-randomized) SVD. By default,
+     the best solver is selected depending on the size of the input and the
+     number of components requested.
+     (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
+
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
      and  :class:`gaussian_process.GaussianProcessRegressor`. Among other things, the new
@@ -34,6 +43,9 @@ New features
 
    - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
      (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
+
+   - Added :class:`linear_model.HuberRegressor`, a linear model robust to outliers.
+     (`#5291 <https://github.com/scikit-learn/scikit-learn/pull/5291>`_) by `Manoj Kumar`_.
 
 Enhancements
 ............
@@ -102,23 +114,35 @@ Enhancements
    - Prediction of out-of-sample events with Isotonic Regression is now much
      faster (over 1000x in tests with synthetic data). By `Jonathan Arfa`_.
 
+   - Added ``inverse_transform`` function to :class:`decomposition.nmf` to compute
+     data matrix of original shape. By `Anish Shah`_.
+
 Bug fixes
 .........
 
     - :class:`StratifiedKFold` now raises error if all n_labels for individual classes is less than n_folds.
       (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
 
-    - :class:`RandomizedPCA` default number of `iterated_power` is 2 instead of 3.
-      This is a speed up with a minor precision decrease. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+    - :class:`RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
+      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
-    - :func:`randomized_svd` performs 2 power iterations by default, instead or 0.
-      In practice this is often enough for obtaining a good approximation of the
-      true eigenvalues/vectors in the presence of noise. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+    - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
+      In practice this is enough for obtaining a good approximation of the
+      true eigenvalues/vectors in the presence of noise. When `n_components` is
+      small (< .1 * min(X.shape)) `n_iter` is set to 7, unless the user specifies
+      a higher number. This improves precision with few components.
+      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
 
-    - :func:`randomized_range_finder` is more numerically stable when many
+    - :func:`utils.extmath.randomized_range_finder` is more numerically stable when many
       power iterations are requested, since it applies LU normalization by default.
       If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
-      Other normalization options are available: 'none', 'LU' and 'QR'. (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+      Other normalization options are available: 'none', 'LU' and 'QR'.
+      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+
+    - Whiten/non-whiten inconsistency between components of :class:`decomposition.PCA`
+      and :class:`decomposition.RandomizedPCA` (now factored into PCA, see the
+      New features) is fixed. `components_` are stored with no whitening.
+      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
 
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
       Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
@@ -135,6 +159,11 @@ Bug fixes
     - :class:`VotingClassifier` now raises ``NotFittedError`` if ``predict``,
       ``transform`` or ``predict_proba`` are called on the non-fitted estimator.
       by `Sebastian Raschka`_.
+
+    - Fixed bug in :class:`model_selection.StratifiedShuffleSplit`
+      where train and test sample could overlap in some edge cases,
+      see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
+      more details. By `Loic Esteve`_.
 
 API changes summary
 -------------------
@@ -182,9 +211,14 @@ Bug fixes
       By `Olivier Grisel`_.
 
     - Fixed a bug that prevented to properly set the ``presort`` parameter
-      in :class:`ensemble.GradientBoostingRegressor`. See #5857`
+      in :class:`ensemble.GradientBoostingRegressor`. See `#5857
       <https://github.com/scikit-learn/scikit-learn/issues/5857>`_
       By Andrew McCulloh.
+
+    - Fixed a joblib error when evaluating the perplexity of a
+      :class:`decomposition.LatentDirichletAllocation` model. See `#6258
+      <https://github.com/scikit-learn/scikit-learn/issues/6258>`_
+      By Chyi-Kwei Yau.
 
 .. _changes_0_17:
 
@@ -197,7 +231,8 @@ Changelog
 
 New features
 ............
-   - All the Scaler classes but :class:`RobustScaler` can be fitted online by
+
+   - All the Scaler classes but :class:`preprocessing.RobustScaler` can be fitted online by
      calling `partial_fit`. By `Giorgio Patrini`_.
 
    - The new class :class:`ensemble.VotingClassifier` implements a
@@ -291,7 +326,7 @@ Enhancements
 
    - The ``class_weight="auto"`` heuristic in classifiers supporting
      ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
-     option, which has a simpler forumlar and interpretation.
+     option, which has a simpler formula and interpretation.
      By Hanna Wallach and `Andreas Müller`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
@@ -429,6 +464,7 @@ Enhancements
 
 Bug fixes
 .........
+
     - Fixed non-determinism in :class:`dummy.DummyClassifier` with sparse
       multi-label output. By `Andreas Müller`_.
 
@@ -573,7 +609,7 @@ API changes summary
     - Classifier and Regressor models are now tagged as such using the
       ``_estimator_type`` attribute.
 
-    - Cross-validation iterators allways provide indices into training and test set,
+    - Cross-validation iterators always provide indices into training and test set,
       not boolean masks.
 
     - The ``decision_function`` on all regressors was deprecated and will be
@@ -784,7 +820,7 @@ Enhancements
      By `Jatin Shah`.
 
    - Add support for multiclass in `metrics.hinge_loss`. Added ``labels=None``
-     as optional paramter. By `Saurabh Jha`.
+     as optional parameter. By `Saurabh Jha`.
 
    - Add ``sample_weight`` parameter to `metrics.hinge_loss`.
      By `Saurabh Jha`.
@@ -868,7 +904,7 @@ Enhancements
      instead of its sum over all samples. By `Hervé Bredin`_.
 
    - The outcome of :func:`manifold.spectral_embedding` was made deterministic
-     by flipping the sign of eigen vectors. By `Hasil Sharma`_.
+     by flipping the sign of eigenvectors. By `Hasil Sharma`_.
 
    - Significant performance and memory usage improvements in
      :class:`preprocessing.PolynomialFeatures`. By `Eric Martin`_.
@@ -952,7 +988,7 @@ Bug fixes
       too much.) By `Dougal Sutherland`_.
 
     - Pipeline object delegate the ``classes_`` attribute to the underlying
-      estimator. It allows for instance to make bagging of a pipeline object.
+      estimator. It allows, for instance, to make bagging of a pipeline object.
       By `Arnaud Joly`_
 
     - :class:`neighbors.NearestCentroid` now uses the median as the centroid
@@ -1452,7 +1488,7 @@ Bug fixes
      By `Virgile Fritsch`_.
 
    - Fixed a race condition in parallel processing with
-     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     ``pre_dispatch != "all"`` (for instance, in ``cross_val_score``).
      By `Olivier Grisel`_.
 
    - Raise error in :class:`cluster.FeatureAgglomeration` and
@@ -2804,7 +2840,7 @@ Other changes
 
    - :class:`svm.SVC` members ``coef_`` and ``intercept_`` changed sign for
      consistency with ``decision_function``; for ``kernel==linear``,
-     ``coef_`` was fixed in the the one-vs-one case, by `Andreas Müller`_.
+     ``coef_`` was fixed in the one-vs-one case, by `Andreas Müller`_.
 
    - Performance improvements to efficient leave-one-out cross-validated
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
@@ -2985,7 +3021,7 @@ Changelog
 
    - Fixed a bug in the RFE module by `Gilles Louppe`_ (issue #378).
 
-   - Fixed a memory leak in in :ref:`svm` module by `Brian Holt`_ (issue #367).
+   - Fixed a memory leak in :ref:`svm` module by `Brian Holt`_ (issue #367).
 
    - Faster tests by `Fabian Pedregosa`_ and others.
 
@@ -3278,7 +3314,7 @@ version 0.8:
     still a ``scikits.learn`` package alias for backward compatibility.
 
     Third-party projects with a dependency on scikit-learn 0.9+ should
-    upgrade their codebase. For instance under Linux / MacOSX just run
+    upgrade their codebase. For instance, under Linux / MacOSX just run
     (make a backup first!)::
 
       find -name "*.py" | xargs sed -i 's/\bscikits.learn\b/sklearn/g'
@@ -3297,7 +3333,7 @@ version 0.8:
     backward compatibility.
 
     Third-party projects with a dependency on scikit-learn 0.9+ should
-    upgrade their codebase. For instance under Linux / MacOSX just run
+    upgrade their codebase. For instance, under Linux / MacOSX just run
     (make a backup first!)::
 
       find -name "*.py" | xargs sed -i 's/\bcross_val\b/cross_validation/g'
@@ -4083,3 +4119,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Devashish Deshpande: https://github.com/dsquareindia
 
 .. _Jonathan Arfa: https://github.com/jarfa
+
+.. _Anish Shah: https://github.com/AnishShah

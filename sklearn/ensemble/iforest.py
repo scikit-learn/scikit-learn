@@ -16,7 +16,6 @@ from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 
 from .bagging import BaseBagging
-from .forest import _parallel_helper
 from .base import _partition_estimators
 
 __all__ = ["IsolationForest"]
@@ -42,6 +41,7 @@ class IsolationForest(BaseBagging):
     Hence, when a forest of random trees collectively produce shorter path
     lengths for particular samples, they are highly likely to be anomalies.
 
+    Read more in the :ref:`User Guide <isolation_forest>`.
 
     Parameters
     ----------

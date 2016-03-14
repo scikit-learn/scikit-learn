@@ -1240,7 +1240,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         X_leaves : array_like, shape = [n_samples, n_estimators, n_classes]
             For each datapoint x in X and for each tree in the ensemble,
-            return the index of the leaf x ends up in in each estimator.
+            return the index of the leaf x ends up in each estimator.
             In the case of binary classification n_classes is 1.
         """
 
@@ -1840,7 +1840,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         -------
         X_leaves : array_like, shape = [n_samples, n_estimators]
             For each datapoint x in X and for each tree in the ensemble,
-            return the index of the leaf x ends up in in each estimator.
+            return the index of the leaf x ends up in each estimator.
         """
 
         leaves = super(GradientBoostingRegressor, self).apply(X)

@@ -1,4 +1,4 @@
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 # License: BSD 3 clause
 
 import numbers

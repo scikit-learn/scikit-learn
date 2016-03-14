@@ -280,7 +280,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
-        data, use sklearn.linear_model.center_data before your regression.
+        data, use sklearn.linear_model._preprocess_data before your regression.
 
         .. versionadded:: 0.17
 
@@ -463,7 +463,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                 np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        X, y, X_mean, y_mean, X_std = self._center_data(
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
@@ -474,14 +474,14 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True)
-            self.intercept_ += y_mean
+            self.intercept_ += y_offset
         else:
             self.coef_, self.n_iter_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=False)
-            self._set_intercept(X_mean, y_mean, X_std)
+            self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
 
@@ -521,6 +521,13 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
         Solver to use in the computational routines:
@@ -663,6 +670,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
         Solver to use in the computational routines:
@@ -682,7 +696,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
@@ -921,7 +935,7 @@ class _RidgeGCV(LinearModel):
 
         n_samples, n_features = X.shape
 
-        X, y, X_mean, y_mean, X_std = LinearModel._center_data(
+        X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
@@ -989,7 +1003,7 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_values:
             if len(y.shape) == 1:
@@ -1085,6 +1099,13 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1179,6 +1200,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
