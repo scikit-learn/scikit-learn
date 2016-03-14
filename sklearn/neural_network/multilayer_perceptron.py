@@ -16,7 +16,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ._base import logistic, softmax
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
-from ..cross_validation import train_test_split
+from ..model_selection import train_test_split
 from ..externals import six
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -348,6 +348,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # l-bfgs does not support mini-batches
         if self.algorithm == 'l-bfgs':
             batch_size = n_samples
+        elif self.batch_size == 'auto':
+            batch_size = min(200, n_samples)
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
                 warnings.warn("Got `batch_size` less than 1 or larger than "
@@ -493,7 +495,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             y_val = None
 
         n_samples = X.shape[0]
-        batch_size = np.clip(self.batch_size, 1, n_samples)
+
+        if self.batch_size == 'auto':
+            batch_size = min(200, n_samples)
+        else:
+            batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
             for it in range(self.max_iter):
@@ -714,9 +720,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     alpha : float, optional, default 0.0001
         L2 penalty (regularization term) parameter.
 
-    batch_size : int, optional, default 200
+    batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
         If the algorithm is 'l-bfgs', the classifier will not use minibatch.
+        When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
@@ -864,7 +871,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  algorithm='adam', alpha=0.0001,
-                 batch_size=200, learning_rate="constant",
+                 batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
                  shuffle=True, random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
@@ -1067,9 +1074,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     alpha : float, optional, default 0.0001
         L2 penalty (regularization term) parameter.
 
-    batch_size : int, optional, default 200
+    batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
         If the algorithm is 'l-bfgs', the classifier will not use minibatch.
+        When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
@@ -1211,7 +1219,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  algorithm='adam', alpha=0.0001,
-                 batch_size=200, learning_rate="constant",
+                 batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
                  power_t=0.5, max_iter=200, shuffle=True,
                  random_state=None, tol=1e-4,

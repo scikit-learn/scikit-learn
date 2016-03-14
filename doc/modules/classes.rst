@@ -974,6 +974,25 @@ See the :ref:`metrics` section of the user guide for further details.
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
 
+.. _multioutput_ref:
+
+:mod:`sklearn.multioutput`: Multioutput regression
+==================================================
+
+.. automodule:: sklearn.multioutput
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`multiclass` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    multioutput.MultiOutputRegressor
+
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes

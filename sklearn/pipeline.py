@@ -89,7 +89,8 @@ class Pipeline(BaseEstimator):
     def __init__(self, steps):
         names, estimators = zip(*steps)
         if len(dict(steps)) != len(steps):
-            raise ValueError("Provided step names are not unique: %s" % (names,))
+            raise ValueError("Provided step names are not unique: %s"
+                             % (names,))
 
         # shallow copy of steps
         self.steps = tosequence(steps)
@@ -195,8 +196,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -232,8 +233,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -249,8 +250,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -266,8 +267,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -283,8 +284,8 @@ class Pipeline(BaseEstimator):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step of
-            the pipeline.
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
         """
         Xt = X
         for name, transform in self.steps:
@@ -294,8 +295,8 @@ class Pipeline(BaseEstimator):
     @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
         """Applies inverse transform to the data.
-        Starts with the last step of the pipeline and applies ``inverse_transform`` in
-        inverse order of the pipeline steps.
+        Starts with the last step of the pipeline and applies
+        ``inverse_transform`` in inverse order of the pipeline steps.
         Valid only if all steps of the pipeline implement inverse_transform.
 
         Parameters
@@ -326,8 +327,8 @@ class Pipeline(BaseEstimator):
             pipeline.
 
         y : iterable, default=None
-            Targets used for scoring. Must fulfill label requirements for all steps of
-            the pipeline.
+            Targets used for scoring. Must fulfill label requirements for all
+            steps of the pipeline.
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -559,13 +560,16 @@ def make_union(*transformers):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
-                 transformer_list=[('pca', PCA(copy=True, n_components=None,
-                                               whiten=False)),
-                                   ('truncatedsvd',
-                                    TruncatedSVD(algorithm='randomized',
-                                                 n_components=2, n_iter=5,
-                                                 random_state=None, tol=0.0))],
-                 transformer_weights=None)
+           transformer_list=[('pca',
+                              PCA(copy=True, iterated_power=4,
+                                  n_components=None, random_state=None,
+                                  svd_solver='auto', tol=0.0, whiten=False)),
+                             ('truncatedsvd',
+                              TruncatedSVD(algorithm='randomized',
+                              n_components=2, n_iter=5,
+                              random_state=None, tol=0.0))],
+           transformer_weights=None)
+
 
     Returns
     -------
