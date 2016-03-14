@@ -275,13 +275,15 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def inplace_csr_row_normalize_l1(X):
-    """Inplace row normalize using the l1 norm"""
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
+    _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data, shape,
+                                  np.ndarray[int, ndim=1] X_indices,
+                                  np.ndarray[int, ndim=1] X_indptr):
+    """Inplace row normalize using the l1 norm"""
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
 
     # the column indices for row i are stored in:
     #    indices[indptr[i]:indices[i+1]]
@@ -310,13 +312,16 @@ def inplace_csr_row_normalize_l1(X):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def inplace_csr_row_normalize_l2(X):
-    """Inplace row normalize using the l2 norm"""
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
+    _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
+                                  shape,
+                                  np.ndarray[int, ndim=1] X_indices,
+                                  np.ndarray[int, ndim=1] X_indptr):
+    """Inplace row normalize using the l2 norm"""
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
 
     cdef unsigned int i
     cdef unsigned int j
