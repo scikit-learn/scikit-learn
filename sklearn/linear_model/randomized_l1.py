@@ -380,7 +380,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    C : float, optional, default=1
+    C : float, or array of shape [n_C], optional, default=1
         The regularization parameter C in the LogisticRegression.
 
     scaling : float, optional, default=0.5
