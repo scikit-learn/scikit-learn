@@ -25,7 +25,7 @@ from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 
@@ -2163,8 +2163,11 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
 
 class AdaptiveLasso(Lasso):
-    """The multi-step adaptive Lasso iteratively solves Lasso estimates with
-    penalty weights applied to the regularization of the coefficients.
+    """Multi-step adaptive Lasso iteratively solving Lasso estimates.
+
+    At each iteration, penalty weights applied are applied to the
+    regularization of the coefficients in order to produce sparser
+    coefficients.
 
     The optimization objective for the AdaptiveLasso is::
 
@@ -2206,49 +2209,51 @@ class AdaptiveLasso(Lasso):
         Stability parameter to ensure that a zero valued coefficient does not
         prohibit a nonzero estimate in the next iteration.
 
-    ada_tol : float, optional
+    ada_tol : float, optional (default=1e-4)
         The tolerance for each Adaptive Lasso step: the optimization code
         checks the optimization objective progress and continues until it is
         smaller than ``tol``.
 
-    fit_intercept : boolean
+    fit_intercept : boolean, optional (default=False)
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional (default=False)
         If ``True``, the regressors X will be normalized before regression.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, optional (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | array-like, optional (default=False)
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
-        WARNING : The ``'auto'`` option is deprecated and will
-        be removed in 0.18.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=1000)
         The maximum number of iterations for each Lasso fit.
 
-    tol : float, optional
+    tol : float, optional, (default=1e-4)
         The tolerance for each Lasso optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    positive : bool, optional
+    warm_start : bool, optional (default=False)
+        When set to ``True``, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    positive : bool, optional (default=False)
         When set to ``True``, forces the coefficients to be positive.
 
-    selection : str, default 'cyclic'
+    selection : str, optional (default='cyclic')
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance, or None, optional (default=None)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
@@ -2298,8 +2303,8 @@ class AdaptiveLasso(Lasso):
     def __init__(self, max_lasso_iterations=20, gamma=1., alpha=1.0,
                  eps=1e-3, ada_tol=1e-4, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
-                 tol=1e-4, positive=False,
-                 random_state=None, selection='cyclic'):
+                 tol=1e-4, positive=False, random_state=None,
+                 selection='cyclic'):
         super(AdaptiveLasso, self).__init__(
             alpha=alpha, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
@@ -2341,6 +2346,10 @@ class AdaptiveLasso(Lasso):
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
 
+        if not self.warm_start or self.coef_ is None:
+            self.coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
+                             order='F')
+
         n_samples, n_features = X.shape
         weights = np.ones(n_features)
         X_sparse = sparse.isspmatrix(X)
@@ -2356,9 +2365,8 @@ class AdaptiveLasso(Lasso):
                 return 1. / (2 * n_samples) * np.sum((y - X.dot(beta)) ** 2) \
                     + self.alpha * np.sum(np.log(np.abs(beta) + self.eps))
 
-        this_obj = None
-        k = 1
-        while k <= self.max_lasso_iterations:
+        previous_obj = obj(self.coef_)
+        for k in xrange(self.max_lasso_iterations):
             # Perform Lasso fit
             if X_sparse:
                 X_w = X.copy()
@@ -2366,19 +2374,19 @@ class AdaptiveLasso(Lasso):
             else:
                 X_w = np.divide(X, weights[np.newaxis, :])
             super(AdaptiveLasso, self).fit(X_w, y)
-            self.coef_ /= weights
+            np.divide(self.coef_, weights, self.coef_)
             weights = np.power(np.abs(self.coef_) + self.eps, -self.gamma)
 
             # Check optimization objective progress
-            previous_obj, this_obj = this_obj, obj(self.coef_)
-            if (all((previous_obj, this_obj)) and
-                    previous_obj - this_obj < self.ada_tol):
+            new_obj = obj(self.coef_)
+            if previous_obj - new_obj < self.ada_tol :
                 break
-            k += 1
-
-        if k > self.max_lasso_iterations:
+            previous_obj = new_obj
+        else:
             warnings.warn("Objective did not converge."
                           " You might want to increase"
                           " the number of Lasso iterations",
                           ConvergenceWarning)
+
+        # return self for chaining fit and predict calls
         return self
