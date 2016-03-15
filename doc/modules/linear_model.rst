@@ -1233,6 +1233,3 @@ This way, we can solve the XOR problem with a linear classifier::
     >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
     >>> clf.score(X, y)
     1.0
-
-
-

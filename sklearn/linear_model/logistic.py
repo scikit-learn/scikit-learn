@@ -832,8 +832,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Decides which solver to use.
 
     penalty : str, 'l1' or 'l2'
-        Used to specify the norm used in the penalization. The newton-cg and
-        lbfgs solvers support only l2 penalties.
+        Used to specify the norm used in the penalization. The 'newton-cg',
+        'sag' and 'lbfgs' solvers support only l2 penalties.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
@@ -972,8 +972,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Parameters
     ----------
     penalty : str, 'l1' or 'l2', default: 'l2'
-        Used to specify the norm used in the penalization. The newton-cg, sag
-        and lbfgs solvers support only l2 penalties.
+        Used to specify the norm used in the penalization. The 'newton-cg',
+        'sag' and 'lbfgs' solvers support only l2 penalties.
 
     dual : bool, default: False
         Dual or primal formulation. Dual formulation is only implemented for
@@ -1361,8 +1361,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         list of possible cross-validation objects.
 
     penalty : str, 'l1' or 'l2'
-        Used to specify the norm used in the penalization. The newton-cg and
-        lbfgs solvers support only l2 penalties.
+        Used to specify the norm used in the penalization. The 'newton-cg',
+        'sag' and 'lbfgs' solvers support only l2 penalties.
 
     dual : bool
         Dual or primal formulation. Dual formulation is only implemented for
