@@ -34,7 +34,7 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
-                               max_samples, seeds, verbose, total_n_estimators):
+                               max_samples, seeds, total_n_estimators, verbose):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
     n_samples, n_features = X.shape
@@ -344,7 +344,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(n_more_estimators,
                                                              self.n_jobs)
-        total_n_estimators = len(n_estimators)
+        total_n_estimators = sum(n_estimators)
 
         # Advance random state to state after training
         # the first n_estimators
@@ -362,8 +362,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_weight,
                 max_samples,
                 seeds[starts[i]:starts[i + 1]],
-                verbose=self.verbose,
-                total_n_estimators)
+                total_n_estimators,
+                verbose=self.verbose)
             for i in range(n_jobs))
 
         # Reduce
