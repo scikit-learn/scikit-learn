@@ -276,15 +276,14 @@ def median_absolute_error(y_true, y_pred, sample_weight=None):
                                                    'uniform_average')
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in median_absolute_error")
+    y_pred = y_pred.ravel()
+    y_true = y_true.ravel()
     if sample_weight is None:
-        return np.median(np.abs(y_pred - y_true))
+        sample_weight = np.ones_like(y_true)
     else:
         check_consistent_length(y_pred, sample_weight)
-        sample_weight = np.array(sample_weight)
-        y_pred = y_pred.ravel()
-        y_true = y_true.ravel()
-        return weighted_median(np.abs(y_pred - y_true),
-                                    np.asarray(sample_weight))
+        sample_weight = np.asarray(sample_weight)
+    return weighted_median(np.abs(y_pred - y_true), sample_weight)
 
 
 def explained_variance_score(y_true, y_pred,

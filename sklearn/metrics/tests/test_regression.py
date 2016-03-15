@@ -146,7 +146,7 @@ def test_regression_custom_weights():
 def test_median_absolute_error_weights():
     y_tr = [3, -0.5, 2, 7]
     y_pr = [2.5, 0.0, 2, 8]
-    sample_weight = [1, 2, 3, 4]
+    sample_weight = [2, 3, 1, 4]
     # check that unit weights gives the same score as no weight
     unweighted_score = median_absolute_error(y_tr, y_pr, sample_weight=None)
     assert_almost_equal(
