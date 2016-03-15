@@ -317,7 +317,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
            computational linguistics". Computational Linguistic 34(4):555-596.
     """
     confusion = confusion_matrix(y1, y2, labels=labels)
-    n = confusion.shape[0]
+    n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
     expected = np.outer(sum0, sum1) / np.sum(sum0)
