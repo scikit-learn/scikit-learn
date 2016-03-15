@@ -324,6 +324,13 @@ def test_cohen_kappa():
     y2 = np.array([0] * 52 + [1] * 32 + [2] * 16)
     assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
 
+    # Weighting example: none, linear, quadratic.
+    y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
+    y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
+    assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2, weights="linear"), .9412, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"), .9541, decimal=4)
+
 
 @ignore_warnings
 def test_matthews_corrcoef_nan():

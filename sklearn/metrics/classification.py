@@ -322,14 +322,17 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     sum1 = np.sum(confusion, axis=1)
     expected = np.outer(sum0, sum1) / np.sum(sum0)
 
-    if weights == None:
-        w_mat = np.ones([n, n]) - np.diag(np.ones([n, ]))
-    elif weights == "linear":
-        w_mat = np.tile(np.arange(n), [n, 1])
-        w_mat = abs(w_mat - w_mat.T)
-    elif weights == "quadratic":
-        w_mat = np.tile(np.arange(n), [n, 1])
-        w_mat = (w_mat - w_mat.T) ** 2
+    if weights is None:
+        w_mat = np.ones([n_classes, n_classes], dtype=np.int)
+        for i in range(n_classes):
+            w_mat[i, i] = 0
+    elif weights == "linear" or weights == "quadratic":
+        w_mat = np.zeros([n_classes, n_classes], dtype=np.int)
+        w_mat += np.arange(n_classes)
+        if weights == "linear":
+            w_mat = abs(w_mat - w_mat.T)
+        else:
+            w_mat = (w_mat - w_mat.T) ** 2
     else:
         raise ValueError("Unknown kappa weighting type.")
 
