@@ -665,6 +665,8 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
    :align: center
    :scale: 50%
 
+ARD is also known in the literature as *Sparse Bayesian Learning* and
+*Relevance Vector Machine* [3]_ [4]_. 
 
 .. topic:: Examples:
 
@@ -674,7 +676,11 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [2] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
+
+    .. [3] Tristan Fletcher: `Relevance Vector Machines explained <http://www.tristanfletcher.co.uk/RVM%20Explained.pdf>`_
+
+    .. [4] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
 .. _Logistic_regression:
 
@@ -721,12 +727,12 @@ weights to zero) model.
 The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
 are found to converge faster for some high dimensional data. Setting
 `multi_class` to "multinomial" with these solvers learns a true multinomial
-logistic regression model [3]_, which means that its probability estimates
+logistic regression model [5]_, which means that its probability estimates
 should be better calibrated than the default "one-vs-rest" setting. The
 "lbfgs", "sag" and "newton-cg"" solvers cannot optimize L1-penalized models,
 therefore the "multinomial" setting does not learn sparse models.
 
-The solver "sag" uses a Stochastic Average Gradient descent [4]_. It is faster
+The solver "sag" uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
 number of features are large.
 
@@ -778,9 +784,9 @@ entropy loss.
 
 .. topic:: References:
 
-    .. [3] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
+    .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
 
-    .. [4] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
+    .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================
