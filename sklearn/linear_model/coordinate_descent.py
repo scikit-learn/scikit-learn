@@ -2189,7 +2189,7 @@ class AdaptiveLasso(Lasso):
 
     Parameters
     ----------
-    max_lasso_iterations : integer, optional (default=20)
+    max_lasso_iterations : integer, optional (default=30)
         Maximum number of lasso iterations to fit. max_lasso_iterations = 1 is
         equivalent to a Lasso, solved by the :class:`Lasso`, and
         max_lasso_iterations = 2 is equivalent to an adaptive Lasso.
@@ -2300,7 +2300,7 @@ class AdaptiveLasso(Lasso):
     The Adaptive Lasso and Its Oracle Properties
     Journal of the American Statistical Association, 2006.
     """
-    def __init__(self, max_lasso_iterations=20, gamma=1., alpha=1.0,
+    def __init__(self, max_lasso_iterations=30, gamma=1., alpha=1.0,
                  eps=1e-3, ada_tol=1e-4, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, positive=False, random_state=None,
@@ -2325,7 +2325,7 @@ class AdaptiveLasso(Lasso):
         X : ndarray or scipy.sparse matrix, shape (n_samples, n_features)
             Data
 
-        y : ndarray, shape (n_samples,) or (n_samples, n_targets)
+        y : ndarray, shape (n_samples,)
             Target
         """
         if not isinstance(self.gamma, numbers.Number) or self.gamma <= 0:
@@ -2346,11 +2346,23 @@ class AdaptiveLasso(Lasso):
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
 
-        if not self.warm_start or self.coef_ is None:
-            self.coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
-                             order='F')
+        if y.ndim != 1:
+            raise ValueError("AdaptiveLasso cannot be used with "
+                             "mutli-task outputs.")
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
+
+        if self.selection not in ['cyclic', 'random']:
+            raise ValueError("selection should be either random or cyclic.")
+
+        if not self.warm_start or self.coef_ is None:
+            self.coef_ = np.zeros(n_features, dtype=np.float64,
+                             order='F')
+
+        # Using warm start makes the iterative lasso solves faster
+        self.warm_start = True
+
         weights = np.ones(n_features)
         X_sparse = sparse.isspmatrix(X)
 
@@ -2368,11 +2380,11 @@ class AdaptiveLasso(Lasso):
         previous_obj = obj(self.coef_)
         for k in xrange(self.max_lasso_iterations):
             # Perform Lasso fit
+            X_w = X.copy()
             if X_sparse:
-                X_w = X.copy()
                 inplace_csr_column_scale(X_w, weights)
             else:
-                X_w = np.divide(X, weights[np.newaxis, :])
+                np.divide(X_w, weights, X_w)
             super(AdaptiveLasso, self).fit(X_w, y)
             np.divide(self.coef_, weights, self.coef_)
             weights = np.power(np.abs(self.coef_) + self.eps, -self.gamma)
