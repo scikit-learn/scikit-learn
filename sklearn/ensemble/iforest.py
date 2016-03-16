@@ -204,7 +204,7 @@ class IsolationForest(BaseBagging):
 
         Returns
         -------
-        is_outliers : array, shape = (n_samples, )
+        is_inlier : array, shape = (n_samples, )
             For each observations, tells whether or not (+1 or -1) it should
             be considered as an outlier according to the fitted model.
 
