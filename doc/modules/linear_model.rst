@@ -666,7 +666,7 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
    :scale: 50%
 
 ARD is also known in the literature as *Sparse Bayesian Learning* and
-*Relevance Vector Machine* [3]_ [4]_. 
+*Relevance Vector Machine* [3]_ [4]_.
 
 .. topic:: Examples:
 
@@ -676,11 +676,13 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
-    .. [3] Tristan Fletcher: `Relevance Vector Machines explained <http://www.tristanfletcher.co.uk/RVM%20Explained.pdf>`_
+    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-    .. [4] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://www.tristanfletcher.co.uk/RVM%20Explained.pdf>`_
+
+
 
 .. _Logistic_regression:
 
