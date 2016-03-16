@@ -1155,7 +1155,7 @@ def test_cross_val_predict():
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
 
-def test_cross_val_apply():
+def test_cross_val_predict_apply():
     iris = load_iris()
     X, y = iris.data, iris.target
     classes = len(set(y))
@@ -1175,25 +1175,25 @@ def test_cross_val_apply():
 
         func = getattr(est, func_name)
 
-        # Naive loop (should be same as cross_val_apply):
+        # Naive loop (should be same as cross_val_predict):
         for train, test in cv:
             est.fit(X[train], y[train])
             preds2[test] = func(X[test])
 
-        preds = cval.cross_val_apply(est, X, y, apply_func=func_name, cv=cv)
+        preds = cval.cross_val_predict(est, X, y, apply_func=func_name, cv=cv)
         assert_array_almost_equal(preds, preds2)
 
-        preds = cval.cross_val_apply(est, X, y, apply_func=func_name)
+        preds = cval.cross_val_predict(est, X, y, apply_func=func_name)
         assert_equal(len(preds), len(y))
 
         cv = cval.LeaveOneOut(len(y))
-        preds = cval.cross_val_apply(est, X, y, apply_func=func_name, cv=cv)
+        preds = cval.cross_val_predict(est, X, y, apply_func=func_name, cv=cv)
         assert_equal(len(preds), len(y))
 
         Xsp = X.copy()
         Xsp *= (Xsp > np.median(Xsp))
         Xsp = coo_matrix(Xsp)
-        preds = cval.cross_val_apply(est, Xsp, y)
+        preds = cval.cross_val_predict(est, Xsp, y)
         assert_array_almost_equal(len(preds), len(y))
 
         def bad_cv():
