@@ -360,14 +360,14 @@ class GaussianNB(BaseNB):
                 priors = np.asarray(self.priors)
                 # Check that the provide prior match the number of classes
                 if len(priors) != n_classes:
-                    raise ValueError("Number of priors must match number of"
-                                     " classes.")
+                    raise ValueError('Number of priors must match number of'
+                                     ' classes.')
                 # Check that the sum is 1
                 if priors.sum() != 1.0:
-                    raise ValueError("The sum of the priors should be 1.")
+                    raise ValueError('The sum of the priors should be 1.')
                 # Check that the prior are non-negative
                 if (priors < 0).any():
-                    raise ValueError("Priors must be non-negative.")
+                    raise ValueError('Priors must be non-negative.')
                 self.class_prior_ = priors
             else:
                 # Initialize the priors to zeros for each class
@@ -375,7 +375,7 @@ class GaussianNB(BaseNB):
                                              dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
-                msg = "Number of features %d does not match previous data %d."
+                msg = 'Number of features %d does not match previous data %d.'
                 raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
@@ -386,8 +386,8 @@ class GaussianNB(BaseNB):
         unique_y_in_classes = in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
-            raise ValueError("The target label(s) %s in y do not exist in the "
-                             "initial classes %s" %
+            raise ValueError('The target label(s) %s in y do not exist in the '
+                             'initial classes %s' %
                              (y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:

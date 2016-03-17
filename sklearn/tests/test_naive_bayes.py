@@ -94,8 +94,14 @@ def test_gnb_sample_weight():
     assert_array_almost_equal(clf_dupl.sigma_, clf_sw.sigma_)
 
 
+def test_gnb_neg_priors():
+    """Test whether an error is raised in case of negative priors"""
+    clf = GaussianNB(priors=np.array([-1., 2.]))
+    assert_raises(ValueError, clf.fit, X, y)
+
+
 def test_gnb_priors():
-    """Test whether the class prior override is properly used. """
+    """Test whether the class prior override is properly used"""
     clf = GaussianNB(priors=np.array([0.3, 0.7])).fit(X, y)
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
@@ -103,17 +109,47 @@ def test_gnb_priors():
     assert_array_equal(clf.class_prior_, np.array([0.3, 0.7]))
 
 
+def test_gnb_wrong_nb_priors():
+    """ Test whether an error is raised if the number of prior is different
+    to the number of class"""
+    clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
+    assert_raises(ValueError, clf.fit, X, y)
+
+
 def test_gnb_prior_greater_one():
-    """Test if an error is risen if the sum of prior greater than one"""
+    """Test if an error is raised if the sum of prior greater than one"""
     clf = GaussianNB(priors=np.array([2., 1.]))
     assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_gnb_prior_large_bias():
-    """Test if good prediction when class prior favor largely one of the class"""
+    """Test if good prediction when class prior favor largely one class"""
     clf = GaussianNB(priors=np.array([0.01, 0.99]))
     clf.fit(X, y)
     assert_equal(clf.predict([[-0.1, -0.1]]), np.array([2]))
+
+
+def test_check_update_with_no_data():
+    """ Test when the partial fit is called without any data"""
+    # Create an empty array
+    prev_points = 100
+    mean = 0.
+    var = 1.
+    x_empty = np.empty((0, X.shape[1]))
+    tmean, tvar = GaussianNB._update_mean_variance(prev_points, mean,
+                                                   var, x_empty)
+    assert_equal(tmean, mean)
+    assert_equal(tvar, var)
+
+
+def test_gnb_pfit_wrong_nb_features():
+    """Test whether an error is raised when the number of feature change
+    between two partial fit"""
+    clf = GaussianNB()
+    # Fit for the first time the GNB
+    clf.fit(X, y)
+    # Partial fit a second time with an incoherent X
+    assert_raises(ValueError, clf.partial_fit, np.hstack((X, X)), y)
 
 
 def test_discrete_prior():
