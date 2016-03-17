@@ -156,32 +156,6 @@ class GaussianNB(BaseNB):
     def __init__(self, priors=None):
         self.priors = priors
 
-    def _init_priors(self):
-        n_classes = len(self.classes_)
-        # Take into account the priors
-        if self.priors is not None:
-            priors = np.asarray(self.priors)
-            # Check that the provide prior match the number of classes
-            if len(priors) != n_classes:
-                raise ValueError("Number of priors must match number of"
-                                 " classes.")
-            # Check that the sum is 1
-            if priors.sum() != 1.0:
-                raise ValueError("The sum of the priors should be 1.")
-            # Check that the prior are non-negative
-            if (priors < 0).any():
-                raise ValueError("Priors must be non-negative.")
-            self.class_prior_ = priors
-        else:
-            # Initialize the priors to zeros for each class
-            self.class_prior_ = np.zeros(len(self.classes_), dtype=np.float64)
-
-    def _update_priors(self):
-        # Update only no priors is provided
-        if self.priors is None:
-            # Empirical prior, with sample_weight taken into account
-            self.class_prior_ = self.class_count_ / self.class_count_.sum()
-
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
 
@@ -380,7 +354,25 @@ class GaussianNB(BaseNB):
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
 
             # Initialise the class prior
-            self._init_priors()
+            n_classes = len(self.classes_)
+            # Take into account the priors
+            if self.priors is not None:
+                priors = np.asarray(self.priors)
+                # Check that the provide prior match the number of classes
+                if len(priors) != n_classes:
+                    raise ValueError("Number of priors must match number of"
+                                     " classes.")
+                # Check that the sum is 1
+                if priors.sum() != 1.0:
+                    raise ValueError("The sum of the priors should be 1.")
+                # Check that the prior are non-negative
+                if (priors < 0).any():
+                    raise ValueError("Priors must be non-negative.")
+                self.class_prior_ = priors
+            else:
+                # Initialize the priors to zeros for each class
+                self.class_prior_ = np.zeros(len(self.classes_),
+                                             dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -418,7 +410,11 @@ class GaussianNB(BaseNB):
             self.class_count_[i] += N_i
 
         self.sigma_[:, :] += epsilon
-        self._update_priors()
+
+        # Update if only no priors is provided
+        if self.priors is None:
+            # Empirical prior, with sample_weight taken into account
+            self.class_prior_ = self.class_count_ / self.class_count_.sum()
 
         return self
 
