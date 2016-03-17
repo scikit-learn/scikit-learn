@@ -42,7 +42,7 @@ def test_graphviz_toy():
                 'headlabel="True"] ;\n' \
                 '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
+                'headabel="False"] ;\n' \
                 '}'
 
     assert_equal(contents1, contents2)
@@ -95,12 +95,12 @@ def test_graphviz_toy():
                 'fontname=helvetica] ;\n' \
                 'edge [fontname=helvetica] ;\n' \
                 '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>' \
-                'value = [0.5, 0.5]>, fillcolor="#e5813900"] ;\n' \
-                '1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, ' \
+                'proportion = [0.5, 0.5]>, fillcolor="#e5813900"] ;\n' \
+                '1 [label=<samples = 50.0%<br/>proportion = [1.0, 0.0]>, ' \
                 'fillcolor="#e58139ff"] ;\n' \
                 '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
                 'headlabel="True"] ;\n' \
-                '2 [label=<samples = 50.0%<br/>value = [0.0, 1.0]>, ' \
+                '2 [label=<samples = 50.0%<br/>proportion = [0.0, 1.0]>, ' \
                 'fillcolor="#399de5ff"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \

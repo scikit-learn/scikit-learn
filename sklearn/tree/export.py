@@ -241,32 +241,32 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                             characters[4])
 
         # Write node class distribution / regression value
-        if proportion==True and tree.n_classes[0] != 1:
+        if proportion == True and tree.n_classes[0] != 1:
             # For classification this will show the proportion of samples
             value = value / tree.weighted_n_node_samples[node_id]
-        if proportion=='both' and tree.n_classes[0] != 1:
+        if proportion == 'both' and tree.n_classes[0] != 1:
             # For classification this will show the proportion of samples
             value2 = value / tree.weighted_n_node_samples[node_id]
         if labels:
-            if proportion==True and tree.n_classes[0] != 1:
+            if proportion == True and tree.n_classes[0] != 1:
                 node_string += 'proportion = '          
             else:    
                 node_string += 'value = '
         if tree.n_classes[0] == 1:
             # Regression
             value_text = np.around(value, 4)
-        elif proportion==True:
+        elif proportion == True:
             # Classification
             value_text = np.around(value, 2)
         elif np.all(np.equal(np.mod(value, 1), 0)):
             # Classification without floating-point weights
             value_text = value.astype(int)
-            if proportion=='both':
+            if proportion == 'both':
                 value_text2 = np.around(value2, 2)
         else:
             # Classification with floating-point weights
             value_text = np.around(value, 4)
-            if proportion=='both':
+            if proportion == 'both':
                 value_text2 = np.around(value2, 2)
         # Strip whitespace
         value_text = str(value_text.astype('S32')).replace("b'", "'")
