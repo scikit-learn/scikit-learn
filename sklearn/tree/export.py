@@ -120,7 +120,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     proportion : bool, optional (default=False)
         When set to ``True``, change the display of 'values' and/or 'samples'
-        to be proportions and percentages respectively.
+        to be proportions and percentages respectively. When set to 'both',
+        display both values and proportions
 
     rotate : bool, optional (default=False)
         When set to ``True``, orient tree left to right rather than top-down.
@@ -224,33 +225,49 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         # Write node sample count
         if labels:
             node_string += 'samples = '
-        if proportion:
+        if proportion==True:
             percent = (100. * tree.n_node_samples[node_id] /
                        float(tree.n_node_samples[0]))
             node_string += (str(round(percent, 1)) + '%' +
+                            characters[4])
+        elif proportion=='both':
+            node_string += (str(tree.n_node_samples[node_id]))
+            percent = (100. * tree.n_node_samples[node_id] /
+                       float(tree.n_node_samples[0]))
+            node_string += (' (' + str(round(percent, 1)) + '%)' +
                             characters[4])
         else:
             node_string += (str(tree.n_node_samples[node_id]) +
                             characters[4])
 
         # Write node class distribution / regression value
-        if proportion and tree.n_classes[0] != 1:
+        if proportion==True and tree.n_classes[0] != 1:
             # For classification this will show the proportion of samples
             value = value / tree.weighted_n_node_samples[node_id]
+        if proportion=='both' and tree.n_classes[0] != 1:
+            # For classification this will show the proportion of samples
+            value2 = value / tree.weighted_n_node_samples[node_id]
         if labels:
-            node_string += 'value = '
+            if proportion==True and tree.n_classes[0] != 1:
+                node_string += 'proportion = '          
+            else:    
+                node_string += 'value = '
         if tree.n_classes[0] == 1:
             # Regression
             value_text = np.around(value, 4)
-        elif proportion:
+        elif proportion==True:
             # Classification
             value_text = np.around(value, 2)
         elif np.all(np.equal(np.mod(value, 1), 0)):
             # Classification without floating-point weights
             value_text = value.astype(int)
+            if proportion=='both':
+                value_text2 = np.around(value2, 2)
         else:
             # Classification with floating-point weights
             value_text = np.around(value, 4)
+            if proportion=='both':
+                value_text2 = np.around(value2, 2)
         # Strip whitespace
         value_text = str(value_text.astype('S32')).replace("b'", "'")
         value_text = value_text.replace("' '", ", ").replace("'", "")
@@ -258,7 +275,14 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             value_text = value_text.replace("[", "").replace("]", "")
         value_text = value_text.replace("\n ", characters[4])
         node_string += value_text + characters[4]
-
+        if proportion == 'both' and tree.n_classes[0] != 1: 
+            # Classification with both value and proportion
+            node_string += 'proportion = '
+            value_text2 = str(value_text2.astype('S32')).replace("b'", "'")
+            value_text2 = value_text2.replace("' '", ", ").replace("'", "")
+            value_text2 = value_text2.replace("\n ", characters[4])
+            node_string += value_text2 + characters[4]        
+        
         # Write node majority class
         if (class_names is not None and
                 tree.n_classes[0] != 1 and
