@@ -42,7 +42,7 @@ def test_graphviz_toy():
                 'headlabel="True"] ;\n' \
                 '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headabel="False"] ;\n' \
+                'headlabel="False"] ;\n' \
                 '}'
 
     assert_equal(contents1, contents2)
