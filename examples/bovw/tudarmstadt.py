@@ -94,8 +94,10 @@ def fetch_tu_darmstadt(data_home=None):
 
     # the file 'motorbikes023' is a gray scale image and need to be removed
     file_removal = [
-        join(data_home, 'TUDarmstadt/PNGImages/motorbike-testset/motorbikes023.png'),
-        join(data_home, 'TUDarmstadt/Annotations/motorbike-testset/motorbikes023.txt'),
+        join(data_home,
+             'TUDarmstadt/PNGImages/motorbike-testset/motorbikes023.png'),
+        join(data_home,
+             'TUDarmstadt/Annotations/motorbike-testset/motorbikes023.txt'),
     ]
     for f in file_removal:
         os.remove(f)
