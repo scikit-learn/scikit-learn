@@ -3,7 +3,7 @@ from scipy.misc import imread
 
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.decomposition import PCA
-from sklearn.cross_validation import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
@@ -85,11 +85,10 @@ patch_arr = Parallel(n_jobs=n_jobs)(delayed(image_extraction_projection)
 print 'Extracted and projected patches for image classification'
 # Apply a stratified K-fold classification in which we will learn
 # a dictionary
-skf = StratifiedKFold(labels, n_folds=5)
+skf = StratifiedKFold(n_folds=5)
 
 # Get the training and testing index from the first fold
-train_idx = np.nonzero(skf.test_folds != 0)[0]
-test_idx = np.nonzero(skf.test_folds == 0)[0]
+train_idx, test_idx = skf.split(patch_arr, labels).next()
 
 # Build the codebook
 # Define the number of words to create the codebook
