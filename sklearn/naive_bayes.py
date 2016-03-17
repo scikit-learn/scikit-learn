@@ -117,7 +117,7 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
-    priors : array-like, size=(n_classes,)
+    priors : array-like, size (n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
