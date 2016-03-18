@@ -542,7 +542,7 @@ Bug fixes
     - Fixed inconsistent memory layout in the coordinate descent solver
       that affected :class:`linear_model.DictionaryLearning` and
       :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`_)
-      By `Oliver Grisel`_.
+      By `Olivier Grisel`_.
 
     - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
       parameter.
@@ -1597,168 +1597,168 @@ People
 
 List of contributors for release 0.15 by number of commits.
 
-* 312	Olivier Grisel
-* 275	Lars Buitinck
-* 221	Gael Varoquaux
-* 148	Arnaud Joly
-* 134	Johannes Schönberger
-* 119	Gilles Louppe
-* 113	Joel Nothman
-* 111	Alexandre Gramfort
-*  95	Jaques Grobler
-*  89	Denis Engemann
-*  83	Peter Prettenhofer
-*  83	Alexander Fabisch
-*  62	Mathieu Blondel
-*  60	Eustache Diemert
-*  60	Nelle Varoquaux
-*  49	Michael Bommarito
-*  45	Manoj-Kumar-S
-*  28	Kyle Kastner
-*  26	Andreas Mueller
-*  22	Noel Dawe
-*  21	Maheshakya Wijewardena
-*  21	Brooke Osborn
-*  21	Hamzeh Alsalhi
-*  21	Jake VanderPlas
-*  21	Philippe Gervais
-*  19	Bala Subrahmanyam Varanasi
-*  12	Ronald Phlypo
-*  10	Mikhail Korobov
-*   8	Thomas Unterthiner
-*   8	Jeffrey Blackburne
-*   8	eltermann
-*   8	bwignall
-*   7	Ankit Agrawal
-*   7	CJ Carey
-*   6	Daniel Nouri
-*   6	Chen Liu
-*   6	Michael Eickenberg
-*   6	ugurthemaster
-*   5	Aaron Schumacher
-*   5	Baptiste Lagarde
-*   5	Rajat Khanduja
-*   5	Robert McGibbon
-*   5	Sergio Pascual
-*   4	Alexis Metaireau
-*   4	Ignacio Rossi
-*   4	Virgile Fritsch
-*   4	Sebastian Saeger
-*   4	Ilambharathi Kanniah
-*   4	sdenton4
-*   4	Robert Layton
-*   4	Alyssa
-*   4	Amos Waterland
-*   3	Andrew Tulloch
-*   3	murad
-*   3	Steven Maude
-*   3	Karol Pysniak
-*   3	Jacques Kvam
-*   3	cgohlke
-*   3	cjlin
-*   3	Michael Becker
-*   3	hamzeh
-*   3	Eric Jacobsen
-*   3	john collins
-*   3	kaushik94
-*   3	Erwin Marsi
-*   2	csytracy
-*   2	LK
-*   2	Vlad Niculae
-*   2	Laurent Direr
-*   2	Erik Shilts
-*   2	Raul Garreta
-*   2	Yoshiki Vázquez Baeza
-*   2	Yung Siang Liau
-*   2	abhishek thakur
-*   2	James Yu
-*   2	Rohit Sivaprasad
-*   2	Roland Szabo
-*   2	amormachine
-*   2	Alexis Mignon
-*   2	Oscar Carlsson
-*   2	Nantas Nardelli
-*   2	jess010
-*   2	kowalski87
-*   2	Andrew Clegg
-*   2	Federico Vaggi
-*   2	Simon Frid
-*   2	Félix-Antoine Fortin
-*   1	Ralf Gommers
-*   1	t-aft
-*   1	Ronan Amicel
-*   1	Rupesh Kumar Srivastava
-*   1	Ryan Wang
-*   1	Samuel Charron
-*   1	Samuel St-Jean
-*   1	Fabian Pedregosa
-*   1	Skipper Seabold
-*   1	Stefan Walk
-*   1	Stefan van der Walt
-*   1	Stephan Hoyer
-*   1	Allen Riddell
-*   1	Valentin Haenel
-*   1	Vijay Ramesh
-*   1	Will Myers
-*   1	Yaroslav Halchenko
-*   1	Yoni Ben-Meshulam
-*   1	Yury V. Zaytsev
-*   1	adrinjalali
-*   1	ai8rahim
-*   1	alemagnani
-*   1	alex
-*   1	benjamin wilson
-*   1	chalmerlowe
-*   1	dzikie drożdże
-*   1	jamestwebber
-*   1	matrixorz
-*   1	popo
-*   1	samuela
-*   1	François Boulogne
-*   1	Alexander Measure
-*   1	Ethan White
-*   1	Guilherme Trein
-*   1	Hendrik Heuer
-*   1	IvicaJovic
-*   1	Jan Hendrik Metzen
-*   1	Jean Michel Rouly
-*   1	Eduardo Ariño de la Rubia
-*   1	Jelle Zijlstra
-*   1	Eddy L O Jansson
-*   1	Denis
-*   1	John
-*   1	John Schmidt
-*   1	Jorge Cañardo Alastuey
-*   1	Joseph Perla
-*   1	Joshua Vredevoogd
-*   1	José Ricardo
-*   1	Julien Miotte
-*   1	Kemal Eren
-*   1	Kenta Sato
-*   1	David Cournapeau
-*   1	Kyle Kelley
-*   1	Daniele Medri
-*   1	Laurent Luce
-*   1	Laurent Pierron
-*   1	Luis Pedro Coelho
-*   1	DanielWeitzenfeld
-*   1	Craig Thompson
-*   1	Chyi-Kwei Yau
-*   1	Matthew Brett
-*   1	Matthias Feurer
-*   1	Max Linke
-*   1	Chris Filo Gorgolewski
-*   1	Charles Earl
-*   1	Michael Hanke
-*   1	Michele Orrù
-*   1	Bryan Lunt
-*   1	Brian Kearns
-*   1	Paul Butler
-*   1	Paweł Mandera
-*   1	Peter
-*   1	Andrew Ash
-*   1	Pietro Zambelli
-*   1	staubda
+ * 312  Olivier Grisel
+ * 275  Lars Buitinck
+ * 221  Gael Varoquaux
+ * 148  Arnaud Joly
+ * 134  Johannes Schönberger
+ * 119  Gilles Louppe
+ * 113  Joel Nothman
+ * 111  Alexandre Gramfort
+ *  95  Jaques Grobler
+ *  89  Denis Engemann
+ *  83  Peter Prettenhofer
+ *  83  Alexander Fabisch
+ *  62  Mathieu Blondel
+ *  60  Eustache Diemert
+ *  60  Nelle Varoquaux
+ *  49  Michael Bommarito
+ *  45  Manoj-Kumar-S
+ *  28  Kyle Kastner
+ *  26  Andreas Mueller
+ *  22  Noel Dawe
+ *  21  Maheshakya Wijewardena
+ *  21  Brooke Osborn
+ *  21  Hamzeh Alsalhi
+ *  21  Jake VanderPlas
+ *  21  Philippe Gervais
+ *  19  Bala Subrahmanyam Varanasi
+ *  12  Ronald Phlypo
+ *  10  Mikhail Korobov
+ *   8  Thomas Unterthiner
+ *   8  Jeffrey Blackburne
+ *   8  eltermann
+ *   8  bwignall
+ *   7  Ankit Agrawal
+ *   7  CJ Carey
+ *   6  Daniel Nouri
+ *   6  Chen Liu
+ *   6  Michael Eickenberg
+ *   6  ugurthemaster
+ *   5  Aaron Schumacher
+ *   5  Baptiste Lagarde
+ *   5  Rajat Khanduja
+ *   5  Robert McGibbon
+ *   5  Sergio Pascual
+ *   4  Alexis Metaireau
+ *   4  Ignacio Rossi
+ *   4  Virgile Fritsch
+ *   4  Sebastian Saeger
+ *   4  Ilambharathi Kanniah
+ *   4  sdenton4
+ *   4  Robert Layton
+ *   4  Alyssa
+ *   4  Amos Waterland
+ *   3  Andrew Tulloch
+ *   3  murad
+ *   3  Steven Maude
+ *   3  Karol Pysniak
+ *   3  Jacques Kvam
+ *   3  cgohlke
+ *   3  cjlin
+ *   3  Michael Becker
+ *   3  hamzeh
+ *   3  Eric Jacobsen
+ *   3  john collins
+ *   3  kaushik94
+ *   3  Erwin Marsi
+ *   2  csytracy
+ *   2  LK
+ *   2  Vlad Niculae
+ *   2  Laurent Direr
+ *   2  Erik Shilts
+ *   2  Raul Garreta
+ *   2  Yoshiki Vázquez Baeza
+ *   2  Yung Siang Liau
+ *   2  abhishek thakur
+ *   2  James Yu
+ *   2  Rohit Sivaprasad
+ *   2  Roland Szabo
+ *   2  amormachine
+ *   2  Alexis Mignon
+ *   2  Oscar Carlsson
+ *   2  Nantas Nardelli
+ *   2  jess010
+ *   2  kowalski87
+ *   2  Andrew Clegg
+ *   2  Federico Vaggi
+ *   2  Simon Frid
+ *   2  Félix-Antoine Fortin
+ *   1  Ralf Gommers
+ *   1  t-aft
+ *   1  Ronan Amicel
+ *   1  Rupesh Kumar Srivastava
+ *   1  Ryan Wang
+ *   1  Samuel Charron
+ *   1  Samuel St-Jean
+ *   1  Fabian Pedregosa
+ *   1  Skipper Seabold
+ *   1  Stefan Walk
+ *   1  Stefan van der Walt
+ *   1  Stephan Hoyer
+ *   1  Allen Riddell
+ *   1  Valentin Haenel
+ *   1  Vijay Ramesh
+ *   1  Will Myers
+ *   1  Yaroslav Halchenko
+ *   1  Yoni Ben-Meshulam
+ *   1  Yury V. Zaytsev
+ *   1  adrinjalali
+ *   1  ai8rahim
+ *   1  alemagnani
+ *   1  alex
+ *   1  benjamin wilson
+ *   1  chalmerlowe
+ *   1  dzikie drożdże
+ *   1  jamestwebber
+ *   1  matrixorz
+ *   1  popo
+ *   1  samuela
+ *   1  François Boulogne
+ *   1  Alexander Measure
+ *   1  Ethan White
+ *   1  Guilherme Trein
+ *   1  Hendrik Heuer
+ *   1  IvicaJovic
+ *   1  Jan Hendrik Metzen
+ *   1  Jean Michel Rouly
+ *   1  Eduardo Ariño de la Rubia
+ *   1  Jelle Zijlstra
+ *   1  Eddy L O Jansson
+ *   1  Denis
+ *   1  John
+ *   1  John Schmidt
+ *   1  Jorge Cañardo Alastuey
+ *   1  Joseph Perla
+ *   1  Joshua Vredevoogd
+ *   1  José Ricardo
+ *   1  Julien Miotte
+ *   1  Kemal Eren
+ *   1  Kenta Sato
+ *   1  David Cournapeau
+ *   1  Kyle Kelley
+ *   1  Daniele Medri
+ *   1  Laurent Luce
+ *   1  Laurent Pierron
+ *   1  Luis Pedro Coelho
+ *   1  DanielWeitzenfeld
+ *   1  Craig Thompson
+ *   1  Chyi-Kwei Yau
+ *   1  Matthew Brett
+ *   1  Matthias Feurer
+ *   1  Max Linke
+ *   1  Chris Filo Gorgolewski
+ *   1  Charles Earl
+ *   1  Michael Hanke
+ *   1  Michele Orrù
+ *   1  Bryan Lunt
+ *   1  Brian Kearns
+ *   1  Paul Butler
+ *   1  Paweł Mandera
+ *   1  Peter
+ *   1  Andrew Ash
+ *   1  Pietro Zambelli
+ *   1  staubda
 
 
 .. _changes_0_14:
@@ -2173,6 +2173,7 @@ Changelog
 People
 ------
 List of contributors for release 0.13.1 by number of commits.
+
  * 16  `Lars Buitinck`_
  * 12  `Andreas Müller`_
  *  8  `Gael Varoquaux`_
@@ -2485,7 +2486,7 @@ List of contributors for release 0.13 by number of commits.
  *  10  Corey Lynch
  *  10  Kyle Beauchamp
  *   9  Brian Cheung
- *   9  Immanuel Bayer
+ *   9  `Immanuel Bayer`_
  *   9  mr.Shu
  *   8  Conrad Lee
  *   8  `James Bergstra`_
@@ -2534,7 +2535,7 @@ Version 0.12.1
 ===============
 
 The 0.12.1 release is a bug-fix release with no additional features, but is
-instead a set of bug fixes
+instead a set of bug fixes.
 
 Changelog
 ----------
@@ -2555,7 +2556,7 @@ Changelog
 
  - Fix Unicode support in count vectorizer by `Andreas Müller`_
 
- - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
+ - Fix MinCovDet breaking with ``X.shape = (3, 1)`` by `Virgile Fritsch`_
 
  - Fix clone of SGD objects by `Peter Prettenhofer`_
 
@@ -2564,14 +2565,14 @@ Changelog
 People
 ------
 
- *  14  `Peter Prettenhofer`_
- *  12  `Gael Varoquaux`_
- *  10  `Andreas Müller`_
- *   5  `Lars Buitinck`_
- *   3  `Virgile Fritsch`_
- *   1  `Alexandre Gramfort`_
- *   1  `Gilles Louppe`_
- *   1  `Mathieu Blondel`_
+ * 14  `Peter Prettenhofer`_
+ * 12  `Gael Varoquaux`_
+ * 10  `Andreas Müller`_
+ *  5  `Lars Buitinck`_
+ *  3  `Virgile Fritsch`_
+ *  1  `Alexandre Gramfort`_
+ *  1  `Gilles Louppe`_
+ *  1  `Mathieu Blondel`_
 
 .. _changes_0_12:
 
@@ -2716,6 +2717,7 @@ API changes summary
 
 People
 ------
+
  * 267  `Andreas Müller`_
  *  94  `Gilles Louppe`_
  *  89  `Gael Varoquaux`_
@@ -2727,7 +2729,7 @@ People
  *  44  Nelle Varoquaux
  *  37  `Jaques Grobler`_
  *  30  Alexis Mignon
- *  30  Immanuel Bayer
+ *  30  `Immanuel Bayer`_
  *  27  `Olivier Grisel`_
  *  16  Subhodeep Moitra
  *  13  Yannick Schwartz
@@ -2755,7 +2757,7 @@ People
  *   1  Bussonnier Matthias
  *   1  Charles-Pierre Astolfi
  *   1  Dan O'Huiginn
- *   1  David Cournapeau
+ *   1  `David Cournapeau`_
  *   1  Keith Goodman
  *   1  Ludwig Schwardt
  *   1  Olivier Hervieu
@@ -2763,7 +2765,6 @@ People
  *   1  Shiqiao Du
  *   1  Tim Sheerman-Chase
  *   1  buguen
-
 
 
 .. _changes_0_11:
@@ -2951,54 +2952,55 @@ API changes summary
 
 People
 ------
-   * 282  `Andreas Müller`_
-   * 239  `Peter Prettenhofer`_
-   * 198  `Gael Varoquaux`_
-   * 129  `Olivier Grisel`_
-   * 114  `Mathieu Blondel`_
-   * 103  Clay Woolam
-   *  96  `Lars Buitinck`_
-   *  88  `Jaques Grobler`_
-   *  82  `Alexandre Gramfort`_
-   *  50  `Bertrand Thirion`_
-   *  42  `Robert Layton`_
-   *  28  flyingimmidev
-   *  26  `Jake Vanderplas`_
-   *  26  Shiqiao Du
-   *  21  `Satrajit Ghosh`_
-   *  17  `David Marek`_
-   *  17  `Gilles Louppe`_
-   *  14  `Vlad Niculae`_
-   *  11  Yannick Schwartz
-   *  10  `Fabian Pedregosa`_
-   *   9  fcostin
-   *   7  Nick Wilson
-   *   5  Adrien Gaidon
-   *   5  `Nicolas Pinto`_
-   *   4  `David Warde-Farley`_
-   *   5  Nelle Varoquaux
-   *   5  Emmanuelle Gouillart
-   *   3  Joonas Sillanpää
-   *   3  Paolo Losi
-   *   2  Charles McCarthy
-   *   2  Roy Hyunjin Han
-   *   2  Scott White
-   *   2  ibayer
-   *   1  Brandyn White
-   *   1  Carlos Scheidegger
-   *   1  Claire Revillet
-   *   1  Conrad Lee
-   *   1  `Edouard Duchesnay`_
-   *   1  Jan Hendrik Metzen
-   *   1  Meng Xinfan
-   *   1  `Rob Zinkov`_
-   *   1  Shiqiao
-   *   1  Udi Weinsberg
-   *   1  Virgile Fritsch
-   *   1  Xinfan Meng
-   *   1  Yaroslav Halchenko
-   *   1  jansoe
-   *   1  Leon Palafox
+
+  * 282  `Andreas Müller`_
+  * 239  `Peter Prettenhofer`_
+  * 198  `Gael Varoquaux`_
+  * 129  `Olivier Grisel`_
+  * 114  `Mathieu Blondel`_
+  * 103  Clay Woolam
+  *  96  `Lars Buitinck`_
+  *  88  `Jaques Grobler`_
+  *  82  `Alexandre Gramfort`_
+  *  50  `Bertrand Thirion`_
+  *  42  `Robert Layton`_
+  *  28  flyingimmidev
+  *  26  `Jake Vanderplas`_
+  *  26  Shiqiao Du
+  *  21  `Satrajit Ghosh`_
+  *  17  `David Marek`_
+  *  17  `Gilles Louppe`_
+  *  14  `Vlad Niculae`_
+  *  11  Yannick Schwartz
+  *  10  `Fabian Pedregosa`_
+  *   9  fcostin
+  *   7  Nick Wilson
+  *   5  Adrien Gaidon
+  *   5  `Nicolas Pinto`_
+  *   4  `David Warde-Farley`_
+  *   5  Nelle Varoquaux
+  *   5  Emmanuelle Gouillart
+  *   3  Joonas Sillanpää
+  *   3  Paolo Losi
+  *   2  Charles McCarthy
+  *   2  Roy Hyunjin Han
+  *   2  Scott White
+  *   2  ibayer
+  *   1  Brandyn White
+  *   1  Carlos Scheidegger
+  *   1  Claire Revillet
+  *   1  Conrad Lee
+  *   1  `Edouard Duchesnay`_
+  *   1  Jan Hendrik Metzen
+  *   1  Meng Xinfan
+  *   1  `Rob Zinkov`_
+  *   1  Shiqiao
+  *   1  Udi Weinsberg
+  *   1  Virgile Fritsch
+  *   1  Xinfan Meng
+  *   1  Yaroslav Halchenko
+  *   1  jansoe
+  *   1  Leon Palafox
 
 
 .. _changes_0_10:
@@ -3152,37 +3154,37 @@ People
 
 The following people contributed to scikit-learn since last release:
 
-   * 246  `Andreas Müller`_
-   * 242  `Olivier Grisel`_
-   * 220  `Gilles Louppe`_
-   * 183  `Brian Holt`_
-   * 166  `Gael Varoquaux`_
-   * 144  `Lars Buitinck`_
-   *  73  `Vlad Niculae`_
-   *  65  `Peter Prettenhofer`_
-   *  64  `Fabian Pedregosa`_
-   *  60  Robert Layton
-   *  55  `Mathieu Blondel`_
-   *  52  `Jake Vanderplas`_
-   *  44  Noel Dawe
-   *  38  `Alexandre Gramfort`_
-   *  24  `Virgile Fritsch`_
-   *  23  `Satrajit Ghosh`_
-   *   3  Jan Hendrik Metzen
-   *   3  Kenneth C. Arnold
-   *   3  Shiqiao Du
-   *   3  Tim Sheerman-Chase
-   *   3  `Yaroslav Halchenko`_
-   *   2  Bala Subrahmanyam Varanasi
-   *   2  DraXus
-   *   2  Michael Eickenberg
-   *   1  Bogdan Trach
-   *   1  Félix-Antoine Fortin
-   *   1  Juan Manuel Caicedo Carvajal
-   *   1  Nelle Varoquaux
-   *   1  `Nicolas Pinto`_
-   *   1  Tiziano Zito
-   *   1  Xinfan Meng
+ * 246  `Andreas Müller`_
+ * 242  `Olivier Grisel`_
+ * 220  `Gilles Louppe`_
+ * 183  `Brian Holt`_
+ * 166  `Gael Varoquaux`_
+ * 144  `Lars Buitinck`_
+ *  73  `Vlad Niculae`_
+ *  65  `Peter Prettenhofer`_
+ *  64  `Fabian Pedregosa`_
+ *  60  Robert Layton
+ *  55  `Mathieu Blondel`_
+ *  52  `Jake Vanderplas`_
+ *  44  Noel Dawe
+ *  38  `Alexandre Gramfort`_
+ *  24  `Virgile Fritsch`_
+ *  23  `Satrajit Ghosh`_
+ *   3  Jan Hendrik Metzen
+ *   3  Kenneth C. Arnold
+ *   3  Shiqiao Du
+ *   3  Tim Sheerman-Chase
+ *   3  `Yaroslav Halchenko`_
+ *   2  Bala Subrahmanyam Varanasi
+ *   2  DraXus
+ *   2  Michael Eickenberg
+ *   1  Bogdan Trach
+ *   1  Félix-Antoine Fortin
+ *   1  Juan Manuel Caicedo Carvajal
+ *   1  Nelle Varoquaux
+ *   1  `Nicolas Pinto`_
+ *   1  Tiziano Zito
+ *   1  Xinfan Meng
 
 
 
@@ -3385,42 +3387,42 @@ People
 
 38 people contributed to this release.
 
-   - 387  `Vlad Niculae`_
-   - 320  `Olivier Grisel`_
-   - 192  `Lars Buitinck`_
-   - 179  `Gael Varoquaux`_
-   - 168  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
-   - 127  `Jake Vanderplas`_
-   - 120  `Mathieu Blondel`_
-   - 85  `Alexandre Passos`_
-   - 67  `Alexandre Gramfort`_
-   - 57  `Peter Prettenhofer`_
-   - 56  `Gilles Louppe`_
-   - 42  Robert Layton
-   - 38  Nelle Varoquaux
-   - 32  `Jean Kossaifi`_
-   - 30  Conrad Lee
-   - 22  Pietro Berkes
-   - 18  andy
-   - 17  David Warde-Farley
-   - 12  Brian Holt
-   - 11  Robert
-   - 8  Amit Aides
-   - 8  `Virgile Fritsch`_
-   - 7  `Yaroslav Halchenko`_
-   - 6  Salvatore Masecchia
-   - 5  Paolo Losi
-   - 4  Vincent Schut
-   - 3  Alexis Metaireau
-   - 3  Bryan Silverthorn
-   - 3  `Andreas Müller`_
-   - 2  Minwoo Jake Lee
-   - 1  Emmanuelle Gouillart
-   - 1  Keith Goodman
-   - 1  Lucas Wiman
-   - 1  `Nicolas Pinto`_
-   - 1  Thouis (Ray) Jones
-   - 1  Tim Sheerman-Chase
+ * 387  `Vlad Niculae`_
+ * 320  `Olivier Grisel`_
+ * 192  `Lars Buitinck`_
+ * 179  `Gael Varoquaux`_
+ * 168  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
+ * 127  `Jake Vanderplas`_
+ * 120  `Mathieu Blondel`_
+ *  85  `Alexandre Passos`_
+ *  67  `Alexandre Gramfort`_
+ *  57  `Peter Prettenhofer`_
+ *  56  `Gilles Louppe`_
+ *  42  Robert Layton
+ *  38  Nelle Varoquaux
+ *  32  `Jean Kossaifi`_
+ *  30  Conrad Lee
+ *  22  Pietro Berkes
+ *  18  andy
+ *  17  David Warde-Farley
+ *  12  Brian Holt
+ *  11  Robert
+ *   8  Amit Aides
+ *   8  `Virgile Fritsch`_
+ *   7  `Yaroslav Halchenko`_
+ *   6  Salvatore Masecchia
+ *   5  Paolo Losi
+ *   4  Vincent Schut
+ *   3  Alexis Metaireau
+ *   3  Bryan Silverthorn
+ *   3  `Andreas Müller`_
+ *   2  Minwoo Jake Lee
+ *   1  Emmanuelle Gouillart
+ *   1  Keith Goodman
+ *   1  Lucas Wiman
+ *   1  `Nicolas Pinto`_
+ *   1  Thouis (Ray) Jones
+ *   1  Tim Sheerman-Chase
 
 
 .. _changes_0_8:
@@ -3495,32 +3497,31 @@ People
 
 People that made this release possible preceded by number of commits:
 
-
-   - 159  `Olivier Grisel`_
-   - 96  `Gael Varoquaux`_
-   - 96  `Vlad Niculae`_
-   - 94  `Fabian Pedregosa`_
-   - 36  `Alexandre Gramfort`_
-   - 32  Paolo Losi
-   - 31  `Edouard Duchesnay`_
-   - 30  `Mathieu Blondel`_
-   - 25  `Peter Prettenhofer`_
-   - 22  `Nicolas Pinto`_
-   - 11  `Virgile Fritsch`_
-   -  7  Lars Buitinck
-   -  6  Vincent Michel
-   -  5  `Bertrand Thirion`_
-   -  4  Thouis (Ray) Jones
-   -  4  Vincent Schut
-   -  3  Jan Schlüter
-   -  2  Julien Miotte
-   -  2  `Matthieu Perrot`_
-   -  2  Yann Malet
-   -  2  `Yaroslav Halchenko`_
-   -  1  Amit Aides
-   -  1  `Andreas Müller`_
-   -  1  Feth Arezki
-   -  1  Meng Xinfan
+ * 159  `Olivier Grisel`_
+ *  96  `Gael Varoquaux`_
+ *  96  `Vlad Niculae`_
+ *  94  `Fabian Pedregosa`_
+ *  36  `Alexandre Gramfort`_
+ *  32  Paolo Losi
+ *  31  `Edouard Duchesnay`_
+ *  30  `Mathieu Blondel`_
+ *  25  `Peter Prettenhofer`_
+ *  22  `Nicolas Pinto`_
+ *  11  `Virgile Fritsch`_
+ *   7  Lars Buitinck
+ *   6  Vincent Michel
+ *   5  `Bertrand Thirion`_
+ *   4  Thouis (Ray) Jones
+ *   4  Vincent Schut
+ *   3  Jan Schlüter
+ *   2  Julien Miotte
+ *   2  `Matthieu Perrot`_
+ *   2  Yann Malet
+ *   2  `Yaroslav Halchenko`_
+ *   1  Amit Aides
+ *   1  `Andreas Müller`_
+ *   1  Feth Arezki
+ *   1  Meng Xinfan
 
 
 .. _changes_0_7:
@@ -3582,7 +3583,7 @@ Changelog
     :func:`metrics.euclidean_distances` and to
     :class:`pca.RandomizedPCA` [`James Bergstra`_].
 
-  - Fix compilation issues under NetBSD [Kamel Ibn Hassen Derouiche]
+  - Fix compilation issues under NetBSD [Kamel Ibn Hassen Derouiche].
 
   - Allow input sequences of different lengths in :class:`hmm.GaussianHMM`
     [`Ron Weiss`_].
@@ -3595,23 +3596,23 @@ People
 
 People that made this release possible preceded by number of commits:
 
-    - 85  `Fabian Pedregosa`_
-    - 67  `Mathieu Blondel`_
-    - 20  `Alexandre Gramfort`_
-    - 19  `James Bergstra`_
-    - 14  Dan Yamins
-    - 13  `Olivier Grisel`_
-    - 12  `Gael Varoquaux`_
-    - 4  `Edouard Duchesnay`_
-    - 4  `Ron Weiss`_
-    - 2  Satrajit Ghosh
-    - 2  Vincent Dubourg
-    - 1  Emmanuelle Gouillart
-    - 1  Kamel Ibn Hassen Derouiche
-    - 1  Paolo Losi
-    - 1  VirgileFritsch
-    - 1  `Yaroslav Halchenko`_
-    - 1  Xinfan Meng
+ * 85  `Fabian Pedregosa`_
+ * 67  `Mathieu Blondel`_
+ * 20  `Alexandre Gramfort`_
+ * 19  `James Bergstra`_
+ * 14  Dan Yamins
+ * 13  `Olivier Grisel`_
+ * 12  `Gael Varoquaux`_
+ *  4  `Edouard Duchesnay`_
+ *  4  `Ron Weiss`_
+ *  2  Satrajit Ghosh
+ *  2  Vincent Dubourg
+ *  1  Emmanuelle Gouillart
+ *  1  Kamel Ibn Hassen Derouiche
+ *  1  Paolo Losi
+ *  1  VirgileFritsch
+ *  1  `Yaroslav Halchenko`_
+ *  1  Xinfan Meng
 
 
 .. _changes_0_6:
@@ -3685,32 +3686,19 @@ People
 
 People that made this release possible preceded by number of commits:
 
-   * 207  `Olivier Grisel`_
-
-   * 167 `Fabian Pedregosa`_
-
-   * 97 `Peter Prettenhofer`_
-
-   * 68 `Alexandre Gramfort`_
-
-   * 59  `Mathieu Blondel`_
-
-   * 55  `Gael Varoquaux`_
-
-   * 33  Vincent Dubourg
-
-   * 21  `Ron Weiss <http://www.ee.columbia.edu/~ronw/>`_
-
-   * 9  Bertrand Thirion
-
-   * 3  `Alexandre Passos`_
-
-   * 3  Anne-Laure Fouque
-
-   * 2  Ronan Amicel
-
-   * 1 `Christian Osendorfer`_
-
+ * 207  `Olivier Grisel`_
+ * 167  `Fabian Pedregosa`_
+ *  97  `Peter Prettenhofer`_
+ *  68  `Alexandre Gramfort`_
+ *  59  `Mathieu Blondel`_
+ *  55  `Gael Varoquaux`_
+ *  33  Vincent Dubourg
+ *  21  `Ron Weiss <http://www.ee.columbia.edu/~ronw/>`_
+ *   9  Bertrand Thirion
+ *   3  `Alexandre Passos`_
+ *   3  Anne-Laure Fouque
+ *   2  Ronan Amicel
+ *   1 `Christian Osendorfer`_
 
 
 .. _changes_0_5:
@@ -3810,23 +3798,22 @@ Misc
 Authors
 -------
 
-The following is a list of authors for this release, preceded by
-number of commits:
+The following is a list of authors for this release, preceded by number of commits:
 
-     * 262  Fabian Pedregosa
-     * 240  Gael Varoquaux
-     * 149  Alexandre Gramfort
-     * 116  Olivier Grisel
-     *  40  Vincent Michel
-     *  38  Ron Weiss
-     *  23  Matthieu Perrot
-     *  10  Bertrand Thirion
-     *   7  Yaroslav Halchenko
-     *   9  VirgileFritsch
-     *   6  Edouard Duchesnay
-     *   4  Mathieu Blondel
-     *   1  Ariel Rokem
-     *   1  Matthieu Brucher
+ * 262  Fabian Pedregosa
+ * 240  Gael Varoquaux
+ * 149  Alexandre Gramfort
+ * 116  Olivier Grisel
+ *  40  Vincent Michel
+ *  38  Ron Weiss
+ *  23  Matthieu Perrot
+ *  10  Bertrand Thirion
+ *   7  Yaroslav Halchenko
+ *   9  VirgileFritsch
+ *   6  Edouard Duchesnay
+ *   4  Mathieu Blondel
+ *   1  Ariel Rokem
+ *   1  Matthieu Brucher
 
 Version 0.4
 ===========
@@ -3875,13 +3862,13 @@ Authors
 The committer list for this release is the following (preceded by number
 of commits):
 
-    * 143  Fabian Pedregosa
-    * 35  Alexandre Gramfort
-    * 34  Olivier Grisel
-    * 11  Gael Varoquaux
-    *  5  Yaroslav Halchenko
-    *  2  Vincent Michel
-    *  1  Chris Filo Gorgolewski
+ * 143  Fabian Pedregosa
+ *  35  Alexandre Gramfort
+ *  34  Olivier Grisel
+ *  11  Gael Varoquaux
+ *   5  Yaroslav Halchenko
+ *   2  Vincent Michel
+ *   1  Chris Filo Gorgolewski
 
 
 Earlier versions
@@ -3889,6 +3876,7 @@ Earlier versions
 
 Earlier versions included contributions by Fred Mailhot, David Cooke,
 David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
+
 
 .. _Olivier Grisel: http://twitter.com/ogrisel
 
@@ -4091,19 +4079,33 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vighnesh Birodkar: https://github.com/vighneshbirodkar
 
 .. _Chyi-Kwei Yau: https://github.com/chyikwei
+
 .. _Martino Sorbaro: https://github.com/martinosorb
+
 .. _Jaidev Deshpande: https://github.com/jaidevd
+
 .. _Arthur Mensch: https://github.com/arthurmensch
+
 .. _Daniel Galvez: https://github.com/galv
+
 .. _Jacob Schreiber: https://github.com/jmschrei
+
 .. _Ankur Ankan: https://github.com/ankurankan
+
 .. _Valentin Stolbunov: http://vstolbunov.com
+
 .. _Jean Kossaifi: https://github.com/JeanKossaifi
+
 .. _Andrew Lamb: https://github.com/andylamb
+
 .. _Graham Clenaghan: https://github.com/gclenaghan
+
 .. _Giorgio Patrini: https://github.com/giorgiop
+
 .. _Elvis Dohmatob: https://github.com/dohmatob
+
 .. _yelite: https://github.com/yelite
+
 .. _Issam H. Laradji: https://github.com/IssamLaradji
 
 .. _Asish Panda: https://github.com/kaichogami
@@ -4121,3 +4123,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jonathan Arfa: https://github.com/jarfa
 
 .. _Anish Shah: https://github.com/AnishShah
+
+.. _David Cournapeau: https://github.com/cournape
+
+.. _Immanuel Bayer: http://www.informatik.uni-konstanz.de/rendle/members/bayer0/
