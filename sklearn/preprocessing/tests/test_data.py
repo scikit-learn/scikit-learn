@@ -6,6 +6,7 @@
 from __future__ import division
 
 import warnings
+import re
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
@@ -31,13 +32,14 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing.data import _transform_selected
+from sklearn.preprocessing.data import _apply_selected
 from sklearn.preprocessing.data import _handle_zeros_in_scale
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
 from sklearn.preprocessing.data import Normalizer
 from sklearn.preprocessing.data import normalize
 from sklearn.preprocessing.data import OneHotEncoder
+from sklearn.preprocessing.data import CategoricalEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
@@ -1851,29 +1853,29 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_transform_selected(X, X_expected, sel):
+def _check_apply_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, sel)
+        Xtr = _apply_selected(M, Binarizer().transform, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
-def test_transform_selected():
-    X = [[3, 2, 1], [0, 1, 1]]
+def test_apply_selected():
+    X = np.array([[3, 2, 1], [0, 1, 1]])
 
     X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0])
-    _check_transform_selected(X, X_expected, [True, False, False])
+    _check_apply_selected(X, X_expected, [0])
+    _check_apply_selected(X, X_expected, [True, False, False])
 
     X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0, 1, 2])
-    _check_transform_selected(X, X_expected, [True, True, True])
-    _check_transform_selected(X, X_expected, "all")
+    _check_apply_selected(X, X_expected, [0, 1, 2])
+    _check_apply_selected(X, X_expected, [True, True, True])
+    _check_apply_selected(X, X_expected, "all")
 
-    _check_transform_selected(X, X, [])
-    _check_transform_selected(X, X, [False, False, False])
+    _check_apply_selected(X, X, [])
+    _check_apply_selected(X, X, [False, False, False])
 
 
-def test_transform_selected_copy_arg():
+def test_apply_selected_copy_arg():
     # transformer that alters X
     def _mutating_transformer(X):
         X[0, 0] = X[0, 0] + 1
@@ -1883,7 +1885,7 @@ def test_transform_selected_copy_arg():
     expected_Xtr = [[2, 2], [3, 4]]
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
+    Xtr = _apply_selected(X, _mutating_transformer, copy=True,
                               selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
@@ -1950,6 +1952,57 @@ def test_one_hot_encoder_unknown_transform():
     oh = OneHotEncoder(handle_unknown='42')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+
+
+def check_categorical(X, cat_mask):
+    cat_idx = np.where(cat_mask)
+
+    enc = CategoricalEncoder(categorical_features=cat_mask)
+    Xtr1 = enc.fit_transform(X)
+
+    enc = CategoricalEncoder(categorical_features=cat_idx)
+    Xtr2 = enc.fit_transform(X)
+
+    enc = CategoricalEncoder(categorical_features=cat_mask, sparse=False)
+    Xtr3 = enc.fit_transform(X)
+
+    assert_allclose(Xtr1.toarray(), Xtr2.toarray())
+    assert_allclose(Xtr1.toarray(), Xtr3)
+
+    assert sparse.issparse(Xtr1)
+    assert sparse.issparse(Xtr2)
+    return Xtr1.toarray()
+
+
+def test_categorical_encoder():
+    X = [['abc', 1, 55], ['def', 2, 55]]
+
+    Xtr = check_categorical(X, [True, False, False])
+    assert_allclose(Xtr, [[1, 0, 1, 55], [0, 1, 2, 55]])
+
+    Xtr = check_categorical(X, [True, True, False])
+    assert_allclose(Xtr, [[1, 0, 1, 0,  55], [0, 1, 0, 1, 55]])
+
+    Xtr = CategoricalEncoder().fit_transform(X)
+    assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
+
+
+def test_categorical_encoder_errors():
+
+    enc = CategoricalEncoder()
+    X = [[1, 2, 3], [4, 5, 6]]
+    enc.fit(X)
+
+    X[0][0] = -1
+    msg = re.escape('Unknown feature(s) [-1] in column 0')
+    assert_raises_regex(ValueError, msg, enc.transform, X)
+
+    enc = CategoricalEncoder(handle_unknown='ignore')
+    X = [[1, 2, 3], [4, 5, 6]]
+    enc.fit(X)
+    X[0][0] = -1
+    Xtr = enc.transform(X)
+    assert_allclose(Xtr.toarray(), [[0, 0, 1, 0, 1, 0], [0, 1, 0, 1, 0, 1]])
 
 
 def test_fit_cold_start():
