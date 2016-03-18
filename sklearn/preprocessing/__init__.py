@@ -20,6 +20,7 @@ from .data import robust_scale
 from .data import maxabs_scale
 from .data import minmax_scale
 from .data import OneHotEncoder
+from .data import CategoricalEncoder
 
 from .data import PolynomialFeatures
 
@@ -43,6 +44,7 @@ __all__ = [
     'MaxAbsScaler',
     'Normalizer',
     'OneHotEncoder',
+    'CategoricalEncoder',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',

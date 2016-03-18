@@ -34,7 +34,7 @@ from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import (RandomTreesEmbedding, RandomForestClassifier,
                               GradientBoostingClassifier)
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import CategoricalEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
 from sklearn.pipeline import make_pipeline
@@ -62,7 +62,7 @@ fpr_rt_lm, tpr_rt_lm, _ = roc_curve(y_test, y_pred_rt)
 
 # Supervised transformation based on random forests
 rf = RandomForestClassifier(max_depth=3, n_estimators=n_estimator)
-rf_enc = OneHotEncoder()
+rf_enc = CategoricalEncoder()
 rf_lm = LogisticRegression()
 rf.fit(X_train, y_train)
 rf_enc.fit(rf.apply(X_train))
@@ -72,7 +72,7 @@ y_pred_rf_lm = rf_lm.predict_proba(rf_enc.transform(rf.apply(X_test)))[:, 1]
 fpr_rf_lm, tpr_rf_lm, _ = roc_curve(y_test, y_pred_rf_lm)
 
 grd = GradientBoostingClassifier(n_estimators=n_estimator)
-grd_enc = OneHotEncoder()
+grd_enc = CategoricalEncoder()
 grd_lm = LogisticRegression()
 grd.fit(X_train, y_train)
 grd_enc.fit(grd.apply(X_train)[:, :, 0])

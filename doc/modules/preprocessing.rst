@@ -390,38 +390,39 @@ not desired (i.e. the set of browsers was ordered arbitrarily).
 
 One possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
-implemented in :class:`OneHotEncoder`.  This estimator transforms each
+implemented in :class:`CategoricalEncoder`.  This estimator transforms each
 categorical feature with ``m`` possible values into ``m`` binary features, with
 only one active.
 
 Continuing the example above::
 
-  >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-         handle_unknown='error', n_values='auto', sparse=True)
-  >>> enc.transform([[0, 1, 3]]).toarray()
-  array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
+  >>> enc = preprocessing.CategoricalEncoder()
+  >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+  >>> enc.fit(X)  # doctest: +ELLIPSIS
+      CategoricalEncoder(categorical_features='all', classes='auto',
+          dtype=<type 'numpy.float64'>, handle_unknown='error', sparse=True)
+  >>> enc.transform([['female', 'from US', 'usues Safari']]).toarray()
+  array([[ 1.,  0.,  0.,  1.,  0.,  1.]])
+
 
 By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``n_values``.
+It is possible to specify this explicitly using the parameter ``classes``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
-Then we fit the estimator, and transform a data point.
-In the result, the first two numbers encode the gender, the next set of three
-numbers the continent and the last four the web browser.
 
 Note that, if there is a possibilty that the training data might have missing categorical
-features, one has to explicitly set ``n_values``. For example,
+features, one has to explicitly set ``classes``. For example,
 
-    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
+    >>> genders = ['male', 'female']
+    >>> enc = preprocessing.CategoricalEncoder(classes=[genders, locations, browsers])
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
-    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
-    >>> enc.transform([[1, 0, 0]]).toarray()
-    array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> enc.fit(X)  # doctest: +ELLIPSIS
+        CategoricalEncoder(categorical_features='all', classes='auto',
+	    dtype=<type 'numpy.float64'>, handle_unknown='error', sparse=True)
+    >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
+        array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
