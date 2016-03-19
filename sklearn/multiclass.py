@@ -408,10 +408,11 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
 
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y_binary = np.zeros_like(y)
-    y_binary[y == j] = 1
-    ind = np.arange(X.shape[0])
-    return _partial_fit_binary(estimator, X[cond], y_binary)
+    if len(y) != 0:
+        y_binary = np.zeros_like(y)
+        y_binary[y == j] = 1
+        return _partial_fit_binary(estimator, X[cond], y_binary)
+    return estimator
 
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -512,6 +513,12 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             self.estimators_ = [clone(self.estimator) for i in
                                 range(self.n_classes_ *
                                 (self.n_classes_-1) // 2)]
+
+        unique_y = np.unique(y)
+        if not all(np.in1d(np.unique(y), self.classes_)):
+            raise ValueError("Mini-batch contains {0} while it "
+                             "must be subset of {1}".format(unique_y,
+                                                            self.classes_))
 
         y = np.asarray(y)
         check_consistent_length(X, y)
