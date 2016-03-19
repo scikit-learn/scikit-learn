@@ -136,7 +136,7 @@ def test_all_scorers_repr():
 def test_check_scoring():
     # Test all branches of check_scoring
     estimator = EstimatorWithoutFit()
-    pattern = (r"estimator should a be an estimator implementing 'fit' method,"
+    pattern = (r"estimator should be an estimator implementing 'fit' method,"
                r" .* was passed")
     assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
 
