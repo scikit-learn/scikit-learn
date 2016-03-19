@@ -665,15 +665,12 @@ def test_check_preserve_type():
 
 
 def test_sparse_dot_row_apply():
-    X = csr_matrix(np.random.random((10, 10)))
-    Y = csr_matrix(np.random.random((10, 10)))
+    X = csr_matrix(np.random.random((7, 7)))
+    Y = csr_matrix(np.random.random((7, 7)))
 
     XY = X.dot(Y)
 
-    def my_func(x):
-        return x
-
-    XYSD = sparse_dot_row_apply(X, Y, my_func, n_jobs=2)
+    XYSD = sparse_dot_row_apply(X, Y, lambda x: x, n_jobs=2)
     assert_array_equal(np.array(XY.todense()).ravel(),
                        np.array(XYSD.todense()).ravel())
 

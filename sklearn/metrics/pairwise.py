@@ -1413,7 +1413,7 @@ def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
 
     Naturally, the higher batch_sizes and n_jobs, the more memory is needed.
     Further, used memory is dependent on the result of `func`. If,
-    for example, `func` is to `func=lambda x: x`, the result will be the
+    for example, `func` is set to `func=lambda x: x`, the result will be the
     unmodified dot product of X and Y without any memory advantages. In such
     cases simple X.dot(Y) should be used.
 
@@ -1476,16 +1476,18 @@ def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
         n_jobs = _get_n_jobs(n_jobs)
 
         # create batch size to fit n_jobs
-        batch_size = int(X.shape[0] / n_jobs) + 1
+        batch_size = int(X.shape[0] / n_jobs)
+        if X.shape[0] % n_jobs != 0:
+            batch_size += 1
 
     if Y is None:
         Y = X
 
     # start computation
-    res = list(Parallel(n_jobs=n_jobs, backend='threading', verbose=verbose)
-               (delayed(_sparse_row_apply_worker)
-                (X[chunk, :], Y, func, *args, **kwds)
-                for chunk in gen_batches(X.shape[0], batch_size)))
+    res = Parallel(n_jobs=n_jobs, backend='threading', verbose=verbose)(
+        delayed(_sparse_row_apply_worker)
+        (X[chunk, :], Y, func, *args, **kwds)
+        for chunk in gen_batches(X.shape[0], batch_size))
 
     if auto_fmt:
         # auto detect output format using first batch result
