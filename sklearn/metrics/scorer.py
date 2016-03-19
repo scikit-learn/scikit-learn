@@ -231,7 +231,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     """
     has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
-        raise TypeError("estimator should a be an estimator implementing "
+        raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     elif has_scoring:
         return get_scorer(scoring)
