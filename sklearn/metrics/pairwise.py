@@ -1364,7 +1364,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
 
 def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
                          n_jobs=1, auto_fmt=True, verbose=0, *args, **kwds):
-    """Compute dot of X and Y.
+    """Compute dot of X and Y in batches and apply a function onto each batch.
 
     This method takes either one or two sparse matrices and calculates
     in batches their dot product. On each batch the callable `func` is
@@ -1374,24 +1374,35 @@ def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
     The function allows for huge sparse matrix dot calculations, where
     only a (or some) property(ies) of each row is/are needed.
 
-    For example, passing 'np.sum' as func and 'axis=1' as kwds returns
+    For example, defining my_func as
+
+        def my_func(A):
+            return A.sum(axis=1)
+
+    and passing it as `func=my_func` to sparse_dot_row_apply returns
     a vector in which element i is the sum of the dot products ith row.
 
     Another example might be to find only elements in the dot product large
     than 0.2. In the case of tf-idf cosine similarity of a huge set of
     documents this can be especially helpful, since holding the whole dot
-    result in memory might not be possible. In that case func should be set
-    to:
+    result in memory might not be possible. Assuming X[n_samples, n_features]
+    is the result of TfidfVectorizer.transform() one could calc similarities
+    between all documents where cosine(doc1, doc2) > 0.2 using the following
+    function call:
+
+        sparse_dot_row_apply(X, X.T,func=my_func)
+
+    where my_func should be defined like that:
         def my_func(X):
             X.data[X.data < .2] = 0
             X.eliminate_zeros()
             return X
 
-    Another function can be used to find highest ten elements per row in
+    Another `func` can be used to find highest ten elements per row in
     the dot product. For instance a text-based recommender system might
     want to find the 10 most similar documents for each document. A proper
-    function might look like the following:
-        def my_func(X):
+    `func` might look like the following:
+        def func(X):
             res = list()
             for i in range(X.shape[0]):
                 r = np.array(X[i, :].todense()).ravel()
@@ -1401,6 +1412,11 @@ def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
             return vstack(res)
 
     Naturally, the higher batch_sizes and n_jobs, the more memory is needed.
+    Further, used memory is dependent on the result of `func`. If,
+    for example, `func` is to `func=lambda x: x`, the result will be the
+    unmodified dot product of X and Y without any memory advantages. In such
+    cases simple X.dot(Y) should be used.
+
 
     Parameters
     ----------
@@ -1462,10 +1478,6 @@ def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
         # create batch size to fit n_jobs
         batch_size = int(X.shape[0] / n_jobs) + 1
 
-    # worker function for delayed
-    def _sparse_row_apply_worker(X_batch, Y, func, *args, **kwds):
-        return func(X_batch.dot(Y), *args, **kwds)
-
     if Y is None:
         Y = X
 
@@ -1486,10 +1498,33 @@ def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
             return np.array(res)
         elif isinstance(f_elem, np.matrix):
             # matrix per batch
-            if f_elem.shape[0] == batch_size and f_elem.shape[1] == 1:
+            if f_elem.shape[0] > 1 and f_elem.shape[1] == 1:
                 # one value per X row -> create array
-                return np.array(map(np.array, res)).ravel()
+                return np.array(list(itertools.chain.from_iterable(
+                    map(lambda x: x.tolist(), res)))).ravel()
             else:
                 # more values per X row -> stack them
                 return np.vstack(res)
     return res
+
+
+def _sparse_row_apply_worker(X_batch, Y, func, *args, **kwds):
+    """ helper function for sparse_dot_row_apply
+    Parameters
+    ----------
+    X_batch : sparse matrix
+        batch of X
+    Y : sparse matrix
+        Y
+    func : callable
+        user defined callable
+    args : list
+        further args for func
+    kwds : dict
+        keyword args for func
+
+    Returns
+    -------
+        depends on the return type of func.
+    """
+    return func(X_batch.dot(Y), *args, **kwds)

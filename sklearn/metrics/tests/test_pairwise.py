@@ -37,6 +37,7 @@ from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
+from sklearn.metrics.pairwise import sparse_dot_row_apply
 from sklearn.preprocessing import normalize
 
 
@@ -661,3 +662,25 @@ def test_check_preserve_type():
                                                    XB.astype(np.float))
     assert_equal(XA_checked.dtype, np.float)
     assert_equal(XB_checked.dtype, np.float)
+
+
+def test_sparse_dot_row_apply():
+    X = csr_matrix(np.random.random((10, 10)))
+    Y = csr_matrix(np.random.random((10, 10)))
+
+    XY = X.dot(Y)
+
+    def my_func(x):
+        return x
+
+    XYSD = sparse_dot_row_apply(X, Y, my_func, n_jobs=2)
+    assert_array_equal(np.array(XY.todense()).ravel(),
+                       np.array(XYSD.todense()).ravel())
+
+    def my_func(x, axis):
+        return x.sum(axis=axis)
+
+    XY_rsum = np.array(XY.sum(axis=1)).ravel()
+    XYSD_rsum = sparse_dot_row_apply(X, Y, my_func, axis=1, n_jobs=2)
+    assert_array_equal(XY_rsum, XYSD_rsum)
+
