@@ -8,6 +8,8 @@ from libc.stdlib cimport abs
 cimport numpy as np
 import numpy as np
 
+from ..externals.six import string_types
+
 from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
 
 np.import_array()
@@ -43,7 +45,12 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
-            value = v
+            if isinstance(v, string_types):
+                f = "%s%s%s" % (f, '=', v)
+                value = 1
+            else:
+                value = v
+
             if value == 0:
                 continue
 
@@ -53,6 +60,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
             # all exceptions. Add "except *" there?
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
+
             h = murmurhash3_bytes_s32(f, 0)
 
             array.resize_smart(indices, len(indices) + 1)
