@@ -1359,6 +1359,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:
         raise ValueError("Unknown kernel %r" % metric)
+    
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
 
 
