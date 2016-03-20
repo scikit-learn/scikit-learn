@@ -63,7 +63,7 @@ High quality PNG and SVG logos are available in the `doc/logos/ <https://github.
 Funding
 -------
 
-`INRIA <http://inria.fr>`_ actively supports this project. It has
+`INRIA <http://www.inria.fr>`_ actively supports this project. It has
 provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
 (2012-2013) and Olivier Grisel (2013-2015) to work on this project
 full-time. It also hosts coding sprints and other events.
