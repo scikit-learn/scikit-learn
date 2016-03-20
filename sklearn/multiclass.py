@@ -242,7 +242,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if _check_partial_fit_first_call(self, classes):
             if (not hasattr(self.estimator, "partial_fit")):
                 raise ValueError("Base estimator {0}, doesn't have partial_fit"
-                                 "method".format(estimator))
+                                 "method".format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
         
@@ -410,7 +410,6 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
     y = y[cond]
     y_binary = np.zeros_like(y)
     y_binary[y == j] = 1
-    ind = np.arange(X.shape[0])
     return _partial_fit_binary(estimator, X[cond], y_binary)
 
 
