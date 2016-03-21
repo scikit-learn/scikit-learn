@@ -117,7 +117,7 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
-    priors : array-like, size (n_classes,)
+    priors : array-like, shape (n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
@@ -375,7 +375,7 @@ class GaussianNB(BaseNB):
                                              dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
-                msg = 'Number of features %d does not match previous data %d.'
+                msg = "Number of features %d does not match previous data %d."
                 raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
@@ -386,8 +386,8 @@ class GaussianNB(BaseNB):
         unique_y_in_classes = in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
-            raise ValueError('The target label(s) %s in y do not exist in the '
-                             'initial classes %s' %
+            raise ValueError("The target label(s) %s in y do not exist in the "
+                             "initial classes %s" %
                              (y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:

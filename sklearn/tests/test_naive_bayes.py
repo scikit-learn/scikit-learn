@@ -111,7 +111,7 @@ def test_gnb_priors():
 
 def test_gnb_wrong_nb_priors():
     """ Test whether an error is raised if the number of prior is different
-    to the number of class"""
+    from the number of class"""
     clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
     assert_raises(ValueError, clf.fit, X, y)
 
@@ -143,7 +143,7 @@ def test_check_update_with_no_data():
 
 
 def test_gnb_pfit_wrong_nb_features():
-    """Test whether an error is raised when the number of feature change
+    """Test whether an error is raised when the number of feature changes
     between two partial fit"""
     clf = GaussianNB()
     # Fit for the first time the GNB
