@@ -2359,24 +2359,14 @@ class AdaptiveLasso(Lasso):
             raise ValueError("With scad penalty, q must be greater than 2;"
                              " got (q=%r)" % self.q)
 
-    def _init_state(self, X, y):
-        """Create loss functions and allocate model state data structures."""
-        n_samples, n_features = X.shape
-
-        # The penalties and derivatives all assume only positive inputs.
-        # p_prime should return values > 0.
+    def _p(self, x):
+        """Calculate penalty term."""
         if self.penalty == 'lq':
             def p(x):
                 return np.power(x, self.q)
-
-            def p_prime(x):
-                return self.q / (np.power(x, 1 - self.q) + self.eps)
         elif self.penalty == 'log':
             def p(x):
                 return np.log(x + self.eps) - np.log(self.eps)
-
-            def p_prime(x):
-                return 1. / (x + self.eps)
         elif self.penalty == 'scad':
             def p(x):
                 if x <= self.alpha:
@@ -2387,7 +2377,18 @@ class AdaptiveLasso(Lasso):
                             (2 * (self.q - 1))
                 else:
                     return (self.q + 1) * self.alpha / 2
+            p = np.vectorize(p, ['float'])
+        return p(x)
 
+    def _p_prime(self, x):
+        """Calculate penalty term derivative."""
+        if self.penalty == 'lq':
+            def p_prime(x):
+                return self.q / (np.power(x, 1 - self.q) + self.eps)
+        elif self.penalty == 'log':
+            def p_prime(x):
+                return 1. / (x + self.eps)
+        elif self.penalty == 'scad':
             def p_prime(x):
                 if x <= self.alpha:
                     return 1.
@@ -2396,20 +2397,15 @@ class AdaptiveLasso(Lasso):
                             (self.q - 1)
                 else:
                     return self.eps
-            p = np.vectorize(p, ['float'])
             p_prime = np.vectorize(p_prime, ['float'])
+        return p_prime(x)
 
-        def loss(beta):
-            return 1. / (2 * n_samples) \
-                * np.sum(np.square(y - X.dot(beta))) \
-                + self.alpha * np.sum(p(np.abs(beta)))
-
-        self._p = p
-        self._p_prime = p_prime
-        self.loss_ = loss
-        self.coef_ = np.zeros(n_features, dtype=np.float64, order='F')
-        self._weights = np.ones(n_features)
-        self.train_score_ = np.zeros(self.max_lasso_iterations)
+    def loss_(self, X, y, beta):
+        """Calculate model loss."""
+        n_samples = X.shape[0]
+        return 1. / (2 * n_samples) \
+            * np.sum(np.square(y - X.dot(beta))) \
+            + self.alpha * np.sum(self._p(np.abs(beta)))
 
     def fit(self, X, y, check_input=True):
         """
@@ -2447,11 +2443,13 @@ class AdaptiveLasso(Lasso):
         X_w = np.empty_like(X)
 
         self._check_params()
-        self._init_state(X, y)
+        self.coef_ = np.zeros(n_features, dtype=np.float64, order='F')
+        self._weights = np.ones(n_features)
+        self.train_score_ = np.zeros(self.max_lasso_iterations)
 
         # Initial Lasso fit
         super(AdaptiveLasso, self).fit(X, y)
-        self.train_score_[0] = self.loss_(self.coef_)
+        self.train_score_[0] = self.loss_(X, y, self.coef_)
 
         for k in xrange(1, self.max_lasso_iterations):
             self.n_iter_ = k
@@ -2469,7 +2467,7 @@ class AdaptiveLasso(Lasso):
             np.divide(self.coef_, self._weights, self.coef_)
 
             # Check optimization objective progress
-            self.train_score_[k] = self.loss_(self.coef_)
+            self.train_score_[k] = self.loss_(X, y, self.coef_)
             if np.abs(self.train_score_[k-1] - self.train_score_[k]) < \
                     self.ada_tol:
                 break
