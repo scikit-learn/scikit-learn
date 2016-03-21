@@ -472,10 +472,13 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     classes = np.asarray(classes)
 
     if y_type == "binary":
-        if len(classes) == 1:
-            Y = np.zeros((len(y), 1), dtype=np.int)
-            Y += neg_label
-            return Y
+        if n_classes == 1:
+            if sparse_output:
+                return sp.csr_matrix((n_samples, 1), dtype=int)
+            else:
+                Y = np.zeros((len(y), 1), dtype=np.int)
+                Y += neg_label
+                return Y
         elif len(classes) >= 3:
             y_type = "multiclass"
 

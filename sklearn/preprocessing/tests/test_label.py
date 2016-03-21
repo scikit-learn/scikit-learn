@@ -11,6 +11,7 @@ from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
@@ -35,16 +36,25 @@ def toarray(a):
 
 
 def test_label_binarizer():
-    lb = LabelBinarizer()
-
     # one-class case defaults to negative label
+    # For dense case:
     inp = ["pos", "pos", "pos", "pos"]
+    lb = LabelBinarizer(sparse_output=False)
     expected = np.array([[0, 0, 0, 0]]).T
     got = lb.fit_transform(inp)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
+    # For sparse case:
+    lb = LabelBinarizer(sparse_output=True)
+    got = lb.fit_transform(inp)
+    assert_true(issparse(got))
+    assert_array_equal(lb.classes_, ["pos"])
+    assert_array_equal(expected, got.toarray())
+    assert_array_equal(lb.inverse_transform(got.toarray()), inp)
+
+    lb = LabelBinarizer(sparse_output=False)
     # two-class case
     inp = ["neg", "pos", "pos", "neg"]
     expected = np.array([[0, 1, 1, 0]]).T
