@@ -677,7 +677,7 @@ def test_adaptive_lasso_same_as_lasso():
 def test_adaptive_lasso_sparser_estimates():
     X, y, _, _ = build_dataset()
     max_iter = 150
-    for alpha in [0.0001, 0.001, 0.01, 0.1, 1.,]:
+    for alpha in [0.0001, 0.001, 0.01, 0.1, 1]:
         clf1 = Lasso(max_iter=max_iter, alpha=alpha).fit(X, y)
         for penalty in ('lq', 'log', 'scad'):
             clf2 = AdaptiveLasso(max_iter=max_iter, alpha=alpha,
@@ -688,8 +688,9 @@ def test_adaptive_lasso_sparser_estimates():
 def test_adaptive_lasso_decreasing_loss():
     X, y, _, _ = build_dataset()
     max_iter = 150
-    for alpha in [0.0001, 0.001, 0.01, 0.1, 1.,]:
+    for alpha in [0.0001, 0.001, 0.01, 0.1, 1]:
         for penalty in ('lq', 'log', 'scad'):
-            clf = AdaptiveLasso(penalty=penalty, max_iter=max_iter, alpha=alpha)
+            clf = AdaptiveLasso(penalty=penalty, max_iter=max_iter,
+                                alpha=alpha)
             clf.fit(X, y)
             assert_true(np.all(np.diff(clf.train_score_) <= 0))

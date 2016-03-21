@@ -2327,25 +2327,32 @@ class AdaptiveLasso(Lasso):
         self.ada_tol = ada_tol
 
     def _check_params(self):
-        """Check validity of parameters and raise ValueError if not valid. """
+        """Check validity of parameters and raise ValueError if not valid."""
         if not isinstance(self.max_lasso_iterations, numbers.Number) \
                 or self.max_lasso_iterations <= 0:
             raise ValueError("Maximum number of Lasso iterations must be"
                              " positive; got (max_iter=%r)" % self.max_iter)
+
         if not isinstance(self.ada_tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
+
         if self.penalty not in ('log', 'lq', 'scad'):
             raise ValueError("penalty must be one of log, lq, or scad. "
                              "got {}".format(self.penalty))
+
+        # Set default q value if undefined
         if self.penalty == 'lq' and self.q is None:
             self.q = 0.5
         elif self.penalty == 'scad' and self.q is None:
             self.q = 4.
-        if not self.penalty=='log' and not isinstance(self.q, numbers.Number):
+
+        # Check that q is appropriate for the given penalty
+        if not self.penalty == 'log' and \
+                not isinstance(self.q, numbers.Number):
             raise ValueError("q must be a number;"
                              " got (q=%r)" % self.q)
-        elif self.penalty == 'lq' and not (0 < self.q < 1):
+        if self.penalty == 'lq' and not (0 < self.q < 1):
             raise ValueError("With lq penalty, q must be between 0 and 1;"
                              " got (q=%r)" % self.q)
         elif self.penalty == 'scad' and self.q < 2:
@@ -2353,9 +2360,7 @@ class AdaptiveLasso(Lasso):
                              " got (q=%r)" % self.q)
 
     def _init_state(self, X, y):
-        """Creates penalty and loss functions, and allocate model state
-        data structures."""
-
+        """Create loss functions and allocate model state data structures."""
         n_samples, n_features = X.shape
 
         # The penalties and derivatives all assume only positive inputs.
@@ -2363,11 +2368,13 @@ class AdaptiveLasso(Lasso):
         if self.penalty == 'lq':
             def p(x):
                 return np.power(x, self.q)
+
             def p_prime(x):
                 return self.q / (np.power(x, 1 - self.q) + self.eps)
         elif self.penalty == 'log':
             def p(x):
                 return np.log(x + self.eps) - np.log(self.eps)
+
             def p_prime(x):
                 return 1. / (x + self.eps)
         elif self.penalty == 'scad':
@@ -2375,16 +2382,18 @@ class AdaptiveLasso(Lasso):
                 if x <= self.alpha:
                     return x
                 elif x < self.q * self.alpha:
-                    return (- x ** 2 / self.alpha + 2 * self.q * x
-                              - self.alpha) / (2 * (self.q - 1))
+                    return (- x ** 2 / self.alpha +
+                            2 * self.q * x - self.alpha) / \
+                            (2 * (self.q - 1))
                 else:
                     return (self.q + 1) * self.alpha / 2
+
             def p_prime(x):
                 if x <= self.alpha:
                     return 1.
                 elif x < self.q * self.alpha:
-                    return  (- x / self.alpha + self.q ) \
-                        / (self.q - 1)
+                    return (- x / self.alpha + self.q) / \
+                            (self.q - 1)
                 else:
                     return self.eps
             p = np.vectorize(p, ['float'])
@@ -2398,11 +2407,9 @@ class AdaptiveLasso(Lasso):
         self._p = p
         self._p_prime = p_prime
         self.loss_ = loss
-
         self.coef_ = np.zeros(n_features, dtype=np.float64, order='F')
         self._weights = np.ones(n_features)
         self.train_score_ = np.zeros(self.max_lasso_iterations)
-
 
     def fit(self, X, y, check_input=True):
         """
@@ -2416,7 +2423,6 @@ class AdaptiveLasso(Lasso):
         y : ndarray, shape (n_samples,)
             Target
         """
-
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
@@ -2443,18 +2449,12 @@ class AdaptiveLasso(Lasso):
         self._check_params()
         self._init_state(X, y)
 
-        def weighted_lasso_loss(X, beta, weights):
-            return 1. / (2 * n_samples) \
-                * np.sum(np.square(y - X.dot(beta))) \
-                + self.alpha * np.sum(np.abs(weights * beta))
-
         # Initial Lasso fit
         super(AdaptiveLasso, self).fit(X, y)
         self.train_score_[0] = self.loss_(self.coef_)
 
         for k in xrange(1, self.max_lasso_iterations):
             self.n_iter_ = k
-            print "ITERATION {} -- {}".format(k, self.train_score_[k-1])
             self._weights = self._p_prime(np.abs(self.coef_))
 
             # Perform Lasso fit
@@ -2464,24 +2464,14 @@ class AdaptiveLasso(Lasso):
             else:
                 np.divide(X_w, self._weights, X_w)
 
-            weighted_pre = weighted_lasso_loss(X, self.coef_, self._weights)
-            # print "Weighted", weighted_pre
             np.multiply(self.coef_, self._weights, self.coef_)
             super(AdaptiveLasso, self).fit(X_w, y)
             np.divide(self.coef_, self._weights, self.coef_)
-            weighted_post = weighted_lasso_loss(X, self.coef_, self._weights)
-            # print "Weighted", weighted_post
-            if weighted_post > weighted_pre:
-                print "WTF MATE?"
-                print self._weights
-                raise ValueError("WTF Mate")
 
             # Check optimization objective progress
             self.train_score_[k] = self.loss_(self.coef_)
-            print "new loss {}".format(self.train_score_[k])
             if np.abs(self.train_score_[k-1] - self.train_score_[k]) < \
-                    self.ada_tol :
-                print "OBJECTIVE CONVERGED"
+                    self.ada_tol:
                 break
         else:
             warnings.warn("Objective did not converge."
@@ -2490,6 +2480,7 @@ class AdaptiveLasso(Lasso):
                           ConvergenceWarning)
 
         self._set_intercept(X_offset, y_offset, X_scale)
+
         # change shape of array after fit
         if self.n_iter_ != self.max_lasso_iterations:
             self.train_score_ = self.train_score_[:self.n_iter_]
