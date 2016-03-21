@@ -667,21 +667,29 @@ def test_lasso_non_float_y():
 
 
 def test_adaptive_lasso_same_as_lasso():
-    # Test that the adaptive lasso gives the same results as the Lasso when
-    # max_lasso_iterations is 1
-
-    X, y, X_test, y_test = build_dataset()
+    X, y, _, _ = build_dataset()
     max_iter = 150
-    clf1 = AdaptiveLasso(max_iter=max_iter, max_lasso_iterations=1).fit(X, y)
-    clf2 = Lasso(max_iter=max_iter).fit(X, y)
+    clf1 = Lasso(max_iter=max_iter).fit(X, y)
+    clf2 = AdaptiveLasso(max_iter=max_iter, max_lasso_iterations=1).fit(X, y)
     assert_array_almost_equal(clf1.coef_, clf2.coef_)
 
 
 def test_adaptive_lasso_sparser_estimates():
-    # Test that the adaptive lasso gives sparser coefficients than a Lasso
-
-    X, y, X_test, y_test = build_dataset()
+    X, y, _, _ = build_dataset()
     max_iter = 150
-    clf1 = AdaptiveLasso(max_iter=max_iter).fit(X, y)
-    clf2 = Lasso(max_iter=max_iter).fit(X, y)
-    assert_greater(sum(clf1.coef_ == 0), sum(clf2.coef_ == 0))
+    for alpha in [0.0001, 0.001, 0.01, 0.1, 1.,]:
+        clf1 = Lasso(max_iter=max_iter, alpha=alpha).fit(X, y)
+        for penalty in ('lq', 'log', 'scad'):
+            clf2 = AdaptiveLasso(max_iter=max_iter, alpha=alpha,
+                                 penalty=penalty).fit(X, y)
+            assert_greater(sum(clf2.coef_ == 0), sum(clf1.coef_ == 0))
+
+
+def test_adaptive_lasso_decreasing_loss():
+    X, y, _, _ = build_dataset()
+    max_iter = 150
+    for alpha in [0.0001, 0.001, 0.01, 0.1, 1.,]:
+        for penalty in ('lq', 'log', 'scad'):
+            clf = AdaptiveLasso(penalty=penalty, max_iter=max_iter, alpha=alpha)
+            clf.fit(X, y)
+            assert_true(np.all(np.diff(clf.train_score_) <= 0))
