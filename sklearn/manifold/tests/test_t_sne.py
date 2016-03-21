@@ -542,3 +542,32 @@ def test_index_offset():
     # Make sure translating between 1D and N-D indices are preserved
     assert_equal(_barnes_hut_tsne.test_index2offset(), 1)
     assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
+
+
+def test_accessible_kl_divergence():
+    # Ensures that the accessible kl_divergence matches the computed value
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    tsne = TSNE(n_iter_without_progress=2, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # The output needs to contain the accessible kl_divergence as the error at
+    # the last iteration
+    lines_out = out.split('\n')[::-1]
+    for line in lines_out:
+        if 'Iteration' in line:
+            start_pos = line.find('error = ')
+            if start_pos >= 0:
+                error, _ = line[start_pos:].split(',')
+                error = error.replace('error = ', '')
+                break
+    assert_equal(("%.7f" % tsne.kl_divergence_), error)
