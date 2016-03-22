@@ -121,6 +121,9 @@ Enhancements
    - Added ``inverse_transform`` function to :class:`decomposition.nmf` to compute
      data matrix of original shape. By `Anish Shah`_.
 
+   - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
+     through the parameter ``priors``. By `Guillaume Lemaitre`_.
+
 Bug fixes
 .........
 
@@ -4127,3 +4130,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Anish Shah: https://github.com/AnishShah
 
 .. _Ryad Zenine: https://github.com/ryadzenine
+
+.. _Guillaume Lemaitre: https://github.com/glemaitre
