@@ -27,7 +27,7 @@ from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import norm, squared_norm
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.extmath import weighted_mode
+from sklearn.utils.extmath import weighted_mode, weighted_median
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import fast_dot, _fast_dot
@@ -658,3 +658,12 @@ def test_stable_cumsum():
                          'cumsum was found to be unstable: its last element '
                          'does not correspond to sum',
                          stable_cumsum, r, rtol=0, atol=0)
+
+
+def test_weighted_median():
+    rng = np.random.RandomState(0)
+    x = rng.randint(10, size=(10,))
+    weights = np.ones(x.shape)
+    median = np.median(x)
+    wmedian = weighted_median(x, weights)
+    assert_almost_equal(median, wmedian)

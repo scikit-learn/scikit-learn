@@ -865,6 +865,24 @@ def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
 
 
 def weighted_median(array, sample_weight):
+    """Compute the weighted median of the array with sample weight
+
+    Parameters
+    ----------
+    array : array_like
+        n-dimensional array of which to find weighted median.
+    sample_weight : array_like
+        n-dimensional array of weights for each value
+
+    Example
+    -------
+    >>> from sklearn.utils.extmath import weighted_median
+    >>> import numpy as np
+    >>> weighted_median(np.array([1,2,3,4]),np.array([1,1,1,1]))
+    2.5
+    >>> weighted_median(np.array([1,2,3]),np.array([1,1,1]))
+    2.0
+    """
     sorted_idx = np.argsort(array)
     sample_weight = np.asarray(sample_weight)
     sorted_sample_weight = sample_weight[sorted_idx]
