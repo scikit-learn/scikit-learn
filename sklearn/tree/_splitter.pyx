@@ -803,9 +803,9 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
                     # Construct a random split
-                    # Repeat up to 20 times if a trivial split is constructed
+                    # Repeat up to 60 times if a trivial split is constructed
                     # (this can only happen with a categorical feature)
-                    for q in range(20):
+                    for q in range(60):
                         is_categorical = self.n_categories[current.feature] > 0
                         if is_categorical:
                             split_seed = our_rand_r(random_state)
