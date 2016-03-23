@@ -2196,7 +2196,7 @@ class AdaptiveLasso(Lasso):
         equivalent to a Lasso, solved by the :class:`Lasso`, and
         max_lasso_iterations = 2 is equivalent to an adaptive Lasso.
 
-    penalty : 'scad' | 'log' | 'lq' (default='log')
+    penalty : 'scad' | 'log' | 'lq' (default='lq')
         Penalty function to use for regularization. For lq, you need to
         specify the value of q.
 
@@ -2208,11 +2208,11 @@ class AdaptiveLasso(Lasso):
              larger than 2. Default value 4.
 
     alpha : float, optional (default=1.0)
-        Regularization term that multiplies the L1 term at each iteration.
+        Regularization term that multiplies the penalty term at each iteration.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` is with the Lasso object is not advised
-        and you should prefer the LinearRegression object.
+        reasons, using ``alpha = 0`` with the AdaptiveLasso object is not
+        advised and you should prefer the LinearRegression object.
 
     eps : float, optional (default=1e-3)
         Stability parameter to ensure that a zero valued coefficient does not
@@ -2221,7 +2221,7 @@ class AdaptiveLasso(Lasso):
     ada_tol : float, optional (default=1e-4)
         The tolerance for each Adaptive Lasso step: the optimization code
         checks the optimization objective progress and continues until it is
-        smaller than ``tol``.
+        smaller than ``ada_tol``.
 
     fit_intercept : boolean, optional (default=False)
         whether to calculate the intercept for this model. If set
@@ -2248,10 +2248,6 @@ class AdaptiveLasso(Lasso):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
-
-    warm_start : bool, optional (default=False)
-        When set to ``True``, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
 
     positive : bool, optional (default=False)
         When set to ``True``, forces the coefficients to be positive.
@@ -2283,6 +2279,9 @@ class AdaptiveLasso(Lasso):
         number of lasso iterations run by the coordinate descent solver to
         reach the specified tolerance.
 
+    loss_ : function
+        The model loss function.
+
     See also
     --------
     Lasso
@@ -2296,20 +2295,11 @@ class AdaptiveLasso(Lasso):
     Penalties and DC Programming
     IEEE Trans. Signal Process., 2009, 4686-4698.
 
-    Zou, H., & Li, R.
-    One-step sparse estimates in nonconcave penalized likelihood models.
-    The Annals of Statistics Ann. Statist., 2008, 1509-1533.
-
-    Buhlmann, P., & Meier, L.
-    Discussion: One-step sparse estimates in nonconcave penalized likelihood
-    models.
-    The Annals of Statistics Ann. Statist., 2008, 1534-1541.
-
     Zou, Hui.
     The Adaptive Lasso and Its Oracle Properties
     Journal of the American Statistical Association, 2006.
     """
-    def __init__(self, max_lasso_iterations=10, penalty='log', q=None,
+    def __init__(self, max_lasso_iterations=30, penalty='log', q=None,
                  alpha=1.0, eps=1e-3, ada_tol=1e-4, fit_intercept=True,
                  normalize=False, precompute=False, copy_X=True,
                  max_iter=1000, tol=1e-4, positive=False,
@@ -2400,12 +2390,11 @@ class AdaptiveLasso(Lasso):
             p_prime = np.vectorize(p_prime, ['float'])
         return p_prime(x)
 
-    def loss_(self, X, y, beta):
+    def loss_(self, pred, y):
         """Calculate model loss."""
-        n_samples = X.shape[0]
-        return 1. / (2 * n_samples) \
-            * np.sum(np.square(y - X.dot(beta))) \
-            + self.alpha * np.sum(self._p(np.abs(beta)))
+        return 1. / (2 * y.shape[0]) \
+            * np.sum(np.square(y - pred)) \
+            + self.alpha * np.sum(self._p(np.abs(self.coef_)))
 
     def fit(self, X, y, check_input=True):
         """
@@ -2444,30 +2433,29 @@ class AdaptiveLasso(Lasso):
 
         self._check_params()
         self.coef_ = np.zeros(n_features, dtype=np.float64, order='F')
-        self._weights = np.ones(n_features)
         self.train_score_ = np.zeros(self.max_lasso_iterations)
+        weights = np.ones(n_features)
 
         # Initial Lasso fit
         super(AdaptiveLasso, self).fit(X, y)
-        self.train_score_[0] = self.loss_(X, y, self.coef_)
+        self.train_score_[0] = self.loss_(y, self.predict(X))
 
         for k in xrange(1, self.max_lasso_iterations):
             self.n_iter_ = k
-            self._weights = self._p_prime(np.abs(self.coef_))
+            weights = self._p_prime(np.abs(self.coef_))
 
-            # Perform Lasso fit
+            # Perform weighted Lasso fit
             np.copyto(X_w, X)
             if X_sparse:
-                inplace_column_scale(X_w, self._weights[:, np.newaxis])
+                inplace_column_scale(X_w, weights[:, np.newaxis])
             else:
-                np.divide(X_w, self._weights, X_w)
-
-            np.multiply(self.coef_, self._weights, self.coef_)
+                np.divide(X_w, weights, X_w)
+            np.multiply(self.coef_, weights, self.coef_)
             super(AdaptiveLasso, self).fit(X_w, y)
-            np.divide(self.coef_, self._weights, self.coef_)
+            np.divide(self.coef_, weights, self.coef_)
 
             # Check optimization objective progress
-            self.train_score_[k] = self.loss_(X, y, self.coef_)
+            self.train_score_[k] = self.loss_(y, self.predict(X))
             if np.abs(self.train_score_[k-1] - self.train_score_[k]) < \
                     self.ada_tol:
                 break
@@ -2478,7 +2466,6 @@ class AdaptiveLasso(Lasso):
                           ConvergenceWarning)
 
         self._set_intercept(X_offset, y_offset, X_scale)
-
         # change shape of array after fit
         if self.n_iter_ != self.max_lasso_iterations:
             self.train_score_ = self.train_score_[:self.n_iter_]
