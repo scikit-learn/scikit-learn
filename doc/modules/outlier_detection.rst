@@ -76,7 +76,7 @@ but regular, observation outside the frontier.
      :class:`svm.OneClassSVM` object.
 
 .. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
-   :target: ../auto_examples/svm/plot_oneclasse.html
+   :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75%
    
