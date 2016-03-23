@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_in
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
+y3 = [0, 0, 0, 0, 0, 0]
 w = [1, 1, 1, .5, .5, .5]
 
 
@@ -235,3 +236,19 @@ def test_friedman_mse_in_graphviz():
 
     for finding in finditer("\[.*?samples.*?\]", dot_data.getvalue()):
         assert_in("friedman_mse", finding.group())
+
+
+def test_graphviz_single_node_tree():
+    dtc = DecisionTreeClassifier()
+    dtc.fit(X, y3)
+
+    out = StringIO()
+    export_graphviz(dtc, out_file=out, filled=True)
+
+    contents1 = out.getvalue()
+    contents2 = 'digraph Tree {\n' \
+                'node [shape=box, style="filled", color="black"] ;\n' \
+                '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", fillcolor="#e58139ff"] ;\n' \
+                '}'
+
+    assert_equal(contents1, contents2)

@@ -157,9 +157,12 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         else:
             # Regression tree or multi-output
             color = list(colors['rgb'][0])
-            alpha = int(np.round(255 * ((value - colors['bounds'][0]) /
-                                        (colors['bounds'][1] -
-                                         colors['bounds'][0])), 0))
+            if colors['bounds'][0] == colors['bounds'][1]:
+                alpha = 255
+            else:
+                alpha = int(np.round(255 * ((value - colors['bounds'][0]) /
+                                            (colors['bounds'][1] -
+                                            colors['bounds'][0])), 0))
 
         # Return html color code in #RRGGBBAA format
         color.append(alpha)
