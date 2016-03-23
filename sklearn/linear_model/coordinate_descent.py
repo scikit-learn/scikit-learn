@@ -2164,7 +2164,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
 
 class AdaptiveLasso(Lasso):
-    """Multi-step adaptive Lasso iteratively solving Lasso estimates.
+    """Multi-step adaptive Lasso.
 
     At each iteration, penalty weights applied are applied to the
     regularization of the coefficients in order to produce sparser
@@ -2177,8 +2177,9 @@ class AdaptiveLasso(Lasso):
 
     Where p is defined by ::
 
-        p(x) = (|x| + eps)^gamma       if gamma != 0
-        p(x) = log(|x| + eps) ^ gamma  if gamma == 0
+        p(x) = (|x| + eps)^q       for 'lq' penalty
+        p(x) = log(|x| + eps)      for 'log' penalty
+        p(x) = scad(x, q)             for 'scad' penalty
 
     In each step in the AdaptiveLasso, the optimization objective is::
 
@@ -2281,6 +2282,10 @@ class AdaptiveLasso(Lasso):
 
     loss_ : function
         The model loss function.
+
+    train_score_ : array, shape = [max_lasso_iterations]
+        The i-th score ``train_score_[i]`` is the loss of the
+        model at iteration ``i``.
 
     See also
     --------
@@ -2423,9 +2428,6 @@ class AdaptiveLasso(Lasso):
                      self.fit_intercept, copy=False)
 
         y = column_or_1d(y, warn=True)
-        if y.ndim != 1:
-            raise ValueError("AdaptiveLasso cannot be used with "
-                             "mutli-task outputs.")
 
         n_samples, n_features = X.shape
         X_sparse = sparse.isspmatrix(X)
