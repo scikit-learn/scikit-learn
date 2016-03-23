@@ -51,6 +51,7 @@ __all__ = ['KFold',
            'LeavePOut',
            'ShuffleSplit',
            'StratifiedKFold',
+           'BinnedStratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
            'LabelShuffleSplit',
@@ -481,7 +482,7 @@ class StratifiedKFold(_BaseKFold):
     random_state : None, int or RandomState
         When shuffle=True, pseudo-random number generator state used for
         shuffling. If None, use default numpy RNG for shuffling.
-
+    
     Examples
     --------
     >>> from sklearn.cross_validation import StratifiedKFold
@@ -509,11 +510,13 @@ class StratifiedKFold(_BaseKFold):
     --------
     LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
-
+     
     def __init__(self, y, n_folds=3, shuffle=False,
                  random_state=None):
         super(StratifiedKFold, self).__init__(
             len(y), n_folds, shuffle, random_state)
+        if bin:
+            y = discretize_folds_centered(y, n_folds)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
@@ -562,6 +565,141 @@ class StratifiedKFold(_BaseKFold):
     def _iter_test_masks(self):
         for i in range(self.n_folds):
             yield self.test_folds == i
+
+    def __repr__(self):
+        return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.y,
+            self.n_folds,
+            self.shuffle,
+            self.random_state,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+class BinnedStratifiedKFold(_BaseKFold):
+    """Binned Stratified K-Folds cross validation iterator for continuous (regression) data
+
+    Provides train/test indices to split data in train test sets
+    based on continuous input `y` of length `len_y`. 
+    The input is binned into `ceil(len_y / n_folds)` classes
+    with equal number of members, except the middle class, 
+    which receives the remainder of labels (of length `len_y % n_folds`).
+
+    This cross-validation object is a variation of KFold that
+    returns binned stratified folds. The folds are made by preserving
+    the percentage of samples for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    y : array-like, [n_samples]
+        Samples to split in K folds.
+
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
+    
+    Examples
+    --------
+    >>> from sklearn.cross_validation import BinnedStratifiedKFold
+    >>> y = np.arange(7.0)
+    >>> np.random.seed(0)
+    >>> np.random.shuffle(y)
+    >>> X = y + 0.1* np.random.randn(7)
+    >>> skf = BinnedStratifiedKFold(y, n_folds=2)
+    >>> len(skf)
+    2
+    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.BinnedStratifiedKFold(labels=[0 0 1 1], n_folds=2,
+                                             shuffle=False, random_state=None)
+    >>> "visualize output to check for balancing"
+    >>> indarr = np.zeros( len(y), dtype = bool)
+    >>> for train_index, test_index in skf:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN:  [ 0  1  2  3  5  7  8 10]   TEST:   [4 6 9]
+    TRAIN:  [ 0  1  2  3  4  6  8  9 10]    TEST:   [5 7]
+    TRAIN:  [0 3 4 5 6 7 8 9]   TEST:   [ 1  2 10]
+    TRAIN:  [ 1  2  4  5  6  7  9 10]   TEST:   [0 3 8]
+
+    Notes
+    -----
+    All the folds have size floor(n_samples / n_folds) or floor(n_samples / n_folds) +1,
+    the length is assigned randomly (even if no shuffling is requested) 
+    to balance the variance between folds.
+
+    See also
+    --------
+    StratifiedKFold -- stratified k-fold generator for classification data
+    """
+ 
+    def __init__(self, y, n_folds=3, shuffle=False,
+                 random_state=None):
+        self.random_state = random_state
+        super(BinnedStratifiedKFold, self).__init__(len(y), 
+                n_folds=n_folds, shuffle=shuffle, random_state=random_state)
+        """        """
+        len_y = len(y)
+        yinds = np.arange(len_y)
+        "reorder the labels according to the ordering of `y`"
+        sorter0 = np.argsort(y)
+        yinds = yinds[sorter0]
+        
+        n_classes = len_y // n_folds + int( len_y % n_folds != 0)
+
+        if len_y // n_folds > 1:
+            n_members_boundary_classes = n_folds * (len_y // n_folds // 2)
+            "assign the lower `n_folds*(n_classes//2 )` labels to the lower class"
+            lowerclasses = yinds[:n_members_boundary_classes].reshape(-1,n_folds)
+            "assign the upper `n_folds*(n_classes//2 )` labels to the upper class"
+            upperclasses = yinds[-n_members_boundary_classes:].reshape(-1,n_folds)
+            """assign the remainder labels to the middle class; 
+            add -1 as a filling value;  shuffle"""
+            middleclass = yinds[ n_members_boundary_classes:-n_members_boundary_classes] 
+            middleclass = np.hstack([ middleclass,  -np.ones(n_folds - len(middleclass) % n_folds, dtype=int)])
+            middleclass = middleclass.reshape(-1,n_folds)
+
+            rng = check_random_state(self.random_state)
+            rng.shuffle(middleclass.T)
+            middleclass = middleclass.reshape(-1,n_folds)
+            self._test_masks = np.vstack([ lowerclasses, middleclass, upperclasses]).T
+            "to do : middle class rebalancing"
+        elif len_y > n_classes:
+            """put the lower half in one piece, and the rest into a ragged array;
+            the central values will remain unpaired
+            """
+            lowerclasses = yinds[:n_folds ].reshape(-1,n_folds)
+            upperclasses = yinds[ n_folds:]
+            upperclasses = np.hstack([upperclasses, 
+                                    -np.ones( n_folds - len(upperclasses) % n_folds, dtype=int)])
+
+            self._test_masks = np.vstack([ lowerclasses, upperclasses]).T
+
+        if shuffle:
+            rng.shuffle( self._test_masks)
+
+        "remove missing values from the middle class"
+        self._test_masks = [ y[ y!=-1]  for y in self._test_masks]
+        return
+
+    def _iter_test_masks(self):
+        indarr = np.zeros( self.n, dtype = bool)
+        for mask in self._test_masks:
+            indarr[:] = True
+            indarr[mask] = False 
+            yield indarr 
 
     def __repr__(self):
         return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
