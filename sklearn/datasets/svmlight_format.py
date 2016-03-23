@@ -385,6 +385,8 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         if six.b("\0") in comment:
             raise ValueError("comment string contains NUL byte")
 
+    if sp.issparse(y):
+        raise ValueError("y should not be a sparse matrix")
     y = np.asarray(y)
     if y.ndim != 1 and not multilabel:
         raise ValueError("expected y of shape (n_samples,), got %r"
