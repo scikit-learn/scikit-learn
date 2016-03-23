@@ -2431,7 +2431,6 @@ class AdaptiveLasso(Lasso):
 
         n_samples, n_features = X.shape
         X_sparse = sparse.isspmatrix(X)
-        X_w = np.empty_like(X)
 
         self._check_params()
         self.coef_ = np.zeros(n_features, dtype=np.float64, order='F')
@@ -2447,7 +2446,7 @@ class AdaptiveLasso(Lasso):
             weights = self._p_prime(np.abs(self.coef_))
 
             # Perform weighted Lasso fit
-            np.copyto(X_w, X)
+            X_w = X.copy()
             if X_sparse:
                 inplace_column_scale(X_w, weights[:, np.newaxis])
             else:
