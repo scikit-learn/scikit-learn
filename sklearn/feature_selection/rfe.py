@@ -421,14 +421,11 @@ class RFECV(RFE, MetaEstimatorMixin):
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y))
 
-        scores = np.sum(scores, axis=0)[::-1]
-        # The index in 'scores' when 'n_features' features are selected
-        n_feature_index = np.ceil((n_features - n_features_to_select) /
-                                  float(self.step))
-        n_features_to_select = max(n_features_to_select,
-                                   n_features - ((n_feature_index -
-                                                 np.argmax(scores)) *
-                                                 self.step))
+        scores = np.sum(scores, axis=0)
+        n_features_to_select = max(
+            n_features - (np.argmax(scores) * self.step),
+            n_features_to_select)
+
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select, step=self.step)
@@ -444,5 +441,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores / cv.get_n_splits(X, y)
+        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y)
         return self
