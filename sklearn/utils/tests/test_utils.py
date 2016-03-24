@@ -42,11 +42,6 @@ def test_make_rng():
     assert_raises(ValueError, check_random_state, "some invalid seed")
 
 
-def test_resample_noarg():
-    # Border case not worth mentioning in doctests
-    assert_true(resample() is None)
-
-
 def test_deprecated():
     # Test whether the deprecated decorator issues appropriate warnings
     # Copied almost verbatim from http://docs.python.org/library/warnings.html
@@ -84,11 +79,19 @@ def test_deprecated():
         assert_true("deprecated" in str(w[0].message).lower())
 
 
-def test_resample_value_errors():
+def test_resample():
+    # Border case not worth mentioning in doctests
+    assert_true(resample() is None)
+
     # Check that invalid arguments yield ValueError
     assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1], n_samples=3)
+    assert_raises(ValueError, resample, [0, 1], [0, 1],
+                  replace=False, n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    # Check result expected
+    exp = 3
+    res = len(resample([1, 2], n_samples=exp))
+    assert_equal(res, exp)
 
 
 def test_safe_mask():
