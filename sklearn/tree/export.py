@@ -152,8 +152,11 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             # Classification tree
             color = list(colors['rgb'][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
-            alpha = int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
-                                 (1 - sorted_values[1]), 0))
+            if len(sorted_values) == 1:
+                alpha = 0
+            else:
+                alpha = int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
+                                           (1 - sorted_values[1]), 0))
         else:
             # Regression tree or multi-output
             color = list(colors['rgb'][0])
@@ -310,7 +313,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                         # Find max and min impurities for multi-output
                         colors['bounds'] = (np.min(-tree.impurity),
                                             np.max(-tree.impurity))
-                    elif tree.n_classes[0] == 1:
+                    elif tree.n_classes[0] == 1 and len(np.unique(tree.value)) != 1:
                         # Find max and min values in leaf nodes for regression
                         colors['bounds'] = (np.min(tree.value),
                                             np.max(tree.value))
