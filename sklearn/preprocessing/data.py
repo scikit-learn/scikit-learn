@@ -28,6 +28,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from .label import LabelEncoder
+from ..utils.fixes import np_version
 
 
 zip = six.moves.zip
@@ -2036,7 +2037,20 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         X_mask = np.ones_like(X, dtype=np.bool)
 
         for i in range(n_features):
-            valid_mask = np.in1d(X[:, i], self.label_encoders_[i].classes_)
+            if np_version < (1, 8):
+                # in1d is not supported for object datatype in np < 1.8
+                valid_mask = np.ones_like(X[:, i], dtype=np.bool)
+                found_classes = set(np.unique(X[:, i]))
+                valid_classes = set(self.label_encoders_[i].classes_)
+                invalid_classes = found_classes - valid_classes
+
+                for item in invalid_classes:
+                    mask = X[:, i] == item
+                    np.logical_not(mask, mask)
+                    np.logical_and(valid_mask, mask, valid_mask)
+
+            else:
+                valid_mask = np.in1d(X[:, i], self.label_encoders_[i].classes_)
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
