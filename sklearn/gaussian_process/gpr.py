@@ -261,11 +261,9 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             Covariance of joint predictive distribution a query points.
             Only returned when return_cov is True.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") \
+        if self.kernel is None:
+            self.kernel = C(1.0, constant_value_bounds="fixed") \
                 * RBF(1.0, length_scale_bounds="fixed")
-        else:
-            self.kernel_ = clone(self.kernel)
 
         if return_std and return_cov:
             raise RuntimeError(
@@ -277,10 +275,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             y_mean = np.zeros(X.shape[0])
             if return_cov:
-                y_cov = self.kernel_(X)
+                y_cov = self.kernel(X)
                 return y_mean, y_cov
             elif return_std:
-                y_var = self.kernel_.diag(X)
+                y_var = self.kernel.diag(X)
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
