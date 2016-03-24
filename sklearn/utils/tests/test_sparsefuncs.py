@@ -179,20 +179,21 @@ def test_mean_variance_illegal_axis():
 
 
 def test_densify_rows():
-    X = sp.csr_matrix([[0, 3, 0],
-                       [2, 4, 0],
-                       [0, 0, 0],
-                       [9, 8, 7],
-                       [4, 0, 5]], dtype=np.float64)
-    X_rows = np.array([0, 2, 3], dtype=np.intp)
-    out = np.ones((6, X.shape[1]), dtype=np.float64)
-    out_rows = np.array([1, 3, 4], dtype=np.intp)
+    for dtype in (np.float32, np.float64):
+        X = sp.csr_matrix([[0, 3, 0],
+                        [2, 4, 0],
+                        [0, 0, 0],
+                        [9, 8, 7],
+                        [4, 0, 5]], dtype=dtype)
+        X_rows = np.array([0, 2, 3], dtype=np.intp)
+        out = np.ones((6, X.shape[1]), dtype=dtype)
+        out_rows = np.array([1, 3, 4], dtype=np.intp)
 
-    expect = np.ones_like(out)
-    expect[out_rows] = X[X_rows, :].toarray()
+        expect = np.ones_like(out)
+        expect[out_rows] = X[X_rows, :].toarray()
 
-    assign_rows_csr(X, X_rows, out_rows, out)
-    assert_array_equal(out, expect)
+        assign_rows_csr(X, X_rows, out_rows, out)
+        assert_array_equal(out, expect)
 
 
 def test_inplace_column_scale():

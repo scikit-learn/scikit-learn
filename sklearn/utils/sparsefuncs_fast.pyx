@@ -11,6 +11,7 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 cimport cython
+from cython cimport floating
 
 np.import_array()
 
@@ -360,11 +361,11 @@ cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
 def assign_rows_csr(X,
                     np.ndarray[np.npy_intp, ndim=1] X_rows,
                     np.ndarray[np.npy_intp, ndim=1] out_rows,
-                    np.ndarray[np.float64_t, ndim=2, mode="c"] out):
+                    np.ndarray[floating, ndim=2, mode="c"] out):
     """Densify selected rows of a CSR matrix into a preallocated array.
 
     Like out[out_rows] = X[X_rows].toarray() but without copying.
-    Only supported for dtype=np.float64.
+    No-copy supported for both dtype=np.float32 and dtype=np.float64.
 
     Parameters
     ----------
@@ -378,7 +379,7 @@ def assign_rows_csr(X,
         # but int is what scipy.sparse uses.
         int i, ind, j
         np.npy_intp rX
-        np.ndarray[DOUBLE, ndim=1] data = X.data
+        np.ndarray[floating, ndim=1] data = X.data
         np.ndarray[int, ndim=1] indices = X.indices, indptr = X.indptr
 
     if X_rows.shape[0] != out_rows.shape[0]:
