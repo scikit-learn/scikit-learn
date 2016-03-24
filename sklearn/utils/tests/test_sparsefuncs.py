@@ -14,9 +14,120 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis,
                                        count_nonzero, csc_median_axis_0)
+from sklearn.utils.sparsefuncs import csr_csc_min_axis0, csr_csc_max_axis0
+
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
+X = np.array([[-67.8,  71. ,   0. ,   0. ,   0. ,  74.5],
+              [  0. ,   0. ,  -2. ,   0. ,   4. ,   0. ],
+              [ 99.8,   0. ,   0. ,   0. ,   4.5,  -2. ],
+              [  0. ,   0. ,   0. ,   0. ,   0. ,   0. ],
+              [ 72. ,  -1. ,   0. ,   0. ,   0. ,  73. ]])
+
+X_int = np.array([[  0,  -1, 666],
+                  [-10,   5,   0],
+                  [  4,   0,   2]])
+
+X_nozeros = [[3, 2, -1],
+             [1, 1, -2],
+             [2, 2, -3]]
+
+X_2 = [[0,   0,   1],
+       [-2, -4,   2],
+       [3,   0,   0]]
+
+def test_csr_csc_min_axis0_2():
+    expected = [-2, -4, 0]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_2)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0_2():
+    expected = [3, 0, 2]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_2)
+        minimum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_min_axis0_nozeros():
+    expected = [1, 1, -3]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_nozeros)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0_nozeros():
+    expected = [3, 2, -1]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_nozeros)
+        maximum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, maximum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_min_axis0_int():
+    expected = [-10, -1, 0]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_int)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0_int():
+    expected = [4, 5, 666]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X_int)
+        minimum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_min_axis0():
+    expected = [-67.8, -1, -2, 0, 0, -2]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X)
+        minimum = csr_csc_min_axis0(sparse)
+        assert_array_equal(expected, minimum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_csc_max_axis0():
+    expected = [99.8, 71, 0, 0, 4.5, 74.5]
+
+    for format in [sp.csr_matrix, sp.csc_matrix]:
+        sparse = format(X)
+        maximum = csr_csc_max_axis0(sparse)
+        assert_array_equal(expected, maximum, "Arrays are not equal for {0}" \
+                           .format(format.__name__))
+
+def test_csr_max_axis0_error():
+    try:
+        for format in [sp.lil_matrix, sp.bsr_matrix, sp.coo_matrix]:
+            sparse = format(X)
+            maximum = csr_csc_max_axis0(sparse)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Error wasn't thrown for bad matrix format input")
+
+def test_csr_col_min_error():
+    try:
+        for format in [sp.lil_matrix, sp.bsr_matrix, sp.coo_matrix]:
+            sparse = format(X)
+            maximum = csr_csc_min_axis0(sparse)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Error wasn't thrown for bad matrix format input")
 
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)

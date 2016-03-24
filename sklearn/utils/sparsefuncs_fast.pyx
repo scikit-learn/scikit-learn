@@ -3,6 +3,7 @@
 #          Peter Prettenhofer
 #          Lars Buitinck
 #          Giorgio Patrini
+#          Henry Lin
 #
 # Licence: BSD 3 clause
 
@@ -13,9 +14,149 @@ import scipy.sparse as sp
 cimport cython
 
 np.import_array()
+ctypedef np.float64_t DOUBLE  # This is simply `double`
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_min_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+
+    cdef:
+        unsigned int n_features = X.shape[1]
+        unsigned int n_samples = X.shape[0]
+        int[::1] col_ptr = X.indptr
+        np.ndarray[DOUBLE, ndim=1, mode="c"] minimum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
+
+        unsigned int i, j
+        unsigned int start, end
+
+    minimum.fill(np.inf)
+
+    for i in range(n_features):
+        start = col_ptr[i]
+        end = col_ptr[i + 1]
+
+        for j in range(start, end):
+            minimum[i] = double_min(minimum[i], data[j])
+
+        # If 0 detected in column, allows 0 to be a candidate min.
+        # Effectively also removes inf values.
+        if end - start < n_samples:
+            minimum[i] = double_min(minimum[i], 0)
+
+    return minimum
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_max_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+
+    cdef:
+        unsigned int n_features = X.shape[1]
+        unsigned int n_samples = X.shape[0]
+        int[::1] col_ptr = X.indptr
+        np.ndarray[DOUBLE, ndim=1, mode="c"] maximum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
+        #DOUBLE min_double = np.finfo(float).min
+
+        unsigned int i, j
+        unsigned int start, end
+
+    maximum.fill(-np.inf)
+
+    # Selects the numbers within a given column, then finds maximum
+    for i in range(n_features):
+        start = col_ptr[i]
+        end = col_ptr[i + 1]
+
+        # Iterate downwards through matrix
+        for j in range(start, end):
+            maximum[i] = double_max(maximum[i], data[j])
+
+        # If 0 detected in column, allows 0 to be a candidate max.
+        # Effectively also removes -inf values.
+        if end - start < n_samples:
+            maximum[i] = double_max(maximum[i], 0)
+
+    return maximum
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_min_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+    cdef:
+        int n_features = X.shape[1]
+        int n_samples = X.shape[0]
+        int[::1] col_indices = X.indices
+        int[::1] row_ptr = X.indptr
+        np.ndarray[DOUBLE, ndim=1, mode="c"] minimum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
+        unsigned int[::1] counter = np.ones(n_features, dtype=np.uint32) * n_samples
+        #DOUBLE[::1] data = X.data
+        #DOUBLE[::1] minimum = np.zeros(n_features)
+
+        int col_ind, index
+        double num
+    minimum.fill(np.inf)
+
+    for index in range(X.nnz):
+        col_ind = col_indices[index]
+        num = data[index]
+        minimum[col_ind] = double_min(num, minimum[col_ind])
+        counter[col_ind] -= 1
+
+    # counter now provides a way to determine whether a column had a zero
+    for index in range(n_features):
+        if counter[index] != 0:
+            minimum[index] = double_min(minimum[index], 0)
+
+    return minimum
 
 
-ctypedef np.float64_t DOUBLE
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_max_axis0(X):
+    """Minimum of each element of X down axis 0.
+    Equivalent to calling X.min(axis=0)
+    """
+    cdef:
+        int n_features = X.shape[1]
+        int n_samples = X.shape[0]
+        int[::1] col_indices = X.indices
+        int[::1] row_ptr = X.indptr
+        #DOUBLE[::1] data = X.data
+        #DOUBLE[::1] maximum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] maximum = np.zeros(n_features)
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data = X.data
+        unsigned int[::1] counter = np.ones(n_features, dtype=np.uint32) * n_samples
+
+        int col_ind, index
+        double num
+    maximum.fill(-np.inf)
+
+    for index in range(X.nnz):
+        col_ind = col_indices[index]
+        num = data[index]
+        maximum[col_ind] = double_max(num, maximum[col_ind])
+        counter[col_ind] -= 1
+
+    # counter now provides a way to determine whether a column had a zero
+    for index in range(n_features):
+        if counter[index] != 0:
+            maximum[index] = double_max(maximum[index], 0)
+
+    return maximum
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

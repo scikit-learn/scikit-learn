@@ -11,7 +11,8 @@ from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
     incr_mean_variance_axis0 as _incr_mean_var_axis0)
-
+from .sparsefuncs_fast import (csr_min_axis0, csr_max_axis0,
+                               csc_min_axis0, csc_max_axis0)
 
 def _raise_typeerror(X):
     """Raises a TypeError if X is not a CSR or CSC matrix"""
@@ -25,6 +26,49 @@ def _raise_error_wrong_axis(axis):
         raise ValueError(
             "Unknown axis value: %d. Use 0 for rows, or 1 for columns" % axis)
 
+def csr_csc_min_axis0(X):
+    """Compute the minimum along axis 0 for a csr or csc matrix.
+
+    Parameters
+    ----------
+    X: {csr_matrix, csc_matrix}, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+    minimum : array, shape [n_features]
+        The minimum of elements along axis 0.
+    """
+
+    X = X.astype(np.float64)
+    if isinstance(X, sp.csr_matrix):
+        return csr_min_axis0(X)
+    elif isinstance(X, sp.csc_matrix):
+        return csc_min_axis0(X)
+    else:
+        raise ValueError("Input array was neither a csr_matrix nor csc_matrix.")
+
+def csr_csc_max_axis0(X):
+    """Compute the maximum along axis 0 for a csr or csc matrix.
+
+    Parameters
+    ----------
+    X: {csr_matrix, csc_matrix}, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+    maximum : array, shape [n_features]
+        The maximum of elements along axis 0.
+    """
+
+    X = X.astype(np.float64)
+    if isinstance(X, sp.csr_matrix):
+        return csr_max_axis0(X)
+    elif isinstance(X, sp.csc_matrix):
+        return csc_max_axis0(X)
+    else:
+        raise ValueError("Input array was neither a csr_matrix nor csc_matrix.")
 
 def inplace_csr_column_scale(X, scale):
     """Inplace column scaling of a CSR matrix.
