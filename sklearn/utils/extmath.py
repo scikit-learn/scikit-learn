@@ -874,6 +874,10 @@ def weighted_median(array, sample_weight):
     sample_weight : array_like
         n-dimensional array of weights for each value
 
+    Returns
+    -------
+    weighted_median : float
+        Weighted median of the array
     Example
     -------
     >>> from sklearn.utils.extmath import weighted_median
@@ -882,6 +886,11 @@ def weighted_median(array, sample_weight):
     2.5
     >>> weighted_median(np.array([1,2,3]),np.array([1,1,1]))
     2.0
+
+    References
+    ----------
+    .. [1] https://en.wikipedia.org/wiki/Percentile
+
     """
     sorted_idx = np.argsort(array)
     sample_weight = np.asarray(sample_weight)

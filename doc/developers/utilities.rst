@@ -122,6 +122,9 @@ Efficient Linear Algebra & Array Operations
 - :func:`shuffle`: Shuffle arrays or sparse matrices in a consistent way.
   Used in ``sklearn.cluster.k_means``.
 
+- :func:`extmath.weighted_median`: an implementation to get weighted median
+  of the array using sample weights.
+
 
 Efficient Random Sampling
 =========================
