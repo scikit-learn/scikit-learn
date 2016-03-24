@@ -2054,8 +2054,13 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
-                    diff = np.setdiff1d(X[:, i],
-                                        self.label_encoders_[i].classes_)
+                    if np_version < (1, 8):
+                        valid_classes = set(self.label_encoders_[i].classes_)
+                        diff = set(X[:, i]) - valid_classes
+                        diff = list(diff)
+                    else:
+                        diff = np.setdiff1d(X[:, i],
+                                            self.label_encoders_[i].classes_)
                     msg = 'Unknown feature(s) %s in column %d' % (diff, i)
                     raise ValueError(msg)
                 else:
