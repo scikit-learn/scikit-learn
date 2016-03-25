@@ -1959,7 +1959,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     CategoricalEncoder(categorical_features='all', classes='auto',
-              dtype=<type 'numpy.float64'>, handle_unknown='error',
+              dtype=<... 'numpy.float64'>, handle_unknown='error',
               sparse=True)
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])

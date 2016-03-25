@@ -424,7 +424,7 @@ features, one has to explicitly set ``classes``. For example,
     >>> enc.fit(X) # doctest: +ELLIPSIS
     CategoricalEncoder(categorical_features='all',
               classes=[...],
-              dtype=<type 'numpy.float64'>, handle_unknown='error',
+              dtype=<... 'numpy.float64'>, handle_unknown='error',
               sparse=True)
 
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
