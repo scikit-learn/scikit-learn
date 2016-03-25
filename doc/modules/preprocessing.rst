@@ -399,9 +399,10 @@ Continuing the example above::
   >>> enc = preprocessing.CategoricalEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS
-      CategoricalEncoder(categorical_features='all', classes='auto',
-          dtype=<type 'numpy.float64'>, handle_unknown='error', sparse=True)
-  >>> enc.transform([['female', 'from US', 'usues Safari']]).toarray()
+  CategoricalEncoder(categorical_features='all', classes='auto',
+            dtype=<type 'numpy.float64'>, handle_unknown='error',
+            sparse=True)
+  >>> enc.transform([['female', 'from US', 'uses Safari']]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  1.]])
 
 
@@ -414,15 +415,15 @@ Note that, if there is a possibilty that the training data might have missing ca
 features, one has to explicitly set ``classes``. For example,
 
     >>> genders = ['male', 'female']
+    >>> locations = ['from Europe', 'from US', 'from Africa', 'from Asia']
+    >>> browsers = ['uses Safari', 'uses Firefox', 'uses IE', 'uses Chrome']
     >>> enc = preprocessing.CategoricalEncoder(classes=[genders, locations, browsers])
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X)  # doctest: +ELLIPSIS
-        CategoricalEncoder(categorical_features='all', classes='auto',
-	    dtype=<type 'numpy.float64'>, handle_unknown='error', sparse=True)
+    >>> _ = enc.fit(X)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
-        array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+    array([[ 1.,  0.,  0.,  0.,  0.,  1.,  1.,  0.,  0.,  0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
