@@ -400,7 +400,7 @@ Continuing the example above::
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS
   CategoricalEncoder(categorical_features='all', classes='auto',
-            dtype=<type 'numpy.float64'>, handle_unknown='error',
+            dtype=<... 'numpy.float64'>, handle_unknown='error',
             sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari']]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  1.]])
@@ -421,7 +421,12 @@ features, one has to explicitly set ``classes``. For example,
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> _ = enc.fit(X)
+    >>> enc.fit(X) # doctest: +ELLIPSIS
+    CategoricalEncoder(categorical_features='all',
+              classes=[...],
+              dtype=<type 'numpy.float64'>, handle_unknown='error',
+              sparse=True)
+
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[ 1.,  0.,  0.,  0.,  0.,  1.,  1.,  0.,  0.,  0.]])
 
