@@ -14,7 +14,9 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis,
                                        count_nonzero, csc_median_axis_0)
-from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
+                                            inplace_csr_row_normalize_l1,
+                                            inplace_csr_row_normalize_l2)
 from sklearn.utils.testing import assert_raises
 
 
@@ -478,3 +480,10 @@ def test_csc_row_median():
 
     # Test that it raises an Error for non-csc matrices.
     assert_raises(TypeError, csc_median_axis_0, sp.csr_matrix(X))
+
+
+def test_inplace_normalize():
+    # regression tests for passing 32-bit floating point
+    X = sp.rand(10, 5, dtype=np.float32, density=.5).tocsr()
+    inplace_csr_row_normalize_l1(X)
+    inplace_csr_row_normalize_l2(X)

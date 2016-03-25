@@ -278,7 +278,9 @@ def inplace_csr_row_normalize_l1(X):
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    # might copy
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = np.asarray(X.data,
+                                                        dtype=np.float64)
     cdef np.ndarray[int, ndim=1] X_indices = X.indices
     cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
@@ -313,7 +315,9 @@ def inplace_csr_row_normalize_l2(X):
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    # might copy
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = np.asarray(X.data,
+                                                        dtype=np.float64)
     cdef np.ndarray[int, ndim=1] X_indices = X.indices
     cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
 
@@ -364,7 +368,7 @@ def assign_rows_csr(X,
     """Densify selected rows of a CSR matrix into a preallocated array.
 
     Like out[out_rows] = X[X_rows].toarray() but without copying.
-    Only supported for dtype=np.float64.
+    No-copy only supported for dtype=np.float64.
 
     Parameters
     ----------
@@ -378,7 +382,9 @@ def assign_rows_csr(X,
         # but int is what scipy.sparse uses.
         int i, ind, j
         np.npy_intp rX
-        np.ndarray[DOUBLE, ndim=1] data = X.data
+        # might copy
+        np.ndarray[DOUBLE, ndim=1] data = np.asarray(X.data,
+                                                     dtype=np.float64)
         np.ndarray[int, ndim=1] indices = X.indices, indptr = X.indptr
 
     if X_rows.shape[0] != out_rows.shape[0]:
