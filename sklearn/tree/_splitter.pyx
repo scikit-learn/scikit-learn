@@ -365,6 +365,9 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
         cdef bint is_categorical
+        cdef UINT64_t cat_split
+        cdef INT32_t ncat_present
+        cdef INT32_t cat_offs[64]
 
         _init_split(&best, end)
 
@@ -452,23 +455,40 @@ cdef class BestSplitter(BaseDenseSplitter):
                     # Evaluate all splits
                     self.criterion.reset()
                     is_categorical = self.n_categories[current.feature] > 0
-                    p = 0 if is_categorical else start
+                    if is_categorical:
+                        p = 0
+                        # Identify the subset of categories present (for performance reasons)
+                        cat_split = 0
+                        ncat_present = 0
+                        for q in range(start, end):
+                            cat_split |= 1 << (<SIZE_t>Xf[q])
+                        for q in range(self.n_categories[current.feature]):
+                            if cat_split & (1 << q):
+                                cat_offs[ncat_present] = q - ncat_present
+                                ncat_present += 1
+                    else:
+                        p = start
 
                     while True:
                         if is_categorical:
                             # WARNING: This is O(n_samples *
                             # 2**n_categories), and will be very slow
                             # for more than just a few categories.
-                            if p > (1 << self.n_categories[current.feature]) - 1:
+                            if p > (1 << ncat_present) - 1:
                                 break
                             else:
                                 p += 2  # LSB must always be 0
+
+                            # Expand the bits of p out into cat_split
+                            cat_split = 0
+                            for q in range(ncat_present):
+                                cat_split |= (p & (1 << q)) << cat_offs[q]
 
                             # Partition
                             q = start
                             partition_end = end
                             while q < partition_end:
-                                if (p >> <SIZE_t>Xf[q]) & 1:
+                                if (cat_split >> <SIZE_t>Xf[q]) & 1:
                                     q += 1
                                 else:
                                     partition_end -= 1
@@ -510,7 +530,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                         if current_proxy_improvement > best_proxy_improvement:
                             best_proxy_improvement = current_proxy_improvement
                             if is_categorical:
-                                current.split_value.cat_split = p
+                                current.split_value.cat_split = cat_split
                             else:
                                 current.split_value.threshold = (Xf[p - 1] + Xf[p]) / 2.0
                                 if current.split_value.threshold == Xf[p]:
