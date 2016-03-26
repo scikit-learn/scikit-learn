@@ -1269,6 +1269,26 @@ def test_normalize():
     assert_raises(ValueError, normalize, [[0]], axis=2)
     assert_raises(ValueError, normalize, [[0]], norm='l3')
 
+    rs = np.random.RandomState(0)
+    X_dense = rs.randn(10, 5)
+    X_sparse = sparse.csr_matrix(X_dense)
+    ones = np.ones((10))
+    for X in (X_dense, X_sparse):
+        for dtype in (np.float32, np.float64):
+            for norm in ('l1', 'l2'):
+                X = X.astype(dtype)
+                X_norm = normalize(X, norm=norm)
+                assert_equal(X_norm.dtype, dtype)
+
+                X_norm = toarray(X_norm)
+                if norm == 'l1':
+                    row_sums = np.abs(X_norm).sum(axis=1)
+                else:
+                    X_norm_squared = X_norm**2
+                    row_sums = X_norm_squared.sum(axis=1)
+
+                assert_array_almost_equal(row_sums, ones)
+
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])

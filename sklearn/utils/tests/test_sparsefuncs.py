@@ -5,6 +5,7 @@ from scipy import linalg
 from numpy.testing import (assert_array_almost_equal,
                            assert_array_equal,
                            assert_equal)
+from numpy.random import RandomState
 
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis,
@@ -14,7 +15,9 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis,
                                        count_nonzero, csc_median_axis_0)
-from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
+                                            inplace_csr_row_normalize_l1,
+                                            inplace_csr_row_normalize_l2)
 from sklearn.utils.testing import assert_raises
 
 
@@ -479,3 +482,19 @@ def test_csc_row_median():
 
     # Test that it raises an Error for non-csc matrices.
     assert_raises(TypeError, csc_median_axis_0, sp.csr_matrix(X))
+
+
+def test_inplace_normalize():
+    ones = np.ones((10, 1))
+    rs = RandomState(10)
+
+    for inplace_csr_row_normalize in (inplace_csr_row_normalize_l1,
+                                      inplace_csr_row_normalize_l2):
+        for dtype in (np.float64, np.float32):
+            X = rs.randn(10, 5).astype(dtype)
+            X_csr = sp.csr_matrix(X)
+            inplace_csr_row_normalize(X_csr)
+            assert_equal(X_csr.dtype, dtype)
+            if inplace_csr_row_normalize is inplace_csr_row_normalize_l2:
+                X_csr.data **= 2
+            assert_array_almost_equal(np.abs(X_csr).sum(axis=1), ones)
