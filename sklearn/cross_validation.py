@@ -515,8 +515,6 @@ class StratifiedKFold(_BaseKFold):
                  random_state=None):
         super(StratifiedKFold, self).__init__(
             len(y), n_folds, shuffle, random_state)
-        if bin:
-            y = discretize_folds_centered(y, n_folds)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
@@ -697,8 +695,8 @@ class BinnedStratifiedKFold(_BaseKFold):
     def _iter_test_masks(self):
         indarr = np.zeros( self.n, dtype = bool)
         for mask in self._test_masks:
-            indarr[:] = True
-            indarr[mask] = False 
+            indarr[:] = False 
+            indarr[mask] = True
             yield indarr 
 
     def __repr__(self):

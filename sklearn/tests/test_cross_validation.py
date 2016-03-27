@@ -438,6 +438,101 @@ def test_label_kfold():
     assert_raises(ValueError, cval.LabelKFold, labels, n_folds=3)
 
 
+def test_binnedstratifiedkfold_balance():
+    for _ in range(10):
+        n_folds = 2 + int(10*np.random.rand())
+        y = np.random.randn(30)
+        np.random.shuffle(y)
+        sizes = []
+     
+        bskf = cval.BinnedStratifiedKFold(y, n_folds=n_folds,
+                                        shuffle = False, random_state=None)
+     
+        bins = np.percentile(y, np.arange(n_folds))
+        for  train_index, test_index in bskf:
+            sizes.append(
+                        len(test_index)
+                        )
+        assert_true((np.max(sizes) - np.min(sizes)) <= 1)
+        assert_equal(np.sum(sizes), bskf.n)
+
+
+def test_binnedstratifiedkfold_bin_spacing():
+    "check if the binned `y` falls into bins of equal size (+/- 1)"
+    for _ in range(10):
+        n_folds = 2 + int(10*np.random.rand())
+        y = np.random.randn(30)
+        np.random.shuffle(y)
+        
+        skf = cval.BinnedStratifiedKFold(y, n_folds=n_folds, 
+                                        shuffle = False, random_state=None)
+        
+        bins = np.percentile(y, np.arange(n_folds))
+
+        for  train_index, test_index in skf:
+            y_test = y[test_index]
+            hist_test, _ = np.histogram( y_test, bins = bins )         
+            assert_true(all(abs(hist_test - np.mean(hist_test)) <= 1),
+                        msg = "y_test falls into bins of too ragged sizes")
+            
+            y_train = y[train_index]
+            hist_train, _ = np.histogram( y_test, bins = bins )         
+            assert_true(all(abs(hist_train - np.mean(hist_train)) <= 1), 
+                        msg = "y_train falls into bins of too ragged sizes")
+
+
+def test_binnedstratifiedkfold_has_more_stable_distribution_moments_between_folds():
+    """check if BinnedStratifiedKFold performs on average better than KFold in terms of 
+    lower between-fold variance of fold mean(y_test) and fold std(y_test)
+    """
+    binned_has_more_stable_std_list = []
+    binned_has_more_stable_mean_list = []
+
+    for trial in range(100):
+        n_folds = 2 + int(10*np.random.rand())
+        y = np.random.randn(30)
+        np.random.shuffle(y)
+        ymeans_binned = []
+        ystds_binned = []
+
+        skf = cval.BinnedStratifiedKFold(y, n_folds=n_folds, 
+                                        shuffle = False, random_state=None)
+
+
+        kf = cval.KFold(len(y), n_folds = n_folds, 
+                                        shuffle = True, random_state = None)
+
+        bins = np.percentile(y, np.arange(n_folds))
+        for  train_index, test_index in skf:
+            y_test = y[test_index]
+            ymeans_binned.append( y_test.mean() )
+            ystds_binned.append(  y_test.std()  )
+            hist_, _ = np.histogram( y[test_index], bins = bins )
+
+            assert (all(abs(hist_ - np.mean(hist_)) <= 1) ), "too ragged bins"
+
+
+        ymeans_regular = []
+        ystds_regular = []
+        for  train_index_reg, test_index_reg in kf:
+            ymeans_regular.append(y[test_index_reg].mean())
+            ystds_regular.append(y[test_index_reg].std())
+
+        binned_has_more_stable_std = np.std(ystds_regular) > np.std(ystds_binned)
+        binned_has_more_stable_std_list.append(binned_has_more_stable_std)
+
+        binned_has_more_stable_mean = np.std(ymeans_regular) > np.std(ymeans_binned)
+        binned_has_more_stable_mean_list.append( binned_has_more_stable_mean )
+
+    binned_has_more_stable_std_fraction = np.mean(binned_has_more_stable_std_list)
+    binned_has_more_stable_mean_fraction = np.mean(binned_has_more_stable_mean_list)
+    
+    assert_greater( binned_has_more_stable_std_fraction, 0.5)
+    assert_greater( binned_has_more_stable_mean_fraction, 0.5)
+    print(" std(y_test) of BinnedStratifiedKFold was more stable than one of KFold in\t%.2f%% cases" % (100.0*binned_has_more_stable_std_fraction))
+    print("mean(y_test) of BinnedStratifiedKFold was more stable than one of KFold in\t%.2f%% cases" % (100.0*binned_has_more_stable_mean_fraction))
+    
+
 def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
