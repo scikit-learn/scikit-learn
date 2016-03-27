@@ -51,6 +51,7 @@ __all__ = ['KFold',
            'LeavePOut',
            'ShuffleSplit',
            'StratifiedKFold',
+           'BinnedStratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
            'LabelShuffleSplit',
@@ -230,8 +231,8 @@ class LeavePOut(_PartitionIterator):
         )
 
     def __len__(self):
-        return int(factorial(self.n) / factorial(self.n - self.p)
-                   / factorial(self.p))
+        return int(factorial(self.n) / factorial(self.n - self.p) /
+                   factorial(self.p))
 
 
 class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
@@ -568,6 +569,150 @@ class StratifiedKFold(_BaseKFold):
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
+            self.n_folds,
+            self.shuffle,
+            self.random_state,
+        )
+
+    def __len__(self):
+        return self.n_folds
+
+
+class BinnedStratifiedKFold(_BaseKFold):
+    """Binned Stratified K-Folds cross validation iterator for continuous data
+
+    Provides train/test indices to split data in train test sets
+    based on continuous input `y` of length `len_y`.
+    The input is binned into `ceil(len_y / n_folds)` classes
+    with equal number of members, except the middle class,
+    which receives the remainder of labels (of length `len_y % n_folds`).
+
+    This cross-validation object is a variation of KFold that
+    returns binned stratified folds. The folds are made by preserving
+    the percentage of samples for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    y : array-like, [n_samples]
+        Samples to split in K folds.
+
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
+
+    Examples
+    --------
+    >>> from sklearn.cross_validation import BinnedStratifiedKFold
+    >>> y = np.arange(11.0)
+    >>> np.random.seed(0)
+    >>> np.random.shuffle(y)
+    >>> X = y + 0.1* np.random.randn(len(y))
+    >>> skf = BinnedStratifiedKFold(y, n_folds=3)
+    >>> len(skf)
+    3
+    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    sklearn.cross_validation.BinnedStratifiedKFold(n=11, n_folds=3,
+            shuffle=False, random_state=None)
+    >>> indarr = np.zeros( len(y), dtype = bool)
+    >>> for train_index, test_index in skf:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [ 1  2  3  4  5  8 10] TEST: [0 6 7 9]
+    TRAIN: [0 2 3 4 6 7 8 9] TEST: [ 1  5 10]
+    TRAIN: [ 0  1  5  6  7  9 10] TEST: [2 3 4 8]
+
+    Notes
+    -----
+    All the folds have size floor(n_samples / n_folds) or
+    floor(n_samples / n_folds) +1,
+    the length is assigned randomly (even if no shuffling is requested)
+    to balance the variance between folds.
+
+    See also
+    --------
+    StratifiedKFold -- stratified k-fold generator for classification data
+    """
+
+    def __init__(self, y, n_folds=3, shuffle=False,
+                 random_state=None):
+        self.random_state = random_state
+        super(BinnedStratifiedKFold, self).__init__(
+                len(y),
+                n_folds=n_folds, shuffle=shuffle, random_state=random_state
+                )
+        len_y = len(y)
+        yinds = np.arange(len_y)
+        "reorder the labels according to the ordering of `y`"
+        sorter0 = np.argsort(y)
+        yinds = yinds[sorter0]
+
+        self.n_classes = len_y // n_folds + int(len_y % n_folds != 0)
+
+        if len_y // n_folds > 1:
+            n_items_boundary_cls = n_folds * (len_y // n_folds // 2)
+            "assign lower `n_folds*(n_classes//2 )` labels to the lower class"
+            lowerclasses = yinds[:n_items_boundary_cls].reshape(-1, n_folds)
+            "assign upper `n_folds*(n_classes//2 )` labels to the upper class"
+            upperclasses = yinds[-n_items_boundary_cls:].reshape(-1, n_folds)
+            """assign the remainder labels to the middle class;
+            add -1 as a filling value;  shuffle"""
+            middleclasses = yinds[n_items_boundary_cls:-n_items_boundary_cls]
+            middleclasses = np.hstack([
+                    middleclasses,
+                    -np.ones(n_folds - len(middleclasses) % n_folds, dtype=int)
+                    ])
+            middleclasses = middleclasses.reshape(-1, n_folds)
+
+            rng = check_random_state(self.random_state)
+            rng.shuffle(middleclasses.T)
+            middleclasses = middleclasses.reshape(-1, n_folds)
+            self._test_masks = np.vstack([
+                        lowerclasses,
+                        middleclasses,
+                        upperclasses]).T
+            "to do : middle class rebalancing"
+        elif len_y > self.n_classes:
+            """put the lower half in one piece, and the rest into a ragged array;
+            the central values will remain unpaired
+            """
+            lowerclasses = yinds[:n_folds].reshape(-1, n_folds)
+            upperclasses = yinds[n_folds:]
+            upperclasses = np.hstack([
+                    upperclasses,
+                    -np.ones(n_folds - len(upperclasses) % n_folds, dtype=int)
+                    ])
+
+            self._test_masks = np.vstack([lowerclasses, upperclasses]).T
+
+        if shuffle:
+            rng.shuffle(self._test_masks)
+
+        "remove missing values from the middle class"
+        self._test_masks = [y[y != -1] for y in self._test_masks]
+        return
+
+    def _iter_test_masks(self):
+        indarr = np.zeros(self.n, dtype=bool)
+        for mask in self._test_masks:
+            indarr[:] = False
+            indarr[mask] = True
+            yield indarr
+
+    def __repr__(self):
+        return '%s.%s(n=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            self.n,
             self.n_folds,
             self.shuffle,
             self.random_state,
