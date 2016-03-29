@@ -81,9 +81,10 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', None}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported.
+        If None is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
         Parameter for rbf kernel
@@ -139,6 +140,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                                                     mode='connectivity')
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
+        elif self.kernel is None:
+            return X
         else:
             raise ValueError("%s is not a valid kernel. Only rbf and knn"
                              " are supported at this time" % self.kernel)
