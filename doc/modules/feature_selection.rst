@@ -225,7 +225,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
 .. _randomized_l1:
 

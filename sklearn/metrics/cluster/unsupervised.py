@@ -78,7 +78,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
        <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
-           <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+           <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
     X, labels = check_X_y(X, labels)
@@ -158,7 +158,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
-       <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+       <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
     le = LabelEncoder()

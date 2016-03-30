@@ -212,7 +212,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     References
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
-           <http://en.wikipedia.org/wiki/Confusion_matrix>`_
+           <https://en.wikipedia.org/wiki/Confusion_matrix>`_
 
     Examples
     --------
@@ -369,7 +369,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     References
     ----------
     .. [1] `Wikipedia entry for the Jaccard index
-           <http://en.wikipedia.org/wiki/Jaccard_index>`_
+           <https://en.wikipedia.org/wiki/Jaccard_index>`_
 
 
     Examples
@@ -451,7 +451,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
        <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
-       <http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
+       <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 
     Examples
     --------
@@ -639,8 +639,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     References
     ----------
-    .. [1] `Wikipedia entry for the F1-score
-            <http://en.wikipedia.org/wiki/F1_score>`_
+    .. [1] `Wikipedia entry for the F1-score <https://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -750,7 +749,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
            Modern Information Retrieval. Addison Wesley, pp. 327-328.
 
     .. [2] `Wikipedia entry for the F1-score
-           <http://en.wikipedia.org/wiki/F1_score>`_
+           <https://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -934,10 +933,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     References
     ----------
     .. [1] `Wikipedia entry for the Precision and recall
-           <http://en.wikipedia.org/wiki/Precision_and_recall>`_
+           <https://en.wikipedia.org/wiki/Precision_and_recall>`_
 
     .. [2] `Wikipedia entry for the F1-score
-           <http://en.wikipedia.org/wiki/F1_score>`_
+           <https://en.wikipedia.org/wiki/F1_score>`_
 
     .. [3] `Discriminative Methods for Multi-labeled Classification Advances
            in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
@@ -1478,7 +1477,7 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
            3(3), 1-13, July-September 2007.
 
     .. [2] `Wikipedia entry on the Hamming distance
-           <http://en.wikipedia.org/wiki/Hamming_distance>`_
+           <https://en.wikipedia.org/wiki/Hamming_distance>`_
 
     Examples
     --------
@@ -1643,7 +1642,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     References
     ----------
     .. [1] `Wikipedia entry on the Hinge loss
-           <http://en.wikipedia.org/wiki/Hinge_loss>`_
+           <https://en.wikipedia.org/wiki/Hinge_loss>`_
 
     .. [2] Koby Crammer, Yoram Singer. On the Algorithmic
            Implementation of Multiclass Kernel-based Vector
@@ -1812,7 +1811,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Brier_score
+    https://en.wikipedia.org/wiki/Brier_score
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

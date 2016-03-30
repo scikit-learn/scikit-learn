@@ -530,7 +530,7 @@ parameters in the estimation procedure: the regularization parameter is
 not set in a hard sense but tuned to the data at hand.
 
 This can be done by introducing `uninformative priors
-<http://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
+<https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
 to finding a maximum a-postiori solution under a Gaussian prior over the
@@ -579,7 +579,7 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
     \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
 
 The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
-distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__, the
+distributions <https://en.wikipedia.org/wiki/Gamma_distribution>`__, the
 conjugate prior for the precision of the Gaussian.
 
 The resulting model is called *Bayesian Ridge Regression*, and is similar to the
@@ -691,10 +691,8 @@ Logistic regression
 
 Logistic regression, despite its name, is a linear model for classification
 rather than regression. Logistic regression is also known in the literature as
-logit regression, maximum-entropy classification (MaxEnt) or the log-linear
-classifier. In this model, the probabilities describing the possible outcomes
-of a single trial are modeled using a `logistic function
-<http://en.wikipedia.org/wiki/Logistic_function>`_.
+logit regression, maximum-entropy classification (MaxEnt)
+or the log-linear classifier. In this model, the probabilities describing the possible outcomes of a single trial are modeled using a `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
@@ -995,7 +993,7 @@ performance.
 
 .. topic:: References:
 
- * http://en.wikipedia.org/wiki/RANSAC
+ * https://en.wikipedia.org/wiki/RANSAC
  * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
    <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
@@ -1022,7 +1020,7 @@ better than an ordinary least squares in high dimension.
 
 .. topic:: References:
 
- * http://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
+ * https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
 
 Theoretical considerations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1063,7 +1061,7 @@ considering only a random subset of all possible combinations.
 
 .. topic:: References:
 
-    .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf>`_
+    .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://home.olemiss.edu/~xdang/papers/MTSE.pdf>`_
 
     .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
 

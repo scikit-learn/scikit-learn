@@ -12,10 +12,10 @@ How to contribute
 -----------------
 
 The preferred way to contribute to scikit-learn is to fork the 
-[main repository](http://github.com/scikit-learn/scikit-learn/) on
+[main repository](https://github.com/scikit-learn/scikit-learn) on
 GitHub:
 
-1. Fork the [project repository](http://github.com/scikit-learn/scikit-learn):
+1. Fork the [project repository](https://github.com/scikit-learn/scikit-learn):
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 

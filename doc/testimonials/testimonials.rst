@@ -82,7 +82,7 @@ Gaël Varoquaux, research at Parietal
    </span>
 
 
-`Evernote <http://evernote.com>`_
+`Evernote <https://evernote.com>`_
 ----------------------------------
 
 .. raw:: html
@@ -149,7 +149,7 @@ Alexandre Gramfort, Assistant Professor
    </span>
 
 
-`AWeber <http://aweber.com/>`_
+`AWeber <http://www.aweber.com>`_
 ------------------------------------------
 
 .. raw:: html
@@ -158,7 +158,7 @@ Alexandre Gramfort, Assistant Professor
 
 .. image:: images/aweber.png
     :width: 120pt
-    :target: http://aweber.com/
+    :target: http://www.aweber.com
 
 .. raw:: html
 
@@ -188,7 +188,7 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
    </span>
 
-`Yhat <http://yhathq.com/>`_
+`Yhat <https://www.yhat.com>`_
 ------------------------------------------
 
 .. raw:: html
@@ -197,7 +197,7 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
 .. image:: images/yhat.png
     :width: 120pt
-    :target: http://yhathq.com/
+    :target: https://www.yhat.com
 
 .. raw:: html
 
@@ -322,8 +322,8 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
 
    </span>
 
-`Change.org <http://www.change.org>`_
---------------------------------------------------
+`Change.org <https://www.change.org>`_
+--------------------------------------
 
 .. raw:: html
 
@@ -331,7 +331,7 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
 
 .. image:: images/change-logo.png
     :width: 120pt
-    :target: http://www.change.org
+    :target: https://www.change.org
 
 .. raw:: html
 
@@ -423,8 +423,8 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
    </span>
 
 
-`PeerIndex <http://www.peerindex.com/>`_
-----------------------------------------
+`PeerIndex <https://www.brandwatch.com/peerindex-and-brandwatch>`_
+------------------------------------------------------------------
 
 .. raw:: html
 
@@ -519,8 +519,8 @@ David Koh - Senior Data Scientist at OkCupid
    </span>
    
 
-`Lovely <https://www.livelovely.com/>`_
------------------------------------------
+`Lovely <https://livelovely.com/>`_
+-----------------------------------
 
 .. raw:: html
 
@@ -528,7 +528,7 @@ David Koh - Senior Data Scientist at OkCupid
 
 .. image:: images/lovely.png
     :width: 120pt
-    :target: https://www.livelovely.com
+    :target: https://livelovely.com
 
 .. raw:: html
 

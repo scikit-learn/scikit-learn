@@ -7,7 +7,7 @@ The project mailing list
 
 If you encounter a bug with ``scikit-learn`` or something that needs
 clarification in the docstring or the online documentation, please feel free to
-ask on the `Mailing List <http://scikit-learn.sourceforge.net/support.html>`_
+ask on the `Mailing List <http://scikit-learn.org/stable/support.html>`_
 
 
 Q&A communities with Machine Learning practitioners
@@ -26,7 +26,7 @@ Q&A communities with Machine Learning practitioners
 
     Quora has a topic for Machine Learning related questions that
     also features some interesting discussions:
-    http://quora.com/Machine-Learning
+    https://www.quora.com/topic/Machine-Learning
 
     Have a look at the best questions section, eg: `What are some
     good resources for learning about machine learning`_.
@@ -35,8 +35,8 @@ Q&A communities with Machine Learning practitioners
 
 .. _`good freely available textbooks on machine learning`: http://metaoptimize.com/qa/questions/186/good-freely-available-textbooks-on-machine-learning
 
-.. _`What are some good resources for learning about machine learning`: http://www.quora.com/What-are-some-good-resources-for-learning-about-machine-learning
+.. _`How do I learn machine learning?`: https://www.quora.com/How-do-I-learn-machine-learning-1
 
--- _'An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford': https://www.coursera.org/course/ml
+-- _'An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford': https://www.coursera.org/learn/machine-learning
 
--- _'Another excellent free online course that takes a more general approach to Artificial Intelligence':http://www.udacity.com/overview/Course/cs271/CourseRev/1
+-- _'Another excellent free online course that takes a more general approach to Artificial Intelligence': https://www.udacity.com/course/intro-to-artificial-intelligence--cs271

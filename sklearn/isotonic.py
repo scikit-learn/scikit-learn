@@ -49,7 +49,7 @@ def check_increasing(x, y):
     References
     ----------
     Fisher transformation. Wikipedia.
-    http://en.wikipedia.org/w/index.php?title=Fisher_transformation
+    https://en.wikipedia.org/wiki/Fisher_transformation
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
@@ -62,7 +62,7 @@ def check_increasing(x, y):
         F_se = 1 / math.sqrt(len(x) - 3)
 
         # Use a 95% CI, i.e., +/-1.96 S.E.
-        # http://en.wikipedia.org/wiki/Fisher_transformation
+        # https://en.wikipedia.org/wiki/Fisher_transformation
         rho_0 = math.tanh(F - 1.96 * F_se)
         rho_1 = math.tanh(F + 1.96 * F_se)
 

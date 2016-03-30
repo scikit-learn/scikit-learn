@@ -685,6 +685,6 @@ candidates, the speedup compared to brute force search is approximately
      '06. 47th Annual IEEE Symposium
 
    * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
-     <http://wwwconference.org/proceedings/www2005/docs/p651.pdf>`_,
+     <http://infolab.stanford.edu/~bawa/Pub/similarity.pdf>`_,
      Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
      international conference on World Wide Web  Pages 651-660

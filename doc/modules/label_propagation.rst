@@ -7,7 +7,7 @@ Semi-Supervised
 .. currentmodule:: sklearn.semi_supervised
 
 `Semi-supervised learning
-<http://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
+<https://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
 in which in your training data some of the samples are not labeled. The
 semi-supervised estimators in :mod:`sklearn.semi_supervised` are able to
 make use of this additional unlabeled data to better capture the shape of

@@ -135,13 +135,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://www-stat.stanford.edu/~tibs/ftp/lars.pdf
+           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
-           <http://en.wikipedia.org/wiki/Least-angle_regression>`_
+           <https://en.wikipedia.org/wiki/Least-angle_regression>`_
 
     .. [3] `Wikipedia entry on the Lasso
-           <http://en.wikipedia.org/wiki/Lasso_(statistics)#Lasso_method>`_
+           <https://en.wikipedia.org/wiki/Lasso_(statistics)#Lasso_method>`_
 
     """
 
@@ -1402,8 +1402,8 @@ class LassoLarsIC(LassoLars):
     Hui Zou, Trevor Hastie, and Robert Tibshirani
     Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
 
-    http://en.wikipedia.org/wiki/Akaike_information_criterion
-    http://en.wikipedia.org/wiki/Bayesian_information_criterion
+    https://en.wikipedia.org/wiki/Akaike_information_criterion
+    https://en.wikipedia.org/wiki/Bayesian_information_criterion
 
     See also
     --------
