@@ -420,6 +420,9 @@ class LabelSpreading(BaseLabelPropagation):
     transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
 
+    transduction_prob_ : array, shape = [n_samples]
+        Probability of label assigned to each item via the transduction.
+
     n_iter_ : int
         Number of iterations run.
 
