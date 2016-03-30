@@ -34,15 +34,3 @@ def test_distribution():
         assert_array_almost_equal(np.asarray(clf.label_distributions_[1]),
                                       np.array([1, 0]), 2)
 
-
-def test_predict():
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(graph, labels)
-        assert_array_equal(clf.predict([[1, 0, 0]]), np.array([0, 0, 0]))
-
-
-def test_predict_proba():
-    for estimator, parameters in ESTIMATORS:
-        clf = estimator(**parameters).fit(graph, labels)
-        assert_array_almost_equal(clf.predict_proba([[1, 0, 0]]),
-                                  np.array([[0.5, 0.5]]))

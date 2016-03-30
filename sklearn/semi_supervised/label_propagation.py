@@ -195,9 +195,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
                 probabilities.append(ine)
             probabilities = np.array(probabilities)
-        else:
+        elif self.kernel == 'rbf':
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
+        elif self.kernel is None:
+            raise NotImplementedError("Currently not implemented for Kernel=None scheme")
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -267,12 +269,19 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 clamp_weights, self.label_distributions_) + y_static
             remaining_iter -= 1
 
+        # Normalise label distributions and replace NaN with 0
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
-        # set the transduction item
-        transduction = self.classes_[np.argmax(self.label_distributions_,
-                                               axis=1)]
-        self.transduction_ = transduction.ravel()
+        self.label_distributions_[np.isnan(self.label_distributions_)] = 0
+
+        # Obtain predictions and probability
+        label_max_arg = np.argmax(self.label_distributions_, axis=1)
+        self.transduction_ = self.classes_[label_max_arg].ravel()
+        self.transduction_prob_ = np.choose(label_max_arg, self.label_distributions_.T)
+
+        # Samples with 0 probability remain unclassified
+        self.transduction_[self.transduction_prob_ == 0] = -1
+
         self.n_iter_ = self.max_iter - remaining_iter
         return self
 
@@ -317,6 +326,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    transduction_prob_ : array, shape = [n_samples]
+        Probability of label assigned to each item via the transduction.
 
     n_iter_ : int
         Number of iterations run.
