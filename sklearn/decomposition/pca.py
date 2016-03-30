@@ -309,9 +309,9 @@ class PCA(_BasePCA):
         >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
         >>> pca = PCA(n_components=2).fit(X)
         >>> pca.get_feature_names(show_coef=True)
-        ['0.84*x0 + 0.54*x1', '0.54*x0 - 0.84*x1']
+        ['-0.84*x0 - 0.54*x1', '0.54*x0 - 0.84*x1']
         >>> pca.get_feature_names(show_coef=1)
-        ['0.84*x0', '-0.84*x1']
+        ['-0.84*x0', '-0.84*x1']
         >>> pca.get_feature_names()
         ['pc0', 'pc1']
         """
