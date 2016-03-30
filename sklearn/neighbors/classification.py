@@ -31,7 +31,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     n_neighbors : int, optional (default = 5)
         Number of neighbors to use by default for :meth:`k_neighbors` queries.
 
-    weights : str or callable
+    weights : str or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -42,8 +42,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
-
-        Uniform weights are used by default.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
