@@ -397,31 +397,37 @@ only one active.
 Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+  >>> enc.fit([['female', 'from US', 'uses Chrome'],
+  ... ['male', 'from Asia', 'uses Firefox']])  # doctest: +ELLIPSIS
   OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-         handle_unknown='error', n_values='auto', sparse=True)
-  >>> enc.transform([[0, 1, 3]]).toarray()
-  array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
+         handle_unknown='error', n_values=None, sparse=True, values='auto')
+  >>> enc.transform([['female', 'from Asia', 'uses Firefox']]).toarray()
+  array([[ 1.,  0.,  1.,  0.,  0.,  1.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``n_values``.
+It is possible to specify this explicitly using the parameter ``xvalues``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
 Then we fit the estimator, and transform a data point.
-In the result, the first two numbers encode the gender, the next set of three
-numbers the continent and the last four the web browser.
+In the result, the first two values are genders, the next set of three
+values are the continents and the last values are web browsers.
 
 Note that, if there is a possibilty that the training data might have missing categorical
 features, one has to explicitly set ``n_values``. For example,
 
-    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
+    >>> browsers = ['uses Internet Explorer', 'uses Chrome' , 'uses Safari', 'uses Firefox']
+    >>> genders = ['male', 'female']
+    >>> locations = ['from Europe', 'from Asia', 'from US']
+    >>> enc = preprocessing.OneHotEncoder(values=[genders, locations, browsers])
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
-    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
+    >>> enc.fit([['female', 'from US', 'uses Chrome'],
+    ... ['male', 'from Asia', 'uses Internet Explorer']])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
-    >>> enc.transform([[1, 0, 0]]).toarray()
-    array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+           handle_unknown='error', n_values=None, sparse=True,
+	   values=[...])
+    >>> enc.transform([['male', 'from Europe', 'uses Safari']]).toarray()
+    array([[ 0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
