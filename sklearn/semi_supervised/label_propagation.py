@@ -66,6 +66,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.graph import graph_laplacian
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..preprocessing import normalize
 
 
 # Helper functions
@@ -221,7 +222,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, accept_sparse='csr')
         self.X_ = X
         check_classification_targets(y)
 
@@ -354,11 +355,7 @@ class LabelPropagation(BaseLabelPropagation):
         if self.kernel == 'knn':
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
-        normalizer = affinity_matrix.sum(axis=0)
-        if sparse.isspmatrix(affinity_matrix):
-            affinity_matrix.data /= np.diag(np.array(normalizer))
-        else:
-            affinity_matrix /= normalizer[:, np.newaxis]
+        affinity_matrix = normalize(affinity_matrix, norm='l1', axis=1)
         return affinity_matrix
 
 
