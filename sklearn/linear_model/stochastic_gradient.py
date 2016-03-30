@@ -32,6 +32,7 @@ from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 from .sgd_fast import SquaredEpsilonInsensitive
+from .sgd_fast import MAPE
 
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
@@ -834,6 +835,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive,
                                         DEFAULT_EPSILON),
+        'mape': (MAPE, ),
     }
 
     @abstractmethod
