@@ -88,9 +88,9 @@ def softmax(X):
     X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
         The transformed data.
     """
-    tmp = X - X.max(axis=1)[:, np.newaxis]
+    tmp = X - X.max(axis=1, keepdims=True)
     np.exp(tmp, out=X)
-    X /= X.sum(axis=1)[:, np.newaxis]
+    X /= X.sum(axis=1, keepdims=True)
 
     return X
 
