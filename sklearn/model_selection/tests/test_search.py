@@ -43,6 +43,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection import UnsupervisedGridSearch
+from sklearn.model_selection import UnsupervisedRandomizedSearch
 
 # TODO Import from sklearn.exceptions once merged.
 from sklearn.base import ChangedBehaviorWarning
@@ -53,9 +55,13 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KernelDensity
+from sklearn.manifold import TSNE
+from sklearn.manifold.t_sne import trustworthiness
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics.cluster import silhouette_score
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -63,7 +69,9 @@ from sklearn.pipeline import Pipeline
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
 class MockClassifier(object):
+
     """Dummy classifier to test the parameter search algorithms"""
+
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
@@ -93,11 +101,62 @@ class MockClassifier(object):
         return self
 
 
+class MockClusterer(object):
+
+    """Dummy clusterer to test the parameter search algorithms"""
+
+    def __init__(self, foo_param=0):
+        self.foo_param = foo_param
+
+    def fit(self, X, y=None):
+        self.labels_ = X
+        return self
+
+    def predict(self, T):
+        return T.shape[0]
+
+    predict_proba = predict
+    decision_function = predict
+    transform = predict
+
+    def score(self, X=None, y=None):
+        if self.foo_param > 1:
+            score = 1.
+        else:
+            score = 0.
+        return score
+
+    def get_params(self, deep=False):
+        return {'foo_param': self.foo_param}
+
+    def set_params(self, **params):
+        self.foo_param = params['foo_param']
+        return self
+
+
 class LinearSVCNoScore(LinearSVC):
+
     """An LinearSVC classifier that has no score method."""
     @property
     def score(self):
         raise AttributeError
+
+
+class KMeansNoScore(KMeans):
+
+    """A KMeans clusterer that has no score method."""
+    @property
+    def score(self):
+        raise AttributeError
+
+
+class TSNENoScore(TSNE):
+
+    """A TSNE clusterer that has no score method."""
+    @property
+    def score(self):
+        raise AttributeError
+
 
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
@@ -168,6 +227,32 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+def test_unsupervised_grid_search():
+    # Test that the best estimator contains the right value for foo_param
+    clf = MockClusterer()
+    grid_search = UnsupervisedGridSearch(
+        clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    # make sure it selects the smallest parameter in case of ties
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    grid_search.fit(X)
+    sys.stdout = old_stdout
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
+
+    for i, foo_i in enumerate([1, 2, 3]):
+        assert_true(grid_search.grid_scores_[i][0]
+                    == {'foo_param': foo_i})
+    # Smoke test the score etc:
+    grid_search.score(X)
+    grid_search.predict_proba(X)
+    grid_search.decision_function(X)
+    grid_search.transform(X)
+
+    # Test exception handling on scoring
+    grid_search.scoring = 'sklearn'
+    assert_raises(ValueError, grid_search.fit, X)
+
+
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
@@ -190,6 +275,79 @@ def test_grid_search_no_score():
 
     # giving no scoring function raises an error
     grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
+    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
+                         [[1]])
+
+
+def silhouette_scorer(estimator, X, y=None):
+    return silhouette_score(X, estimator.labels_)
+
+#def rand_scorer(estimator, X, y=None):
+#    return silhouette_score(X, estimator.labels_)
+
+
+@ignore_warnings
+def test_unsupervised_grid_search_clusterer_no_score():
+    # Test grid-search on clusterer that has no score function.
+    clf = KMeans(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    n_clusters = [2, 3, 4]
+    clf_no_score = KMeansNoScore(random_state=0)
+    scorer = silhouette_scorer
+    grid_search = UnsupervisedGridSearch(clf, {'n_clusters': n_clusters},
+                                         scoring=scorer)
+    grid_search.fit(X)
+
+    grid_search_no_score = UnsupervisedGridSearch(clf_no_score,
+                                                  {'n_clusters': n_clusters},
+                                                  scoring=scorer)
+    # smoketest grid search
+    grid_search_no_score.fit(X)
+
+    # check that best params are equal
+    assert_equal(grid_search_no_score.best_params_, grid_search.best_params_)
+    # check that we can call score and that it gives the correct result
+    assert_equal(grid_search.score(X), grid_search_no_score.score(X))
+
+    # giving no scoring function raises an error
+    grid_search_no_score = UnsupervisedGridSearch(clf_no_score,
+                                                  {'n_clusters': n_clusters})
+    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
+                         [[1]])
+
+
+def trustworthiness_scorer(estimator, X, y=None):
+    return trustworthiness(X, estimator.embedding_)
+
+
+@ignore_warnings
+def test_unsupervised_grid_search_no_score():
+    # Test grid-search on non-clustering unsupervised model that has no score
+    # function.
+    clf = TSNE(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    learning_rate = [100, 500, 1000]
+    clf_no_score = TSNENoScore(random_state=0)
+    scorer = trustworthiness_scorer
+    grid_search = UnsupervisedGridSearch(clf, {'learning_rate': learning_rate},
+                                         scoring=scorer)
+    grid_search.fit(X)
+
+    grid_search_no_score = UnsupervisedGridSearch(
+        clf_no_score,
+        {'learning_rate': learning_rate},
+        scoring=scorer)
+    # smoketest grid search
+    grid_search_no_score.fit(X)
+
+    # check that best params are equal
+    assert_equal(grid_search_no_score.best_params_, grid_search.best_params_)
+    # check that we can call score and that it gives the correct result
+    assert_equal(grid_search.score(X), grid_search_no_score.score(X))
+
+    # giving no scoring function raises an error
+    grid_search_no_score = GridSearchCV(clf_no_score,
+                                        {'learning_rate': learning_rate})
     assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
                          [[1]])
 
@@ -246,6 +404,7 @@ def test_grid_search_labels():
 
     non_label_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
     for cv in non_label_cvs:
+        print(cv)
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
@@ -264,11 +423,35 @@ def test_trivial_grid_scores():
     assert_true(hasattr(random_search, "grid_scores_"))
 
 
+def test_trivial_unsupervised_grid_scores():
+    # Test search over a "grid" with only one point.
+    # Non-regression test: grid_scores_ wouldn't be set by
+    # UnsupervisedGridSearch.
+    clf = MockClusterer()
+    grid_search = UnsupervisedGridSearch(clf, {'foo_param': [1]})
+    grid_search.fit(X)
+    assert_true(hasattr(grid_search, "grid_scores_"))
+
+    random_search = UnsupervisedRandomizedSearch(
+        clf, {'foo_param': [0]}, n_iter=1)
+    random_search.fit(X)
+    assert_true(hasattr(random_search, "grid_scores_"))
+
+
 def test_no_refit():
     # Test that grid search can be used for model selection only
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
     grid_search.fit(X, y)
+    assert_true(hasattr(grid_search, "best_params_"))
+
+
+def test_unsupervised_no_refit():
+    # Test that grid search can be used for model selection only
+    clf = MockClusterer()
+    grid_search = UnsupervisedGridSearch(
+        clf, {'foo_param': [1, 2, 3]}, refit=False)
+    grid_search.fit(X)
     assert_true(hasattr(grid_search, "best_params_"))
 
 
@@ -335,6 +518,22 @@ def test_grid_search_one_grid_point():
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
 
 
+def test_unsupervised_grid_search_one_grid_point():
+    X_, y_ = make_blobs(random_state=13, centers=3)
+    param_dict = {"n_clusters": [3], "tol": [0.1]}
+
+    clf = KMeans()
+    cv = UnsupervisedGridSearch(clf, param_dict)
+    cv.fit(X_)
+
+    clf = KMeans(n_clusters=3, tol=0.1)
+    clf.fit(X_)
+
+    mutual_info = normalized_mutual_info_score(
+        clf.labels_, cv.best_estimator_.labels_)
+    assert_equal(mutual_info, 1)
+
+
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
     clf = SVC()
@@ -347,6 +546,20 @@ def test_grid_search_bad_param_grid():
     param_dict = {"C": np.ones(6).reshape(3, 2)}
     clf = SVC()
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
+
+
+def test_unsupervised_grid_search_bad_param_grid():
+    param_dict = {"n_clusters": 3}
+    clf = KMeans()
+    assert_raises(ValueError, UnsupervisedGridSearch, clf, param_dict)
+
+    param_dict = {"n_clusters": []}
+    clf = KMeans()
+    assert_raises(ValueError, UnsupervisedGridSearch, clf, param_dict)
+
+    param_dict = {"n_clusters": np.ones(6).reshape(3, 2)}
+    clf = KMeans()
+    assert_raises(ValueError, UnsupervisedGridSearch, clf, param_dict)
 
 
 def test_grid_search_sparse():
@@ -368,6 +581,27 @@ def test_grid_search_sparse():
 
     assert_true(np.mean(y_pred == y_pred2) >= .9)
     assert_equal(C, C2)
+
+
+def test_unsupervised_grid_search_sparse():
+    # Test that grid search works with both dense and sparse matrices
+    X_, y_ = make_blobs(random_state=0, centers=3)
+
+    clf = KMeans()
+    clf = UnsupervisedGridSearch(clf, {'n_clusters': [2, 3]})
+    clf.fit(X_)
+    labels = clf.predict(X_)
+    n = clf.best_estimator_.n_clusters
+
+    X_ = sp.csr_matrix(X_)
+    clf = KMeans()
+    clf = UnsupervisedGridSearch(clf, {'n_clusters': [2, 3]})
+    clf.fit(X_.tocoo())
+    labels2 = clf.predict(X_)
+    n2 = clf.best_estimator_.n_clusters
+
+    assert_true(len(set(labels)) == len(set(labels2)))
+    assert_equal(n, n2)
 
 
 def test_grid_search_sparse_scoring():
@@ -453,6 +687,7 @@ def test_grid_search_precomputed_kernel_error_kernel_function():
 
 
 class BrokenClassifier(BaseEstimator):
+
     """Broken classifier that cannot be fit twice"""
 
     def __init__(self, parameter=None):
@@ -541,7 +776,7 @@ def test_pandas_input():
         assert_true(hasattr(grid_search, "grid_scores_"))
 
 
-def test_unsupervised_grid_search():
+def test_unsupervised_grid_search_cv():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
@@ -553,6 +788,25 @@ def test_unsupervised_grid_search():
 
     # Now without a score, and without y
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]))
+    grid_search.fit(X)
+    assert_equal(grid_search.best_params_["n_clusters"], 4)
+
+
+def test_unsupervised_unsupervised_grid_search():
+    # test grid-search with unsupervised estimator
+    X, y = make_blobs(random_state=0)
+    km = KMeans(random_state=0)
+    # test with y, to be used in adjusted_rand_score
+    grid_search = UnsupervisedGridSearch(
+        km, param_grid=dict(n_clusters=[2, 3, 4]),
+        scoring='adjusted_rand_score')
+    grid_search.fit(X, y)
+    # ARI can find the right number :)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
+
+    # Now without a score, and without y
+    grid_search = UnsupervisedGridSearch(
+        km, param_grid=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
@@ -628,7 +882,7 @@ def test_randomized_search_grid_scores():
 
     # Check the consistency with the best_score_ and best_params_ attributes
     sorted_grid_scores = list(sorted(search.grid_scores_,
-                              key=lambda x: x.mean_validation_score))
+                                     key=lambda x: x.mean_validation_score))
     best_score = sorted_grid_scores[-1].mean_validation_score
     assert_equal(search.best_score_, best_score)
 
@@ -674,6 +928,20 @@ def test_pickle():
     random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]},
                                        refit=True, n_iter=3)
     random_search.fit(X, y)
+    pickle.dumps(random_search)  # smoke test
+
+
+def test_pickle_unsupervised():
+    # Test that a fit search can be pickled
+    clf = MockClusterer()
+    grid_search = UnsupervisedGridSearch(
+        clf, {'foo_param': [1, 2, 3]}, refit=True)
+    grid_search.fit(X)
+    pickle.dumps(grid_search)  # smoke test
+
+    random_search = UnsupervisedRandomizedSearch(clf, {'foo_param': [1, 2, 3]},
+                                                 refit=True, n_iter=3)
+    random_search.fit(X)
     pickle.dumps(random_search)  # smoke test
 
 
@@ -739,6 +1007,7 @@ def test_grid_search_allows_nans():
 
 
 class FailingClassifier(BaseEstimator):
+
     """Classifier that raises a ValueError on fit()"""
 
     FAILING_PARAMETER = 2
@@ -752,6 +1021,17 @@ class FailingClassifier(BaseEstimator):
 
     def predict(self, X):
         return np.zeros(X.shape[0])
+
+
+class FailingClusterer(FailingClassifier):
+
+    """Clusterer that raises a ValueError on fit()"""
+
+    def fit(self, X, y=None):
+        if self.parameter == FailingClassifier.FAILING_PARAMETER:
+            raise ValueError("Failing classifier failed as required")
+
+        self.labels_ = self.predict(X)
 
 
 def test_grid_search_failing_classifier():
@@ -788,6 +1068,41 @@ def test_grid_search_failing_classifier():
                FailingClassifier.FAILING_PARAMETER)
 
 
+def test_grid_search_failing_clusterer():
+    # UnsupervisedGridSearch with error_score != 'raise'
+    # Ensures that a warning is raised and score reset where appropriate.
+
+    X, _y = make_blobs(random_state=0, centers=3)
+
+    clf = FailingClusterer()
+
+    # refit=False because we only want to check that errors caused by fits
+    # will be caught and warnings raised instead. If refit was done, then an
+    # exception would be raised on refit and not caught by grid_search
+    # (expected behavior), and this would cause an error in this test.
+    gs = UnsupervisedGridSearch(clf, [{'parameter': [0, 1, 2]}],
+                                scoring=silhouette_scorer, refit=False,
+                                error_score=0.0)
+
+    assert_warns(FitFailedWarning, gs.fit, X)
+
+    # Ensure that grid scores were set to zero as required for those fits
+    # that are expected to fail.
+    assert all(np.all(this_point.score == 0.0)
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClusterer.FAILING_PARAMETER)
+
+    gs = UnsupervisedGridSearch(clf, [{'parameter': [0, 1, 2]}],
+                                scoring=silhouette_scorer, refit=False,
+                                error_score=float('nan'))
+    assert_warns(FitFailedWarning, gs.fit, X)
+    assert all(np.all(np.isnan(this_point.score))
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClusterer.FAILING_PARAMETER)
+
+
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
 
@@ -801,6 +1116,22 @@ def test_grid_search_failing_classifier_raise():
 
     # FailingClassifier issues a ValueError so this is what we look for.
     assert_raises(ValueError, gs.fit, X, y)
+
+
+def test_grid_search_failing_clusterer_raise():
+    # UnsupervisedGridSearch with error_score == 'raise' raises the error
+
+    X, _y = make_blobs(random_state=0, centers=3)
+
+    clf = FailingClusterer()
+
+    # refit=False because we want to test the behaviour of the grid search part
+    gs = UnsupervisedGridSearch(clf, [{'parameter': [0, 1, 2]}],
+                                scoring=silhouette_scorer,
+                                refit=False, error_score='raise')
+
+    # FailingClassifier issues a ValueError so this is what we look for.
+    assert_raises(ValueError, gs.fit, X)
 
 
 def test_parameters_sampler_replacement():
