@@ -1796,7 +1796,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
-        if self.n_values == 'auto':
+        if (isinstance(self.n_values, six.string_types) and
+            self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
             if (np.max(X, axis=0) >= self.n_values).any():
