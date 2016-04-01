@@ -130,7 +130,7 @@ cdef class DistanceMetric:
     --------------  --------------------  --------  -------------------------------
     "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
-    "chebyshev"     ChebyshevDistance     -         ``sum(max(|x - y|))``
+    "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
@@ -499,7 +499,7 @@ cdef class ManhattanDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Chebyshev Distance
-#  d = max_i(abs(x_i), abs(y_i))
+#  d = max_i(abs(x_i - y_i))
 cdef class ChebyshevDistance(DistanceMetric):
     """Chebyshev/Infinity Distance
 
