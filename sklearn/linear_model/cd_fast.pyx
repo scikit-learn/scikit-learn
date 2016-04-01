@@ -125,6 +125,7 @@ cdef extern from "cblas.h":
 @cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
+                            np.ndarray[DOUBLE, ndim=1] l1_weights,
                             np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
                             np.ndarray[DOUBLE, ndim=1, mode='c'] y,
                             int max_iter, double tol,
@@ -169,6 +170,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef double w_alpha = alpha
+    cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
@@ -189,6 +192,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
+                if use_l1_weight:
+                    w_alpha = l1_weights[f_iter]
+
                 if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
@@ -213,7 +219,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - w_alpha, 0)
                              / (norm_cols_X[ii] + beta))
 
                 if w[ii] != 0.0:
@@ -257,8 +263,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
                                <DOUBLE*>w.data, 1)
 
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
+                if (dual_norm_XtA > w_alpha):
+                    const = w_alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * (const ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
@@ -268,7 +274,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
 
                 # np.dot(R.T, y)
-                gap += (alpha * l1_norm - const * ddot(
+                gap += (w_alpha * l1_norm - const * ddot(
                             n_samples,
                             <DOUBLE*>R.data, 1,
                             <DOUBLE*>y.data, n_tasks)
@@ -484,6 +490,7 @@ def sparse_enet_coordinate_descent(double[:] w,
 @cython.wraparound(False)
 @cython.cdivision(True)
 def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
+                                 np.ndarray[DOUBLE, ndim=1] l1_weights,
                                  np.ndarray[double, ndim=2, mode='c'] Q,
                                  np.ndarray[double, ndim=1, mode='c'] q,
                                  np.ndarray[double, ndim=1] y,
@@ -522,6 +529,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
+    cdef double w_alpha = alpha
+    cdef unsigned int use_l1_weight = l1_weights.size > 1
 
     cdef double y_norm2 = np.dot(y, y)
     cdef double* w_ptr = <double*>&w[0]
@@ -540,6 +549,9 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
+                if use_l1_weight:
+                    w_alpha = l1_weights[f_iter]
+
                 if random:
                     ii = rand_int(n_features, rand_r_state)
                 else:
@@ -560,7 +572,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 if positive and tmp < 0:
                     w[ii] = 0.0
                 else:
-                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - w_alpha, 0) \
                         / (Q[ii, ii] + beta)
 
                 if w[ii] != 0.0:
@@ -600,8 +612,8 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                 # w_norm2 = np.dot(w, w)
                 w_norm2 = ddot(n_features, &w[0], 1, &w[0], 1)
 
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
+                if (dual_norm_XtA > w_alpha):
+                    const = w_alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * (const ** 2)
                     gap = 0.5 * (R_norm2 + A_norm2)
                 else:
@@ -609,7 +621,7 @@ def enet_coordinate_descent_gram(double[:] w, double alpha, double beta,
                     gap = R_norm2
 
                 # The call to dasum is equivalent to the L1 norm of w
-                gap += (alpha * dasum(n_features, &w[0], 1) -
+                gap += (w_alpha * dasum(n_features, &w[0], 1) -
                         const * y_norm2 +  const * q_dot_w +
                         0.5 * beta * (1 + const ** 2) * w_norm2)
 
