@@ -47,6 +47,10 @@ New features
    - Added :class:`linear_model.HuberRegressor`, a linear model robust to outliers.
      (`#5291 <https://github.com/scikit-learn/scikit-learn/pull/5291>`_) by `Manoj Kumar`_.
 
+   - Added the :class:`multioutput.MultiOutputRegressor` meta-estimator. It
+     converts single output regressors to multi-ouput regressors by fitting
+     one regressor per output. By `Tim Head`_.
+
 Enhancements
 ............
 
