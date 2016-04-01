@@ -4,7 +4,7 @@
 #          Lars Buitinck
 #          Giorgio Patrini
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np

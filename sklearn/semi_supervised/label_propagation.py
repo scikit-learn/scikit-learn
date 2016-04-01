@@ -52,7 +52,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 from abc import ABCMeta, abstractmethod
 
 import numpy as np

@@ -3,7 +3,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 """
 
 # Author: Issam H. Laradji
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import sys
 import warnings

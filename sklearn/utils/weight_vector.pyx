@@ -6,7 +6,7 @@
 #         Lars Buitinck
 #         Danny Sullivan <dsullivan7@hotmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 cimport cython
 from libc.limits cimport INT_MAX

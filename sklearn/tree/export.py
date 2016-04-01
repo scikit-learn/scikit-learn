@@ -8,7 +8,7 @@ This module defines export functions for decision trees.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Trevor Stephens <trev.stephens@gmail.com>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 

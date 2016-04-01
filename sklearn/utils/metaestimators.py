@@ -1,7 +1,7 @@
 """Utilities for meta-estimators"""
 # Author: Joel Nothman
 #         Andreas Mueller
-# Licence: BSD
+# License: BSD
 
 from operator import attrgetter
 from functools import update_wrapper
