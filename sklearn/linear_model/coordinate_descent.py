@@ -454,7 +454,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 precompute = check_array(precompute, dtype=np.float64,
                                          order='C')
             model = cd_fast.enet_coordinate_descent_gram(
-                coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
+                coef_, l1_reg, l2_reg, l1_weights_, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
