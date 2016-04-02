@@ -133,6 +133,8 @@ def resample(*arrays, **options):
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
+        If replace is False it should not be larger than the length of
+        arrays.
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -194,10 +196,10 @@ def resample(*arrays, **options):
 
     if max_n_samples is None:
         max_n_samples = n_samples
-
-    if max_n_samples > n_samples:
-        raise ValueError("Cannot sample %d out of arrays with dim %d" % (
-            max_n_samples, n_samples))
+    elif (max_n_samples > n_samples) and (not replace):
+        raise ValueError("Cannot sample %d out of arrays with dim %d"
+                         "when replace is False" % (max_n_samples,
+                                                    n_samples))
 
     check_consistent_length(*arrays)
 
