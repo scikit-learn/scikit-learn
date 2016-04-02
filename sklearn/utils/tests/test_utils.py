@@ -88,10 +88,8 @@ def test_resample():
     assert_raises(ValueError, resample, [0, 1], [0, 1],
                   replace=False, n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
-    # Check result expected
-    exp = 3
-    res = len(resample([1, 2], n_samples=exp))
-    assert_equal(res, exp)
+    # Issue:6581, n_samples can be more when replace is True (default).
+    assert_equal(len(resample([1, 2], n_samples=5)), 5)
 
 
 def test_safe_mask():

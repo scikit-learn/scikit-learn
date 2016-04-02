@@ -196,17 +196,16 @@ def resample(*arrays, **options):
 
     if max_n_samples is None:
         max_n_samples = n_samples
+    elif (max_n_samples > n_samples) and (not replace):
+        raise ValueError("Cannot sample %d out of arrays with dim %d"
+                         "when replace is False" % (max_n_samples,
+                                                    n_samples))
 
     check_consistent_length(*arrays)
 
     if replace:
         indices = random_state.randint(0, n_samples, size=(max_n_samples,))
     else:
-        if max_n_samples > n_samples:
-            raise ValueError("Cannot sample %d out of arrays with dim %d"
-                             "when replace is False" % (max_n_samples,
-                                                        n_samples))
-
         indices = np.arange(n_samples)
         random_state.shuffle(indices)
         indices = indices[:max_n_samples]
