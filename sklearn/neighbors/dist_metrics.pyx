@@ -177,7 +177,7 @@ cdef class DistanceMetric:
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "maching"          MatchingDistance         NNEQ / N
+    "matching"          MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
