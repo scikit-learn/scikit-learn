@@ -1,4 +1,3 @@
-
 """
 Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 """
@@ -20,7 +19,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.grid_search import ParameterGrid
 from sklearn.ensemble import IsolationForest
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
