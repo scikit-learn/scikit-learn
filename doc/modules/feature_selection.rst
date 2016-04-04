@@ -150,7 +150,7 @@ estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitti
 The features are considered unimportant and removed, if the corresponding
 ``coef_`` or ``feature_importances_`` values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
-there are build-in heuristics for finding a threshold using a string argument.
+there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
 "0.1*mean".
 
