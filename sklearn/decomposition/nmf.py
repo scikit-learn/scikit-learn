@@ -760,7 +760,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                          "positive; got (tol=%r)" % tol)
 
     # check W and H, or initialize them
-    if init == 'custom':
+    if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
     elif not update_H:
