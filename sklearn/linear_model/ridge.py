@@ -10,6 +10,7 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
+from itertools import combinations_with_replacement
 import warnings
 
 import numpy as np
@@ -963,7 +964,8 @@ class _RidgeGCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
-                 gcv_mode=None, store_cv_values=False):
+                 gcv_mode=None, store_cv_values=False,
+                 alpha_per_target=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -971,6 +973,7 @@ class _RidgeGCV(LinearModel):
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.alpha_per_target = alpha_per_target
 
     def _pre_compute(self, X, y, centered_kernel=True):
         # even if X is very sparse, K is usually very dense
@@ -1116,11 +1119,15 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
 
-        centered_kernel = not sparse.issparse(X) and self.fit_intercept
+        # Ensure that y is a 2D array: n_samples x n_targets
+        flat_y = y.ndim == 1
+        if flat_y:
+            y = np.atleast_2d(y).T
+        n_targets = y.shape[1]
 
+        centered_kernel = not sparse.issparse(X) and self.fit_intercept
         v, Q, QT_y = _pre_compute(X, y, centered_kernel)
-        n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
+        cv_values = np.zeros((n_samples, n_targets, len(self.alphas)))
         C = []
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
@@ -1136,13 +1143,22 @@ class _RidgeGCV(LinearModel):
                 out, c = _errors(float(alpha), y, v, Q, QT_y)
             else:
                 out, c = _values(float(alpha), y, v, Q, QT_y)
-            cv_values[:, i] = out.ravel()
+            cv_values[:, :, i] = out
             C.append(c)
 
+        if self.store_cv_values:
+            self.cv_values_ = cv_values
+
         if error:
-            best = cv_values.mean(axis=0).argmin()
+            if self.alpha_per_target:
+                # Find the best alpha for each target
+                best = cv_values.mean(axis=0).argmin(axis=1)
+            else:
+                # Find the best alpha overall
+                best = np.mean(cv_values.reshape(-1, len(self.alphas)),
+                               axis=0).argmin()
         else:
-            # The scorer want an object that will make the predictions but
+            # The scorer wants an object that will make the predictions, but
             # they are already computed efficiently by _RidgeGCV. This
             # identity_estimator will just return them
             def identity_estimator():
@@ -1150,22 +1166,35 @@ class _RidgeGCV(LinearModel):
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
 
-            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
-                   for i in range(len(self.alphas))]
-            best = np.argmax(out)
+            if self.alpha_per_target:
+                out = [scorer(identity_estimator, target, cv_values[:, i, j])
+                       for j in range(len(self.alphas))
+                       for i, target in enumerate(y.T)]
+                best = np.argmax(out, axis=1)
+            else:
+                out = [scorer(identity_estimator, y.ravel(),
+                              cv_values[:, :, i].ravel())
+                       for i in range(len(self.alphas))]
+                best = np.argmax(out)
 
         self.alpha_ = self.alphas[best]
-        self.dual_coef_ = C[best]
+
+        if self.alpha_per_target:
+            self.dual_coef_ = np.vstack([C[j][:, i]
+                                         for i, j in enumerate(best)]).T
+        else:
+            self.dual_coef_ = C[best]
+
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        self._set_intercept(X_offset, y_offset, X_scale)
+        # If the original y was flat, remove some dimensions to match
+        if flat_y:
+            if self.store_cv_values:
+                self.cv_values_ = cv_values.reshape(n_samples,
+                                                    len(self.alphas))
+            self.coef_ = self.coef_.ravel()
 
-        if self.store_cv_values:
-            if len(y.shape) == 1:
-                cv_values_shape = n_samples, len(self.alphas)
-            else:
-                cv_values_shape = n_samples, n_y, len(self.alphas)
-            self.cv_values_ = cv_values.reshape(cv_values_shape)
+        self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
 
@@ -1173,8 +1202,8 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel, MultiOutputMixin):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
-                 cv=None, gcv_mode=None,
-                 store_cv_values=False):
+                 cv=None, gcv_mode=None, store_cv_values=False,
+                 alpha_per_target=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1182,6 +1211,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.alpha_per_target = alpha_per_target
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -1207,7 +1237,8 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
                                   normalize=self.normalize,
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
-                                  store_cv_values=self.store_cv_values)
+                                  store_cv_values=self.store_cv_values,
+                                  alpha_per_target=self.alpha_per_target)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
@@ -1216,7 +1247,12 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
             if self.store_cv_values:
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
-            parameters = {'alpha': self.alphas}
+            if self.alpha_per_target:
+                n_targets = y.shape[1] if y.ndim > 1 else 1
+                alphas = combinations_with_replacement(self.alphas, n_targets)
+                parameters = {'alpha': list(alphas)}
+            else:
+                parameters = {'alpha': self.alphas}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
                                     normalize=self.normalize),
                               parameters, cv=self.cv, scoring=self.scoring)
@@ -1303,6 +1339,13 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         each alpha should be stored in the ``cv_values_`` attribute (see
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Generalized Cross-Validation).
+
+    alpha_per_target : boolean, default=False
+        Flag indicating whether to optimize the alpha value (picked from the
+        list specified in the `alphas` parameter) for each target separately.
+        When set to `True`, after fitting, the `alpha_` attribute will contain
+        a value for each target. When set to `False`, a single alpha is used
+        for all targets. This flag has no effect when there is only one target.
 
     Attributes
     ----------

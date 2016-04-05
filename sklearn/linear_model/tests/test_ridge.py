@@ -36,7 +36,7 @@ from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, LeaveOneOut
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -428,6 +428,44 @@ def _test_ridge_cv(filter_):
 
     assert_equal(len(ridge_cv.coef_.shape), 1)
     assert_equal(type(ridge_cv.intercept_), np.float64)
+
+
+def test_ridge_cv_individual_penalties():
+    # Tests the ridge_cv object optimizing individual penalties for each target
+
+    rng = np.random.RandomState(42)
+
+    # Create random dataset with multiple targets. Each target should have
+    # a different optimal alpha.
+    n_samples, n_features, n_targets = 20, 5, 3
+    y = rng.randn(n_samples, n_targets)
+    X = (np.dot(y[:, [0]], np.ones((1, n_features))) +
+         np.dot(y[:, [1]], 0.05 * np.ones((1, n_features))) +
+         np.dot(y[:, [2]], 0.001 * np.ones((1, n_features))) +
+         rng.randn(n_samples, n_features))
+
+    alphas = (1, 100, 1000)
+
+    # Find optimal alpha for each target
+    optimal_alphas = [RidgeCV(alphas=alphas).fit(X, target).alpha_
+                      for target in y.T]
+
+    # Find optimal alphas for all targets simultaneously
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True).fit(X, y)
+    assert_array_equal(optimal_alphas, ridge_cv.alpha_)
+
+    # The resulting regression weights should incorporate the different
+    # alpha values.
+    assert_array_almost_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
+                              ridge_cv.coef_)
+
+    # Find optimal alphas using a custom CV object
+    cv = LeaveOneOut()
+    ridge_cv = RidgeCV(alphas=alphas, cv=cv, scoring='mean_squared_error',
+                       alpha_per_target=True).fit(X, y)
+    assert_array_equal(optimal_alphas, ridge_cv.alpha_)
+    assert_array_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
+                       ridge_cv.coef_)
 
 
 def _test_ridge_diabetes(filter_):
