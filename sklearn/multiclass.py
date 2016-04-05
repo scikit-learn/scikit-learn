@@ -468,6 +468,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
+        X = np.asarray(X)
         y = np.asarray(y)
         check_consistent_length(X, y)
 
