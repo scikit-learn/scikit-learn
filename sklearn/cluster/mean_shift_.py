@@ -167,7 +167,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     Notes
     -----
-    See examples/cluster/plot_meanshift.py for an example.
+    See examples/cluster/plot_mean_shift.py for an example.
 
     """
 
