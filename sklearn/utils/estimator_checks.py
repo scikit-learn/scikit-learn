@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
@@ -1490,7 +1491,7 @@ def check_non_transformer_estimators_n_iter(name, estimator,
     # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
     # which doesn't return a n_iter for old versions of SciPy.
     if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
-        assert_greater(estimator.n_iter_, 0)
+        assert_greater_equal(estimator.n_iter_, 1)
 
 
 def check_transformer_n_iter(name, estimator):
@@ -1509,9 +1510,9 @@ def check_transformer_n_iter(name, estimator):
     # These return a n_iter per component.
     if name in CROSS_DECOMPOSITION:
         for iter_ in estimator.n_iter_:
-            assert_greater(iter_, 1)
+            assert_greater_equal(iter_, 1)
     else:
-        assert_greater(estimator.n_iter_, 1)
+        assert_greater_equal(estimator.n_iter_, 1)
 
 
 def check_get_params_invariance(name, estimator):
