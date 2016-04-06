@@ -557,6 +557,11 @@ class GaussianMixture(BaseMixture):
 
     lower_bound_ : float
         Log-likelihood of the best fit of EM.
+
+    See Also
+    --------
+    BayesianGaussianMixture : Finite gaussian mixture model fit with a
+        variational algorithm.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
