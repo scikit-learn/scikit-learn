@@ -5,7 +5,6 @@
 import numpy as np
 import scipy as sp
 from scipy import ndimage
-from scipy import misc
 
 from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
@@ -21,6 +20,7 @@ if sp_version < (0, 12):
     raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
                    "thus does not include the scipy.misc.face() image.")
 
+
 def test_img_to_graph():
     x, y = np.mgrid[:4, :4] - 10
     grad_x = img_to_graph(x)
@@ -34,7 +34,7 @@ def test_img_to_graph():
 
 
 def test_grid_to_graph():
-    #Checking that the function works with graphs containing no edges
+    # Checking that the function works with graphs containing no edges
     size = 2
     roi_size = 1
     # Generating two convex parts with one vertex
@@ -57,7 +57,8 @@ def test_grid_to_graph():
     assert_true(A.dtype == np.bool)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
     assert_true(A.dtype == np.int)
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
+                      dtype=np.float64)
     assert_true(A.dtype == np.float64)
 
 
@@ -192,7 +193,7 @@ def test_reconstruct_patches_perfect_color():
 
     patches = extract_patches_2d(face, (p_h, p_w))
     face_reconstructed = reconstruct_from_patches_2d(patches, face.shape)
-    np.testing.assert_array_equal(face, face_reconstructed)
+    np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
 def test_patch_extractor_fit():
@@ -299,7 +300,7 @@ def test_extract_patches_square():
     face = downsampled_face
     i_h, i_w = face.shape
     p = 8
-    expected_n_patches = ((i_h - p + 1),  (i_w - p + 1))
+    expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
     patches = extract_patches(face, patch_shape=p)
     assert_true(patches.shape == (expected_n_patches[0], expected_n_patches[1],
                                   p, p))

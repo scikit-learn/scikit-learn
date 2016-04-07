@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import META_ESTIMATORS
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
@@ -131,6 +132,7 @@ def _yield_classifier_checks(name, Classifier):
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
 
+
 def check_supervised_y_no_nan(name, Estimator):
     # Checks that the Estimator targets are not NaN.
 
@@ -146,11 +148,12 @@ def check_supervised_y_no_nan(name, Estimator):
     except ValueError as e:
         if str(e) != errmsg:
             raise ValueError("Estimator {0} raised warning as expected, but "
-                             "does not match expected error message" \
+                             "does not match expected error message"
                              .format(name))
     else:
         raise ValueError("Estimator {0} should have raised error on fitting "
                          "array y with NaN value.".format(name))
+
 
 def _yield_regressor_checks(name, Regressor):
     # TODO: test with intercept
@@ -717,7 +720,8 @@ def check_estimators_empty_data_messages(name, Estimator):
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
     y = multioutput_estimator_convert_y_2d(name, np.array([1, 0, 1]))
-    msg = "0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* is required."
+    msg = ("0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
+           "is required.")
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
 
@@ -1490,7 +1494,7 @@ def check_non_transformer_estimators_n_iter(name, estimator,
     # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
     # which doesn't return a n_iter for old versions of SciPy.
     if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
-        assert_greater(estimator.n_iter_, 0)
+        assert_greater_equal(estimator.n_iter_, 1)
 
 
 def check_transformer_n_iter(name, estimator):
@@ -1509,9 +1513,9 @@ def check_transformer_n_iter(name, estimator):
     # These return a n_iter per component.
     if name in CROSS_DECOMPOSITION:
         for iter_ in estimator.n_iter_:
-            assert_greater(iter_, 1)
+            assert_greater_equal(iter_, 1)
     else:
-        assert_greater(estimator.n_iter_, 1)
+        assert_greater_equal(estimator.n_iter_, 1)
 
 
 def check_get_params_invariance(name, estimator):
