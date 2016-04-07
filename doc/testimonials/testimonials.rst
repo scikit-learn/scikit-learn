@@ -149,6 +149,41 @@ Alexandre Gramfort, Assistant Professor
    </span>
 
 
+`Booking.com <http://booking.com>`_
+-------------------------------------
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/booking.png
+    :width: 120pt
+    :target: http://www.booking.com
+
+.. raw:: html
+
+  </div>
+
+At Booking.com, we use machine learning algorithms for many different
+applications, such as recommending hotels and destinations to our customers,
+detecting fraudulent reservations, or scheduling our customer service agents.
+Scikit-learn is one of the tools we use when implementing standard algorithms
+for prediction tasks. Its API and documentations are excellent and make it easy
+to use. The scikit-learn developers do a great job of incorporating state of
+the art implementations and new algorithms into the package. Thus, scikit-learn
+provides convenient access to a wide spectrum of algorithms, and allows us to
+readily find the right tool for the right job.
+
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Melanie Mueller, Data Scientist
+
+.. raw:: html
+
+   </span>
+
 `AWeber <http://www.aweber.com>`_
 ------------------------------------------
 
