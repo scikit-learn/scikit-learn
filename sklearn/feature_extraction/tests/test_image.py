@@ -184,7 +184,7 @@ def test_reconstruct_patches_perfect():
 
     patches = extract_patches_2d(face, (p_h, p_w))
     face_reconstructed = reconstruct_from_patches_2d(patches, face.shape)
-    np.testing.assert_array_equal(face, face_reconstructed)
+    np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
 def test_reconstruct_patches_perfect_color():
