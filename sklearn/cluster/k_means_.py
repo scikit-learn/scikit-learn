@@ -734,11 +734,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    algorithm : "auto", "full" or "elkan", default="auto" K-means algorithm to
-        use. The classical EM-style algorithm is "full". The "elkan" variation
-        is more efficient by using the triangle inequality, but currently
-        doesn't support sparse data. "auto" chooses "elkan" for dense data and
-        "full" for sparse data.
+    algorithm : "auto", "full" or "elkan", default="auto"
+        K-means algorithm to use. The classical EM-style algorithm is "full".
+        The "elkan" variation is more efficient by using the triangle
+        inequality, but currently doesn't support sparse data. "auto" chooses
+        "elkan" for dense data and "full" for sparse data.
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
