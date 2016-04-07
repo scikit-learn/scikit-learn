@@ -120,7 +120,6 @@ def test_nmf_transform():
         assert_array_almost_equal(ft, t, decimal=2)
 
 
-@ignore_warnings
 def test_nmf_transform_custom_init():
     # Smoke test that checks if NMF.transform works with custom initialization
     A = np.abs(random_state.randn(6, 5))
@@ -129,10 +128,9 @@ def test_nmf_transform_custom_init():
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
-    for solver in ('pg', 'cd'):
-        m = NMF(solver=solver, n_components=n_components, init='custom', random_state=0)
-        ft = m.fit_transform(A, W=W_init, H=H_init)
-        t = m.transform(A)
+    m = NMF(solver='cd', n_components=n_components, init='custom', random_state=0)
+    ft = m.fit_transform(A, W=W_init, H=H_init)
+    t = m.transform(A)
 
 
 
