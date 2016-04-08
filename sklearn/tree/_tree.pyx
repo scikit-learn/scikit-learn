@@ -192,13 +192,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 
-        # push root node onto stack
-        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
-        if rc == -1:
-            # got return code -1 - out-of-memory
-            raise MemoryError()
-
         with nogil:
+            # push root node onto stack
+            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+            if rc == -1:
+                # got return code -1 - out-of-memory
+                with gil:
+                    raise MemoryError()
+
             while not stack.is_empty():
                 stack.pop(&stack_record)
 
@@ -341,10 +342,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                       &split_node_left)
             if rc >= 0:
                 rc = _add_to_frontier(&split_node_left, frontier)
-        if rc == -1:
-            raise MemoryError()
 
-        with nogil:
+            if rc == -1:
+                with gil:
+                    raise MemoryError()
+
             while not frontier.is_empty():
                 frontier.pop(&record)
 
