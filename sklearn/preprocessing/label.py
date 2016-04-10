@@ -661,6 +661,17 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
+    The following counter-example should be a reminder to new users to pass in
+    an iterable of iterables.
+    >>> mlb.fit(['sci-fi', 'thriller', 'comedy'])
+    >>> mlb.classes_
+    array(['-', 'c', 'd', 'e', 'f', 'h', 'i', 'l', 'm', 'o', 'r', 's', 't',
+        'y'], dtype=object)
+
+    To correct this, the list of labels should be passed in as:
+    >>> mlb.fit([['sci-fi', 'thriller', 'comedy']])
+    >>> mlb.classes_
+    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
