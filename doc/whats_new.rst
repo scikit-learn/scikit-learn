@@ -93,6 +93,10 @@ Bug fixes
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
       are required to split a decision tree node. By `Arnaud Joly`_
 
+    - Attribute `explained_variance_ratio` calculated with the SVD solver of
+      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns correct results. By `JPFrancoia`_
+
+
 API changes summary
 -------------------
 
