@@ -166,7 +166,7 @@ def test_lda_explained_variance_ratio():
 
     state = np.random.RandomState(0)
     X = state.normal(loc=0, scale=100, size=(40, 20))
-    y = state.randint(0, 3, size=(40, 1))
+    y = state.randint(0, 3, size=(40,))
 
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
