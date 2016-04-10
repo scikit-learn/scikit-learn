@@ -176,6 +176,11 @@ Bug fixes
       see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
       more details. By `Loic Esteve`_.
 
+    - Attribute `explained_variance_ratio` calculated with the SVD solver of
+      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
+      correct results. By `JPFrancoia`_
+
+
 API changes summary
 -------------------
 
@@ -4136,3 +4141,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ryad Zenine: https://github.com/ryadzenine
 
 .. _Guillaume Lemaitre: https://github.com/glemaitre
+
+.. _JPFrancoia: https://github.com/JPFrancoia
