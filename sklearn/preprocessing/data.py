@@ -1829,7 +1829,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if self.n_values == 'auto':
+        if (isinstance(self.n_values, six.string_types) and
+            self.n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -1880,7 +1881,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if self.n_values == 'auto':
+        if (isinstance(self.n_values, six.string_types) and
+            self.n_values == 'auto'):
             out = out[:, self.active_features_]
 
         return out if self.sparse else out.toarray()
