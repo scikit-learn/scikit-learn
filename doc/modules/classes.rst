@@ -818,7 +818,6 @@ details.
    metrics.roc_auc_score
    metrics.roc_curve
    metrics.zero_one_loss
-   metrics.brier_score_loss
 
 Regression metrics
 ------------------
