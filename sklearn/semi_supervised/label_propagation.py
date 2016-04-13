@@ -82,10 +82,10 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf', None}
+    kernel : {'knn', 'rbf', 'precomputed'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported.
-        If None is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
+        If 'precomputed' is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
         Parameter for rbf kernel
@@ -141,7 +141,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                                                     mode='connectivity')
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
-        elif self.kernel is None:
+        elif self.kernel == 'precomputed':
             return X
         else:
             raise ValueError("%s is not a valid kernel. Only rbf and knn"
@@ -198,8 +198,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         elif self.kernel == 'rbf':
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
-        elif self.kernel is None:
-            raise NotImplementedError("Currently not implemented for Kernel=None scheme")
+        elif self.kernel == 'precomputed':
+            raise NotImplementedError("Currently not implemented for kernel='precomputed' scheme")
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -293,9 +293,10 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'precomputed'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported.
+        If 'precomputed' is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
         Parameter for rbf kernel
@@ -382,9 +383,10 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'precomputed'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported.
+        If 'precomputed' is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
       parameter for rbf kernel
