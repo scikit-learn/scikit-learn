@@ -207,6 +207,168 @@ and Cython optimizations.
    <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
+Rebasing and squashing commits
+------------------------------
+
+Squashing commits
+^^^^^^^^^^^^^^^^^
+
+To keep the history clean and to help backtrack regressions to a single commit we
+prefer less (but meaningful) number of commits.
+Please try to avoid merging master into a feature / bugfix branch as it makes it hard
+to rebase and squash intermediate commits later. Ideally it would be great to start
+branch again off of current master, ``git cherry-pick`` the commits that are needed
+from ``my-feature-branch``, and then ``push -f`` the result of that operation to
+``my-feature-branch``. Squashing commits is done as follows:
+
+	1. Rename your current feature branch in case something goes wrong::
+
+		$ git branch -m my-feature-branch my-feature-branch-bak
+
+	2. Update local master::
+
+		$ git checkout master
+		$ git pull upstream master
+
+	3. Delete the ``my-feature-branch``. The code will still be under the branch
+	   ``my-feature-branch-bak`` in case you need it::
+
+		$ git branch -D my-feature-branch
+
+	4. Create a new feature branch (could be named ``my-feature-branch``) and cherry pick
+	   meaningful commits::
+
+		$ git checkout -b new-feature-branch
+		$ git cherry pick *commit-1 id*
+		$ git cherry pick *commit-2 id*
+		.
+		.
+		.
+
+	5. Force push into your PR branch::
+
+		$ git push origin new-feature-branch -f
+
+Squashing via Interactive Rebasing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Another way to squash commits is through interactive rebasing which is one the most powerful
+features of ``rebase``. If you want to squash the latest 3 commits together (this number can
+be found out by typing ``$ git log --oneline``):
+
+	1. Rewind ``HEAD`` to the parent of the last commit you want to edit::
+
+		$ git rebase -i HEAD~3
+
+	2. This will open an editor that might look something like this::
+
+		pick f7f3f6d changed my name a bit
+		pick 310154e updated README formatting and added blame
+		pick a5f4a0d added cat-file
+
+		# Rebase 710f0f8..a5f4a0d onto 710f0f8
+		#
+		# Commands:
+		#  p, pick = use commit
+		#  r, reword = use commit, but edit the commit message
+		#  e, edit = use commit, but stop for amending
+		#  s, squash = use commit, but meld into previous commit
+		#  f, fixup = like "squash", but discard this commit's log message
+		#  x, exec = run command (the rest of the line) using shell
+		#
+		# These lines can be re-ordered; they are executed from top to bottom.
+		#
+		# If you remove a line here THAT COMMIT WILL BE LOST.
+		#
+		# However, if you remove everything, the rebase will be aborted.
+		#
+		# Note that empty commits are commented out
+
+	3. Change ``pick`` to ``fixup`` or ``f`` for the second and third commit like::
+
+		pick f7f3f6d changed my name a bit
+		f 310154e updated README formatting and added blame
+		f a5f4a0d added cat-file
+
+	4. Save and quit the editor. This will immediately popup an editor for editing the
+	   commit message as you're squashing some commits together and might want to change
+	   the original commit message.
+
+	5. After saving and quiting you will see a message like::
+
+		Successfully rebased and updated refs/heads/my-feature-branch.
+
+	6. Once successfully rebased, force push onto your PR branch by::
+
+		$ git push -u -f origin my-feature-branch
+
+
+.. note::
+
+	Detailed guides on **interactive rebasing** can be found:
+
+	* In the *Scipy Development Workflow* in the `rebasing
+	  <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_
+	  and `squashing
+	  <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#
+	  rewriting-commit-history>`_ sections
+
+	* On `gitready.com
+	  <http://gitready.com/advanced/2009/02/10/squashing-commits-with-rebase.html>`_.
+
+	* On `atlassian.com
+	  <https://www.atlassian.com/git/tutorials/merging-vs-rebasing/conceptual-overview>`_.
+
+Rebasing
+^^^^^^^^
+
+You should generally use ``rebase`` over ``merge`` to integrate changes from one branch into
+another branch. Merging creates a "merge commit" every time you incorporate upstream changes.
+This pollutes the feature branch's history and makes it hard for other developers to understand
+the history of the project. On the other hand ``rebase`` effectively rewrites the project history
+by creating brand new commits for each commit in the original branch. This creates a much cleaner
+project history.
+To rebase:
+
+	1. Update your master branch::
+
+		$ git checkout master
+		$ git pull upstream master
+
+	2. Switch to feature branch::
+
+		$ git checkout my-feature-branch
+
+	3. Rebase on master::
+
+		$ git rebase master
+
+.. note::
+
+  This can create merge conflicts and you might need to resolve them. If you encounter any other
+  problem or wish to undo any changes, you can use `git reflog
+  <https://www.atlassian.com/git/tutorials/rewriting-history/git-reflog>`_. Detailed information on
+  this can be found `here
+  <https://git-scm.com/docs/git-reflog>`_.
+
+Resolving merge conflicts
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you changed the same part of the same file differently in the two branches you’re merging
+together, Git won’t be able to merge them cleanly. This is called a merge conflict. To resolve a
+merge conflict you can either:
+
+  * Open the files manually and resolve them as git adds standard resolution markers to the
+    files that have conflicts.
+
+  * Use a graphical tool by running ``git mergetool``. This tool will walk you through all the
+    conflicts.
+
+.. note::
+
+  A detailed guide on solving merge conflicts can be found on `git-scm.com
+  <http://git-scm.com/book/en/v2/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts>`_
+
 .. _easy_issues:
 
 Easy Issues
