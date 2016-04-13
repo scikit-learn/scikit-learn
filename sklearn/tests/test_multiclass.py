@@ -438,8 +438,9 @@ def test_ovo_fit_on_list():
     # same output as predict from an array
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
-    prediction_from_list = ovo.fit(iris.data,
-                                   list(iris.target)).predict(iris.data)
+    iris_data_list = [list(a) for a in iris.data]
+    prediction_from_list = ovo.fit(iris_data_list,
+                                   list(iris.target)).predict(iris_data_list)
     assert_array_equal(prediction_from_array, prediction_from_list)
 
 
