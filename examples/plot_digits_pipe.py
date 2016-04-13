@@ -54,7 +54,7 @@ plt.ylabel('explained_variance_')
 n_components = [20, 40, 64]
 Cs = np.logspace(-4, 4, 3)
 
-#Parameters of pipelines can be set using ‘__’ separated parameter names:
+# Parameters of pipelines can be set using ‘__’ separated parameter names:
 
 estimator = GridSearchCV(pipe,
                          dict(pca__n_components=n_components,

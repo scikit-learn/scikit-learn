@@ -9,7 +9,8 @@ and mutual information.
 We consider 3 features x_1, x_2, x_3 distributed uniformly over [0, 1], the
 target depends on them as follows:
 
-y = x_1 + sin(6 * pi * x_2) + 0.1 * N(0, 1), that is the third features is completely irrelevant.
+y = x_1 + sin(6 * pi * x_2) + 0.1 * N(0, 1), that is the third features
+are completely irrelevant.
 
 The code below plots the dependency of y against individual x_i and normalized
 values of univariate F-tests statistics and mutual information.
@@ -46,4 +47,3 @@ for i in range(3):
     plt.title("F-test={:.2f}, MI={:.2f}".format(f_test[i], mi[i]),
               fontsize=16)
 plt.show()
-

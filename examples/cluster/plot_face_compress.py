@@ -39,7 +39,7 @@ except AttributeError:
 
 n_clusters = 5
 np.random.seed(0)
-    
+
 X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
 k_means = cluster.KMeans(n_clusters=n_clusters, n_init=4)
 k_means.fit(X)

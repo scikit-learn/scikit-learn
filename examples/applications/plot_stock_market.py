@@ -69,10 +69,12 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 try:
-     from matplotlib.finance import quotes_historical_yahoo_ochl
+    from matplotlib.finance import quotes_historical_yahoo_ochl
 except ImportError:
-     # quotes_historical_yahoo_ochl was named quotes_historical_yahoo before matplotlib 1.4
-     from matplotlib.finance import quotes_historical_yahoo as quotes_historical_yahoo_ochl
+    # quotes_historical_yahoo_ochl was named quotes_historical_yahoo
+    # before matplotlib 1.4
+    from matplotlib.finance import quotes_historical_yahoo \
+         as quotes_historical_yahoo_ochl
 from matplotlib.collections import LineCollection
 from sklearn import cluster, covariance, manifold
 
@@ -209,7 +211,7 @@ plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
-#a sequence of (*line0*, *line1*, *line2*), where::
+# A sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]

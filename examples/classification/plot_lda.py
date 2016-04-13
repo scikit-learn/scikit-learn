@@ -45,8 +45,10 @@ for n_features in n_features_range:
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
-        clf1 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto').fit(X, y)
-        clf2 = LinearDiscriminantAnalysis(solver='lsqr', shrinkage=None).fit(X, y)
+        clf1 = LinearDiscriminantAnalysis(solver='lsqr',
+                                          shrinkage='auto').fit(X, y)
+        clf2 = LinearDiscriminantAnalysis(solver='lsqr',
+                                          shrinkage=None).fit(X, y)
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)

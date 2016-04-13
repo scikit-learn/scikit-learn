@@ -88,11 +88,13 @@ estimators = [("Tree", DecisionTreeRegressor()),
 
 n_estimators = len(estimators)
 
+
 # Generate data
 def f(x):
     x = x.ravel()
 
     return np.exp(-x ** 2) + 1.5 * np.exp(-(x - 2) ** 2)
+
 
 def generate(n_samples, noise, n_repeat=1):
     X = np.random.rand(n_samples) * 10 - 5

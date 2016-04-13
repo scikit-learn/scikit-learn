@@ -67,8 +67,9 @@ def nudge_dataset(X, Y):
          [0, 0, 0],
          [0, 1, 0]]]
 
-    shift = lambda x, w: convolve(x.reshape((8, 8)), mode='constant',
-                                  weights=w).ravel()
+    def shift(x, w):
+        return convolve(x.reshape((8, 8)), mode='constant', weights=w).ravel()
+    
     X = np.concatenate([X] +
                        [np.apply_along_axis(shift, 1, X, vector)
                         for vector in direction_vectors])

@@ -15,8 +15,9 @@ from sklearn import svm, datasets
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+# we only take the first two features. We could
+# avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]
 Y = iris.target
 
 

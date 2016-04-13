@@ -59,7 +59,7 @@ plt.figure()
 models = [X, S, S_, H]
 names = ['Observations (mixed signal)',
          'True Sources',
-         'ICA recovered signals', 
+         'ICA recovered signals',
          'PCA recovered signals']
 colors = ['red', 'steelblue', 'orange']
 

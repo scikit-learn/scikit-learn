@@ -29,7 +29,7 @@ print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
-#from sklearn.linear_model import SGDClassifier
+# from sklearn.linear_model import SGDClassifier
 
 # we create 40 separable points
 rng = np.random.RandomState(0)

@@ -91,7 +91,7 @@ for index, (name, estimator) in enumerate(estimators.items()):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
     estimator.means_ = np.array([X_train[y_train == i].mean(axis=0)
-                                  for i in xrange(n_classes)])
+                                 for i in xrange(n_classes)])
 
     # Train the other parameters using the EM algorithm.
     estimator.fit(X_train)

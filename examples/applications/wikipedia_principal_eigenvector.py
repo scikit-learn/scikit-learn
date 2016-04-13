@@ -126,8 +126,6 @@ def get_redirects(redirects_filename):
     return redirects
 
 
-# disabling joblib as the pickling of large dicts seems much too slow
-#@memory.cache
 def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     """Extract the adjacency graph as a scipy sparse matrix
 
@@ -210,8 +208,8 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     for i in range(max_iter):
         print("power iteration #%d" % i)
         prev_scores = scores
-        scores = (alpha * (scores * X + np.dot(dangle, prev_scores))
-                  + (1 - alpha) * prev_scores.sum() / n)
+        scores = (alpha * (scores * X + np.dot(dangle, prev_scores)) +
+                  (1 - alpha) * prev_scores.sum() / n)
         # check convergence: normalized l_inf norm
         scores_max = np.abs(scores).max()
         if scores_max == 0.0:

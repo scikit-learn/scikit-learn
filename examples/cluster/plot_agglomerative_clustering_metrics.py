@@ -61,9 +61,9 @@ for i, (phi, a) in enumerate([(.5, .15), (.5, .6), (.3, .2)]):
         # Make the noise sparse
         additional_noise[np.abs(additional_noise) < .997] = 0
 
-        X.append(12 * ((a + amplitude_noise)
-                 * (sqr(6 * (t + phi + phase_noise)))
-                 + additional_noise))
+        X.append(12 * ((a + amplitude_noise) *
+                       (sqr(6 * (t + phi + phase_noise))) +
+                       additional_noise))
         y.append(i)
 
 X = np.array(X)

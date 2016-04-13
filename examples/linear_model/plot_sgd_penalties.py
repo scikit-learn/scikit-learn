@@ -26,12 +26,12 @@ def l2(xs):
 
 def el(xs, z):
     return np.array([(2 - 2 * x - 2 * z + 4 * x * z -
-                      (4 * z ** 2
-                       - 8 * x * z ** 2
-                       + 8 * x ** 2 * z ** 2
-                       - 16 * x ** 2 * z ** 3
-                       + 8 * x * z ** 3 + 4 * x ** 2 * z ** 4) ** (1. / 2)
-                      - 2 * x * z ** 2) / (2 - 4 * z) for x in xs])
+                      (4 * z ** 2 -
+                       8 * x * z ** 2 +
+                       8 * x ** 2 * z ** 2 -
+                       16 * x ** 2 * z ** 3 +
+                       8 * x * z ** 3 + 4 * x ** 2 * z ** 4) ** (0.5) -
+                    2 * x * z ** 2) / (2 - 4 * z) for x in xs])
 
 
 def cross(ext):
@@ -59,7 +59,8 @@ plt.plot(xs, -1.0 * l2(xs), color=l2_color, lw=lw)
 plt.plot(-1 * xs, l2(xs), color=l2_color, lw=lw)
 plt.plot(-1 * xs, -1.0 * l2(xs), color=l2_color, lw=lw)
 
-plt.plot(xs, el(xs, alpha), color=elastic_net_color, label="Elastic Net", lw=lw)
+plt.plot(xs, el(xs, alpha), color=elastic_net_color,
+         label="Elastic Net", lw=lw)
 plt.plot(xs, -1.0 * el(xs, alpha), color=elastic_net_color, lw=lw)
 plt.plot(-1 * xs, el(xs, alpha), color=elastic_net_color, lw=lw)
 plt.plot(-1 * xs, -1.0 * el(xs, alpha), color=elastic_net_color, lw=lw)
