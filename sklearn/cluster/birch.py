@@ -345,7 +345,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         split and if the number of subclusters in the parent is greater than
         the branching factor, then it has to be split recursively.
 
-    n_clusters : int, instance of sklearn.cluster model, default None
+    n_clusters : int, instance of sklearn.cluster model, default 3
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples. By default, this final
         clustering step is not performed and the subclusters are returned
