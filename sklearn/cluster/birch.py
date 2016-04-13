@@ -347,7 +347,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     n_clusters : int, instance of sklearn.cluster model, default 3
         Number of clusters after the final clustering step, which treats the
-        subclusters from the leaves as new samples. By default, this final
+        subclusters from the leaves as new samples. If None, this final
         clustering step is not performed and the subclusters are returned
         as they are. If a model is provided, the model is fit treating
         the subclusters as new samples and the initial data is mapped to the
