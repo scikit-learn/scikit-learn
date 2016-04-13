@@ -511,6 +511,9 @@ def test_precompute_invalid_argument():
                 LassoCV(precompute="invalid")]:
         assert_raises(ValueError, clf.fit, X, y)
 
+    # Precompute = 'auto' is not supported for ElasticNet
+    assert_raises(ValueError, ElasticNet(precompute='auto').fit, X, y)
+
 
 def test_warm_start_convergence():
     X, y, _, _ = build_dataset()

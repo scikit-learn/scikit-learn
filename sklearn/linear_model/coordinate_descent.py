@@ -659,10 +659,10 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if (isinstance(self.precompute, six.string_types) and
            self.precompute == 'auto'):
-            warnings.warn("Setting precompute to 'auto', was found to be "
-                          "slower even when n_samples > n_features. Hence "
-                          "it will be removed in 0.18.",
-                          DeprecationWarning, stacklevel=2)
+            raise ValueError("Precompute='auto' is not supported for "
+                             "ElasticNetCV as it was found to be slower even "
+                             "when n_samples > n_features.")
+
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
