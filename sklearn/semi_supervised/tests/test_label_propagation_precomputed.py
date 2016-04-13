@@ -10,8 +10,8 @@ from numpy.testing import assert_array_equal
 
 
 ESTIMATORS = [
-    (label_propagation.LabelPropagation, {'kernel': None}),
-    (label_propagation.LabelSpreading, {'kernel': None}),
+    (label_propagation.LabelPropagation, {'kernel': 'precomputed'}),
+    (label_propagation.LabelSpreading, {'kernel': 'precomputed'}),
 ]
 
 graph = [[0, 1, 0], [1, 0, 0], [0, 0, 1]]
