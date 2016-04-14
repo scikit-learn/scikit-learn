@@ -18,6 +18,8 @@ import operator
 import warnings
 
 import numpy as np
+from multiprocessing import Queue
+import optunity
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
@@ -1001,3 +1003,80 @@ class RandomizedSearchCV(BaseSearchCV):
                                           self.n_iter,
                                           random_state=self.random_state)
         return self._fit(X, y, sampled_params)
+
+def _cv_avg_score(queue, cv, base_estimator, X, y, scoring, verbose, fit_params, error_score, **parameters):
+    test_scores = []
+    for train, test in cv:
+        test_score, _, _ = _fit_and_score(clone(base_estimator), X, y, scoring,
+                                          train, test, verbose, parameters,
+                                          fit_params, return_train_score=False,
+                                          error_score=error_score)
+
+        test_scores.append(test_score)
+
+    avg_test_score = np.average(test_scores)
+    CV_result = _CVScoreTuple(parameters, avg_test_score, test_scores)
+    queue.put(CV_result)
+
+    return avg_test_score
+
+
+class OptunitySearchCV(BaseSearchCV):
+    """
+    Uses the Optunity to optimise a classifier using cross-validation
+    """
+    def __init__(self, estimator,
+                 box_constraints, num_evals=100,  # Optunity parameters
+                 scoring=None, fit_params=None, n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise'):
+
+        self.num_evals, self.box_constraints = num_evals, box_constraints
+
+        super(OptunitySearchCV, self).__init__(estimator, scoring, fit_params, n_jobs, iid, refit, cv, verbose,
+                                                             pre_dispatch, error_score)
+
+    def fit(self, X, y):
+        """Actual fitting,  performing the search over parameters."""
+
+        estimator = self.estimator
+        cv = self.cv
+        # self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+
+        n_samples = _num_samples(X)
+        X, y = indexable(X, y)
+
+        if y is not None:
+            if len(y) != n_samples:
+                raise ValueError('Target variable (y) has a different number '
+                                 'of samples (%i) than data (X: %i samples)'
+                                 % (len(y), n_samples))
+        cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+
+        base_estimator = clone(self.estimator)
+
+        q = Queue()
+        avg_score_partial = partial(_cv_avg_score, q, cv, base_estimator, X, y, self.scoring,
+                                    self.verbose, self.fit_params, self.error_score)
+
+        solution, details, suggestion = optunity.maximize(avg_score_partial, self.num_evals,
+                                                          pmap=optunity.parallel.pmap,
+                                                          **self.box_constraints)
+
+        self.grid_scores_ = [q.get() for i in range(q.qsize())]
+
+        self.best_params_ = solution
+        self.best_score_ = details.optimum
+
+        self.optunity_details = details
+
+        if self.refit:
+            # fit the best estimator using the entire dataset
+            # clone first to work around broken estimators
+            best_estimator = clone(base_estimator).set_params(
+                **self.best_params_)
+            if y is not None:
+                best_estimator.fit(X, y, **self.fit_params)
+            else:
+                best_estimator.fit(X, **self.fit_params)
+            self.best_estimator_ = best_estimator
+        return self
