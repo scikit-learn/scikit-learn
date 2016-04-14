@@ -128,6 +128,9 @@ Enhancements
    - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
      through the parameter ``priors``. By `Guillaume Lemaitre`_.
 
+   - Add option to show ``indicator features`` in the output of Imputer.
+     By `Mani Teja`_.
+
 Bug fixes
 .........
 
@@ -4143,3 +4146,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Guillaume Lemaitre: https://github.com/glemaitre
 
 .. _JPFrancoia: https://github.com/JPFrancoia
+
+.. _Mani Teja: https://github.com/maniteja123
