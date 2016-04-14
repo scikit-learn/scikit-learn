@@ -20,7 +20,6 @@ from sklearn.utils import shuffle as sh
 np.random.seed(1)
 
 datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-# datasets = ['http']
 
 for dat in datasets:
     # loading and vectorization
@@ -34,7 +33,7 @@ for dat in datasets:
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
-        sh(X, y)
+        X, y = sh(X, y)
         # we remove data with label 4
         # normal data are then those of class 1
         s = (y != 4)
@@ -95,7 +94,7 @@ for dat in datasets:
     scoring = - model.decision_function(X_test)  # the lower, the more normal
 
     # Show score histograms
-    f, ax = plt.subplots(3, sharex=True, sharey=True)
+    fig, ax = plt.subplots(3, sharex=True, sharey=True)
     bins = np.linspace(-0.5, 0.5, 200)
     ax[0].hist(scoring, bins, color='black')
     ax[0].set_title('decision function for %s dataset' % dat)
