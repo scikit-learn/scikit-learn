@@ -36,7 +36,7 @@ from .exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
-           'ParameterSampler', 'RandomizedSearchCV']
+           'ParameterSampler', 'RandomizedSearchCV', 'OptunitySearchCV']
 
 
 warnings.warn("This module has been deprecated in favor of the "
