@@ -193,7 +193,7 @@ class IsolationForest(BaseBagging):
         return self
 
     def predict(self, X):
-        """Outlyingness of observations in X according to the fitted model.
+        """Predict if a particular sample is an outlier or not.
 
         Parameters
         ----------
@@ -206,7 +206,7 @@ class IsolationForest(BaseBagging):
         -------
         is_inlier : array, shape = (n_samples, )
             For each observations, tells whether or not (+1 or -1) it should
-            be considered as an outlier according to the fitted model.
+            be considered as an inlier according to the fitted model.
 
         """
         X = check_array(X, accept_sparse='csr')
