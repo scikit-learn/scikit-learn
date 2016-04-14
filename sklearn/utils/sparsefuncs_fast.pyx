@@ -6,6 +6,9 @@
 #
 # Licence: BSD 3 clause
 
+#!python
+#cython: boundscheck=False, wraparound=False, cdivision=True
+
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
 import numpy as np
@@ -18,9 +21,6 @@ np.import_array()
 
 ctypedef np.float64_t DOUBLE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     cdef:
@@ -46,9 +46,6 @@ def csr_row_norms(X):
     return norms
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csr_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR matrix
 
@@ -109,9 +106,6 @@ def csr_mean_variance_axis0(X):
     return means, variances
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csc_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSC matrix
 
@@ -172,9 +166,6 @@ def csc_mean_variance_axis0(X):
     return means, variances
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix.
 
@@ -271,17 +262,15 @@ def incr_mean_variance_axis0(X, last_mean, last_var, unsigned long last_n):
     return updated_mean, updated_var, updated_n
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def inplace_csr_row_normalize_l1(X):
+    """Inplace row normalize using the l1 norm"""
     _inplace_csr_row_normalize_l1(X.data, X.shape, X.indices, X.indptr)
 
 
-def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data, shape,
+def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
+                                  shape,
                                   np.ndarray[int, ndim=1] X_indices,
                                   np.ndarray[int, ndim=1] X_indptr):
-    """Inplace row normalize using the l1 norm"""
     cdef unsigned int n_samples = shape[0]
     cdef unsigned int n_features = shape[1]
 
@@ -308,10 +297,8 @@ def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data, shape,
             X_data[j] /= sum_
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def inplace_csr_row_normalize_l2(X):
+    """Inplace row normalize using the l2 norm"""
     _inplace_csr_row_normalize_l2(X.data, X.shape, X.indices, X.indptr)
 
 
@@ -319,7 +306,6 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
                                   shape,
                                   np.ndarray[int, ndim=1] X_indices,
                                   np.ndarray[int, ndim=1] X_indptr):
-    """Inplace row normalize using the l2 norm"""
     cdef unsigned int n_samples = shape[0]
     cdef unsigned int n_features = shape[1]
 
@@ -344,8 +330,6 @@ def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
             X_data[j] /= sum_
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
                       np.ndarray[int, ndim=1] indices,
                       np.ndarray[int, ndim=1] indptr,
@@ -361,8 +345,6 @@ cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
         out[j] += data[ind]
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def assign_rows_csr(X,
                     np.ndarray[np.npy_intp, ndim=1] X_rows,
                     np.ndarray[np.npy_intp, ndim=1] out_rows,
