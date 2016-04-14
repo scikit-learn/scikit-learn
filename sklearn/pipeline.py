@@ -7,6 +7,7 @@ estimator, as a chain of transforms and estimators.
 #         Virgile Fritsch
 #         Alexandre Gramfort
 #         Lars Buitinck
+#         Tim Head
 # Licence: BSD
 
 from collections import defaultdict
@@ -15,14 +16,16 @@ from warnings import warn
 import numpy as np
 from scipy import sparse
 
-from .base import BaseEstimator, TransformerMixin
+from .base import BaseEstimator, ClassifierMixin
+from .base import MetaEstimatorMixin, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .externals.six import iteritems
 
-__all__ = ['Pipeline', 'FeatureUnion']
+__all__ = ['Pipeline', 'FeatureUnion', 'PredictionTransformer',
+           'ThresholdClassifier']
 
 
 class Pipeline(BaseEstimator):
@@ -576,3 +579,32 @@ def make_union(*transformers):
     f : FeatureUnion
     """
     return FeatureUnion(_name_estimators(transformers))
+
+
+class PredictionTransformer(BaseEstimator, TransformerMixin, MetaEstimatorMixin):
+    def __init__(self, clf):
+        """Replaces all features with `clf.predict_proba(X)`"""
+        self.clf = clf
+
+    def fit(self, X, y):
+        self.clf.fit(X, y)
+        return self
+
+    def transform(self, X):
+        return self.clf.predict_proba(X)
+
+
+class ThresholdClassifier(BaseEstimator, ClassifierMixin):
+    def __init__(self, threshold=0.5):
+        """Classify samples based on whether they are above of below `threshold`"""
+        self.threshold = threshold
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        return self
+
+    def predict(self, X):
+        # the implementation used here breaks ties differently
+        # from the one used in RFs:
+        #return self.classes_.take(np.argmax(X, axis=1), axis=0)
+        return np.where(X[:, 0]>self.threshold, *self.classes_)
