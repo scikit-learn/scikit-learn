@@ -19,6 +19,7 @@ from libc.stdlib cimport calloc
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.math cimport fabs
 
 import numpy as np
 cimport numpy as np
@@ -962,6 +963,78 @@ cdef class MSE(RegressionCriterion):
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
 
+cdef class MAE(RegressionCriterion):
+    """Mean absolute error impurity criterion
+    """
+    cdef void node_value(self, double* dest) nogil:
+        """Computes the node value of samples[start:end] into dest."""
+        cdef double* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+        
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t y_ik
+
+        cdef DOUBLE_t sum_weights = 0
+        cdef SIZE_t median_index = 0
+        cdef DOUBLE_t sum
+
+        
+        cdef DOUBLE_t* y_vals
+        cdef DOUBLE_t* weights
+        for k in range(self.n_outputs):
+            for p in range(start,end):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                y_ik = y[i * self.y_stride + k]
+                y_vals[p] = y_ik
+                weights[p] = w
+
+            # calculate weighted median
+            for p in range(start, end):
+                sum_weights += weights[p]
+            sum = sum_weights - weights[0]
+
+            while(sum > (sum_weights/2)):
+                median_index +=1
+                sum -= weights[median_index]
+            dest[k] = samples[median_index]
+
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of 
+           samples[start:end]"""
+        # todo
+        pass
+
+    cdef double proxy_impurity_improvement(self) nogil:
+        """Compute a proxy of the impurity reduction
+        This method is used to speed up the search for the best split.
+        It is a proxy quantity such that the split that maximizes this value
+        also maximizes the impurity improvement. It neglects all constant terms
+        of the impurity decrease for a given split.
+        The absolute impurity improvement is only computed by the
+        impurity_improvement method once the best split has been found.
+        """
+
+        # todo
+        pass
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end]).
+        """
+        # todo
+        pass
 
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman
