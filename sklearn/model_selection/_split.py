@@ -44,6 +44,7 @@ __all__ = ['BaseCrossValidator',
            'ShuffleSplit',
            'LabelShuffleSplit',
            'StratifiedKFold',
+           'BinnedStratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
            'train_test_split',
@@ -635,6 +636,164 @@ class StratifiedKFold(_BaseKFold):
         """
         return super(StratifiedKFold, self).split(X, y, labels)
 
+
+class BinnedStratifiedKFold(_BaseKFold):
+    """Stratified K-Folds cross-validator
+
+    Provides train/test indices to split data in train/test sets.
+
+    This cross-validation object is a variation of KFold that returns
+    stratified folds. The folds are made by preserving the percentage of
+    samples for each class.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import BinnedStratifiedKFold
+    >>> y = np.arange(11.0)
+    >>> np.random.seed(0)
+    >>> np.random.shuffle(y)
+    >>> X = y + 0.1* np.random.randn(len(y))
+    >>> cv = BinnedStratifiedKFold(n_folds=3)
+    >>> skf = cv.split(y)
+    >>> print(cv)  # doctest: +NORMALIZE_WHITESPACE
+    BinnedStratifiedKFold(n_folds=3, random_state=None,
+    shuffle=False)
+    >>> indarr = np.zeros(len(y), dtype=bool)
+    >>> for train_index, test_index in skf:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [ 1  2  3  4  5  8 10] TEST: [0 6 7 9]
+    TRAIN: [0 2 3 4 6 7 8 9] TEST: [ 1  5 10]
+    TRAIN: [ 0  1  5  6  7  9 10] TEST: [2 3 4 8]
+
+    Notes
+    -----
+    All the folds have size floor(n_samples / n_folds) or
+    floor(n_samples / n_folds) +1,
+    the length is assigned randomly (even if no shuffling is requested)
+    to balance the variance between folds.
+
+    See also
+    --------
+    StratifiedKFold -- stratified k-fold generator for classification data
+    """
+
+    def __init__(self, n_folds=3, shuffle=False, random_state=None):
+        super(BinnedStratifiedKFold, self).__init__(n_folds, shuffle,
+                                                    random_state)
+
+    def _make_test_folds(self, X, y=None, labels=None):
+        if y is None:
+            if hasattr(X, "shape") and \
+               (len(X.shape) == 1 or all(X.shape[1:] == 1)):
+                y = X
+            else:
+                raise ValueError("no y has been supplied; "
+                                 "first argument is not a valid y")
+        n_samples = len(y)
+        self.n_samples = n_samples
+        n_folds = self.n_folds
+        yinds = np.arange(n_samples)
+        "reorder the labels according to the ordering of `y`"
+        sorter0 = np.argsort(y)
+        yinds = yinds[sorter0]
+
+        self.n_classes = n_samples // n_folds + int(n_samples % n_folds != 0)
+
+        if n_samples // n_folds > 1:
+            n_items_boundary_cls = n_folds * (n_samples // n_folds // 2)
+            "assign lower `n_folds*(n_classes//2 )` labels to the lower class"
+            lowerclasses = yinds[:n_items_boundary_cls].reshape(-1, n_folds)
+            "assign upper `n_folds*(n_classes//2 )` labels to the upper class"
+            upperclasses = yinds[-n_items_boundary_cls:].reshape(-1, n_folds)
+            """assign the remainder labels to the middle class;
+            add -1 as a filling value;  shuffle"""
+            middleclasses = yinds[n_items_boundary_cls:-n_items_boundary_cls]
+            middleclasses = np.hstack([
+                    middleclasses,
+                    -np.ones(n_folds - len(middleclasses) % n_folds, dtype=int)
+                    ])
+            middleclasses = middleclasses.reshape(-1, n_folds)
+
+            rng = check_random_state(self.random_state)
+            rng.shuffle(middleclasses.T)
+            middleclasses = middleclasses.reshape(-1, n_folds)
+            self._test_masks = np.vstack([
+                        lowerclasses,
+                        middleclasses,
+                        upperclasses]).T
+            "to do : middle class rebalancing"
+        elif n_samples > self.n_classes:
+            """put the lower half in one piece, and the rest into a ragged array;
+            the central values will remain unpaired
+            """
+            lowerclasses = yinds[:n_folds].reshape(-1, n_folds)
+            upperclasses = yinds[n_folds:]
+            upperclasses = np.hstack([
+                    upperclasses,
+                    -np.ones(n_folds - len(upperclasses) % n_folds, dtype=int)
+                    ])
+
+            self._test_masks = np.vstack([lowerclasses, upperclasses]).T
+
+        if self.shuffle:
+            rng.shuffle(self._test_masks)
+        "remove missing values from the middle class"
+        self._test_masks = [y[y != -1] for y in self._test_masks]
+
+        test_folds = np.empty(n_samples,  dtype=np.int)
+        for nn, fold_masks in enumerate(self._test_masks):
+            test_folds[fold_masks] = nn
+        return test_folds
+
+    def _iter_test_masks(self, X, y=None, labels=None):
+        test_folds = self._make_test_folds(X, y)
+        for i in range(self.n_folds):
+            yield test_folds == i
+
+    def split(self, X, y=None, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super(BinnedStratifiedKFold, self).split(X, y, labels)
+
+
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
 
@@ -1193,8 +1352,8 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
-    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i'
-            and test_size >= n_samples):
+    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i' and
+            test_size >= n_samples):
         raise ValueError('test_size=%d should be smaller than the number of '
                          'samples %d' % (test_size, n_samples))
 

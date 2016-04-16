@@ -2,6 +2,7 @@ from ._split import BaseCrossValidator
 from ._split import KFold
 from ._split import LabelKFold
 from ._split import StratifiedKFold
+from ._split import BinnedStratifiedKFold
 from ._split import LeaveOneLabelOut
 from ._split import LeaveOneOut
 from ._split import LeavePLabelOut
@@ -40,6 +41,7 @@ __all__ = ('BaseCrossValidator',
            'RandomizedSearchCV',
            'ShuffleSplit',
            'StratifiedKFold',
+           'BinnedStratifiedKFold',
            'StratifiedShuffleSplit',
            'check_cv',
            'cross_val_predict',
