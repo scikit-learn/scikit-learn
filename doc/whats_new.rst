@@ -131,6 +131,9 @@ Enhancements
    - Add option to show ``indicator features`` in the output of Imputer.
      By `Mani Teja`_.
 
+   - Reduce the memory usage for 32-bit float input arrays of :func:`utils.mean_variance_axis` and 
+     :func:`utils.incr_mean_variance_axis` by supporting cython fused types. By `YenChen Lin`_.
+
 Bug fixes
 .........
 
