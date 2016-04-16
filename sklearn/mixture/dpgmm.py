@@ -20,7 +20,7 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import logsumexp, pinvh, squared_norm
 from ..utils.validation import check_is_fitted
 from .. import cluster
-from .gmm import GMM
+from .gmm import _GMMBase
 
 
 def digamma(x):
@@ -106,7 +106,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     return bound
 
 
-class DPGMM(GMM):
+class DPGMM(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
     DPGMM stands for Dirichlet Process Gaussian Mixture Model, and it
@@ -492,7 +492,7 @@ class DPGMM(GMM):
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when creating
+        argument init_params to the empty string '' when when creating
         the object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 
