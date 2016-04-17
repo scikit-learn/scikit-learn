@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ 
+|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
@@ -22,6 +22,11 @@
 
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
+
+
+.. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
+.. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
+
 
 scikit-learn
 ============
