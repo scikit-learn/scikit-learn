@@ -968,8 +968,6 @@ cdef class MAE(RegressionCriterion):
     """
     cdef void node_value(self, double* dest) nogil:
         """Computes the node value of samples[start:end] into dest."""
-        with gil:
-            print "entered node_value"
         cdef double* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         
@@ -982,50 +980,40 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
 
-        cdef DOUBLE_t sum_weights = 0.0
-        cdef SIZE_t median_index = 0
-        cdef DOUBLE_t Sum
+        cdef DOUBLE_t sum_weights
+        cdef SIZE_t median_index
+        cdef DOUBLE_t sum
 
-        y_vals = NULL
-        weights = NULL
-        y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
-        weights = <double*> calloc(self.n_node_samples, sizeof(double))
-        cdef double* y_val_pointer = y_vals
-        cdef double* weight_pointer = weights
+        cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
         for k in range(self.n_outputs):
+            median_index = 0
+            sum_weights = 0.0
             for p in range(start,end):
                 i = samples[p]
-
+                
+                y_ik = y[i * self.y_stride + k]
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                y_ik = y[i * self.y_stride + k]
-                
-                y_val_pointer[p] = y_ik
-                weight_pointer[p] = w
+                y_vals[p] = y_ik
+                weights[p] = w
 
             for p in range(start, end):
-                sum_weights += weight_pointer[p]
+                sum_weights += weights[p]
                 
-            Sum = sum_weights - weight_pointer[0]
-
-            while(Sum > sum_weights/2):
+            sum = sum_weights - weights[0]
+            
+            while(sum > sum_weights/2):
                 median_index +=1
-                Sum -= weight_pointer[median_index]
+                sum -= weights[median_index]
 
-            with gil:
-                print "calculated weighted median:"
-                print y_val_pointer[median_index]
-            dest[k] = y_val_pointer[median_index]
-            with gil:
-                print "normally this isn't printed because of bus error: 10"
+            dest[k] = y_vals[median_index]
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of 
            samples[start:end]"""
-        with gil:
-            print "Entered node_impurity function"
-        cdef double* medians
+        cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
         cdef double impurity = 0.0
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t k
@@ -1033,16 +1021,12 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i
         cdef DOUBLE_t y_ik
         self.node_value(medians)
-        with gil:
-            print "exited node_value"
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
-
-                impurity += fabs(y_ik - medians[k]) / self.n_node_samples
+                impurity += fabs(y_ik - medians[k]) / self.weighted_n_node_samples
         return impurity / self.n_outputs
-        # todo
 
     cdef double proxy_impurity_improvement(self) nogil:
         """Compute a proxy of the impurity reduction
