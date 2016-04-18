@@ -58,18 +58,11 @@ class StackingClassifier(BaseEstimator,ClassifierMixin):
             self.__X_test = np.hstack((self.__X_test,y_pred)) 
             
         # second stage
-        preds = []
-        for i in range(self.n_runs):
-            j = 0
-            for clf in self.stage_two_clfs:
-                y_pred = clf.predict(self.__X_test)  
-                preds.append(self.weights[j] * y_pred)
-                j += 1
-        # average predictions
-        y_final = preds.pop(0)
-        for pred in preds:
-            y_final += pred
-        y_out = y_final/(np.array(self.weights).sum() * self.n_runs)
+        est = []
+        for clf in self.stage_two_clfs:
+            est.append(("clf",clf))
+        majority_voting = VotingClassifier(estimators=est, voting="hard", weights=self.weights)
+        y_out = majority_voting.predict(self.__X_test)
         
         return y_out
         
@@ -87,8 +80,18 @@ class StackingClassifier(BaseEstimator,ClassifierMixin):
             self.__X_test = np.hstack((self.__X_test,y_pred)) 
             
         # second stage
-        majority_voting = VotingClassifier(estimators=self.stage_two_clfs, voting="hard", weights=self.weights)
-        y_out = majority_voting.predict(self.__X_test)
+        preds = []
+        for i in range(self.n_runs):
+            j = 0
+            for clf in self.stage_two_clfs:
+                y_pred = clf.predict_proba(self.__X_test)  
+                preds.append(self.weights[j] * y_pred)
+                j += 1
+        # average predictions
+        y_final = preds.pop(0)
+        for pred in preds:
+            y_final += pred
+        y_out = y_final/(np.array(self.weights).sum() * self.n_runs)
         
         return y_out
     
