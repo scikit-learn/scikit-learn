@@ -245,7 +245,12 @@ def test_sparse_coder_mmap():
     # arrays to child processes
 
     rng = np.random.RandomState(777)
-    init_dict = rng.rand(500, 64)
-    data = np.random.rand(8096, 64)
+    num_cols = 64
+    init_dict = rng.rand(500, num_cols)
+    # Ensure that `data` is >2M. Joblib memory maps arrays
+    # if they are larger than 1MB. The 4 accounts for float32
+    # data type
+    num_rows = (1024*1024*2)/(4*num_cols)
+    data = np.random.rand(num_rows, num_cols).astype(np.float32)
     sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
     sc.fit_transform(data)
