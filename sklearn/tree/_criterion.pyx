@@ -999,11 +999,20 @@ cdef class MAE(RegressionCriterion):
 
                 y_vals[p] = y_ik
                 weights[p] = w
+                with gil:
+                    print "p {}".format(p)
+                    print "unsorted y val {}".format(y_vals[p])
+                    print "unsorted weight {}".format(weights[p])
 
             for p in range(start, end):
                 sum_weights += weights[p]
 
             self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
+            for p in range(start, end):
+                with gil:
+                    print "p {}".format(p)
+                    print "sorted y val {}".format(y_vals[p])
+                    print "sorted weight {}".format(weights[p])
             
             sum = sum_weights - weights[0]
             
@@ -1011,10 +1020,12 @@ cdef class MAE(RegressionCriterion):
                 median_index +=1
                 sum -= weights[median_index]
 
-            if start-end % 2 == 0:
+            if sum == sum_weights/2:
                 dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
             else:
                 dest[k] = y_vals[median_index]
+            with gil:
+                print dest[k]
                 
     cdef void sort_values_and_weights(self, double* y_vals, double* weights,
                                       SIZE_t low, SIZE_t high) nogil:
