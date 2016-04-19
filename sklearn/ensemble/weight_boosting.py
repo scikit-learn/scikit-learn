@@ -671,7 +671,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                        for estimator, w in zip(self.estimators_,
                                                self.estimator_weights_))
 
-        pred /= self.estimator_weights_.sum()
         if n_classes == 2:
             pred[:, 0] *= -1
             return pred.sum(axis=1)
