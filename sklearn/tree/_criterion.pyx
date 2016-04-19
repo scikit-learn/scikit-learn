@@ -967,26 +967,30 @@ cdef class MAE(RegressionCriterion):
     """Mean absolute error impurity criterion
     """
     cdef void node_value(self, double* dest) nogil:
-        """Computes the node value of samples[start:end] into dest."""
-        cdef double* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
-        
-        cdef DOUBLE_t* y = self.y
+        """Computes the node value of samples[start:end] into dest."""        
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
+
+        cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
+        self.compute_weighted_median(dest, y_vals, weights, start, end)
+
+    cdef void compute_weighted_median(self, double* median_dest, double* y_vals,
+                                      double* weights, SIZE_t start, SIZE_t end) nogil:
+        """Calculate the weighted median and put it into a destination pointer
+        given values, weights, and a start and end index
+        """
+        cdef double* sample_weight = self.sample_weight
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t* samples = self.samples
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
 
+        cdef SIZE_t i, p, k
         cdef DOUBLE_t sum_weights
         cdef SIZE_t median_index
         cdef DOUBLE_t sum
 
-        cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
-        cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
-        cdef SIZE_t* sorted_indexes
         for k in range(self.n_outputs):
             median_index = 0
             sum_weights = 0.0
@@ -999,7 +1003,7 @@ cdef class MAE(RegressionCriterion):
 
                 y_vals[p] = y_ik
                 weights[p] = w
-
+        
             for p in range(start, end):
                 sum_weights += weights[p]
 
@@ -1012,9 +1016,10 @@ cdef class MAE(RegressionCriterion):
                 sum -= weights[median_index]
 
             if sum == sum_weights/2:
-                dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+                median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
             else:
-                dest[k] = y_vals[median_index]
+                median_dest[k] = y_vals[median_index]
+            
                 
     cdef void sort_values_and_weights(self, double* y_vals, double* weights,
                                       SIZE_t low, SIZE_t high) nogil:
@@ -1076,9 +1081,6 @@ cdef class MAE(RegressionCriterion):
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
         """
-        cdef SIZE_t k
-        cdef double proxy_impurity_left = 0.0
-        cdef double proxy_impurity_right = 0.0
 
         # todo
         pass
@@ -1098,48 +1100,15 @@ cdef class MAE(RegressionCriterion):
 
         cdef double impurity_total = self.node_impurity()
 
-        cdef DOUBLE_t sum_weights
-        cdef SIZE_t median_index
-        cdef DOUBLE_t sum
-
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t w = 1.0
+        cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
 
         cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
         cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
         cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
+        self.compute_weighted_median(medians, y_vals, weights, start, pos)
+            
         
-        for k in range(self.n_outputs):
-            median_index = 0
-            sum_weights = 0.0
-            for p in range(start, pos):
-                i = samples[p]
-                y_ik = y[i * self.y_stride + k]
-
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
-                y_vals[p] = y_ik
-                weights[p] = w
-
-            for p in range(start, pos):
-                sum_weights += weights[p]
-
-            self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
-            sum = sum_weights - weights[0]
-
-            while(sum > sum_weights/2):
-                median_index +=1
-                sum -= weights[median_index]
-
-            if sum == sum_weights/2:
-                medians[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
-            else:
-                medians[k] = y_vals[median_index]
-
         for k in range(self.n_outputs):
             for p in range(start, pos):
                 i = samples[p]
