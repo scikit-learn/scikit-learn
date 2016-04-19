@@ -986,6 +986,7 @@ cdef class MAE(RegressionCriterion):
 
         cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
         cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef SIZE_t* sorted_indexes
         for k in range(self.n_outputs):
             median_index = 0
             sum_weights = 0.0
@@ -1001,15 +1002,53 @@ cdef class MAE(RegressionCriterion):
 
             for p in range(start, end):
                 sum_weights += weights[p]
-                
+
+            self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
+            
             sum = sum_weights - weights[0]
             
             while(sum > sum_weights/2):
                 median_index +=1
                 sum -= weights[median_index]
 
-            dest[k] = y_vals[median_index]
+            if start-end % 2 == 0:
+                dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+            else:
+                dest[k] = y_vals[median_index]
+                
+    cdef void sort_values_and_weights(self, double* y_vals, double* weights,
+                                      SIZE_t low, SIZE_t high) nogil:
+        """Sort an array and its weights"""
+        cdef SIZE_t pivot, i, j,
+        cdef double temp
+        if low < high:
+            pivot = low
+            i = low
+            j = high
+            while i < j:
+                while(y_vals[i] <= y_vals[pivot] and i <= high):
+                    i += 1
+                while(y_vals[j] > y_vals[pivot] and j  >= low):
+                    j -= 1
+                if i < j:
+                    temp = y_vals[i]
+                    y_vals[i] = y_vals[j]
+                    y_vals[j] = temp
 
+                    temp = weights[i]
+                    weights[i] = weights[j]
+                    weights[j] = temp
+            temp = y_vals[j]
+            y_vals[j] = y_vals[pivot]
+            y_vals[pivot] = temp
+
+            temp = weights[j]
+            weights[j] = weights[pivot]
+            weights[pivot] = temp
+            self.sort_values_and_weights(y_vals, weights, low, j-1)
+            self.sort_values_and_weights(y_vals, weights, j+1, high)
+
+        
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of 
            samples[start:end]"""
