@@ -999,20 +999,11 @@ cdef class MAE(RegressionCriterion):
 
                 y_vals[p] = y_ik
                 weights[p] = w
-                with gil:
-                    print "p {}".format(p)
-                    print "unsorted y val {}".format(y_vals[p])
-                    print "unsorted weight {}".format(weights[p])
 
             for p in range(start, end):
                 sum_weights += weights[p]
 
             self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
-            for p in range(start, end):
-                with gil:
-                    print "p {}".format(p)
-                    print "sorted y val {}".format(y_vals[p])
-                    print "sorted weight {}".format(weights[p])
             
             sum = sum_weights - weights[0]
             
@@ -1024,8 +1015,6 @@ cdef class MAE(RegressionCriterion):
                 dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
             else:
                 dest[k] = y_vals[median_index]
-            with gil:
-                print dest[k]
                 
     cdef void sort_values_and_weights(self, double* y_vals, double* weights,
                                       SIZE_t low, SIZE_t high) nogil:
@@ -1087,6 +1076,9 @@ cdef class MAE(RegressionCriterion):
         The absolute impurity improvement is only computed by the
         impurity_improvement method once the best split has been found.
         """
+        cdef SIZE_t k
+        cdef double proxy_impurity_left = 0.0
+        cdef double proxy_impurity_right = 0.0
 
         # todo
         pass
@@ -1097,8 +1089,67 @@ cdef class MAE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end]).
         """
-        # todo
-        pass
+        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t start = self.start
+
+        cdef double impurity_total = self.node_impurity()
+
+        cdef DOUBLE_t sum_weights
+        cdef SIZE_t median_index
+        cdef DOUBLE_t sum
+
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t y_ik
+
+        cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
+        
+        for k in range(self.n_outputs):
+            median_index = 0
+            sum_weights = 0.0
+            for p in range(start, pos):
+                i = samples[p]
+                y_ik = y[i * self.y_stride + k]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                y_vals[p] = y_ik
+                weights[p] = w
+
+            for p in range(start, pos):
+                sum_weights += weights[p]
+
+            self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
+            sum = sum_weights - weights[0]
+
+            while(sum > sum_weights/2):
+                median_index +=1
+                sum -= weights[median_index]
+
+            if sum == sum_weights/2:
+                medians[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+            else:
+                medians[k] = y_vals[median_index]
+
+        for k in range(self.n_outputs):
+            for p in range(start, pos):
+                i = samples[p]
+                y_ik = y[i * self.y_stride + k]
+                impurity_left[0] += fabs(y_ik - medians[k]) / (pos - start)
+
+        impurity_right[0] = impurity_total - impurity_left[0]
+
+        impurity_left[0] /= self.n_outputs
+        impurity_right[0] /= self.n_outputs
 
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman
