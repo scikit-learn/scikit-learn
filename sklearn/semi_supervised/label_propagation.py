@@ -55,6 +55,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Licence: BSD
 from abc import ABCMeta, abstractmethod
 
+import warnings
 import numpy as np
 from scipy import sparse
 
@@ -291,7 +292,7 @@ class LabelPropagation(BaseLabelPropagation):
         Parameter for knn kernel
 
     alpha : float
-        Clamping factor
+        (DEPRECATED) Clamping factor
 
     max_iter : float
         Change maximum number of iterations allowed
@@ -341,6 +342,19 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     LabelSpreading : Alternate label propagation strategy more robust to noise
     """
+
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
+        # Deprecating the parameter 'alpha', fixing it to zero.
+        if alpha is not None:
+            warnings.warn("The parameter 'alpha' is deprecated",
+                          category=DeprecationWarning)
+        alpha = 0.;
+        super(LabelPropagation, self).__init__(kernel=kernel, gamma=gamma,
+                                               n_neighbors=n_neighbors,
+                                               alpha=alpha, max_iter=max_iter,
+                                               tol=tol,
+                                               n_jobs=n_jobs)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
