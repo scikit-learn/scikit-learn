@@ -329,7 +329,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # We need to use isclose to avoid spurious repeated thresholds
     # stemming from floating point roundoff errors.
     distinct_value_indices = np.where(np.logical_not(isclose(
-        np.diff(y_score), 0)))[0]
+        np.diff(y_score), 0, atol=0.0, rtol=0.0)))[0]
+
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold
