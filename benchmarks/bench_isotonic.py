@@ -59,6 +59,8 @@ def bench_isotonic_regression(Y):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Isotonic Regression benchmark tool")
+    parser.add_argument('--seed', type=int,
+                        help="RNG seed")
     parser.add_argument('--iterations', type=int, required=True,
                         help="Number of iterations to average timings over "
                         "for each problem size")
@@ -72,6 +74,8 @@ if __name__ == '__main__':
                         required=True)
 
     args = parser.parse_args()
+
+    np.random.seed(args.seed)
 
     timings = []
     for exponent in range(args.log_min_problem_size,
