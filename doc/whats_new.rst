@@ -131,8 +131,11 @@ Enhancements
    - Add option to show ``indicator features`` in the output of Imputer.
      By `Mani Teja`_.
 
-   - Reduce the memory usage for 32-bit float input arrays of :func:`utils.mean_variance_axis` and 
+   - Reduce the memory usage for 32-bit float input arrays of :func:`utils.mean_variance_axis` and
      :func:`utils.incr_mean_variance_axis` by supporting cython fused types. By `YenChen Lin`_.
+
+   - The :func: `ignore_warnings` now accept a category argument to ignore only
+     the warnings of a specified type. By `Thierry Guillemot`_.
 
 Bug fixes
 .........
@@ -200,6 +203,12 @@ API changes summary
 
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
+
+   - The old :class:`GMM` is deprecated in favor of the new
+     :class:`GaussianMixture`. The new class compute the Gaussian mixture
+     faster than before and some of computationnal problems have been solved.
+     By `Wei Xue`_ and `Thierry Guillemot`_.
+
 
 
 .. _changes_0_17_1:
@@ -4151,3 +4160,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _JPFrancoia: https://github.com/JPFrancoia
 
 .. _Mani Teja: https://github.com/maniteja123
+
+.. _Thierry Guillemot: https://github.com/tguillemot
+
+.. _Wei Xue: https://github.com/xuewei4d

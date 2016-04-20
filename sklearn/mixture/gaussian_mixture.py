@@ -279,7 +279,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         "diag": _estimate_gaussian_covariance_diag,
         "spherical": _estimate_gaussian_covariance_spherical}
 
-    nk = resp.sum(axis=0) + 10 * np.finfo(float).eps
+    nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
     means = np.dot(resp.T, X) / nk[:, np.newaxis]
     covariances = compute_covariance[covariance_type](
         resp, X, nk, means, reg_covar)
