@@ -128,6 +128,12 @@ Enhancements
    - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
      through the parameter ``priors``. By `Guillaume Lemaitre`_.
 
+   - Add option to show ``indicator features`` in the output of Imputer.
+     By `Mani Teja`_.
+
+   - Reduce the memory usage for 32-bit float input arrays of :func:`utils.mean_variance_axis` and 
+     :func:`utils.incr_mean_variance_axis` by supporting cython fused types. By `YenChen Lin`_.
+
 Bug fixes
 .........
 
@@ -175,6 +181,11 @@ Bug fixes
       where train and test sample could overlap in some edge cases,
       see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
       more details. By `Loic Esteve`_.
+
+    - Attribute `explained_variance_ratio_` calculated with the SVD solver of
+      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
+      correct results. By `JPFrancoia`_
+
 
 API changes summary
 -------------------
@@ -4136,3 +4147,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ryad Zenine: https://github.com/ryadzenine
 
 .. _Guillaume Lemaitre: https://github.com/glemaitre
+
+.. _JPFrancoia: https://github.com/JPFrancoia
+
+.. _Mani Teja: https://github.com/maniteja123

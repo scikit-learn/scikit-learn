@@ -445,28 +445,49 @@ values, either using the mean, the median or the most frequent value of
 the row or column in which the missing values are located. This class
 also allows for different missing values encodings.
 
+Imputing missing values ordinarily discards the information of which values
+were missing. Setting ``add_indicator_features=True`` allows the knowledge of
+which features were imputed to be exploited by a downstream estimator
+by adding features that indicate which elements have been imputed.
+
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean value of the columns (axis 0)
-that contain the missing values::
+that contain the missing values. In case there is a feature which has
+all missing features, it is discarded when transformed. Also if the
+indicator matrix is requested (``add_indicator_features=True``),
+then the shape of the transformed input is 
+``(n_samples, n_features_new + len(imputed_features_))`` ::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import Imputer
     >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
-    Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])  # doctest: +NORMALIZE_WHITESPACE
+    Imputer(add_indicator_features=False, axis=0, copy=True, missing_values='NaN',
+        strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.        ]
      [ 6.          3.666...]
      [ 7.          6.        ]]
+    >>> imp_with_in = Imputer(missing_values='NaN', strategy='mean', axis=0,add_indicator_features=True)
+    >>> imp_with_in.fit([[1, 2], [np.nan, 3], [7, 6]])
+    Imputer(add_indicator_features=True, axis=0, copy=True, missing_values='NaN',
+        strategy='mean', verbose=0)
+    >>> print(imp_with_in.transform(X))                           # doctest: +ELLIPSIS
+    [[ 4.          2.          1.          0.        ]
+     [ 6.          3.66666667  0.          1.        ]
+     [ 7.          6.          0.          0.        ]]
+    >>> print(imp_with_in.imputed_features_)
+    [0 1]
 
 The :class:`Imputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
     >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
-    >>> imp.fit(X)
-    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
+    >>> imp.fit(X) # doctest: +NORMALIZE_WHITESPACE
+    Imputer(add_indicator_features=False, axis=0, copy=True, missing_values=0,
+        strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
     >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
     [[ 4.          2.        ]
