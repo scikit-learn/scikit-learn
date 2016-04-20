@@ -1742,7 +1742,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
-    i.e. the sum of norm of earch row.
+    i.e. the sum of norm of each row.
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
 
