@@ -7,12 +7,10 @@ For more information, see User Questions: http://scikit-learn.org/stable/support
 
 <!-- Instructions For Filing a Bug: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md#filing-bugs -->
 
-Description
------------
+#### Description
 <!-- Example: Joblib Error thrown when calling fit on LatentDirichletAllocation with evaluate_every > 0-->
 
-Steps/Code to Reproduce
------------------------
+#### Steps/Code to Reproduce
 <!--
 Example:
 ```
@@ -36,16 +34,13 @@ If the code is too long, feel free to put it in a public gist and link
 it in the issue: https://gist.github.com
 -->
 
-Expected Results
-----------------
+#### Expected Results
 <!-- Example: No error is throw. Please paste or describe the expected results.-->
 
-Actual Results
---------------
+#### Actual Results
 <!-- Please paste or specifically describe the actual output or traceback. -->
 
-Versions
---------
+#### Versions
 <!--
 Please run the following snippet and paste the output below.
 import platform; print(platform.platform())
