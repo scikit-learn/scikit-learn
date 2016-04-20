@@ -1465,17 +1465,6 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     :func:`sklearn.metrics.make_scorer`:
         Make a scorer from a performance metric or loss function.
 
-    Examples
-    --------
-    >>> from sklearn import datasets, linear_model
-    >>> from sklearn.cross_validation import cross_val_score
-    >>> diabetes = datasets.load_diabetes()
-    >>> X = diabetes.data[:150]
-    >>> y = diabetes.target[:150]
-    >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))  # doctest:  +ELLIPSIS
-    [ 0.33150734  0.08022311  0.03531764]
-
     """
     X, y = indexable(X, y)
 
