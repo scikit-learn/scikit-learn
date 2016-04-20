@@ -236,7 +236,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         y = np.asarray(y)
         unlabeled = y == -1
         clamp_weights = np.ones((n_samples, 1))
-        clamp_weights[unlabeled, 0] = self.alpha
+        clamp_weights[~unlabeled, 0] = self.alpha
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
