@@ -971,12 +971,12 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
-        cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef double* y_vals = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
+        cdef double* weights = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
         self.compute_weighted_median(dest, y_vals, weights, start, end)
 
-    cdef void compute_weighted_median(self, double* median_dest, double* y_vals,
-                                      double* weights, SIZE_t start, SIZE_t end) nogil:
+    cdef void compute_weighted_median(self, double* median_dest, DOUBLE_t* y_vals,
+                                      DOUBLE_t* weights, SIZE_t start, SIZE_t end) nogil:
         """Calculate the weighted median and put it into a destination pointer
         given values, weights, and a start and end index
         """
@@ -1021,7 +1021,7 @@ cdef class MAE(RegressionCriterion):
                 median_dest[k] = y_vals[median_index]
             
                 
-    cdef void sort_values_and_weights(self, double* y_vals, double* weights,
+    cdef void sort_values_and_weights(self, DOUBLE_t* y_vals, DOUBLE_t* weights,
                                       SIZE_t low, SIZE_t high) nogil:
         """Sort an array and its weights"""
         cdef SIZE_t pivot, i, j,
@@ -1052,7 +1052,6 @@ cdef class MAE(RegressionCriterion):
             weights[pivot] = temp
             self.sort_values_and_weights(y_vals, weights, low, j-1)
             self.sort_values_and_weights(y_vals, weights, j+1, high)
-
         
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of 
@@ -1103,8 +1102,8 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
 
-        cdef double* y_vals = <double*> calloc(self.n_node_samples, sizeof(double))
-        cdef double* weights = <double*> calloc(self.n_node_samples, sizeof(double))
+        cdef DOUBLE_t* y_vals = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
+        cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
         cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
         self.compute_weighted_median(medians, y_vals, weights, start, pos)
             
