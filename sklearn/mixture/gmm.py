@@ -15,7 +15,7 @@ from scipy import linalg
 from time import time
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, deprecated
 from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
@@ -112,7 +112,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     return (rand.T + mean).T
 
 
-class GMM(BaseEstimator):
+class _GMMBase(BaseEstimator):
     """Gaussian Mixture Model.
 
     Representation of a Gaussian mixture model probability distribution.
@@ -648,6 +648,19 @@ class GMM(BaseEstimator):
         """
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
 
+
+@deprecated("The class GMM is deprecated and "
+            "will be removed in 0.20. Use class GaussianMixture instead.")
+class GMM(_GMMBase):
+    def __init__(self, n_components=1, covariance_type='diag',
+                 random_state=None, tol=1e-3, min_covar=1e-3,
+                 n_iter=100, n_init=1, params='wmc', init_params='wmc',
+                 verbose=0):
+        super(GMM, self).__init__(
+            n_components=n_components, covariance_type=covariance_type,
+            random_state=random_state, tol=tol, min_covar=min_covar,
+            n_iter=n_iter, n_init=n_init, params=params,
+            init_params=init_params, verbose=verbose)
 
 #########################################################################
 # some helper routines
