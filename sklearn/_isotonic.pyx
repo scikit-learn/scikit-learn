@@ -19,13 +19,15 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
         Py_ssize_t n = y.shape[0], i, k
         bint pooled
         DOUBLE prev_y, sum_wy, sum_w
-        Py_ssize_t[::1] skip_to = np.arange(1, n + 1, dtype=np.intp)
+        Py_ssize_t[::1] next_block = np.arange(1, n + 1, dtype=np.intp)
+        # Make prev_block of size n+1 to avoid complications from prev_block[n].
+        Py_ssize_t[::1] prev_block = np.arange(-1, n, dtype=np.intp)
 
-    # skip_to describes a list of "constant" sections, skipping over redundant
+    # next_block describes a list of "constant" blocks, skipping over redundant
     # indices.
     # For "active" indices (not skipped over):
-    # w[i] := sum{w_orig[j], j=[i..skip_to[i])}
-    # y[i] := sum{y_orig[j]*w_orig[j], j=[i..skip_to[i])} / w[i]
+    # w[i] := sum{w_orig[j], j=[i..next_block[i])}
+    # y[i] := sum{y_orig[j]*w_orig[j], j=[i..next_block[i])} / w[i]
     while True:
         # Repeat until there are no more adjacent violators.
         i = 0
@@ -36,20 +38,29 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
             sum_wy = w[k] * y[k]
             sum_w = w[k]
             while True:
-                k = skip_to[k]
+                k = next_block[k]
                 if k == n or prev_y < y[k]:
-                    # Decreasing subsequence is finished, update first entry.
-                    if pooled:
+                    if k > next_block[i]:
+                        # Non-singleton decreasing subsequence is finished,
+                        # update first entry.
                         y[i] = sum_wy / sum_w
                         w[i] = sum_w
-                        skip_to[i] = k
+                        next_block[i] = k
+                        prev_block[k] = i
+                        if i > 0:
+                            # Backtrack if we can.  This is needed to avoid
+                            # O(n^2) complexity in pathological cases.
+                            i = prev_block[i]
+                        else:
+                            i = k
+                    else:
+                        i = k
                     break
                 # We are within a decreasing subsequence.
                 prev_y = y[k]
                 sum_wy += w[k] * y[k]
                 sum_w += w[k]
                 pooled = True
-            i = k
         # Check for convergence
         if not pooled:
             break
@@ -57,7 +68,7 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
     # Reconstruct the solution.
     i = 0
     while i < n:
-        k = skip_to[i]
+        k = next_block[i]
         y[i + 1 : k] = y[i]
         i = k
 
