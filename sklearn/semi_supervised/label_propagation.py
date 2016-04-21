@@ -22,7 +22,7 @@ Label clamping:
 
 Kernel:
   A function which projects a vector into some higher dimensional space. This
-  implementation supprots RBF and KNN kernels. Using the RBF kernel generates
+  implementation supprots RBF, KNN, and cosine kernels. Using the RBF and cosine kernel generates
   a dense matrix of size O(N^2). KNN kernel will generate a sparse matrix of
   size O(k*N) which will run much faster. See the documentation for SVMs for
   more info on kernels.
@@ -61,6 +61,7 @@ from scipy import sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..externals import six
 from ..metrics.pairwise import rbf_kernel
+from ..metrics.pairwise import cosine_similarity
 from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.graph import graph_laplacian
@@ -81,9 +82,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'cosine'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf', 'knn', and 'cosine' kernels are currently supported..
 
     gamma : float
         Parameter for rbf kernel
@@ -129,6 +130,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 return rbf_kernel(X, X, gamma=self.gamma)
             else:
                 return rbf_kernel(X, y, gamma=self.gamma)
+        elif self.kernel == "cosine":
+            if y is None:
+                return cosine_similarity(X)
+            else:
+                return cosine_similarity(X,y)
         elif self.kernel == "knn":
             if self.nn_fit is None:
                 self.nn_fit = NearestNeighbors(self.n_neighbors,
@@ -140,7 +146,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
         else:
-            raise ValueError("%s is not a valid kernel. Only rbf and knn"
+            raise ValueError("%s is not a valid kernel. Only rbf, knn, and cosine"
                              " are supported at this time" % self.kernel)
 
     @abstractmethod
@@ -280,9 +286,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'cosine'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf', 'knn', and 'cosine'  kernels are currently supported..
 
     gamma : float
         Parameter for rbf kernel
@@ -370,9 +376,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'cosine'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported.
+        Only 'rbf', 'knn', and 'cosine' kernels are currently supported.
 
     gamma : float
       parameter for rbf kernel
