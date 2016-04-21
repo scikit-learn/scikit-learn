@@ -16,6 +16,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -509,10 +510,12 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        assert_raises(ValueError, clf.fit, X, y)
+        assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
+                            "array-like.*Got 'invalid'", clf.fit, X, y)
 
     # Precompute = 'auto' is not supported for ElasticNet
-    assert_raises(ValueError, ElasticNet(precompute='auto').fit, X, y)
+    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
+                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
 
 
 def test_warm_start_convergence():
