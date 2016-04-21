@@ -15,6 +15,7 @@ the lower the better
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
+#          Maximilian Soelch <m.soelch@tum.de>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -328,6 +329,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # concatenate a value for the end of the curve.
     # We need to use isclose to avoid spurious repeated thresholds
     # stemming from floating point roundoff errors.
+    # Setting the tolerances to higher values than 0.0 will cause unexpected
+    # behavior for low variance y_score arrays.
     distinct_value_indices = np.where(np.logical_not(isclose(
         np.diff(y_score), 0, atol=0.0, rtol=0.0)))[0]
 
