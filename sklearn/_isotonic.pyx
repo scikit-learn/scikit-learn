@@ -17,58 +17,49 @@ ctypedef np.float64_t DOUBLE
 def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
     cdef:
         Py_ssize_t n = y.shape[0], i, k
-        bint pooled
         DOUBLE prev_y, sum_wy, sum_w
-        Py_ssize_t[::1] next_block = np.arange(1, n + 1, dtype=np.intp)
-        # Make prev_block of size n+1 to avoid complications from prev_block[n].
-        Py_ssize_t[::1] prev_block = np.arange(-1, n, dtype=np.intp)
+        Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
-    # next_block describes a list of "constant" blocks, skipping over redundant
-    # indices.
-    # For "active" indices (not skipped over):
-    # w[i] := sum{w_orig[j], j=[i..next_block[i])}
-    # y[i] := sum{y_orig[j]*w_orig[j], j=[i..next_block[i])} / w[i]
-    while True:
-        # Repeat until there are no more adjacent violators.
-        i = 0
-        pooled = False
-        while i < n:
-            k = i
+    # target describes a list of blocks.  At any time, if [i..j] (inclusive) is
+    # an active block, then target[i] := j and target[j] := i.
+
+    # For "active" indices (block starts):
+    # w[i] := sum{w_orig[j], j=[i..target[i]]}
+    # y[i] := sum{y_orig[j]*w_orig[j], j=[i..target[i]]} / w[i]
+
+    i = 0
+    while i < n:
+        k = target[i] + 1
+        if k == n or y[i] < y[k]:
+            i = k
+            continue
+        sum_wy = w[i] * y[i]
+        sum_w = w[i]
+        while True:
+            # We are within a decreasing subsequence.
             prev_y = y[k]
-            sum_wy = w[k] * y[k]
-            sum_w = w[k]
-            while True:
-                k = next_block[k]
-                if k == n or prev_y < y[k]:
-                    if k > next_block[i]:
-                        # Non-singleton decreasing subsequence is finished,
-                        # update first entry.
-                        y[i] = sum_wy / sum_w
-                        w[i] = sum_w
-                        next_block[i] = k
-                        prev_block[k] = i
-                        if i > 0:
-                            # Backtrack if we can.  This is needed to avoid
-                            # O(n^2) complexity in pathological cases.
-                            i = prev_block[i]
-                        else:
-                            i = k
-                    else:
-                        i = k
-                    break
-                # We are within a decreasing subsequence.
-                prev_y = y[k]
-                sum_wy += w[k] * y[k]
-                sum_w += w[k]
-                pooled = True
-        # Check for convergence
-        if not pooled:
-            break
+            sum_wy += w[k] * y[k]
+            sum_w += w[k]
+            k = target[k] + 1
+            if k == n or prev_y < y[k]:
+                # Non-singleton decreasing subsequence is finished,
+                # update first entry.
+                y[i] = sum_wy / sum_w
+                w[i] = sum_w
+                target[i] = k - 1
+                target[k - 1] = i
+                if i > 0:
+                    # Backtrack if we can.  This makes the algorithm single-pass
+                    # and avoid O(n^2) complexity in pathological cases.
+                    i = target[i - 1]
+                else:
+                    i = k
+                break
 
     # Reconstruct the solution.
     i = 0
     while i < n:
-        k = next_block[i]
+        k = target[i] + 1
         y[i + 1 : k] = y[i]
         i = k
 
