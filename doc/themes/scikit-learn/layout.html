@@ -89,7 +89,7 @@
             </ul>
 
             <div class="search_form">
-                <div id="cse" style="width: 100%;"></div>
+              <input type="text" id='docsearch-input' placeholder="Search docs...">
             </div>
         </div> <!-- end navbar -->
 
@@ -336,14 +336,13 @@
     </script>
     {% endif %}
 
-    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
-    <script type="text/javascript"> google.load('search', '1',
-        {language : 'en'}); google.setOnLoadCallback(function() {
-            var customSearchControl = new
-            google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
-            customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-            var options = new google.search.DrawOptions();
-            options.setAutoComplete(true);
-            customSearchControl.draw('cse', options); }, true);
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/docsearch.js/1/docsearch.min.css" />
+    <script type="text/javascript" src="//cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script>
+    <script type="text/javascript">
+      docsearch({
+        apiKey: 'd1eea247ba648e6a42e72a961a615ab2',
+        indexName: 'sklearn',
+        inputSelector: '#docsearch-input'
+      });
     </script>
 {%- endblock %}

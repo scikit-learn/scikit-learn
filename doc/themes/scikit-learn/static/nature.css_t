@@ -72,6 +72,7 @@ div.navbar ul {
     border-radius: 5px;
     -moz-border-radius: 5px;
     list-style: none;
+    float: left;
 }
 
 div.navbar ul, div.navbar li {
@@ -95,29 +96,64 @@ div.navbar ul li a:hover {
 }
 
 /*-------------------------------------------------------------*/
-/* The next few elements have to do with the gsc (referring to */
-/* Google's custom search bar */
-
-.gsc-input {
-    width: 180px;
-    float: right;
-}
+/* The next elements have to do with the Algolia docsearch input */
 
 .search_form {
-    margin-top: -23px;
-    /*The min-height is added here, to prevent the element from shrinking
-    too much, while the scripts are still loading the search-bar.
-    Without it, layout glitches occur, as the element keeps dynamically
-    changing its size while its loading-contents adjusts into position.*/
-    min-height: 42px;
+    margin-left: 10px;
+    float: left;
+    width: 180px;
 }
 
-#cse .gsc-clear-button {
-    width: 50px;
+/* Make the dropdown menu aligned on its right side */
+.aa-dropdown-menu {
+    right: 0px !important;
+    left: auto !important;
 }
 
-.gsc-branding {
-    display: none;
+/* Bottom border of each suggestion */
+.algolia-docsearch-suggestion {
+    border-bottom-color: #3A3DD1 !important;
+}
+
+/* Main category headers */
+.algolia-docsearch-suggestion--category-header {
+    background-color: #3499CD !important;
+    font-weight: normal !important;
+}
+
+/* Highlighted search terms in the main category headers */
+.algolia-docsearch-suggestion--highlight  {
+    color: inherit !important;
+    background: rgba(187, 223, 241, 0.6) !important;
+}
+
+.algolia-docsearch-suggestion--category-header .algolia-docsearch-suggestion--highlight {
+    color: inherit !important;
+    border-bottom: 2px solid rgba(187, 223, 241, 0.6);
+    background: none !important;
+}
+
+/* Currently selected suggestion */
+.aa-cursor .algolia-docsearch-suggestion--content {
+    color: #3499CD !important;
+}
+
+.aa-cursor .algolia-docsearch-suggestion {
+    background: #EBEBFB;
+}
+
+/* For bigger screens, when displaying results in two columns */
+@media (min-width: 768px) {
+    /* Bottom border of each suggestion */
+    .algolia-docsearch-suggestion {
+        border-bottom-color: #7671df;
+    }
+    /* Left column, with secondary category header */
+    .algolia-docsearch-suggestion--subcategory-column {
+        border-right-color: #7671df;
+        background-color: #F2F2FF;
+        color: #4E4726;
+    }
 }
 
 /*---------------------------------------------------------------*/
