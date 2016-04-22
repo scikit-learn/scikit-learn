@@ -27,41 +27,41 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
     # w[i] := sum{w_orig[j], j=[i..target[i]]}
     # y[i] := sum{y_orig[j]*w_orig[j], j=[i..target[i]]} / w[i]
 
-    i = 0
-    while i < n:
-        k = target[i] + 1
-        if k == n or y[i] < y[k]:
+    with nogil:
+        i = 0
+        while i < n:
+            k = target[i] + 1
+            if k == n or y[i] < y[k]:
+                i = k
+                continue
+            sum_wy = w[i] * y[i]
+            sum_w = w[i]
+            while True:
+                # We are within a decreasing subsequence.
+                prev_y = y[k]
+                sum_wy += w[k] * y[k]
+                sum_w += w[k]
+                k = target[k] + 1
+                if k == n or prev_y < y[k]:
+                    # Non-singleton decreasing subsequence is finished,
+                    # update first entry.
+                    y[i] = sum_wy / sum_w
+                    w[i] = sum_w
+                    target[i] = k - 1
+                    target[k - 1] = i
+                    if i > 0:
+                        # Backtrack if we can.  This makes the algorithm
+                        # single-pass and ensures O(n) complexity.
+                        i = target[i - 1]
+                    else:
+                        i = k
+                    break
+        # Reconstruct the solution.
+        i = 0
+        while i < n:
+            k = target[i] + 1
+            y[i + 1 : k] = y[i]
             i = k
-            continue
-        sum_wy = w[i] * y[i]
-        sum_w = w[i]
-        while True:
-            # We are within a decreasing subsequence.
-            prev_y = y[k]
-            sum_wy += w[k] * y[k]
-            sum_w += w[k]
-            k = target[k] + 1
-            if k == n or prev_y < y[k]:
-                # Non-singleton decreasing subsequence is finished,
-                # update first entry.
-                y[i] = sum_wy / sum_w
-                w[i] = sum_w
-                target[i] = k - 1
-                target[k - 1] = i
-                if i > 0:
-                    # Backtrack if we can.  This makes the algorithm single-pass
-                    # and avoid O(n^2) complexity in pathological cases.
-                    i = target[i - 1]
-                else:
-                    i = k
-                break
-
-    # Reconstruct the solution.
-    i = 0
-    while i < n:
-        k = target[i] + 1
-        y[i + 1 : k] = y[i]
-        i = k
 
 
 @cython.boundscheck(False)
