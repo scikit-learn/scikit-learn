@@ -268,7 +268,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
-def check_array(array, accept_sparse=None, dtype="numeric", order='A',
+def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
                 warn_on_dtype=False, estimator=None):
