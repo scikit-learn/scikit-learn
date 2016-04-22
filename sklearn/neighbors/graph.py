@@ -49,9 +49,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
         Number of neighbors for each sample.
 
     mode : {'connectivity', 'distance'}, optional
-        Type of returned matrix: 'connectivity' will return the
-        connectivity matrix with ones and zeros, in 'distance' the
-        edges are Euclidean distance between points.
+        Type of returned matrix: 'connectivity' will return the connectivity
+        matrix with ones and zeros, and 'distance' will return the distances
+        between neighbors according to the given metric.
 
     metric : string, default 'minkowski'
         The distance metric used to calculate the k-Neighbors for each sample
@@ -124,9 +124,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
         Radius of neighborhoods.
 
     mode : {'connectivity', 'distance'}, optional
-        Type of returned matrix: 'connectivity' will return the
-        connectivity matrix with ones and zeros, in 'distance' the
-        edges are Euclidean distance between points.
+        Type of returned matrix: 'connectivity' will return the connectivity
+        matrix with ones and zeros, and 'distance' will return the distances
+        between neighbors according to the given metric.
 
     metric : string, default 'minkowski'
         The distance metric used to calculate the neighbors within a
