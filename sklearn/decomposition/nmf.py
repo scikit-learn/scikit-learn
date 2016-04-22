@@ -387,9 +387,7 @@ def _update_projected_gradient_h(X, W, H, tolH, nls_max_iter, alpha, l1_ratio,
     elif sparseness == 'components':
         H, gradH, iterH = _nls_subproblem(
             safe_vstack([X, np.zeros((1, n_features))]),
-            safe_vstack([W,
-                         np.sqrt(beta)
-                         * np.ones((1, n_components_))]),
+            safe_vstack([W, np.sqrt(beta) * np.ones((1, n_components_))]),
             H, tolH, nls_max_iter, alpha=alpha, l1_ratio=l1_ratio)
 
     return H, gradH, iterH
@@ -409,10 +407,10 @@ def _fit_projected_gradient(X, W, H, tol, max_iter,
     P. Hoyer. Non-negative Matrix Factorization with Sparseness Constraints.
     Journal of Machine Learning Research 2004.
     """
-    gradW = (np.dot(W, np.dot(H, H.T))
-             - safe_sparse_dot(X, H.T, dense_output=True))
-    gradH = (np.dot(np.dot(W.T, W), H)
-             - safe_sparse_dot(W.T, X, dense_output=True))
+    gradW = (np.dot(W, np.dot(H, H.T)) -
+             safe_sparse_dot(X, H.T, dense_output=True))
+    gradH = (np.dot(np.dot(W.T, W), H) -
+             safe_sparse_dot(W.T, X, dense_output=True))
 
     init_grad = squared_norm(gradW) + squared_norm(gradH.T)
     # max(0.001, tol) to force alternating minimizations of W and H
@@ -891,7 +889,8 @@ class NMF(BaseEstimator, TransformerMixin):
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
         .. versionadded:: 0.17
-           Regularization parameter *l1_ratio* used in the Coordinate Descent solver.
+           Regularization parameter *l1_ratio* used in the Coordinate Descent
+           solver.
 
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
@@ -1214,7 +1213,8 @@ class ProjectedGradientNMF(NMF):
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
         .. versionadded:: 0.17
-           Regularization parameter *l1_ratio* used in the Coordinate Descent solver.
+           Regularization parameter *l1_ratio* used in the Coordinate Descent
+           solver.
 
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
