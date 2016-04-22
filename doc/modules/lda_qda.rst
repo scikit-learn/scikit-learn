@@ -41,7 +41,7 @@ Dimensionality reduction using Linear Discriminant Analysis
 perform supervised dimensionality reduction, by projecting the input data to a
 linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
-below). The dimension of the output is necessarily less that the number of
+below). The dimension of the output is necessarily less than the number of
 classes, so this is a in general a rather strong dimensionality reduction, and
 only makes senses in a multiclass setting.
 
