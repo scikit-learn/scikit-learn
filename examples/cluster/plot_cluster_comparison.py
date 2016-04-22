@@ -45,7 +45,7 @@ no_structure = np.random.rand(n_samples, 2), None
 # Anisotropicly distributed data
 random_state = 170
 X, y = datasets.make_blobs(n_samples=n_samples, random_state=random_state)
-transformation = [[ 0.6, -0.6], [-0.4, 0.8]]
+transformation = [[0.6, -0.6], [-0.4, 0.8]]
 X_aniso = np.dot(X, transformation)
 aniso = (X_aniso,y)
 
@@ -61,7 +61,7 @@ colors = np.hstack([colors] * 20)
 clustering_names = [
     'MiniBatchKMeans', 'AffinityPropagation', 'MeanShift',
     'SpectralClustering', 'Ward', 'AgglomerativeClustering',
-    'DBSCAN', 'Birch', 'GMM']
+    'DBSCAN', 'Birch', 'GaussianMixture']
 
 plt.figure(figsize=(len(clustering_names) * 2 + 3, 12.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
@@ -101,7 +101,7 @@ for i_dataset, dataset in enumerate(datasets):
 
     birch = cluster.Birch(n_clusters=3)
 
-    gmm = mixture.GMM(n_components=3, covariance_type='full')
+    gmm = mixture.GaussianMixture(n_components=3, covariance_type='full')
     clustering_algorithms = [
         two_means, affinity_propagation, ms, spectral, ward, average_linkage,
         dbscan, birch, gmm]
