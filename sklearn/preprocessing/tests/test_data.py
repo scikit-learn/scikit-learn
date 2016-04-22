@@ -420,7 +420,7 @@ def test_standard_scaler_partial_fit_numerical_stability():
     # Sparse input
     size = (100, 3)
     scale = 1e20
-    X = rng.random_integers(0, 1, size).astype(np.float64) * scale
+    X = rng.randint(0, 2, size).astype(np.float64) * scale
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
