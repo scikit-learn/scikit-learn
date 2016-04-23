@@ -46,8 +46,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
             delayed(estimator_func)(
-                X, y, weights=scaling * random_state.random_integers(
-                    0, 1, size=(n_features,)),
+                X, y, weights=scaling * random_state.randint(
+                    0, 2, size=(n_features,)),
                 mask=(random_state.rand(n_samples) < sample_fraction),
                 verbose=max(0, verbose - 1),
                 **params)
@@ -627,8 +627,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     paths = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_lasso_stability_path)(
             X, y, mask=rng.rand(n_samples) < sample_fraction,
-            weights=1. - scaling * rng.random_integers(0, 1,
-                                                       size=(n_features,)),
+            weights=1. - scaling * rng.randint(0, 2, size=(n_features,)),
             eps=eps)
         for k in range(n_resampling))
 

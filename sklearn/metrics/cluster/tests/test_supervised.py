@@ -110,12 +110,12 @@ def test_non_consicutive_labels():
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
                              seed=42):
     # Compute score for random uniform cluster labelings
-    random_labels = np.random.RandomState(seed).random_integers
+    random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(k_range), n_runs))
     for i, k in enumerate(k_range):
         for j in range(n_runs):
-            labels_a = random_labels(low=0, high=k - 1, size=n_samples)
-            labels_b = random_labels(low=0, high=k - 1, size=n_samples)
+            labels_a = random_labels(low=0, high=k, size=n_samples)
+            labels_b = random_labels(low=0, high=k, size=n_samples)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
@@ -195,8 +195,8 @@ def test_v_measure_and_mutual_information(seed=36):
     # Check relation between v_measure, entropy and mutual information
     for i in np.logspace(1, 4, 4).astype(np.int):
         random_state = np.random.RandomState(seed)
-        labels_a, labels_b = random_state.random_integers(0, 10, i),\
-            random_state.random_integers(0, 10, i)
+        labels_a, labels_b = random_state.randint(0, 11, i),\
+            random_state.randint(0, 11, i)
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
