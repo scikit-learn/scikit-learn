@@ -295,10 +295,8 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
 
-    order : 'F', 'C' or 'A' (default='A')
-        Whether an array will be forced to be fortran or c-style. If
-        `order='A'`, then the returned array might be in any order, unless
-        `copy=True` in which case a C-style array will be returned.
+    order : 'F', 'C' or None (default=None)
+        Whether an array will be forced to be fortran or c-style.
 
     copy : boolean (default=False)
         Whether a forced copy will be triggered. If copy=False, a copy might
