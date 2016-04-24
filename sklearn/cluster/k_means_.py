@@ -391,6 +391,7 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
+    centers = np.ascontiguousarray(centers)
     if verbose:
         print('Initialization complete')
     centers, labels, n_iter = k_means_elkan(X, n_clusters, centers, tol=tol,
