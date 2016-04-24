@@ -317,8 +317,7 @@ def _estimate_log_gaussian_prob_full(X, means, covariances):
                              "Try to decrease the number of components, or "
                              "increase reg_covar.")
         cv_log_det = 2. * np.sum(np.log(np.diagonal(cov_chol)))
-        cv_sol = linalg.solve_triangular(cov_chol, (X - mu).T,
-                                         lower=True).T
+        cv_sol = linalg.solve_triangular(cov_chol, (X - mu).T, lower=True).T
         log_prob[:, k] = - .5 * (n_features * np.log(2. * np.pi) +
                                  cv_log_det +
                                  np.sum(np.square(cv_sol), axis=1))
