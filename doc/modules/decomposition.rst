@@ -125,7 +125,7 @@ For instance, the following shows 16 sample portraits (centered around
 0.0) from the Olivetti dataset. On the right hand side are the first 16
 singular vectors reshaped as portraits. Since we only require the top
 16 singular vectors of a dataset with size :math:`n_{samples} = 400`
-and :math:`n_{features} = 64 \times 64 = 4096`, the computation time it
+and :math:`n_{features} = 64 \times 64 = 4096`, the computation time is
 less than 1s:
 
 .. |orig_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_001.png
