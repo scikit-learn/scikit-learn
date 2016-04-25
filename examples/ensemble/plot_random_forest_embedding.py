@@ -70,7 +70,7 @@ ax.set_xticks(())
 ax.set_yticks(())
 
 # Plot the decision in original space. For that, we will assign a color to each
-# point in the mesh [x_min, m_max] x [y_min, y_max].
+# point in the mesh [x_min, x_max]x[y_min, y_max].
 h = .01
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
