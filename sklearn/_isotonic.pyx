@@ -31,7 +31,9 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
         i = 0
         while i < n:
             k = target[i] + 1
-            if k == n or y[i] < y[k]:
+            if k == n:
+                break
+            if y[i] < y[k]:
                 i = k
                 continue
             sum_wy = w[i] * y[i]
@@ -53,8 +55,7 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
                         # Backtrack if we can.  This makes the algorithm
                         # single-pass and ensures O(n) complexity.
                         i = target[i - 1]
-                    else:
-                        i = k
+                    # Otherwise, restart from the same point.
                     break
         # Reconstruct the solution.
         i = 0
