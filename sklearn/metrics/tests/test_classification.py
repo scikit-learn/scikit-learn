@@ -45,7 +45,6 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 
-
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -1373,6 +1372,33 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+    #test labels option
+
+    X = [[1,1], [1,1], [2,2], [2,2]]
+    y_label = [1,1,2,2]
+
+    X_test = [[2,2], [2,2]]
+    y_true = [2,2]
+    y_score = np.array([[0.1,0.9], [0.1, 0.9]])
+    
+    # because y_true label are the same, if not use labels option, will get error
+    #error_logloss = log_loss(y_true, y_score)
+    #label_not_of_2_loss = -np.mean(np.log(y_score[:,0]))
+    #assert_almost_equal(error_logloss, label_not_of_2_loss)
+    #assert_raises(log_loss(y_true, y_score))
+
+    error_str  = ('y_true has only one label,'
+        'maybe get error log loss, should use labels option')
+
+    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+
+    # use labels, it works
+    ture_log_loss = -np.mean(np.log(y_score[:, 1]))
+    calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
+    assert_almost_equal(calculated_log_loss, ture_log_loss)
+
+    
 
 
 def test_log_loss_pandas_input():
