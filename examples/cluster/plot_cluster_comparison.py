@@ -47,12 +47,12 @@ random_state = 170
 X, y = datasets.make_blobs(n_samples=n_samples, random_state=random_state)
 transformation = [[0.6, -0.6], [-0.4, 0.8]]
 X_aniso = np.dot(X, transformation)
-aniso = (X_aniso,y)
+aniso = (X_aniso, y)
 
 # Different variance
 varied = datasets.make_blobs(n_samples=n_samples,
-                                cluster_std=[1.0, 2.5, 0.5],
-                                random_state=random_state)
+                             cluster_std=[1.0, 2.5, 0.5],
+                             random_state=random_state)
 
 
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
@@ -68,8 +68,8 @@ plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 
 plot_num = 1
-# noisy_circles, noisy_moons, blobs, no_structure, varied
-datasets = [noisy_circles, noisy_moons, blobs, no_structure, varied,aniso]
+
+datasets = [noisy_circles, noisy_moons, blobs, varied, aniso, no_structure]
 for i_dataset, dataset in enumerate(datasets):
     X, y = dataset
     # normalize dataset for easier parameter selection
