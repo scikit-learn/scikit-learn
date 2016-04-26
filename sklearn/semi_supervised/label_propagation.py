@@ -292,7 +292,8 @@ class LabelPropagation(BaseLabelPropagation):
         Parameter for knn kernel
 
     alpha : float
-        (DEPRECATED) Clamping factor
+        (DEPRECATED) Clamping factor. It's internally fixed to zero and it'll
+        be removed in another release
 
     max_iter : float
         Change maximum number of iterations allowed
@@ -344,12 +345,10 @@ class LabelPropagation(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
-        # Deprecating the parameter 'alpha', fixing it to zero.
-        if alpha is not None:
-            warnings.warn("The parameter 'alpha' is deprecated",
-                          category=DeprecationWarning)
-        alpha = 0.;
+                 alpha=.0, max_iter=30, tol=1e-3, n_jobs=1):
+        # alpha is deprecated for LabelPropagation because it doesn't have any
+        # theoretical meaning (from the reference paper).
+        alpha = .0
         super(LabelPropagation, self).__init__(kernel=kernel, gamma=gamma,
                                                n_neighbors=n_neighbors,
                                                alpha=alpha, max_iter=max_iter,
