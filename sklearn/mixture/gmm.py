@@ -491,7 +491,12 @@ class _GMMBase(BaseEstimator):
                     print('\tWeights have been initialized.')
 
             if 'c' in self.init_params or not hasattr(self, 'covars_'):
-                cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
+                # Only compute the full covariance if full or tied
+                cv = None
+                if self.covariance_type in ['full', 'tied']:
+                    cv = np.cov(X.T) + self.min_covar * np.eye(X.shape[1])
+                else:
+                    cv = np.var(X, axis=0) + self.min_covar
                 if not cv.shape:
                     cv.shape = (1, 1)
                 self.covars_ = \
@@ -759,15 +764,24 @@ def _validate_covars(covars, covariance_type, n_components):
 
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):
-    """Create all the covariance matrices from a given template."""
+    """Create all the covariance matrices from a given template.
+
+    If covariance_type is 'spherical' or 'diag', then tied_cv should be
+    a vector, representing the diagonal of the initial tied covariance matrix.
+
+    Otherwise, tied_cv should be the entire covariance matrix."""
     if covariance_type == 'spherical':
-        cv = np.tile(tied_cv.mean() * np.ones(tied_cv.shape[1]),
+        assert len(tied_cv.shape) == 1
+        cv = np.tile(tied_cv.mean() * np.ones(len(tied_cv)),
                      (n_components, 1))
     elif covariance_type == 'tied':
+        assert len(tied_cv.shape) == 2
         cv = tied_cv
     elif covariance_type == 'diag':
-        cv = np.tile(np.diag(tied_cv), (n_components, 1))
+        assert len(tied_cv.shape) == 1
+        cv = np.tile(tied_cv, (n_components, 1))
     elif covariance_type == 'full':
+        assert len(tied_cv.shape) == 2
         cv = np.tile(tied_cv, (n_components, 1, 1))
     else:
         raise ValueError("covariance_type must be one of " +
