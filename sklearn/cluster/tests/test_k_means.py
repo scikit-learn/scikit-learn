@@ -29,6 +29,7 @@ from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics.cluster import homogeneity_score
 
 
 # non centered, sparse centers to check the
@@ -51,6 +52,20 @@ def test_kmeans_dtype():
     km = KMeans(n_init=1).fit(X)
     pred_x = assert_warns(DataConversionWarning, km.predict, X)
     assert_array_equal(km.labels_, pred_x)
+
+
+def test_elkan_results():
+    rnd = np.random.RandomState(0)
+    X_normal = rnd.normal(size=(50, 10))
+    X_blobs, _ = make_blobs(random_state=0)
+    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_elkan = KMeans(algorithm='elkan', n_clusters=5,
+                      random_state=0, n_init=1)
+    for X in [X_normal, X_blobs]:
+        km_full.fit(X)
+        km_elkan.fit(X)
+        assert_array_almost_equal(km_elkan.cluster_centers_, km_full.cluster_centers_)
+        assert_array_equal(km_elkan.labels_, km_full.labels_)
 
 
 def test_labels_assignment_and_inertia():
@@ -565,9 +580,18 @@ def test_predict():
 
 
 def test_score():
+
     km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, n_init=1)
     s1 = km1.fit(X).score(X)
     km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, n_init=1)
+    s2 = km2.fit(X).score(X)
+    assert_greater(s2, s1)
+
+    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, n_init=1,
+                 algorithm='elkan')
+    s1 = km1.fit(X).score(X)
+    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, n_init=1,
+                 algorithm='elkan')
     s2 = km2.fit(X).score(X)
     assert_greater(s2, s1)
 
@@ -664,9 +688,26 @@ def test_fit_transform():
 
 
 def test_predict_equal_labels():
-    km = KMeans(random_state=13, n_jobs=1, n_init=1, max_iter=1)
+    km = KMeans(random_state=13, n_jobs=1, n_init=1, max_iter=1,
+                algorithm='full')
     km.fit(X)
     assert_array_equal(km.predict(X), km.labels_)
+
+    km = KMeans(random_state=13, n_jobs=1, n_init=1, max_iter=1,
+                algorithm='elkan')
+    km.fit(X)
+    assert_array_equal(km.predict(X), km.labels_)
+
+
+def test_full_vs_elkan():
+
+    km1 = KMeans(algorithm='full', random_state=13)
+    km2 = KMeans(algorithm='elkan', random_state=13)
+
+    km1.fit(X)
+    km2.fit(X)
+
+    homogeneity_score(km1.predict(X), km2.predict(X)) == 1.0
 
 
 def test_n_init():

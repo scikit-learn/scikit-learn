@@ -34,6 +34,7 @@ from ..externals.joblib import delayed
 from ..externals.six import string_types
 
 from . import _k_means
+from ._k_means_elkan import k_means_elkan
 
 
 ###############################################################################
@@ -166,7 +167,7 @@ def _tolerance(X, tol):
 def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             n_init=10, max_iter=300, verbose=False,
             tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
-            return_n_iter=False):
+            algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -203,6 +204,12 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
+
+    algorithm : "auto", "full" or "elkan", default="auto"
+        K-means algorithm to use. The classical EM-style algorithm is "full".
+        The "elkan" variation is more efficient by using the triangle
+        inequality, but currently doesn't support sparse data. "auto" chooses
+        "elkan" for dense data and "full" for sparse data.
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
@@ -313,12 +320,25 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     x_squared_norms = row_norms(X, squared=True)
 
     best_labels, best_inertia, best_centers = None, None, None
+    if n_clusters == 1:
+        # elkan doesn't make sense for a single cluster, full will produce
+        # the right result.
+        algorithm = "full"
+    if algorithm == "auto":
+        algorithm = "full" if sp.issparse(X) else 'elkan'
+    if algorithm == "full":
+        kmeans_single = _kmeans_single_lloyd
+    elif algorithm == "elkan":
+        kmeans_single = _kmeans_single_elkan
+    else:
+        raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
+                         " %s" % str(algorithm))
     if n_jobs == 1:
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
             # run a k-means once
-            labels, inertia, centers, n_iter_ = _kmeans_single(
+            labels, inertia, centers, n_iter_ = kmeans_single(
                 X, n_clusters, max_iter=max_iter, init=init, verbose=verbose,
                 precompute_distances=precompute_distances, tol=tol,
                 x_squared_norms=x_squared_norms, random_state=random_state)
@@ -332,12 +352,12 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         # parallelisation of k-means runs
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(_kmeans_single)(X, n_clusters, max_iter=max_iter,
-                                    init=init, verbose=verbose, tol=tol,
-                                    precompute_distances=precompute_distances,
-                                    x_squared_norms=x_squared_norms,
-                                    # Change seed to ensure variety
-                                    random_state=seed)
+            delayed(kmeans_single)(X, n_clusters, max_iter=max_iter, init=init,
+                                   verbose=verbose, tol=tol,
+                                   precompute_distances=precompute_distances,
+                                   x_squared_norms=x_squared_norms,
+                                   # Change seed to ensure variety
+                                   random_state=seed)
             for seed in seeds)
         # Get results with the lowest inertia
         labels, inertia, centers, n_iters = zip(*results)
@@ -358,9 +378,32 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         return best_centers, best_labels, best_inertia
 
 
-def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
-                   init='k-means++', verbose=False, random_state=None,
-                   tol=1e-4, precompute_distances=True):
+def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
+                         verbose=False, x_squared_norms=None,
+                         random_state=None, tol=1e-4,
+                         precompute_distances=True):
+    if sp.issparse(X):
+        raise ValueError("algorithm='elkan' not supported for sparse input X")
+    X = check_array(X, order="C")
+    random_state = check_random_state(random_state)
+    if x_squared_norms is None:
+        x_squared_norms = row_norms(X, squared=True)
+    # init
+    centers = _init_centroids(X, n_clusters, init, random_state=random_state,
+                              x_squared_norms=x_squared_norms)
+    centers = np.ascontiguousarray(centers)
+    if verbose:
+        print('Initialization complete')
+    centers, labels, n_iter = k_means_elkan(X, n_clusters, centers, tol=tol,
+                                            max_iter=max_iter, verbose=verbose)
+    inertia = np.sum((X - centers[labels]) ** 2)
+    return labels, inertia, centers, n_iter
+
+
+def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
+                         verbose=False, x_squared_norms=None,
+                         random_state=None, tol=1e-4,
+                         precompute_distances=True):
     """A single run of k-means, assumes preparation completed prior.
 
     Parameters
@@ -461,14 +504,15 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
             best_centers = centers.copy()
             best_inertia = inertia
 
-        shift = squared_norm(centers_old - centers)
-        if shift <= tol:
+        center_shift_total = squared_norm(centers_old - centers)
+        if center_shift_total <= tol:
             if verbose:
-                print("Converged at iteration %d" % i)
-
+                print("Converged at iteration %d: "
+                      "center shift %e within tolerance %e"
+                      % (i, center_shift_total, tol))
             break
 
-    if shift > 0:
+    if center_shift_total > 0:
         # rerun E-step in case of non-convergence so that predicted labels
         # match cluster centers
         best_labels, best_inertia = \
@@ -690,6 +734,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
+    algorithm : "auto", "full" or "elkan", default="auto"
+        K-means algorithm to use. The classical EM-style algorithm is "full".
+        The "elkan" variation is more efficient by using the triangle
+        inequality, but currently doesn't support sparse data. "auto" chooses
+        "elkan" for dense data and "full" for sparse data.
+
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
 
@@ -765,9 +815,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     """
 
-    def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, precompute_distances='auto',
-                 verbose=0, random_state=None, copy_x=True, n_jobs=1):
+    def __init__(self, n_clusters=8, init='k-means++', n_init=10,
+                 max_iter=300, tol=1e-4, precompute_distances='auto',
+                 verbose=0, random_state=None, copy_x=True,
+                 n_jobs=1, algorithm='auto'):
 
         self.n_clusters = n_clusters
         self.init = init
@@ -779,6 +830,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.random_state = random_state
         self.copy_x = copy_x
         self.n_jobs = n_jobs
+        self.algorithm = algorithm
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
@@ -812,12 +864,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
-                X, n_clusters=self.n_clusters, init=self.init,
-                n_init=self.n_init, max_iter=self.max_iter,
-                verbose=self.verbose, return_n_iter=True,
+                X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
+                max_iter=self.max_iter, verbose=self.verbose,
                 precompute_distances=self.precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
-                n_jobs=self.n_jobs)
+                n_jobs=self.n_jobs, algorithm=self.algorithm, return_n_iter=True)
         return self
 
     def fit_predict(self, X, y=None):
