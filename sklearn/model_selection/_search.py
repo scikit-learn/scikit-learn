@@ -241,11 +241,9 @@ class ParameterSampler(object):
                 yield param_grid[i]
 
         else:
-            # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(self.param_distributions.items())
             for _ in six.moves.range(self.n_iter):
                 params = dict()
-                for k, v in items:
+                for k, v in self.param_distributions.items():
                     if hasattr(v, "rvs"):
                         if sp_version < (0, 16):
                             params[k] = v.rvs()
