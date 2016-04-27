@@ -700,3 +700,19 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_copy_and_writeable(X, copy=False):
+    """Return a writeable copy of the array
+
+    Parameters
+    ----------
+    X : array
+        Input array.
+    copy : bool
+        If set, a copy of `X` is made irrespective of it being writeable
+        or not.
+    """
+    if copy or not X.flags.writeable:
+        return X.copy()
+    return X
