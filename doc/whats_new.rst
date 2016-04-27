@@ -200,6 +200,9 @@ Bug fixes
       :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor`
       (`#6764 <https://github.com/scikit-learn/scikit-learn/pull/6764>`_). By `Wenhua Yang`_.
 
+    - Fix bug where expected and adjusted mutual information were incorrect if
+      cluster contingency cells exceeded ``2**16``. By `Joel Nothman`_.
+
 
 API changes summary
 -------------------
@@ -4179,5 +4182,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ori Ziv: https://github.com/zivori
 
 .. _Sears Merritt: https://github.com/merritts
+<<<<<<< HEAD
 
 .. _Wenhua Yang: https://github.com/geekoala
+=======
+>>>>>>> FIX bug where expected_mutual_information may miscalculate
