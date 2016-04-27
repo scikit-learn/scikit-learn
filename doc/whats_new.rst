@@ -54,6 +54,10 @@ New features
    - Added ``algorithm="elkan"`` to :class:`cluster.KMeans` implementing
      Elkan's fast K-Means algorithm. By `Andreas Müller`_.
 
+   - Generalization of :func:`model_selection._validation.cross_val_predict`.
+     One can pass method names such as `predict_proba` to be used in the cross
+     validation framework instead of the default `predict`. By `Ori Ziv`_ and `Sears Merritt`_.
+
 Enhancements
 ............
 
@@ -4167,3 +4171,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Thierry Guillemot: https://github.com/tguillemot
 
 .. _Wei Xue: https://github.com/xuewei4d
+
+.. _Ori Ziv: https://github.com/zivori
+
+.. _Sears Merritt: https://github.com/merritts

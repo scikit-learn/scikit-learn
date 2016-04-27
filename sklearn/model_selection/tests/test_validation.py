@@ -41,7 +41,7 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import precision_score
 
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -53,6 +53,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.base import BaseEstimator
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
@@ -740,3 +741,31 @@ def test_cross_val_predict_sparse_prediction():
     preds_sparse = cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
     assert_array_almost_equal(preds_sparse, preds)
+
+
+def test_cross_val_predict_apply_func_cv():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    classes = len(set(y))
+
+    kfold = KFold(len(iris.target))
+
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    for method in methods:
+        est = LogisticRegression()
+
+        predictions = cross_val_predict(est, X, y, method=method)
+        assert_equal(len(predictions), len(y))
+
+        expected_predictions = np.zeros([len(y), classes])
+        func = getattr(est, method)
+
+        # Naive loop (should be same as cross_val_predict):
+        for train, test in kfold.split(X, y):
+            est.fit(X[train], y[train])
+            expected_predictions[test] = func(X[test])
+
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold)
+        assert_array_almost_equal(expected_predictions, predictions)
