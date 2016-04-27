@@ -242,7 +242,7 @@ class Pipeline(_BasePipeline):
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
-        
+
         Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
 
@@ -681,8 +681,6 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             delayed(_fit_transform_one)(trans, name, weight, X, y,
                                         **fit_params)
             for name, trans, weight in self._iter())
-        print(len(result))
-        print('!!!', result[0])
 
         Xs, transformers = zip(*result)
         self._update_transformer_list(transformers)
