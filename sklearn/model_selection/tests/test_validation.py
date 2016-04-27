@@ -743,7 +743,7 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def test_cross_val_predict_apply_func_cv():
+def test_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
