@@ -308,7 +308,8 @@ def _score(estimator, X_test, y_test, scorer):
 
 
 def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
+                      method='predict'):
     """Generate cross-validated estimates for each input data point
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -371,10 +372,13 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+    method : string, optional, default: 'predict'
+        Invokes the passed method name of the passed estimator.
+
     Returns
     -------
     predictions : ndarray
-        This is the result of calling 'predict'
+        This is the result of calling ``method``
 
     Examples
     --------
@@ -389,12 +393,18 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     X, y, labels = indexable(X, y, labels)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+
+    # Ensure the estimator has implemented the passed decision function
+    if not callable(getattr(estimator, method)):
+        raise AttributeError('{} not implemented in estimator'
+                             .format(method))
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
-        clone(estimator), X, y, train, test, verbose, fit_params)
+        clone(estimator), X, y, train, test, verbose, fit_params, method)
         for train, test in cv.split(X, y, labels))
 
     # Concatenate the predictions
@@ -416,7 +426,8 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     return predictions[inv_test_indices]
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
+def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
+                     method):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -445,10 +456,13 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
 
+    method : string
+        Invokes the passed method name of the passed estimator.
+
     Returns
     -------
     predictions : sequence
-        Result of calling 'estimator.predict'
+        Result of calling 'estimator.method'
 
     test : array-like
         This is the value of the test parameter
@@ -465,7 +479,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    predictions = estimator.predict(X_test)
+    func = getattr(estimator, method)
+    predictions = func(X_test)
     return predictions, test
 
 
