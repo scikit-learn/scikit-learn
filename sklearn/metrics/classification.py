@@ -1559,8 +1559,8 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True, sample_weig
         predict_proba method.
 
     labels : array-like 
-        When len(unique(y_true)) < len(unique(y_pred)), you must use labels option and
-        len(unique(labels)) eques len(unique(y_pred))
+        When len(np.unique(y_true)) < len(np.unique(y_pred)), you must use labels option then
+        len(np.unique(labels)) eques len(np.unique(y_pred))
 
 
     eps : float
@@ -1594,17 +1594,14 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True, sample_weig
     The logarithm used is the natural logarithm (base-e).
     """
     lb = LabelBinarizer()
-
-    
-
-    lb.fit(labels) if labels else lb.fit(y_true)
+    lb.fit(labels) if labels is not None else lb.fit(y_true)
 
     T = lb.transform(y_true)
     
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
-
     y_pred = check_array(y_pred, ensure_2d=False)
+
     # Clipping
     Y = np.clip(y_pred, eps, 1 - eps)
 

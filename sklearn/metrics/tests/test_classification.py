@@ -44,7 +44,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
-
+from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -1374,6 +1374,29 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
 
+    #test labels option
+    X = [[1,1], [1,1], [2, 2], [2, 2]]
+
+    y = [1, 1, 2, 2]
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+
+
+    y_score = clf.predict_proba([[2,2], [2,2]])
+    y_true = [2,2]
+    expected_loss = -np.log(1)*2
+
+
+    # because y_true label are the same, if not use labels option , will get error
+    error_logloss = log_loss(y_true, y_score)
+    label_not_of_2_loss = -np.mean( np.log( np.clip(y_score[:,0],1e-15, 1-1e-15)))
+    assert_almost_equal(error_logloss, label_not_of_2_loss)
+    
+
+    # use labels, it works
+    label_of_2_loss = -np.mean(np.log(y_score[:,1]))
+    expected_logloss = log_loss(y_true, y_score, labels=[1, 2])
+    assert_almost_equal(expected_loss, label_of_2_loss)
 
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
