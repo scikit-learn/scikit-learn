@@ -54,6 +54,18 @@ def _intercept_dot(w, X, y):
 
     y : ndarray, shape (n_samples,)
         Array of labels.
+
+    Returns
+    -------
+    w : ndarray, shape (n_features,)
+        Coefficient vector without the intercept weight (w[-1]) if the
+        intercept should be fit. Unchanged otherwise.
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Unchanged.
+
+    yz : float
+        y * np.dot(X, w).
     """
     c = 0.
     if w.size == X.shape[1] + 1:
@@ -61,7 +73,8 @@ def _intercept_dot(w, X, y):
         w = w[:-1]
 
     z = safe_sparse_dot(X, w) + c
-    return w, c, y * z
+    yz = y * z
+    return w, c, yz
 
 
 def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
@@ -93,13 +106,13 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     grad : ndarray, shape (n_features,) or (n_features + 1,)
         Logistic gradient.
     """
-    _, n_features = X.shape
+    n_samples, n_features = X.shape
     grad = np.empty_like(w)
 
     w, c, yz = _intercept_dot(w, X, y)
 
     if sample_weight is None:
-        sample_weight = np.ones(y.shape[0])
+        sample_weight = np.ones(n_samples)
 
     # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
