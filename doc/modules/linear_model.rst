@@ -753,6 +753,8 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
 
   * :ref:`example_linear_model_plot_logistic_path.py`
 
+  * :ref:`example_linear_model_plot_logistic_multinomial.py`
+
 .. _liblinear_differences:
 
 .. topic:: Differences from liblinear:
