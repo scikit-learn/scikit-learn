@@ -258,8 +258,8 @@ def load_iris(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If true, you will get (X, y), else you will get Bunch.
-
+        If True, returns (data, target) instead of a Bunch object. See below for more
+        information about the `data` and `target` object
 
     Returns
     -------
