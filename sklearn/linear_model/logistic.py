@@ -93,13 +93,13 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     grad : ndarray, shape (n_features,) or (n_features + 1,)
         Logistic gradient.
     """
-    _, n_features = X.shape
+    n_samples, n_features = X.shape
     grad = np.empty_like(w)
 
     w, c, yz = _intercept_dot(w, X, y)
 
     if sample_weight is None:
-        sample_weight = np.ones(y.shape[0])
+        sample_weight = np.ones(n_samples)
 
     # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
