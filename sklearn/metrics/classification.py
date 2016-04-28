@@ -1558,9 +1558,8 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True, sample_weig
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
-    labels : array-like 
-        When len(np.unique(y_true)) < len(np.unique(y_pred)), you must use labels option then
-        len(np.unique(labels)) eques len(np.unique(y_pred))
+    labels : array-like, optional (default=None)
+        If not None , LabelBinarizer will fit labels instead of y_true
 
 
     eps : float

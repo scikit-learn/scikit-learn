@@ -247,31 +247,6 @@ def test_regression_scorers():
     assert_almost_equal(score1, score2)
 
 
-def test_log_loss():
-   
-
-
-
-    X = [[1,1], [1,1], [2, 2], [2, 2]]
-    y = [1, 1, 2, 2]
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-
-
-
-    y_score = clf.predict_proba([[2,2], [2,2]])
-    y_true = [2,2]
-    expected_value = np.log(1)*2
-
-    # y_true are the same, not use labels arg, you will get error 
-    error_logloss = log_loss(y_true, y_score)
-    assert_not_equal(expected_value, error_logloss)
-
-
-    # use labels, it works
-    expected_logloss = log_loss(y_true, y_score, labels=[1, 2])
-    assert_almost_equal(expected_value, expected_logloss)
-
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
