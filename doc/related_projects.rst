@@ -24,6 +24,12 @@ enhance the functionality of scikit-learn's estimators.
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
 
+- `TPOT <https://github.com/rhiever/tpot>`_
+  An automated machine learning toolkit that optimizes a series of scikit-learn
+  operators to design a machine learning pipeline, including data and feature
+  preprocessors as well as the estimators. Works as a drop-in replacement for a
+  scikit-learn estimator.
+
 - `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
   Serialization of (some) scikit-learn estimators into PMML.
 
