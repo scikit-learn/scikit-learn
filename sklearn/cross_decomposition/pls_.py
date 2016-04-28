@@ -17,10 +17,10 @@ import numpy as np
 from scipy import linalg
 from ..utils import arpack
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+import scipy
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
-import scipy
 pinv2_args = {}
 if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
     # check_finite=False is an optimization available only in scipy >=0.12
@@ -41,7 +41,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     ite = 1
     X_pinv = Y_pinv = None
     eps = np.finfo(X.dtype).eps
-    # Inner loop of the Wold algo.
+    # Inner loop of the Wold algorithm.
     while True:
         # 1.1 Update u: the X weights
         if mode == "B":
@@ -52,7 +52,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
-            x_weights = np.dot(X.T, y_score) / np.dot(y_score.T, y_score)
+            x_weights = np.dot(X.T, y_score)
         # 1.2 Normalize u
         x_weights /= np.sqrt(np.dot(x_weights.T, x_weights)) + eps
         # 1.3 Update x_score: the X latent scores
@@ -64,13 +64,12 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
-            y_weights = np.dot(Y.T, x_score) / np.dot(x_score.T, x_score)
+            y_weights = np.dot(Y.T, x_score)
         # 2.2 Normalize y_weights
         if norm_y_weights:
             y_weights /= np.sqrt(np.dot(y_weights.T, y_weights)) + eps
         # 2.3 Update y_score: the Y latent scores
-        y_score = np.dot(Y, y_weights) / (np.dot(y_weights.T, y_weights) + eps)
-        # y_score = np.dot(Y, y_weights) / np.dot(y_score.T, y_score) ## BUG
+        y_score = np.dot(Y, y_weights)
         x_weights_diff = x_weights - x_weights_old
         if np.dot(x_weights_diff.T, x_weights_diff) < tol or Y.shape[1] == 1:
             break
@@ -91,7 +90,7 @@ def _svd_cross_product(X, Y):
 
 
 def _center_scale_xy(X, Y, scale=True):
-    """ Center X, Y and scale if the scale parameter==True
+    """ Center X, Y, and optionally scales it
 
     Returns
     -------
@@ -142,7 +141,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
     n_components : int, number of components to keep. (default 2).
 
-    scale : boolean, scale data? (default True)
+    scale : boolean, scale data? (default True) Data is always centered even if False
 
     deflation_mode : str, "canonical" or "regression". See notes.
 
@@ -358,8 +357,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         else:
             self.y_rotations_ = np.ones(1)
 
-        if True or self.deflation_mode == "regression":
-            # FIXME what's with the if?
+        if True or self.deflation_mode is "regression":
             # Estimate regression coefficient
             # Regress Y on T
             # Y = TQ' + Err,
@@ -367,8 +365,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
             self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-            self.coef_ = (1. / self.x_std_.reshape((p, 1)) * self.coef_ *
-                          self.y_std_)
+
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -432,7 +429,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         X -= self.x_mean_
         X /= self.x_std_
         Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
+        return(Ypred * self.y_std_) + self.y_mean_
 
     def fit_transform(self, X, y=None, **fit_params):
         """Learn and apply the dimension reduction on the train data.
@@ -850,3 +847,4 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         return self.fit(X, y, **fit_params).transform(X, y)
+        
