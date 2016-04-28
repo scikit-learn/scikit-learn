@@ -46,6 +46,7 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
+from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets)
 from .externals.joblib import Parallel
@@ -468,8 +469,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
-        y = np.asarray(y)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
@@ -512,8 +512,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                 range(self.n_classes_ *
                                 (self.n_classes_-1) // 2)]
 
-        y = np.asarray(y)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_ovo_binary)(
