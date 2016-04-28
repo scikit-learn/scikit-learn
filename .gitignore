@@ -61,3 +61,5 @@ cythonize.dat
 
 !*/src/*.c
 !*/src/*.cpp
+*.sln
+*.pyproj
