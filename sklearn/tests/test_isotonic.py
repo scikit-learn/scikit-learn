@@ -1,6 +1,7 @@
 import warnings
 import numpy as np
 import pickle
+import copy
 
 from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression)
@@ -395,3 +396,9 @@ def test_fast_predict():
     y_pred_fast = fast_model.predict(X_test)
 
     assert_array_equal(y_pred_slow, y_pred_fast)
+
+
+def test_isotonic_copy_before_fit():
+    # https://github.com/scikit-learn/scikit-learn/issues/6628
+    ir = IsotonicRegression()
+    copy.copy(ir)
