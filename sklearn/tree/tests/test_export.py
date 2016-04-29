@@ -46,26 +46,7 @@ def test_graphviz_toy():
                 '}'
 
     assert_equal(contents1, contents2)
-    # Test export with both proportions and values
-    out = StringIO()
-    export_graphviz(clf, out_file=out,proportion='both')
-    contents1 = out.getvalue()
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box] ;\n' \
-                '0 [label="X[0] <= 0.0\\ngini = 0.5\\n' \
-                'samples = 6 (100.0%)\\n' \
-                'value = [3, 3]\\nproportion = [0.5, 0.5]"] ;\n' \
-                '1 [label="gini = 0.0\\nsamples = 3 (50.0%)\\n' \
-                'value = [3, 0]\\nproportion = [1.0, 0.0]"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="gini = 0.0\\nsamples = 3 (50.0%)\\n' \
-                'value = [0, 3]\\nproportion = [0.0, 1.0]"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '}'
 
-    assert_equal(contents1, contents2)
     # Test with feature_names
     out = StringIO()
     export_graphviz(clf, out_file=out, feature_names=["feature0", "feature1"])
@@ -126,6 +107,30 @@ def test_graphviz_toy():
                 '}'
 
     assert_equal(contents1, contents2)
+
+    # Test proportions equal 'both'
+    out = StringIO()
+    export_graphviz(clf, out_file=out, filled=True, impurity=False,
+                    proportion='both', special_characters=True, rounded=True)
+    contents1 = out.getvalue()
+    contents2 = 'digraph Tree {\n' \
+                'node [shape=box, style="filled, rounded", color="black", ' \
+                'fontname=helvetica] ;\n' \
+                'edge [fontname=helvetica] ;\n' \
+                '0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 6 (100.0%)' \
+                '<br/>value = [3, 3]<br/>proportion = [0.5, 0.5]>, ' \
+                'fillcolor="#e5813900"] ;\n' \
+                '1 [label=<samples = 3 (50.0%)<br/>value = [3, 0]<br/>' \
+                'proportion = [1.0, 0.0]>, fillcolor="#e58139ff"] ;\n' \
+                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
+                'headlabel="True"] ;\n' \
+                '2 [label=<samples = 3 (50.0%)<br/>value = [0, 3]<br/>' \
+                'proportion = [0.0, 1.0]>, fillcolor="#399de5ff"] ;\n' \
+                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
+                'headlabel="False"] ;\n' \
+                '}'
+
+    assert_equal(contents1, contents2)    
 
     # Test max_depth
     out = StringIO()
@@ -241,59 +246,6 @@ def test_graphviz_toy():
 
     assert_equal(contents1, contents2)
 
-    #Test export with proportions
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, leaves_parallel=True,
-                    rotate=True, rounded=True, proportion =True)
-    contents1 = out.getvalue()
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
-                'rankdir=LR ;\n' \
-                '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 100.0%\\n' \
-                'value = 0.0", fillcolor="#e5813980"] ;\n' \
-                '1 [label="mse = 0.0\\nsamples = 50.0%\\nvalue = -1.0", ' \
-                'fillcolor="#e5813900"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="mse = 0.0\\nsamples = 50.0%\\nvalue = 1.0", ' \
-                'fillcolor="#e58139ff"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="False"] ;\n' \
-                '{rank=same ; 0} ;\n' \
-                '{rank=same ; 1; 2} ;\n' \
-                '}'
-
-    assert_equal(contents1, contents2)
-
-    #Test export with proportions and values
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, leaves_parallel=True,
-                    rotate=True, rounded=True, proportion ='both')
-    contents1 = out.getvalue()
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled, rounded", color="black", ' \
-                'fontname=helvetica] ;\n' \
-                'graph [ranksep=equally, splines=polyline] ;\n' \
-                'edge [fontname=helvetica] ;\n' \
-                'rankdir=LR ;\n' \
-                '0 [label="X[0] <= 0.0\\nmse = 1.0\\nsamples = 6 (100.0%)\\n' \
-                'value = 0.0", fillcolor="#e5813980"] ;\n' \
-                '1 [label="mse = 0.0\\nsamples = 3 (50.0%)\\nvalue = -1.0", ' \
-                'fillcolor="#e5813900"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="mse = 0.0\\nsamples = 3 (50.0%)\\nvalue = 1.0", ' \
-                'fillcolor="#e58139ff"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="False"] ;\n' \
-                '{rank=same ; 0} ;\n' \
-                '{rank=same ; 1; 2} ;\n' \
-                '}'
-
-    assert_equal(contents1, contents2)    
     
 def test_graphviz_errors():
     # Check for errors of export_graphviz

@@ -225,19 +225,18 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         # Write node sample count
         if labels:
             node_string += 'samples = '
+        curr_n_node_samples = tree.n_node_samples[node_id]
         if proportion==True:
-            percent = (100. * tree.n_node_samples[node_id] /
-                       float(tree.n_node_samples[0]))
+            percent = 100. * curr_n_node_samples / tree.n_node_samples[0]
             node_string += (str(round(percent, 1)) + '%' +
                             characters[4])
         elif proportion=='both':
-            node_string += (str(tree.n_node_samples[node_id]))
-            percent = (100. * tree.n_node_samples[node_id] /
-                       float(tree.n_node_samples[0]))
+            node_string += (str(curr_n_node_samples))
+            percent = 100. * curr_n_node_samples / tree.n_node_samples[0]
             node_string += (' (' + str(round(percent, 1)) + '%)' +
                             characters[4])
         else:
-            node_string += (str(tree.n_node_samples[node_id]) +
+            node_string += (str(curr_n_node_samples) +
                             characters[4])
 
         # Write node class distribution / regression value
@@ -277,7 +276,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         node_string += value_text + characters[4]
         if proportion == 'both' and tree.n_classes[0] != 1: 
             # Classification with both value and proportion
-            node_string += 'proportion = '
+            if labels:
+                node_string += 'proportion = '
             value_text2 = str(value_text2.astype('S32')).replace("b'", "'")
             value_text2 = value_text2.replace("' '", ", ").replace("'", "")
             value_text2 = value_text2.replace("\n ", characters[4])
