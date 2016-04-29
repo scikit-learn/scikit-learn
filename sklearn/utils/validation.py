@@ -297,6 +297,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
+        When order is None (default), then if copy=False, nothing is ensured
+        about the memory layout of the output array; otherwise (copy=True)
+        the memory layout of the returned array is kept as close as possible
+        to the original array.
 
     copy : boolean (default=False)
         Whether a forced copy will be triggered. If copy=False, a copy might
