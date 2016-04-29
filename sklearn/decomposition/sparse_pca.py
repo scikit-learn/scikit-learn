@@ -8,7 +8,8 @@ from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
-from .dict_learning import dict_learning, dict_learning_online
+from .dict_learning import dict_learning, dict_learning_online, \
+    MiniBatchDictionaryLearning
 
 
 class SparsePCA(BaseEstimator, TransformerMixin):
@@ -282,3 +283,27 @@ class MiniBatchSparsePCA(SparsePCA):
             return_n_iter=True)
         self.components_ = Vt.T
         return self
+
+
+class IncrementalSparsePCA(MiniBatchDictionaryLearning):
+    def __init__(self, n_components=None, alpha=1, l1_ratio=1.0,
+                 n_iter=1000, n_jobs=1,
+                 batch_size=3, tol=0., shuffle=True, dict_init=None,
+                 transform_alpha=None,
+                 verbose=False, random_state=None,
+                 debug_info=False):
+        MiniBatchDictionaryLearning.__init__(self, n_components=n_components,
+                                           alpha=alpha,
+                                           l1_ratio=l1_ratio,
+                                           fit_algorithm='ridge',
+                                           n_iter=n_iter,
+                                           n_jobs=n_jobs,
+                                           batch_size=batch_size,
+                                           tol=tol,
+                                           shuffle=shuffle,
+                                           dict_init=dict_init,
+                                           transform_alpha=transform_alpha,
+                                           verbose=verbose,
+                                           random_state=random_state,
+                                           split_sign=False,
+                                           debug_info=debug_info)

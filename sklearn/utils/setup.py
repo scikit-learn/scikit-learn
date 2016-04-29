@@ -74,6 +74,11 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension("enet_proj_fast",
+                         sources=["enet_proj_fast.c"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
     return config
 
 
