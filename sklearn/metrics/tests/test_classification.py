@@ -1375,29 +1375,26 @@ def test_log_loss():
     assert_almost_equal(loss, 1.0383217, decimal=6)
 
     #test labels option
-    X = [[1,1], [1,1], [2, 2], [2, 2]]
 
-    y = [1, 1, 2, 2]
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
+    X = [[1,1], [1,1], [2,2], [2,2]]
+    y_label = [1,1,2,2]
 
-
-    y_score = clf.predict_proba([[2,2], [2,2]])
+    X_test = [[2,2], [2,2]]
     y_true = [2,2]
-    expected_loss = -np.log(1)*2
-
-
-    # because y_true label are the same, if not use labels option , will get error
+    y_score = np.array([[0.1,0.9], [0.1, 0.9]])
+    
+    # because y_true label are the same, if not use labels option, will get error
     error_logloss = log_loss(y_true, y_score)
-    label_not_of_2_loss = -np.mean( np.log( np.clip(y_score[:,0],1e-15, 1-1e-15)))
+    label_not_of_2_loss = -np.mean(np.log(y_score[:,0]))
     assert_almost_equal(error_logloss, label_not_of_2_loss)
     
 
     # use labels, it works
-    label_of_2_loss = -np.mean(np.log(y_score[:,1]))
+    label_of_2_loss = -np.mean(np.log(y_score[:, 1]))
     expected_logloss = log_loss(y_true, y_score, labels=[1, 2])
-    assert_almost_equal(expected_loss, label_of_2_loss)
+    assert_almost_equal(expected_logloss, label_of_2_loss)
 
+test_log_loss()
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
     y_tr = np.array(["ham", "spam", "spam", "ham"])

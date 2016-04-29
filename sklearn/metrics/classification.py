@@ -1536,7 +1536,8 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True, sample_weight=None):
+def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
+             sample_weight=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1558,9 +1559,9 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True, sample_weig
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
-    labels : array-like, optional (default=None)
-        If not None , LabelBinarizer will fit labels instead of y_true
 
+    labels : array-like, optional (default=None)
+        If not provided, labels will be inferred from y_true
 
     eps : float
         Log loss is undefined for p=0 or p=1, so probabilities are
@@ -1594,9 +1595,8 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True, sample_weig
     """
     lb = LabelBinarizer()
     lb.fit(labels) if labels is not None else lb.fit(y_true)
-
     T = lb.transform(y_true)
-    
+
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
     y_pred = check_array(y_pred, ensure_2d=False)
