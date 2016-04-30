@@ -15,7 +15,6 @@ from sklearn.model_selection import cross_val_score
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.base import clone
 
 
 # Load the iris dataset and randomly permute it
@@ -210,8 +209,8 @@ def test_gridsearch():
     grid.fit(iris.data, iris.target)
 
 
-def test_threading_predict_proba_on_toy_problem():
-    """Check multithreading backend of VotingClassifier on toy dataset."""
+def test_parallel_predict_proba_on_toy_problem():
+    """Check parallel backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -220,19 +219,18 @@ def test_threading_predict_proba_on_toy_problem():
 
     eclf1 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='soft', n_jobs=1, backend='threading').fit(X, y)
+        voting='soft', n_jobs=1).fit(X, y)
     eclf2 = VotingClassifier(estimators=[
-        ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3))],
-        voting='soft', n_jobs=-1, backend='multiprocessing').fit(X, y)
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft', n_jobs=2).fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
-def test_multiprocessing_majority_label_iris():
+def test_parallel_majority_label_iris():
     """
-       Check multiprocessing backend of VotingClassifier
-       by majority label on dataset iris.
+       Check parallel VotingClassifier by majority label on dataset iris.
     """
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
@@ -241,27 +239,9 @@ def test_multiprocessing_majority_label_iris():
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
         voting='hard', n_jobs=1).fit(X, y)
     eclf2 = VotingClassifier(estimators=[
-        ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3))],
-        voting='hard', n_jobs=-1).fit(X, y)
-    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-
-
-def test_multithreading_majority_label_iris():
-    """
-       Check multithreading backend of VotingClassifier
-       by majority label on dataset iris.
-    """
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
-    clf3 = GaussianNB()
-    eclf1 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='soft', n_jobs=1, backend='threading').fit(X, y)
-    eclf2 = VotingClassifier(estimators=[
-        ('lr', clone(clf1)), ('rf', clone(clf2)), ('gnb', clone(clf3))],
-        voting='soft', n_jobs=-1, backend='multiprocessing').fit(X, y)
+        voting='hard', n_jobs=2).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
 def test_sample_weight():
@@ -273,16 +253,16 @@ def test_sample_weight():
     clf3 = SVC(probability=True, random_state=123)
     eclf1 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('svc', clf3)],
-        voting='soft', n_jobs=1).fit(X, y, sample_weight=np.ones((len(y),)))
+        voting='soft').fit(X, y, sample_weight=np.ones((len(y),)))
     eclf2 = VotingClassifier(estimators=[
-        ('lr', clone(clf1)), ('rf', clone(clf2)), ('svc', clone(clf3))],
-        voting='soft', n_jobs=-1).fit(X, y)
+        ('lr', clf1), ('rf', clf2), ('svc', clf3)],
+        voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
     sample_weight_ = np.random.RandomState(123).uniform(size=(len(y),))
-    eclf3 = VotingClassifier(estimators=[('lr', clone(clf1))],
-                             voting='soft', n_jobs=-1)
+    eclf3 = VotingClassifier(estimators=[('lr', clf1)],
+                             voting='soft')
     eclf3.fit(X, y, sample_weight_)
     clf1.fit(X, y, sample_weight_)
     assert_array_equal(eclf3.predict(X), clf1.predict(X))
