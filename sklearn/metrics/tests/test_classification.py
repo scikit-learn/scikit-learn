@@ -44,7 +44,6 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
-from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -1384,17 +1383,23 @@ def test_log_loss():
     y_score = np.array([[0.1,0.9], [0.1, 0.9]])
     
     # because y_true label are the same, if not use labels option, will get error
-    error_logloss = log_loss(y_true, y_score)
-    label_not_of_2_loss = -np.mean(np.log(y_score[:,0]))
-    assert_almost_equal(error_logloss, label_not_of_2_loss)
-    
+    #error_logloss = log_loss(y_true, y_score)
+    #label_not_of_2_loss = -np.mean(np.log(y_score[:,0]))
+    #assert_almost_equal(error_logloss, label_not_of_2_loss)
+    #assert_raises(log_loss(y_true, y_score))
+
+    error_str  = ('y_true has only one label,'
+        'maybe get error log loss, should use labels option')
+
+    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
 
     # use labels, it works
-    label_of_2_loss = -np.mean(np.log(y_score[:, 1]))
-    expected_logloss = log_loss(y_true, y_score, labels=[1, 2])
-    assert_almost_equal(expected_logloss, label_of_2_loss)
+    ture_log_loss = -np.mean(np.log(y_score[:, 1]))
+    calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
+    assert_almost_equal(calculated_log_loss, ture_log_loss)
 
-test_log_loss()
+
+
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
     y_tr = np.array(["ham", "spam", "spam", "ham"])
