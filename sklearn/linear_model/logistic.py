@@ -437,8 +437,8 @@ def _check_solver_option(solver, multi_class, penalty, dual):
                          "a multinomial backend." % solver)
 
     if solver != 'liblinear':
-        if penalty != 'l2':
-            raise ValueError("Solver %s supports only l2 penalties, "
+        if penalty not in ['l2', 'no-reg']:
+            raise ValueError("Solver %s supports only l2 or no penalties, "
                              "got %s penalty." % (solver, penalty))
         if dual:
             raise ValueError("Solver %s supports only "
@@ -522,9 +522,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : {'l1', 'l2', 'no-reg'}
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support only l2 penalties and no penalties.
 
     intercept_scaling : float, default 1.
         Useful only when the solver 'liblinear' is used
@@ -845,13 +845,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     solver : {'lbfgs', 'newton-cg', 'liblinear', 'sag'}
         Decides which solver to use.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : {'l1', 'l2', 'no-reg'}
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers support l2 penalties and no penalties.
 
     dual : bool
-        Dual or primal formulation. Dual formulation is only implemented for
-        l2 penalty with liblinear solver. Prefer dual=False when
+        Dual or primal formulation. Dual formulation is implemented for
+        l2 and no penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
     intercept_scaling : float, default 1.
@@ -977,17 +977,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     containing 64-bit floats for optimal performance; any other input format
     will be converted (and copied).
 
-    The 'newton-cg', 'sag', and 'lbfgs' solvers support only L2 regularization
-    with primal formulation. The 'liblinear' solver supports both L1 and L2
-    regularization, with a dual formulation only for the L2 penalty.
+    The 'newton-cg', 'sag', and 'lbfgs' solvers support no regularization
+    and L2 regularization with primal formulation. The 'liblinear' solver
+    supports L1, L2, and no regularization, with a dual formulation only
+    for the L2 penalty.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
     Parameters
     ----------
-    penalty : str, 'l1' or 'l2', default: 'l2'
+    penalty : {'l1', 'l2', 'no-reg'}, default: 'l2'
         Used to specify the norm used in the penalization. The 'newton-cg',
-        'sag' and 'lbfgs' solvers support only l2 penalties.
+        'sag' and 'lbfgs' solvers don't support l1 penalties.
 
     dual : bool, default: False
         Dual or primal formulation. Dual formulation is only implemented for
@@ -1047,7 +1048,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - For multiclass problems, only 'newton-cg', 'sag' and 'lbfgs' handle
             multinomial loss; 'liblinear' is limited to one-versus-rest
             schemes.
-        - 'newton-cg', 'lbfgs' and 'sag' only handle L2 penalty.
+        - 'newton-cg', 'lbfgs' and 'sag' don't handle l1 penalty.
 
         Note that 'sag' fast convergence is only guaranteed on features with
         approximately the same scale. You can preprocess the data with a
@@ -1136,7 +1137,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
-        self.C = C
+        self.C = C if penalty != 'no-reg' else 1e12
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
@@ -1375,7 +1376,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
-    penalty : str, 'l1' or 'l2'
+    penalty : str, 'l1' or 'l2', default 'l2'
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties.
 
@@ -1554,6 +1555,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         """
         _check_solver_option(self.solver, self.multi_class, self.penalty,
                              self.dual)
+        if self.penalty == "no-reg":
+            raise ValueError("Penalty cannot be 'no-reg' for"
+                             " LogisticRegressionCV. Use LogisticRegression"
+                             " with penalty='no-reg' for unregularized"
+                             " logistic regression.")
 
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
