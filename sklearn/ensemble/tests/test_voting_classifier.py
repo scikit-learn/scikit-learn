@@ -219,35 +219,35 @@ def test_parallel_predict_proba_on_toy_problem():
 
     eclf1 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='soft', n_jobs=1).fit(X, y)
+        voting='soft',
+        n_jobs=1).fit(X, y)
     eclf2 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='soft', n_jobs=2).fit(X, y)
+        voting='soft',
+        n_jobs=2).fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
 def test_parallel_majority_label_iris():
-    """
-       Check parallel VotingClassifier by majority label on dataset iris.
-    """
+    """Check parallel VotingClassifier by majority label on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
     eclf1 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='hard', n_jobs=1).fit(X, y)
+        voting='hard',
+        n_jobs=1).fit(X, y)
     eclf2 = VotingClassifier(estimators=[
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-        voting='hard', n_jobs=2).fit(X, y)
+        voting='hard',
+        n_jobs=2).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
 
 def test_sample_weight():
-    """
-        Tests sample_weight parameter of VotingClassifier
-    """
+    """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = SVC(probability=True, random_state=123)
@@ -261,8 +261,7 @@ def test_sample_weight():
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
     sample_weight_ = np.random.RandomState(123).uniform(size=(len(y),))
-    eclf3 = VotingClassifier(estimators=[('lr', clf1)],
-                             voting='soft')
+    eclf3 = VotingClassifier(estimators=[('lr', clf1)], voting='soft')
     eclf3.fit(X, y, sample_weight_)
     clf1.fit(X, y, sample_weight_)
     assert_array_equal(eclf3.predict(X), clf1.predict(X))
