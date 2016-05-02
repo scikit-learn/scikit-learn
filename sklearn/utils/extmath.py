@@ -267,7 +267,7 @@ def randomized_range_finder(A, size, n_iter,
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter=4,
+def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
@@ -349,6 +349,13 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=4,
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
+    if n_iter == None:
+        # Checks if the number of iterations is explicitely specified
+        n_iter = 4
+        n_iter_specified = False
+    else:
+        n_iter_specified = True
+
     if transpose == 'auto':
         transpose = n_samples < n_features
     if transpose:
@@ -357,8 +364,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=4,
 
     # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
     if n_components < .1 * min(M.shape) and n_iter < 7:
-        warnings.warn("The number of power iterations is increased to 7 to "
-                      "achieve higher precision.")
+        if n_iter_specified:
+            warnings.warn("The number of power iterations is increased to "
+                      "7 to achieve higher precision.")
         n_iter = 7
 
     Q = randomized_range_finder(M, n_random, n_iter,
