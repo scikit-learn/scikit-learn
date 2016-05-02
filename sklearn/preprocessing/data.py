@@ -28,7 +28,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from .label import LabelEncoder
-from ..utils.fixes import np_version
+from ..utils.fixes import in1d, setdiff1d
 
 
 zip = six.moves.zip
@@ -1706,10 +1706,8 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         return X
 
     n_features = X.shape[1]
-    ind = np.arange(n_features)
     sel = np.zeros(n_features, dtype=bool)
     sel[np.asarray(selected)] = True
-    not_sel = np.logical_not(sel)
     n_selected = np.sum(sel)
 
     if n_selected == 0:
@@ -1719,8 +1717,8 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         # All features selected.
         return transform(X)
     else:
-        X_sel = transform(X[:, ind[sel]])
-        X_not_sel = X[:, ind[not_sel]].astype(dtype)
+        X_sel = transform(X[:, sel])
+        X_not_sel = X[:, ~sel].astype(dtype)
 
         if return_val:
             if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
@@ -1833,7 +1831,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def _fit(self, X):
-        "Assumes `X` contains only cetergorical features."
+        "Assumes `X` contains only catergorical features."
 
         X = check_array(X, dtype=np.object)
         n_samples, n_features = X.shape
@@ -1915,31 +1913,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_mask = np.ones_like(X, dtype=np.bool)
 
         for i in range(n_features):
-            if np_version < (1, 8):
-                # in1d is not supported for object datatype in np < 1.8
-                valid_mask = np.ones_like(X[:, i], dtype=np.bool)
-                found_classes = set(np.unique(X[:, i]))
-                valid_classes = set(self.label_encoders_[i].classes_)
-                invalid_classes = found_classes - valid_classes
 
-                for item in invalid_classes:
-                    mask = X[:, i] == item
-                    np.logical_not(mask, mask)
-                    np.logical_and(valid_mask, mask, valid_mask)
-
-            else:
-                valid_mask = np.in1d(X[:, i], self.label_encoders_[i].classes_)
+            valid_mask = in1d(X[:, i], self.label_encoders_[i].classes_)
 
             if not np.all(valid_mask):
 
                 if self.handle_unknown == 'error':
-                    if np_version < (1, 8):
-                        valid_classes = set(self.label_encoders_[i].classes_)
-                        diff = set(X[:, i]) - valid_classes
-                        diff = list(diff)
-                    else:
-                        diff = np.setdiff1d(X[:, i],
-                                            self.label_encoders_[i].classes_)
+                    diff = setdiff1d(X[:, i], self.label_encoders_[i].classes_)
                     msg = 'Unknown feature(s) %s in column %d' % (diff, i)
                     raise ValueError(msg)
                 elif self.handle_unknown == 'ignore':
