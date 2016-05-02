@@ -1706,8 +1706,10 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         return X
 
     n_features = X.shape[1]
+    ind = np.arange(n_features)
     sel = np.zeros(n_features, dtype=bool)
     sel[np.asarray(selected)] = True
+    not_sel = np.logical_not(sel)
     n_selected = np.sum(sel)
 
     if n_selected == 0:
@@ -1717,8 +1719,8 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
         # All features selected.
         return transform(X)
     else:
-        X_sel = transform(X[:, sel])
-        X_not_sel = X[:, ~sel].astype(dtype)
+        X_sel = transform(X[:, ind[sel]])
+        X_not_sel = X[:, ind[not_sel]].astype(dtype)
 
         if return_val:
             if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
