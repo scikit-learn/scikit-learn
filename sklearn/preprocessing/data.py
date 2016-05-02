@@ -122,7 +122,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     See also
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
-         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`)
+         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
@@ -242,7 +242,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    minmax_scale: Equivalent function without the object oriented API
+    minmax_scale: Equivalent function without the object oriented API.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -416,7 +416,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     See also
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
-         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`)
+         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
@@ -511,7 +511,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    scale: Equivalent function without the object oriented API
+    scale: Equivalent function without the object oriented API.
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
@@ -729,7 +729,7 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    maxabs_scale: Equivalent function without the object oriented API
+    maxabs_scale: Equivalent function without the object oriented API.
     """
 
     def __init__(self, copy=True):
@@ -864,7 +864,7 @@ def maxabs_scale(X, axis=0, copy=True):
     See also
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`)
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
@@ -947,7 +947,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    robust_scale: Equivalent function without the object oriented API
+    robust_scale: Equivalent function without the object oriented API.
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
@@ -1102,7 +1102,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
     See also
     --------
     RobustScaler: Performs centering and scaling using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`)
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
                      copy=copy)
@@ -1304,7 +1304,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`)
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     if norm not in ('l1', 'l2', 'max'):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1386,7 +1386,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    normalize: Equivalent function without the object oriented API
+    normalize: Equivalent function without the object oriented API.
     """
 
     def __init__(self, norm='l2', copy=True):
@@ -1440,7 +1440,7 @@ def binarize(X, threshold=0.0, copy=True):
     See also
     --------
     Binarizer: Performs binarization using the ``Transformer`` API
-         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`)
+         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
@@ -1497,7 +1497,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    binarize: Equivalent function without the object oriented API
+    binarize: Equivalent function without the object oriented API.
     """
 
     def __init__(self, threshold=0.0, copy=True):
