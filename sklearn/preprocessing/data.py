@@ -122,7 +122,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     See also
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
-         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
@@ -416,7 +416,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     See also
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
-         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
@@ -1440,7 +1440,7 @@ def binarize(X, threshold=0.0, copy=True):
     See also
     --------
     Binarizer: Performs binarization using the ``Transformer`` API
-         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
