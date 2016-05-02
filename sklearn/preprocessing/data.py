@@ -1717,6 +1717,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Whether to raise an error or ignore if a unknown categorical feature is
         present during transform.
 
+    copy : bool, default=True
+        If unset, `X` maybe modified in space.
+
     Attributes
     ----------
     label_encoders_ : list of size n_features.
@@ -1756,15 +1759,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       and n_classes-1.
     """
 
-    def __init__(self, categorical_features="all", n_values=None,
-                 values='auto', dtype=np.float64, sparse=True,
-                 handle_unknown='error'):
+    def __init__(self, values='auto', categorical_features="all",
+                 n_values=None, dtype=np.float64, sparse=True,
+                 handle_unknown='error', copy=True):
+        self.values = values
         self.categorical_features = categorical_features
         self.dtype = dtype
         self.sparse = sparse
         self.handle_unknown = handle_unknown
         self.n_values = n_values
-        self.values = values
+        self.copy = copy
 
     def fit(self, X, y=None):
         """Fit the CategoricalEncoder to X.
@@ -1779,7 +1783,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self
         """
 
-        X = check_array(X, dtype=np.object, accept_sparse='csc')
+        X = check_array(X, dtype=np.object, accept_sparse='csc', copy=self.copy)
         n_samples, n_features = X.shape
 
         _apply_selected(X, self._fit, dtype=self.dtype,
