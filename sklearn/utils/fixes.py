@@ -286,11 +286,11 @@ def _in1d_object(ar1, ar2, invert=False):
     # version 1.8. Hence in1d for object arrays needs to be handled differently
     values1 = set(ar1)
     values2 = set(ar2)
-    abset_values = values1 - values2
+    absent_values = values1 - values2
 
     present = np.ones_like(ar1, dtype=np.bool)
 
-    for value in abset_values:
+    for value in absent_values:
         present[ar1 == value] = False
 
     return ~present if invert else present
@@ -474,16 +474,16 @@ if np_version < (1, 8):
             # Unique is not supported for object arrays till np version 1.8
             # due to mergesort
             if ar1.dtype == object:
-                ar1 = np.array(set(ar1))
+                ar1 = np.array(sorted(set(ar1)))
             else:
                 ar1 = np.unique(ar1)
 
             if ar2.dtype == object:
-                ar2 = np.array(set(ar2))
+                ar2 = np.array(sorted(set(ar2)))
             else:
-                ar1 = np.unique(ar2)
+                ar2 = np.unique(ar2)
 
-            return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+        return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
 
 else:
     from numpy import setdiff1d
