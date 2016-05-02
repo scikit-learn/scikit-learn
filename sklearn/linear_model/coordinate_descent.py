@@ -10,7 +10,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy import sparse
+from scipy import sparse, stats
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
@@ -95,8 +95,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(X, y, fit_intercept,
-                                                      normalize,
-                                                      return_mean=True)
+                                                          normalize,
+                                                          return_mean=True)
             mean_dot = X_offset * np.sum(y)
 
     if Xy.ndim == 1:
@@ -363,7 +363,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_coordinate_descent_path.py for an example.
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py for an
+    example.
 
     See also
     --------
@@ -710,8 +711,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          X_offset=X_offset, X_scale=X_scale, return_n_iter=True,
-                          coef_init=coef_[k], max_iter=self.max_iter,
+                          X_offset=X_offset, X_scale=X_scale,
+                          return_n_iter=True, coef_init=coef_[k],
+                          max_iter=self.max_iter,
                           random_state=self.random_state,
                           selection=self.selection,
                           check_input=False)
@@ -1018,7 +1020,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 objective='minimum'):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1034,6 +1037,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.objective = objective
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1154,6 +1158,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv.split(X))
         best_mse = np.inf
+        best_upper_mse = np.inf
+        best_lower_mse = np.inf
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
@@ -1167,18 +1173,70 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                              backend="threading")(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
+        sem_mse = stats.sem(mse_paths, axis=1, ddof=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
-        for l1_ratio, l1_alphas, mse_alphas in zip(l1_ratios, alphas,
-                                                   mean_mse):
+        for l1_ratio, l1_alphas, mse_alphas, sem_alphas in zip(l1_ratios,
+                                                               alphas,
+                                                               mean_mse,
+                                                               sem_mse):
             i_best_alpha = np.argmin(mse_alphas)
+            this_best_alpha = l1_alphas[i_best_alpha]
             this_best_mse = mse_alphas[i_best_alpha]
+
+            # overall minimum
             if this_best_mse < best_mse:
-                best_alpha = l1_alphas[i_best_alpha]
+                best_alpha = this_best_alpha
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
 
-        self.l1_ratio_ = best_l1_ratio
-        self.alpha_ = best_alpha
+            threshold = this_best_mse + sem_alphas[i_best_alpha]
+
+            greater_alphas = np.where((l1_alphas > this_best_alpha) &
+                                      (mse_alphas <= threshold))
+
+            if len(greater_alphas[0] > 0):
+                i_upper_best = greater_alphas[0][0]
+            else:
+                i_upper_best = i_best_alpha
+
+            this_best_upper_alpha = l1_alphas[i_upper_best]
+            this_best_upper_mse = mse_alphas[i_upper_best]
+
+            # overall minimum-within-1-standard-error (for bigger alphas)
+            if this_best_upper_mse < best_upper_mse:
+                best_upper_alpha = this_best_upper_alpha
+                best_upper_l1_ratio = l1_ratio
+                best_upper_mse = this_best_upper_mse
+
+            smaller_alphas = np.where((l1_alphas < this_best_alpha) &
+                                      (mse_alphas <= threshold))
+
+            if len(smaller_alphas[0] > 0):
+                i_lower_best = smaller_alphas[0][-1]
+            else:
+                i_lower_best = i_best_alpha
+
+            this_best_lower_alpha = l1_alphas[i_lower_best]
+            this_best_lower_mse = mse_alphas[i_lower_best]
+
+            # overall minimum-within-1-standard-error (for smaller alphas)
+            if this_best_lower_mse < best_lower_mse:
+                best_lower_alpha = this_best_lower_alpha
+                best_lower_l1_ratio = l1_ratio
+                best_lower_mse = this_best_lower_mse
+
+        # depending on the user choice, we select one of the calculated
+        # (l1_ratio, alpha) pairs
+        if self.objective == 'minimum':
+            self.l1_ratio_ = best_l1_ratio
+            self.alpha_ = best_alpha
+        elif self.objective == 'upper':
+            self.l1_ratio_ = best_upper_l1_ratio
+            self.alpha_ = best_upper_alpha
+        elif self.objective == 'lower':
+            self.l1_ratio_ = best_lower_l1_ratio
+            self.alpha_ = best_lower_alpha
+
         if self.alphas is None:
             self.alphas_ = np.asarray(alphas)
             if n_l1_ratio == 1:
@@ -1192,8 +1250,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                              for name, value in self.get_params().items()
                              if name in model.get_params())
         model.set_params(**common_params)
-        model.alpha = best_alpha
-        model.l1_ratio = best_l1_ratio
+        model.alpha = self.alpha_
+        model.l1_ratio = self.l1_ratio_
         model.copy_X = copy_X
         model.precompute = False
         model.fit(X, y)
@@ -1273,6 +1331,14 @@ class LassoCV(LinearModelCV, RegressorMixin):
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
+
+    objective : str, default 'minimum'
+        If set to the default 'minimum', the alpha to be selected for fitting
+        will be the one with globally minimum MSE. If set to 'upper', the
+        bigger alpha within one standard error of the minimum will be selected
+        (this is equivalent to glmnet's lambda.1se).
+        If set to 'lower', the smaller alpha within one standard error of the
+        minimum will be selected.
 
     random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
@@ -1428,6 +1494,16 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
+    objective : str, default 'minimum'
+        If set to the default 'minimum', the alpha and l1_ratio to be selected
+        for fitting will be the ones with globally minimum MSE. If set to
+        'upper', the bigger alpha within one standard error of the minimum will
+        be selected (this is equivalent to glmnet's lambda.1se) for each
+        l1_ratio, and among these the one with the minimal MSE is chosen.
+        If set to 'lower', the smaller alpha within one standard error of the
+        minimum will be selected for each l1_ratio, and among these the one
+        with the minimal MSE is chosen.
+
     random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
@@ -1514,7 +1590,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', objective='minimum'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1531,6 +1607,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.objective = objective
 
 
 ###############################################################################
@@ -1943,6 +2020,16 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
+    objective : str, default 'minimum'
+        If set to the default 'minimum', the alpha and l1_ratio to be selected
+        for fitting will be the ones with globally minimum MSE. If set to
+        'upper', the bigger alpha within one standard error of the minimum will
+        be selected (this is equivalent to glmnet's lambda.1se) for each
+        l1_ratio, and among these the one with the minimal MSE is chosen.
+        If set to 'lower', the smaller alpha within one standard error of the
+        minimum will be selected for each l1_ratio, and among these the one
+        with the minimal MSE is chosen.
+
     random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
@@ -1982,8 +2069,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
-           n_jobs=1, normalize=False, random_state=None, selection='cyclic',
-           tol=0.0001, verbose=0)
+           n_jobs=1, normalize=False, objective='minimum', random_state=None,
+           selection='cyclic', tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[ 0.52875032  0.46958558]
      [ 0.52875032  0.46958558]]
@@ -2008,7 +2095,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, random_state=None, selection='cyclic'):
+                 verbose=0, n_jobs=1, random_state=None, selection='cyclic',
+                 objective='minimum'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -2023,6 +2111,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
+        self.objective = objective
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2108,6 +2197,14 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
+    objective : str, default 'minimum'
+        If set to the default 'minimum', the alpha to be selected for fitting
+        will be the one with globally minimum MSE. If set to 'upper', the
+        bigger alpha within one standard error of the minimum will be selected
+        (this is equivalent to glmnet's lambda.1se).
+        If set to 'lower', the smaller alpha within one standard error of the
+        minimum will be selected.
+
     random_state : int, RandomState instance, or None (default)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
@@ -2152,10 +2249,10 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
                  cv=None, verbose=False, n_jobs=1, random_state=None,
-                 selection='cyclic'):
+                 selection='cyclic', objective='minimum'):
         super(MultiTaskLassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
-            selection=selection)
+            selection=selection, objective=objective)
