@@ -23,6 +23,7 @@ behavior.
 print(__doc__)
 
 import time
+import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -109,7 +110,19 @@ for i_dataset, dataset in enumerate(datasets):
     for name, algorithm in zip(clustering_names, clustering_algorithms):
         # predict cluster memberships
         t0 = time.time()
-        algorithm.fit(X)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="the number of connected components of the connectivity matrix is [2,3]" +
+                " > 1. Completing it to avoid stopping the tree early.",
+                category=UserWarning)
+            warnings.filterwarnings(
+                "ignore",
+                message="Graph is not fully connected, spectral embedding may not work as" +
+                " expected.",
+                category=UserWarning)
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            algorithm.fit(X)
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
             y_pred = algorithm.labels_.astype(np.int)
