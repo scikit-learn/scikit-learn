@@ -27,6 +27,7 @@ from .classification import matthews_corrcoef
 from .classification import precision_recall_fscore_support
 from .classification import precision_score
 from .classification import recall_score
+from .classification import balanced_accuracy_score
 from .classification import zero_one_loss
 from .classification import brier_score_loss
 
@@ -101,6 +102,7 @@ __all__ = [
     'precision_score',
     'r2_score',
     'recall_score',
+    'balanced_accuracy_score',
     'roc_auc_score',
     'roc_curve',
     'SCORERS',

@@ -1348,6 +1348,52 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+    """Compute the balanced accuracy
+
+    The balanced accuracy is basically an unweighted average of recall score
+    for each class: ``1/C * \sum_{i=1}^C rc_i``, where ``rc_i`` is the recall
+    score for class ``i`` and ``C`` is the total number of unique classes.
+
+    The best value is 1 and the worst value is 0.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    balanced_accuracy : float
+        Unweighted average of the recall of each class.
+
+    See also
+    --------
+    recall_score: Compute the recall
+
+    Examples
+    --------
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.33
+
+    """
+    # simply wrap the ``recall_score`` function
+    return recall_score(y_true, y_pred,
+                        labels=None,
+                        pos_label=None,
+                        average='macro',
+                        sample_weight=sample_weight)
+
+
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
