@@ -121,7 +121,6 @@ for i_dataset, dataset in enumerate(datasets):
                 message="Graph is not fully connected, spectral embedding may not work as" +
                 " expected.",
                 category=UserWarning)
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
             algorithm.fit(X)
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
