@@ -23,6 +23,7 @@ from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import norm, squared_norm
 from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_block_krylov_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
@@ -359,6 +360,186 @@ def test_randomized_svd_sign_flip_with_transpose():
 
     # With transpose
     u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_svd(
+        mat, 3, flip_sign=True, transpose=True)
+    u_based, v_based = max_loading_is_positive(
+        u_flipped_with_transpose, v_flipped_with_transpose)
+    assert_true(u_based)
+    assert_false(v_based)
+
+
+def test_randomized_block_krylov_svd_low_rank():
+    # Check that extmath.randomized_block_krylov_svd is consistent with linalg.svd
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # generate a matrix X of approximate effective rank `rank` and no noise
+    # component (very structured signal):
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.0,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    U, s, V = linalg.svd(X, full_matrices=False)
+
+    # compute the singular values of X using the fast approximate method
+    Ua, sa, Va = \
+        randomized_block_krylov_svd(X, k, block_size=k+10)
+    assert_equal(Ua.shape, (n_samples, k))
+    assert_equal(sa.shape, (k,))
+    assert_equal(Va.shape, (k, n_features))
+
+    # ensure that the singular values of both methods are equal up to the
+    # real rank of the matrix
+    assert_almost_equal(s[:k], sa)
+
+    # check the singular vectors too (while not checking the sign)
+    assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va))
+
+    # check the sparse matrix representation
+    X = sparse.csr_matrix(X)
+
+    # compute the singular values of X using the fast approximate method
+    Ua, sa, Va = \
+        randomized_block_krylov_svd(X, k, block_size=k+10)
+    assert_almost_equal(s[:rank], sa[:rank])
+
+
+def test_randomized_block_krylov_svd_low_rank_with_noise():
+    # Check that extmath.randomized_block_krylov_svd can handle noisy matrices
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # generate a matrix X wity structure approximate rank `rank` and an
+    # important noisy component
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.1,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    _, s, _ = linalg.svd(X, full_matrices=False)
+
+    # compute the singular values of X using a single iteration and
+    # block size of k
+    _, sa, _ = randomized_block_krylov_svd(X, k, block_size=k, n_iter=1)
+
+    # the approximation does not tolerate the noise:
+    assert_greater(np.abs(s[:k] - sa).max(), 0.01)
+
+    # compute the singular values of X using the fast approximate
+    # method with default number of iterations and block size
+    _, sap, _ = randomized_block_krylov_svd(X, k, block_size=k+10)
+
+    # the iterated power method is helping getting rid of the noise:
+    assert_almost_equal(s[:k], sap, decimal=3)
+
+
+def test_randomized_block_krylov_svd_infinite_rank():
+    # Check that extmath.randomized_svd can handle noisy matrices
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # let us try again without 'low_rank component': just regularly but slowly
+    # decreasing singular values: the rank of the data matrix is infinite
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=1.0,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    _, s, _ = linalg.svd(X, full_matrices=False)
+
+    # compute the singular values of X using the fast approximate method
+    # with a single iteration and block size of k
+    _, sa, _ = randomized_block_krylov_svd(X, k, block_size=k, n_iter=1)
+
+    # the approximation does not tolerate the noise:
+    assert_greater(np.abs(s[:k] - sa).max(), 0.1)
+
+    # compute the singular values of X using the fast approximate method
+    # with default number of iterations and block size
+    _, sap, _ = randomized_block_krylov_svd(X, k, block_size=k+10)
+
+    # the iterated power method is still managing to get most of the
+    # structure at the requested rank
+    assert_almost_equal(s[:k], sap, decimal=3)
+
+
+def test_randomized_block_krylov_svd_transpose_consistency():
+    # Check that transposing the design matrix has limited impact
+    n_samples = 100
+    n_features = 500
+    rank = 4
+    k = 10
+
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.5,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    U1, s1, V1 = randomized_block_krylov_svd(X, k, block_size=k+10, n_iter=3,
+                                             transpose=False, random_state=0)
+    U2, s2, V2 = randomized_block_krylov_svd(X, k, block_size=k+10, n_iter=3,
+                                             transpose=True, random_state=0)
+    U3, s3, V3 = randomized_block_krylov_svd(X, k, block_size=k+10, n_iter=3,
+                                             transpose='auto', random_state=0)
+    U4, s4, V4 = linalg.svd(X, full_matrices=False)
+
+    assert_almost_equal(s1, s4[:k], decimal=3)
+    assert_almost_equal(s2, s4[:k], decimal=3)
+    assert_almost_equal(s3, s4[:k], decimal=3)
+
+    assert_almost_equal(np.dot(U1, V1), np.dot(U4[:, :k], V4[:k, :]),
+                        decimal=2)
+    assert_almost_equal(np.dot(U2, V2), np.dot(U4[:, :k], V4[:k, :]),
+                        decimal=2)
+
+    # in this case 'auto' is equivalent to transpose
+    assert_almost_equal(s2, s3)
+
+
+def test_randomized_block_krylov_svd_sign_flip():
+    a = np.array([[2.0, 0.0], [0.0, 1.0]])
+    u1, s1, v1 = randomized_block_krylov_svd(a, 2, block_size=2,
+                                            flip_sign=True, random_state=41)
+    for seed in range(10):
+        u2, s2, v2 = randomized_block_krylov_svd(a, 2, block_size=2,
+                                                 flip_sign=True,
+                                                 random_state=seed)
+        assert_almost_equal(u1, u2)
+        assert_almost_equal(v1, v2)
+        assert_almost_equal(np.dot(u2 * s2, v2), a)
+        assert_almost_equal(np.dot(u2.T, u2), np.eye(2))
+        assert_almost_equal(np.dot(v2.T, v2), np.eye(2))
+
+
+def test_randomized_block_krylov_svd_sign_flip_with_transpose():
+    def max_loading_is_positive(u, v):
+        """
+        returns bool tuple indicating if the values maximising np.abs
+        are positive across all rows for u and across all columns for v.
+        """
+        u_based = (np.abs(u).max(axis=0) == u.max(axis=0)).all()
+        v_based = (np.abs(v).max(axis=1) == v.max(axis=1)).all()
+        return u_based, v_based
+
+    mat = np.arange(10 * 8).reshape(10, -1)
+
+    # Without transpose
+    u_flipped, _, v_flipped = randomized_svd(mat, 3, flip_sign=True)
+    u_based, v_based = max_loading_is_positive(u_flipped, v_flipped)
+    assert_true(u_based)
+    assert_false(v_based)
+
+    # With transpose
+    u_flipped_with_transpose, _, v_flipped_with_transpose = randomized_block_krylov_svd(
         mat, 3, flip_sign=True, transpose=True)
     u_based, v_based = max_loading_is_positive(
         u_flipped_with_transpose, v_flipped_with_transpose)

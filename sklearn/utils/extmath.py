@@ -267,10 +267,98 @@ def randomized_range_finder(A, size, n_iter,
     return Q
 
 
+def randomized_block_krylov_svd(M, n_components, block_size=None, n_iter=8,
+                                transpose='auto', flip_sign=True,
+                                random_state=0):
+    """Computes a truncated randomized SVD via Block Krylov Iteration
+
+    Parameters
+    ----------
+    M: ndarray or sparse matrix
+        Matrix to decompose.
+
+    n_components: int
+        Number of singular values and vectors to extract.
+
+    block_size: int (default is n_components+10)
+        Number of block size, which must be >= n_components.
+
+    n_iter: int (default is 8)
+        Number of iterations.
+
+    transpose: True, False or 'auto' (default)
+        Whether the algorithm should be applied to M.T instead of M. The
+        result should approximately be the same. The 'auto' mode will
+        trigger the transposition if M.shape[1] > M.shape[0] since this
+        implementation of randomized SVD tend to be a little faster in that
+        case.
+
+    flip_sign: boolean, (True by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
+
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance to make behavior.
+
+    References
+    ----------
+    * Randomized Block Krylov Methods for Stronger and Faster Approximate
+      Singular Value Decomposition
+      Musco and Musco, 2015, http://arxiv.org/abs/1504.05477
+    """
+
+    random_state = check_random_state(random_state)
+    n_samples, n_features = M.shape
+
+    if transpose == 'auto':
+        transpose = n_samples < n_features
+    if transpose:
+        # this implementation is a bit faster with smaller shape[1]
+        M = M.T
+
+    if block_size == None:
+        block_size = n_components+10
+
+    # Random block initialization
+    G = random_state.normal(size=(M.shape[1], block_size))
+
+    # Construct and orthonormalize Krlov Subspace
+    # Orthogonalize at each step using economy size QR decomposition
+    block, _ = linalg.qr(safe_sparse_dot(M, G), mode='economic')
+    del G
+    K = block
+    for it in range(1, n_iter):
+        block, _ = linalg.qr(safe_sparse_dot(M, safe_sparse_dot(M.T, block)),
+                             mode='economic')
+        K = np.hstack((K,block))
+    Q, _ = linalg.qr(K, mode='economic')
+    del K
+
+    # Rayleigh-Ritz postprocessing
+    B = safe_sparse_dot(Q.T, M)
+    Uhat, s, V = linalg.svd(B, full_matrices=False)
+    del B
+    U = np.dot(Q, Uhat)
+
+    if flip_sign:
+        if not transpose:
+            U, V = svd_flip(U, V)
+        else:
+            U, V = svd_flip(U, V, u_based_decision=False)
+
+    if transpose:
+        # transpose back the results according to the input convention
+        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
+    else:
+        return U[:, :n_components], s[:n_components], V[:n_components, :]
+
+
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=4,
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
-    """Computes a truncated randomized SVD
+    """Computes a truncated randomized SVD via Simultaneous Iteration
 
     Parameters
     ----------
