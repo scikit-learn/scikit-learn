@@ -12,7 +12,7 @@ from sklearn.utils.bench import total_seconds
 
 if __name__ == '__main__':
 
-    import pylab as pl
+    import matplotlib.pyplot as pl
 
     n_iter = 40
 
