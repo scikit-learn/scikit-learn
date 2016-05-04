@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 from sys import version_info
+from math import sqrt
 
 import numpy as np
 from scipy import interpolate, sparse
@@ -84,6 +85,27 @@ def test_lasso_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
+def test_lasso_toy2():
+    """
+    Test Lasso on another toy example for various values of alpha.
+    """
+    theta = np.pi / 4.
+    X = [[np.cos(theta), -np.sin(theta)],
+         [np.sin(theta), np.cos(theta)]]
+    X = np.array(X)
+    y = np.array([2. / sqrt(5.), 1. / sqrt(5)])
+    n_samples = 2
+    XTy = np.dot(X.T, y)
+
+    for alpha in [1e-8, 0.1, 0.5, 1]:
+        clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False)
+        clf.fit(X, y)
+        exact_sol = (np.sign(XTy) *
+                     np.maximum(np.abs(XTy) - alpha * n_samples, 0))
+        assert_array_almost_equal(clf.coef_, exact_sol)
+        assert_almost_equal(clf.dual_gap_, 0)
+
+
 def test_enet_toy():
     # Test ElasticNet for various parameters of alpha and l1_ratio.
     # Actually, the parameters alpha = 0 should not be allowed. However,
@@ -149,6 +171,31 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     X_test = random_state.randn(n_samples, n_features)
     y_test = np.dot(X_test, w)
     return X, y, X_test, y_test
+
+
+def test_enet_screening():
+    """
+    test that the screening for coordinate descent ElasticNet provides the same
+    results as no screening (original version)
+    """
+    X, y, X_test, y_test = build_dataset()
+    max_iter = 500
+
+    clf_screening = ElasticNet(screening=11, l1_ratio=1, tol=1e-8,
+                               alpha=0.05, max_iter=max_iter).fit(X, y)
+    clf_no_screening = ElasticNet(screening=0, l1_ratio=1, tol=1e-8,
+                                  alpha=0.05, max_iter=max_iter).fit(X, y)
+    assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
+    assert_true(clf_no_screening.dual_gap_ < 1e-5)
+    assert_true(clf_screening.dual_gap_ < 1e-5)
+
+    clf_screening = ElasticNet(screening=11, l1_ratio=0.5, tol=1e-8,
+                               alpha=0.05, max_iter=max_iter).fit(X, y)
+    clf_no_screening = ElasticNet(screening=0, l1_ratio=0.5, tol=1e-8,
+                                  alpha=0.05, max_iter=max_iter).fit(X, y)
+    assert_array_almost_equal(clf_no_screening.coef_, clf_screening.coef_, 4)
+    assert_true(clf_no_screening.dual_gap_ < 1e-5)
+    assert_true(clf_screening.dual_gap_ < 1e-5)
 
 
 def test_lasso_cv():
@@ -418,7 +465,7 @@ def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
                                n_informative_features=10, n_targets=n_targets)
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True)
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=True)
     estimator.fit(X, y)
     coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
                                  estimator.dual_gap_)
@@ -617,8 +664,8 @@ def test_sparse_dense_descent_paths():
     X, y, _, _ = build_dataset(n_samples=50, n_features=20)
     csr = sparse.csr_matrix(X)
     for path in [enet_path, lasso_path]:
-        _, coefs, _ = path(X, y, fit_intercept=False)
-        _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
+        _, coefs, _ = path(X, y, fit_intercept=False, tol=1e-10)
+        _, sparse_coefs, _ = path(csr, y, fit_intercept=False, tol=1e-10)
         assert_array_almost_equal(coefs, sparse_coefs)
 
 

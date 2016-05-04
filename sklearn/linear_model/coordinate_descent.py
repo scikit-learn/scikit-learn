@@ -28,9 +28,9 @@ from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 
-
 ###############################################################################
 # Paths functions
+
 
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
@@ -244,6 +244,17 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     [[ 0.          0.          0.46915237]
      [ 0.2159048   0.4425765   0.23668876]]
 
+    References
+    ----------
+    R. Tibshirani (1996) "Regression shrinkage and selection via the lasso"
+    J. Royal. Statist. Soc B., Vol. 58, No. 1, pages 267-288).
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
 
     See also
     --------
@@ -254,6 +265,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     LassoLarsCV
     sklearn.decomposition.sparse_encode
     """
+
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      copy_X=copy_X, coef_init=coef_init, verbose=verbose,
@@ -263,7 +275,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
-              check_input=True, **params):
+              check_input=True, screening=10, **params):
     """Compute elastic net path with coordinate descent
 
     The elastic net optimization function varies for mono and multi-outputs.
@@ -344,6 +356,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
 
+    screening : int
+        If screening is not zero, variable screening is performed every
+        screening iterations, e.g. every 10 iterations if screening
+        is set to 10.
+
     Returns
     -------
     alphas : array, shape (n_alphas,)
@@ -364,6 +381,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     Notes
     -----
     See examples/linear_model/plot_lasso_coordinate_descent_path.py for an example.
+
+    References
+    ----------
+    H. Zou, T. Hastie (2005). "Regularization and Variable Selection via the
+    Elastic Net". Journal of the Royal Statistical Society, Series B: 301–320.
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
 
     See also
     --------
@@ -439,14 +468,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
+
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
-                max_iter, tol, rng, random, positive)
+                max_iter, tol, rng, random, positive,
+                screening)
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random)
+            # XXX add screening to multioutput
         elif isinstance(precompute, np.ndarray):
             # We expect precompute to be already Fortran ordered when bypassing
             # checks
@@ -456,10 +488,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
+            # XXX screening is not performed in gram/precomputed case
         elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
-                positive)
+                positive, screening)
         else:
             raise ValueError("Precompute should be one of True, False, "
                              "'auto' or array-like")
@@ -468,6 +501,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         dual_gaps[i] = dual_gap_
         n_iters.append(n_iter_)
         if dual_gap_ > eps_:
+            # warnings.simplefilter('always', ConvergenceWarning)
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
                           ' to increase the number of iterations',
@@ -582,6 +616,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    screening : int
+        If screening is not zero, variable screening is performed every
+        screening iterations, e.g. every 10 iterations if screening
+        is set to 10.
+
     Attributes
     ----------
     coef_ : array, shape (n_features,) | (n_targets, n_features)
@@ -603,6 +642,18 @@ class ElasticNet(LinearModel, RegressorMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
+    References
+    ----------
+    H. Zou, T. Hastie (2005). "Regularization and Variable Selection via the
+    Elastic Net". Journal of the Royal Statistical Society, Series B: 301–320.
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
+
     See also
     --------
     SGDRegressor: implements elastic net regression with incremental training.
@@ -614,7 +665,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic',
+                 screening=10):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.coef_ = None
@@ -629,6 +681,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
         self.random_state = random_state
         self.selection = selection
+        self.screening = screening
 
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
@@ -684,6 +737,11 @@ class ElasticNet(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
+        if n_targets > 1:  # make y data contiguous in memory
+            y = np.asfortranarray(y)
+            if Xy is not None:
+                Xy = np.asfortranarray(Xy)
+
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("selection should be either random or cyclic.")
 
@@ -714,7 +772,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                           coef_init=coef_[k], max_iter=self.max_iter,
                           random_state=self.random_state,
                           selection=self.selection,
-                          check_input=False)
+                          screening=self.screening,
+                          check_input=False,
+                          pre_fit=False)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
             self.n_iter_.append(this_iter[0])
@@ -844,6 +904,11 @@ class Lasso(ElasticNet):
         a random feature to update. Useful only when selection is set to
         'random'.
 
+    screening : int
+        If screening is not zero, variable screening is performed every
+        screening iterations, e.g. every 10 iterations if screening
+        is set to 10.
+
     Attributes
     ----------
     coef_ : array, shape (n_features,) | (n_targets, n_features)
@@ -867,7 +932,7 @@ class Lasso(ElasticNet):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
-       selection='cyclic', tol=0.0001, warm_start=False)
+       screening=10, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
     >>> print(clf.intercept_)
@@ -888,19 +953,32 @@ class Lasso(ElasticNet):
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    References
+    ----------
+    R. Tibshirani (1996) "Regression shrinkage and selection via the lasso"
+    J. Royal. Statist. Soc B., Vol. 58, No. 1, pages 267-288).
+
+    J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
+    Generalized Linear Models via Coordinate Descent"
+    Journal of Statistical Software, Vol. 33, No. 1, pages 1-22.
+
+    O. Fercoq, A. Gramfort, J. Salmon (2015) "Mind the duality gap: safer
+    rules for the Lasso" Proc. ICML. http://arxiv.org/pdf/1505.03410v1
     """
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
-                 random_state=None, selection='cyclic'):
+                 random_state=None, selection='cyclic',
+                 screening=10):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
             positive=positive, random_state=random_state,
-            selection=selection)
+            selection=selection, screening=screening)
 
 
 ###############################################################################
@@ -1018,7 +1096,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 screening=10):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1034,6 +1113,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+        self.screening = screening
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1343,13 +1423,15 @@ class LassoCV(LinearModelCV, RegressorMixin):
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
-                 positive=False, random_state=None, selection='cyclic'):
+                 positive=False, random_state=None, selection='cyclic',
+                 screening=10):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
-            random_state=random_state, selection=selection)
+            random_state=random_state, selection=selection,
+            screening=screening)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):

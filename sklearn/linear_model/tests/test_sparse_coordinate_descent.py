@@ -45,7 +45,7 @@ def test_lasso_zero():
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
-    assert_almost_equal(clf.dual_gap_,  0)
+    assert_almost_equal(clf.dual_gap_, 0)
 
 
 def test_enet_toy_list_input():
@@ -70,14 +70,14 @@ def test_enet_toy_list_input():
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-    assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, l1_ratio=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
-    assert_array_almost_equal(pred, [0.9090,  1.3636,  1.8181], 3)
+    assert_array_almost_equal(pred, [0.9090, 1.3636, 1.8181], 3)
     assert_almost_equal(clf.dual_gap_, 0)
 
 
@@ -109,18 +109,18 @@ def test_enet_toy_explicit_sparse_input():
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-    assert_array_almost_equal(pred, [1.0163,  1.5245,  2.0327], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, l1_ratio=0.5)
     clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.45454], 3)
-    assert_array_almost_equal(pred, [0.9090,  1.3636,  1.8181], 3)
+    assert_array_almost_equal(pred, [0.9090, 1.3636, 1.8181], 3)
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def make_sparse_data(n_samples=100, n_features=100, n_informative=10, seed=42,
+def make_sparse_data(n_samples=80, n_features=100, n_informative=10, seed=42,
                      positive=False, n_targets=1):
     random_state = np.random.RandomState(seed)
 
@@ -143,6 +143,48 @@ def make_sparse_data(n_samples=100, n_features=100, n_informative=10, seed=42,
     if n_targets == 1:
         y = np.ravel(y)
     return X, y
+
+
+def _test_sparse_screening_enet_not_as_toy_dataset(alpha,
+                                                   fit_intercept, positive):
+    n_samples, n_features, max_iter = 50, 200, 1000
+    n_informative = 10
+
+    X, y = make_sparse_data(n_samples, n_features, n_informative,
+                            positive=positive)
+
+    s_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
+                       max_iter=max_iter, tol=1e-8, positive=positive,
+                       warm_start=True)
+    s_clf.fit(X, y)
+
+    # check the convergence is the same as screened version
+    s_screen_clf = ElasticNet(alpha=alpha, l1_ratio=0.8,
+                              fit_intercept=fit_intercept,
+                              max_iter=max_iter, tol=1e-8, positive=positive,
+                              warm_start=True, screening=12)
+    s_screen_clf.fit(X.toarray(), y)
+
+    assert_true(s_clf.dual_gap_ < 1e-5)
+    assert_true(s_screen_clf.dual_gap_ < 1e-5)
+
+    assert_almost_equal(s_clf.coef_, s_screen_clf.coef_, 5)
+    assert_almost_equal(s_clf.intercept_, s_screen_clf.intercept_, 5)
+
+
+def test_sparse_screening_enet_not_as_toy_dataset():
+    _test_sparse_screening_enet_not_as_toy_dataset(alpha=0.1,
+                                                   fit_intercept=False,
+                                                   positive=False)
+    _test_sparse_screening_enet_not_as_toy_dataset(alpha=0.1,
+                                                   fit_intercept=True,
+                                                   positive=False)
+    _test_sparse_screening_enet_not_as_toy_dataset(alpha=1e-3,
+                                                   fit_intercept=False,
+                                                   positive=True)
+    _test_sparse_screening_enet_not_as_toy_dataset(alpha=1e-3,
+                                                   fit_intercept=True,
+                                                   positive=True)
 
 
 def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
@@ -218,7 +260,8 @@ def test_enet_multitarget():
     n_targets = 3
     X, y = make_sparse_data(n_targets=n_targets)
 
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
+    estimator = ElasticNet(alpha=0.01, tol=1e-8, fit_intercept=True,
+                           precompute=False)
     # XXX: There is a bug when precompute is not None!
     estimator.fit(X, y)
     coef, intercept, dual_gap = (estimator.coef_,
@@ -250,18 +293,18 @@ def test_path_parameters():
 def test_same_output_sparse_dense_lasso_and_enet_cv():
     X, y = make_sparse_data(n_samples=40, n_features=10)
     for normalize in [True, False]:
-        clfs = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
+        clfs = ElasticNetCV(max_iter=100, cv=5, normalize=normalize, tol=1e-10)
         ignore_warnings(clfs.fit)(X, y)
-        clfd = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
+        clfd = ElasticNetCV(max_iter=100, cv=5, normalize=normalize, tol=1e-10)
         ignore_warnings(clfd.fit)(X.toarray(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
         assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
         assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
 
-        clfs = LassoCV(max_iter=100, cv=4, normalize=normalize)
+        clfs = LassoCV(max_iter=100, cv=4, normalize=normalize, tol=1e-10)
         ignore_warnings(clfs.fit)(X, y)
-        clfd = LassoCV(max_iter=100, cv=4, normalize=normalize)
+        clfd = LassoCV(max_iter=100, cv=4, normalize=normalize, tol=1e-10)
         ignore_warnings(clfd.fit)(X.toarray(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
