@@ -33,11 +33,9 @@ import matplotlib.pyplot as plt
 from sklearn import cluster, datasets, mixture
 from sklearn.neighbors import kneighbors_graph
 from sklearn.preprocessing import StandardScaler
+from itertools import cycle, islice
 
 np.random.seed(0)
-
-colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
-colors = np.hstack([colors] * 20)
 
 # ============
 # Generate datasets. We choose the size big enough to see the scalability
@@ -65,11 +63,7 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-clustering_names = [
-    'MiniBatchKMeans', 'AffinityPropagation', 'MeanShift', 'SpectralClustering',
-    'Ward', 'AgglomerativeClustering', 'DBSCAN', 'Birch', 'GaussianMixture']
-
-plt.figure(figsize=(len(clustering_names) * 2 + 3, 12.5))
+plt.figure(figsize=(9 * 2 + 3, 12.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 
@@ -131,10 +125,19 @@ for i_dataset, (dataset, params) in enumerate(datasets):
     gmm = mixture.GaussianMixture(
         n_components=defaults['n_clusters'], covariance_type='full')
 
-    clustering_algorithms = [two_means, affinity_propagation, ms, spectral,
-                             ward, average_linkage, dbscan, birch, gmm]
+    clustering_algorithms = (
+        ('MiniBatchKMeans', two_means),
+        ('AffinityPropagation', affinity_propagation),
+        ('MeanShift', ms),
+        ('SpectralClustering', spectral),
+        ('Ward', ward),
+        ('AgglomerativeClustering', average_linkage),
+        ('DBSCAN', dbscan),
+        ('Birch', birch),
+        ('GaussianMixture', gmm)
+    )
 
-    for name, algorithm in zip(clustering_names, clustering_algorithms):
+    for name, algorithm in clustering_algorithms:
         t0 = time.time()
 
         # catch warnings related to kneighbors_graph
@@ -161,7 +164,9 @@ for i_dataset, (dataset, params) in enumerate(datasets):
         plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
         if i_dataset == 0:
             plt.title(name, size=18)
-        plt.scatter(X[:, 0], X[:, 1], color=colors[y_pred].tolist(), s=10)
+
+        colors = np.array(list(islice(cycle('bgrcmyk'), max(y_pred) + 1)))
+        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-2.5, 2.5)
         plt.ylim(-2.5, 2.5)
