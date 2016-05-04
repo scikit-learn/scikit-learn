@@ -555,7 +555,8 @@ by varying a decision threshold.
 
 The :func:`average_precision_score` function computes the average precision
 (AP) from prediction scores. This score corresponds to the area under the
-precision-recall curve.
+precision-recall curve. The value is between 0 and 1 and higher is better.
+With random predictions, the AP is the fraction of positive samples.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
