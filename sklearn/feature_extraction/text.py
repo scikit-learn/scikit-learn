@@ -46,7 +46,7 @@ def strip_accents_unicode(s):
     """Transform accentuated unicode symbols into their simple counterpart
 
     Warning: the python-level loop and join operations make this
-    implementation 20 times slower than the strip_accents_ascii basic
+    implementation 10 times slower than the strip_accents_ascii basic
     normalization.
 
     See also
@@ -55,8 +55,9 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    return ''.join([c for c in unicodedata.normalize('NFKD', s)
-                    if not unicodedata.combining(c)])
+    _normalize = unicodedata.normalize
+    _combining = unicodedata.combining
+    return ''.join([c for c in _normalize('NFKD', s) if not _combining(c)])
 
 
 def strip_accents_ascii(s):
@@ -74,13 +75,14 @@ def strip_accents_ascii(s):
     return nkfd_form.encode('ASCII', 'ignore').decode('ASCII')
 
 
+_replace_tags = re.compile(r"<([^>]+)>", flags=re.UNICODE).sub
 def strip_tags(s):
     """Basic regexp based HTML / XML tag stripper function
 
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
     """
-    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
+    return _replace_tags(" ", s)
 
 
 def _check_stop_list(stop):
@@ -98,6 +100,7 @@ class VectorizerMixin(object):
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
+    _replace_white_spaces = _white_spaces.sub
 
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
@@ -142,7 +145,7 @@ class VectorizerMixin(object):
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        text_document = self._replace_white_spaces(" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -158,7 +161,7 @@ class VectorizerMixin(object):
         Tokenize text_document into a sequence of character n-grams
         excluding any whitespace (operating only inside word boundaries)"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        text_document = self._replace_white_spaces(" ", text_document)
 
         min_n, max_n = self.ngram_range
         ngrams = []
@@ -209,8 +212,7 @@ class VectorizerMixin(object):
         """Return a function that splits a string into a sequence of tokens"""
         if self.tokenizer is not None:
             return self.tokenizer
-        token_pattern = re.compile(self.token_pattern)
-        return lambda doc: token_pattern.findall(doc)
+        return re.compile(self.token_pattern).findall
 
     def get_stop_words(self):
         """Build or fetch the effective stop words list"""
