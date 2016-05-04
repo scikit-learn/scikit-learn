@@ -1075,3 +1075,12 @@ def test_sparse_input():
 
     for EstimatorClass, sparse_matrix in product(ests, sparse_matrices):
         yield check_sparse_input, EstimatorClass, X, sparse_matrix(X), y
+
+
+def test_warm_start_fortran_array():
+    # https://github.com/scikit-learn/scikit-learn/issues/6647
+    X_ = np.asfortranarray(X)
+    clf = GradientBoostingClassifier(warm_start=True)
+
+    clf.fit(X_, y)
+    clf.fit(X_, y)
