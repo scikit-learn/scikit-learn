@@ -47,8 +47,8 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
 if __name__ == '__main__':
     from glmnet.elastic_net import Lasso as GlmnetLasso
     from sklearn.linear_model import Lasso as ScikitLasso
-    # Delayed import of pylab
-    import pylab as pl
+    # Delayed import of matplotlib.pyplot
+    import matplotlib.pyplot as pl
 
     scikit_results = []
     glmnet_results = []
