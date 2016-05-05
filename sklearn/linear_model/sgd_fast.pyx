@@ -319,7 +319,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
         z = y - p
         if z > self.epsilon:
             return -2 * (z - self.epsilon)
-        elif z < self.epsilon:
+        elif z < -self.epsilon:
             return 2 * (-z - self.epsilon)
         else:
             return 0
