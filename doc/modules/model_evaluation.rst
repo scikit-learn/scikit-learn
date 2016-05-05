@@ -59,6 +59,7 @@ Scoring                      Function                                    Comment
 ========================     =======================================     ==================================
 **Classification**
 'accuracy'                   :func:`metrics.accuracy_score`
+'balanced_accuracy'          :func:`metrics.balanced_accuracy_score`     for binary targets
 'average_precision'          :func:`metrics.average_precision_score`
 'f1'                         :func:`metrics.f1_score`                    for binary targets
 'f1_micro'                   :func:`metrics.f1_score`                    micro-averaged
@@ -224,6 +225,7 @@ Some of these are restricted to the binary classification case:
    matthews_corrcoef
    precision_recall_curve
    roc_curve
+   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -353,6 +355,49 @@ In the multilabel case with binary label indicators: ::
   * See :ref:`example_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
+
+.. _balanced_accuracy_score:
+
+Balanced accuracy score
+-----------------------
+
+The :func:`balanced_accuracy_score` function computes the
+`balanced accuracy <https://en.wikipedia.org/wiki/Accuracy_and_precision>`_, which
+avoids inflated performance estimates on imbalanced datasets. It is defined as the
+arithmetic mean of `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true positive rate) and `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
+(true negative rate), or the average accuracy obtained on either class. It can also
+be seen as the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
+on both classes.
+
+If the classifier performs equally well on either class, this term reduces to the
+conventional accuracy (i.e., the number of correct predictions divided by the total
+number of predictions). In contrast, if the conventional accuracy is above chance only
+because the classifier takes advantage of an imbalanced test set, then the balanced
+accuracy, as appropriate, will drop to chance.
+
+If :math:`\hat{y}_i\in\{0,1\}` is the predicted value of
+the :math:`i`-th sample and :math:`y_i\in\{0,1\}` is the corresponding true value,
+then the balanced accuracy is defined as
+
+.. math::
+
+   \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{2} \left(\frac{\sum_i 1(\hat{y}_i = 1 \land y_i = 1)}{\sum_i 1(y_i = 1)} + \frac{\sum_i 1(\hat{y}_i = 0 \land y_i = 0)}{\sum_i 1(y_i = 0)}\right)
+
+where :math:`1(x)` is the `indicator function
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import balanced_accuracy_score
+  >>> y_true = [0, 1, 0, 0, 1, 0]
+  >>> y_pred = [0, 1, 0, 0, 0, 1]
+  >>> balanced_accuracy_score(y_true, y_pred)
+  0.625
+
+.. note::
+
+    Currently this score function is only defined for binary classification problems, you
+    may need to wrap it by yourself if you want to use it for multilabel problems.
 
 .. _cohen_kappa:
 
