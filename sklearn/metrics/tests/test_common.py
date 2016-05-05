@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
@@ -98,6 +99,7 @@ REGRESSION_METRICS = {
 
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
+    "balanced_accuracy_score": balanced_accuracy_score,
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
     "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
@@ -216,6 +218,7 @@ METRIC_UNDEFINED_BINARY = [
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
     "matthews_corrcoef_score",
+    "balanced_accuracy_score"
 ]
 
 # Metric undefined with "binary" or "multiclass" input
@@ -255,6 +258,8 @@ METRICS_WITH_POS_LABEL = [
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
+    "balanced_accuracy_score",
+
     "confusion_matrix",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
@@ -340,6 +345,7 @@ SYMMETRIC_METRICS = [
 # Asymmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = [
+    "balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
     "confusion_matrix",
