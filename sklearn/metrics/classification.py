@@ -1386,7 +1386,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
            The balanced accuracy and its posterior distribution.
            Proceedings of the 20th International Conference on Pattern Recognition,
            3121–24.
-
+           
     Examples
     --------
     >>> from sklearn.metrics import balanced_accuracy_score
