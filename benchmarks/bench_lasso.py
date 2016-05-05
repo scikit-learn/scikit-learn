@@ -59,7 +59,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
 
 if __name__ == '__main__':
     from sklearn.linear_model import Lasso, LassoLars
-    import pylab as pl
+    import matplotlib.pyplot as pl
 
     alpha = 0.01  # regularization parameter
 
