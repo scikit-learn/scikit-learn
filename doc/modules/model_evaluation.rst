@@ -366,9 +366,8 @@ The :func:`balanced_accuracy_score` function computes the
 avoids inflated performance estimates on imbalanced datasets. It is defined as the
 arithmetic mean of `sensitivity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
 (true positive rate) and `specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_
-(true negative rate), or the average accuracy obtained on either class. It can also
-be seen as the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
-on both classes.
+(true negative rate), or the average of `recall scores <https://en.wikipedia.org/wiki/Precision_and_recall>`_
+obtained on either class.
 
 If the classifier performs equally well on either class, this term reduces to the
 conventional accuracy (i.e., the number of correct predictions divided by the total
@@ -384,15 +383,21 @@ then the balanced accuracy is defined as
 
    \texttt{balanced-accuracy}(y, \hat{y}) = \frac{1}{2} \left(\frac{\sum_i 1(\hat{y}_i = 1 \land y_i = 1)}{\sum_i 1(y_i = 1)} + \frac{\sum_i 1(\hat{y}_i = 0 \land y_i = 0)}{\sum_i 1(y_i = 0)}\right)
 
-where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_.
+where :math:`1(x)` is the `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+Under this definition, the balanced accuracy coincides with `AUC score <https://en.wikipedia.org/wiki/AUC>`_
+given binary ``y_true`` and ``y_pred``:
 
   >>> import numpy as np
-  >>> from sklearn.metrics import balanced_accuracy_score
+  >>> from sklearn.metrics import balanced_accuracy_score, roc_auc_score
   >>> y_true = [0, 1, 0, 0, 1, 0]
   >>> y_pred = [0, 1, 0, 0, 0, 1]
   >>> balanced_accuracy_score(y_true, y_pred)
   0.625
+  >>> roc_auc_score(y_true, y_pred)
+  0.625
+
+(but in general, :func:`roc_auc_score` takes as its second argument non-binary scores).
 
 .. note::
 
