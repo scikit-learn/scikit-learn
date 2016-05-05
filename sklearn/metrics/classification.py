@@ -1385,7 +1385,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
     .. [1] Brodersen, K.H.; Ong, C.S.; Stephan, K.E.; Buhmann, J.M. (2010).
            The balanced accuracy and its posterior distribution.
            Proceedings of the 20th International Conference on Pattern Recognition,
-           3121–24.
+           3121-24.
 
     Examples
     --------
