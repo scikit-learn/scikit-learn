@@ -105,7 +105,7 @@ if __name__ == '__main__':
     results = compute_bench(samples_range, features_range)
     max_time = max(np.max(t) for t in results.values())
 
-    import pylab as pl
+    import matplotlib.pyplot as pl
     fig = pl.figure('scikit-learn OMP vs. LARS benchmark results')
     for i, (label, timings) in enumerate(sorted(results.iteritems())):
         ax = fig.add_subplot(1, 2, i)
