@@ -258,8 +258,6 @@ METRICS_WITH_POS_LABEL = [
 # TODO: Handle multi_class metrics that has a labels argument as well as a
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
-    "balanced_accuracy_score",
-
     "confusion_matrix",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
