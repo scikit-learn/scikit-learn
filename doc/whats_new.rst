@@ -196,6 +196,10 @@ Bug fixes
       :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
       correct results. By `JPFrancoia`_
 
+    - Fixed bug in :class:`linear_model.SquaredEpsilonInsensitive`
+      where condition of if statement is incorrect when p - y > epsilon.
+      (`#6764 <https://github.com/scikit-learn/scikit-learn/pull/6764>`_). By `Wenhua Yang`_.
+
 
 API changes summary
 -------------------
