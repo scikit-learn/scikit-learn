@@ -2,7 +2,7 @@
 # License: BSD 3 clause
 import time
 
-import pylab as pl
+import matplotlib.pyplot as pl
 
 from sklearn.utils import check_random_state
 from sklearn.metrics.pairwise import pairwise_distances
