@@ -59,11 +59,11 @@ cdef double log(double x) nogil
 
 
 # Functions for traversing a tree
-cdef inline void make_bit_cache(SplitValue split, INT32_t n_categories,
-                                UINT8_t* bit_cache) nogil
+cdef void make_bit_cache(SplitValue split, INT32_t n_categories,
+                         UINT8_t* bit_cache) nogil
 
-cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
-                           INT32_t n_categories, UINT8_t* bit_cache) nogil
+cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
+                    INT32_t n_categories, UINT8_t* bit_cache) nogil
 
 # =============================================================================
 # Stack data structure
