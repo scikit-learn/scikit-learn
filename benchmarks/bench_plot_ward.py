@@ -6,7 +6,7 @@ import time
 
 import numpy as np
 from scipy.cluster import hierarchy
-import pylab as pl
+import matplotlib.pyplot as pl
 
 from sklearn.cluster import AgglomerativeClustering
 
