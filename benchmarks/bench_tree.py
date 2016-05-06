@@ -14,7 +14,7 @@ training set, classify a sample and plot the time taken as a function
 of the number of dimensions.
 """
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as pl
 import gc
 from datetime import datetime
 
