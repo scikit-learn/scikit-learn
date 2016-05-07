@@ -299,6 +299,9 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     return centers
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         np.ndarray[DOUBLE, ndim=1] distances):
     """M step of the K-means EM algorithm
