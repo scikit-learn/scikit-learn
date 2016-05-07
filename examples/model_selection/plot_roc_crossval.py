@@ -64,7 +64,6 @@ classifier = svm.SVC(kernel='linear', probability=True,
 
 mean_tpr = 0.0
 mean_fpr = np.linspace(0, 1, 100)
-all_tpr = []
 
 colors = cycle(['cyan', 'indigo', 'seagreen', 'yellow', 'blue', 'darkorange'])
 lw = 2
