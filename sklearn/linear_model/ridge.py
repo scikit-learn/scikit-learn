@@ -1233,6 +1233,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
+    store_cv_values : boolean, default=False
+        Flag indicating if the cross-validation values corresponding to each alpha
+        should be stored in the cv_values_ attribute (see below). This flag is only
+        compatible with cv=None (i.e. using Generalized Cross-Validation).
+
     Attributes
     ----------
     cv_values_ : array, shape = [n_samples, n_alphas] or \
@@ -1265,10 +1270,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
-                 normalize=False, scoring=None, cv=None, class_weight=None):
+                 normalize=False, scoring=None, cv=None, class_weight=None, store_cv_values=False):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, cv=cv)
+            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
