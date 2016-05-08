@@ -274,7 +274,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                 warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2nd numpy array.
+    By default, the input is converted to an at least 2D numpy array.
     If the dtype of the array is object, attempt converting to float,
     raising on failure.
 
