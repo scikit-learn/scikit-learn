@@ -61,7 +61,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>> import numpy as np
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.naive_bayes import GaussianNB
-    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier, VotingClassifier
     >>> clf1 = LogisticRegression(random_state=1)
     >>> clf2 = RandomForestClassifier(random_state=1)
     >>> clf3 = GaussianNB()
