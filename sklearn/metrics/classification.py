@@ -1595,6 +1595,10 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
     """
     lb = LabelBinarizer()
     lb.fit(labels) if labels is not None else lb.fit(y_true)
+    if labels is None and len(lb.classes_) == 1:
+        raise ValueError('y_true has only one label,'
+        'maybe get error log loss, should use labels option')
+
     T = lb.transform(y_true)
 
     if T.shape[1] == 1:

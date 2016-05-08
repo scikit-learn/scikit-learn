@@ -1398,6 +1398,7 @@ def test_log_loss():
     calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
     assert_almost_equal(calculated_log_loss, ture_log_loss)
 
+    
 
 
 def test_log_loss_pandas_input():
