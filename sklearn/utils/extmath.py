@@ -258,12 +258,12 @@ def randomized_range_finder(A, size, n_iter,
             Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
             Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
         elif power_iteration_normalizer == 'QR':
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q),  mode='economic')
+            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q),  mode='economic')
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
     return Q
 
 
@@ -349,7 +349,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if n_iter == None:
+    if n_iter is None:
         # Checks if the number of iterations is explicitely specified
         n_iter = 4
         n_iter_specified = False
@@ -366,7 +366,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
     if n_components < .1 * min(M.shape) and n_iter < 7:
         if n_iter_specified:
             warnings.warn("The number of power iterations is increased to "
-                      "7 to achieve higher precision.")
+                          "7 to achieve higher precision.")
         n_iter = 7
 
     Q = randomized_range_finder(M, n_random, n_iter,
