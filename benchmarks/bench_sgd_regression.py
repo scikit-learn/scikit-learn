@@ -11,7 +11,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 
 import gc
 
@@ -113,39 +113,39 @@ if __name__ == "__main__":
     # Plot results
     i = 0
     m = len(list_n_features)
-    pl.figure('scikit-learn SGD regression benchmark results',
+    plt.figure('scikit-learn SGD regression benchmark results',
               figsize=(5 * 2, 4 * m))
     for j in range(m):
-        pl.subplot(m, 2, i + 1)
-        pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),
+        plt.subplot(m, 2, i + 1)
+        plt.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),
                 label="ElasticNet")
-        pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
+        plt.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
                 label="SGDRegressor")
-        pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 0]),
+        plt.plot(list_n_samples, np.sqrt(asgd_results[:, j, 0]),
                 label="A-SGDRegressor")
-        pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
+        plt.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
                 label="Ridge")
-        pl.legend(prop={"size": 10})
-        pl.xlabel("n_train")
-        pl.ylabel("RMSE")
-        pl.title("Test error - %d features" % list_n_features[j])
+        plt.legend(prop={"size": 10})
+        plt.xlabel("n_train")
+        plt.ylabel("RMSE")
+        plt.title("Test error - %d features" % list_n_features[j])
         i += 1
 
-        pl.subplot(m, 2, i + 1)
-        pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 1]),
+        plt.subplot(m, 2, i + 1)
+        plt.plot(list_n_samples, np.sqrt(elnet_results[:, j, 1]),
                 label="ElasticNet")
-        pl.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
+        plt.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
                 label="SGDRegressor")
-        pl.plot(list_n_samples, np.sqrt(asgd_results[:, j, 1]),
+        plt.plot(list_n_samples, np.sqrt(asgd_results[:, j, 1]),
                 label="A-SGDRegressor")
-        pl.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
+        plt.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
                 label="Ridge")
-        pl.legend(prop={"size": 10})
-        pl.xlabel("n_train")
-        pl.ylabel("Time [sec]")
-        pl.title("Training time - %d features" % list_n_features[j])
+        plt.legend(prop={"size": 10})
+        plt.xlabel("n_train")
+        plt.ylabel("Time [sec]")
+        plt.title("Training time - %d features" % list_n_features[j])
         i += 1
 
-    pl.subplots_adjust(hspace=.30)
+    plt.subplots_adjust(hspace=.30)
 
-    pl.show()
+    plt.show()
