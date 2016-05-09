@@ -1172,6 +1172,17 @@ def _test_gradient_common(loss_function, cases):
 
 def test_gradient_hinge():
     # Test Hinge (hinge / perceptron)
+    # hinge
+    loss = sgd_fast.Hinge(1.0)
+    cases = [
+        # (p, y, expected)
+        (1.1, 1.0, 0.0), (-2.0, -1.0, 0.0),
+        (1.0, 1.0, -1.0), (-1.0, -1.0, 1.0), (0.5, 1.0, -1.0),
+        (2.0, -1.0, 1.0), (-0.5, -1.0, 1.0), (0.0, 1.0, -1.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+    # perceptron
     loss = sgd_fast.Hinge(0.0)
     cases = [
         # (p, y, expected)
