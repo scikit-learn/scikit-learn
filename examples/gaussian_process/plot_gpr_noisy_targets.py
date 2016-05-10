@@ -66,9 +66,9 @@ plt.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 plt.plot(X, y, 'r.', markersize=10, label=u'Observations')
 plt.plot(x, y_pred, 'b-', label=u'Prediction')
 plt.fill(np.concatenate([x, x[::-1]]),
-        np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]),
-        alpha=.5, fc='b', ec='None', label='95% confidence interval')
+         np.concatenate([y_pred - 1.9600 * sigma,
+                        (y_pred + 1.9600 * sigma)[::-1]]),
+         alpha=.5, fc='b', ec='None', label='95% confidence interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
 plt.ylim(-10, 20)
@@ -102,9 +102,9 @@ plt.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 plt.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')
 plt.plot(x, y_pred, 'b-', label=u'Prediction')
 plt.fill(np.concatenate([x, x[::-1]]),
-        np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]),
-        alpha=.5, fc='b', ec='None', label='95% confidence interval')
+         np.concatenate([y_pred - 1.9600 * sigma,
+                        (y_pred + 1.9600 * sigma)[::-1]]),
+         alpha=.5, fc='b', ec='None', label='95% confidence interval')
 plt.xlabel('$x$')
 plt.ylabel('$f(x)$')
 plt.ylim(-10, 20)

@@ -114,17 +114,17 @@ if __name__ == "__main__":
     i = 0
     m = len(list_n_features)
     plt.figure('scikit-learn SGD regression benchmark results',
-                figsize=(5 * 2, 4 * m))
+               figsize=(5 * 2, 4 * m))
     for j in range(m):
         plt.subplot(m, 2, i + 1)
         plt.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),
-                    label="ElasticNet")
+                 label="ElasticNet")
         plt.plot(list_n_samples, np.sqrt(sgd_results[:, j, 0]),
-                    label="SGDRegressor")
+                 label="SGDRegressor")
         plt.plot(list_n_samples, np.sqrt(asgd_results[:, j, 0]),
-                    label="A-SGDRegressor")
+                 label="A-SGDRegressor")
         plt.plot(list_n_samples, np.sqrt(ridge_results[:, j, 0]),
-                    label="Ridge")
+                 label="Ridge")
         plt.legend(prop={"size": 10})
         plt.xlabel("n_train")
         plt.ylabel("RMSE")
@@ -133,13 +133,13 @@ if __name__ == "__main__":
 
         plt.subplot(m, 2, i + 1)
         plt.plot(list_n_samples, np.sqrt(elnet_results[:, j, 1]),
-                    label="ElasticNet")
+                 label="ElasticNet")
         plt.plot(list_n_samples, np.sqrt(sgd_results[:, j, 1]),
-                    label="SGDRegressor")
+                 label="SGDRegressor")
         plt.plot(list_n_samples, np.sqrt(asgd_results[:, j, 1]),
-                    label="A-SGDRegressor")
+                 label="A-SGDRegressor")
         plt.plot(list_n_samples, np.sqrt(ridge_results[:, j, 1]),
-                    label="Ridge")
+                 label="Ridge")
         plt.legend(prop={"size": 10})
         plt.xlabel("n_train")
         plt.ylabel("Time [sec]")
