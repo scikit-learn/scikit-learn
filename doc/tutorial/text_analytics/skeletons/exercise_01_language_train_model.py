@@ -47,7 +47,7 @@ cm = metrics.confusion_matrix(y_test, y_predicted)
 print(cm)
 
 #import matplotlib.pyplot as plt
-#t.matshow(cm, cmap=plt.cm.jet)
+#plt.matshow(cm, cmap=plt.cm.jet)
 #plt.show()
 
 # Predict the result on some short new sentences:
