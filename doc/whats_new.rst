@@ -196,6 +196,11 @@ Bug fixes
       :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
       correct results. By `JPFrancoia`_
 
+    - Fixed bug in :class:`linear_model.sgd_fast.SquaredEpsilonInsensitive`
+      where condition of if statement is incorrect when p - y > epsilon.
+      Affects :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor`.
+      (`#6764 <https://github.com/scikit-learn/scikit-learn/pull/6764>`_). By `Wenhua Yang`_.
+
 
 API changes summary
 -------------------
@@ -4175,3 +4180,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ori Ziv: https://github.com/zivori
 
 .. _Sears Merritt: https://github.com/merritts
+
+.. _Wenhua Yang: https://github.com/geekoala
