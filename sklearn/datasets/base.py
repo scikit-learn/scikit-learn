@@ -415,10 +415,10 @@ def load_digits(n_class=10):
         >>> digits = load_digits()
         >>> print(digits.data.shape)
         (1797, 64)
-        >>> import pylab as pl #doctest: +SKIP
-        >>> pl.gray() #doctest: +SKIP
-        >>> pl.matshow(digits.images[0]) #doctest: +SKIP
-        >>> pl.show() #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt #doctest: +SKIP
+        >>> plt.gray() #doctest: +SKIP
+        >>> plt.matshow(digits.images[0]) #doctest: +SKIP
+        >>> plt.show() #doctest: +SKIP
     """
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),

@@ -44,7 +44,7 @@ import sys
 import os
 import numpy as np
 import scipy.sparse as sp
-import pylab as pl
+import matplotlib.pyplot as pl
 
 from sklearn.datasets import load_mlcomp
 from sklearn.feature_extraction.text import TfidfVectorizer
