@@ -44,7 +44,7 @@ import sys
 import os
 import numpy as np
 import scipy.sparse as sp
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import load_mlcomp
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -121,9 +121,9 @@ def benchmark(clf_class, params, name):
     print(cm)
 
     # Show confusion matrix
-    pl.matshow(cm)
-    pl.title('Confusion matrix of the %s classifier' % name)
-    pl.colorbar()
+    plt.matshow(cm)
+    plt.title('Confusion matrix of the %s classifier' % name)
+    plt.colorbar()
 
 
 print("Testbenching a linear classifier...")
@@ -142,4 +142,4 @@ parameters = {'alpha': 0.01}
 
 benchmark(MultinomialNB, parameters, 'MultinomialNB')
 
-pl.show()
+plt.show()
