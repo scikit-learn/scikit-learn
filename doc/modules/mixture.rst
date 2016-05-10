@@ -19,8 +19,8 @@ components are also provided.
    :align: center
    :scale: 50%
 
-   **Two-component Gaussian mixture model:** *data points, and equi-probability surfaces of
-   the model.*
+   **Two-component Gaussian mixture model:** *data points, and equi-probability
+   surfaces of the model.*
 
 A Gaussian mixture model is a probabilistic model that assumes all the
 data points are generated from a mixture of a finite number of
@@ -51,9 +51,9 @@ the :meth:`GaussianMixture.predict` method.
     sample belonging to the various Gaussians may be retrieved using the
     :meth:`GaussianMixture.predict_proba` method.
 
-The :class:`GaussianMixture` comes with different options to constrain the covariance
-of the difference classes estimated: spherical, diagonal, tied or full
-covariance.
+The :class:`GaussianMixture` comes with different options to constrain the
+covariance of the difference classes estimated: spherical, diagonal, tied or
+full covariance.
 
 .. figure:: ../auto_examples/mixture/images/plot_gmm_covariances_001.png
    :target: ../auto_examples/mixture/plot_gmm_covariances.html
@@ -72,7 +72,7 @@ Pros and cons of class :class:`GaussianMixture`
 -----------------------------------------------
 
 Pros
-.....
+....
 
 :Speed: It is the fastest algorithm for learning mixture models
 
