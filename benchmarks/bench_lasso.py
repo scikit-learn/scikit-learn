@@ -74,7 +74,8 @@ if __name__ == '__main__':
                             label='Lasso')
     plt.plot(list_n_samples, lars_lasso_results, 'r-',
                             label='LassoLars')
-    plt.title('precomputed Gram matrix, %d features, alpha=%s' % (n_features, alpha))
+    plt.title('precomputed Gram matrix, %d features, alpha=%s' % (n_features,
+                            alpha))
     plt.legend(loc='upper left')
     plt.xlabel('number of samples')
     plt.ylabel('Time (s)')
