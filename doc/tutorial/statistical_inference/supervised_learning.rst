@@ -212,7 +212,7 @@ induces high variance:
     >>> test = np.c_[ 0, 2].T
     >>> regr = linear_model.LinearRegression()
 
-    >>> import matplotlib as plt # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt # doctest: +SKIP
     >>> plt.figure() # doctest: +SKIP
 
     >>> np.random.seed(0)
