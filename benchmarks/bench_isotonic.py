@@ -31,9 +31,15 @@ def generate_logistic_dataset(size):
     return np.random.random(size=size) < 1.0 / (1.0 + np.exp(-X))
 
 
+def generate_pathological_dataset(size):
+    # Triggers O(n^2) complexity on the original implementation.
+    return np.r_[np.arange(n), np.arange(-(n - 1), n), np.arange(-(n - 1), 1)]
+
+
 DATASET_GENERATORS = {
     'perturbed_logarithm': generate_perturbed_logarithm_dataset,
-    'logistic': generate_logistic_dataset
+    'logistic': generate_logistic_dataset,
+    'pathological': generate_pathological_dataset,
 }
 
 
