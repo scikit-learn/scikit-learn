@@ -42,15 +42,14 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-
 from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.exceptions import FitFailedWarning
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                     ParameterGrid, ParameterSampler)
+    from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
+    from sklearn.grid_search import ParameterGrid, ParameterSampler
     from sklearn.cross_validation import KFold, StratifiedKFold
+    from sklearn.cross_validation import FitFailedWarning
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
@@ -485,6 +484,7 @@ def test_y_as_list():
     assert_true(hasattr(grid_search, "grid_scores_"))
 
 
+@ignore_warnings
 def test_pandas_input():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]

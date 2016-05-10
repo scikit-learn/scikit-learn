@@ -26,6 +26,8 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from sklearn import cross_validation as cval
+    # We should be able to import this from cross_validation
+    from sklearn.cross_validation import FitFailedWarning as _
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -674,6 +676,8 @@ def test_cross_val_score():
     assert_raises(ValueError, cval.cross_val_score, clf, X_3d, y)
 
 
+# Ignore the RuntimeWarning
+@ignore_warnings
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -861,6 +865,7 @@ def train_test_split_pandas():
         assert_true(isinstance(X_train, InputFeatureType))
         assert_true(isinstance(X_test, InputFeatureType))
 
+
 def train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
@@ -1028,26 +1033,6 @@ def test_shufflesplit_reproducible():
     assert_array_equal(list(a for a, b in ss), list(a for a, b in ss))
 
 
-def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
-    clfp = SVC(kernel="precomputed")
-
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    K = np.dot(X, X.T)
-
-    cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
-    tr, te = list(cv)[0]
-
-    X_tr, y_tr = cval._safe_split(clf, X, y, tr)
-    K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
-    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
-
-    X_te, y_te = cval._safe_split(clf, X, y, te, tr)
-    K_te, y_te2 = cval._safe_split(clfp, K, y, te, tr)
-    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
-
-
 def test_cross_val_score_allow_nans():
     # Check that cross_val_score allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
@@ -1121,6 +1106,7 @@ def test_cross_val_score_multilabel():
     assert_almost_equal(score_samples, [1, 1 / 2, 3 / 4, 1 / 2, 1 / 4])
 
 
+@ignore_warnings
 def test_cross_val_predict():
     boston = load_boston()
     X, y = boston.data, boston.target
@@ -1160,6 +1146,7 @@ def test_cross_val_predict():
     assert_raises(ValueError, cval.cross_val_predict, est, X, y, cv=bad_cv())
 
 
+@ignore_warnings
 def test_cross_val_predict_input_types():
     clf = Ridge()
     # Smoke test
@@ -1217,15 +1204,6 @@ def test_sparse_fit_params():
     fit_params = {'sparse_sample_weight': coo_matrix(np.eye(X.shape[0]))}
     a = cval.cross_val_score(clf, X, y, fit_params=fit_params)
     assert_array_equal(a, np.ones(3))
-
-
-def test_check_is_partition():
-    p = np.arange(100)
-    assert_true(cval._check_is_partition(p, 100))
-    assert_false(cval._check_is_partition(np.delete(p, 23), 100))
-
-    p[0] = 23
-    assert_false(cval._check_is_partition(p, 100))
 
 
 def test_cross_val_predict_sparse_prediction():
