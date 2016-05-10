@@ -132,18 +132,18 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
             width = 0.8
 
             c_bar = plt.bar(xvals, build_time[alg] - bottom,
-                           width, bottom, color='r')
+                            width, bottom, color='r')
             q_bar = plt.bar(xvals, query_time[alg],
-                           width, build_time[alg], color='b')
+                            width, build_time[alg], color='b')
 
             tick_vals += list(xvals + 0.5 * width)
             tick_labels += ['%i' % val for val in vals]
 
             plt.text((i + 0.02) / len(algorithms), 0.98, alg,
-                    transform=ax.transAxes,
-                    ha='left',
-                    va='top',
-                    bbox=dict(facecolor='w', edgecolor='w', alpha=0.5))
+                        transform=ax.transAxes,
+                        ha='left',
+                        va='top',
+                        bbox=dict(facecolor='w', edgecolor='w', alpha=0.5))
 
             plt.ylabel('Time (s)')
 
@@ -167,17 +167,17 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
         descr_string = descr_string[:-2]
 
         plt.text(1.01, 0.5, title_string,
-                transform=ax.transAxes, rotation=-90,
-                ha='left', va='center', fontsize=20)
+                    transform=ax.transAxes, rotation=-90,
+                    ha='left', va='center', fontsize=20)
 
         plt.text(0.99, 0.5, descr_string,
-                transform=ax.transAxes, rotation=-90,
-                ha='right', va='center')
+                    transform=ax.transAxes, rotation=-90,
+                    ha='right', va='center')
 
         plt.gcf().suptitle("%s data set" % dataset.capitalize(), fontsize=16)
 
     plt.figlegend((c_bar, q_bar), ('construction', 'N-point query'),
-                 'upper right')
+                    'upper right')
 
 if __name__ == '__main__':
     barplot_neighbors(dataset='digits')
