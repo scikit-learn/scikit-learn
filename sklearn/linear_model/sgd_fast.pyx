@@ -167,7 +167,7 @@ cdef class Hinge(Classification):
         return Hinge, (self.threshold,)
 
 
-cdef class SquaredHinge(LossFunction):
+cdef class SquaredHinge(Classification):
     """Squared Hinge loss for binary classification tasks with y in {-1,1}
 
     Parameters
