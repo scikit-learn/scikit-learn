@@ -39,6 +39,13 @@ cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
+cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
+                                  DOUBLE_t* weights, SIZE_t start, SIZE_t end,
+                                  DOUBLE_t* sample_weight, DOUBLE_t* y,
+                                  SIZE_t* samples, SIZE_t y_stride,
+                                  SIZE_t n_node_samples,
+                                  SIZE_t n_outputs) nogil
+
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil

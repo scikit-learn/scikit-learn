@@ -49,6 +49,90 @@ def _realloc_test():
         assert False
 
 
+cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
+                                  DOUBLE_t* weights, SIZE_t start, SIZE_t end,
+                                  DOUBLE_t* sample_weight, DOUBLE_t* y,
+                                  SIZE_t* samples, SIZE_t y_stride,
+                                  SIZE_t n_node_samples,
+                                  SIZE_t n_outputs) nogil:
+    """Calculate the weighted median and put it into a destination pointer
+    given values, weights, and a start and end index
+    """
+    # cdef DOUBLE_t* sample_weight = self.sample_weight
+    # cdef DOUBLE_t* y = self.y
+    # cdef SIZE_t* samples = self.samples
+    cdef DOUBLE_t w = 1.0
+    cdef DOUBLE_t y_ik
+
+    cdef SIZE_t i, p, k
+    cdef DOUBLE_t sum_weights
+    cdef SIZE_t median_index
+    cdef DOUBLE_t sum
+
+    for k in range(n_outputs):
+        median_index = 0
+        sum_weights = 0.0
+        for p in range(start,end):
+            i = samples[p]
+
+            y_ik = y[i * y_stride + k]
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            y_vals[p] = y_ik
+            weights[p] = w
+
+        for p in range(start, end):
+            sum_weights += weights[p]
+
+        # self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
+        sort_values_and_weights(y_vals, weights, 0, n_node_samples - 1)
+
+        sum = sum_weights - weights[0]
+
+        while(sum > sum_weights/2):
+            median_index +=1
+            sum -= weights[median_index]
+
+        if sum == sum_weights/2:
+            median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+        else:
+            median_dest[k] = y_vals[median_index]
+
+
+cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
+                                  SIZE_t low, SIZE_t high) nogil:
+    """Sort an array and its weights"""
+    cdef SIZE_t pivot, i, j,
+    cdef double temp
+    if low < high:
+        pivot = low
+        i = low
+        j = high
+        while i < j:
+            while(y_vals[i] <= y_vals[pivot] and i <= high):
+                i += 1
+            while(y_vals[j] > y_vals[pivot] and j  >= low):
+                j -= 1
+            if i < j:
+                temp = y_vals[i]
+                y_vals[i] = y_vals[j]
+                y_vals[j] = temp
+
+                temp = weights[i]
+                weights[i] = weights[j]
+                weights[j] = temp
+        temp = y_vals[j]
+        y_vals[j] = y_vals[pivot]
+        y_vals[pivot] = temp
+
+        temp = weights[j]
+        weights[j] = weights[pivot]
+        weights[pivot] = temp
+        sort_values_and_weights(y_vals, weights, low, j-1)
+        sort_values_and_weights(y_vals, weights, j+1, high)
+
+
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:

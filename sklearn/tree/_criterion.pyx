@@ -28,6 +28,7 @@ np.import_array()
 from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
+from ._utils cimport compute_weighted_median
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -848,7 +849,7 @@ cdef class RegressionCriterion(Criterion):
 
                 self.weighted_n_left -= w
 
-        self.weighted_n_right = (self.weighted_n_node_samples - 
+        self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
             sum_right[k] = sum_total[k] - sum_left[k]
@@ -922,7 +923,6 @@ cdef class MSE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
 
-
         cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
@@ -958,7 +958,7 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
@@ -967,101 +967,26 @@ cdef class MAE(RegressionCriterion):
     """Mean absolute error impurity criterion
     """
     cdef void node_value(self, double* dest) nogil:
-        """Computes the node value of samples[start:end] into dest."""        
+        """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        cdef double* y_vals = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
-        cdef double* weights = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
-        self.compute_weighted_median(dest, y_vals, weights, start, end)
+        cdef DOUBLE_t* y_vals = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                 sizeof(DOUBLE_t))
+        cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                  sizeof(DOUBLE_t))
+        compute_weighted_median(dest, y_vals, weights, start, end,
+                                self.sample_weight, self.y, self.samples,
+                                self.y_stride, self.n_node_samples,
+                                self.n_outputs)
 
-    cdef void compute_weighted_median(self, double* median_dest, DOUBLE_t* y_vals,
-                                      DOUBLE_t* weights, SIZE_t start, SIZE_t end) nogil:
-        """Calculate the weighted median and put it into a destination pointer
-        given values, weights, and a start and end index
-        """
-        cdef double* sample_weight = self.sample_weight
-        cdef DOUBLE_t* y = self.y
-        cdef SIZE_t* samples = self.samples
-        cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
-
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t sum_weights
-        cdef SIZE_t median_index
-        cdef DOUBLE_t sum
-
-        for k in range(self.n_outputs):
-            median_index = 0
-            sum_weights = 0.0
-            for p in range(start,end):
-                i = samples[p]
-                
-                y_ik = y[i * self.y_stride + k]
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
-                y_vals[p] = y_ik
-                weights[p] = w
-        
-            for p in range(start, end):
-                sum_weights += weights[p]
-
-            self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
-            
-            sum = sum_weights - weights[0]
-            
-            while(sum > sum_weights/2):
-                median_index +=1
-                sum -= weights[median_index]
-
-            if sum == sum_weights/2:
-                median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
-            else:
-                median_dest[k] = y_vals[median_index]
-            
-                
-    cdef void sort_values_and_weights(self, DOUBLE_t* y_vals, DOUBLE_t* weights,
-                                      SIZE_t low, SIZE_t high) nogil:
-        """Sort an array and its weights"""
-        cdef SIZE_t pivot, i, j,
-        cdef double temp
-        if low < high:
-            pivot = low
-            i = low
-            j = high
-            while i < j:
-                while(y_vals[i] <= y_vals[pivot] and i <= high):
-                    i += 1
-                while(y_vals[j] > y_vals[pivot] and j  >= low):
-                    j -= 1
-                if i < j:
-                    temp = y_vals[i]
-                    y_vals[i] = y_vals[j]
-                    y_vals[j] = temp
-
-                    temp = weights[i]
-                    weights[i] = weights[j]
-                    weights[j] = temp
-            temp = y_vals[j]
-            y_vals[j] = y_vals[pivot]
-            y_vals[pivot] = temp
-
-            temp = weights[j]
-            weights[j] = weights[pivot]
-            weights[pivot] = temp
-            self.sort_values_and_weights(y_vals, weights, low, j-1)
-            self.sort_values_and_weights(y_vals, weights, j+1, high)
-        
     cdef double node_impurity(self) nogil:
-        """Evaluate the impurity of the current node, i.e. the impurity of 
+        """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
         cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
         cdef double impurity = 0.0
         cdef SIZE_t* samples = self.samples
-        cdef SIZE_t k
-        cdef SIZE_t p
-        cdef SIZE_t i
+        cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
         self.node_value(medians)
         for k in range(self.n_outputs):
@@ -1102,12 +1027,16 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
 
-        cdef DOUBLE_t* y_vals = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
-        cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples, sizeof(DOUBLE_t))
+        cdef DOUBLE_t* y_vals = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                   sizeof(DOUBLE_t))
+        cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                    sizeof(DOUBLE_t))
         cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
-        self.compute_weighted_median(medians, y_vals, weights, start, pos)
-            
-        
+        compute_weighted_median(medians, y_vals, weights, start, pos,
+                                self.sample_weight, self.y, self.samples,
+                                self.y_stride, self.n_node_samples,
+                                self.n_outputs)
+
         for k in range(self.n_outputs):
             for p in range(start, pos):
                 i = samples[p]
@@ -1175,5 +1104,5 @@ cdef class FriedmanMSE(MSE):
         diff = (self.weighted_n_right * total_sum_left -
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right * 
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
                                self.weighted_n_node_samples))
