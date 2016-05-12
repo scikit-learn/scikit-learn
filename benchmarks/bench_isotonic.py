@@ -22,8 +22,8 @@ import argparse
 
 
 def generate_perturbed_logarithm_dataset(size):
-    return np.random.randint(-50, 50, size=n) \
-        + 50. * np.log(1 + np.arange(n))
+    return (np.random.randint(-50, 50, size=size)
+            + 50. * np.log(1 + np.arange(size)))
 
 
 def generate_logistic_dataset(size):
@@ -33,7 +33,9 @@ def generate_logistic_dataset(size):
 
 def generate_pathological_dataset(size):
     # Triggers O(n^2) complexity on the original implementation.
-    return np.r_[np.arange(n), np.arange(-(n - 1), n), np.arange(-(n - 1), 1)]
+    return np.r_[np.arange(size),
+                 np.arange(-(size - 1), size),
+                 np.arange(-(size - 1), 1)]
 
 
 DATASET_GENERATORS = {

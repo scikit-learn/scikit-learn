@@ -293,6 +293,11 @@ Enhancements
      See :ref:`example_plot_compare_reduction.py`. By `Joel Nothman`_ and
      `Robert McGibbon`_.
 
+   - Isotonic regression (:mod:`isotonic`) now uses a better algorithm to avoid
+     `O(n^2)` behavior in pathological cases, and is also generally faster
+     (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
+     By `Antony Lee`_.
+
 Bug fixes
 .........
 
