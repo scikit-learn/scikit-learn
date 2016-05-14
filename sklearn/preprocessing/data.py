@@ -12,9 +12,11 @@ import warnings
 
 import numpy as np
 from scipy import sparse
+from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
+from ..externals.joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils import deprecated
 from ..utils.extmath import row_norms
@@ -49,6 +51,7 @@ __all__ = [
     'robust_scale',
     'maxabs_scale',
     'minmax_scale',
+    'boxcox_transform'
 ]
 
 DEPRECATION_MSG_1D = (
@@ -1673,7 +1676,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True):
+def _transform_selected(X, transform, selected="all", copy=True, order=False):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -1689,6 +1692,10 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
     selected: "all" or array of indices or mask
         Specify which features to apply the transform to.
+
+    order: boolean, default False
+        Specify whether the initial order of features has
+        to be maintained in the output
 
     Returns
     -------
@@ -1719,10 +1726,15 @@ def _transform_selected(X, transform, selected="all", copy=True):
         X_sel = transform(X[:, ind[sel]])
         X_not_sel = X[:, ind[not_sel]]
 
-        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-            return sparse.hstack((X_sel, X_not_sel))
+        if order:
+        # As of now, X is expected to be dense array
+            X[:, ind[sel]] = X_sel
+            return X
         else:
-            return np.hstack((X_sel, X_not_sel))
+            if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
+                return sparse.hstack((X_sel, X_not_sel))
+            else:
+                return np.hstack((X_sel, X_not_sel))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -1946,3 +1958,145 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         return _transform_selected(X, self._transform,
                                    self.categorical_features, copy=True)
+
+
+def _boxcox(X, lambdas, return_maxlog=False):
+    if lambdas is None:
+        X, maxlogs = stats.boxcox(X, lambdas)
+    else:
+        X = stats.boxcox(X, lambdas)
+    if return_maxlog:
+        return X, maxlogs
+    return X
+
+
+def boxcox(X, copy=True):
+    """BoxCox transform to the input data
+
+    Apply boxcox transform on individual features with lambda
+    that maximizes the log-likelihood function for each feature
+
+    Parameters
+    ----------
+    X : array-like, shape [n_samples, n_features]
+        The data to be transformed. Should contain only positive data.
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace transformation and avoid a
+        copy (if the input is already a numpy array or a scipy.sparse
+        CSR matrix and if axis is 1).
+
+    References
+    ----------
+    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
+    Royal Statistical Society B, 26, 211-252 (1964).
+    """
+    X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=copy)
+    if any(np.any(X <= 0, axis=0)):
+        raise ValueError("BoxCox transform can only be applied on positive data")
+    n_features = X.shape[1]
+    outputs = Parallel(n_jobs=-1)(delayed(_boxcox)(X[:, i], None)
+                                  for i in range(n_features))
+    output = np.concatenate([o[..., np.newaxis] for o in outputs], axis=1)
+    return output
+
+
+class BoxCoxTransformer(BaseEstimator, TransformerMixin):
+    """BoxCox features individually.
+
+    Each feature (i.e. each column of the data matrix) will be applied
+    boxcox transform with lambda evaluated to maximise the log-likelihood
+
+    Parameters
+    ----------
+    feature_indices: "all" or array of indices or mask, default None
+        Specify what features are treated are to be transformed.
+
+        - 'all' (default): All features are to be transformed.
+        - array of indices: Array of feature indices to be transformed..
+        - mask: Array of length n_features and with dtype=bool.
+
+    copy : boolean, optional, default None
+        Set to False to perform inplace computation.
+
+    Notes
+    -----
+    The Box-Cox transform is given by::
+
+        y = (x**lmbda - 1) / lmbda,  for lmbda > 0
+            log(x),                  for lmbda = 0
+
+    `boxcox` requires the input data to be positive.
+
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
+
+    See also
+    --------
+    boxcox_transform: Equivalent function without the object oriented API.
+    """
+
+    def __init__(self, feature_indices=None, copy=None):
+        self.feature_indices_ = feature_indices
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Do nothing and return the estimator unchanged
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data to fit by apply boxcox transform,
+            to each of the features and learn the lambda.
+
+        """
+        self.X = X
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES)
+        if any(np.any(X <= 0, axis=0)):
+            raise ValueError("BoxCox transform can only be applied on positive data")
+        n_features = X.shape[1]
+        if any(np.any(X <= 0, axis=0)):
+            raise ValueError("BoxCox transform can only be applied on positive data")
+        if isinstance(self.feature_indices_, np.ndarray):
+            if self.feature_indices_.dtype == np.bool:
+                self.indices_ = np.where(self.feature_indices_)[0]
+            else:
+                self.indices_ = self.feature_indices_
+        else:
+                self.indices_ = np.arange(n_features)
+        outputs = Parallel(n_jobs=-1)(delayed(_boxcox)(X[:, i], None, True)
+                                      for i in self.indices_)
+        output = np.concatenate([o[0][..., np.newaxis] for o in outputs],
+                                axis=1)
+        self.lambdas_ = np.array([o[1] for o in outputs])
+        return self
+
+    def transform(self, X, y=None):
+        """Scale each non zero row of X to unit norm
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data to apply boxcox transform, to each of the
+            features given in the ``feature_indices`` attribute.
+
+        copy : boolean, optional, default None
+            Set to False to perform inplace computation.
+        """
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES)
+        n_features = X.shape[1]
+        if self.feature_indices_ is not None :
+            selected = self.feature_indices_
+        else:
+            selected ="all"
+        if any(np.any(X <= 0, axis=0)):
+            raise ValueError("BoxCox transform can only be applied on positive data")
+        X_tr = _transform_selected(X, self._transform, selected, self.copy, True)
+        return X_tr
+
+    def _transform(self, X):
+        n_features = X.shape[1]
+        outputs = Parallel(n_jobs=-1)(delayed(_boxcox)(X[:, i], self.lambdas_[i])
+                                      for i in range(n_features))
+        output = np.concatenate([o[..., np.newaxis] for o in outputs], axis=1)
+        return output

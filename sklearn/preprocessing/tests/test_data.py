@@ -8,6 +8,7 @@
 import warnings
 import numpy as np
 import numpy.linalg as la
+import scipy.stats as stats
 from scipy import sparse
 from distutils.version import LooseVersion
 
@@ -49,6 +50,8 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
+from sklearn.preprocessing.data import boxcox
+from sklearn.preprocessing.data import BoxCoxTransformer
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.pipeline import Pipeline
@@ -1651,3 +1654,29 @@ def test_fit_cold_start():
         # with a different shape, this may break the scaler unless the internal
         # state is reset
         scaler.fit_transform(X_2d)
+
+
+def test_boxcox_transform():
+    # Apply boxcox transform and check if it is
+    # applying individually on each feature
+    X = np.array([[4, 2, 1], [1, 6, 3], [1, 5, 2], [3, 1, 3]])
+    Xtr = boxcox(X)
+    n_features = X.shape[1]
+    for feature in range(n_features):
+        assert_array_equal(stats.boxcox(X[:, feature])[0], Xtr[:, feature])
+        assert_array_equal(boxcox(X[:, feature].reshape(-1, 1)).ravel(),
+                           Xtr[:, feature])
+
+
+def test_boxcox_transformer():
+    X1 = np.array([[4, 2, 1], [1, 6, 3], [1, 5, 2], [3, 1, 3]])
+    X2 = np.array([[7, 4, 3], [2, 5, 4], [1, 6, 3], [4, 2, 1]])
+    feature_indices = np.array([0, 2])
+    BCTr = BoxCoxTransformer(feature_indices=feature_indices)
+    BCTr.fit(X1)
+    X_tr = BCTr.transform(X2)
+    n_features = X2.shape[1]
+    X_tr1 = BCTr.transform(X2)
+    feature_indices = np.array([True, False, True])
+    X_tr2 = BCTr.transform(X2)
+    assert_array_equal(X_tr1, X_tr2)
