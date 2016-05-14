@@ -43,7 +43,6 @@ cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
                                   DOUBLE_t* weights, SIZE_t start, SIZE_t end,
                                   DOUBLE_t* sample_weight, DOUBLE_t* y,
                                   SIZE_t* samples, SIZE_t y_stride,
-                                  SIZE_t n_node_samples,
                                   SIZE_t n_outputs) nogil
 
 

@@ -53,16 +53,17 @@ cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
                                   DOUBLE_t* weights, SIZE_t start, SIZE_t end,
                                   DOUBLE_t* sample_weight, DOUBLE_t* y,
                                   SIZE_t* samples, SIZE_t y_stride,
-                                  SIZE_t n_node_samples,
                                   SIZE_t n_outputs) nogil:
-    """Calculate the weighted median and put it into a destination pointer
-    given values, weights, and a start and end index
+    """Calculate the weighted median of samples[start:end] and put
+    it into a destination pointer
+    given values, weights, and a start and end index.
     """
     # cdef DOUBLE_t* sample_weight = self.sample_weight
     # cdef DOUBLE_t* y = self.y
     # cdef SIZE_t* samples = self.samples
     cdef DOUBLE_t w = 1.0
     cdef DOUBLE_t y_ik
+    cdef SIZE_t n_node_samples = end-start
 
     cdef SIZE_t i, p, k
     cdef DOUBLE_t sum_weights
@@ -85,9 +86,7 @@ cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
         for p in range(start, end):
             sum_weights += weights[p]
 
-        # self.sort_values_and_weights(y_vals, weights, 0, self.n_node_samples - 1)
         sort_values_and_weights(y_vals, weights, 0, n_node_samples - 1)
-
         sum = sum_weights - weights[0]
 
         while(sum > sum_weights/2):

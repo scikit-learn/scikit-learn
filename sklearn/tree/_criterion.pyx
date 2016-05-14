@@ -977,8 +977,7 @@ cdef class MAE(RegressionCriterion):
                                                   sizeof(DOUBLE_t))
         compute_weighted_median(dest, y_vals, weights, start, end,
                                 self.sample_weight, self.y, self.samples,
-                                self.y_stride, self.n_node_samples,
-                                self.n_outputs)
+                                self.y_stride, self.n_outputs)
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
@@ -994,6 +993,8 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
                 impurity += fabs(y_ik - medians[k]) / self.weighted_n_node_samples
+        with gil:
+            print "impurity / self.n_outputs = {} / {} = {}".format(impurity, self.n_outputs, impurity / self.n_outputs)
         return impurity / self.n_outputs
 
     cdef double proxy_impurity_improvement(self) nogil:
@@ -1019,8 +1020,9 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
-        cdef SIZE_t pos = self.pos
         cdef SIZE_t start = self.start
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t end = self.end
 
         cdef double impurity_total = self.node_impurity()
 
@@ -1031,11 +1033,10 @@ cdef class MAE(RegressionCriterion):
                                                    sizeof(DOUBLE_t))
         cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples,
                                                     sizeof(DOUBLE_t))
-        cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
+        cdef double* medians = <double*> calloc(self.n_outputs, sizeof(double))
         compute_weighted_median(medians, y_vals, weights, start, pos,
                                 self.sample_weight, self.y, self.samples,
-                                self.y_stride, self.n_node_samples,
-                                self.n_outputs)
+                                self.y_stride, self.n_outputs)
 
         for k in range(self.n_outputs):
             for p in range(start, pos):
@@ -1044,9 +1045,13 @@ cdef class MAE(RegressionCriterion):
                 impurity_left[0] += fabs(y_ik - medians[k]) / (pos - start)
 
         impurity_right[0] = impurity_total - impurity_left[0]
+        with gil:
+            print "start: {}".format(start)
+            print "pos: {}".format(pos)
+            print "end: {}".format(end)
+            print "impurity_left[0]: {}".format(impurity_left[0])
+            print "impurity_right[0]: {}".format(impurity_right[0])
 
-        impurity_left[0] /= self.n_outputs
-        impurity_right[0] /= self.n_outputs
 
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman
