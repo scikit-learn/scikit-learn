@@ -158,6 +158,12 @@ def test_adjusted_mutual_info_score():
     assert_almost_equal(ami, 0.37, 2)
 
 
+def test_expected_mutual_info_overflow():
+    # Test for regression where contingency cell exceeds 2**16
+    # leading to overflow in np.outer, resulting in EMI > 1
+    assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
+
+
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
