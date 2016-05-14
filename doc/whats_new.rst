@@ -26,7 +26,7 @@ New features
      and it is available calling with parameter ``svd_solver='randomized'``.
      The default number of ``n_iter`` for ``'randomized'`` has changed to 4. The old
      behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
-     calls `arpack` and performs truncated (non-randomized) SVD. By default,
+     calls ``arpack`` and performs truncated (non-randomized) SVD. By default,
      the best solver is selected depending on the size of the input and the
      number of components requested.
      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
@@ -192,11 +192,11 @@ Bug fixes
       see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
       more details. By `Loic Esteve`_.
 
-    - Attribute `explained_variance_ratio_` calculated with the SVD solver of
+    - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
       :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
       correct results. By `JPFrancoia`_
 
-    - Fixed incorrect gradient computation for `loss='squared_epsilon_insensitive'` in
+    - Fixed incorrect gradient computation for ``loss='squared_epsilon_insensitive'`` in
       :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor`
       (`#6764 <https://github.com/scikit-learn/scikit-learn/pull/6764>`_). By `Wenhua Yang`_.
 
@@ -4182,8 +4182,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ori Ziv: https://github.com/zivori
 
 .. _Sears Merritt: https://github.com/merritts
-<<<<<<< HEAD
 
 .. _Wenhua Yang: https://github.com/geekoala
-=======
->>>>>>> FIX bug where expected_mutual_information may miscalculate
