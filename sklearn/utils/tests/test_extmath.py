@@ -148,14 +148,23 @@ def test_norm_squared_norm():
 
 def test_row_norms():
     X = np.random.RandomState(42).randn(100, 100)
-    sq_norm = (X ** 2).sum(axis=1)
+    for dtype in (np.float32, np.float64):
+        if dtype is np.float32:
+            precision = 4
+        else:
+            precision = 5
 
-    assert_array_almost_equal(sq_norm, row_norms(X, squared=True), 5)
-    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X))
+        X = X.astype(dtype)
+        sq_norm = (X ** 2).sum(axis=1)
 
-    Xcsr = sparse.csr_matrix(X, dtype=np.float32)
-    assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True), 5)
-    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr))
+        assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
+                                  precision)
+        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
+
+        Xcsr = sparse.csr_matrix(X, dtype=dtype)
+        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
+                                  precision)
+        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
 
 
 def test_randomized_svd_low_rank_with_noise():
