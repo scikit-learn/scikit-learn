@@ -779,10 +779,10 @@ def test_score_memmap():
     X, y = iris.data, iris.target
     clf = MockClassifier()
     tf = tempfile.NamedTemporaryFile(mode='wb', delete=False)
-    tf.write('Hello world!!!!!')
+    tf.write(b'Hello world!!!!!')
     tf.close()
     scores = np.memmap(tf.name, dtype=float)
-    score = scores.sum()
+    score = np.memmap(tf.name, shape=(), mode='w+', dtype=float)
     try:
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
         # non-scalar should still fail
