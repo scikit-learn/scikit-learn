@@ -3,6 +3,8 @@ from __future__ import division
 
 import sys
 import warnings
+import tempfile
+import os
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
@@ -769,3 +771,22 @@ def test_cross_val_predict_with_method():
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)
         assert_array_almost_equal(expected_predictions, predictions)
+
+
+def test_score_memmap():
+    # Ensure a scalar score of memmap type is accepted
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    clf = MockClassifier()
+    tf = tempfile.NamedTemporaryFile(mode='wb', delete=False)
+    tf.write('Hello world!!!!!')
+    tf.close()
+    scores = np.memmap(tf.name, dtype=float)
+    score = scores.sum()
+    try:
+        cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
+        # non-scalar should still fail
+        assert_raises(ValueError, cross_val_score, clf, X, y,
+                      scoring=lambda est, X, y: scores)
+    finally:
+        os.unlink(tf.name)
