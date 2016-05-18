@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -44,8 +43,6 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 
-# TODO Import from sklearn.exceptions once merged.
-from sklearn.base import ChangedBehaviorWarning
 from sklearn.model_selection._validation import FitFailedWarning
 
 from sklearn.svm import LinearSVC, SVC
@@ -155,8 +152,7 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.grid_scores_[i][0]
-                    == {'foo_param': foo_i})
+        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
     # Smoke test the score etc:
     grid_search.score(X, y)
     grid_search.predict_proba(X)
@@ -208,13 +204,11 @@ def test_grid_search_score_method():
 
     # Check warning only occurs in situation where behavior changed:
     # estimator requires score method to compete with scoring parameter
-    score_no_scoring = assert_no_warnings(search_no_scoring.score, X, y)
-    score_accuracy = assert_warns(ChangedBehaviorWarning,
-                                  search_accuracy.score, X, y)
-    score_no_score_auc = assert_no_warnings(search_no_score_method_auc.score,
-                                            X, y)
-    score_auc = assert_warns(ChangedBehaviorWarning,
-                             search_auc.score, X, y)
+    score_no_scoring = search_no_scoring.score(X, y)
+    score_accuracy = search_accuracy.score(X, y)
+    score_no_score_auc = search_no_score_method_auc.score(X, y)
+    score_auc = search_auc.score(X, y)
+
     # ensure the test is sane
     assert_true(score_auc < 1.0)
     assert_true(score_accuracy < 1.0)

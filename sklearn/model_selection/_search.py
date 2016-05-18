@@ -15,12 +15,11 @@ from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
 import operator
-import warnings
 
 import numpy as np
 
 from ..base import BaseEstimator, is_classifier, clone
-from ..base import MetaEstimatorMixin, ChangedBehaviorWarning
+from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ..externals.joblib import Parallel, delayed
@@ -234,8 +233,8 @@ class ParameterSampler(object):
             if grid_size < self.n_iter:
                 raise ValueError(
                     "The total space of parameters %d is smaller "
-                    "than n_iter=%d." % (grid_size, self.n_iter)
-                    + " For exhaustive searches, use GridSearchCV.")
+                    "than n_iter=%d. For exhaustive searches, use "
+                    "GridSearchCV." % (grid_size, self.n_iter))
             for i in sample_without_replacement(grid_size, self.n_iter,
                                                 random_state=rnd):
                 yield param_grid[i]
@@ -404,24 +403,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         Returns
         -------
         score : float
-
-        Notes
-        -----
-         * The long-standing behavior of this method changed in version 0.16.
-         * It no longer uses the metric provided by ``estimator.score`` if the
-           ``scoring`` parameter was set when fitting.
-
         """
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
-            warnings.warn("The long-standing behavior to use the estimator's "
-                          "score function in {0}.score has changed. The "
-                          "scoring parameter is now used."
-                          "".format(self.__class__.__name__),
-                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
     @if_delegate_has_method(delegate='estimator')

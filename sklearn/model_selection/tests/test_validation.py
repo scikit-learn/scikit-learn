@@ -378,8 +378,8 @@ def test_permutation_score():
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):
-        return (((y_true == y_pred).sum() - (y_true != y_pred).sum())
-                / y_true.shape[0])
+        return (((y_true == y_pred).sum() - (y_true != y_pred).sum()) /
+                y_true.shape[0])
 
     scorer = make_scorer(custom_score)
     score, _, pvalue = permutation_test_score(
