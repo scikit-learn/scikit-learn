@@ -973,18 +973,9 @@ cdef class MAE(RegressionCriterion):
         """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
-        cdef double* y_vals = NULL
-        cdef double* weights = NULL
-        y_vals = <double*> calloc(self.n_node_samples,
-                                  sizeof(double))
-        weights = <double*> calloc(self.n_node_samples,
-                                   sizeof(double))
-        if (y_vals == NULL or weights == NULL):
-            with gil:
-                raise MemoryError()
-        compute_weighted_median(dest, y_vals, weights, start, end,
-                                self.sample_weight, self.y, self.samples,
-                                self.y_stride, self.n_outputs)
+
+        compute_weighted_median(dest, start, end, self.sample_weight, self.y,
+                                self.samples, self.y_stride, self.n_outputs)
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
@@ -992,7 +983,7 @@ cdef class MAE(RegressionCriterion):
         with gil:
             print "entered node_impurity"
         cdef double* medians = NULL
-        medians = <double *> calloc(self.n_outputs, sizeof(double))
+        medians = <DOUBLE_t *> calloc(self.n_outputs, sizeof(double))
         if (medians == NULL):
             with gil:
                 raise MemoryError()
@@ -1042,21 +1033,17 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
 
-        cdef double* y_vals = NULL
-        cdef double* weights = NULL
         cdef double* medians = NULL
 
-        y_vals = <double*> calloc(self.n_node_samples,
-                                                   sizeof(double))
-        weights = <double*> calloc(self.n_node_samples,
-                                                    sizeof(double))
         medians = <double*> calloc(self.n_outputs, sizeof(double))
-        if (y_vals == NULL or weights == NULL or medians == NULL):
+        if (medians == NULL):
             with gil:
                 raise MemoryError()
-        compute_weighted_median(medians, y_vals, weights, start, pos,
-                                self.sample_weight, self.y, self.samples,
-                                self.y_stride, self.n_outputs)
+        for k in range(self.n_outputs):
+            medians[k] = k
+        compute_weighted_median(medians, start, pos, self.sample_weight,
+                                self.y, self.samples, self.y_stride,
+                                self.n_outputs)
 
         for k in range(self.n_outputs):
             for p in range(start, pos):

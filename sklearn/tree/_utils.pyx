@@ -12,8 +12,10 @@
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
+from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
+
 
 import numpy as np
 cimport numpy as np
@@ -50,8 +52,7 @@ def _realloc_test():
         assert False
 
 
-cdef void compute_weighted_median(double* median_dest, double* y_vals,
-                                  double* weights, SIZE_t start, SIZE_t end,
+cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
                                   DOUBLE_t* sample_weight, DOUBLE_t* y,
                                   SIZE_t* samples, SIZE_t y_stride,
                                   SIZE_t n_outputs) nogil:
@@ -68,6 +69,18 @@ cdef void compute_weighted_median(double* median_dest, double* y_vals,
     cdef SIZE_t median_index
     cdef DOUBLE_t sum
 
+    cdef DOUBLE_t* y_vals = NULL
+    cdef DOUBLE_t* weights = NULL
+    y_vals = <DOUBLE_t*> calloc(n_node_samples,
+                                sizeof(DOUBLE_t))
+    weights = <DOUBLE_t*> calloc(n_node_samples,
+                                 sizeof(DOUBLE_t))
+
+    if (y_vals == NULL or weights == NULL):
+        with gil:
+            raise MemoryError()
+
+
     for k in range(n_outputs):
         median_index = 0
         sum_weights = 0.0
@@ -78,17 +91,17 @@ cdef void compute_weighted_median(double* median_dest, double* y_vals,
             if sample_weight != NULL:
                 w = sample_weight[i]
 
-            y_vals[p] = y_ik
             weights[p] = w
-
+            y_vals[p] = y_ik
+        sort_values_and_weights(y_vals, weights, 0,
+                                n_node_samples - 1)
         for p in range(start, end):
             sum_weights += weights[p]
 
-        sort_values_and_weights(y_vals, weights, 0, n_node_samples - 1)
         sum = sum_weights - weights[0]
 
         while(sum > sum_weights/2):
-            median_index +=1
+            median_index += 1
             sum -= weights[median_index]
 
         if sum == sum_weights/2:
@@ -97,12 +110,11 @@ cdef void compute_weighted_median(double* median_dest, double* y_vals,
             median_dest[k] = y_vals[median_index]
 
 
-
-cdef void sort_values_and_weights(double* y_vals, double* weights,
+cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
                                   SIZE_t low, SIZE_t high) nogil:
     """Sort an array and its weights"""
     cdef SIZE_t pivot, i, j,
-    cdef double temp
+    cdef DOUBLE_t temp
     if low < high:
         pivot = low
         i = low
@@ -127,6 +139,7 @@ cdef void sort_values_and_weights(double* y_vals, double* weights,
         temp = weights[j]
         weights[j] = weights[pivot]
         weights[pivot] = temp
+
         sort_values_and_weights(y_vals, weights, low, j-1)
         sort_values_and_weights(y_vals, weights, j+1, high)
 
