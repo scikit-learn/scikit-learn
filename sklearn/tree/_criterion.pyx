@@ -39,6 +39,7 @@ cdef class Criterion:
 
     def __dealloc__(self):
         """Destructor."""
+
         free(self.sum_total)
         free(self.sum_left)
         free(self.sum_right)
@@ -169,7 +170,6 @@ cdef class Criterion:
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
-
     cdef double impurity_improvement(self, double impurity) nogil:
         """Placeholder for improvement in impurity after a split.
 
@@ -272,6 +272,7 @@ cdef class ClassificationCriterion(Criterion):
 
     def __dealloc__(self):
         """Destructor."""
+
         free(self.n_classes)
 
     def __reduce__(self):
@@ -722,7 +723,6 @@ cdef class RegressionCriterion(Criterion):
         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
         self.sum_left = <double*> calloc(n_outputs, sizeof(double))
         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
-
 
         if (self.sum_total == NULL or
                 self.sum_left == NULL or

@@ -265,6 +265,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
+
 # Best first builder ----------------------------------------------------------
 
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
@@ -938,6 +939,7 @@ cdef class Tree:
 
     cdef inline object _decision_path_sparse_csr(self, object X):
         """Finds the decision path (=node) for each sample in X."""
+
         # Check input
         if not isinstance(X, csr_matrix):
             raise ValueError("X should be in csr_matrix format, got %s"
