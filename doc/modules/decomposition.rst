@@ -516,7 +516,7 @@ Factor Analysis
 
 In unsupervised learning we only have a dataset :math:`X = \{x_1, x_2, \dots, x_n
 \}`. How can this dataset be described mathematically? A very simple
-`continuous latent variabel` model for :math:`X` is
+`continuous latent variable` model for :math:`X` is
 
 .. math:: x_i = W h_i + \mu + \epsilon
 
