@@ -45,12 +45,13 @@ def _realloc_test():
     cdef SIZE_t* p = NULL
     safe_realloc(&p, <size_t>(-1) / 2)
     if p != NULL:
+        print "entered free in dealloc test"
         free(p)
         assert False
 
 
-cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
-                                  DOUBLE_t* weights, SIZE_t start, SIZE_t end,
+cdef void compute_weighted_median(double* median_dest, double* y_vals,
+                                  double* weights, SIZE_t start, SIZE_t end,
                                   DOUBLE_t* sample_weight, DOUBLE_t* y,
                                   SIZE_t* samples, SIZE_t y_stride,
                                   SIZE_t n_outputs) nogil:
@@ -58,12 +59,9 @@ cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
     it into a destination pointer
     given values, weights, and a start and end index.
     """
-    # cdef DOUBLE_t* sample_weight = self.sample_weight
-    # cdef DOUBLE_t* y = self.y
-    # cdef SIZE_t* samples = self.samples
     cdef DOUBLE_t w = 1.0
     cdef DOUBLE_t y_ik
-    cdef SIZE_t n_node_samples = end-start
+    cdef SIZE_t n_node_samples = end - start
 
     cdef SIZE_t i, p, k
     cdef DOUBLE_t sum_weights
@@ -99,7 +97,8 @@ cdef void compute_weighted_median(double* median_dest, DOUBLE_t* y_vals,
             median_dest[k] = y_vals[median_index]
 
 
-cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
+
+cdef void sort_values_and_weights(double* y_vals, double* weights,
                                   SIZE_t low, SIZE_t high) nogil:
     """Sort an array and its weights"""
     cdef SIZE_t pivot, i, j,
@@ -194,7 +193,9 @@ cdef class Stack:
             raise MemoryError()
 
     def __dealloc__(self):
+        print "entered dealloc in stack"
         free(self.stack_)
+        print "exited dealloc in stack"
 
     cdef bint is_empty(self) nogil:
         return self.top <= 0
@@ -316,6 +317,7 @@ cdef class PriorityHeap:
             raise MemoryError()
 
     def __dealloc__(self):
+        print "entered dealloc in priorityheap"
         free(self.heap_)
 
     cdef bint is_empty(self) nogil:

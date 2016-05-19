@@ -39,10 +39,11 @@ cdef class Criterion:
 
     def __dealloc__(self):
         """Destructor."""
-
+        print "entered criterion dealloc"
         free(self.sum_total)
         free(self.sum_left)
         free(self.sum_right)
+        print "exited criterion dealloc"
 
     def __getstate__(self):
         return {}
@@ -170,6 +171,7 @@ cdef class Criterion:
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
+
     cdef double impurity_improvement(self, double impurity) nogil:
         """Placeholder for improvement in impurity after a split.
 
@@ -200,9 +202,9 @@ cdef class Criterion:
         self.children_impurity(&impurity_left, &impurity_right)
 
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity - (self.weighted_n_right / 
+                (impurity - (self.weighted_n_right /
                              self.weighted_n_node_samples * impurity_right)
-                          - (self.weighted_n_left / 
+                          - (self.weighted_n_left /
                              self.weighted_n_node_samples * impurity_left)))
 
 
@@ -265,14 +267,14 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = <double*> calloc(n_elements, sizeof(double))
         self.sum_right = <double*> calloc(n_elements, sizeof(double))
 
-        if (self.sum_total == NULL or 
+        if (self.sum_total == NULL or
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
 
     def __dealloc__(self):
         """Destructor."""
-
+        print "entered classificationcriterion dealloc"
         free(self.n_classes)
 
     def __reduce__(self):
@@ -724,7 +726,8 @@ cdef class RegressionCriterion(Criterion):
         self.sum_left = <double*> calloc(n_outputs, sizeof(double))
         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
 
-        if (self.sum_total == NULL or 
+
+        if (self.sum_total == NULL or
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
@@ -970,11 +973,15 @@ cdef class MAE(RegressionCriterion):
         """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
-
-        cdef DOUBLE_t* y_vals = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                 sizeof(DOUBLE_t))
-        cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                  sizeof(DOUBLE_t))
+        cdef double* y_vals = NULL
+        cdef double* weights = NULL
+        y_vals = <double*> calloc(self.n_node_samples,
+                                  sizeof(double))
+        weights = <double*> calloc(self.n_node_samples,
+                                   sizeof(double))
+        if (y_vals == NULL or weights == NULL):
+            with gil:
+                raise MemoryError()
         compute_weighted_median(dest, y_vals, weights, start, end,
                                 self.sample_weight, self.y, self.samples,
                                 self.y_stride, self.n_outputs)
@@ -982,7 +989,13 @@ cdef class MAE(RegressionCriterion):
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
-        cdef double* medians = <double *> calloc(self.n_outputs, sizeof(double))
+        with gil:
+            print "entered node_impurity"
+        cdef double* medians = NULL
+        medians = <double *> calloc(self.n_outputs, sizeof(double))
+        if (medians == NULL):
+            with gil:
+                raise MemoryError()
         cdef double impurity = 0.0
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
@@ -992,23 +1005,23 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
-                impurity += fabs(y_ik - medians[k]) / self.weighted_n_node_samples
+                impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
         with gil:
             print "impurity / self.n_outputs = {} / {} = {}".format(impurity, self.n_outputs, impurity / self.n_outputs)
         return impurity / self.n_outputs
 
-    cdef double proxy_impurity_improvement(self) nogil:
-        """Compute a proxy of the impurity reduction
-        This method is used to speed up the search for the best split.
-        It is a proxy quantity such that the split that maximizes this value
-        also maximizes the impurity improvement. It neglects all constant terms
-        of the impurity decrease for a given split.
-        The absolute impurity improvement is only computed by the
-        impurity_improvement method once the best split has been found.
-        """
+    # cdef double proxy_impurity_improvement(self) nogil:
+    #     """Compute a proxy of the impurity reduction
+    #     This method is used to speed up the search for the best split.
+    #     It is a proxy quantity such that the split that maximizes this value
+    #     also maximizes the impurity improvement. It neglects all constant terms
+    #     of the impurity decrease for a given split.
+    #     The absolute impurity improvement is only computed by the
+    #     impurity_improvement method once the best split has been found.
+    #     """
 
-        # todo
-        pass
+    #     # todo
+    #     pass
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
@@ -1029,11 +1042,18 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
 
-        cdef DOUBLE_t* y_vals = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                   sizeof(DOUBLE_t))
-        cdef DOUBLE_t* weights = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                    sizeof(DOUBLE_t))
-        cdef double* medians = <double*> calloc(self.n_outputs, sizeof(double))
+        cdef double* y_vals = NULL
+        cdef double* weights = NULL
+        cdef double* medians = NULL
+
+        y_vals = <double*> calloc(self.n_node_samples,
+                                                   sizeof(double))
+        weights = <double*> calloc(self.n_node_samples,
+                                                    sizeof(double))
+        medians = <double*> calloc(self.n_outputs, sizeof(double))
+        if (y_vals == NULL or weights == NULL or medians == NULL):
+            with gil:
+                raise MemoryError()
         compute_weighted_median(medians, y_vals, weights, start, pos,
                                 self.sample_weight, self.y, self.samples,
                                 self.y_stride, self.n_outputs)
@@ -1046,9 +1066,9 @@ cdef class MAE(RegressionCriterion):
 
         impurity_right[0] = impurity_total - impurity_left[0]
         with gil:
-            print "start: {}".format(start)
-            print "pos: {}".format(pos)
-            print "end: {}".format(end)
+            # print "start: {}".format(start)
+            # print "pos: {}".format(pos)
+            # print "end: {}".format(end)
             print "impurity_left[0]: {}".format(impurity_left[0])
             print "impurity_right[0]: {}".format(impurity_right[0])
 

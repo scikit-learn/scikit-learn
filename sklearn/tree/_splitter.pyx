@@ -104,11 +104,12 @@ cdef class Splitter:
 
     def __dealloc__(self):
         """Destructor."""
-
+        print "entered splitter dealloc"
         free(self.samples)
         free(self.features)
         free(self.constant_features)
         free(self.feature_values)
+        print "exited splitter dealloc"
 
     def __getstate__(self):
         return {}
@@ -253,9 +254,11 @@ cdef class BaseDenseSplitter(Splitter):
         self.presort = presort
 
     def __dealloc__(self):
+        print "entered basedensesplitter dealloc"
         """Destructor."""
         if self.presort == 1:
             free(self.sample_mask)
+        print "exited basedensesplitter dealloc"
 
     cdef void init(self,
                    object X,
@@ -861,6 +864,7 @@ cdef class BaseSparseSplitter(Splitter):
         self.sorted_samples = NULL
 
     def __dealloc__(self):
+        print "entered basesparsesplitter dealloc"
         """Deallocate memory."""
         free(self.index_to_samples)
         free(self.sorted_samples)
