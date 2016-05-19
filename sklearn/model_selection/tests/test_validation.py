@@ -57,7 +57,7 @@ from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
-from test_split import MockClassifier
+from sklearn.model_selection.tests.test_split import MockClassifier
 
 
 class MockImprovingEstimator(BaseEstimator):
