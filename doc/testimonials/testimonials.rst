@@ -783,7 +783,7 @@ scikt-learn in all aspects of our daily work from data exploration to developmen
 of machine learning application to the productive deployment of those services.
 It helps us to tackle machine learning problems ranging from e-commerce to logistics.
 It consistent APIs enabled us to build the `Palladium REST-API framework
-<https://github.com/ottogroup/palladium/>`_ around it and continously deliver
+<https://github.com/ottogroup/palladium/>`_ around it and continuously deliver
 scikit-learn based services.
 
 
