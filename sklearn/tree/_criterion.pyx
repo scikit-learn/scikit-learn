@@ -39,11 +39,9 @@ cdef class Criterion:
 
     def __dealloc__(self):
         """Destructor."""
-        print "entered criterion dealloc"
         free(self.sum_total)
         free(self.sum_left)
         free(self.sum_right)
-        print "exited criterion dealloc"
 
     def __getstate__(self):
         return {}
@@ -274,7 +272,6 @@ cdef class ClassificationCriterion(Criterion):
 
     def __dealloc__(self):
         """Destructor."""
-        print "entered classificationcriterion dealloc"
         free(self.n_classes)
 
     def __reduce__(self):
@@ -980,8 +977,6 @@ cdef class MAE(RegressionCriterion):
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
-        with gil:
-            print "entered node_impurity"
         cdef double* medians = NULL
         medians = <DOUBLE_t *> calloc(self.n_outputs, sizeof(double))
         if (medians == NULL):
@@ -997,8 +992,6 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
                 impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
-        with gil:
-            print "impurity / self.n_outputs = {} / {} = {}".format(impurity, self.n_outputs, impurity / self.n_outputs)
         return impurity / self.n_outputs
 
     # cdef double proxy_impurity_improvement(self) nogil:
@@ -1052,12 +1045,6 @@ cdef class MAE(RegressionCriterion):
                 impurity_left[0] += fabs(y_ik - medians[k]) / (pos - start)
 
         impurity_right[0] = impurity_total - impurity_left[0]
-        with gil:
-            # print "start: {}".format(start)
-            # print "pos: {}".format(pos)
-            # print "end: {}".format(end)
-            print "impurity_left[0]: {}".format(impurity_left[0])
-            print "impurity_right[0]: {}".format(impurity_right[0])
 
 
 cdef class FriedmanMSE(MSE):

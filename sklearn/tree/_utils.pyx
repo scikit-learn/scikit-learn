@@ -47,7 +47,6 @@ def _realloc_test():
     cdef SIZE_t* p = NULL
     safe_realloc(&p, <size_t>(-1) / 2)
     if p != NULL:
-        print "entered free in dealloc test"
         free(p)
         assert False
 
@@ -67,7 +66,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
     cdef SIZE_t i, p, k
     cdef DOUBLE_t sum_weights
     cdef SIZE_t median_index
-    cdef DOUBLE_t sum
+    cdef DOUBLE_t running_sum
 
     cdef DOUBLE_t* y_vals = NULL
     cdef DOUBLE_t* weights = NULL
@@ -80,11 +79,11 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
         with gil:
             raise MemoryError()
 
-
     for k in range(n_outputs):
         median_index = 0
+        # median_index = start
         sum_weights = 0.0
-        for p in range(start,end):
+        for p in range(0, n_node_samples):
             i = samples[p]
 
             y_ik = y[i * y_stride + k]
@@ -95,16 +94,16 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
             y_vals[p] = y_ik
         sort_values_and_weights(y_vals, weights, 0,
                                 n_node_samples - 1)
-        for p in range(start, end):
+        for p in range(0, n_node_samples):
             sum_weights += weights[p]
 
-        sum = sum_weights - weights[0]
+        running_sum = sum_weights - weights[0]
 
-        while(sum > sum_weights/2):
+        while(running_sum > sum_weights/2):
             median_index += 1
-            sum -= weights[median_index]
+            running_sum -= weights[median_index]
 
-        if sum == sum_weights/2:
+        if running_sum == sum_weights/2:
             median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
         else:
             median_dest[k] = y_vals[median_index]
@@ -206,9 +205,7 @@ cdef class Stack:
             raise MemoryError()
 
     def __dealloc__(self):
-        print "entered dealloc in stack"
         free(self.stack_)
-        print "exited dealloc in stack"
 
     cdef bint is_empty(self) nogil:
         return self.top <= 0
@@ -330,7 +327,6 @@ cdef class PriorityHeap:
             raise MemoryError()
 
     def __dealloc__(self):
-        print "entered dealloc in priorityheap"
         free(self.heap_)
 
     cdef bint is_empty(self) nogil:

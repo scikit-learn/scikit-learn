@@ -371,7 +371,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
-        print "done fitting"
         return self
 
     def _validate_X_predict(self, X, check_input):

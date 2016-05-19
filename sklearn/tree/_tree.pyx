@@ -264,7 +264,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 tree.max_depth = max_depth_seen
         if rc == -1:
             raise MemoryError()
-        print "dont building"
 
 # Best first builder ----------------------------------------------------------
 
@@ -603,7 +602,6 @@ cdef class Tree:
 
     def __dealloc__(self):
         """Destructor."""
-        print "entered tree dealloc"
         # Free all inner structures
         free(self.n_classes)
         free(self.value)
@@ -799,7 +797,6 @@ cdef class Tree:
     cdef inline np.ndarray _apply_sparse_csr(self, object X):
         """Finds the terminal region (=leaf node) for each sample in sparse X.
         """
-        print "entered _apply_sparse_csr in tree.pyx"
         # Check input
         if not isinstance(X, csr_matrix):
             raise ValueError("X should be in csr_matrix format, got %s"
@@ -941,7 +938,6 @@ cdef class Tree:
 
     cdef inline object _decision_path_sparse_csr(self, object X):
         """Finds the decision path (=node) for each sample in X."""
-        print "entered _decision_path_sparse_csr in tree.pyx"
         # Check input
         if not isinstance(X, csr_matrix):
             raise ValueError("X should be in csr_matrix format, got %s"
