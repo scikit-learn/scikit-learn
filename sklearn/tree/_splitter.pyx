@@ -104,6 +104,7 @@ cdef class Splitter:
 
     def __dealloc__(self):
         """Destructor."""
+
         free(self.samples)
         free(self.features)
         free(self.constant_features)
