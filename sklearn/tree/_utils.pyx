@@ -72,16 +72,18 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
     cdef DOUBLE_t* weights = NULL
     y_vals = <DOUBLE_t*> calloc(n_node_samples,
                                 sizeof(DOUBLE_t))
-    weights = <DOUBLE_t*> calloc(n_node_samples,
-                                 sizeof(DOUBLE_t))
+    if sample_weight != NULL:
+        with gil:
+            print "made weights arry"
+        weights = <DOUBLE_t*> calloc(n_node_samples,
+                                     sizeof(DOUBLE_t))
 
-    if (y_vals == NULL or weights == NULL):
+    if (y_vals == NULL or (weights == NULL and sample_weight != NULL)):
         with gil:
             raise MemoryError()
 
     for k in range(n_outputs):
         median_index = 0
-        # median_index = start
         sum_weights = 0.0
         for p in range(0, n_node_samples):
             i = samples[p]
@@ -89,25 +91,32 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
             y_ik = y[i * y_stride + k]
             if sample_weight != NULL:
                 w = sample_weight[i]
+                weights[p] = w
 
-            weights[p] = w
             y_vals[p] = y_ik
         sort_values_and_weights(y_vals, weights, 0,
                                 n_node_samples - 1)
-        for p in range(0, n_node_samples):
-            sum_weights += weights[p]
+        if sample_weight != NULL:
+            # calculate the weighted median
+            for p in range(0, n_node_samples):
+                sum_weights += weights[p]
 
-        running_sum = sum_weights - weights[0]
+            running_sum = sum_weights - weights[0]
 
-        while(running_sum > sum_weights/2):
-            median_index += 1
-            running_sum -= weights[median_index]
+            while(running_sum > sum_weights/2):
+                median_index += 1
+                running_sum -= weights[median_index]
 
-        if running_sum == sum_weights/2:
-            median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+            if running_sum == sum_weights/2:
+                median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+            else:
+                median_dest[k] = y_vals[median_index]
         else:
-            median_dest[k] = y_vals[median_index]
-
+            # calculate the unweighted median
+            if n_node_samples % 2 == 0:
+                median_dest[k] = (y_vals[n_node_samples / 2] +  y_vals[(n_node_samples / 2) - 1])/2
+            else:
+                median_dest[k] = y_vals[n_node_samples / 2]
 
 cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
                                   SIZE_t low, SIZE_t high) nogil:
@@ -127,17 +136,18 @@ cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
                 temp = y_vals[i]
                 y_vals[i] = y_vals[j]
                 y_vals[j] = temp
-
-                temp = weights[i]
-                weights[i] = weights[j]
-                weights[j] = temp
+                if weights != NULL:
+                    temp = weights[i]
+                    weights[i] = weights[j]
+                    weights[j] = temp
         temp = y_vals[j]
         y_vals[j] = y_vals[pivot]
         y_vals[pivot] = temp
 
-        temp = weights[j]
-        weights[j] = weights[pivot]
-        weights[pivot] = temp
+        if weights != NULL:
+            temp = weights[j]
+            weights[j] = weights[pivot]
+            weights[pivot] = temp
 
         sort_values_and_weights(y_vals, weights, low, j-1)
         sort_values_and_weights(y_vals, weights, j+1, high)
