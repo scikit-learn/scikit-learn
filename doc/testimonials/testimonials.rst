@@ -779,7 +779,7 @@ Florian Douetteau, CEO, Dataiku
    </div>
 
 Here at Otto Group, one of global Big Five B2C online retailers, we are using
-scikt-learn in all aspects of our daily work from data exploration to development
+scikit-learn in all aspects of our daily work from data exploration to development
 of machine learning application to the productive deployment of those services.
 It helps us to tackle machine learning problems ranging from e-commerce to logistics.
 It consistent APIs enabled us to build the `Palladium REST-API framework
