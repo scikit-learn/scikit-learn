@@ -14,7 +14,7 @@ from sklearn.mixture.bayesian_mixture import gamma_entropy_spherical
 from sklearn.mixture.bayesian_mixture import gamma_entropy_diag
 
 from sklearn.mixture import BayesianGaussianMixture
-from sklearn.datasets.samples_generator import make_spd_matrix
+
 
 def test_log_dirichlet_norm():
     rng = np.random.RandomState(0)
@@ -109,21 +109,21 @@ def test_bayesian_mixture_weights_prior_initialisation():
     n_samples, n_components, n_features = 10, 5, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of alpha_prior_init
-    bad_alpha_prior_init = 0.
-    bgmm = BayesianGaussianMixture(alpha_prior_init=bad_alpha_prior_init)
+    # Check raise message for a bad value of alpha_init
+    bad_alpha_init = 0.
+    bgmm = BayesianGaussianMixture(alpha_init=bad_alpha_init)
     assert_raise_message(ValueError,
-                         "The parameter 'alpha_prior_init' should be "
+                         "The parameter 'alpha_init' should be "
                          "greater than 0., but got %.3f."
-                         % bad_alpha_prior_init,
+                         % bad_alpha_init,
                          bgmm.fit, X)
 
-    # Check correct init for a given value of alpha_prior_init
-    alpha_prior_init = rng.rand()
-    bgmm = BayesianGaussianMixture(alpha_prior_init=alpha_prior_init).fit(X)
-    assert_almost_equal(alpha_prior_init, bgmm._alpha_prior)
+    # Check correct init for a given value of alpha_init
+    alpha_init = rng.rand()
+    bgmm = BayesianGaussianMixture(alpha_init=alpha_init).fit(X)
+    assert_almost_equal(alpha_init, bgmm._alpha_prior)
 
-    # Check correct init for the default value of alpha_prior_init
+    # Check correct init for the default value of alpha_init
     bgmm = BayesianGaussianMixture(n_components=n_components).fit(X)
     assert_almost_equal(1. / n_components, bgmm._alpha_prior)
 
