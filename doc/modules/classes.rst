@@ -324,6 +324,7 @@ Samples generator
    decomposition.DictionaryLearning
    decomposition.MiniBatchDictionaryLearning
    decomposition.LatentDirichletAllocation
+   decomposition.RobustPCA
 
 .. autosummary::
    :toctree: generated/
@@ -333,6 +334,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.sparse_encode
+   decomposition.rpca
 
 .. _dummy_ref:
 
