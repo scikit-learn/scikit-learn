@@ -990,6 +990,8 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
                 impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
+        with gil:
+            print impurity / self.n_outputs
         return impurity / self.n_outputs
 
     # cdef double proxy_impurity_improvement(self) nogil:
@@ -1021,6 +1023,7 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
+        cdef double test
 
         cdef double* medians = NULL
 
@@ -1032,12 +1035,17 @@ cdef class MAE(RegressionCriterion):
         compute_weighted_median(medians, start, pos, self.sample_weight,
                                 self.y, self.samples, self.y_stride,
                                 self.n_outputs)
-
+        impurity_left[0] = 0.0
+        impurity_right[0] = 0.0
         for k in range(self.n_outputs):
             for p in range(start, pos):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
-                impurity_left[0] += (fabs(y_ik - medians[k]) / (pos - start))
+                test = (fabs(y_ik - medians[k]) / (pos-start))
+                # with gil:
+                # print test
+                # impurity_left[0] += (fabs(y_ik - medians[k]) / (pos - start))
+                impurity_left[0] += test
         impurity_left[0] /= self.n_outputs
 
         compute_weighted_median(medians, pos, end, self.sample_weight,
