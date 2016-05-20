@@ -888,7 +888,6 @@ cdef class MSE(RegressionCriterion):
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
-
         return impurity / self.n_outputs
 
     cdef double proxy_impurity_improvement(self) nogil:
@@ -970,7 +969,6 @@ cdef class MAE(RegressionCriterion):
         """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
-
         compute_weighted_median(dest, start, end, self.sample_weight, self.y,
                                 self.samples, self.y_stride, self.n_outputs)
 
@@ -1021,8 +1019,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
 
-        cdef double impurity_total = self.node_impurity()
-
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
 
@@ -1032,8 +1028,7 @@ cdef class MAE(RegressionCriterion):
         if (medians == NULL):
             with gil:
                 raise MemoryError()
-        for k in range(self.n_outputs):
-            medians[k] = k
+
         compute_weighted_median(medians, start, pos, self.sample_weight,
                                 self.y, self.samples, self.y_stride,
                                 self.n_outputs)
@@ -1042,9 +1037,18 @@ cdef class MAE(RegressionCriterion):
             for p in range(start, pos):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
-                impurity_left[0] += fabs(y_ik - medians[k]) / (pos - start)
+                impurity_left[0] += (fabs(y_ik - medians[k]) / (pos - start))
+        impurity_left[0] /= self.n_outputs
 
-        impurity_right[0] = impurity_total - impurity_left[0]
+        compute_weighted_median(medians, pos, end, self.sample_weight,
+                                self.y, self.samples, self.y_stride,
+                                self.n_outputs)
+        for k in range(self.n_outputs):
+            for p in range(pos, end):
+                i = samples[p]
+                y_ik = y[i * self.y_stride + k]
+                impurity_right[0] += (fabs(y_ik - medians[k]) / (end - pos))
+        impurity_right[0] /= self.n_outputs
 
 
 cdef class FriedmanMSE(MSE):
