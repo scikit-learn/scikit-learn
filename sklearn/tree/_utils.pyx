@@ -72,9 +72,8 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
     cdef DOUBLE_t* weights = NULL
     y_vals = <DOUBLE_t*> calloc(n_node_samples,
                                 sizeof(DOUBLE_t))
+
     if sample_weight != NULL:
-        with gil:
-            print "made weights arry"
         weights = <DOUBLE_t*> calloc(n_node_samples,
                                      sizeof(DOUBLE_t))
 
@@ -85,6 +84,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
     for k in range(n_outputs):
         median_index = 0
         sum_weights = 0.0
+
         for p in range(0, n_node_samples):
             i = samples[p]
 
@@ -94,6 +94,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
                 weights[p] = w
 
             y_vals[p] = y_ik
+
         sort_values_and_weights(y_vals, weights, 0,
                                 n_node_samples - 1)
         if sample_weight != NULL:
@@ -117,6 +118,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
                 median_dest[k] = (y_vals[n_node_samples / 2] +  y_vals[(n_node_samples / 2) - 1])/2
             else:
                 median_dest[k] = y_vals[n_node_samples / 2]
+
 
 cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
                                   SIZE_t low, SIZE_t high) nogil:
