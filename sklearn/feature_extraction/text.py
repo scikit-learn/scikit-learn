@@ -55,8 +55,11 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    return ''.join([c for c in unicodedata.normalize('NFKD', s)
-                    if not unicodedata.combining(c)])
+    normalized = unicodedata.normalize('NFKD', s)
+    if normalized == s:
+        return s
+    else:
+        return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
 def strip_accents_ascii(s):
