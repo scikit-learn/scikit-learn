@@ -166,7 +166,6 @@ cdef class Criterion:
         cdef double impurity_left
         cdef double impurity_right
         self.children_impurity(&impurity_left, &impurity_right)
-
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
@@ -198,7 +197,6 @@ cdef class Criterion:
         cdef double impurity_right
 
         self.children_impurity(&impurity_left, &impurity_right)
-
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
                 (impurity - (self.weighted_n_right /
                              self.weighted_n_node_samples * impurity_right)
@@ -821,7 +819,6 @@ cdef class RegressionCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
-
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):
                 i = samples[p]
@@ -971,6 +968,7 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t end = self.end
         compute_weighted_median(dest, start, end, self.sample_weight, self.y,
                                 self.samples, self.y_stride, self.n_outputs)
+        cdef SIZE_t i
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
@@ -990,8 +988,6 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
                 impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
-        with gil:
-            print impurity / self.n_outputs
         return impurity / self.n_outputs
 
     # cdef double proxy_impurity_improvement(self) nogil:
@@ -1023,7 +1019,6 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
-        cdef double test
 
         cdef double* medians = NULL
 
@@ -1037,16 +1032,16 @@ cdef class MAE(RegressionCriterion):
                                 self.n_outputs)
         impurity_left[0] = 0.0
         impurity_right[0] = 0.0
+
         for k in range(self.n_outputs):
             for p in range(start, pos):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
-                test = (fabs(y_ik - medians[k]) / (pos-start))
-                # with gil:
-                # print test
                 # impurity_left[0] += (fabs(y_ik - medians[k]) / (pos - start))
-                impurity_left[0] += test
-        impurity_left[0] /= self.n_outputs
+                impurity_left[0] += fabs(y_ik - medians[k])
+        # impurity_left[0] /= self.n_outputs
+        impurity_left[0] /= ((pos - start) * self.n_outputs)
+
 
         compute_weighted_median(medians, pos, end, self.sample_weight,
                                 self.y, self.samples, self.y_stride,
@@ -1055,8 +1050,10 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, end):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
-                impurity_right[0] += (fabs(y_ik - medians[k]) / (end - pos))
-        impurity_right[0] /= self.n_outputs
+                # impurity_right[0] += (fabs(y_ik - medians[k]) / (end - pos))
+                impurity_right[0] += fabs(y_ik - medians[k])
+        # impurity_right[0] /= self.n_outputs
+        impurity_right[0] /= ((end - pos) * self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):

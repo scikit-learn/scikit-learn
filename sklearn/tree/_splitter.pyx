@@ -458,7 +458,6 @@ cdef class BestSplitter(BaseDenseSplitter):
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
                                 current.threshold = (Xf[p - 1] + Xf[p]) / 2.0
@@ -486,6 +485,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                     samples[p] = tmp
 
             self.criterion.reset()
+
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
@@ -782,6 +782,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
                     # Evaluate split
                     self.criterion.reset()
+
                     self.criterion.update(current.pos)
 
                     # Reject if min_weight_leaf is not satisfied
@@ -815,6 +816,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
 
             self.criterion.reset()
+
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
@@ -1354,6 +1356,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                 best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+
         if best.pos < end:
             self.extract_nnz(best.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
@@ -1362,6 +1365,7 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                             best.pos)
 
             self.criterion.reset()
+
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
@@ -1563,6 +1567,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
                     # Evaluate split
                     self.criterion.reset()
+
                     self.criterion.update(current.pos)
 
                     # Reject if min_weight_leaf is not satisfied
@@ -1590,6 +1595,7 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                 best.pos)
 
             self.criterion.reset()
+
             self.criterion.update(best.pos)
             best.improvement = self.criterion.impurity_improvement(impurity)
             self.criterion.children_impurity(&best.impurity_left,
