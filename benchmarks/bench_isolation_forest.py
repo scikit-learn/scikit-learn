@@ -21,6 +21,9 @@ np.random.seed(1)
 
 datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
+fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
+
+
 for dat in datasets:
     # loading and vectorization
     print('loading data')
@@ -107,20 +110,19 @@ for dat in datasets:
     ax[2].legend(loc="lower right")
 
     # Show ROC Curves
-    plt.figure(0)
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     AUC = auc(fpr, tpr)
     label = ('%s (area: %0.3f, train-time: %0.2fs, '
              'test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
-    plt.plot(fpr, tpr, lw=1, label=label)
+    ax_roc.plot(fpr, tpr, lw=1, label=label)
 
-plt.figure(0)  # for ROC curves
-plt.xlim([-0.05, 1.05])
-plt.ylim([-0.05, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic (ROC) curves')
-plt.legend(loc="lower right")
 
+ax_roc.set_xlim([-0.05, 1.05])
+ax_roc.set_ylim([-0.05, 1.05])
+ax_roc.set_xlabel('False Positive Rate')
+ax_roc.set_ylabel('True Positive Rate')
+ax_roc.set_title('Receiver operating characteristic (ROC) curves')
+ax_roc.legend(loc="lower right")
+fig_roc.tight_layout()
 plt.show()
