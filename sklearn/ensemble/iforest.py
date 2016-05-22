@@ -197,22 +197,20 @@ class IsolationForest(BaseBagging):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        is_inlier : array, shape = (n_samples, )
+        is_inlier : array, shape (n_samples,)
             For each observations, tells whether or not (+1 or -1) it should
             be considered as an inlier according to the fitted model.
-
         """
         X = check_array(X, accept_sparse='csr')
         is_inlier = np.ones(X.shape[0], dtype=int)
         is_inlier[self.decision_function(X) <= self.threshold_] = -1
-
         return is_inlier
 
     def decision_function(self, X):
