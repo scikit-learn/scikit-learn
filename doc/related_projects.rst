@@ -12,6 +12,12 @@ Interoperability and framework enhancements
 These tools adapt scikit-learn for use with other technologies or otherwise
 enhance the functionality of scikit-learn's estimators.
 
+- `ML Frontend <https://github.com/jeff1evesque/machine-learning>`_ provides
+  dataset management and SVM fitting/prediction through
+  `web-based <https://github.com/jeff1evesque/machine-learning#web-interface>`_
+  and `programmatic <https://github.com/jeff1evesque/machine-learning#programmatic-interface>`_
+  interfaces.
+
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
 
