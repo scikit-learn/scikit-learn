@@ -974,7 +974,7 @@ cdef class MAE(RegressionCriterion):
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
         cdef double* medians = NULL
-        medians = <DOUBLE_t *> calloc(self.n_outputs, sizeof(double))
+        medians = <double*> calloc(self.n_outputs, sizeof(double))
         if (medians == NULL):
             with gil:
                 raise MemoryError()
