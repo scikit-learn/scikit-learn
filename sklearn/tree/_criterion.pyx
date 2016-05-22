@@ -968,7 +968,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t end = self.end
         compute_weighted_median(dest, start, end, self.sample_weight, self.y,
                                 self.samples, self.y_stride, self.n_outputs)
-        cdef SIZE_t i
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
@@ -987,8 +986,10 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
-                impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
-        return impurity / self.n_outputs
+                # impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
+                impurity += fabs(y_ik - medians[k])
+        # return impurity / self.n_outputs
+        return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     # cdef double proxy_impurity_improvement(self) nogil:
     #     """Compute a proxy of the impurity reduction
