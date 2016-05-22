@@ -987,7 +987,7 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
                 # impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
-                impurity += fabs(y_ik - medians[k])
+                impurity += <double> fabs((<double> y_ik) - medians[k])
         # return impurity / self.n_outputs
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
@@ -1039,9 +1039,9 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
                 # impurity_left[0] += (fabs(y_ik - medians[k]) / (pos - start))
-                impurity_left[0] += fabs(y_ik - medians[k])
+                impurity_left[0] += <double>fabs((<double>y_ik) - medians[k])
         # impurity_left[0] /= self.n_outputs
-        impurity_left[0] /= ((pos - start) * self.n_outputs)
+        impurity_left[0] /= <double>((pos - start) * self.n_outputs)
 
 
         compute_weighted_median(medians, pos, end, self.sample_weight,
@@ -1052,9 +1052,9 @@ cdef class MAE(RegressionCriterion):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
                 # impurity_right[0] += (fabs(y_ik - medians[k]) / (end - pos))
-                impurity_right[0] += fabs(y_ik - medians[k])
+                impurity_right[0] += <double>fabs((<double>y_ik) - medians[k])
         # impurity_right[0] /= self.n_outputs
-        impurity_right[0] /= ((end - pos) * self.n_outputs)
+        impurity_right[0] /= <double>((end - pos) * self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):
