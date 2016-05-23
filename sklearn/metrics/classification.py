@@ -316,7 +316,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
            Educational and Psychological Measurement 20(1):37-46.
            doi:10.1177/001316446002000104.
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
-           computational linguistics". Computational Linguistic 34(4):555-596.
+           computational linguistics". Computational Linguistics 34(4):555-596.
            <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
     .. [3] `Wikipedia entry for the Cohen's kappa.
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
