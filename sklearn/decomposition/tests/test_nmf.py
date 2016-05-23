@@ -133,7 +133,6 @@ def test_nmf_transform_custom_init():
     t = m.transform(A)
 
 
-
 @ignore_warnings
 def test_nmf_inverse_transform():
     # Test that NMF.inverse_transform returns close values
