@@ -1,7 +1,7 @@
 <!--
 If your issue is a usage question, submit it here instead:
 - StackOverflow with the scikit-learn tag: http://stackoverflow.com/questions/tagged/scikit-learn
-- Mailing List: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- Mailing List: https://mail.python.org/mailman/listinfo/scikit-learn
 For more information, see User Questions: http://scikit-learn.org/stable/support.html#user-questions
 -->
 

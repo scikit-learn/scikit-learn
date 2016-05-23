@@ -76,7 +76,7 @@ Contributing code
   To avoid duplicating work, it is highly advised that you contact the
   developers on the mailing list before starting work on a non-trivial feature.
 
-  https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+  https://mail.python.org/mailman/listinfo/scikit-learn
 
 How to contribute
 -----------------
