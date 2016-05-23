@@ -203,6 +203,11 @@ Bug fixes
     - Fix bug where expected and adjusted mutual information were incorrect if
       cluster contingency cells exceeded ``2**16``. By `Joel Nothman`_.
 
+    - Fix bug in :class:`linear_model.LogisticRegressionCV` where
+      ``solver='liblinear'`` did not accept ``class_weights='balanced``.
+      (`#6817 <https://github.com/scikit-learn/scikit-learn/pull/6817>`_).
+      By `Tom Dupre la Tour`_.
+
 
 API changes summary
 -------------------
