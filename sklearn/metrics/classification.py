@@ -271,7 +271,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 def cohen_kappa_score(y1, y2, labels=None, weights=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
-    This function computes Cohen's kappa [1], a score that expresses the level
+    This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
     defined as
 
@@ -282,7 +282,9 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     assigned to any sample (the observed agreement ratio), and :math:`p_e` is
     the expected agreement when both annotators assign labels randomly.
     :math:`p_e` is estimated using a per-annotator empirical prior over the
-    class labels [2].
+    class labels [2]_.
+
+    Read more in the :ref:`User Guide <cohen_kappa>`.
 
     Parameters
     ----------
@@ -313,8 +315,11 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
            Educational and Psychological Measurement 20(1):37-46.
            doi:10.1177/001316446002000104.
-    .. [2] R. Artstein and M. Poesio (2008). "Inter-coder agreement for
-           computational linguistics". Computational Linguistic 34(4):555-596.
+    .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
+           computational linguistics". Computational Linguistics 34(4):555-596.
+           <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
+    .. [3] `Wikipedia entry for the Cohen's kappa.
+            <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
     confusion = confusion_matrix(y1, y2, labels=labels)
     n_classes = confusion.shape[0]
@@ -1831,7 +1836,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     References
     ----------
-    https://en.wikipedia.org/wiki/Brier_score
+    .. [1] `Wikipedia entry for the Brier score.
+            <https://en.wikipedia.org/wiki/Brier_score>`_
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
