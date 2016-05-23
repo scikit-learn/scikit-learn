@@ -284,6 +284,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     :math:`p_e` is estimated using a per-annotator empirical prior over the
     class labels [2]_.
 
+    Read more in the :ref:`User Guide <cohen_kappa>`.
+
     Parameters
     ----------
     y1 : array, shape = [n_samples]
