@@ -10,8 +10,8 @@ There are several ways to get in touch with the developers.
 Mailing List
 ============
 
-- The main mailing list is `scikit-learn-general
-  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_.
+- The main mailing list is `scikit-learn
+  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 - There is also a commit list `scikit-learn-commits
   <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_,
