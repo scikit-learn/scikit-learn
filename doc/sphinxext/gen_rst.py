@@ -26,11 +26,12 @@ from sklearn.externals import six
 # Try Python 2 first, otherwise load from Python 3
 try:
     from StringIO import StringIO
+    from BytesIO import BytesIO
     import cPickle as pickle
     import urllib2 as urllib
     from urllib2 import HTTPError, URLError
 except ImportError:
-    from io import StringIO
+    from io import StringIO, BytesIO
     import pickle
     import urllib.request
     import urllib.error
@@ -104,7 +105,7 @@ def _get_data(url):
         if encoding == 'plain':
             pass
         elif encoding == 'gzip':
-            data = StringIO(data)
+            data = BytesIO(data)
             data = gzip.GzipFile(fileobj=data).read()
         else:
             raise RuntimeError('unknown encoding')

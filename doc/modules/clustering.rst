@@ -1339,6 +1339,91 @@ mean of homogeneity and completeness**:
    <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
    Becker, PhD Thesis.
 
+.. _fowlkes_mallows_scores:
+
+Fowlkes-Mallows scores
+----------------------
+
+The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
+the pairwise precision and recall::
+
+      FMI = TP / sqrt((TP + FP) * (TP + FN))
+
+Where :math:`TP` is the number of **True Positive** (i.e. the number of pair
+of points that belong to the same clusters in both labels_true and
+labels_pred), :math:`FP` is the number of **False Positive** (i.e. the number
+of pair of points that belong to the same clusters in labels_true and not
+in labels_pred) and :math:`FN`is the number of **False Negative** (i.e the
+number of pair of points that belongs in the same clusters in labels_pred
+and not in labels_True).
+
+The score ranges from 0 to 1. A high value indicates a good similarity
+between two clusters.
+
+  >>> from sklearn import metrics
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.47140...
+
+One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
+the same score::
+
+  >>> labels_pred = [1, 1, 0, 0, 3, 3]
+
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.47140...
+
+Perfect labeling is scored 1.0::
+
+  >>> labels_pred = labels_true[:]
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  1.0
+
+Bad (e.g. independent labelings) have zero scores::
+
+  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
+  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.0
+
+Advantages
+~~~~~~~~~~
+
+- **Random (uniform) label assignments have a FMI score close to 0.0**
+  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  case for raw Mutual Information or the V-measure for instance).
+
+- **Bounded range [0, 1]**:  Values close to zero indicate two label
+  assignments that are largely independent, while values close to one
+  indicate significant agreement. Further, values of exactly 0 indicate
+  **purely** independent label assignments and a AMI of exactly 1 indicates
+  that the two label assignments are equal (with or without permutation).
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assumes isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- Contrary to inertia, **FMI-based measures require the knowledge
+  of the ground truth classes** while almost never available in practice or
+  requires manual assignment by human annotators (as in the supervised learning
+  setting).
+
+.. topic:: References
+
+  * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+    hierarchical clusterings". Journal of the American Statistical Association.
+    http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf
+
+  * `Wikipedia entry for the Fowlkes-Mallows Index
+    <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+
 .. _silhouette_coefficient:
 
 Silhouette Coefficient
@@ -1413,3 +1498,70 @@ Drawbacks
 
  * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
+
+.. _calinski_harabaz_index:
+
+Calinski-Harabaz Index
+----------------------
+
+If the ground truth labels are not known, the Calinski-Harabaz index
+(:func:'sklearn.metrics.calinski_harabaz_score') can be used to evaluate the
+model, where a higher Calinski-Harabaz score relates to a model with better
+defined clusters.
+
+For :math:`k` clusters, the Calinski-Harabaz :math:`ch` is given as the ratio
+of the between-clusters dispersion mean and the within-cluster dispersion:
+
+.. math::
+  ch(k) = \frac{trace(B_k)}{trace(W_k)} \times \frac{N - k}{k - 1}
+  W_k  = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T \\
+  B_k = \sum_q n_q (c_q - c) (c_q - c)^T \\
+
+where:
+- :math:`N` be the number of points in our data,
+- :math:`C_q` be the set of points in cluster :math:`q`,
+- :math:`c_q` be the center of cluster :math:`q`,
+- :math:`c` be the center of :math:`E`,
+- :math:`n_q` be the number of points in cluster :math:`q`:
+
+
+  >>> from sklearn import metrics
+  >>> from sklearn.metrics import pairwise_distances
+  >>> from sklearn import datasets
+  >>> dataset = datasets.load_iris()
+  >>> X = dataset.data
+  >>> y = dataset.target
+
+In normal usage, the Calinski-Harabaz index is applied to the results of a
+cluster analysis.
+
+  >>> import numpy as np
+  >>> from sklearn.cluster import KMeans
+  >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans_model.labels_
+  >>> metrics.calinski_harabaz_score(X, labels)
+  ...                                                      # doctest: +ELLIPSIS
+  560.39...
+
+
+Advantages
+~~~~~~~~~~
+
+- The score is higher when clusters are dense and well separated, which relates
+  to a standard concept of a cluster.
+
+- The score is fast to compute
+
+
+Drawbacks
+~~~~~~~~~
+
+- The Calinski-Harabaz index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
+
+.. topic:: References
+
+ *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
+    analysis". Communications in Statistics-theory and Methods 3: 1-27.
+    `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.

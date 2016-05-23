@@ -109,6 +109,14 @@ New features
      One can pass method names such as `predict_proba` to be used in the cross
      validation framework instead of the default `predict`. By `Ori Ziv`_ and `Sears Merritt`_.
 
+   - Added :func:`metrics.cluster.fowlkes_mallows_score`, the Fowlkes Mallows
+     Index which measures the similarity of two clusterings of a set of points
+     By `Arnaud Fouchet`_ and `Thierry Guillemot`_.
+
+   - Added :func:`metrics.calinski_harabaz_score`, which computes the Calinski
+     and Harabaz score to evaluate the resulting clustering of a set of points.
+     By `Arnaud Fouchet`_ and `Thierry Guillemot`_.
+
 Enhancements
 ............
 
@@ -4257,3 +4265,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sears Merritt: https://github.com/merritts
 
 .. _Wenhua Yang: https://github.com/geekoala
+
+.. _Arnaud Fouchet: https://github.com/afouchet
