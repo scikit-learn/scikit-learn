@@ -165,7 +165,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     if mode == 'mem':
         # Because under ``mem`` mode, we don't know core_samples in advance,
         # we set it to a certain number (2) marking it unknown.
-        core_samples = np.full(X.shape[0], 2, dtype=np.uint8)
+        core_samples = np.ones(X.shape[0], dtype=np.uint8)
+        core_samples[:] = 2
     elif mode == 'once':
         core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
     else:
