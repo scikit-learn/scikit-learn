@@ -803,6 +803,7 @@ details.
    metrics.average_precision_score
    metrics.brier_score_loss
    metrics.classification_report
+   metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.f1_score
    metrics.fbeta_score
@@ -928,7 +929,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.paired_manhattan_distances
    metrics.pairwise.paired_cosine_distances
    metrics.pairwise.paired_distances
-   
+
 
 .. _mixture_ref:
 
