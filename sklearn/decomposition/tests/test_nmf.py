@@ -235,7 +235,7 @@ def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    msg = "Number of components must be positive; got (n_components='2')"
+    msg = "Number of components must be a positive integer; got (n_components='2')"
     assert_raise_message(ValueError, msg, nnmf, A, A, A, '2')
     msg = "Negative values in data passed to NMF (input H)"
     assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
