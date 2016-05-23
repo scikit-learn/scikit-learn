@@ -19,7 +19,6 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from ..externals import six
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
@@ -747,11 +746,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if n_components is None:
         n_components = n_features
 
-    if not isinstance(n_components, six.integer_types) or n_components <= 0:
-        raise ValueError("Number of components must be positive;"
+    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
+        raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, numbers.Number) or max_iter < 0:
-        raise ValueError("Maximum number of iteration must be positive;"
+    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
+        raise ValueError("Maximum number of iterations must be a positive integer;"
                          " got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
