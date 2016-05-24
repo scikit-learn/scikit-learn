@@ -104,8 +104,9 @@ def test_iforest_error():
                          "max_samples will be set to n_samples for estimation",
                          IsolationForest(max_samples=1000).fit, X)
     assert_no_warnings(IsolationForest(max_samples='auto').fit, X)
-    assert_raises(ValueError,
-                  IsolationForest(max_samples='foobar').fit, X)
+    assert_no_warnings(IsolationForest(max_samples=np.int64(2)).fit, X)
+    assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
+    assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
 
 
 def test_recalculate_max_depth():
