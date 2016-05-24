@@ -15,7 +15,7 @@ cimport numpy as np
 cimport cython
 
 from ..utils.extmath import norm
-from sklearn.utils.sparsefuncs_fast cimport add_row_csr
+from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.fixes import bincount
 
 ctypedef np.float64_t DOUBLE
@@ -326,9 +326,8 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     centers: array, shape (n_clusters, n_features)
         The resulting centers
     """
-    n_features = X.shape[1]
-
-    cdef np.npy_intp cluster_id
+    cdef int n_features = X.shape[1]
+    cdef int curr_label
 
     cdef np.ndarray[DOUBLE, ndim=1] data = X.data
     cdef np.ndarray[int, ndim=1] indices = X.indices
@@ -341,24 +340,25 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         bincount(labels, minlength=n_clusters)
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
         np.where(n_samples_in_cluster == 0)[0]
+    cdef int n_empty_clusters = empty_clusters.shape[0]
 
     # maybe also relocate small clusters?
 
-    if empty_clusters.shape[0] > 0:
+    if n_empty_clusters > 0:
         # find points to reassign empty clusters to
-        far_from_centers = distances.argsort()[::-1]
+        far_from_centers = distances.argsort()[::-1][:n_empty_clusters]
 
-        for i in range(empty_clusters.shape[0]):
-            cluster_id = empty_clusters[i]
+        # XXX two relocated clusters could be close to each other
+        assign_rows_csr(X, far_from_centers, empty_clusters, centers)
 
-            # XXX two relocated clusters could be close to each other
-            centers[cluster_id] = 0.
-            add_row_csr(data, indices, indptr, far_from_centers[i],
-                        centers[cluster_id])
-            n_samples_in_cluster[cluster_id] = 1
+        for i in range(n_empty_clusters):
+            n_samples_in_cluster[empty_clusters[i]] = 1
 
     for i in range(labels.shape[0]):
-        add_row_csr(data, indices, indptr, i, centers[labels[i]])
+        curr_label = labels[i]
+        for ind in range(indptr[i], indptr[i + 1]):
+            j = indices[ind]
+            centers[curr_label, j] += data[ind]
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 
