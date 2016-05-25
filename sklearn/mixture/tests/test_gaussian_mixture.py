@@ -11,10 +11,11 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture.gaussian_mixture import GaussianMixture
 from sklearn.mixture.gaussian_mixture import (
-    _estimate_gaussian_precisions_cholesky_full,
-    _estimate_gaussian_precisions_cholesky_tied,
-    _estimate_gaussian_precisions_cholesky_diag,
-    _estimate_gaussian_precisions_cholesky_spherical)
+    _estimate_gaussian_covariances_full,
+    _estimate_gaussian_covariances_tied,
+    _estimate_gaussian_covariances_diag,
+    _estimate_gaussian_covariances_spherical,
+    _compute_precision_cholesky)
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils.testing import assert_allclose
@@ -327,25 +328,33 @@ def test_suffstat_sk_full():
     X_resp = np.sqrt(resp) * X
     nk = np.array([n_samples])
     xk = np.zeros((1, n_features))
-    precs_pred = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                             nk, xk, 0)
-    covars_pred = linalg.inv(np.dot(precs_pred[0], precs_pred[0].T))
+    covars_pred = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
     ecov = EmpiricalCovariance(assume_centered=True)
     ecov.fit(X_resp)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='frobenius'), 0)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='spectral'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='frobenius'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
+    precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
+    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
+    assert_array_almost_equal(precs_est, precs_pred)
 
     # special case 2, assuming resp are all ones
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean(axis=0).reshape((1, -1))
-    precs_pred = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                             nk, xk, 0)
-    covars_pred = linalg.inv(np.dot(precs_pred[0], precs_pred[0].T))
+    covars_pred = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
     ecov = EmpiricalCovariance(assume_centered=False)
     ecov.fit(X)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='frobenius'), 0)
-    assert_almost_equal(ecov.error_norm(covars_pred, norm='spectral'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='frobenius'), 0)
+    assert_almost_equal(ecov.error_norm(covars_pred[0], norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred, 'full')
+    precs_pred = np.array([np.dot(prec, prec.T) for prec in precs_chol_pred])
+    precs_est = np.array([linalg.inv(cov) for cov in covars_pred])
+    assert_array_almost_equal(precs_est, precs_pred)
 
 
 def test_suffstat_sk_tied():
@@ -359,22 +368,22 @@ def test_suffstat_sk_tied():
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
 
-    precs_pred_full = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_full = [linalg.inv(np.dot(precision_chol, precision_chol.T))
-                        for precision_chol in precs_pred_full]
+    covars_pred_full = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
     covars_pred_full = np.sum(nk[:, np.newaxis, np.newaxis] * covars_pred_full,
                               0) / n_samples
 
-    precs_pred_tied = _estimate_gaussian_precisions_cholesky_tied(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_tied = linalg.inv(np.dot(precs_pred_tied, precs_pred_tied.T))
+    covars_pred_tied = _estimate_gaussian_covariances_tied(resp, X, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
     ecov.covariance_ = covars_pred_full
     assert_almost_equal(ecov.error_norm(covars_pred_tied, norm='frobenius'), 0)
     assert_almost_equal(ecov.error_norm(covars_pred_tied, norm='spectral'), 0)
 
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred_tied, 'tied')
+    precs_pred = np.dot(precs_chol_pred, precs_chol_pred.T)
+    precs_est = linalg.inv(covars_pred_tied)
+    assert_array_almost_equal(precs_est, precs_pred)
 
 def test_suffstat_sk_diag():
     # test against 'full' case
@@ -386,21 +395,19 @@ def test_suffstat_sk_diag():
     X = rng.rand(n_samples, n_features)
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
-    precs_pred_full = _estimate_gaussian_precisions_cholesky_full(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_full = [linalg.inv(np.dot(precision_chol, precision_chol.T))
-                        for precision_chol in precs_pred_full]
-
-    precs_pred_diag = _estimate_gaussian_precisions_cholesky_diag(resp, X,
-                                                                  nk, xk, 0)
-    covars_pred_diag = np.array([np.diag(1. / d) ** 2
-                                 for d in precs_pred_diag])
+    covars_pred_full = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
+    covars_pred_diag = _estimate_gaussian_covariances_diag(resp, X, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
     for (cov_full, cov_diag) in zip(covars_pred_full, covars_pred_diag):
         ecov.covariance_ = np.diag(np.diag(cov_full))
+        cov_diag = np.diag(cov_diag)
         assert_almost_equal(ecov.error_norm(cov_diag, norm='frobenius'), 0)
         assert_almost_equal(ecov.error_norm(cov_diag, norm='spectral'), 0)
+
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred_diag, 'diag')
+    assert_almost_equal(covars_pred_diag, 1. / precs_chol_pred ** 2)
 
 
 def test_gaussian_suffstat_sk_spherical():
@@ -414,12 +421,16 @@ def test_gaussian_suffstat_sk_spherical():
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean()
-    precs_pred_spherical = _estimate_gaussian_precisions_cholesky_spherical(
-        resp, X, nk, xk, 0)
-    covars_pred_spherical = (np.dot(X.flatten().T, X.flatten()) /
-                             (n_features * n_samples))
-    assert_almost_equal(1. / precs_pred_spherical ** 2, covars_pred_spherical)
+    covars_pred_spherical = _estimate_gaussian_covariances_spherical(resp, X,
+                                                                     nk, xk, 0)
+    covars_pred_spherical2 = (np.dot(X.flatten().T, X.flatten()) /
+                              (n_features * n_samples))
+    assert_almost_equal(covars_pred_spherical, covars_pred_spherical2)
 
+    # check the precision computation
+    precs_chol_pred = _compute_precision_cholesky(covars_pred_spherical,
+                                                  'spherical')
+    assert_almost_equal(covars_pred_spherical, 1. / precs_chol_pred ** 2)
 
 def _naive_lmvnpdf_diag(X, means, covars):
     resp = np.empty((len(X), len(means)))
