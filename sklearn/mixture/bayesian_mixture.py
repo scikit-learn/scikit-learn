@@ -329,7 +329,7 @@ class BayesianGaussianMixture(BaseMixture):
         nk : array-like, shape (n_components,)
         """
         self.alpha_ = self._alpha_prior + nk
-        # XXX Check if we can normalize here directly
+        self.alpha_ /= np.sum(self.alpha_)
 
     def _initialize_means_distribution(self, X, nk, xk):
         """Initialize the parameters of the Gaussian distribution.
@@ -342,7 +342,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         xk : array-like, shape (n_components, n_features)
         """
-        n_features = X.shape[1]
+        _, n_features = X.shape
 
         if self.beta_init is None:
             self._beta_prior = 1.
@@ -449,7 +449,7 @@ class BayesianGaussianMixture(BaseMixture):
                 ensure_2d=False)
             _check_shape(self._covariance_prior, (n_features,),
                          '%s covariance_init' % self.covariance_type)
-            _check_precision_positivity(self._precision_prior,
+            _check_precision_positivity(self._covariance_prior,
                                         self.covariance_type)
         # spherical case
         elif self.covariance_init > 0.:
@@ -591,7 +591,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.nu_ = self._nu_prior + .5 * nk
 
         diff = xk - self._mean_prior
-        self.covariances_ = (self._precision_prior + .5 / n_features *
+        self.covariances_ = (self._covariance_prior + .5 / n_features *
                              (nk * Sk + (nk * self._beta_prior / self.beta_) *
                               np.mean(np.square(diff), 1)))
         # XXX Check if we cannot directly normalized with nu
@@ -704,7 +704,7 @@ class BayesianGaussianMixture(BaseMixture):
             n_features * np.log(2) - log_det_precisions)
 
         for k in range(self.n_components):
-            y = np.dot(X - self.means_[k], self.precisions_cholesky_[k])
+            y = np.dot(X - self.means_[k], self.precisions_cholesky_)
             mahala_dist = np.sum(np.square(y), axis=1)
 
             log_prob[:, k] = -.5 * (- self._log_lambda +
@@ -797,7 +797,7 @@ class BayesianGaussianMixture(BaseMixture):
         temp1 = np.empty(self.n_components)
         for k in range(self.n_components):
             y = np.dot(self.means_[k] - self._mean_prior,
-                       self._precisions_cholesky)
+                       self.precisions_cholesky_)
             temp1[k] = np.sum(np.square(y))
 
         temp1 = (self.n_components * self._log_gaussian_norm_prior +
@@ -816,7 +816,6 @@ class BayesianGaussianMixture(BaseMixture):
 
     def _estimate_p_lambda_diag(self):
         n_features, = self._mean_prior.shape
-
         sum_y = np.sum(np.square(self.means_ - self._mean_prior) *
                        self.precisions_, axis=1)
         temp1 = (self.n_components * self._log_gaussian_norm_prior +
@@ -832,8 +831,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     def _estimate_p_lambda_spherical(self):
         n_features, = self._mean_prior.shape
-
-        sum_y = self.precisions_ * np.sum(np.square(self.means_,
+        sum_y = self.precisions_ * np.sum(np.square(self.means_ -
                                                     self._mean_prior), axis=1)
 
         temp1 = (self.n_components * self._log_gaussian_norm_prior +
@@ -868,7 +866,7 @@ class BayesianGaussianMixture(BaseMixture):
     def _estimate_q_lambda_tied(self):
         n_features, = self._mean_prior.shape
         wishart_entropy = estimate_wishart_entropy(
-            self.nu_, self._precisions_chol, self._log_lambda, n_features)
+            self.nu_, self.precisions_cholesky_, self._log_lambda, n_features)
         return (.5 * self.n_components * self._log_lambda +
                 .5 * n_features * np.sum(np.log(self.beta_ / (2. * np.pi))) -
                 .5 * n_features * self.n_components -
