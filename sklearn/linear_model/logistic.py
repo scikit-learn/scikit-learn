@@ -618,23 +618,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # are assigned to the original labels. If it is "balanced", then
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
-
     if isinstance(class_weight, dict) or multi_class == 'multinomial':
-        if solver == "liblinear":
-            if classes.size == 2:
-                # Reconstruct the weights with keys 1 and -1
-                temp = {1: class_weight[pos_class],
-                        -1: class_weight[classes[0]]}
-                class_weight = temp.copy()
-            else:
-                raise ValueError("In LogisticRegressionCV the liblinear "
-                                 "solver cannot handle multiclass with "
-                                 "class_weight of type dict. Use the lbfgs, "
-                                 "newton-cg or sag solvers or set "
-                                 "class_weight='balanced'")
-        else:
-            class_weight_ = compute_class_weight(class_weight, classes, y)
-            sample_weight *= class_weight_[le.fit_transform(y)]
+        class_weight_ = compute_class_weight(class_weight, classes, y)
+        sample_weight *= class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
@@ -740,7 +726,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                                      maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
-                X, target, C, fit_intercept, intercept_scaling, class_weight,
+                X, target, C, fit_intercept, intercept_scaling, None,
                 penalty, dual, verbose, max_iter, tol, random_state,
                 sample_weight=sample_weight)
             if fit_intercept:
