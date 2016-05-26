@@ -742,7 +742,7 @@ In a nutshell, one may choose the solver with the following rules:
 Case                               Solver
 =================================  =============================
 Small dataset or L1 penalty        "liblinear"
-Multinomial loss or large dataset  "lbfgs", "sag" or newton-cg"
+Multinomial loss or large dataset  "lbfgs", "sag" or "newton-cg"
 Very Large dataset                 "sag"
 =================================  =============================
 For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
