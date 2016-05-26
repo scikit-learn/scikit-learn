@@ -129,7 +129,6 @@ Once trained, we can export the tree in `Graphviz
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
-    >>> from sklearn.externals.six import StringIO
     >>> with open("iris.dot", 'w') as f:
     ...     f = tree.export_graphviz(clf, out_file=f)
 
