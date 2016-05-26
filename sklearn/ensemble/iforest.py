@@ -10,6 +10,7 @@ from warnings import warn
 
 from scipy.sparse import issparse
 
+import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
@@ -167,7 +168,7 @@ class IsolationForest(BaseBagging):
                                  'Valid choices are: "auto", int or'
                                  'float' % self.max_samples)
 
-        elif isinstance(self.max_samples, six.integer_types):
+        elif isinstance(self.max_samples, numbers.Integral):
             if self.max_samples > n_samples:
                 warn("max_samples (%s) is greater than the "
                      "total number of samples (%s). max_samples "
@@ -277,7 +278,7 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, six.integer_types):
+    if isinstance(n_samples_leaf, numbers.Integral):
         if n_samples_leaf <= 1:
             return 1.
         else:
