@@ -1662,21 +1662,42 @@ def test_boxcox_transform():
     X = np.array([[4, 2, 1], [1, 6, 3], [1, 5, 2], [3, 1, 3]])
     Xtr = boxcox(X)
     n_features = X.shape[1]
-    for feature in range(n_features):
-        assert_array_equal(stats.boxcox(X[:, feature])[0], Xtr[:, feature])
-        assert_array_equal(boxcox(X[:, feature].reshape(-1, 1)).ravel(),
-                           Xtr[:, feature])
+    for k in range(n_features):
+        assert_array_equal(stats.boxcox(X[:, k])[0], Xtr[:, k])
+        assert_array_equal(boxcox(X[:, k:k + 1]).ravel(),
+                           Xtr[:, k])
 
 
 def test_boxcox_transformer():
-    X1 = np.array([[4, 2, 1], [1, 6, 3], [1, 5, 2], [3, 1, 3]])
-    X2 = np.array([[7, 4, 3], [2, 5, 4], [1, 6, 3], [4, 2, 1]])
-    feature_indices = np.array([0, 2])
-    BCTr = BoxCoxTransformer(feature_indices=feature_indices)
-    BCTr.fit(X1)
-    X_tr = BCTr.transform(X2)
-    n_features = X2.shape[1]
-    X_tr1 = BCTr.transform(X2)
-    feature_indices = np.array([True, False, True])
-    X_tr2 = BCTr.transform(X2)
-    assert_array_equal(X_tr1, X_tr2)
+    rng = np.random.RandomState(42)
+    X = rng.randn(3000, 2)
+    lambda0 = 0.1
+    X[:, 0] = np.exp(X[:, 0])
+    X[:, 1] = ((X[:, 1] * lambda0 + 1)) ** (1. / lambda0)
+
+    feature_indices = [0]
+    bct = BoxCoxTransformer(feature_indices=feature_indices)
+
+    bct.fit(X)
+    assert_true(len(bct.lambdas_), 1)
+    X_tr = bct.transform(X)
+    assert_true(X_tr.shape, X.shape)
+    assert_true(np.min(X_tr[:, 0]) < 0.)
+    assert_true(np.min(X_tr[:, 1]) > 0.)
+
+    bct.set_params(feature_indices=np.array([False, True]))
+    bct.fit(X)
+    assert_true(len(bct.lambdas_), 1)
+    X_tr = bct.transform(X)
+    assert_true(X_tr.shape, X.shape)
+    assert_true(np.min(X_tr[:, 0]) > 0.)
+    assert_true(np.min(X_tr[:, 1]) < 0.)
+
+    bct.set_params(feature_indices=None)
+    bct.fit(X)
+    assert_true(len(bct.lambdas_), 2)
+    X_tr = bct.transform(X)
+    assert_true(X_tr.shape, X.shape)
+    assert_true(np.min(X_tr[:, 0]) < 0.)
+    assert_true(np.min(X_tr[:, 1]) < 0.)
+    assert_array_almost_equal(bct.lambdas_, [0., lambda0], 2)
