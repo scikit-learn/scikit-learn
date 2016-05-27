@@ -225,13 +225,15 @@ def get_scorer(scoring):
     >>> dummy = DummyClassifier(strategy="constant", constant=1.0)
     >>>
     >>> cross_val_score(dummy, X, y, scoring=get_scorer("accuracy"))
-    array([0.5, 0.5, 0.5])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([ 0.5, 0.5, 0.5])
     >>>
     >>> def dummy_scorer(estimator, y_test, y_pred):
-    >>>     return 1.0
+    ...     return 1.0
     >>>
     >>> cross_val_score(dummy, X, y, scoring=get_scorer(dummy_scorer))
-    array([1., 1., 1.])
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([ 1., 1., 1.])
 
     """
     if isinstance(scoring, six.string_types):
