@@ -317,8 +317,51 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.random_state,
                                self.presort), self.__getstate__())
 
+
+    cdef void _shortcut_catlist(self, SIZE_t start, SIZE_t end, INT32_t ncat,
+                                INT32_t ncat_present, const INT32_t *cat_offs,
+                                SIZE_t *shortcut_cat) nogil:
+        """The Breiman shortcut for finding the best split involves a
+        preprocessing step wherein we sort the categories by
+        increasing (weighted) mean of the outcome y (whether 0/1
+        binary for classification or quantitative for
+        regression). This function implements this preprocessing step
+        and produces a sorted list of category values.
+
+        """
+        cdef SIZE_t *samples = self.samples
+        cdef DTYPE_t *Xf = self.feature_values
+        cdef DOUBLE_t *y = self.y
+        cdef SIZE_t y_stride = self.y_stride
+        cdef DOUBLE_t *sample_weight = self.sample_weight
+        cdef DOUBLE_t w
+        cdef SIZE_t cat, localcat
+        cdef SIZE_t q, partition_end
+        cdef DTYPE_t sort_value[64]
+        cdef DTYPE_t sort_den[64]
+
+        for cat in range(ncat):
+            sort_value[cat] = 0
+            sort_den[cat] = 0
+
+        for q in range(start, end):
+            cat = <SIZE_t> Xf[q]
+            w = sample_weight[samples[q]] if sample_weight else 1.0
+            sort_value[cat] += w * (y[y_stride * samples[q]])
+            sort_den[cat] += w
+
+        for localcat in range(ncat_present):
+            cat = localcat + cat_offs[localcat]
+            sort_value[localcat] = sort_value[cat] / sort_den[cat]
+            shortcut_cat[localcat] = cat
+
+        # Second step: sort by decreasing impurity
+        sort(&sort_value[0], shortcut_cat, ncat_present)
+
+
     cdef void node_split(self, double impurity, SplitRecord* split,
                          SIZE_t* n_constant_features) nogil:
+
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -368,6 +411,8 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef UINT64_t cat_split
         cdef INT32_t ncat_present
         cdef INT32_t cat_offs[64]
+        cdef SIZE_t shortcut_cat[64]
+        cdef bint shortcut = 0
 
         _init_split(&best, end)
 
@@ -466,23 +511,34 @@ cdef class BestSplitter(BaseDenseSplitter):
                             if cat_split & (1 << q):
                                 cat_offs[ncat_present] = q - ncat_present
                                 ncat_present += 1
+                        if shortcut:
+                            self._shortcut_catlist(start, end, self.n_categories[current.feature],
+                                                   ncat_present, cat_offs, &shortcut_cat[0])
                     else:
                         p = start
 
                     while True:
                         if is_categorical:
-                            # WARNING: This is O(n_samples *
-                            # 2**n_categories), and will be very slow
-                            # for more than just a few categories.
-                            if p > (1 << ncat_present) - 1:
-                                break
+                            if shortcut:
+                                p += 1
+                                if p >= ncat_present:
+                                    break
+                                cat_split = 0
+                                for q in range(p):
+                                    cat_split |= (<SIZE_t> 1) << shortcut_cat[q]
+                                if cat_split & 1:
+                                    cat_split = (~cat_split) & (
+                                        ((<SIZE_t> 1) << self.n_categories[current.feature]) - 1)
                             else:
-                                p += 2  # LSB must always be 0
+                                if p > (1 << ncat_present) - 1:
+                                    break
+                                else:
+                                    p += 2  # LSB must always be 0
 
-                            # Expand the bits of p out into cat_split
-                            cat_split = 0
-                            for q in range(ncat_present):
-                                cat_split |= (p & (1 << q)) << cat_offs[q]
+                                # Expand the bits of p out into cat_split
+                                cat_split = 0
+                                for q in range(ncat_present):
+                                    cat_split |= (p & ((<SIZE_t> 1) << q)) << cat_offs[q]
 
                             # Partition
                             q = start
