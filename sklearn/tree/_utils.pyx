@@ -85,7 +85,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
         median_index = 0
         sum_weights = 0.0
 
-        for p in range(0, n_node_samples):
+        for p in range(n_node_samples):
             i = samples[p + start]
 
             y_ik = y[i * y_stride + k]
@@ -118,6 +118,8 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
                 median_dest[k] = (y_vals[n_node_samples / 2] +  y_vals[(n_node_samples / 2) - 1])/2
             else:
                 median_dest[k] = y_vals[n_node_samples / 2]
+    free(y_vals)
+    free(weights)
 
 
 cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,

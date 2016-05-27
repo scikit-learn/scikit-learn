@@ -166,6 +166,7 @@ cdef class Criterion:
         cdef double impurity_left
         cdef double impurity_right
         self.children_impurity(&impurity_left, &impurity_right)
+
         return (- self.weighted_n_right * impurity_right
                 - self.weighted_n_left * impurity_left)
 
@@ -198,9 +199,9 @@ cdef class Criterion:
 
         self.children_impurity(&impurity_left, &impurity_right)
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity - (self.weighted_n_right /
+                (impurity - (self.weighted_n_right / 
                              self.weighted_n_node_samples * impurity_right)
-                          - (self.weighted_n_left /
+                          - (self.weighted_n_left / 
                              self.weighted_n_node_samples * impurity_left)))
 
 
@@ -263,7 +264,7 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = <double*> calloc(n_elements, sizeof(double))
         self.sum_right = <double*> calloc(n_elements, sizeof(double))
 
-        if (self.sum_total == NULL or
+        if (self.sum_total == NULL or 
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
@@ -819,6 +820,7 @@ cdef class RegressionCriterion(Criterion):
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
         # of computations, i.e. from pos to new_pos or from end to new_po.
+
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):
                 i = samples[p]
@@ -846,7 +848,7 @@ cdef class RegressionCriterion(Criterion):
 
                 self.weighted_n_left -= w
 
-        self.weighted_n_right = (self.weighted_n_node_samples -
+        self.weighted_n_right = (self.weighted_n_node_samples - 
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
             sum_right[k] = sum_total[k] - sum_left[k]
@@ -885,6 +887,7 @@ cdef class MSE(RegressionCriterion):
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
+
         return impurity / self.n_outputs
 
     cdef double proxy_impurity_improvement(self) nogil:
@@ -918,6 +921,7 @@ cdef class MSE(RegressionCriterion):
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
+
 
         cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
@@ -960,8 +964,7 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 cdef class MAE(RegressionCriterion):
-    """Mean absolute error impurity criterion
-    """
+    """Mean absolute error impurity criterion"""
     cdef void node_value(self, double* dest) nogil:
         """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
@@ -989,6 +992,7 @@ cdef class MAE(RegressionCriterion):
                 # impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
                 impurity += <double> fabs((<double> y_ik) - medians[k])
         # return impurity / self.n_outputs
+        free(medians)
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     # cdef double proxy_impurity_improvement(self) nogil:
@@ -1055,6 +1059,7 @@ cdef class MAE(RegressionCriterion):
                 impurity_right[0] += <double>fabs((<double>y_ik) - medians[k])
         # impurity_right[0] /= self.n_outputs
         impurity_right[0] /= <double>((end - pos) * self.n_outputs)
+        free(medians)
 
 
 cdef class FriedmanMSE(MSE):
