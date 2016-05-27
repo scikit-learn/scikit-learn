@@ -40,7 +40,7 @@ from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.fixes import bincount
 from ..exceptions import UndefinedMetricWarning
-
+from ..utils.validation import _assert_all_finite
 
 def _check_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
@@ -70,6 +70,8 @@ def _check_targets(y_true, y_pred):
     y_pred : array or indicator matrix
     """
     check_consistent_length(y_true, y_pred)
+    _assert_all_finite(y_true)
+    _assert_all_finite(y_pred)
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 
