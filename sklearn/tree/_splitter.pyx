@@ -458,6 +458,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                 continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+
                             if current_proxy_improvement > best_proxy_improvement:
                                 best_proxy_improvement = current_proxy_improvement
                                 current.threshold = (Xf[p - 1] + Xf[p]) / 2.0

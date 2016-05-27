@@ -198,6 +198,7 @@ cdef class Criterion:
         cdef double impurity_right
 
         self.children_impurity(&impurity_left, &impurity_right)
+
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
                 (impurity - (self.weighted_n_right / 
                              self.weighted_n_node_samples * impurity_right)
@@ -723,7 +724,7 @@ cdef class RegressionCriterion(Criterion):
         self.sum_left = <double*> calloc(n_outputs, sizeof(double))
         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
 
-        if (self.sum_total == NULL or
+        if (self.sum_total == NULL or 
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
@@ -958,7 +959,7 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
@@ -1118,5 +1119,5 @@ cdef class FriedmanMSE(MSE):
         diff = (self.weighted_n_right * total_sum_left -
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right * 
                                self.weighted_n_node_samples))

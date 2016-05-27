@@ -119,7 +119,8 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
             else:
                 median_dest[k] = y_vals[n_node_samples / 2]
     free(y_vals)
-    free(weights)
+    if sample_weight != NULL:
+        free(weights)
 
 
 cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
