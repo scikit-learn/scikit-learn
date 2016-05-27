@@ -17,8 +17,63 @@ from ..externals.joblib import delayed
 from ..isotonic import IsotonicRegression
 
 
-def _smacof_single(similarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None):
+def _e_vect(n, N):
+    """
+    Computes vector of length N, such that n-th element is one,
+    and zero otherwise.
+
+    Parameters
+    ----------
+    n: int
+        n-th element of array is one
+
+    N: int
+        size of array
+
+    Returns
+    -------
+    out: ndarray (N,)
+        array with N zeros, n-th element is one
+
+    """
+    out = np.zeros((1, N)).T
+    out[n, 0] = 1
+
+    return np.array(out)
+
+
+def _makeVinv(N, W=None):
+    """
+    Computes the pseudo-inverse of V matrix, used in the
+    Guttman transform: X = Vinv * B * X
+
+    Parameters
+    ----------
+    N: int
+        Size of V matrix (in smacof, is n_samples)
+
+    W: ndarray (N, N), optional, default None
+        weighting matrix of similarities, default considers all weights to one
+
+    """
+    if W is None:
+        Vinv = np.identity(N) - np.ones((N, N)) / N
+        Vinv /= N
+    else:
+        V = np.zeros((N, N))
+        for nn in range(N):
+            for mm in range(nn, N):
+                V += W[nn, mm] * np.dot(_e_vect(nn, N) - _e_vect(mm, N),
+                                        (_e_vect(nn, N) - _e_vect(mm, N)).T)
+
+        Vinv = np.linalg.pinv(V)
+
+    return Vinv
+
+
+def _smacof_single(similarities, metric=True, n_components=2,
+                   init=None, weight=None, max_iter=300, verbose=0,
+                   eps=1e-3, random_state=None):
     """
     Computes multidimensional scaling using SMACOF algorithm
 
@@ -37,6 +92,9 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     init: {None or ndarray}, optional
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
+
+    weight: symmetric ndarray, shape [n * n], optional, default: None
+        weighting matrix of similarities. Default considers all weights to 1.
 
     max_iter: int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run
@@ -84,6 +142,8 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
                              (n_samples, n_components))
         X = init
 
+    Vinv = _makeVinv(n_samples, W=weight)
+
     old_stress = None
     ir = IsotonicRegression()
     for it in range(max_iter):
@@ -110,10 +170,14 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
-        ratio = disparities / dis
+        if weight is None:
+            ratio = disparities / dis
+        else:
+            ratio = weight * disparities / dis
+
         B = - ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
-        X = 1. / n_samples * np.dot(B, X)
+        X = np.dot(Vinv, np.dot(B, X))
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
         if verbose >= 2:
@@ -129,9 +193,9 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     return X, stress, it + 1
 
 
-def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
-           n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None,
-           return_n_iter=False):
+def smacof(similarities, metric=True, n_components=2, init=None, weight=None,
+           n_init=8, n_jobs=1, max_iter=300, verbose=0, eps=1e-3,
+           random_state=None, return_n_iter=False):
     """
     Computes multidimensional scaling using SMACOF (Scaling by Majorizing a
     Complicated Function) algorithm
@@ -167,6 +231,9 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     init : {None or ndarray of shape (n_samples, n_components)}, optional
         if None, randomly chooses the initial configuration
         if ndarray, initialize the SMACOF algorithm with this array
+
+    weight: symmetric ndarray, shape [n * n], optional, default: None
+        weighting matrix of similarities. Default considers all weights to 1.
 
     n_init : int, optional, default: 8
         Number of time the smacof algorithm will be run with different
@@ -225,7 +292,6 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     "Multidimensional scaling by optimizing goodness of fit to a nonmetric
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
-
     similarities = check_array(similarities)
     random_state = check_random_state(random_state)
 
@@ -244,7 +310,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         for it in range(n_init):
             pos, stress, n_iter_ = _smacof_single(
                 similarities, metric=metric,
-                n_components=n_components, init=init,
+                n_components=n_components, init=init, weight=weight,
                 max_iter=max_iter, verbose=verbose,
                 eps=eps, random_state=random_state)
             if best_stress is None or stress < best_stress:
@@ -256,8 +322,8 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
             delayed(_smacof_single)(
                 similarities, metric=metric, n_components=n_components,
-                init=init, max_iter=max_iter, verbose=verbose, eps=eps,
-                random_state=seed)
+                init=init, weight=weight, max_iter=max_iter, verbose=verbose,
+                eps=eps, random_state=seed)
             for seed in seeds)
         positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
@@ -359,7 +425,7 @@ class MDS(BaseEstimator):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, y=None, init=None):
+    def fit(self, X, y=None, init=None, weight=None):
         """
         Computes the position of the points in the embedding space
 
@@ -372,11 +438,14 @@ class MDS(BaseEstimator):
         init : {None or ndarray, shape (n_samples,)}, optional
             If None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array.
+
+        weight: symmetric ndarray, shape [n * n], optional, default: None
+            weighting matrix of similarities. In default, all weights are 1.
         """
-        self.fit_transform(X, init=init)
+        self.fit_transform(X, init=init, weight=weight)
         return self
 
-    def fit_transform(self, X, y=None, init=None):
+    def fit_transform(self, X, y=None, init=None, weight=None):
         """
         Fit the data from X, and returns the embedded coordinates
 
@@ -390,6 +459,8 @@ class MDS(BaseEstimator):
             If None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array.
 
+        weight: symmetric ndarray, shape [n * n], optional, default: None
+            weighting matrix of similarities. In default, all weights are 1.
         """
         X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
@@ -408,9 +479,9 @@ class MDS(BaseEstimator):
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
             self.dissimilarity_matrix_, metric=self.metric,
-            n_components=self.n_components, init=init, n_init=self.n_init,
-            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
-            eps=self.eps, random_state=self.random_state,
+            n_components=self.n_components, init=init, weight=weight,
+            n_init=self.n_init, n_jobs=self.n_jobs, max_iter=self.max_iter,
+            verbose=self.verbose, eps=self.eps, random_state=self.random_state,
             return_n_iter=True)
 
         return self.embedding_
