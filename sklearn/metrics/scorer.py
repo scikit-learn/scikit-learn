@@ -243,8 +243,11 @@ def get_scorer(scoring):
             raise ValueError('%r is not a valid scoring value. '
                              'Valid options are %s'
                              % (scoring, sorted(SCORERS.keys())))
-    else:
+    elif six.callable(scoring):
+        # TODO Check that scoring method has three arguments
         scorer = scoring
+    else:
+        raise ValueError("Input must be either callable or string.")
     return scorer
 
 
