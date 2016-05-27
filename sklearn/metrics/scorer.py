@@ -187,6 +187,53 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    """Converts an estimator scoring strategy into a valid callable
+    object.
+
+    For possible string arguments to the function, read more in the
+    :ref:`User Guide <scoring>`.
+
+    Parameters
+    ----------
+    scoring : str or callable
+        String to specify the scoring metric, or a callable with
+        signature ``scorer(estimator, X, y)``.
+
+        Some possible string arguments include: "accuracy",
+        "average_precision", "f1", "adjusted_rand_score", "r2". Read
+        the User Guide for the full list of possibilities.
+
+        If a callable is passed in, the signature of the callable
+        should be ``(estimator, X, y)``, where ``estimator`` is the
+        model to be evaluated, ``X`` is the test data and ``y`` is the
+        ground truth labeling (or ``None`` in the case of unsupervised
+        models).
+
+    Returns
+    -------
+    scorer : callable scoring object
+        Callable scoring object with signature ``(estimator, X, y)``.
+
+    Example
+    -------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.dummy import DummyClassifier
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.metrics import get_scorer
+    >>>
+    >>> X, y = make_classification(random_state=0)
+    >>> dummy = DummyClassifier(strategy="constant", constant=1.0)
+    >>>
+    >>> cross_val_score(dummy, X, y, scoring=get_scorer("accuracy"))
+    array([0.5, 0.5, 0.5])
+    >>>
+    >>> def dummy_scorer(estimator, y_test, y_pred):
+    >>>     return 1.0
+    >>>
+    >>> cross_val_score(dummy, X, y, scoring=get_scorer(dummy_scorer))
+    array([1., 1., 1.])
+
+    """
     if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
