@@ -16,7 +16,6 @@ from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
-
 import numpy as np
 cimport numpy as np
 np.import_array()
