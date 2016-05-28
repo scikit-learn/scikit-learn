@@ -85,7 +85,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
         sum_weights = 0.0
 
         for p in range(n_node_samples):
-            i = samples[p + start]
+            i = samples[start + p]
 
             y_ik = y[i * y_stride + k]
             if sample_weight != NULL:
@@ -98,7 +98,7 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
                                 n_node_samples - 1)
         if sample_weight != NULL:
             # calculate the weighted median
-            for p in range(0, n_node_samples):
+            for p in range(n_node_samples):
                 sum_weights += weights[p]
 
             running_sum = sum_weights - weights[0]
