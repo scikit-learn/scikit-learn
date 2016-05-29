@@ -33,9 +33,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     cross-validation generator and the test set is used for calibration.
     The probabilities for each of the folds are then averaged
     for prediction. In case that cv="prefit" is passed to __init__,
-    it is it is assumed that base_estimator has been
-    fitted already and all data is used for calibration. Note that
-    data for fitting the classifier and for calibrating it must be disjoint.
+    it is assumed that base_estimator has been fitted already and all
+    data is used for calibration. Note that data for fitting the
+    classifier and for calibrating it must be disjoint.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -126,7 +126,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         lb = LabelBinarizer().fit(y)
         self.classes_ = lb.classes_
 
-        # Check that we each cross-validation fold can have at least one
+        # Check that each cross-validation fold can have at least one
         # example per class
         n_folds = self.cv if isinstance(self.cv, int) \
             else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
