@@ -44,8 +44,6 @@ cdef class Criterion:
         free(self.sum_total)
         free(self.sum_left)
         free(self.sum_right)
-        free(self.coupled_sorted_y)
-        free(self.coupled_sorted_weights)
 
     def __getstate__(self):
         return {}
@@ -686,6 +684,10 @@ cdef class RegressionCriterion(Criterion):
         var = \sum_i^n (y_i - y_bar) ** 2
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.coupled_sorted_y)
+        free(self.coupled_sorted_weights)
 
     cdef double sq_sum_total
 

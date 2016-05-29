@@ -47,8 +47,10 @@ cdef class Criterion:
                                     # where k is output index. 
     cdef double* sum_left           # Same as above, but for the left side of the split
     cdef double* sum_right          # same as above, but for the right side of the split
-    cdef DOUBLE_t* coupled_sorted_y
-    cdef DOUBLE_t* coupled_sorted_weights
+    cdef DOUBLE_t* coupled_sorted_y       # For MAE regression criteria, this stores the
+                                          # sorted y values
+    cdef DOUBLE_t* coupled_sorted_weights # For MAE regression criteria, this stores the
+                                          # weights corresponding to the sorted y values
 
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
