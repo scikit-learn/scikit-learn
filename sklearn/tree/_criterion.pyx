@@ -29,6 +29,7 @@ from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 from ._utils cimport compute_weighted_median
+from ._utils cimport sort_values_and_weights
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -43,6 +44,8 @@ cdef class Criterion:
         free(self.sum_total)
         free(self.sum_left)
         free(self.sum_right)
+        free(self.coupled_sorted_y)
+        free(self.coupled_sorted_weights)
 
     def __getstate__(self):
         return {}
@@ -718,6 +721,8 @@ cdef class RegressionCriterion(Criterion):
         self.sum_total = NULL
         self.sum_left = NULL
         self.sum_right = NULL
+        self.coupled_sorted_y = NULL
+        self.coupled_sorted_weights = NULL
 
         # Allocate memory for the accumulators
         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
@@ -755,6 +760,16 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t w = 1.0
 
+        self.coupled_sorted_y = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                   sizeof(DOUBLE_t))
+        if sample_weight != NULL:
+            self.coupled_sorted_weights = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                             sizeof(DOUBLE_t))
+        if(self.coupled_sorted_y == NULL or
+               (self.coupled_sorted_weights == NULL and sample_weight != NULL)):
+            with gil:
+                raise MemoryError()
+
         self.sq_sum_total = 0.0
         memset(self.sum_total, 0, self.n_outputs * sizeof(double))
 
@@ -763,14 +778,19 @@ cdef class RegressionCriterion(Criterion):
 
             if sample_weight != NULL:
                 w = sample_weight[i]
+                self.coupled_sorted_weights[p - start] = w
 
             for k in range(self.n_outputs):
                 y_ik = y[i * y_stride + k]
+                self.coupled_sorted_y[p - start] = y_ik
                 w_y_ik = w * y_ik
                 self.sum_total[k] += w_y_ik
                 self.sq_sum_total += w_y_ik * y_ik
 
             self.weighted_n_node_samples += w
+
+        sort_values_and_weights(self.coupled_sorted_y, self.coupled_sorted_weights,
+                                0, self.n_node_samples-1)
 
         # Reset to pos=start
         self.reset()
@@ -970,8 +990,10 @@ cdef class MAE(RegressionCriterion):
         """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
-        compute_weighted_median(dest, start, end, self.sample_weight, self.y,
-                                self.samples, self.y_stride, self.n_outputs)
+        compute_weighted_median(dest, 0, end-start,
+                                self.coupled_sorted_weights,
+                                self.coupled_sorted_y,
+                                self.n_outputs)
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
@@ -990,9 +1012,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
                 y_ik = self.y[i * self.y_stride + k]
-                # impurity += (fabs(y_ik - medians[k]) / self.weighted_n_node_samples)
                 impurity += <double> fabs((<double> y_ik) - medians[k])
-        # return impurity / self.n_outputs
         free(medians)
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
@@ -1033,8 +1053,9 @@ cdef class MAE(RegressionCriterion):
             with gil:
                 raise MemoryError()
 
-        compute_weighted_median(medians, start, pos, self.sample_weight,
-                                self.y, self.samples, self.y_stride,
+        compute_weighted_median(medians, 0, pos-start,
+                                self.coupled_sorted_weights,
+                                self.coupled_sorted_y,
                                 self.n_outputs)
         impurity_left[0] = 0.0
         impurity_right[0] = 0.0
@@ -1043,22 +1064,17 @@ cdef class MAE(RegressionCriterion):
             for p in range(start, pos):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
-                # impurity_left[0] += (fabs(y_ik - medians[k]) / (pos - start))
                 impurity_left[0] += <double>fabs((<double>y_ik) - medians[k])
-        # impurity_left[0] /= self.n_outputs
         impurity_left[0] /= <double>((pos - start) * self.n_outputs)
-
-
-        compute_weighted_median(medians, pos, end, self.sample_weight,
-                                self.y, self.samples, self.y_stride,
+        compute_weighted_median(medians, pos-start, end-start,
+                                self.coupled_sorted_weights,
+                                self.coupled_sorted_y,
                                 self.n_outputs)
         for k in range(self.n_outputs):
             for p in range(pos, end):
                 i = samples[p]
                 y_ik = y[i * self.y_stride + k]
-                # impurity_right[0] += (fabs(y_ik - medians[k]) / (end - pos))
                 impurity_right[0] += <double>fabs((<double>y_ik) - medians[k])
-        # impurity_right[0] /= self.n_outputs
         impurity_right[0] /= <double>((end - pos) * self.n_outputs)
         free(medians)
 

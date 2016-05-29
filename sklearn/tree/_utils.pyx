@@ -51,75 +51,47 @@ def _realloc_test():
 
 
 cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
-                                  DOUBLE_t* sample_weight, DOUBLE_t* y,
-                                  SIZE_t* samples, SIZE_t y_stride,
+                                  DOUBLE_t* coupled_sorted_weights,
+                                  DOUBLE_t* coupled_sorted_y,
                                   SIZE_t n_outputs) nogil:
     """Calculate the weighted median of samples[start:end] and put
     it into a destination pointer
     given values, weights, and a start and end index.
     """
     cdef DOUBLE_t w = 1.0
-    cdef DOUBLE_t y_ik
-    cdef SIZE_t n_node_samples = end - start
-
-    cdef SIZE_t i, p, k
+    cdef SIZE_t p, k
     cdef DOUBLE_t sum_weights
     cdef SIZE_t median_index
     cdef DOUBLE_t running_sum
-
-    cdef DOUBLE_t* y_vals = NULL
-    cdef DOUBLE_t* weights = NULL
-    y_vals = <DOUBLE_t*> calloc(n_node_samples,
-                                sizeof(DOUBLE_t))
-
-    if sample_weight != NULL:
-        weights = <DOUBLE_t*> calloc(n_node_samples,
-                                     sizeof(DOUBLE_t))
-
-    if (y_vals == NULL or (weights == NULL and sample_weight != NULL)):
-        with gil:
-            raise MemoryError()
+    cdef SIZE_t n_node_samples = end - start
 
     for k in range(n_outputs):
         median_index = 0
         sum_weights = 0.0
 
-        for p in range(n_node_samples):
-            i = samples[start + p]
-
-            y_ik = y[i * y_stride + k]
-            if sample_weight != NULL:
-                w = sample_weight[i]
-                weights[p] = w
-
-            y_vals[p] = y_ik
-
-        sort_values_and_weights(y_vals, weights, 0,
-                                n_node_samples - 1)
-        if sample_weight != NULL:
+        if coupled_sorted_weights != NULL:
             # calculate the weighted median
             for p in range(n_node_samples):
-                sum_weights += weights[p]
+                sum_weights += coupled_sorted_weights[p]
 
-            running_sum = sum_weights - weights[0]
+            running_sum = sum_weights - coupled_sorted_weights[0]
 
             while(running_sum > sum_weights/2):
                 median_index += 1
-                running_sum -= weights[median_index]
+                running_sum -= coupled_sorted_weights[median_index]
 
             if running_sum == sum_weights/2:
-                median_dest[k] = (y_vals[median_index] + y_vals[median_index + 1]) / 2
+                median_dest[k] = (coupled_sorted_y[median_index] +
+                                  coupled_sorted_y[median_index + 1]) / 2
             else:
-                median_dest[k] = y_vals[median_index]
+                median_dest[k] = coupled_sorted_y[median_index]
         else:
             # calculate the unweighted median
-            if n_node_samples % 2 == 0:
-                median_dest[k] = (y_vals[n_node_samples / 2] +  y_vals[(n_node_samples / 2) - 1])/2
+            if (n_node_samples) % 2 == 0:
+                median_dest[k] = (coupled_sorted_y[(n_node_samples / 2) + start] +
+                                  coupled_sorted_y[(n_node_samples / 2) - 1 + start])/2
             else:
-                median_dest[k] = y_vals[n_node_samples / 2]
-    free(y_vals)
-    if sample_weight != NULL:
-        free(weights)
+                median_dest[k] = coupled_sorted_y[(n_node_samples / 2) + start]
 
 
 cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
