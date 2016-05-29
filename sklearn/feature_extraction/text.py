@@ -940,7 +940,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    norm : 'l1', 'l2' or None, optional, default='l2'
+    norm : 'l1', 'l2' or None, default='l2'
         Norm used to normalize term vectors. None for no normalization.
 
     use_idf : boolean, default=True
@@ -1185,7 +1185,7 @@ class TfidfVectorizer(CountVectorizer):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    norm : 'l1', 'l2' or None, optional, default='l2'
+    norm : 'l1', 'l2' or None, default='l2'
         Norm used to normalize term vectors. None for no normalization.
 
     use_idf : boolean, default=True
