@@ -690,6 +690,8 @@ cdef class RegressionCriterion(Criterion):
         free(self.coupled_sorted_weights)
 
     cdef double sq_sum_total
+    cdef DOUBLE_t* coupled_sorted_y
+    cdef DOUBLE_t* coupled_sorted_weights
 
     def __cinit__(self, SIZE_t n_outputs):
         """Initialize parameters for this criterion.

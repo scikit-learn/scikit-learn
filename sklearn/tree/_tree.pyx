@@ -15,8 +15,6 @@
 #
 # License: BSD 3 clause
 
-# adding a comment to try to force recythonization
-
 from cpython cimport Py_INCREF, PyObject
 
 from libc.stdlib cimport free

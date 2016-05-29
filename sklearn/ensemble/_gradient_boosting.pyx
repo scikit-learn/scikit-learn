@@ -6,8 +6,6 @@
 #
 # License: BSD 3 clause
 
-# another empty comment to force recythonizing
-
 cimport cython
 
 import numpy as np
