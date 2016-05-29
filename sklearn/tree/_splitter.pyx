@@ -15,6 +15,8 @@
 #
 # License: BSD 3 clause
 
+# adding a new line to attempt to force recythonizing.
+
 from ._criterion cimport Criterion
 
 from libc.stdlib cimport free
