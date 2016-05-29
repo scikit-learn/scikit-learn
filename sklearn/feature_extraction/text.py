@@ -940,7 +940,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    norm : 'l1', 'l2' or None, optional
+    norm : 'l1', 'l2' or None, optional, default='l2'
         Norm used to normalize term vectors. None for no normalization.
 
     use_idf : boolean, default=True
@@ -1054,6 +1054,26 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
+    Tf means term-frequency while tf-idf means term-frequency times inverse
+    document-frequency. This is a common term weighting scheme in information
+    retrieval, that has also found good use in document classification.
+
+    The goal of using tf-idf instead of the raw frequencies of occurrence of a
+    token in a given document is to scale down the impact of tokens that occur
+    very frequently in a given corpus and that are hence empirically less
+    informative than features that occur in a small fraction of the training
+    corpus.
+
+    The actual formula used for tf-idf is tf * (idf + 1) = tf + tf * idf,
+    instead of tf * idf. The effect of this is that terms with zero idf, i.e.
+    that occur in all documents of a training set, will not be entirely
+    ignored. The formulas used to compute tf and idf depend on parameter
+    settings that correspond to the SMART notation used in IR, as follows:
+
+    Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
+    Idf is "t" when use_idf is given, "n" (none) otherwise.
+    Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
+
     Equivalent to CountVectorizer followed by TfidfTransformer.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
@@ -1165,7 +1185,7 @@ class TfidfVectorizer(CountVectorizer):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    norm : 'l1', 'l2' or None, optional
+    norm : 'l1', 'l2' or None, optional, default='l2'
         Norm used to normalize term vectors. None for no normalization.
 
     use_idf : boolean, default=True
