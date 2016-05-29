@@ -1027,7 +1027,6 @@ cdef class MAE(RegressionCriterion):
     #     The absolute impurity improvement is only computed by the
     #     impurity_improvement method once the best split has been found.
     #     """
-
     #     # todo
     #     pass
 
@@ -1049,7 +1048,6 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t y_ik
 
         cdef double* medians = NULL
-
         medians = <double*> calloc(self.n_outputs, sizeof(double))
         if (medians == NULL):
             with gil:

@@ -12,7 +12,6 @@
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
-from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
@@ -81,15 +80,15 @@ cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
                 running_sum -= coupled_sorted_weights[median_index]
 
             if running_sum == sum_weights/2:
-                median_dest[k] = (coupled_sorted_y[median_index] +
-                                  coupled_sorted_y[median_index + 1]) / 2
+                median_dest[k] = (coupled_sorted_y[median_index + start] +
+                                  coupled_sorted_y[median_index + 1 + start]) / 2.0
             else:
-                median_dest[k] = coupled_sorted_y[median_index]
+                median_dest[k] = coupled_sorted_y[median_index + start]
         else:
             # calculate the unweighted median
             if (n_node_samples) % 2 == 0:
                 median_dest[k] = (coupled_sorted_y[(n_node_samples / 2) + start] +
-                                  coupled_sorted_y[(n_node_samples / 2) - 1 + start])/2
+                                  coupled_sorted_y[(n_node_samples / 2) - 1 + start]) / 2.0
             else:
                 median_dest[k] = coupled_sorted_y[(n_node_samples / 2) + start]
 
