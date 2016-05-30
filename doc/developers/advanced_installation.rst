@@ -139,11 +139,11 @@ the ``--install-option="--prefix="`` flag is only required if python has a
 from source package
 ~~~~~~~~~~~~~~~~~~~
 
-download the source package from 
-`pypi <https://pypi.python.org/pypi/scikit-learn>`_,
-, unpack the sources and cd into the source directory.
+download the source package from
+`pypi <https://pypi.python.org/pypi/scikit-learn>`_, unpack the sources and
+cd into the source directory.
 
-this packages uses distutils, which is the default way of installing
+This packages uses distutils, which is the default way of installing
 python modules. the install command is::
 
     python setup.py install
@@ -183,7 +183,7 @@ or from a :ref:`python distribution <install_by_distribution>` instead.
 
 .. _install_by_distribution:
 
-third party distributions of scikit-learn
+Third party distributions of scikit-learn
 =========================================
 
 some third-party distributions are now providing versions of
