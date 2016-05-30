@@ -496,6 +496,9 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     samples[q], samples[partition_end] = (
                                         samples[partition_end], samples[q])
                             current.pos = q
+
+                            # Must reset criterion since we've reordered the samples
+                            self.criterion.reset()
                         else:
                             # Non-categorical feature
                             while (p + 1 < end and
