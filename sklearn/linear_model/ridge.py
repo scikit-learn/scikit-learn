@@ -500,11 +500,13 @@ class Ridge(_BaseRidge, RegressorMixin):
     Parameters
     ----------
     alpha : {float, array-like}, shape (n_targets)
-        Small positive values of alpha improve the conditioning of the problem
-        and reduce the variance of the estimates.  Alpha corresponds to
-        ``C^-1`` in other linear models such as LogisticRegression or
-        LinearSVC. If an array is passed, penalties are assumed to be specific
-        to the targets. Hence they must correspond in number.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduce the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        assumed to be specific to the targets. Hence they must correspond in
+        number.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
