@@ -210,8 +210,13 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     alpha : {float, array-like},
         shape = [n_targets] if array-like
-        The l_2 penalty to be used. If an array is passed, penalties are
-        assumed to be specific to targets
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduce the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        assumed to be specific to the targets. Hence they must correspond in
+        number.
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
@@ -645,10 +650,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the conditioning of the problem
-        and reduce the variance of the estimates.  Alpha corresponds to
-        ``C^-1`` in other linear models such as LogisticRegression or
-        LinearSVC.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduce the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1089,10 +1095,11 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     ----------
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduce the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. 
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -1190,10 +1197,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     ----------
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduce the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. 
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
