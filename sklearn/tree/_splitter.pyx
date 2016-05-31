@@ -63,7 +63,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint shortcut):
         """
         Parameters
         ----------
@@ -106,6 +106,7 @@ cdef class Splitter:
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
         self.presort = presort
+        self.shortcut = shortcut
 
     def __dealloc__(self):
         """Destructor."""
@@ -263,7 +264,7 @@ cdef class BaseDenseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint shortcut):
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -412,7 +413,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef INT32_t ncat_present
         cdef INT32_t cat_offs[64]
         cdef SIZE_t shortcut_cat[64]
-        cdef bint shortcut = 0
+        cdef bint shortcut = self.shortcut
 
         _init_split(&best, end)
 
@@ -511,6 +512,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                             if cat_split & (1 << q):
                                 cat_offs[ncat_present] = q - ncat_present
                                 ncat_present += 1
+                        shortcut = self.shortcut if ncat_present > 3 else 0  # No benefit for small N
                         if shortcut:
                             self._shortcut_catlist(start, end, self.n_categories[current.feature],
                                                    ncat_present, cat_offs, &shortcut_cat[0])
@@ -996,7 +998,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, bint shortcut):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL

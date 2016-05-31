@@ -469,6 +469,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                          self.n_classes_)
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
+        if is_classification:
+            use_shortcut = (self.n_classes_.tolist() == [2] and
+                            (isinstance(criterion, _criterion.Gini) or
+                             isinstance(criterion, _criterion.Entropy)))
+        else:
+            use_shortcut = isinstance(criterion, _criterion.MSE)
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
@@ -479,7 +485,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state,
-                                                self.presort)
+                                                self.presort,
+                                                use_shortcut)
 
         if (not isinstance(splitter, _splitter.RandomSplitter) and
                 np.max(n_categories) > 64):
