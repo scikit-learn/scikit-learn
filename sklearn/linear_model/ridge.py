@@ -211,7 +211,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     alpha : {float, array-like},
         shape = [n_targets] if array-like
         Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduce the variance of
+        improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as 
         LogisticRegression or LinearSVC. If an array is passed, penalties are
@@ -506,7 +506,7 @@ class Ridge(_BaseRidge, RegressorMixin):
     ----------
     alpha : {float, array-like}, shape (n_targets)
         Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduce the variance of
+        improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as 
         LogisticRegression or LinearSVC. If an array is passed, penalties are
@@ -651,7 +651,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     ----------
     alpha : float
         Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduce the variance of
+        improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as 
         LogisticRegression or LinearSVC.
@@ -1096,7 +1096,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduce the variance of
+        improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as 
         LogisticRegression or LinearSVC. 
@@ -1198,7 +1198,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
-        improves the conditioning of the problem and reduce the variance of
+        improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as 
         LogisticRegression or LinearSVC. 
