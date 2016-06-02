@@ -592,9 +592,9 @@ class NuSVC(BaseSVC):
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
         weight one.
-	The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+	    The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies as
+        ``n_samples / (n_classes * np.bincount(y))``
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
