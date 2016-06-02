@@ -588,12 +588,12 @@ class NuSVC(BaseSVC):
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
 
-    class_weight : {dict, 'auto'}, optional
+    class_weight : {dict, 'balanced'}, optional
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
-        weight one. The 'auto' mode uses the values of y to
-        automatically adjust weights inversely proportional to
-        class frequencies.
+        weight one. The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies as
+        ``n_samples / (n_classes * np.bincount(y))``
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a

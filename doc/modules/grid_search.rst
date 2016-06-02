@@ -101,7 +101,7 @@ For each parameter, either a distribution over possible values or a list of
 discrete choices (which will be sampled uniformly) can be specified::
 
   [{'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
-    'kernel': ['rbf'], 'class_weight':['auto', None]}]
+    'kernel': ['rbf'], 'class_weight':['balanced', None]}]
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
