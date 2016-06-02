@@ -137,14 +137,9 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
 
 ###############################################################################
 # Gaussian mixture parameters estimators (used by the M-Step)
-ESTIMATE_PRECISION_ERROR_MESSAGE = ("The algorithm has diverged because of "
-                                    "too few samples per components. Try to "
-                                    "decrease the number of components, "
-                                    "or increase reg_covar.")
 
-
-def _estimate_gaussian_precisions_cholesky_full(resp, X, nk, means, reg_covar):
-    """Estimate the full precision matrices.
+def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
+    """Estimate the full covariance matrices.
 
     Parameters
     ----------
@@ -160,27 +155,20 @@ def _estimate_gaussian_precisions_cholesky_full(resp, X, nk, means, reg_covar):
 
     Returns
     -------
-    precisions_chol : array, shape (n_components, n_features, n_features)
-        The cholesky decomposition of the precision matrix.
+    covariances : array, shape (n_components, n_features, n_features)
+        The covariance matrix of the current components.
     """
     n_components, n_features = means.shape
-    precisions_chol = np.empty((n_components, n_features, n_features))
+    covariances = np.empty((n_components, n_features, n_features))
     for k in range(n_components):
         diff = X - means[k]
-        covariance = np.dot(resp[:, k] * diff.T, diff) / nk[k]
-        covariance.flat[::n_features + 1] += reg_covar
-        try:
-            cov_chol = linalg.cholesky(covariance, lower=True)
-        except linalg.LinAlgError:
-            raise ValueError(ESTIMATE_PRECISION_ERROR_MESSAGE)
-        precisions_chol[k] = linalg.solve_triangular(cov_chol,
-                                                     np.eye(n_features),
-                                                     lower=True).T
-    return precisions_chol
+        covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
+        covariances[k].flat[::n_features + 1] += reg_covar
+    return covariances
 
 
-def _estimate_gaussian_precisions_cholesky_tied(resp, X, nk, means, reg_covar):
-    """Estimate the tied precision matrix.
+def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
+    """Estimate the tied covariance matrix.
 
     Parameters
     ----------
@@ -196,26 +184,20 @@ def _estimate_gaussian_precisions_cholesky_tied(resp, X, nk, means, reg_covar):
 
     Returns
     -------
-    precisions_chol : array, shape (n_features, n_features)
-        The cholesky decomposition of the precision matrix.
+    covariance : array, shape (n_features, n_features)
+        The tied covariance matrix of the components.
     """
-    n_samples, n_features = X.shape
+    n_samples, _ = X.shape
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(nk * means.T, means)
-    covariances = avg_X2 - avg_means2
-    covariances /= n_samples
-    covariances.flat[::len(covariances) + 1] += reg_covar
-    try:
-        cov_chol = linalg.cholesky(covariances, lower=True)
-    except linalg.LinAlgError:
-        raise ValueError(ESTIMATE_PRECISION_ERROR_MESSAGE)
-    precisions_chol = linalg.solve_triangular(cov_chol, np.eye(n_features),
-                                              lower=True).T
-    return precisions_chol
+    covariance = avg_X2 - avg_means2
+    covariance /= n_samples
+    covariance.flat[::len(covariance) + 1] += reg_covar
+    return covariance
 
 
-def _estimate_gaussian_precisions_cholesky_diag(resp, X, nk, means, reg_covar):
-    """Estimate the diagonal precision matrices.
+def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
+    """Estimate the diagonal covariance vectors.
 
     Parameters
     ----------
@@ -231,21 +213,17 @@ def _estimate_gaussian_precisions_cholesky_diag(resp, X, nk, means, reg_covar):
 
     Returns
     -------
-    precisions_chol : array, shape (n_components, n_features)
-        The cholesky decomposition of the precision matrix.
+    covariances : array, shape (n_components, n_features)
+        The covariance vector of the current components.
     """
     avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
     avg_means2 = means ** 2
     avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
-    covariances = avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
-    if np.any(np.less_equal(covariances, 0.0)):
-        raise ValueError(ESTIMATE_PRECISION_ERROR_MESSAGE)
-    return 1. / np.sqrt(covariances)
+    return avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
 
 
-def _estimate_gaussian_precisions_cholesky_spherical(resp, X, nk, means,
-                                                     reg_covar):
-    """Estimate the spherical precision matrices.
+def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar):
+    """Estimate the spherical variance values.
 
     Parameters
     ----------
@@ -261,16 +239,11 @@ def _estimate_gaussian_precisions_cholesky_spherical(resp, X, nk, means,
 
     Returns
     -------
-    precisions_chol : array, shape (n_components,)
-        The cholesky decomposition of the precision matrix.
+    variances : array, shape (n_components,)
+        The variance values of each components.
     """
-    avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
-    avg_means2 = means ** 2
-    avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
-    covariances = (avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar).mean(1)
-    if np.any(np.less_equal(covariances, 0.0)):
-        raise ValueError(ESTIMATE_PRECISION_ERROR_MESSAGE)
-    return 1. / np.sqrt(covariances)
+    return _estimate_gaussian_covariances_diag(resp, X, nk,
+                                               means, reg_covar).mean(1)
 
 
 def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
@@ -292,29 +265,77 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
 
     Returns
     -------
-    nk : array, shape (n_components,)
+    nk : array-like, shape (n_components,)
         The numbers of data samples in the current components.
 
-    means : array, shape (n_components, n_features)
+    means : array-like, shape (n_components, n_features)
         The centers of the current components.
 
-    precisions_cholesky : array
-        The cholesky decomposition of sample precisions of the current
-        components. The shape depends of the covariance_type.
+    covariances : array-like
+        The covariance matrix of the current components.
+        The shape depends of the covariance_type.
     """
     nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
     means = np.dot(resp.T, X) / nk[:, np.newaxis]
-    precs_chol = {"full": _estimate_gaussian_precisions_cholesky_full,
-                  "tied": _estimate_gaussian_precisions_cholesky_tied,
-                  "diag": _estimate_gaussian_precisions_cholesky_diag,
-                  "spherical": _estimate_gaussian_precisions_cholesky_spherical
-                  }[covariance_type](resp, X, nk, means, reg_covar)
-    return nk, means, precs_chol
+    covariances = {"full": _estimate_gaussian_covariances_full,
+                   "tied": _estimate_gaussian_covariances_tied,
+                   "diag": _estimate_gaussian_covariances_diag,
+                   "spherical": _estimate_gaussian_covariances_spherical
+                   }[covariance_type](resp, X, nk, means, reg_covar)
+    return nk, means, covariances
+
+
+def _compute_precision_cholesky(covariances, covariance_type):
+    """Compute the Cholesky decomposition of the precisions.
+
+    Parameters
+    ----------
+    covariances : array-like
+        The covariance matrix of the current components.
+        The shape depends of the covariance_type.
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+        The type of precision matrices.
+
+    Returns
+    -------
+    precisions_cholesky : array-like
+        The cholesky decomposition of sample precisions of the current
+        components. The shape depends of the covariance_type.
+    """
+    estimate_precision_error_message = (
+        "The algorithm has diverged because of too few samples per "
+        "components. Try to decrease the number of components, "
+        "or increase reg_covar.")
+
+    if covariance_type in 'full':
+        n_components, n_features, _ = covariances.shape
+        precisions_chol = np.empty((n_components, n_features, n_features))
+        for k, covariance in enumerate(covariances):
+            try:
+                cov_chol = linalg.cholesky(covariance, lower=True)
+            except linalg.LinAlgError:
+                raise ValueError(estimate_precision_error_message)
+            precisions_chol[k] = linalg.solve_triangular(cov_chol,
+                                                         np.eye(n_features),
+                                                         lower=True).T
+    elif covariance_type is 'tied':
+        _, n_features = covariances.shape
+        try:
+            cov_chol = linalg.cholesky(covariances, lower=True)
+        except linalg.LinAlgError:
+            raise ValueError(estimate_precision_error_message)
+        precisions_chol = linalg.solve_triangular(cov_chol, np.eye(n_features),
+                                                  lower=True).T
+    else:
+        if np.any(np.less_equal(covariances, 0.0)):
+            raise ValueError(estimate_precision_error_message)
+        precisions_chol = 1. / np.sqrt(covariances)
+    return precisions_chol
 
 
 ###############################################################################
 # Gaussian mixture probability estimators
-
 def _estimate_log_gaussian_prob_full(X, means, precisions_chol):
     """Estimate the log Gaussian probability for 'full' precision.
 
@@ -497,13 +518,13 @@ class GaussianMixture(BaseMixture):
 
     Attributes
     ----------
-    weights_ : array, shape (n_components,)
+    weights_ : array-like, shape (n_components,)
         The weights of each mixture components.
 
-    means_ : array, shape (n_components, n_features)
+    means_ : array-like, shape (n_components, n_features)
         The mean of each mixture component.
 
-    covariances_ : array
+    covariances_ : array-like
         The covariance of each mixture component.
         The shape depends on `covariance_type`::
             (n_components,)                        if 'spherical',
@@ -511,7 +532,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    precisions_ : array
+    precisions_ : array-like
         The precision matrices for each component in the mixture. A precision
         matrix is the inverse of a covariance matrix. A covariance matrix is
         symmetric positive definite so the mixture of Gaussian can be
@@ -524,7 +545,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    precisions_cholesky_ : array
+    precisions_cholesky_ : array-like
         The cholesky decomposition of the precision matrices of each mixture
         component. A precision matrix is the inverse of a covariance matrix.
         A covariance matrix is symmetric positive definite so the mixture of
@@ -594,7 +615,7 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
 
-        weights, means, precisions_cholesky = _estimate_gaussian_parameters(
+        weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, self.reg_covar, self.covariance_type)
         weights /= n_samples
 
@@ -603,7 +624,9 @@ class GaussianMixture(BaseMixture):
         self.means_ = means if self.means_init is None else self.means_init
 
         if self.precisions_init is None:
-            self.precisions_cholesky_ = precisions_cholesky
+            self.covariances_ = covariances
+            self.precisions_cholesky_ = _compute_precision_cholesky(
+                covariances, self.covariance_type)
         elif self.covariance_type is 'full':
             self.precisions_cholesky_ = np.array(
                 [linalg.cholesky(prec_init, lower=True)
@@ -619,10 +642,13 @@ class GaussianMixture(BaseMixture):
         return np.mean(log_prob_norm), np.exp(log_resp)
 
     def _m_step(self, X, resp):
-        self.weights_, self.means_, self.precisions_cholesky_ = (
+        n_samples, _ = X.shape
+        self.weights_, self.means_, self.covariances_ = (
             _estimate_gaussian_parameters(X, resp, self.reg_covar,
                                           self.covariance_type))
-        self.weights_ /= X.shape[0]
+        self.weights_ /= n_samples
+        self.precisions_cholesky_ = _compute_precision_cholesky(
+            self.covariances_, self.covariance_type)
 
     def _estimate_log_prob(self, X):
         return {"full": _estimate_log_gaussian_prob_full,
@@ -649,22 +675,14 @@ class GaussianMixture(BaseMixture):
 
         if self.covariance_type is 'full':
             self.precisions_ = np.empty(self.precisions_cholesky_.shape)
-            self.covariances_ = np.empty(self.precisions_cholesky_.shape)
             for k, prec_chol in enumerate(self.precisions_cholesky_):
                 self.precisions_[k] = np.dot(prec_chol, prec_chol.T)
-                cov_chol = linalg.solve_triangular(prec_chol,
-                                                   np.eye(n_features))
-                self.covariances_[k] = np.dot(cov_chol.T, cov_chol)
 
         elif self.covariance_type is 'tied':
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
-            cov_chol = linalg.solve_triangular(self.precisions_cholesky_,
-                                               np.eye(n_features))
-            self.covariances_ = np.dot(cov_chol.T, cov_chol)
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
-            self.covariances_ = 1. / self.precisions_
 
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
