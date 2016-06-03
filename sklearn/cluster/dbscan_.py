@@ -196,6 +196,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         to store the tree. The optimal value depends
         on the nature of the problem.
 
+    p : float, optional
+        The power of the Minkowski metric to be used to calculate distance
+        between points.
+
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
