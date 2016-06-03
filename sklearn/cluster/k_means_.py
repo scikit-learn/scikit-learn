@@ -397,8 +397,6 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300, init='k-means++',
     centers, labels, n_iter = k_means_elkan(X, n_clusters, centers, tol=tol,
                                             max_iter=max_iter, verbose=verbose)
     inertia = np.sum((X - centers[labels]) ** 2, dtype=np.float64)
-    if X.dtype is np.float32:
-        inertia = np.float32(inertia)
     return labels, inertia, centers, n_iter
 
 
