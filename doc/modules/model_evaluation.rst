@@ -1038,12 +1038,27 @@ set [0,1] has an error: ::
 Brier score loss
 ----------------
 
-The :func:`brier_score_loss` function returns a score of the mean square difference
-between the actual outcome and the predicted probability of the possible outcome.
-The actual outcome has to be 1 or 0 (true or false), while the predicted probability
-of the actual outcome happens can be value between 0 and 1. The brier score loss is
-also between 0 to 1 and the lower the score (the mean square difference is smaller),
-the more accurate the prediction is.
+The :func:`brier_score_loss` function computes the
+`Brier score <https://en.wikipedia.org/wiki/Brier_score>`_
+for binary classes. Quoting Wikipedia:
+
+   "The Brier score is a proper score function that measures the accuracy of
+    probabilistic predictions. It is applicable to tasks in which predictions
+    must assign probabilities to a set of mutually exclusive discrete outcomes.
+    The set of possible outcomes can be either binary or categorical in nature,
+    and the probabilities assigned to this set of outcomes must sum to one
+    (where each individual probability is in the range of 0 to 1). It was proposed
+    by Glenn W. Brier in 1950."
+
+This function returns a score of the mean square difference between the actual outcome and
+the predicted probability of the possible outcome. The actual outcome has to be 1 or 0
+(true or false), while the predicted probability of the actual outcome can be
+a value between 0 and 1.
+The brier score loss is also between 0 to 1 and the lower the score
+(the mean square difference is smaller), the more accurate the prediction is.
+It can be thought of as a measure of the "calibration" of a set of probabilistic predictions.
+`Here <ttp://docs.lib.noaa.gov/rescue/mwr/078/mwr-078-01-0001.pdf>`_ is
+the paper describing it.
 
 .. math::
 
@@ -1054,21 +1069,19 @@ probablity of the actual outcome :math:`o_t`
 
   >>> import numpy as np
   >>> from sklearn.metrics import brier_score_loss
-  >>> from sklearn.metrics import zero_one_loss
   >>> y_true = np.array([0, 1, 1, 0])
   >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
   >>> y_prob = np.array([0.1, 0.9, 0.8, 0.4])
   >>> y_pred = np.array([0, 1, 1, 0])
-  >>> brier_score_loss(y_true, y_prob) # doctest: +ELLIPSIS
+  >>> brier_score_loss(y_true, y_prob)
   0.055
-  >>> zero_one_loss(y_true, y_pred, normalize=False)
-  0
-  >>> brier_score_loss(y_true, 1-y_prob, pos_label=0) # doctest: +ELLIPSIS
+  >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)
   0.055
-  >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham") # doctest: +ELLIPSIS
+  >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")
   0.055
-  >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
-  0.055
+  >>> brier_score_loss(y_true, y_prob>0.5)
+  0.0
+
 
 .. topic:: Example:
 
