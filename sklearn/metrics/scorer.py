@@ -267,9 +267,9 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         The object to use to fit the data.
 
     scoring : string, callable or None, optional, default: None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A string (see model scoring `User Guide <scoring>` for full
+        list of options) or a scorer callable object / function with
+        signature ``scorer(estimator, X, y)``.
 
     allow_none : boolean, optional, default: False
         If no scoring is specified and the estimator has no score
@@ -277,9 +277,12 @@ def check_scoring(estimator, scoring=None, allow_none=False):
 
     Returns
     -------
-    scoring : callable
+    scoring : callable or None
         A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``. Returns a float.
+        ``scorer(estimator, X, y)``. The callable returns a float.
+
+        If no scoring is specified and the estimator has no score
+        function, None is returned when allow_none=True
     """
     has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
