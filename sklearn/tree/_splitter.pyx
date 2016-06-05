@@ -527,12 +527,12 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     break
                                 cat_split = 0
                                 for q in range(p):
-                                    cat_split |= (<SIZE_t> 1) << shortcut_cat[q]
+                                    cat_split |= (<UINT64_t> 1) << shortcut_cat[q]
                                 if cat_split & 1:
                                     cat_split = (~cat_split) & (
-                                        ((<SIZE_t> 1) << self.n_categories[current.feature]) - 1)
+                                        (~(<UINT64_t> 0)) >> (64 - self.n_categories[current.feature]))
                             else:
-                                if p > (1 << ncat_present) - 1:
+                                if p > ((~(<UINT64_t> 0)) >> (64 - ncat_present)):
                                     break
                                 else:
                                     p += 2  # LSB must always be 0
@@ -540,7 +540,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                                 # Expand the bits of p out into cat_split
                                 cat_split = 0
                                 for q in range(ncat_present):
-                                    cat_split |= (p & ((<SIZE_t> 1) << q)) << cat_offs[q]
+                                    cat_split |= (p & ((<UINT64_t> 1) << q)) << cat_offs[q]
 
                             # Partition
                             q = start
