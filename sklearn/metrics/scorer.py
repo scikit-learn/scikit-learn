@@ -187,8 +187,7 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
-    """Converts an estimator scoring strategy into a valid callable
-    object.
+    """Converts an scoring strategy into a valid callable object.
 
     For possible string arguments to the function, read more in the
     :ref:`User Guide <scoring>`.
@@ -201,18 +200,19 @@ def get_scorer(scoring):
 
         Some possible string arguments include: "accuracy",
         "average_precision", "f1", "adjusted_rand_score", "r2". Read
-        the User Guide for the full list of possibilities.
+        the :ref:`User Guide <scoring>`. for the full list of options.
 
         If a callable is passed in, the signature of the callable
         should be ``(estimator, X, y)``, where ``estimator`` is the
         model to be evaluated, ``X`` is the test data and ``y`` is the
         ground truth labeling (or ``None`` in the case of unsupervised
-        models).
+        models). The callable returns a float.
 
     Returns
     -------
     scorer : callable scoring object
         Callable scoring object with signature ``(estimator, X, y)``.
+        The callable returns a float.
 
     Example
     -------
@@ -272,14 +272,14 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         ``scorer(estimator, X, y)``.
 
     allow_none : boolean, optional, default: False
-        If no scoring is specified and the estimator has no score function, we
-        can either return None or raise an exception.
+        If no scoring is specified and the estimator has no score
+        function, we can either return None or raise an exception.
 
     Returns
     -------
     scoring : callable
         A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        ``scorer(estimator, X, y)``. Returns a float.
     """
     has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
