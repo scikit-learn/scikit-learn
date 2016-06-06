@@ -207,9 +207,9 @@ class Imputer(BaseEstimator, TransformerMixin):
             mask_matrix = X.__class__((mask, X.indices.copy(),
                                        X.indptr.copy()), shape=X.shape,
                                       dtype=X.dtype)
-            feat_with_missing = mask_matrix.sum(axis=0).A.nonzero()[1]
+            feat_with_missing = mask_matrix.sum(axis=0).nonzero()[1]
             # ravel since nonzero returns 2d matrices for sparse in scipy 0.11
-            feat_with_missing = feat_with_missing.ravel()
+            feat_with_missing = np.asarray(feat_with_missing).ravel()
 
         # Count the zeros
         if missing_values == 0:
