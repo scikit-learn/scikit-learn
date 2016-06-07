@@ -1107,11 +1107,12 @@ class NMF(BaseEstimator, TransformerMixin):
         return W
 
     def inverse_transform(self, W):
-        """
+        """Transform data back to its original space.
+        
         Parameters
         ----------
         W: {array-like, sparse matrix}, shape (n_samples, n_components)
-            Transformed Data matrix
+            Transformed data matrix
 
         Returns
         -------
