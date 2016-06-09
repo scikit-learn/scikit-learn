@@ -74,6 +74,7 @@ def test_non_meta_estimators():
             else:
                 yield check, name, Estimator
 
+
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in the scikit
@@ -204,7 +205,8 @@ def test_get_params_invariance():
     # get_params(deep=False) is a subset of get_params(deep=True)
     # Related to issue #4465
 
-    estimators = all_estimators(include_meta_estimators=False, include_other=True)
+    estimators = all_estimators(include_meta_estimators=False,
+                                include_other=True)
     for name, Estimator in estimators:
         if hasattr(Estimator, 'get_params'):
             # The ProjectedGradientNMF class is deprecated
