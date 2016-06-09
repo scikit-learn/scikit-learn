@@ -183,7 +183,8 @@ def average_precision_score(y_true, y_score, average="macro",
                                  average, sample_weight=sample_weight)
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
+def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
+                  pos_label=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task
@@ -220,6 +221,9 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    pos_label : int, optional (default=None)
+        The label of the positive class
+
     Returns
     -------
     auc : float
@@ -250,7 +254,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
             raise ValueError("Only one class present in y_true. ROC AUC score "
                              "is not defined in that case.")
 
-        fpr, tpr, tresholds = roc_curve(y_true, y_score,
+        # use closure for pos_label parameter
+        fpr, tpr, tresholds = roc_curve(y_true, y_score, pos_label=pos_label,
                                         sample_weight=sample_weight)
         return auc(fpr, tpr, reorder=True)
 
