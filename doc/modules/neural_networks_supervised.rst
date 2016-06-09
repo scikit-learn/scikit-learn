@@ -183,7 +183,7 @@ for regularization (L2 regularization) term which helps in avoiding overfitting
 by penalizing weights with large magnitudes. Following plot displays varying
 decision function with value of alpha.
 
-.. figure:: ../auto_examples/neural_networks/plot_mlp_alpha_001.png
+.. figure:: ../auto_examples/neural_networks/images/plot_mlp_alpha_001.png
    :target: ../auto_examples/neural_networks/plot_mlp_alpha.html
    :align: center
    :scale: 75
