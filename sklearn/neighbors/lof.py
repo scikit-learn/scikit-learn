@@ -9,8 +9,6 @@ from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
 
-from ..metrics import pairwise_distances
-
 from ..utils.validation import check_is_fitted
 from ..utils import check_array
 
@@ -123,8 +121,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         super(LocalOutlierFactor, self).fit(X)
 
-        self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_ = (
-            self._k_distance(None))
+        self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_ = self.kneighbors(None)
+        # self._k_distance_value_fit_X_ = distances[:, self.n_neighbors - 1]
 
         # Compute decision_function over training samples to define threshold_:
         self.decision_function_train_ = -self._local_outlier_factor()
@@ -219,7 +217,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         return k_dist, neighbors_indices
 
-    def _local_reachability_density(self, X, neighbors_indices):
+    def _local_reachability_density(self, distances_X, neighbors_indices):
         """The local reachability density (LRD)
 
         The LRD of a sample is the inverse of the average reachability
@@ -244,22 +242,27 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         local_reachability_density : array, shape (n_samples,)
             The local reachability density of each sample.
         """
-        if X is None:
-            X = self._fit_X
+        dist_k = self._k_distance_value_fit_X_[neighbors_indices,
+                                               self.n_neighbors - 1]
 
-        n_samples = X.shape[0]
-        reach_dist_array = np.zeros((n_samples, self.n_neighbors))
+        reach_dist_array = np.maximum(distances_X, dist_k)
 
-        for j in range(n_samples):
-            neighbors_number = -1
-            dist_j = pairwise_distances(
-                X[j:j + 1, :],
-                self._fit_X[neighbors_indices[j, :], :],
-                metric=self.effective_metric_)[0]
-            for cpt, i in enumerate(neighbors_indices[j, :]):
-                neighbors_number += 1
-                reach_dist_array[j, neighbors_number] = np.max(
-                    [self._k_distance_value_fit_X_[i], dist_j[cpt]])
+        # if X is None:
+        #     X = self._fit_X
+
+        # n_samples = X.shape[0]
+        # reach_dist_array = np.zeros((n_samples, self.n_neighbors))
+
+        # for j in range(n_samples):
+        #     neighbors_number = -1
+        #     dist_j = pairwise_distances(
+        #         X[j:j + 1, :],
+        #         self._fit_X[neighbors_indices[j, :], :],
+        #         metric=self.effective_metric_)[0]
+        #     for cpt, i in enumerate(neighbors_indices[j, :]):
+        #         neighbors_number += 1
+        #         reach_dist_array[j, neighbors_number] = np.max(
+        #             [self._k_distance_value_fit_X_[i, self.n_neighbors - 1], dist_j[cpt]])
 
         #  1e-10 to avoid `nan' when when nb of duplicates > n_neighbors:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
@@ -291,23 +294,21 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         """
         if X is None:
             n_samples = self._fit_X.shape[0]
+            distances_X = self._k_distance_value_fit_X_
             neighbors_indices_X = self.neighbors_indices_fit_X_
         else:
             n_samples = X.shape[0]
-            neighbors_indices_X = self._k_distance(X)[1]
+            distances_X, neighbors_indices_X = self.kneighbors(X)
 
-        # Compute the local_reachibility_density of samples X:
-        X_lrd = self._local_reachability_density(X, neighbors_indices_X)
+        # Compute the local_reachability_density of samples X:
+        X_lrd = self._local_reachability_density(distances_X,
+                                                 neighbors_indices_X)
         lrd_ratios_array = np.zeros((n_samples, self.n_neighbors))
 
         # Avoid re-computing X_lrd if X is None:
         lrd = X_lrd if X is None else self._local_reachability_density(
-            None, self.neighbors_indices_fit_X_)
+            self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_)
 
-        for j in range(n_samples):
-            neighbors_number = -1
-            for i in neighbors_indices_X[j, :]:
-                neighbors_number += 1
-                lrd_ratios_array[j, neighbors_number] = lrd[i] / X_lrd[j]
+        lrd_ratios_array = lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
 
         return np.mean(lrd_ratios_array, axis=1)
