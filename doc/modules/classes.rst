@@ -661,7 +661,7 @@ Kernels:
 .. currentmodule:: sklearn
 
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
    :template: class.rst
 
    discriminant_analysis.LinearDiscriminantAnalysis
