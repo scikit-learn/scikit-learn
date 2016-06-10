@@ -39,7 +39,7 @@ X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]], dtype='f')
 
 # Data is just 9 separable points in the plane
 X6 = np.array([[0, 0], [-2, -2], [-2, -1], [-1, -1], [-1, -2],
-              [1, 3], [1, 2], [2, 1], [2, 2]])
+               [1, 3], [1, 2], [2, 1], [2, 2]])
 y6 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2])
 y7 = np.array([1, 2, 3, 2, 3, 1, 2, 3, 1])
 
@@ -183,7 +183,7 @@ def test_lda_explained_variance_ratio():
     # length. Make it the same length as clf_lda_svd.explained_variance_ratio_
     # before comparison.
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
-            clf_lda_eigen.explained_variance_ratio_[:tested_length])
+                              clf_lda_eigen.explained_variance_ratio_[:tested_length])
 
 
 def test_lda_orthogonality():

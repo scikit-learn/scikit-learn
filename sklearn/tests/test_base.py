@@ -193,7 +193,7 @@ def test_is_classifier():
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
     assert_true(is_classifier(Pipeline([('svc_cv',
-                              GridSearchCV(svc, {'C': [0.1, 1]}))])))
+                                         GridSearchCV(svc, {'C': [0.1, 1]}))])))
 
 
 def test_set_params():
