@@ -23,6 +23,7 @@ In scikit-learn a random split into training and test sets
 can be quickly computed with the :func:`train_test_split` helper function.
 Let's load the iris data set to fit a linear support vector machine on it::
 
+  >>> import numpy as np
   >>> from sklearn import cross_validation
   >>> from sklearn import datasets
   >>> from sklearn import svm
