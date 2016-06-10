@@ -21,8 +21,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     The anomaly score of each sample is called Local Outlier Factor.
     It measures the local deviation of density of a given sample with
     respect to its neighbors.
-    It is local in that the degree depends on how isolated the object is
-    with respect to the surrounding neighborhood.
+    It is local in that the anomaly score depends on how isolated the object
+    is with respect to the surrounding neighborhood.
     More precisely, locality is given by k-nearest neighbors, whose distance
     is used to estimate the local density.
     By comparing the local density of a sample to the local densities of
@@ -96,6 +96,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`k_neighbors` and :meth:`kneighbors_graph` methods.
+
+    References
+    ----------
+    .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
+           LOF: identifying density-based local outliers. In ACM sigmod record.
     """
     def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
@@ -121,22 +126,22 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         super(LocalOutlierFactor, self).fit(X)
 
-        self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_ = self.kneighbors(None)
-        # self._k_distance_value_fit_X_ = distances[:, self.n_neighbors - 1]
+        self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_ = (
+            self.kneighbors(None))
 
         # Compute decision_function over training samples to define threshold_:
         self.decision_function_train_ = -self._local_outlier_factor()
-        # as bigger is better (less abnormal)
+        # minus as bigger is better (less abnormal)
 
         self.threshold_ = -scoreatpercentile(
             -self.decision_function_train_, 100. * (1. - self.contamination))
 
-        # XXX May be optimized (if X is not None) by only computing it for
+        # XXX may be optimized (if X is not None) by only computing it for
         # X_sub_samples = neighbors of neighbors of X ?
         return self
 
     def predict(self, X=None):
-        """Predict Local Outlier Factor of X.
+        """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
 
         The local outlier factor (LOF) of a sample captures its
         supposed `degree of abnormality'.
@@ -244,25 +249,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         """
         dist_k = self._k_distance_value_fit_X_[neighbors_indices,
                                                self.n_neighbors - 1]
-
         reach_dist_array = np.maximum(distances_X, dist_k)
-
-        # if X is None:
-        #     X = self._fit_X
-
-        # n_samples = X.shape[0]
-        # reach_dist_array = np.zeros((n_samples, self.n_neighbors))
-
-        # for j in range(n_samples):
-        #     neighbors_number = -1
-        #     dist_j = pairwise_distances(
-        #         X[j:j + 1, :],
-        #         self._fit_X[neighbors_indices[j, :], :],
-        #         metric=self.effective_metric_)[0]
-        #     for cpt, i in enumerate(neighbors_indices[j, :]):
-        #         neighbors_number += 1
-        #         reach_dist_array[j, neighbors_number] = np.max(
-        #             [self._k_distance_value_fit_X_[i, self.n_neighbors - 1], dist_j[cpt]])
 
         #  1e-10 to avoid `nan' when when nb of duplicates > n_neighbors:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)

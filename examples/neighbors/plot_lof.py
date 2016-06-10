@@ -3,8 +3,14 @@
 Anomaly detection with Local Outlier Factor (LOF)
 =================================================
 
-This example uses the LocalOutlierFactor estimator
+This example uses the LocalOutlierFactor (LOF) estimator
 for anomaly detection.
+LOF is a unsupervised Outlier Detection method.
+Its anomaly score measures the local deviation of density of a given
+sample with respect to its neighbors.
+By comparing the local density of a sample to the local densities of
+its neighbors, one can identify samples that have a substantially lower
+density than their neighbors. These are considered as outliers.
 """
 print(__doc__)
 
@@ -30,7 +36,7 @@ y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
 y_pred_outliers = clf.predict(X_outliers)
 
-# plot the line, the samples, and the nearest vectors to the plane
+# plot the level sets of the decision function
 xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
