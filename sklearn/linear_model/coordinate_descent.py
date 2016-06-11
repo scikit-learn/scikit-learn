@@ -641,6 +641,10 @@ class ElasticNet(LinearModel, RegressorMixin):
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
             Target
 
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
         Notes
         -----
 
