@@ -651,7 +651,7 @@ class GraphLassoCV(GraphLasso):
                 alpha_1 = path[0][0]
                 alpha_0 = path[1][0]
             elif (best_index == last_finite_idx
-                    and not best_index == len(path) - 1):
+                  and not best_index == len(path) - 1):
                 # We have non-converged models on the upper bound of the
                 # grid, we need to refine the grid there
                 alpha_1 = path[best_index][0]

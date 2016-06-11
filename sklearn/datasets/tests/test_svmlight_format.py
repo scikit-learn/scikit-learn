@@ -1,11 +1,11 @@
 from bz2 import BZ2File
 import gzip
 from io import BytesIO
-import numpy as np
-import scipy.sparse as sp
 import os
 import shutil
 from tempfile import NamedTemporaryFile
+import numpy as np
+import scipy.sparse as sp
 
 from sklearn.externals.six import b
 
@@ -38,8 +38,8 @@ def test_load_svmlight_file():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
-                     (1, 5, 1.0), (1, 12, -3),
-                     (2, 20, 27)):
+                      (1, 5, 1.0), (1, 12, -3),
+                      (2, 20, 27)):
 
         assert_equal(X[i, j], val)
 
@@ -101,7 +101,7 @@ def test_load_svmlight_file_n_features():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2),
-                     (1, 5, 1.0), (1, 12, -3)):
+                      (1, 5, 1.0), (1, 12, -3)):
 
         assert_equal(X[i, j], val)
 
@@ -219,7 +219,7 @@ def test_dump():
                     # LibSVM doesn't grok comments so they're not put in by
                     # default anymore.
 
-                    if (sp.issparse(y) and y.shape[0] == 1):
+                    if sp.issparse(y) and y.shape[0] == 1:
                         # make sure y's shape is: (n_samples, n_labels)
                         # when it is sparse
                         y = y.T

@@ -14,8 +14,8 @@ Seeding is performed using a binning technique for scalability.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
 
-import numpy as np
 import warnings
+import numpy as np
 
 from collections import defaultdict
 from ..externals import six

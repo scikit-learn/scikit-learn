@@ -1,5 +1,5 @@
-import numpy as np
 from itertools import product
+import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal

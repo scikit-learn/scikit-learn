@@ -139,7 +139,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
                 U, S, Vh = np.linalg.svd(t_svd)
                 svd_restarts += 1
             except LinAlgError:
-                print("SVD did not converge, randomizing and trying again")
+                print "SVD did not converge, randomizing and trying again"
                 break
 
             ncut_value = 2.0 * (n_samples - S.sum())
