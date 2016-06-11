@@ -2536,16 +2536,16 @@ model* train(const problem *prob, const parameter *param)
             problem sub_prob;
             sub_prob.l = l;
             sub_prob.n = n;
-            sub_prob.x = Malloc(feature_node *,sub_prob.l);	// Copy (pointers) of samples
             sub_prob.y = Malloc(double,sub_prob.l);			// +1/-1 values for samples while solving
             sub_prob.sample_weight = sample_weight;
-
-            for(k=0; k<sub_prob.l; k++)
-                sub_prob.x[k] = x[k];	// Copy permutated samples (grouped by label)
 
             // multi-class svm by Crammer and Singer
             if(param->solver_type == MCSVM_CS)
             {
+            	sub_prob.x = Malloc(feature_node *,sub_prob.l);	// Copy (pointers) of samples
+	            for(k=0; k<sub_prob.l; k++)
+	                sub_prob.x[k] = x[k];	// Copy permutated samples (grouped by label)
+
                 model_->w=Malloc(double, n*nr_class);
                 model_->n_iter=Malloc(int, 1);
                 for(i=0;i<nr_class;i++)
@@ -2556,6 +2556,8 @@ model* train(const problem *prob, const parameter *param)
             }
             else
             {
+            	sub_prob.x = x;
+
                 if(nr_class == 2)
                 {
                     model_->w=Malloc(double, w_size);
@@ -2597,12 +2599,15 @@ model* train(const problem *prob, const parameter *param)
 
             }
 
-            free(sub_prob.x);
+            if (param->solver_type == MCSVM_CS) {
+	            free(sub_prob.x);
+	        }
             free(sub_prob.y);
         }
 
-        if (extra)
+        if (extra) {
             free(extra);
+        }
         free(x);
         free(label);
         free(start);
