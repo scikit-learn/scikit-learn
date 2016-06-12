@@ -134,6 +134,10 @@ def test_roc_curve():
         roc_auc = auc(fpr, tpr)
         assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
         assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+        assert_almost_equal(roc_auc,
+                            roc_auc_score(y_true, probas_pred, pos_label=1))
+        assert_almost_equal(1 - roc_auc,
+                            roc_auc_score(y_true, probas_pred, pos_label=0))
         assert_equal(fpr.shape, tpr.shape)
         assert_equal(fpr.shape, thresholds.shape)
 
@@ -272,6 +276,18 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [1, 1])
     assert_almost_equal(roc_auc, 1.)
 
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=1)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=1)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [1, 1])
+    assert_almost_equal(roc_auc, 1.)
+
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=0)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=0)
+    assert_array_almost_equal(tpr, [0, 1, 1])
+    assert_array_almost_equal(fpr, [0, 0, 1])
+    assert_almost_equal(roc_auc, 0.)
+
     y_true = [0, 1]
     y_score = [1, 0]
     tpr, fpr, _ = roc_curve(y_true, y_score)
@@ -280,10 +296,34 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [0, 0, 1])
     assert_almost_equal(roc_auc, 0.)
 
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=1)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=1)
+    assert_array_almost_equal(tpr, [0, 1, 1])
+    assert_array_almost_equal(fpr, [0, 0, 1])
+    assert_almost_equal(roc_auc, 0.)
+
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=0)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=0)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [1, 1])
+    assert_almost_equal(roc_auc, 1.)
+
     y_true = [1, 0]
     y_score = [1, 1]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [0, 1])
+    assert_almost_equal(roc_auc, 0.5)
+
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=1)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=1)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [0, 1])
+    assert_almost_equal(roc_auc, 0.5)
+
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=0)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=0)
     assert_array_almost_equal(tpr, [0, 1])
     assert_array_almost_equal(fpr, [0, 1])
     assert_almost_equal(roc_auc, 0.5)
@@ -296,6 +336,18 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [1, 1])
     assert_almost_equal(roc_auc, 1.)
 
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=1)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=1)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [1, 1])
+    assert_almost_equal(roc_auc, 1.)
+
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=0)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=0)
+    assert_array_almost_equal(tpr, [0, 1, 1])
+    assert_array_almost_equal(fpr, [0, 0, 1])
+    assert_almost_equal(roc_auc, 0)
+
     y_true = [1, 0]
     y_score = [0.5, 0.5]
     tpr, fpr, _ = roc_curve(y_true, y_score)
@@ -304,21 +356,59 @@ def test_roc_curve_toydata():
     assert_array_almost_equal(fpr, [0, 1])
     assert_almost_equal(roc_auc, .5)
 
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=1)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=1)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [0, 1])
+    assert_almost_equal(roc_auc, .5)
+
+    tpr, fpr, _ = roc_curve(y_true, y_score, pos_label=0)
+    roc_auc = roc_auc_score(y_true, y_score, pos_label=0)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [0, 1])
+    assert_almost_equal(roc_auc, .5)
+
     y_true = [0, 0]
     y_score = [0.25, 0.75]
     # assert UndefinedMetricWarning because of no positive sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [0., 0.5, 1.])
     assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
-    y_true = [1, 1]
-    y_score = [0.25, 0.75]
-    # assert UndefinedMetricWarning because of no negative sample in y_true
-    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score, pos_label=1)
+    assert_raises(ValueError, roc_auc_score, y_true, y_score)
+    assert_array_almost_equal(tpr, [0., 0.5, 1.])
+    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
+
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score, pos_label=0)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
     assert_array_almost_equal(tpr, [np.nan, np.nan])
     assert_array_almost_equal(fpr, [0.5, 1.])
+
+    y_true = [1, 1]
+    y_score = [0.25, 0.75]
+    # assert UndefinedMetricWarning because of no negative sample in y_true
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score)
+    assert_raises(ValueError, roc_auc_score, y_true, y_score)
+    assert_array_almost_equal(tpr, [np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.5, 1.])
+
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score, pos_label=1)
+    assert_raises(ValueError, roc_auc_score, y_true, y_score)
+    assert_array_almost_equal(tpr, [np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.5, 1.])
+
+    tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve,
+                               y_true, y_score, pos_label=0)
+    assert_raises(ValueError, roc_auc_score, y_true, y_score)
+    assert_array_almost_equal(tpr, [0., 0.5, 1.])
+    assert_array_almost_equal(fpr, [np.nan, np.nan, np.nan])
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
@@ -327,7 +417,15 @@ def test_roc_curve_toydata():
     assert_raises(ValueError, roc_auc_score, y_true, y_score,
                   average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 1.)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=1), 1.)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=0), 0.)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 1.)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=1), 1.)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=0), 0.)
 
     y_true = np.array([[0, 1], [0, 1]])
     y_score = np.array([[0, 1], [1, 0]])
@@ -335,21 +433,67 @@ def test_roc_curve_toydata():
     assert_raises(ValueError, roc_auc_score, y_true, y_score,
                   average="weighted")
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=1),
+            0.5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=0),
+            0.5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=1), 0.5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=0), 0.5)
 
     y_true = np.array([[1, 0], [0, 1]])
     y_score = np.array([[0, 1], [1, 0]])
     assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="macro", pos_label=1), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="macro", pos_label=0), 1.)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="weighted", pos_label=1), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="weighted", pos_label=0),
+            1.)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=1), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=0),
+            1.)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=1), 0)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=0), 1.)
 
     y_true = np.array([[1, 0], [0, 1]])
     y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
     assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="macro", pos_label=1), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="macro", pos_label=0), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="weighted", pos_label=1),
+            .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="weighted", pos_label=0),
+            .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=1), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="samples", pos_label=0), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=1), .5)
+    assert_almost_equal(
+            roc_auc_score(y_true, y_score, average="micro", pos_label=0), .5)
 
 
 def test_roc_curve_drop_intermediate():
