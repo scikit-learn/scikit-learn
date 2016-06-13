@@ -948,7 +948,7 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   mixture.GMM
+   mixture.GaussianMixture
    mixture.DPGMM
    mixture.VBGMM
 
