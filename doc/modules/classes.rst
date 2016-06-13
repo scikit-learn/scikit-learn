@@ -928,7 +928,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.paired_manhattan_distances
    metrics.pairwise.paired_cosine_distances
    metrics.pairwise.paired_distances
-   
+
 
 .. _mixture_ref:
 
@@ -947,7 +947,7 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   mixture.GMM
+   mixture.GaussianMixture
    mixture.DPGMM
    mixture.VBGMM
 
