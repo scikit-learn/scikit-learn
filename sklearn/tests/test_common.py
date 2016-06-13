@@ -10,11 +10,13 @@ from __future__ import print_function
 import os
 import warnings
 import sys
+import re
 import pkgutil
 
 from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
@@ -140,6 +142,29 @@ def test_root_import_all_completeness():
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
             continue
         assert_in(modname, sklearn.__all__)
+
+
+def test_all_tests_are_importable():
+    # Ensure that for each contentful subpackage, there is a test directory
+    # within it that is also a subpackage (i.e. a directory with __init__.py)
+
+    HAS_TESTS_EXCEPTIONS = re.compile(r'''(?x)
+                                      \.externals(\.|$)|
+                                      \.tests(\.|$)|
+                                      \._
+                                      ''')
+    lookup = dict((name, ispkg)
+                  for _, name, ispkg
+                  in pkgutil.walk_packages(sklearn.__path__,
+                                           prefix='sklearn.'))
+    missing_tests = [name for name, ispkg in lookup.items()
+                     if ispkg
+                     and not HAS_TESTS_EXCEPTIONS.search(name)
+                     and name + '.tests' not in lookup]
+    assert_equal(missing_tests, [],
+                 '{0} do not have `tests` subpackages. Perhaps they require '
+                 '__init__.py or an add_subpackage directive in the parent '
+                 'setup.py'.format(missing_tests))
 
 
 def test_non_transformer_estimators_n_iter():
