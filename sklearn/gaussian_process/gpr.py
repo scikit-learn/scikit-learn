@@ -32,6 +32,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
 
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
     Parameters
     ----------
     kernel : kernel object
