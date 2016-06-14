@@ -17,13 +17,15 @@ from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
+from sklearn.pipeline import PredictionTransformer, ThresholdClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris, make_classification
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -472,3 +474,16 @@ def test_X1d_inverse_transform():
     X = np.ones(10)
     msg = "1d X will not be reshaped in pipeline.inverse_transform"
     assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
+
+
+def test_prediction_transformer_pipeline():
+    X, y = make_classification()
+
+    pipe = make_pipeline(PredictionTransformer(RandomForestClassifier()),
+                         ThresholdClassifier())
+    pipe.fit(X, y)
+
+    clf = RandomForestClassifier()
+    clf.fit(X, y)
+
+    assert_array_equal(clf.predict(X), pipe.predict(X))
