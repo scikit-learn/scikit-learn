@@ -1318,12 +1318,12 @@ class MiniBatchKMeans(KMeans):
             # using tol-based early stopping needs the allocation of a
             # dedicated before which can be expensive for high dim data:
             # hence we allocate it outside of the main loop
-            old_center_buffer = np.zeros(n_features, np.double)
+            old_center_buffer = np.zeros(n_features, dtype=X.dtype)
         else:
             tol = 0.0
             # no need for the center buffer if tol-based early stopping is
             # disabled
-            old_center_buffer = np.zeros(0, np.double)
+            old_center_buffer = np.zeros(0, dtype=X.dtype)
 
         distances = np.zeros(self.batch_size, dtype=X.dtype)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
@@ -1486,7 +1486,7 @@ class MiniBatchKMeans(KMeans):
             distances = np.zeros(X.shape[0], dtype=X.dtype)
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
-                         self.counts_, np.zeros(0, np.double), 0,
+                         self.counts_, np.zeros(0, dtype=X.dtype), 0,
                          random_reassign=random_reassign, distances=distances,
                          random_state=self.random_state_,
                          reassignment_ratio=self.reassignment_ratio,
