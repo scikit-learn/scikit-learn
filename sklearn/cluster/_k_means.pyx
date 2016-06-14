@@ -108,7 +108,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef DOUBLE _assign_labels_csr(X, np.ndarray[floating, ndim=1] x_squared_norms,
+cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                 np.ndarray[floating, ndim=2] centers,
                                 np.ndarray[INT, ndim=1] labels,
                                 np.ndarray[floating, ndim=1] distances):
@@ -173,7 +173,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[floating, ndim=1] x_squared_norms,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _mini_batch_update_csr(X, np.ndarray[floating, ndim=1] x_squared_norms,
+def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                            np.ndarray[floating, ndim=2] centers,
                            np.ndarray[INT, ndim=1] counts,
                            np.ndarray[INT, ndim=1] nearest_center,
