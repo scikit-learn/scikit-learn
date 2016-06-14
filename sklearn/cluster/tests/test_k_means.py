@@ -783,6 +783,7 @@ def test_kmeans_float32_64():
 
     inertia = {}
     X_new = {}
+    centers = {}
 
     for dtype in [np.float64, np.float32]:
         X_test = dtype(X)
@@ -791,6 +792,7 @@ def test_kmeans_float32_64():
         assert_equal(km.cluster_centers_.dtype, dtype)
         inertia[dtype] = km.inertia_
         X_new[dtype] = km.transform(km.cluster_centers_)
+        centers[dtype] = km.cluster_centers_
         # make sure predictions correspond to the correct label
         assert_equal(km.predict(X_test[0]), km.labels_[0])
 
@@ -799,6 +801,7 @@ def test_kmeans_float32_64():
     assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
                               decimal=4)
     assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
+    assert_array_almost_equal(centers[np.float32], centers[np.float64])
 
     for dtype in [np.float32, np.float64]:
         X_csr_test = sp.csr_matrix(X_csr, dtype=dtype)
@@ -807,6 +810,7 @@ def test_kmeans_float32_64():
         assert_equal(km.cluster_centers_.dtype, dtype)
         inertia[dtype] = km.inertia_
         X_new[dtype] = km.transform(km.cluster_centers_)
+        centers[dtype] = km.cluster_centers_
         # make sure predictions correspond to the correct label
         assert_equal(km.predict(X_csr_test[0]),
                                 km.labels_[0])
@@ -814,6 +818,7 @@ def test_kmeans_float32_64():
     assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
                               decimal=4)
     assert_array_almost_equal(X_new[np.float32], X_new[np.float64])
+    assert_array_almost_equal(centers[np.float32], centers[np.float64])
 
 
 def test_mb_k_means_float32_64():
@@ -821,6 +826,7 @@ def test_mb_k_means_float32_64():
 
     inertia = {}
     X_new = {}
+    centers = {}
     for dtype in [np.float64, np.float32]:
         X_test = dtype(X)
         km.fit(X_test)
@@ -828,6 +834,7 @@ def test_mb_k_means_float32_64():
         assert_equal(km.cluster_centers_.dtype, dtype)
         inertia[dtype] = km.inertia_
         X_new[dtype] = km.transform(km.cluster_centers_)
+        centers[dtype] = km.cluster_centers_
         # make sure predictions correspond to the correct label
         assert_equal(km.predict(X_test[0]), km.labels_[0])
         km.partial_fit(X_test[0:3])
@@ -838,6 +845,7 @@ def test_mb_k_means_float32_64():
     # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
     assert_array_almost_equal(inertia[np.float32], inertia[np.float64], decimal=4)
     assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
+    assert_array_almost_equal(centers[np.float32], centers[np.float64])
 
     for dtype in [np.float32, np.float64]:
         X_csr_test = sp.csr_matrix(X_csr, dtype=dtype)
@@ -846,6 +854,7 @@ def test_mb_k_means_float32_64():
         assert_equal(km.cluster_centers_.dtype, dtype)
         inertia[dtype] = km.inertia_
         X_new[dtype] = km.transform(km.cluster_centers_)
+        centers[dtype] = km.cluster_centers_
         # make sure predictions correspond to the correct label
         assert_equal(km.predict(X_csr_test[0]), km.labels_[0])
         km.partial_fit(X_csr_test[0:3])
@@ -856,3 +865,4 @@ def test_mb_k_means_float32_64():
                               decimal=4)
     assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
                               decimal=4)
+    assert_array_almost_equal(centers[np.float32], centers[np.float64], 4)
