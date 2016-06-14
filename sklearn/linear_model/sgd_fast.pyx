@@ -45,19 +45,19 @@ DEF PA2 = 5
 cdef class LossFunction:
     """Base class for convex loss functions"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef floating loss(self, floating p, floating y) nogil:
         """Evaluate the loss function.
 
         Parameters
         ----------
-        p : double
+        p : floating
             The prediction, p = w^T x
-        y : double
+        y : floating
             The true value (aka target)
 
         Returns
         -------
-        double
+        floating
             The loss evaluated at `p` and `y`.
         """
         return 0.
@@ -79,7 +79,7 @@ cdef class LossFunction:
         """
         return self._dloss(p, y)
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef floating _dloss(self, floating p, floating y) nogil:
         # Implementation of dloss; separate function because cpdef and nogil
         # can't be combined.
         return 0.
@@ -88,20 +88,20 @@ cdef class LossFunction:
 cdef class Regression(LossFunction):
     """Base class for loss functions for regression"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef floating loss(self, floating p, floating y) nogil:
         return 0.
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef floating _dloss(self, floating p, floating y) nogil:
         return 0.
 
 
 cdef class Classification(LossFunction):
     """Base class for loss functions for classification"""
 
-    cdef double loss(self, double p, double y) nogil:
+    cdef floating loss(self, floating p, floating y) nogil:
         return 0.
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef floating _dloss(self, floating p, floating y) nogil:
         return 0.
 
 
@@ -202,8 +202,8 @@ cdef class SquaredHinge(Classification):
 cdef class Log(Classification):
     """Logistic regression loss for binary classification with y in {-1, 1}"""
 
-    cdef double loss(self, double p, double y) nogil:
-        cdef double z = p * y
+    cdef floating loss(self, floating p, floating y) nogil:
+        cdef floating z = p * y
         # approximately equal and saves the computation of the log
         if z > 18:
             return exp(-z)
@@ -211,8 +211,8 @@ cdef class Log(Classification):
             return -z
         return log(1.0 + exp(-z))
 
-    cdef double _dloss(self, double p, double y) nogil:
-        cdef double z = p * y
+    cdef floating _dloss(self, floating p, floating y) nogil:
+        cdef floating z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
             return exp(-z) * -y
@@ -226,10 +226,10 @@ cdef class Log(Classification):
 
 cdef class SquaredLoss(Regression):
     """Squared loss traditional used in linear regression."""
-    cdef double loss(self, double p, double y) nogil:
+    cdef floating loss(self, floating p, floating y) nogil:
         return 0.5 * (p - y) * (p - y)
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef floating _dloss(self, floating p, floating y) nogil:
         return p - y
 
     def __reduce__(self):
