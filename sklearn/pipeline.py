@@ -7,7 +7,7 @@ estimator, as a chain of transforms and estimators.
 #         Virgile Fritsch
 #         Alexandre Gramfort
 #         Lars Buitinck
-# Licence: BSD
+# License: BSD
 
 from collections import defaultdict
 from warnings import warn

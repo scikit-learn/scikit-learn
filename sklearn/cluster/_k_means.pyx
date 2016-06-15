@@ -6,7 +6,7 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Lars Buitinck
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.math cimport sqrt
 import numpy as np

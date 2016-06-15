@@ -9,7 +9,7 @@ classification estimators.
 # Authors: Sebastian Raschka <se.raschka@gmail.com>,
 #          Gilles Louppe <g.louppe@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 

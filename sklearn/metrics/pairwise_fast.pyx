@@ -5,7 +5,7 @@
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Lars Buitinck
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.string cimport memset
 import numpy as np

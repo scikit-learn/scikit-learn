@@ -9,7 +9,7 @@ are represented by the dashed lines.
 """
 print(__doc__)
 # Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt

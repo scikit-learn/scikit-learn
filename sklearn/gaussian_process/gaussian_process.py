@@ -2,7 +2,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from __future__ import print_function
 

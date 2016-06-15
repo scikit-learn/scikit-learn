@@ -7,7 +7,7 @@
 #         Rob Zinkov (passive-aggressive)
 #         Lars Buitinck
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 
 import numpy as np
