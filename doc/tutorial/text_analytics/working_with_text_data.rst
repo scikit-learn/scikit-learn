@@ -446,21 +446,22 @@ that we can use to ``predict``::
   >>> twenty_train.target_names[gs_clf.predict(['God is love'])]
   'soc.religion.christian'
 
-but otherwise, it's a pretty large and clumsy object. We can, however, get the
-optimal parameters out by inspecting the object's ``grid_scores_`` attribute,
-which is a list of parameters/score pairs. To get the best scoring attributes,
-we can do::
+The object's ``best_score_`` and ``best_params_`` attributes store the best
+mean score and the parameters setting corresponding to that score::
 
-  >>> best_parameters, score, _ = max(gs_clf.grid_scores_, key=lambda x: x[1])
+  >>> gs_clf.best_score_
+  0.900...
   >>> for param_name in sorted(parameters.keys()):
-  ...     print("%s: %r" % (param_name, best_parameters[param_name]))
+  ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-  >>> score                                              # doctest: +ELLIPSIS
-  0.900...
+A more detailed summary of the search is available at ``gs_clf.results_``.
+
+The ``results_`` parameter can be easily imported into pandas as a
+``DataFrame`` for further inspection.
 
 .. note:
 
