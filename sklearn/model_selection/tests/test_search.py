@@ -525,7 +525,6 @@ def test_gridsearch_no_predict():
                           param_grid=dict(bandwidth=[.01, .1, 1]),
                           scoring=custom_scoring)
     search.fit(X)
-    print(search.best_score_)
     assert_equal(search.best_params_['bandwidth'], .1)
     assert_equal(search.best_score_, 42)
 
