@@ -4,7 +4,7 @@
 #          Lars Buitinck
 #          Giorgio Patrini
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 #!python
 #cython: boundscheck=False, wraparound=False, cdivision=True

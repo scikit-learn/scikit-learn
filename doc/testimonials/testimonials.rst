@@ -82,6 +82,43 @@ Gaël Varoquaux, research at Parietal
    </span>
 
 
+`betaworks <https://betaworks.com>`_
+------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/betaworks.png
+    :width: 120pt
+    :target: https://betaworks.com
+
+.. raw:: html
+
+  </div>
+
+Betaworks is a NYC-based startup studio that builds new products, grows
+companies, and invests in others. Over the past 8 years we’ve launched a
+handful of social data analytics-driven services, such as Bitly, Chartbeat,
+digg and Scale Model. Consistently the betaworks data science team uses
+Scikit-learn for a variety of tasks. From exploratory analysis, to product
+development, it is an essential part of our toolkit. Recent uses are included
+in `digg’s new video recommender system
+<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3#.g5kk2u89v>`_,
+and Poncho’s `dynamic heuristic subspace clustering
+<http://data.betaworks.com/a-data-driven-approach-to-verbalize-weather-forecasts-at-scale/>`_. 
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Gilad Lotan, Chief Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
 `Evernote <https://evernote.com>`_
 ----------------------------------
 

@@ -1,7 +1,7 @@
 """Testing for kernels for Gaussian processes."""
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from collections import Hashable
 from sklearn.externals.funcsigs import signature

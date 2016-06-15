@@ -5,7 +5,7 @@
 # Authors: Danny Sullivan <dbsullivan23@gmail.com>
 #          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 import numpy as np
 cimport numpy as np
 import scipy.sparse as sp

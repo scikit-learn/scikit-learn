@@ -38,7 +38,7 @@ except:
 extensions = ['gen_rst',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
-              'sphinx.ext.linkcode',
+              'sphinx.ext.linkcode', 'sphinx.ext.doctest',
               ]
 
 autosummary_generate = True

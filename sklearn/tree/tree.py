@@ -11,7 +11,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from __future__ import division
 

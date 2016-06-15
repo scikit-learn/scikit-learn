@@ -8,7 +8,7 @@
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
