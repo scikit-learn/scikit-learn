@@ -3,6 +3,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn.metrics.cluster.unsupervised import silhouette_score
+from sklearn.metrics.cluster.unsupervised import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_almost_equal
@@ -50,6 +51,8 @@ def test_no_nan():
     D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
+    ss = silhouette_samples(D, labels, metric='precomputed')
+    assert_false(np.isnan(ss).any())
 
 
 def test_correct_labelsize():
