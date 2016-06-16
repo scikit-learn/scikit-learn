@@ -301,6 +301,8 @@ class BayesianGaussianMixture(BaseMixture):
         self._initialize_weights_distribution(nk)
         self._initialize_means_distribution(X, nk, xk)
         self._initialize_precisions_distribution(X, nk, xk, sk)
+        print('W', self.precisions_)
+
         self._estimate_distribution_norms()
 
     def _initialize_weights_distribution(self, nk):
@@ -329,7 +331,8 @@ class BayesianGaussianMixture(BaseMixture):
         nk : array-like, shape (n_components,)
         """
         self.alpha_ = self._alpha_prior + nk
-        self.alpha_ /= np.sum(self.alpha_)
+        # In fact the normalisation is done only at the end
+        # self.alpha_ /= np.sum(self.alpha_)
 
     def _initialize_means_distribution(self, X, nk, xk):
         """Initialize the parameters of the Gaussian distribution.
@@ -376,6 +379,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.beta_ = self._beta_prior + nk
         self.means_ = (self._beta_prior * self._mean_prior +
                        nk[:, np.newaxis] * xk) / self.beta_[:, np.newaxis]
+        print('means', self.means_)
 
     def _initialize_precisions_distribution(self, X, nk, xk, sk):
         """Initialize the prior parameters of the precision distribution.
@@ -429,10 +433,10 @@ class BayesianGaussianMixture(BaseMixture):
 
         if self.covariance_init is None:
             self._covariance_prior = {
-                'full': np.eye(X.shape[1]),
-                'tied': np.eye(X.shape[1]),
-                'diag': .5 * np.diag(np.atleast_2d(np.cov(X.T, bias=1))),
-                'spherical': .5 * np.var(X, axis=0).mean()
+                'full': np.eye(n_features),
+                'tied': np.eye(n_features),
+                'diag': np.diag(np.atleast_2d(np.cov(X.T))),
+                'spherical': np.var(X, axis=0).mean()
             }[self.covariance_type]
 
         elif self.covariance_type in ['full', 'tied']:
@@ -488,7 +492,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         if self.covariance_type is 'full':
             self.precisions_ = np.array([
-                np.dot(prec_chol, prec_chol)
+                np.dot(prec_chol, prec_chol.T)
                 for prec_chol in self.precisions_cholesky_])
         elif self.covariance_type is 'tied':
             self.precisions_ = np.dot(self.precisions_cholesky_,
@@ -511,10 +515,12 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        self.nu_ = self._nu_prior + nk
+        # Typo error in certain version of Bishop for nu
+        self.nu_ = self._nu_prior + nk + 1
 
         self.covariances_ = np.empty((self.n_components, n_features,
                                       n_features))
+
         for k in range(self.n_components):
             diff = xk[k] - self._mean_prior
             self.covariances_[k] = (self._covariance_prior + nk[k] * Sk[k] +
@@ -539,6 +545,7 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
+        # FIXME Typo error in certain version of Bishop for nu
         self.nu_ = self._nu_prior + nk.sum() / self.n_components
 
         diff = xk - self._mean_prior
@@ -563,6 +570,7 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
+        # FIXME Typo error in certain version of Bishop for nu
         self.nu_ = self._nu_prior + .5 * nk
 
         diff = xk - self._mean_prior
@@ -588,6 +596,7 @@ class BayesianGaussianMixture(BaseMixture):
         """
         n_features = xk.shape[1]
 
+        # FIXME Typo error in certain version of Bishop for nu
         self.nu_ = self._nu_prior + .5 * nk
 
         diff = xk - self._mean_prior
@@ -641,14 +650,15 @@ class BayesianGaussianMixture(BaseMixture):
     def _m_step(self, X, resp):
         nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
                                                    self.covariance_type)
-
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
+        self.covariances_ = sk
 
     def _e_step(self, X):
         _, log_prob, log_resp = self._estimate_log_prob_resp(X)
         resp = np.exp(log_resp)
+        print('Z', resp)
         self._lower_bound = self._estimate_lower_bound(log_prob, resp,
                                                        log_resp)
         return self._lower_bound, resp
@@ -676,22 +686,24 @@ class BayesianGaussianMixture(BaseMixture):
             log_det_precisions = -2. * np.sum(np.log(np.diag(
                 self.precisions_cholesky_[k])))
             # Equation 3.43
+            # FIXME possible typos in 10.65 sum from i=0 to Dy
             self._log_lambda[k] = (
-                np.sum(digamma(.5 * (self.nu_[k] -
+                np.sum(digamma(.5 * (self.nu_[k] + 1 -
                                      np.arange(0, n_features)))) +
                 n_features * np.log(2.) - log_det_precisions)
 
             y = np.dot(X - self.means_[k], self.precisions_cholesky_[k])
             mahala_dist = np.sum(np.square(y), axis=1)
 
-            log_prob[:, k] = -.5 * (self._log_lambda[k] +
-                                    n_features / self.beta_[k] +
-                                    self.nu_[k] * mahala_dist)
+            log_prob[:, k] = .5 * (self._log_lambda[k] -
+                                   n_features / self.beta_[k] -
+                                   self.nu_[k] * mahala_dist)
         log_prob -= .5 * n_features * np.log(2. * np.pi)
 
         return log_prob
 
     def _estimate_log_prob_tied(self, X):
+        # FIXME par rapport à full
         n_samples, n_features = X.shape
 
         log_prob = np.empty((n_samples, self.n_components))
@@ -715,6 +727,7 @@ class BayesianGaussianMixture(BaseMixture):
         return log_prob
 
     def _estimate_log_prob_diag(self, X):
+        # F
         _, n_features = X.shape
         self._log_lambda = (n_features * digamma(self.nu_) +
                             np.sum(np.log(self.precisions_), axis=1))
@@ -896,9 +909,9 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Attributes computation
         self. weights_ = self.alpha_ / np.sum(self.alpha_)
-        if self.covariance_type is 'full':
-            self.covariances_ /= self.nu_[:, np.newaxis, np.newaxis]
-        elif self.covariance_type is 'diag':
-            self.covariances_ /= self.nu_[:, np.newaxis]
-        else:
-            self.covariances_ /= self.nu_
+        # if self.covariance_type is 'full':
+        #     self.covariances_ /= self.nu_[:, np.newaxis, np.newaxis]
+        # elif self.covariance_type is 'diag':
+        #     self.covariances_ /= self.nu_[:, np.newaxis]
+        # else:
+        #     self.covariances_ /= self.nu_

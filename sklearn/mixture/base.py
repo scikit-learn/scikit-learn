@@ -148,6 +148,10 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
+        elif self.init_params == 'test':
+            resp = np.array([random_state.dirichlet(np.ones(self.n_components))
+                            for _ in range(n_samples)])
+            print('NK', resp.sum(0))
         else:
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
@@ -203,6 +207,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 self._initialize_parameters(X)
                 self.lower_bound_ = -np.infty
 
+            current_log_likelihood, resp = self._e_step(X)
             for n_iter in range(self.max_iter):
                 prev_lower_bound = self.lower_bound_
 
