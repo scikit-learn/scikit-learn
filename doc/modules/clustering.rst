@@ -1344,18 +1344,20 @@ mean of homogeneity and completeness**:
 Fowlkes-Mallows scores
 ----------------------
 
-The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
-the pairwise precision and recall::
+The Fowlkes-Mallows index (:func:`sklearn.metrics.fowlkes_mallows_score`) can be
+used when the ground truth class assignments of the samples is known. The
+Fowlkes-Mallows score FMI is defined as the geometric mean of the
+pairwise precision and recall:
 
-      FMI = TP / sqrt((TP + FP) * (TP + FN))
+.. math:: \text{FMI} = \frac{\text{TP}}{\sqrt{(\text{TP} + \text{FP}) (\text{TP} + \text{FN})}}
 
-Where :math:`TP` is the number of **True Positive** (i.e. the number of pair
-of points that belong to the same clusters in both labels_true and
-labels_pred), :math:`FP` is the number of **False Positive** (i.e. the number
-of pair of points that belong to the same clusters in labels_true and not
-in labels_pred) and :math:`FN`is the number of **False Negative** (i.e the
-number of pair of points that belongs in the same clusters in labels_pred
-and not in labels_True).
+Where ``TP`` is the number of **True Positive** (i.e. the number of pair
+of points that belong to the same clusters in both the true labels and the
+predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
+of pair of points that belong to the same clusters in the true labels and not
+in the predicted labels) and ``FN`` is the number of **False Negative** (i.e the
+number of pair of points that belongs in the same clusters in the predicted
+labels and not in the true labels).
 
 The score ranges from 0 to 1. A high value indicates a good similarity
 between two clusters.
@@ -1505,24 +1507,28 @@ Calinski-Harabaz Index
 ----------------------
 
 If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:'sklearn.metrics.calinski_harabaz_score') can be used to evaluate the
+(:func:`sklearn.metrics.calinski_harabaz_score`) can be used to evaluate the
 model, where a higher Calinski-Harabaz score relates to a model with better
 defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabaz :math:`ch` is given as the ratio
-of the between-clusters dispersion mean and the within-cluster dispersion:
+For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
+ratio of the between-clusters dispersion mean and the within-cluster
+dispersion:
 
 .. math::
-  ch(k) = \frac{trace(B_k)}{trace(W_k)} \times \frac{N - k}{k - 1}
-  W_k  = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T \\
-  B_k = \sum_q n_q (c_q - c) (c_q - c)^T \\
+  s(k) = \frac{\mathrm{Tr}(B_k)}{\mathrm{Tr}(W_k)} \times \frac{N - k}{k - 1}
 
-where:
-- :math:`N` be the number of points in our data,
-- :math:`C_q` be the set of points in cluster :math:`q`,
-- :math:`c_q` be the center of cluster :math:`q`,
-- :math:`c` be the center of :math:`E`,
-- :math:`n_q` be the number of points in cluster :math:`q`:
+where :math:`B_K` is the between group dispersion matrix and :math:`W_K`
+is the within-cluster dispersion matrix defined by:
+
+.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
+
+.. math:: B_k = \sum_q n_q (c_q - c) (c_q - c)^T
+
+with :math:`N` be the number of points in our data, :math:`C_q` be the set of
+points in cluster :math:`q`, :math:`c_q` be the center of cluster
+:math:`q`, :math:`c` be the center of :math:`E`, :math:`n_q` be the number of
+points in cluster :math:`q`.
 
 
   >>> from sklearn import metrics
@@ -1539,8 +1545,7 @@ cluster analysis.
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabaz_score(X, labels)
-  ...                                                      # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
   560.39...
 
 

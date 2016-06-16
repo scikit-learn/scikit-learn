@@ -212,26 +212,21 @@ def calinski_harabaz_score(X, labels):
     """Compute the Calinski and Harabaz score.
 
     The score is defined as ratio between the within-cluster dispersion and
-    the between-cluster dispersion. For :math:`K` cluster, the Calinski and
-    Harabaz score is defined as::
+    the between-cluster dispersion.
 
+    Read more in the :ref:`User Guide <calinski_harabaz_index>`.
 
-    With :math:`B_K` the between group dispersion matrix and :math:`W_K`
-    the within-cluster dispersion matrix defined by::
-    the number of samples in the cluster :math:`k` and the mean of the samples
-    in the cluster :math:`k` and the mean of all the samples.
-
-    Parameter
-    ---------
-    X : array-like, shape (n_samples, n_features)
-        List of n_features-dimensional data points. Each row corresponds
+    Parameters
+    ----------
+    X : array-like, shape (``n_samples``, ``n_features``)
+        List of ``n_features``-dimensional data points. Each row corresponds
         to a single data point.
 
-    labels : array-like, shape (n_samples,)
+    labels : array-like, shape (``n_samples``,)
         Predicted labels for each sample.
 
-    Return
-    ------
+    Returns
+    -------
     score: float
         The resulting Calinski-Harabaz score.
 

@@ -824,23 +824,25 @@ def fowlkes_mallows_score(labels_true, labels_pred, max_n_classes=5000):
 
         FMI = TP / sqrt((TP + FP) * (TP + FN))
 
-    Where :math:`TP` is the number of `True Positive` (i.e. the number of pair
-    of points that belongs in the same clusters in both labels_true and
-    labels_pred), :math:`FP` is the number of `False Positive` (i.e. the number
-    of pair of points that belongs in the same clusters in labels_true and not
-    in labels_pred) and :math:`FN`is the number of `False Negative` (i.e the
-    number of pair of points that belongs in the same clusters in labels_pred
-    and not in labels_True).
+    Where ``TP`` is the number of **True Positive** (i.e. the number of pair of
+    points that belongs in the same clusters in both ``labels_true`` and
+    ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
+    number of pair of points that belongs in the same clusters in
+    ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
+    **False Negative** (i.e the number of pair of points that belongs in the
+    same clusters in ``labels_pred`` and not in ``labels_True``).
 
     The score ranges from 0 to 1. A high value indicates a good similarity
     between two clusters.
 
+    Read more in the :ref:`User Guide <fowlkes_mallows_scores>`.
+
     Parameters
     ----------
-    labels_true : int array, shape = (n_samples,)
+    labels_true : int array, shape = (``n_samples``,)
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = (n_samples, )
+    labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
 
     max_n_classes : int, optional (default=5000)
