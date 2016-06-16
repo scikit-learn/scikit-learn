@@ -12,6 +12,57 @@ Version 0.18
 Changelog
 ---------
 
+.. _model_selection_changes:
+
+Model Selection Enhancements and API Changes
+--------------------------------------------
+
+  - **The ``model_selection`` module**
+
+    The new module :mod:`sklearn.model_selection`, which groups together the
+    functionalities of formerly :mod:`cross_validation`, :mod:`grid_search` and
+    :mod:`learning_curve`, introduces new possibilities such as nested
+    cross-validation and better manipulation of parameter searches with Pandas.
+
+    Many things will stay the same but there are some key differences. Read
+    below to know more about the changes.
+
+  - **Data-independent CV splitters enabling nested cross-validation**
+
+    The new cross-validation splitters, defined in the
+    :mod:`sklearn.model_selection`, are no longer initialized with any
+    data-dependent parameters such as ``y``. Instead they expose a
+    :func:`split` method that takes in the data and yields a generator for the
+    different splits.
+
+    This change makes it possible to use the cross-validation splitters to
+    perform nested cross-validation, facilitated by
+    :class:`model_selection.GridSearchCV` and
+    :class:`model_selection.RandomizedSearchCV` utilities.
+
+  - **The enhanced `results_` attribute**
+
+    The new ``results_`` attribute (of :class:`model_selection.GridSearchCV`
+    and :class:`model_selection.RandomizedSearchCV`) introduced in lieu of the
+    ``grid_scores_`` attribute is a dict of 1D arrays with elements in each
+    array corresponding to the parameter settings (i.e. search candidates).
+
+    The ``results_`` dict can be easily imported into ``pandas`` as a
+    ``DataFrame`` for exploring the search results.
+
+    The ``results_`` arrays include scores for each cross-validation split
+    (with keys such as ``test_split0_score``), as well as their mean
+    (``test_mean_score``) and standard deviation (``test_std_score``).
+
+    The ranks for the search candidates (based on their mean
+    cross-validation score) is available at ``results_['test_rank_score']``.
+
+    The parameter values for each parameter is stored separately as numpy
+    masked object arrays. The value, for that search candidate, is masked if
+    the corresponding parameter is not applicable. Additionally a list of all
+    the parameter dicts are stored at ``results_['params']``.
+
+
 New features
 ............
 
@@ -54,7 +105,7 @@ New features
    - Added ``algorithm="elkan"`` to :class:`cluster.KMeans` implementing
      Elkan's fast K-Means algorithm. By `Andreas Müller`_.
 
-   - Generalization of :func:`model_selection._validation.cross_val_predict`.
+   - Generalization of :func:`model_selection.cross_val_predict`.
      One can pass method names such as `predict_proba` to be used in the cross
      validation framework instead of the default `predict`. By `Ori Ziv`_ and `Sears Merritt`_.
 
@@ -66,11 +117,10 @@ Enhancements
      and `Devashish Deshpande`_.
 
    - The cross-validation iterators are replaced by cross-validation splitters
-     available from :mod:`model_selection`. These expose a ``split`` method
-     that takes in the data and yields a generator for the different splits.
-     This change makes it possible to do nested cross-validation with ease,
-     facilitated by :class:`model_selection.GridSearchCV` and similar
-     utilities.  (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
+     available from :mod:`sklearn.model_selection`.
+     Ref :ref:`model_selection_changes` for more information.
+     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
+     `Raghav R V`_.
 
    - The random forest, extra trees and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
@@ -144,6 +194,14 @@ Enhancements
    - The :func: `ignore_warnings` now accept a category argument to ignore only
      the warnings of a specified type. By `Thierry Guillemot`_.
 
+   - The new ``results_`` attribute of :class:`model_selection.GridSearchCV`
+     (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
+     into pandas as a ``DataFrame``. Ref :ref:`model_selection_changes` for
+     more information.
+     (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
+     `Raghav R V`_.
+
+
 Bug fixes
 .........
 
@@ -212,10 +270,12 @@ Bug fixes
 API changes summary
 -------------------
 
-   - The :mod:`cross_validation`, :mod:`grid_search` and :mod:`learning_curve`
-     have been deprecated and the classes and functions have been reorganized into
-     the :mod:`model_selection` module.
-     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by `Raghav R V`_.
+   - The :mod:`sklearn.cross_validation`, :mod:`sklearn.grid_search` and
+     :mod:`sklearn.learning_curve` have been deprecated and the classes and
+     functions have been reorganized into the :mod:`model_selection` module.
+     Ref :ref:`model_selection_changes` for more information.
+     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
+     `Raghav R V`_.
 
    - ``residual_metric`` has been deprecated in :class:`linear_model.RANSACRegressor`.
      Use ``loss`` instead. By `Manoj Kumar`_.
@@ -224,11 +284,19 @@ API changes summary
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
 
    - The old :class:`GMM` is deprecated in favor of the new
-     :class:`GaussianMixture`. The new class compute the Gaussian mixture
-     faster than before and some of computationnal problems have been solved.
+     :class:`GaussianMixture`. The new class computes the Gaussian mixture
+     faster than before and some of computational problems have been solved.
      By `Wei Xue`_ and `Thierry Guillemot`_.
 
+   - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
+     and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
+     the attribute ``results_``.
+     Ref :ref:`model_selection_changes` for more information.
+     (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
+     `Raghav R V`_.
 
+
+.. currentmodule:: sklearn
 
 .. _changes_0_17_1:
 
@@ -4088,7 +4156,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
-.. _Raghav R V: https://github.com/rvraghav93
+.. _Raghav R V: https://github.com/raghavrv
 
 .. _Trevor Stephens: http://trevorstephens.com/
 
