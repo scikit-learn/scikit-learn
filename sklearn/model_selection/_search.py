@@ -538,11 +538,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
           for parameters in parameter_iterable
           for train, test in cv.split(X, y, labels))
 
-        test_scores, test_sample_counts, _, parameters = zip(*out)
+        test_scores, test_sample_counts, scoring_time, parameters = zip(*out)
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
 
+        scoring_time = np.array(scoring_time,
+                                dtype=np.float64).reshape(n_candidates,
+                                                          n_splits)
         test_scores = np.array(test_scores,
                                dtype=np.float64).reshape(n_candidates,
                                                          n_splits)
@@ -556,11 +559,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         stds = np.sqrt(np.average((test_scores - means[:, np.newaxis]) ** 2,
                                   axis=1, weights=weights))
 
+        mean_time = np.average(scoring_time, axis=1)
+
         results = dict()
         for split_i in range(n_splits):
             results["test_split%d_score" % split_i] = test_scores[:, split_i]
         results["test_mean_score"] = means
         results["test_std_score"] = stds
+        results["test_mean_time"] = mean_time
 
         ranks = np.asarray(rankdata(-means, method='min'), dtype=np.int32)
 
@@ -786,6 +792,7 @@ class GridSearchCV(BaseSearchCV):
             'test_mean_score'   : [0.81, 0.60, 0.75, 0.82],
             'test_std_score'    : [0.02, 0.01, 0.03, 0.03],
             'test_rank_score'   : [2, 4, 3, 1],
+            'test_mean_time'    : [--, -- ,-- ,--],
             'params'            : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
@@ -1015,6 +1022,7 @@ class RandomizedSearchCV(BaseSearchCV):
             'test_mean_score'   : [0.81, 0.7, 0.7],
             'test_std_score'    : [0.02, 0.2, 0.],
             'test_rank_score'   : [3, 1, 1],
+            'test_mean_time'    : [--, -- ,-- ,--],
             'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
