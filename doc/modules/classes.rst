@@ -868,7 +868,9 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
+   metrics.calinski_harabaz_score
    metrics.completeness_score
+   metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.mutual_info_score
