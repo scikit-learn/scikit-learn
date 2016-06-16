@@ -1033,6 +1033,46 @@ set [0,1] has an error: ::
     for an example of zero one loss usage to perform recursive feature
     elimination with cross-validation.
 
+.. _brier_score_loss:
+
+Brier score loss
+----------------
+
+The :func:`brier_score_loss` function returns a score of the mean square difference 
+between the actual outcome and the predicted probability of the possible outcome. 
+The actual outcome has to be 1 or 0 (true or false), while the predicted probability 
+of the actual outcome happens can be value between 0 and 1. The brier score loss is 
+also between 0 to 1 and the lower the score (the mean square difference is smaller), 
+the more accurate the prediction is.
+
+.. math::
+
+   BS = \frac{1}{N} \sum_{t=1}^{N}(f_t - o_t)^2
+
+where : :math:`N` is the total number of predictions, :math:`f_t` is the predicted probablity of the actual outcome :math:`o_t` 
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import brier_score_loss
+  >>> from sklearn.metrics import zero_one_loss
+  >>> y_true = np.array([0, 1, 1, 0])
+  >>> y_true_categorical = np.array(["spam", "ham", "ham", "spam"])
+  >>> y_prob = np.array([0.1, 0.9, 0.8, 0.3])  
+  >>> brier_score_loss(y_true, y_prob)
+  0.0375...
+  >>> zero_one_loss(y_true, y_pred, normalize=False)
+  4
+  >>> brier_score_loss(y_true, 1-y_prob, pos_label=0)  
+  0.0375...
+  >>> brier_score_loss(y_true_categorical, y_prob, pos_label="ham")  
+  0.0375...
+  >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
+  0.0
+
+.. topic:: Example:
+
+  * See :ref:`example_calibration_plot_calibration.py`
+    for an example of Brier score loss usage to perform probability calibration of classifiers.
+
 
 .. _multilabel_ranking_metrics:
 
