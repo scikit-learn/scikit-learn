@@ -8,6 +8,7 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
+from ...utils import check_array
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -81,6 +82,9 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    X = np.asarray(X)
+    if X.ndim == 1:
+        raise ValueError("X must not be 1D: shape is %r" % (X.shape,))
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)

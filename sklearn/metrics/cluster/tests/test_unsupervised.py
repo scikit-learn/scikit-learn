@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_raise_message
 
 
 def test_silhouette():
@@ -50,6 +51,16 @@ def test_no_nan():
     D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
+
+
+def test_correct_Xsize():
+    random_state = np.random.RandomState(seed=0)
+    random_clusters = random_state.rand(10)
+    random_clusters2 = random_state.rand(10)
+
+    assert_raise_message(ValueError,
+                         'X must not be 1D: shape is %r' % (random_clusters.shape,),
+                         silhouette_score, random_clusters, random_clusters2)
 
 
 def test_correct_labelsize():
