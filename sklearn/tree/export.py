@@ -65,92 +65,13 @@ def _color_brew(n):
     return color_list
 
 
-def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
-                    feature_names=None, class_names=None, label='all',
-                    filled=False, leaves_parallel=False, impurity=True,
-                    node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False):
-    """Export a decision tree in DOT format.
 
-    This function generates a GraphViz representation of the decision tree,
-    which is then written into `out_file`. Once exported, graphical renderings
-    can be generated using, for example::
-
-        $ dot -Tps tree.dot -o tree.ps      (PostScript format)
-        $ dot -Tpng tree.dot -o tree.png    (PNG format)
-
-    The sample counts that are shown are weighted with any sample_weights that
-    might be present.
-
-    Read more in the :ref:`User Guide <tree>`.
-
-    Parameters
-    ----------
-    decision_tree : decision tree classifier
-        The decision tree to be exported to GraphViz.
-
-    out_file : file object or string, optional (default="tree.dot")
-        Handle or name of the output file.
-
-    max_depth : int, optional (default=None)
-        The maximum depth of the representation. If None, the tree is fully
-        generated.
-
-    feature_names : list of strings, optional (default=None)
-        Names of each of the features.
-
-    class_names : list of strings, bool or None, optional (default=None)
-        Names of each of the target classes in ascending numerical order.
-        Only relevant for classification and not supported for multi-output.
-        If ``True``, shows a symbolic representation of the class name.
-
-    label : {'all', 'root', 'none'}, optional (default='all')
-        Whether to show informative labels for impurity, etc.
-        Options include 'all' to show at every node, 'root' to show only at
-        the top root node, or 'none' to not show at any node.
-
-    filled : bool, optional (default=False)
-        When set to ``True``, paint nodes to indicate majority class for
-        classification, extremity of values for regression, or purity of node
-        for multi-output.
-
-    leaves_parallel : bool, optional (default=False)
-        When set to ``True``, draw all leaf nodes at the bottom of the tree.
-
-    impurity : bool, optional (default=True)
-        When set to ``True``, show the impurity at each node.
-
-    node_ids : bool, optional (default=False)
-        When set to ``True``, show the ID number on each node.
-
-    proportion : bool, optional (default=False)
-        When set to ``True``, change the display of 'values' and/or 'samples'
-        to be proportions and percentages respectively.
-
-    rotate : bool, optional (default=False)
-        When set to ``True``, orient tree left to right rather than top-down.
-
-    rounded : bool, optional (default=False)
-        When set to ``True``, draw node boxes with rounded corners and use
-        Helvetica fonts instead of Times-Roman.
-
-    special_characters : bool, optional (default=False)
-        When set to ``False``, ignore special characters for PostScript
-        compatibility.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn import tree
-
-    >>> clf = tree.DecisionTreeClassifier()
-    >>> iris = load_iris()
-
-    >>> clf = clf.fit(iris.data, iris.target)
-    >>> tree.export_graphviz(clf,
-    ...     out_file='tree.dot')                # doctest: +SKIP
-    """
-
+def get_graphviz_source(decision_tree, max_depth=None, special_characters=False,
+                        feature_names=None, class_names=None, label='all',
+                        filled=False, leaves_parallel=False, impurity=True,
+                        node_ids=False, proportion=False, rotate=False,
+                        rounded=False):
+    """Returns decision tree source in GraphViz format."""
     def get_color(value):
         # Find the appropriate color & intensity for a node
         if colors['bounds'] is None:
@@ -305,7 +226,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             else:
                 ranks[str(depth)].append(str(node_id))
 
-            out_file.write('%d [label=%s'
+            source.append('%d [label=%s'
                            % (node_id,
                               node_to_str(tree, node_id, criterion)))
 
@@ -331,21 +252,21 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                 else:
                     # If multi-output color node by impurity
                     node_val = -tree.impurity[node_id]
-                out_file.write(', fillcolor="%s"' % get_color(node_val))
-            out_file.write('] ;\n')
+                source.append(', fillcolor="%s"' % get_color(node_val))
+            source.append('] ;\n')
 
             if parent is not None:
                 # Add edge to parent
-                out_file.write('%d -> %d' % (parent, node_id))
+                source.append('%d -> %d' % (parent, node_id))
                 if parent == 0:
                     # Draw True/False labels if parent is root node
                     angles = np.array([45, -45]) * ((rotate - .5) * -2)
-                    out_file.write(' [labeldistance=2.5, labelangle=')
+                    source.append(' [labeldistance=2.5, labelangle=')
                     if node_id == 1:
-                        out_file.write('%d, headlabel="True"]' % angles[0])
+                        source.append('%d, headlabel="True"]' % angles[0])
                     else:
-                        out_file.write('%d, headlabel="False"]' % angles[1])
-                out_file.write(' ;\n')
+                        source.append('%d, headlabel="False"]' % angles[1])
+                source.append(' ;\n')
 
             if left_child != _tree.TREE_LEAF:
                 recurse(tree, left_child, criterion=criterion, parent=node_id,
@@ -356,172 +277,77 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         else:
             ranks['leaves'].append(str(node_id))
 
-            out_file.write('%d [label="(...)"' % node_id)
+            source.append('%d [label="(...)"' % node_id)
             if filled:
                 # color cropped nodes grey
-                out_file.write(', fillcolor="#C0C0C0"')
-            out_file.write('] ;\n' % node_id)
+                source.append(', fillcolor="#C0C0C0"')
+            source.append('] ;\n' % node_id)
 
             if parent is not None:
                 # Add edge to parent
-                out_file.write('%d -> %d ;\n' % (parent, node_id))
+                source.append('%d -> %d ;\n' % (parent, node_id))
 
-    own_file = False
+    source = []
+
+    # The depth of each node for plotting with 'leaf' option
+    ranks = {'leaves': []}
+    # The colors to render each node with
+    colors = {'bounds': None}
+
+    source.append('digraph Tree {\n')
+
+    # Specify node aesthetics
+    source.append('node [shape=box')
+    rounded_filled = []
+    if filled:
+        rounded_filled.append('filled')
+    if rounded:
+        rounded_filled.append('rounded')
+    if len(rounded_filled) > 0:
+        source.append(', style="%s", color="black"' % ", ".join(
+            rounded_filled))
+    if rounded:
+        source.append(', fontname=helvetica')
+    source.append('] ;\n')
+
+    # Specify graph & edge aesthetics
+    if leaves_parallel:
+        source.append('graph [ranksep=equally, splines=polyline] ;\n')
+    if rounded:
+        source.append('edge [fontname=helvetica] ;\n')
+    if rotate:
+        source.append('rankdir=LR ;\n')
+
+    # Now recurse the tree and add node & edge attributes
+    if isinstance(decision_tree, _tree.Tree):
+        recurse(decision_tree, 0, criterion="impurity")
+    else:
+        recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
+
+    # If required, draw leaf nodes at same depth as each other
+    if leaves_parallel:
+        for rank in sorted(ranks):
+            source.append("{rank=same ; " +
+                          "; ".join(r for r in ranks[rank]) + "} ;\n")
+    source.append("}")
+    return ''.join(source)
+
+
+def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
+                    feature_names=None, class_names=None, label='all',
+                    filled=False, leaves_parallel=False, impurity=True,
+                    node_ids=False, proportion=False, rotate=False,
+                    rounded=False, special_characters=False):
+    """Export a decision tree in DOT format."""
+    tree_source = get_graphviz_source(
+        tree, max_depth, feature_names, class_names, label, filled,
+        leaves_parallel, impurity, node_ids,proportion, rotate, rounded,
+        special_characters)
     try:
-        if isinstance(out_file, six.string_types):
-            if six.PY3:
-                out_file = open(out_file, "w", encoding="utf-8")
-            else:
-                out_file = open(out_file, "wb")
-            own_file = True
-
-        # The depth of each node for plotting with 'leaf' option
-        ranks = {'leaves': []}
-        # The colors to render each node with
-        colors = {'bounds': None}
-
-        out_file.write('digraph Tree {\n')
-
-        # Specify node aesthetics
-        out_file.write('node [shape=box')
-        rounded_filled = []
-        if filled:
-            rounded_filled.append('filled')
-        if rounded:
-            rounded_filled.append('rounded')
-        if len(rounded_filled) > 0:
-            out_file.write(', style="%s", color="black"'
-                           % ", ".join(rounded_filled))
-        if rounded:
-            out_file.write(', fontname=helvetica')
-        out_file.write('] ;\n')
-
-        # Specify graph & edge aesthetics
-        if leaves_parallel:
-            out_file.write('graph [ranksep=equally, splines=polyline] ;\n')
-        if rounded:
-            out_file.write('edge [fontname=helvetica] ;\n')
-        if rotate:
-            out_file.write('rankdir=LR ;\n')
-
-        # Now recurse the tree and add node & edge attributes
-        if isinstance(decision_tree, _tree.Tree):
-            recurse(decision_tree, 0, criterion="impurity")
+        if six.PY3:
+            source_file = open(out_file, "w", encoding="utf-8")
         else:
-            recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
-
-        # If required, draw leaf nodes at same depth as each other
-        if leaves_parallel:
-            for rank in sorted(ranks):
-                out_file.write("{rank=same ; " +
-                               "; ".join(r for r in ranks[rank]) + "} ;\n")
-        out_file.write("}")
-
+            source_file = open(out_file, "wb")
+        source_file.write(tree_source)
     finally:
-        if own_file:
-            out_file.close()
-
-
-def plot(decision_tree, width=1000, height=1000, max_depth=None,
-         feature_names=None, class_names=None, label='all',
-         filled=False, leaves_parallel=False, impurity=True,
-         node_ids=False, proportion=False, rotate=False,
-         rounded=False, special_characters=False, out='matplotlib'):
-    """Plots decision tree.
-
-    Parameters
-    ----------
-    decision_tree : decision tree classifier
-        The decision tree to be plotted.
-
-    width : width of resulting tree.
-
-    height : height of resulting tree.
-
-    max_depth : int, optional (default=None)
-        The maximum depth of the representation. If None, the tree is fully
-        generated.
-
-    feature_names : list of strings, optional (default=None)
-        Names of each of the features.
-
-    class_names : list of strings, bool or None, optional (default=None)
-        Names of each of the target classes in ascending numerical order.
-        Only relevant for classification and not supported for multi-output.
-        If ``True``, shows a symbolic representation of the class name.
-
-    label : {'all', 'root', 'none'}, optional (default='all')
-        Whether to show informative labels for impurity, etc.
-        Options include 'all' to show at every node, 'root' to show only at
-        the top root node, or 'none' to not show at any node.
-
-    filled : bool, optional (default=False)
-        When set to ``True``, paint nodes to indicate majority class for
-        classification, extremity of values for regression, or purity of node
-        for multi-output.
-
-    leaves_parallel : bool, optional (default=False)
-        When set to ``True``, draw all leaf nodes at the bottom of the tree.
-
-    impurity : bool, optional (default=True)
-        When set to ``True``, show the impurity at each node.
-
-    node_ids : bool, optional (default=False)
-        When set to ``True``, show the ID number on each node.
-
-    proportion : bool, optional (default=False)
-        When set to ``True``, change the display of 'values' and/or 'samples'
-        to be proportions and percentages respectively.
-
-    rotate : bool, optional (default=False)
-        When set to ``True``, orient tree left to right rather than top-down.
-
-    rounded : bool, optional (default=False)
-        When set to ``True``, draw node boxes with rounded corners and use
-        Helvetica fonts instead of Times-Roman.
-
-    special_characters : bool, optional (default=False)
-        When set to ``False``, ignore special characters for PostScript
-        compatibility.
-
-    out : {'matplotlib', 'jupyter'}, optional (default='matplotlib')
-        Options include 'matplotlib' to plot using matplotlib library,
-        'jupyter' to plot to Jupyter Notebook environment.
-    """
-    if out not in ('matplotlib', 'jupyter'):
-        raise ValueError(
-            "Incorrect 'out' value passed (%s). "
-            "Use 'jupyter' or 'matplotlib'." % out)
-    try:
-        import graphviz
-    except ImportError:
-        raise ImportError('Plotting requires graphviz to be installed.')
-
-    in_memory_dot_file = six.StringIO()
-    export_graphviz(
-        decision_tree, out_file=in_memory_dot_file, max_depth=max_depth,
-        feature_names=feature_names, class_names=class_names, label=label,
-        filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
-        node_ids=node_ids, proportion=proportion, rotate=rotate,
-        rounded=rounded, special_characters=special_characters)
-    src = graphviz.Source(in_memory_dot_file.getvalue())
-    image = src.pipe(format='png')
-    if out == 'jupyter':
-        try:
-            from IPython.display import Image
-        except ImportError:
-            raise ImportError(
-                'Plotting to Jupyter Notebook requires Jupyter Notebook.')
-        return Image(image, height=height, width=width)
-    elif out == 'matplotlib':
-        from scipy.misc import imread
-        try:
-            from matplotlib import pyplot
-        except ImportError:
-            raise ImportError(
-                'Plotting using matplotlib requires matplotlib.')
-        img = imread(six.BytesIO(image))
-        figure = pyplot.figure()
-        figure.set_size_inches(height / figure.dpi, width / figure.dpi)
-        pyplot.imshow(img)
-        pyplot.show()
+        source_file.close()
