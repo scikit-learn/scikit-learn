@@ -52,6 +52,11 @@ from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.exceptions import DataConversionWarning
 
+from sklearn.pipeline import Pipeline
+from sklearn.cross_validation import cross_val_score
+from sklearn.cross_validation import LeaveOneOut
+from sklearn.svm import SVR
+
 from sklearn import datasets
 
 iris = datasets.load_iris()
@@ -1368,6 +1373,23 @@ def test_center_kernel():
     K_pred_centered = np.dot(X_pred_centered, X_fit_centered.T)
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
+
+def test_cv_pipeline_precomputed():
+    """Cross-validate a regression on four coplanar points with the same 
+    value. Use precomputed kernel to ensure Pipeline with KernelCenterer
+    is treated as a _pairwise operation."""
+    X = np.array([[3,0,0],[0,3,0],[0,0,3],[1,1,1]])
+    y = np.ones((4,))
+    K = X.dot(X.T)
+    kcent = KernelCenterer()
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+
+    # did the pipeline set the _pairwise attribute?
+    assert_true(pipeline._pairwise)
+
+    # test cross-validation, score should be almost perfect
+    score = cross_val_score(pipeline,K,y,cv=LeaveOneOut(4))
+    assert_array_almost_equal(score, np.ones_like(score))
 
 
 def test_fit_transform():
