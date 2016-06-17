@@ -1584,6 +1584,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         K += self.K_fit_all_
 
         return K
+        
+    @property
+    def _pairwise(self):
+        return True
 
 
 def add_dummy_feature(X, value=1.0):
