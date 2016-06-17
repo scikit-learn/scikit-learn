@@ -53,8 +53,7 @@ from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.pipeline import Pipeline
-from sklearn.cross_validation import cross_val_score
-from sklearn.cross_validation import LeaveOneOut
+from sklearn.cross_validation import cross_val_predict
 from sklearn.svm import SVR
 
 from sklearn import datasets
@@ -1379,7 +1378,7 @@ def test_cv_pipeline_precomputed():
     value. Use precomputed kernel to ensure Pipeline with KernelCenterer
     is treated as a _pairwise operation."""
     X = np.array([[3,0,0],[0,3,0],[0,0,3],[1,1,1]])
-    y = np.ones((4,))
+    y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
     pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
@@ -1388,8 +1387,10 @@ def test_cv_pipeline_precomputed():
     assert_true(pipeline._pairwise)
 
     # test cross-validation, score should be almost perfect
-    score = cross_val_score(pipeline,K,y,cv=LeaveOneOut(4))
-    assert_array_almost_equal(score, np.ones_like(score))
+    # NB: this test is pretty vacuous -- it's mainly to test integration
+    #     of Pipeline and KernelCenterer
+    y_pred = cross_val_predict(pipeline,K,y_true,cv=4)
+    assert_array_almost_equal(y_true, y_pred)
 
 
 def test_fit_transform():
