@@ -643,33 +643,38 @@ def test_predict_minibatch_random_init_sparse_input():
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
 
 
-def test_input_dtypes():
+def test_int_input():
     X_list = [[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]]
-    X_int = np.array(X_list, dtype=np.int32)
-    X_int_csr = sp.csr_matrix(X_int)
-    init_int = X_int[:2]
+    for dtype in [np.int32, np.int64]:
+        X_int = np.array(X_list, dtype=dtype)
+        X_int_csr = sp.csr_matrix(X_int)
+        init_int = X_int[:2]
 
-    fitted_models = [
-        KMeans(n_clusters=2).fit(X_list),
-        KMeans(n_clusters=2).fit(X_int),
-        KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_list),
-        KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
-        # mini batch kmeans is very unstable on such a small dataset hence
-        # we use many inits
-        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
-        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
-        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
-        MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int, n_init=1).fit(X_list),
-        MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int, n_init=1).fit(X_int),
-        MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int, n_init=1).fit(X_int_csr),
-    ]
-    expected_labels = [0, 1, 1, 0, 0, 1]
-    scores = np.array([v_measure_score(expected_labels, km.labels_)
-                       for km in fitted_models])
-    assert_array_equal(scores, np.ones(scores.shape[0]))
+        fitted_models = [
+            KMeans(n_clusters=2).fit(X_list),
+            KMeans(n_clusters=2).fit(X_int),
+            KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_list),
+            KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
+            # mini batch kmeans is very unstable on such a small dataset hence
+            # we use many inits
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
+            MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            init=init_int, n_init=1).fit(X_list),
+            MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            init=init_int, n_init=1).fit(X_int),
+            MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            init=init_int, n_init=1).fit(X_int_csr),
+        ]
+
+        for km in fitted_models:
+            assert_equal(km.cluster_centers_.dtype, np.float64)
+
+        expected_labels = [0, 1, 1, 0, 0, 1]
+        scores = np.array([v_measure_score(expected_labels, km.labels_)
+                        for km in fitted_models])
+        assert_array_equal(scores, np.ones(scores.shape[0]))
 
 
 def test_transform():
