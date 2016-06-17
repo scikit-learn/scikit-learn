@@ -817,3 +817,17 @@ def test_float_precision():
                                     decimal=4)
             assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
             assert_array_almost_equal(centers[np.float32], centers[np.float64], decimal=4)
+
+
+def test_KMeans_init_centers():
+    # This test is used to check KMeans won't mutate the user provided input array silently
+    # even if input data and init centers have the same type
+    X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
+    init_centers = np.array([[0.0, 0.0], [5.0, 5.0], [-5.0, -5.0]])
+    for dtype in [np.int32, np.int64, np.float32, np.float64]:
+        X_test = dtype(X_small)
+        init_centers_test = dtype(init_centers)
+        assert_equal(X_test.dtype, init_centers_test.dtype)
+        km = KMeans(init=init_centers_test, n_clusters=3)
+        km.fit(X_test)
+        assert_equal(False, km.cluster_centers_ is init_centers)
