@@ -836,10 +836,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
-        if sp.issparse(X):
-            X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32])
-        else:
-            X = check_array(X, dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32])
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
                 X.shape[0], self.n_clusters))
@@ -1289,11 +1286,8 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
-        if sp.issparse(X):
-            X = check_array(X, accept_sparse="csr", order='C',
-                            dtype=[np.float64, np.float32])
-        else:
-            X = check_array(X, order='C', dtype=[np.float64, np.float32])
+        X = check_array(X, accept_sparse="csr", order='C',
+                        dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
             raise ValueError("Number of samples smaller than number "
