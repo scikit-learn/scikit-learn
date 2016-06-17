@@ -778,9 +778,9 @@ def test_max_iter_error():
                          km.fit, X)
 
 
-def test_kmeans_float_precision():
-    km = KMeans(n_init=1, random_state=11)
-    mb_km = MiniBatchKMeans(n_init=1, random_state=11)
+def test_float_precision():
+    km = KMeans(n_init=1, random_state=30)
+    mb_km = MiniBatchKMeans(n_init=1, random_state=30)
 
     inertia = {}
     X_new = {}
@@ -797,7 +797,7 @@ def test_kmeans_float_precision():
                 # dtype of cluster centers has to be the dtype of the input data
                 assert_equal(estimator.cluster_centers_.dtype, dtype)
                 inertia[dtype] = estimator.inertia_
-                X_new[dtype] = estimator.transform(estimator.cluster_centers_)
+                X_new[dtype] = estimator.transform(X_test)
                 centers[dtype] = estimator.cluster_centers_
                 # make sure predictions correspond to the correct label
                 assert_equal(estimator.predict(X_test[0]), estimator.labels_[0])
