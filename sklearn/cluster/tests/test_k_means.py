@@ -778,91 +778,37 @@ def test_max_iter_error():
                          km.fit, X)
 
 
-def test_kmeans_float32_64():
+def test_kmeans_float_precision():
     km = KMeans(n_init=1, random_state=11)
+    mb_km = MiniBatchKMeans(n_init=1, random_state=11)
 
     inertia = {}
     X_new = {}
     centers = {}
 
-    for dtype in [np.float64, np.float32]:
-        X_test = dtype(X)
-        km.fit(X_test)
-        # dtype of cluster centers has to be the dtype of the input data
-        assert_equal(km.cluster_centers_.dtype, dtype)
-        inertia[dtype] = km.inertia_
-        X_new[dtype] = km.transform(km.cluster_centers_)
-        centers[dtype] = km.cluster_centers_
-        # make sure predictions correspond to the correct label
-        assert_equal(km.predict(X_test[0]), km.labels_[0])
+    for estimator in [km, mb_km]:
+        for is_sparse in [False, True]:
+            for dtype in [np.float64, np.float32]:
+                if is_sparse:
+                    X_test = sp.csr_matrix(X_csr, dtype=dtype)
+                else:
+                    X_test = dtype(X)
+                estimator.fit(X_test)
+                # dtype of cluster centers has to be the dtype of the input data
+                assert_equal(estimator.cluster_centers_.dtype, dtype)
+                inertia[dtype] = estimator.inertia_
+                X_new[dtype] = estimator.transform(estimator.cluster_centers_)
+                centers[dtype] = estimator.cluster_centers_
+                # make sure predictions correspond to the correct label
+                assert_equal(estimator.predict(X_test[0]), estimator.labels_[0])
+                if estimator == mb_km:
+                    estimator.partial_fit(X_test[0:3])
+                    # dtype of cluster centers has to stay the same after partial_fit
+                    assert_equal(estimator.cluster_centers_.dtype, dtype)
 
-    # compare arrays with low precision since the difference between
-    # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
-    assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
-                              decimal=4)
-    assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
-    assert_array_almost_equal(centers[np.float32], centers[np.float64])
-
-    for dtype in [np.float32, np.float64]:
-        X_csr_test = sp.csr_matrix(X_csr, dtype=dtype)
-        km.fit(X_csr_test)
-        # dtype of cluster centers has to be the dtype of the input data
-        assert_equal(km.cluster_centers_.dtype, dtype)
-        inertia[dtype] = km.inertia_
-        X_new[dtype] = km.transform(km.cluster_centers_)
-        centers[dtype] = km.cluster_centers_
-        # make sure predictions correspond to the correct label
-        assert_equal(km.predict(X_csr_test[0]),
-                                km.labels_[0])
-
-    assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
-                              decimal=4)
-    assert_array_almost_equal(X_new[np.float32], X_new[np.float64])
-    assert_array_almost_equal(centers[np.float32], centers[np.float64])
-
-
-def test_mb_k_means_float32_64():
-    km = MiniBatchKMeans(n_init=1, random_state=30)
-
-    inertia = {}
-    X_new = {}
-    centers = {}
-    for dtype in [np.float64, np.float32]:
-        X_test = dtype(X)
-        km.fit(X_test)
-        # dtype of cluster centers has to be the dtype of the input data
-        assert_equal(km.cluster_centers_.dtype, dtype)
-        inertia[dtype] = km.inertia_
-        X_new[dtype] = km.transform(km.cluster_centers_)
-        centers[dtype] = km.cluster_centers_
-        # make sure predictions correspond to the correct label
-        assert_equal(km.predict(X_test[0]), km.labels_[0])
-        km.partial_fit(X_test[0:3])
-        # dtype of cluster centers has to stay the same after partial_fit
-        assert_equal(km.cluster_centers_.dtype, dtype)
-
-    # compare arrays with low precision since the difference between
-    # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
-    assert_array_almost_equal(inertia[np.float32], inertia[np.float64], decimal=4)
-    assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
-    assert_array_almost_equal(centers[np.float32], centers[np.float64])
-
-    for dtype in [np.float32, np.float64]:
-        X_csr_test = sp.csr_matrix(X_csr, dtype=dtype)
-        km.fit(X_csr_test)
-        # dtype of cluster centers has to be the dtype of the input data
-        assert_equal(km.cluster_centers_.dtype, dtype)
-        inertia[dtype] = km.inertia_
-        X_new[dtype] = km.transform(km.cluster_centers_)
-        centers[dtype] = km.cluster_centers_
-        # make sure predictions correspond to the correct label
-        assert_equal(km.predict(X_csr_test[0]), km.labels_[0])
-        km.partial_fit(X_csr_test[0:3])
-        # dtype of cluster centers has to stay the same after partial_fit
-        assert_equal(km.cluster_centers_.dtype, dtype)
-
-    assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
-                              decimal=4)
-    assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
-                              decimal=4)
-    assert_array_almost_equal(centers[np.float32], centers[np.float64], 4)
+            # compare arrays with low precision since the difference between
+            # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
+            assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
+                                    decimal=4)
+            assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
+            assert_array_almost_equal(centers[np.float32], centers[np.float64], decimal=4)
