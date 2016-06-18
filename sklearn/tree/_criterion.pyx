@@ -692,6 +692,7 @@ cdef class RegressionCriterion(Criterion):
     cdef double sq_sum_total
     cdef DOUBLE_t* coupled_sorted_y
     cdef DOUBLE_t* coupled_sorted_weights
+    cdef bint initialized
 
     def __cinit__(self, SIZE_t n_outputs):
         """Initialize parameters for this criterion.
@@ -714,6 +715,7 @@ cdef class RegressionCriterion(Criterion):
 
         self.n_outputs = n_outputs
         self.n_node_samples = 0
+        self.initialized = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
@@ -764,37 +766,49 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t w = 1.0
 
-        self.coupled_sorted_y = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                   sizeof(DOUBLE_t))
-        if sample_weight != NULL:
-            self.coupled_sorted_weights = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                             sizeof(DOUBLE_t))
-        if(self.coupled_sorted_y == NULL or
-               (self.coupled_sorted_weights == NULL and sample_weight != NULL)):
-            with gil:
-                raise MemoryError()
-
         self.sq_sum_total = 0.0
         memset(self.sum_total, 0, self.n_outputs * sizeof(double))
+
+        if self.initialized == 0:
+            self.coupled_sorted_y = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                       sizeof(DOUBLE_t))
+            if sample_weight != NULL:
+                self.coupled_sorted_weights = <DOUBLE_t*> calloc(self.n_node_samples,
+                                                                 sizeof(DOUBLE_t))
+            if(self.coupled_sorted_y == NULL or
+               (self.coupled_sorted_weights == NULL and sample_weight != NULL)):
+                with gil:
+                    raise MemoryError()
 
         for p in range(start, end):
             i = samples[p]
 
             if sample_weight != NULL:
                 w = sample_weight[i]
-                self.coupled_sorted_weights[p - start] = w
 
             for k in range(self.n_outputs):
                 y_ik = y[i * y_stride + k]
-                self.coupled_sorted_y[p - start] = y_ik
                 w_y_ik = w * y_ik
                 self.sum_total[k] += w_y_ik
                 self.sq_sum_total += w_y_ik * y_ik
 
             self.weighted_n_node_samples += w
 
-        sort_values_and_weights(self.coupled_sorted_y, self.coupled_sorted_weights,
-                                0, self.n_node_samples-1)
+        if self.initialized == 0:
+            for p in range(start, end):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+                    self.coupled_sorted_weights[p - start] = w
+
+                for k in range(self.n_outputs):
+                    y_ik = y[i * y_stride + k]
+                    self.coupled_sorted_y[p - start] = y_ik
+
+            sort_values_and_weights(self.coupled_sorted_y, self.coupled_sorted_weights,
+                                    0, self.n_node_samples-1)
+            self.initialized = 1
 
         # Reset to pos=start
         self.reset()
@@ -821,7 +835,6 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
-
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
         cdef double* sum_total = self.sum_total
@@ -912,7 +925,6 @@ cdef class MSE(RegressionCriterion):
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
-
         return impurity / self.n_outputs
 
     cdef double proxy_impurity_improvement(self) nogil:
@@ -937,7 +949,6 @@ cdef class MSE(RegressionCriterion):
         for k in range(self.n_outputs):
             proxy_impurity_left += sum_left[k] * sum_left[k]
             proxy_impurity_right += sum_right[k] * sum_right[k]
-
         return (proxy_impurity_left / self.weighted_n_left +
                 proxy_impurity_right / self.weighted_n_right)
 
@@ -994,7 +1005,7 @@ cdef class MAE(RegressionCriterion):
         """Computes the node value of samples[start:end] into dest."""
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
-        compute_weighted_median(dest, 0, end-start,
+        compute_weighted_median(dest, self.start, self.end,
                                 self.coupled_sorted_weights,
                                 self.coupled_sorted_y,
                                 self.n_outputs)
@@ -1014,23 +1025,10 @@ cdef class MAE(RegressionCriterion):
         self.node_value(medians)
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
-                i = samples[p]
-                y_ik = self.y[i * self.y_stride + k]
+                y_ik = self.coupled_sorted_y[p]
                 impurity += <double> fabs((<double> y_ik) - medians[k])
         free(medians)
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
-
-    # cdef double proxy_impurity_improvement(self) nogil:
-    #     """Compute a proxy of the impurity reduction
-    #     This method is used to speed up the search for the best split.
-    #     It is a proxy quantity such that the split that maximizes this value
-    #     also maximizes the impurity improvement. It neglects all constant terms
-    #     of the impurity decrease for a given split.
-    #     The absolute impurity improvement is only computed by the
-    #     impurity_improvement method once the best split has been found.
-    #     """
-    #     # todo
-    #     pass
 
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil:
@@ -1038,7 +1036,7 @@ cdef class MAE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end]).
         """
-        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* y = self.coupled_sorted_y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
@@ -1055,7 +1053,7 @@ cdef class MAE(RegressionCriterion):
             with gil:
                 raise MemoryError()
 
-        compute_weighted_median(medians, 0, pos-start,
+        compute_weighted_median(medians, start, pos,
                                 self.coupled_sorted_weights,
                                 self.coupled_sorted_y,
                                 self.n_outputs)
@@ -1064,18 +1062,16 @@ cdef class MAE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             for p in range(start, pos):
-                i = samples[p]
-                y_ik = y[i * self.y_stride + k]
+                y_ik = y[p]
                 impurity_left[0] += <double>fabs((<double>y_ik) - medians[k])
         impurity_left[0] /= <double>((pos - start) * self.n_outputs)
-        compute_weighted_median(medians, pos-start, end-start,
+        compute_weighted_median(medians, pos, end,
                                 self.coupled_sorted_weights,
                                 self.coupled_sorted_y,
                                 self.n_outputs)
         for k in range(self.n_outputs):
             for p in range(pos, end):
-                i = samples[p]
-                y_ik = y[i * self.y_stride + k]
+                y_ik = y[p]
                 impurity_right[0] += <double>fabs((<double>y_ik) - medians[k])
         impurity_right[0] /= <double>((end - pos) * self.n_outputs)
         free(medians)
