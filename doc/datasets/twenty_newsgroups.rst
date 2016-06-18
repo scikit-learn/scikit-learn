@@ -132,8 +132,8 @@ which is fast to train and achieves a decent F-score::
   >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
-  0.88251152461278892
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
+  0.88213592402729568
 
 (The example :ref:`example_text_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
@@ -182,8 +182,8 @@ blocks, and quotation blocks respectively.
   ...                                      categories=categories)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(pred, newsgroups_test.target, average='weighted')
-  0.78409163025839435
+  >>> metrics.f1_score(pred, newsgroups_test.target, average='macro')
+  0.77310350681274775
 
 This classifier lost over a lot of its F-score, just because we removed
 metadata that has little to do with topic classification.
