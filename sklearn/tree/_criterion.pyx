@@ -1015,7 +1015,7 @@ cdef class MAE(RegressionCriterion):
            samples[start:end]"""
         cdef double* medians = NULL
         medians = <double*> calloc(self.n_outputs, sizeof(double))
-        if (medians == NULL):
+        if medians == NULL:
             with gil:
                 raise MemoryError()
         cdef double impurity = 0.0
