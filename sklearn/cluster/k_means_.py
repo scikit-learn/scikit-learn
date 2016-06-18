@@ -305,7 +305,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         X -= X_mean
 
     if hasattr(init, '__array__'):
-        init = check_array(init, dtype=np.float64, copy=True)
+        init = check_array(init, dtype=X.dtype.type, copy=True)
         _validate_center_shape(X, n_clusters, init)
 
         init -= X_mean
@@ -690,6 +690,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         centers = np.array(init, dtype=X.dtype)
     elif callable(init):
         centers = init(X, k, random_state=random_state)
+        centers = np.asarray(centers, dtype=X.dtype)
     else:
         raise ValueError("the init parameter for the k-means should "
                          "be 'k-means++' or 'random' or an ndarray, "
