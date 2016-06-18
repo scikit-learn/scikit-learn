@@ -651,17 +651,12 @@ def test_int_input():
         init_int = X_int[:2]
 
         fitted_models = [
-            KMeans(n_clusters=2).fit(X_list),
             KMeans(n_clusters=2).fit(X_int),
-            KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_list),
             KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
             # mini batch kmeans is very unstable on such a small dataset hence
             # we use many inits
-            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
             MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
             MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
-            MiniBatchKMeans(n_clusters=2, batch_size=2,
-                            init=init_int, n_init=1).fit(X_list),
             MiniBatchKMeans(n_clusters=2, batch_size=2,
                             init=init_int, n_init=1).fit(X_int),
             MiniBatchKMeans(n_clusters=2, batch_size=2,
@@ -827,7 +822,7 @@ def test_KMeans_init_centers():
     for dtype in [np.int32, np.int64, np.float32, np.float64]:
         X_test = dtype(X_small)
         init_centers_test = dtype(init_centers)
-        assert_equal(X_test.dtype, init_centers_test.dtype)
+        assert_array_equal(init_centers, init_centers_test)
         km = KMeans(init=init_centers_test, n_clusters=3)
         km.fit(X_test)
-        assert_equal(False, km.cluster_centers_ is init_centers)
+        assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
