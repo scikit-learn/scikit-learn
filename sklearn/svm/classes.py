@@ -6,7 +6,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_X_y
+from ..utils import check_X_y, column_or_1d
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 
@@ -329,7 +329,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.dual = dual
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -366,6 +366,9 @@ class LinearSVR(LinearModel, RegressorMixin):
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
+        if ((sample_weight is not None) and
+            np.atleast_1d(sample_weight).ndim > 1):
+                sample_weight = column_or_1d(sample_weight, warn=True)
 
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C")
@@ -374,7 +377,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, loss=self.loss,
-            epsilon=self.epsilon)
+            epsilon=self.epsilon, sample_weight=sample_weight)
         self.coef_ = self.coef_.ravel()
 
         return self
@@ -765,6 +768,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     intercept_ : array, shape = [1]
         Constants in decision function.
+
+    sample_weight : array-like, shape = [n_samples]
+            Individual weights for each sample
 
     Examples
     --------

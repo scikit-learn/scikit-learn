@@ -6,12 +6,10 @@ TODO: remove hard coded numerical results when possible
 
 import numpy as np
 import itertools
-
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
-
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
@@ -25,7 +23,6 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError
-
 from sklearn.multiclass import OneVsRestClassifier
 
 # toy sample
@@ -202,6 +199,41 @@ def test_linearsvr():
     assert np.abs(score1 - score2) < 0.1
 
 
+def test_linearsvr_fit_sampleweight():
+    # check correct result when sample_weight is 1
+    # check that SVR(kernel='linear') and LinearSVC() give
+    # comparable results
+    diabetes = datasets.load_diabetes()
+    n_samples = len(diabetes.target)
+    unit_weight = np.ones(n_samples)
+    lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target,
+                                    sample_weight=unit_weight)
+    score1 = lsvr.score(diabetes.data, diabetes.target)
+
+    lsvr_no_weight = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
+    score2 = lsvr_no_weight.score(diabetes.data, diabetes.target)
+
+    assert np.linalg.norm(lsvr.coef_ - lsvr_no_weight.coef_)\
+        / np.linalg.norm(lsvr_no_weight.coef_) < .1
+    assert np.abs(score1 - score2) < 0.1
+
+    # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
+    # X = X1 repeated n1 times, X2 repeated n2 times and so forth
+    random_state = check_random_state(0)
+    random_weight = random_state.randint(0, 10, n_samples)
+    lsvr_unflat = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target,
+                                           sample_weight=random_weight)
+    score3 = lsvr_unflat.score(diabetes.data, diabetes.target,
+                               sample_weight=random_weight)
+
+    X_flat = np.repeat(diabetes.data, random_weight, axis=0)
+    y_flat = np.repeat(diabetes.target, random_weight, axis=0)
+    lsvr_flat = svm.LinearSVR(C=1e3).fit(X_flat, y_flat)
+    score4 = lsvr_flat.score(X_flat, y_flat)
+
+    assert np.abs(score3 - score4) < 0.1
+
+
 def test_svr_errors():
     X = [[0.0], [1.0]]
     y = [0.0, 0.5]
@@ -277,14 +309,13 @@ def test_probability():
 
     for clf in (svm.SVC(probability=True, random_state=0, C=1.0),
                 svm.NuSVC(probability=True, random_state=0)):
-
         clf.fit(iris.data, iris.target)
 
         prob_predict = clf.predict_proba(iris.data)
         assert_array_almost_equal(
             np.sum(prob_predict, 1), np.ones(iris.data.shape[0]))
         assert_true(np.mean(np.argmax(prob_predict, 1)
-                    == clf.predict(iris.data)) > 0.9)
+                            == clf.predict(iris.data)) > 0.9)
 
         assert_almost_equal(clf.predict_proba(iris.data),
                             np.exp(clf.predict_log_proba(iris.data)), 8)
@@ -509,9 +540,9 @@ def test_linearsvc_parameters():
     for loss, penalty, dual in itertools.product(losses, penalties, duals):
         clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
         if ((loss, penalty) == ('hinge', 'l1') or
-                (loss, penalty, dual) == ('hinge', 'l2', False) or
-                (penalty, dual) == ('l1', True) or
-                loss == 'foo' or penalty == 'bar'):
+                    (loss, penalty, dual) == ('hinge', 'l2', False) or
+                    (penalty, dual) == ('l1', True) or
+                    loss == 'foo' or penalty == 'bar'):
 
             assert_raises_regexp(ValueError,
                                  "Unsupported set of arguments.*penalty='%s.*"
@@ -569,7 +600,7 @@ def test_linear_svx_uppercase_loss_penality_raises_error():
                          svm.LinearSVC(loss="SQuared_hinge").fit, X, y)
 
     assert_raise_message(ValueError, ("The combination of penalty='L2'"
-                         " and loss='squared_hinge' is not supported"),
+                                      " and loss='squared_hinge' is not supported"),
                          svm.LinearSVC(penalty="L2").fit, X, y)
 
 
@@ -634,7 +665,6 @@ def test_crammer_singer_binary():
 
 
 def test_linearsvc_iris():
-
     # Test that LinearSVC gives plausible predictions on the iris dataset
     # Also, test symbolic class names (classes_).
     target = iris.target_names[iris.target]
@@ -773,7 +803,7 @@ def test_timeout():
 
 
 def test_unfitted():
-    X = "foo!"      # input validation not required when SVM not fitted
+    X = "foo!"  # input validation not required when SVM not fitted
 
     clf = svm.SVC()
     assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
