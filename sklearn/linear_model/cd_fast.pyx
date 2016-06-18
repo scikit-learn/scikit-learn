@@ -12,6 +12,7 @@ import numpy as np
 import numpy.linalg as linalg
 
 cimport cython
+from cython cimport floating
 from cpython cimport bool
 import warnings
 
@@ -42,13 +43,13 @@ cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
     return our_rand_r(random_state) % end
 
 
-cdef inline double fmax(double x, double y) nogil:
+cdef inline floating fmax(floating x, floating y) nogil:
     if x > y:
         return x
     return y
 
 
-cdef inline double fsign(double f) nogil:
+cdef inline floating fsign(floating f) nogil:
     if f == 0:
         return 0
     elif f > 0:
@@ -57,11 +58,11 @@ cdef inline double fsign(double f) nogil:
         return -1.0
 
 
-cdef double abs_max(int n, double* a) nogil:
+cdef floating abs_max(int n, floating* a) nogil:
     """np.max(np.abs(a))"""
     cdef int i
-    cdef double m = fabs(a[0])
-    cdef double d
+    cdef floating m = fabs(a[0])
+    cdef floating d
     for i in range(1, n):
         d = fabs(a[i])
         if d > m:
@@ -69,11 +70,11 @@ cdef double abs_max(int n, double* a) nogil:
     return m
 
 
-cdef double max(int n, double* a) nogil:
+cdef floating max(int n, floating* a) nogil:
     """np.max(a)"""
     cdef int i
-    cdef double m = a[0]
-    cdef double d
+    cdef floating m = a[0]
+    cdef floating d
     for i in range(1, n):
         d = a[i]
         if d > m:
@@ -81,11 +82,11 @@ cdef double max(int n, double* a) nogil:
     return m
 
 
-cdef double diff_abs_max(int n, double* a, double* b) nogil:
+cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
     """np.max(np.abs(a - b))"""
     cdef int i
-    cdef double m = fabs(a[0] - b[0])
-    cdef double d
+    cdef floating m = fabs(a[0] - b[0])
+    cdef floating d
     for i in range(1, n):
         d = fabs(a[i] - b[i])
         if d > m:
