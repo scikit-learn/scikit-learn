@@ -469,7 +469,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
     # compute scores with default labels introspection
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  pos_label=None,
-                                                 average='binary')
+                                                 average='macro')
 
 
 def test_zero_precision_recall():

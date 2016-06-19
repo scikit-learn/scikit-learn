@@ -197,8 +197,8 @@ It loses even more if we also strip this metadata from the training data:
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
-  >>> metrics.f1_score(newsgroups_test.target, pred, average='weighted')
-  0.73160869205141166
+  >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
+  0.65437545099490202
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`example_model_selection_grid_search_text_feature_extraction.py` with and without
