@@ -1,5 +1,4 @@
 import os
-import sklearn
 import shutil
 import tempfile
 import warnings
@@ -187,11 +186,10 @@ def test_load_iris():
     assert_true(isinstance(X_y_tuple, tuple))
     assert_equal(X_y_tuple[0].shape, bunch.data.shape)
     assert_equal(X_y_tuple[0].size, bunch.data.size)
-    
+
     assert_equal(X_y_tuple[0].shape, (150, 4))
     assert_equal(X_y_tuple[1].size, 150)
 
-    
 
 def test_load_breast_cancer():
     res = load_breast_cancer()
@@ -235,4 +233,3 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     bunch_from_pkl.key = 'changed'
     assert_equal(bunch_from_pkl.key, 'changed')
     assert_equal(bunch_from_pkl['key'], 'changed')
-
