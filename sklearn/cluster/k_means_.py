@@ -279,7 +279,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
-    best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
 
@@ -298,23 +297,22 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                          precompute_distances)
 
     # subtract of mean of x for more accurate distance computations
-    if not sp.issparse(X) or hasattr(init, '__array__'):
-        X_mean = X.mean(axis=0)
     if not sp.issparse(X):
+        X_mean = X.mean(axis=0)
         # The copy was already done above
         X -= X_mean
 
-    if hasattr(init, '__array__'):
-        init = check_array(init, dtype=np.float64, copy=True)
-        _validate_center_shape(X, n_clusters, init)
+        if hasattr(init, '__array__'):
+            init = check_array(init, dtype=np.float64, copy=True)
+            _validate_center_shape(X, n_clusters, init)
 
-        init -= X_mean
-        if n_init != 1:
-            warnings.warn(
-                'Explicit initial center position passed: '
-                'performing only one init in k-means instead of n_init=%d'
-                % n_init, RuntimeWarning, stacklevel=2)
-            n_init = 1
+            init -= X_mean
+            if n_init != 1:
+                warnings.warn(
+                    'Explicit initial center position passed: '
+                    'performing only one init in k-means instead of n_init=%d'
+                    % n_init, RuntimeWarning, stacklevel=2)
+                n_init = 1
 
     # precompute squared norms of data points
     x_squared_norms = row_norms(X, squared=True)
