@@ -193,12 +193,12 @@ It loses even more if we also strip this metadata from the training data:
   ...                                       remove=('headers', 'footers', 'quotes'),
   ...                                       categories=categories)
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
-  >>> clf = BernoulliNB(alpha=.01)
+  >>> clf = MultinomialNB(alpha=.01)
   >>> clf.fit(vectors, newsgroups_train.target)
   >>> vectors_test = vectorizer.transform(newsgroups_test.data)
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.65437545099490202
+  0.76995175184521725
 
 Some other classifiers cope better with this harder version of the task. Try
 running :ref:`example_model_selection_grid_search_text_feature_extraction.py` with and without
