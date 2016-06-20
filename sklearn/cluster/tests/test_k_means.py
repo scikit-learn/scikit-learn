@@ -63,7 +63,8 @@ def test_elkan_results():
     for X in [X_normal, X_blobs]:
         km_full.fit(X)
         km_elkan.fit(X)
-        assert_array_almost_equal(km_elkan.cluster_centers_, km_full.cluster_centers_)
+        assert_array_almost_equal(km_elkan.cluster_centers_,
+                                  km_full.cluster_centers_)
         assert_array_equal(km_elkan.labels_, km_full.labels_)
 
 
@@ -810,8 +811,10 @@ def test_float_precision():
             # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
             assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
                                     decimal=4)
-            assert_array_almost_equal(X_new[np.float32], X_new[np.float64], decimal=4)
-            assert_array_almost_equal(centers[np.float32], centers[np.float64], decimal=4)
+            assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
+                                      decimal=4)
+            assert_array_almost_equal(centers[np.float32], centers[np.float64],
+                                      decimal=4)
 
 
 def test_KMeans_init_centers():

@@ -867,11 +867,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
-                X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
-                max_iter=self.max_iter, verbose=self.verbose,
+                X, n_clusters=self.n_clusters, init=self.init,
+                n_init=self.n_init, max_iter=self.max_iter, verbose=self.verbose,
                 precompute_distances=self.precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
-                n_jobs=self.n_jobs, algorithm=self.algorithm, return_n_iter=True)
+                n_jobs=self.n_jobs, algorithm=self.algorithm,
+                return_n_iter=True)
         return self
 
     def fit_predict(self, X, y=None):
