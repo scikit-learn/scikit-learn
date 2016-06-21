@@ -139,11 +139,11 @@ cdef extern from "cblas.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
-                            double alpha, double beta,
-                            np.ndarray[DOUBLE, ndim=2, mode='fortran'] X,
-                            np.ndarray[DOUBLE, ndim=1, mode='c'] y,
-                            int max_iter, double tol,
+def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
+                            floating alpha, floating beta,
+                            np.ndarray[floating, ndim=2, mode='fortran'] X,
+                            np.ndarray[floating, ndim=1, mode='c'] y,
+                            int max_iter, floating tol,
                             object rng, bint random=0, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -159,26 +159,34 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int n_features = X.shape[1]
 
     # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
+    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
 
     # compute norms of the columns of X
-    cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
+    cdef np.ndarray[floating, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
     # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)
+    cdef np.ndarray[floating, ndim=1] R
 
-    cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
-    cdef double tmp
-    cdef double w_ii
-    cdef double d_w_max
-    cdef double w_max
-    cdef double d_w_ii
-    cdef double gap = tol + 1.0
-    cdef double d_w_tol = tol
-    cdef double dual_norm_XtA
-    cdef double R_norm2
-    cdef double w_norm2
-    cdef double l1_norm
+    cdef np.ndarray[floating, ndim=1] XtA
+
+    if floating is float:
+        R = np.empty(n_samples, dtype=np.float32)
+        XtA = np.empty(n_features, dtype=np.float32)
+    else:
+        R = np.empty(n_samples)
+        XtA = np.empty(n_features)
+
+    cdef floating tmp
+    cdef floating w_ii
+    cdef floating d_w_max
+    cdef floating w_max
+    cdef floating d_w_ii
+    cdef floating gap = tol + 1.0
+    cdef floating d_w_tol = tol
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating w_norm2
+    cdef floating l1_norm
     cdef unsigned int ii
     cdef unsigned int i
     cdef unsigned int n_iter = 0
@@ -191,108 +199,212 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             " results and is discouraged.")
 
     with nogil:
-        # R = y - np.dot(X, w)
-        for i in range(n_samples):
-            R[i] = y[i] - ddot(n_features,
-                               <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
-                               n_samples, <DOUBLE*>w.data, 1)
+        if floating is double:
+            # R = y - np.dot(X, w)
+            for i in range(n_samples):
+                R[i] = y[i] - ddot(n_features,
+                                <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
+                                n_samples, <DOUBLE*>w.data, 1)
 
-        # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,
-                    <DOUBLE*>y.data, n_tasks)
+            # tol *= np.dot(y, y)
+            tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,
+                        <DOUBLE*>y.data, n_tasks)
 
-        for n_iter in range(max_iter):
-            w_max = 0.0
-            d_w_max = 0.0
-            for f_iter in range(n_features):  # Loop over coordinates
-                if random:
-                    ii = rand_int(n_features, rand_r_state)
-                else:
-                    ii = f_iter
+            for n_iter in range(max_iter):
+                w_max = 0.0
+                d_w_max = 0.0
+                for f_iter in range(n_features):  # Loop over coordinates
+                    if random:
+                        ii = rand_int(n_features, rand_r_state)
+                    else:
+                        ii = f_iter
 
-                if norm_cols_X[ii] == 0.0:
-                    continue
+                    if norm_cols_X[ii] == 0.0:
+                        continue
 
-                w_ii = w[ii]  # Store previous value
+                    w_ii = w[ii]  # Store previous value
 
-                if w_ii != 0.0:
-                    # R += w_ii * X[:,ii]
-                    daxpy(n_samples, w_ii,
-                          <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
-                          1, <DOUBLE*>R.data, 1)
+                    if w_ii != 0.0:
+                        # R += w_ii * X[:,ii]
+                        daxpy(n_samples, w_ii,
+                            <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                            1, <DOUBLE*>R.data, 1)
 
-                # tmp = (X[:,ii]*R).sum()
-                tmp = ddot(n_samples,
-                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
-                           1, <DOUBLE*>R.data, 1)
+                    # tmp = (X[:,ii]*R).sum()
+                    tmp = ddot(n_samples,
+                            <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                            1, <DOUBLE*>R.data, 1)
 
-                if positive and tmp < 0:
-                    w[ii] = 0.0
-                else:
-                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
-                             / (norm_cols_X[ii] + beta))
+                    if positive and tmp < 0:
+                        w[ii] = 0.0
+                    else:
+                        w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                                / (norm_cols_X[ii] + beta))
 
-                if w[ii] != 0.0:
-                    # R -=  w[ii] * X[:,ii] # Update residual
-                    daxpy(n_samples, -w[ii],
-                          <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
-                          1, <DOUBLE*>R.data, 1)
+                    if w[ii] != 0.0:
+                        # R -=  w[ii] * X[:,ii] # Update residual
+                        daxpy(n_samples, -w[ii],
+                            <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                            1, <DOUBLE*>R.data, 1)
 
-                # update the maximum absolute coefficient update
-                d_w_ii = fabs(w[ii] - w_ii)
-                if d_w_ii > d_w_max:
-                    d_w_max = d_w_ii
+                    # update the maximum absolute coefficient update
+                    d_w_ii = fabs(w[ii] - w_ii)
+                    if d_w_ii > d_w_max:
+                        d_w_max = d_w_ii
 
-                if fabs(w[ii]) > w_max:
-                    w_max = fabs(w[ii])
+                    if fabs(w[ii]) > w_max:
+                        w_max = fabs(w[ii])
 
-            if (w_max == 0.0
-                    or d_w_max / w_max < d_w_tol
-                    or n_iter == max_iter - 1):
-                # the biggest coordinate update of this iteration was smaller
-                # than the tolerance: check the duality gap as ultimate
-                # stopping criterion
+                if (w_max == 0.0
+                        or d_w_max / w_max < d_w_tol
+                        or n_iter == max_iter - 1):
+                    # the biggest coordinate update of this iteration was smaller
+                    # than the tolerance: check the duality gap as ultimate
+                    # stopping criterion
 
-                # XtA = np.dot(X.T, R) - beta * w
-                for i in range(n_features):
-                    XtA[i] = ddot(
-                        n_samples,
-                        <DOUBLE*>(X.data + i * n_samples *sizeof(DOUBLE)),
-                        1, <DOUBLE*>R.data, 1) - beta * w[i]
-
-                if positive:
-                    dual_norm_XtA = max(n_features, <DOUBLE*>XtA.data)
-                else:
-                    dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
-
-                # R_norm2 = np.dot(R, R)
-                R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
-                               <DOUBLE*>R.data, 1)
-
-                # w_norm2 = np.dot(w, w)
-                w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
-                               <DOUBLE*>w.data, 1)
-
-                if (dual_norm_XtA > alpha):
-                    const = alpha / dual_norm_XtA
-                    A_norm2 = R_norm2 * (const ** 2)
-                    gap = 0.5 * (R_norm2 + A_norm2)
-                else:
-                    const = 1.0
-                    gap = R_norm2
-
-                l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
-
-                # np.dot(R.T, y)
-                gap += (alpha * l1_norm - const * ddot(
+                    # XtA = np.dot(X.T, R) - beta * w
+                    for i in range(n_features):
+                        XtA[i] = ddot(
                             n_samples,
-                            <DOUBLE*>R.data, 1,
-                            <DOUBLE*>y.data, n_tasks)
-                        + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+                            <DOUBLE*>(X.data + i * n_samples *sizeof(DOUBLE)),
+                            1, <DOUBLE*>R.data, 1) - beta * w[i]
 
-                if gap < tol:
-                    # return if we reached desired tolerance
-                    break
+                    if positive:
+                        dual_norm_XtA = max(n_features, <DOUBLE*>XtA.data)
+                    else:
+                        dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
+
+                    # R_norm2 = np.dot(R, R)
+                    R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
+                                <DOUBLE*>R.data, 1)
+
+                    # w_norm2 = np.dot(w, w)
+                    w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
+                                <DOUBLE*>w.data, 1)
+
+                    if (dual_norm_XtA > alpha):
+                        const = alpha / dual_norm_XtA
+                        A_norm2 = R_norm2 * (const ** 2)
+                        gap = 0.5 * (R_norm2 + A_norm2)
+                    else:
+                        const = 1.0
+                        gap = R_norm2
+
+                    l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
+
+                    # np.dot(R.T, y)
+                    gap += (alpha * l1_norm - const * ddot(
+                                n_samples,
+                                <DOUBLE*>R.data, 1,
+                                <DOUBLE*>y.data, n_tasks)
+                            + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+
+                    if gap < tol:
+                        # return if we reached desired tolerance
+                        break
+        else:
+            # R = y - np.dot(X, w)
+            for i in range(n_samples):
+                R[i] = y[i] - sdot(n_features,
+                                <float*>(X.data + i * sizeof(float)),
+                                n_samples, <float*>w.data, 1)
+
+            # tol *= np.dot(y, y)
+            tol *= sdot(n_samples, <float*>y.data, n_tasks,
+                        <float*>y.data, n_tasks)
+
+            for n_iter in range(max_iter):
+                w_max = 0.0
+                d_w_max = 0.0
+                for f_iter in range(n_features):  # Loop over coordinates
+                    if random:
+                        ii = rand_int(n_features, rand_r_state)
+                    else:
+                        ii = f_iter
+
+                    if norm_cols_X[ii] == 0.0:
+                        continue
+
+                    w_ii = w[ii]  # Store previous value
+
+                    if w_ii != 0.0:
+                        # R += w_ii * X[:,ii]
+                        saxpy(n_samples, w_ii,
+                            <float*>(X.data + ii * n_samples * sizeof(float)),
+                            1, <float*>R.data, 1)
+
+                    # tmp = (X[:,ii]*R).sum()
+                    tmp = sdot(n_samples,
+                            <float*>(X.data + ii * n_samples * sizeof(float)),
+                            1, <float*>R.data, 1)
+
+                    if positive and tmp < 0:
+                        w[ii] = 0.0
+                    else:
+                        w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                                / (norm_cols_X[ii] + beta))
+
+                    if w[ii] != 0.0:
+                        # R -=  w[ii] * X[:,ii] # Update residual
+                        saxpy(n_samples, -w[ii],
+                            <float*>(X.data + ii * n_samples * sizeof(float)),
+                            1, <float*>R.data, 1)
+
+                    # update the maximum absolute coefficient update
+                    d_w_ii = fabs(w[ii] - w_ii)
+                    if d_w_ii > d_w_max:
+                        d_w_max = d_w_ii
+
+                    if fabs(w[ii]) > w_max:
+                        w_max = fabs(w[ii])
+
+                if (w_max == 0.0
+                        or d_w_max / w_max < d_w_tol
+                        or n_iter == max_iter - 1):
+                    # the biggest coordinate update of this iteration was smaller
+                    # than the tolerance: check the duality gap as ultimate
+                    # stopping criterion
+
+                    # XtA = np.dot(X.T, R) - beta * w
+                    for i in range(n_features):
+                        XtA[i] = sdot(
+                            n_samples,
+                            <float*>(X.data + i * n_samples *sizeof(float)),
+                            1, <float*>R.data, 1) - beta * w[i]
+
+                    if positive:
+                        dual_norm_XtA = max(n_features, <float*>XtA.data)
+                    else:
+                        dual_norm_XtA = abs_max(n_features, <float*>XtA.data)
+
+                    # R_norm2 = np.dot(R, R)
+                    R_norm2 = sdot(n_samples, <float*>R.data, 1,
+                                <float*>R.data, 1)
+
+                    # w_norm2 = np.dot(w, w)
+                    w_norm2 = sdot(n_features, <float*>w.data, 1,
+                                <float*>w.data, 1)
+
+                    if (dual_norm_XtA > alpha):
+                        const = alpha / dual_norm_XtA
+                        A_norm2 = R_norm2 * (const ** 2)
+                        gap = 0.5 * (R_norm2 + A_norm2)
+                    else:
+                        const = 1.0
+                        gap = R_norm2
+
+                    l1_norm = sasum(n_features, <float*>w.data, 1)
+
+                    # np.dot(R.T, y)
+                    gap += (alpha * l1_norm - const * sdot(
+                                n_samples,
+                                <float*>R.data, 1,
+                                <float*>y.data, n_tasks)
+                            + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+
+                    if gap < tol:
+                        # return if we reached desired tolerance
+                        break
 
     return w, gap, tol, n_iter + 1
 

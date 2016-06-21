@@ -375,12 +375,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already float64 Fortran ordered when bypassing
     # checks
     if check_input:
-        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+        X = check_array(X, 'csc', order='F', copy=copy_X)
+        y = check_array(y, 'csc', order='F', copy=False,
                         ensure_2d=False)
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
-            Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
+            Xy = check_array(Xy, order='C', copy=False,
                              ensure_2d=False)
     n_samples, n_features = X.shape
 
@@ -426,10 +426,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     random = (selection == 'random')
 
     if not multi_output:
-        coefs = np.empty((n_features, n_alphas), dtype=np.float64)
+        coefs = np.empty((n_features, n_alphas), dtype=X.dtype)
     else:
         coefs = np.empty((n_outputs, n_features, n_alphas),
-                         dtype=np.float64)
+                         dtype=X.dtype)
 
     if coef_init is None:
         coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
@@ -457,6 +457,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
         elif precompute is False:
+            print "model: enet_coordinate_descent"
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
                 positive)
@@ -656,6 +657,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
 
+        print "test test"
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -670,12 +672,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
-            y = np.asarray(y, dtype=np.float64)
-            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+            y = np.asarray(y)
+            X, y = check_X_y(X, y, accept_sparse='csc',
                              order='F',
                              copy=self.copy_X and self.fit_intercept,
                              multi_output=True, y_numeric=True)
-            y = check_array(y, dtype=np.float64, order='F', copy=False,
+            y = check_array(y, order='F', copy=False,
                             ensure_2d=False)
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
@@ -692,14 +694,14 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError("selection should be either random or cyclic.")
 
         if not self.warm_start or self.coef_ is None:
-            coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
+            coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
                              order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
                 coef_ = coef_[np.newaxis, :]
 
-        dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
+        dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
         for k in xrange(n_targets):
