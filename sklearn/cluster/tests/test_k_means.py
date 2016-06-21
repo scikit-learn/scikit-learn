@@ -802,7 +802,7 @@ def test_float_precision():
                 centers[dtype] = estimator.cluster_centers_
                 # make sure predictions correspond to the correct label
                 assert_equal(estimator.predict(X_test[0]), estimator.labels_[0])
-                if estimator == mb_km:
+                if hasattr(estimator, 'partial_fit'):
                     estimator.partial_fit(X_test[0:3])
                     # dtype of cluster centers has to stay the same after partial_fit
                     assert_equal(estimator.cluster_centers_.dtype, dtype)
