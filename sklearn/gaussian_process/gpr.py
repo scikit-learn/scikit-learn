@@ -128,7 +128,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
                  normalize_y=False, copy_X_train=True, random_state=None):
-        self.kernel = kernel
+        if kernel is None:  # Use an RBF kernel as default
+            self.kernel = C(1.0, constant_value_bounds="fixed") \
+                * RBF(1.0, length_scale_bounds="fixed")
+        else:
+            self.kernel = kernel
         self.alpha = alpha
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer
@@ -151,11 +155,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") \
-                * RBF(1.0, length_scale_bounds="fixed")
-        else:
-            self.kernel_ = clone(self.kernel)
+        self.kernel_ = clone(self.kernel)
 
         self.rng = check_random_state(self.random_state)
 
