@@ -10,7 +10,6 @@ import numpy as np
 import numpy.linalg as la
 from scipy import sparse
 from distutils.version import LooseVersion
-from sklearn.externals.six import u
 
 from sklearn.utils import gen_batches
 
@@ -1390,7 +1389,7 @@ def test_cv_pipeline_precomputed():
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
     #     of Pipeline and KernelCenterer
-    y_pred = cross_val_predict(pipeline, K, y_true, cv=4)
+    y_pred = cross_val_predict(pipeline, K, y_true, cv=2)
     assert_array_almost_equal(y_true, y_pred)
 
 
