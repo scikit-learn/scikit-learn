@@ -184,7 +184,7 @@ The most intuitive way to do so is the bags of words representation:
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
-larger that 100,000.
+larger than 100,000.
 
 If ``n_samples == 10000``, storing ``X`` as a numpy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
@@ -443,13 +443,13 @@ to speed up the computation::
 The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
 that we can use to ``predict``::
 
-  >>> twenty_train.target_names[gs_clf.predict(['God is love'])]
+  >>> twenty_train.target_names[gs_clf.predict(['God is love'])[0]]
   'soc.religion.christian'
 
 The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
-  >>> gs_clf.best_score_
+  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
   0.900...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
