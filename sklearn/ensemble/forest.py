@@ -553,7 +553,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
             The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
+            ``dtype=np.float32``, and if a sparse matrix is provided,
             to a sparse ``csr_matrix``.
 
         Returns
