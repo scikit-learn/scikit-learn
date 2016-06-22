@@ -248,7 +248,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
