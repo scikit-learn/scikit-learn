@@ -797,6 +797,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
+
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
         cdef double* sum_total = self.sum_total
@@ -890,6 +891,7 @@ cdef class MSE(RegressionCriterion):
         impurity = self.sq_sum_total / self.weighted_n_node_samples
         for k in range(self.n_outputs):
             impurity -= (sum_total[k] / self.weighted_n_node_samples)**2.0
+
         return impurity / self.n_outputs
 
     cdef double proxy_impurity_improvement(self) nogil:
@@ -914,6 +916,7 @@ cdef class MSE(RegressionCriterion):
         for k in range(self.n_outputs):
             proxy_impurity_left += sum_left[k] * sum_left[k]
             proxy_impurity_right += sum_right[k] * sum_right[k]
+
         return (proxy_impurity_left / self.weighted_n_left +
                 proxy_impurity_right / self.weighted_n_right)
 
@@ -922,7 +925,6 @@ cdef class MSE(RegressionCriterion):
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
-
 
         cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
