@@ -8,6 +8,7 @@ import numpy as np
 import itertools
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose
 from scipy import sparse
 from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 from sklearn import svm, linear_model, datasets, metrics, base
@@ -195,9 +196,8 @@ def test_linearsvr():
     svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
     score2 = svr.score(diabetes.data, diabetes.target)
 
-    assert np.linalg.norm(lsvr.coef_ - svr.coef_) / np.linalg.norm(svr.coef_) < .1
-    assert np.abs(score1 - score2) < 0.1
-
+    assert_allclose( np.linalg.norm(lsvr.coef_) , np.linalg.norm(svr.coef_),1, 0.0001 )
+    assert_almost_equal(score1, score2, 2)
 
 def test_linearsvr_fit_sampleweight():
     # check correct result when sample_weight is 1
@@ -213,9 +213,8 @@ def test_linearsvr_fit_sampleweight():
     lsvr_no_weight = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
     score2 = lsvr_no_weight.score(diabetes.data, diabetes.target)
 
-    assert np.linalg.norm(lsvr.coef_ - lsvr_no_weight.coef_)\
-        / np.linalg.norm(lsvr_no_weight.coef_) < .1
-    assert np.abs(score1 - score2) < 0.1
+    assert_allclose(np.linalg.norm(lsvr.coef_), np.linalg.norm(lsvr_no_weight.coef_), 1, 0.0001)
+    assert_almost_equal(score1, score2, 2)
 
     # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
     # X = X1 repeated n1 times, X2 repeated n2 times and so forth
@@ -231,8 +230,7 @@ def test_linearsvr_fit_sampleweight():
     lsvr_flat = svm.LinearSVR(C=1e3).fit(X_flat, y_flat)
     score4 = lsvr_flat.score(X_flat, y_flat)
 
-    assert np.abs(score3 - score4) < 0.1
-
+    assert_almost_equal(score3 ,score4,2)
 
 def test_svr_errors():
     X = [[0.0], [1.0]]
