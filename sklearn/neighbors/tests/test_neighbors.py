@@ -348,14 +348,14 @@ def test_radius_neighbors_classifier_outlier_labeling():
     # Test radius-based classifier when no neighbors found and outliers
     # are labeled.
 
-    X = np.array([[1.0, 1.0], [2.0, 2.0]])
-    y = np.array([1, 2])
+    X = np.array([[1.0, 1.0], [2.0, 2.0], [0.99,0.99], [0.98, 0.98], [2.01,2.01]])
+    y  = np.array([1, 2, 1, 1, 2])
     radius = 0.1
 
     z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
-    z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
+    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01,2.01]])    # one outlier
     correct_labels1 = np.array([1, 2])
-    correct_labels2 = np.array([1, -1])
+    correct_labels2 = np.array([-1, 1, 2])
 
     weight_func = _weight_func
 
@@ -369,24 +369,7 @@ def test_radius_neighbors_classifier_outlier_labeling():
             assert_array_equal(correct_labels1, clf.predict(z1))
             assert_array_equal(correct_labels2, clf.predict(z2))
 
-def test_radius_neighbors_classifier_with_precomputed_metric_and_outliers():
-  # Test radius-based classifier with precomputed metric 
-  # and outlier are labeled
-  
-    random_state = check_random_state(0)
-    X = random_state.rand(100,100)
-    for i in range(0, len(X)):
-        X[i,i]=0
-        for j in range(0, len(X)):
-            X[i,j] = X[j,i]
-    y = random_state.randint(2, size=100)
-  
-    clf = neighbors.RadiusNeighborsClassifier(radius=0.01, 
-                                              weights='distance', 
-                                              metric='precomputed', 
-                                              outlier_label=2)
-    scores = cross_val_score(clf, X, y, cv=5)
-  
+      
 def test_radius_neighbors_classifier_zero_distance():
     # Test radius-based classifier, when distance to a sample is zero.
 
