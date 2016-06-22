@@ -369,7 +369,21 @@ def test_radius_neighbors_classifier_outlier_labeling():
             assert_array_equal(correct_labels1, clf.predict(z1))
             assert_array_equal(correct_labels2, clf.predict(z2))
 
-
+def test_radius_neighbors_classifier_with_precomputed_metric_and_outliers():
+  # Test radius-based classifier with precomputed metric 
+  # and outlier are labeled
+  
+    np.random.seed(0)
+    X = np.random.rand(100,100)
+    for i in range(0, len(X)):
+        X[i,i]=0
+        for j in range(0, len(X)):
+            X[i,j] = X[j,i]
+    y = np.random.randint(2, size=100)
+  
+    clf = neighbors.RadiusNeighborsClassifier(radius=0.01, weights='distance', metric='precomputed', outlier_label=2)
+    scores = cross_validation.cross_val_score(clf, X, y, cv=5)
+  
 def test_radius_neighbors_classifier_zero_distance():
     # Test radius-based classifier, when distance to a sample is zero.
 
