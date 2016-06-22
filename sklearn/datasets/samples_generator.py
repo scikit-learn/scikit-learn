@@ -144,6 +144,16 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     --------
     make_blobs: simplified variant
     make_multilabel_classification: unrelated generator for multilabel tasks
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> import matplotlib.pyplot as plt
+    >>> X, y = make_classification(n_features=2, n_redundant=0,
+    ...                            random_state=0, n_clusters_per_class=1)
+    >>> plt.gray()
+    >>> _ = plt.scatter(X[:, 0], X[:, 1], c=y)
+    >>> plt.show()
     """
     generator = check_random_state(random_state)
 
@@ -600,6 +610,15 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     y : array of shape [n_samples]
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_circles
+    >>> import matplotlib.pyplot as plt
+    >>> X, y = make_circles(noise=0.1, random_state=0)
+    >>> plt.gray()
+    >>> _ = plt.scatter(X[:, 0], X[:, 1], c=y)
+    >>> plt.show()
     """
 
     if factor > 1 or factor < 0:
@@ -653,6 +672,15 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     y : array of shape [n_samples]
         The integer labels (0 or 1) for class membership of each sample.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_moons
+    >>> import matplotlib.pyplot as plt
+    >>> X, y = make_moons(noise=0.1, random_state=0)
+    >>> plt.gray()
+    >>> _ = plt.scatter(X[:, 0], X[:, 1], c=y)
+    >>> plt.show()
     """
 
     n_samples_out = n_samples // 2
