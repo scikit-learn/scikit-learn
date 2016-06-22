@@ -1373,11 +1373,12 @@ def test_center_kernel():
     K_pred_centered2 = centerer.transform(K_pred)
     assert_array_almost_equal(K_pred_centered, K_pred_centered2)
 
+
 def test_cv_pipeline_precomputed():
-    """Cross-validate a regression on four coplanar points with the same 
+    """Cross-validate a regression on four coplanar points with the same
     value. Use precomputed kernel to ensure Pipeline with KernelCenterer
     is treated as a _pairwise operation."""
-    X = np.array([[3,0,0],[0,3,0],[0,0,3],[1,1,1]])
+    X = np.array([[3, 0, 0], [0, 3, 0], [0, 0, 3], [1, 1, 1]])
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
@@ -1389,7 +1390,7 @@ def test_cv_pipeline_precomputed():
     # test cross-validation, score should be almost perfect
     # NB: this test is pretty vacuous -- it's mainly to test integration
     #     of Pipeline and KernelCenterer
-    y_pred = cross_val_predict(pipeline,K,y_true,cv=4)
+    y_pred = cross_val_predict(pipeline, K, y_true, cv=4)
     assert_array_almost_equal(y_true, y_pred)
 
 
