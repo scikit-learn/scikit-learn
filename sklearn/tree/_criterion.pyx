@@ -12,6 +12,7 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
 
@@ -28,8 +29,8 @@ np.import_array()
 from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
-from ._utils cimport compute_weighted_median
-from ._utils cimport sort_values_and_weights
+from ._utils cimport MedianHeap
+from ._utils cimport MinMaxHeapRecord
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -684,15 +685,7 @@ cdef class RegressionCriterion(Criterion):
         var = \sum_i^n (y_i - y_bar) ** 2
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
-    def __dealloc__(self):
-        """Destructor."""
-        free(self.coupled_sorted_y)
-        free(self.coupled_sorted_weights)
-
     cdef double sq_sum_total
-    cdef DOUBLE_t* coupled_sorted_y
-    cdef DOUBLE_t* coupled_sorted_weights
-    cdef bint initialized
 
     def __cinit__(self, SIZE_t n_outputs):
         """Initialize parameters for this criterion.
@@ -703,7 +696,6 @@ cdef class RegressionCriterion(Criterion):
             The number of targets to be predicted
         """
 
-        # Default values
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
@@ -715,7 +707,6 @@ cdef class RegressionCriterion(Criterion):
 
         self.n_outputs = n_outputs
         self.n_node_samples = 0
-        self.initialized = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
@@ -727,8 +718,6 @@ cdef class RegressionCriterion(Criterion):
         self.sum_total = NULL
         self.sum_left = NULL
         self.sum_right = NULL
-        self.coupled_sorted_y = NULL
-        self.coupled_sorted_weights = NULL
 
         # Allocate memory for the accumulators
         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
@@ -769,17 +758,6 @@ cdef class RegressionCriterion(Criterion):
         self.sq_sum_total = 0.0
         memset(self.sum_total, 0, self.n_outputs * sizeof(double))
 
-        if self.initialized == 0:
-            self.coupled_sorted_y = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                       sizeof(DOUBLE_t))
-            if sample_weight != NULL:
-                self.coupled_sorted_weights = <DOUBLE_t*> calloc(self.n_node_samples,
-                                                                 sizeof(DOUBLE_t))
-            if(self.coupled_sorted_y == NULL or
-               (self.coupled_sorted_weights == NULL and sample_weight != NULL)):
-                with gil:
-                    raise MemoryError()
-
         for p in range(start, end):
             i = samples[p]
 
@@ -793,35 +771,19 @@ cdef class RegressionCriterion(Criterion):
                 self.sq_sum_total += w_y_ik * y_ik
 
             self.weighted_n_node_samples += w
-
-        if self.initialized == 0:
-            for p in range(start, end):
-                i = samples[p]
-
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-                    self.coupled_sorted_weights[p - start] = w
-
-                for k in range(self.n_outputs):
-                    y_ik = y[i * y_stride + k]
-                    self.coupled_sorted_y[p - start] = y_ik
-
-            sort_values_and_weights(self.coupled_sorted_y, self.coupled_sorted_weights,
-                                    0, self.n_node_samples-1)
-            self.initialized = 1
-
-        # Reset to pos=start
         self.reset()
 
     cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
+
         memset(self.sum_left, 0, n_bytes)
         memcpy(self.sum_right, self.sum_total, n_bytes)
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
+
 
     cdef void reverse_reset(self) nogil:
         """Reset the criterion at pos=end."""
@@ -850,6 +812,7 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w_y_ik
 
         # Update statistics up to new_pos
         #
@@ -868,7 +831,8 @@ cdef class RegressionCriterion(Criterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    sum_left[k] += w * y_ik
+                    w_y_ik = w * y_ik
+                    sum_left[k] += w_y_ik
 
                 self.weighted_n_left += w
         else:
@@ -882,7 +846,8 @@ cdef class RegressionCriterion(Criterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    sum_left[k] -= w * y_ik
+                    w_y_ik = w * y_ik
+                    sum_left[k] -= w_y_ik
 
                 self.weighted_n_left -= w
 
@@ -1001,33 +966,248 @@ cdef class MSE(RegressionCriterion):
 
 cdef class MAE(RegressionCriterion):
     """Mean absolute error impurity criterion"""
+    def __dealloc__(self):
+        """Destructor."""
+
+        free(self.node_medians)
+
+    cdef np.ndarray left_child_heaps
+    cdef np.ndarray right_child_heaps
+    cdef double* node_medians
+
+    def __cinit__(self, SIZE_t n_outputs):
+        """Initialize parameters for this criterion.
+
+        Parameters
+        ----------
+        n_outputs: SIZE_t
+            The number of targets to be predicted
+        """
+
+        # Default values
+        self.y = NULL
+        self.y_stride = 0
+        self.sample_weight = NULL
+
+        self.samples = NULL
+        self.start = 0
+        self.pos = 0
+        self.end = 0
+
+        self.n_outputs = n_outputs
+        self.n_node_samples = 0
+        self.weighted_n_node_samples = 0.0
+        self.weighted_n_left = 0.0
+        self.weighted_n_right = 0.0
+
+        # Allocate accumulators. Make sure they are NULL, not uninitialized,
+        # before an exception can be raised (which triggers __dealloc__).
+        self.node_medians = NULL
+
+        # Allocate memory for the accumulators
+        self.node_medians = <double*> calloc(n_outputs, sizeof(double))
+
+        if (self.node_medians == NULL):
+            raise MemoryError()
+
+        self.left_child_heaps = np.empty(n_outputs, dtype='object')
+        self.right_child_heaps = np.empty(n_outputs, dtype='object')
+
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
+        """Initialize the criterion at node samples[start:end] and
+           children samples[start:start] and samples[start:end]."""
+
+        # Initialize fields
+        self.y = y
+        self.y_stride = y_stride
+        self.sample_weight = sample_weight
+        self.samples = samples
+        self.start = start
+        self.end = end
+        self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
+        self.weighted_n_node_samples = 0.
+
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w_y_ik
+        cdef DOUBLE_t w = 1.0
+
+        # Fill accumulators with MedianHeaps
+        with gil:
+            for k in range(self.n_outputs):
+                self.left_child_heaps[k] = MedianHeap(self.n_node_samples)
+                self.right_child_heaps[k] = MedianHeap(self.n_node_samples)
+
+        cdef void** left_child_heaps = <void**> self.left_child_heaps.data
+        cdef void** right_child_heaps = <void**> self.right_child_heaps.data
+
+        for p in range(start, end):
+            i = samples[p]
+
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = y[i * y_stride + k]
+                w_y_ik = w * y_ik
+
+                # push all values to the right side,
+                # since pos = start initially anyway
+                (<MedianHeap> right_child_heaps[k]).push(w_y_ik)
+
+            self.weighted_n_node_samples += w
+        # calculate the node medians
+        for k in range(self.n_outputs):
+            (<MedianHeap> right_child_heaps[k]).get_median(&(self.node_medians[k]))
+
+        # Reset to pos=start
+        self.reset()
+
+    cdef void reset(self) nogil:
+        """Reset the criterion at pos=start."""
+
+        cdef SIZE_t i
+        cdef SIZE_t k
+        cdef DOUBLE_t popped
+
+        cdef void** left_child_heaps = <void**> self.left_child_heaps.data
+        cdef void** right_child_heaps = <void**> self.right_child_heaps.data
+
+        self.weighted_n_left = 0.0
+        self.weighted_n_right = self.weighted_n_node_samples
+        self.pos = self.start
+
+        # reset the medianheaps, left should have no elements and
+        # right should have all elements.
+
+        for k in range(self.n_outputs):
+            # if left has no elements, it's already reset
+            for i in range((<MedianHeap> left_child_heaps[k]).size()):
+                # remove everything from left and put it into right
+                (<MedianHeap> left_child_heaps[k]).pop(&popped)
+                (<MedianHeap> right_child_heaps[k]).push(popped)
+
+    cdef void reverse_reset(self) nogil:
+        """Reset the criterion at pos=end."""
+
+        self.weighted_n_right = 0.0
+        self.weighted_n_left = self.weighted_n_node_samples
+        self.pos = self.end
+
+        cdef DOUBLE_t popped
+        cdef void** left_child_heaps = <void**> self.left_child_heaps.data
+        cdef void** right_child_heaps = <void**> self.right_child_heaps.data
+
+        # reverse_reset the medianheaps, right should have no elements and
+        # left should have all elements.
+        for k in range(self.n_outputs):
+            # if right has no elements, it's already reset
+            for i in range((<MedianHeap> right_child_heaps[k]).size()):
+                # remove everything from right and put it into left
+                (<MedianHeap> right_child_heaps[k]).pop(&popped)
+                (<MedianHeap> left_child_heaps[k]).push(popped)
+
+    cdef void update(self, SIZE_t new_pos) nogil:
+        """Updated statistics by moving samples[pos:new_pos] to the left."""
+
+        cdef double* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+
+        cdef void** left_child_heaps = <void**> self.left_child_heaps.data
+        cdef void** right_child_heaps = <void**> self.right_child_heaps.data
+
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t end = self.end
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w_y_ik
+
+        # Update statistics up to new_pos
+        #
+        # We are going to update right_child_heaps and left_child_heaps
+        # from the direction that require the least amount of
+        # computations, i.e. from pos to new_pos or from end to new_pos.
+
+        if (new_pos - pos) <= (end - new_pos):
+            for p in range(pos, new_pos):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = y[i * self.y_stride + k]
+                    w_y_ik = w * y_ik
+
+                    # remove w_y_ik from right and add to left
+                    (<MedianHeap> right_child_heaps[k]).remove(w_y_ik)
+                    (<MedianHeap> left_child_heaps[k]).push(w_y_ik)
+
+                self.weighted_n_left += w
+        else:
+            self.reverse_reset()
+
+            for p in range(end - 1, new_pos - 1, -1):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = y[i * self.y_stride + k]
+                    w_y_ik = w * y_ik
+
+                    # remove w_y_ik from left and add to right
+                    (<MedianHeap> left_child_heaps[k]).remove(w_y_ik)
+                    (<MedianHeap> right_child_heaps[k]).push(w_y_ik)
+
+                self.weighted_n_left -= w
+
+        self.weighted_n_right = (self.weighted_n_node_samples - 
+                                 self.weighted_n_left)
+        self.pos = new_pos
+
     cdef void node_value(self, double* dest) nogil:
         """Computes the node value of samples[start:end] into dest."""
-        cdef SIZE_t start = self.start
-        cdef SIZE_t end = self.end
-        compute_weighted_median(dest, self.start, self.end,
-                                self.coupled_sorted_weights,
-                                self.coupled_sorted_y,
-                                self.n_outputs)
+
+        cdef SIZE_t k
+        for k in range(self.n_outputs):
+            dest[k] = self.node_medians[k]
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
-        cdef double* medians = NULL
-        medians = <double*> calloc(self.n_outputs, sizeof(double))
-        if medians == NULL:
-            with gil:
-                raise MemoryError()
-        cdef double impurity = 0.0
+
+        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
+        cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
-        self.node_value(medians)
+        cdef DOUBLE_t w_y_ik
+
+        cdef double impurity = 0.0
+
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
-                y_ik = self.coupled_sorted_y[p]
-                impurity += <double> fabs((<double> y_ik) - medians[k])
-        free(medians)
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                y_ik = y[i * self.y_stride + k]
+                w_y_ik = w * y_ik
+
+                impurity += <double> fabs((<double> w_y_ik) - self.node_medians[k])
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* impurity_left,
@@ -1036,7 +1216,7 @@ cdef class MAE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end]).
         """
-        cdef DOUBLE_t* y = self.coupled_sorted_y
+        cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
@@ -1046,35 +1226,41 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t w_y_ik
+        cdef DOUBLE_t median
 
-        cdef double* medians = NULL
-        medians = <double*> calloc(self.n_outputs, sizeof(double))
-        if (medians == NULL):
-            with gil:
-                raise MemoryError()
+        cdef void** left_child_heaps = <void**> self.left_child_heaps.data
+        cdef void** right_child_heaps = <void**> self.right_child_heaps.data
 
-        compute_weighted_median(medians, start, pos,
-                                self.coupled_sorted_weights,
-                                self.coupled_sorted_y,
-                                self.n_outputs)
         impurity_left[0] = 0.0
         impurity_right[0] = 0.0
 
         for k in range(self.n_outputs):
+            (<MedianHeap> left_child_heaps[k]).get_median(&median)
             for p in range(start, pos):
-                y_ik = y[p]
-                impurity_left[0] += <double>fabs((<double>y_ik) - medians[k])
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                y_ik = y[i * self.y_stride + k]
+                w_y_ik = w * y_ik
+                impurity_left[0] += <double>fabs((<double> w_y_ik) - median)
         impurity_left[0] /= <double>((pos - start) * self.n_outputs)
-        compute_weighted_median(medians, pos, end,
-                                self.coupled_sorted_weights,
-                                self.coupled_sorted_y,
-                                self.n_outputs)
+
         for k in range(self.n_outputs):
+            (<MedianHeap> right_child_heaps[k]).get_median(&median)
             for p in range(pos, end):
-                y_ik = y[p]
-                impurity_right[0] += <double>fabs((<double>y_ik) - medians[k])
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                y_ik = y[i * self.y_stride + k]
+                w_y_ik = w * y_ik
+                impurity_right[0] += <double>fabs((<double> w_y_ik) - median)
         impurity_right[0] /= <double>((end - pos) * self.n_outputs)
-        free(medians)
 
 
 cdef class FriedmanMSE(MSE):

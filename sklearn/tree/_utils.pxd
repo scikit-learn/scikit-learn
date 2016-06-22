@@ -39,14 +39,6 @@ cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
-cdef void compute_weighted_median(double* median_dest, SIZE_t start, SIZE_t end,
-                                  DOUBLE_t* coupled_sorted_weights,
-                                  DOUBLE_t* coupled_sorted_y,
-                                  SIZE_t n_outputs) nogil
-
-cdef void sort_values_and_weights(DOUBLE_t* y_vals, DOUBLE_t* weights,
-                                  SIZE_t low, SIZE_t high) nogil
-
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil
 
@@ -111,3 +103,47 @@ cdef class PriorityHeap:
                   double impurity, double impurity_left,
                   double impurity_right) nogil
     cdef int pop(self, PriorityHeapRecord* res) nogil
+    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil
+    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
+                           SIZE_t heap_length) nogil
+
+# =============================================================================
+# MinMaxHeap data structure
+# =============================================================================
+
+# A record stored in the MinMaxHeap
+cdef struct MinMaxHeapRecord:
+    DOUBLE_t data
+
+cdef class MinMaxHeap:
+    cdef SIZE_t capacity
+    cdef SIZE_t heap_ptr
+    cdef MinMaxHeapRecord* heap_
+    cdef bint mode
+
+    cdef void heapify_up(self, MinMaxHeapRecord* heap, SIZE_t pos) nogil
+    cdef void heapify_down(self, MinMaxHeapRecord* heap, SIZE_t pos,
+                           SIZE_t heap_length) nogil
+    cdef bint is_empty(self) nogil
+    cdef SIZE_t size(self) nogil
+    cdef int push(self, DOUBLE_t data) nogil
+    cdef int remove(self, DOUBLE_t value) nogil
+    cdef int pop(self, DOUBLE_t* res) nogil
+    cdef int peek(self, DOUBLE_t* res) nogil
+
+# =============================================================================
+# MedianHeap data structure
+# =============================================================================
+
+cdef class MedianHeap:
+    cdef SIZE_t initial_capacity
+    cdef SIZE_t current_capacity
+    cdef MinMaxHeap right_min_heap
+    cdef MinMaxHeap left_max_heap
+
+    cdef SIZE_t size(self) nogil
+    cdef int pop(self, DOUBLE_t* res) nogil
+    cdef int push(self, DOUBLE_t data) nogil
+    cdef int remove(self, DOUBLE_t data) nogil
+    cdef int get_median(self, DOUBLE_t* data) nogil
+    cdef int rebalance(self) nogil
