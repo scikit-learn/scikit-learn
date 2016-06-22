@@ -51,7 +51,7 @@ for score in scores:
     print()
 
     clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5,
-                       scoring='%s_weighted' % score)
+                       scoring='%s_macro' % score)
     clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")

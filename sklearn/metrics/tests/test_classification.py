@@ -469,7 +469,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
     # compute scores with default labels introspection
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  pos_label=None,
-                                                 average='weighted')
+                                                 average='macro')
 
 
 def test_zero_precision_recall():
@@ -482,10 +482,10 @@ def test_zero_precision_recall():
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
         assert_almost_equal(precision_score(y_true, y_pred,
-                                            average='weighted'), 0.0, 2)
-        assert_almost_equal(recall_score(y_true, y_pred, average='weighted'),
+                                            average='macro'), 0.0, 2)
+        assert_almost_equal(recall_score(y_true, y_pred, average='macro'),
                             0.0, 2)
-        assert_almost_equal(f1_score(y_true, y_pred, average='weighted'),
+        assert_almost_equal(f1_score(y_true, y_pred, average='macro'),
                             0.0, 2)
 
     finally:
