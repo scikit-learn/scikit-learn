@@ -1585,6 +1585,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
         return K
 
+    @property
+    def _pairwise(self):
+        return True
+
 
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
