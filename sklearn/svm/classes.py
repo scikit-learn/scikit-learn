@@ -366,6 +366,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
+
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C")
         penalty = 'l2'  # SVR only accepts l2 penalty
