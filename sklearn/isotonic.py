@@ -77,7 +77,7 @@ def check_increasing(x, y):
 
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
-                        increasing=True):
+                        increasing=True, pre_sorted=True):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -110,6 +110,9 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
         (if set to False)
 
+    pre_sorted : boolean, optional, default: True
+        Whether the input `y` is pre-sorted, e.g., from within a model class.
+
     Returns
     -------
     y_ : list of floating-point values
@@ -129,17 +132,23 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         y = y[::-1]
         sample_weight = sample_weight[::-1]
 
+    # Ensure that sample is sorted if not pre_sort
+    if not pre_sorted:
+        _y_sort_index = np.argsort(y)
+        y = np.copy(y[_y_sort_index])
+        sample_weight = np.copy(sample_weight[_y_sort_index])
+
     if y_min is not None or y_max is not None:
-        y = np.copy(y)
-        sample_weight = np.copy(sample_weight)
+        # Only create a copy if pre-sorted
+        if pre_sorted:
+            y = np.copy(y)
+            sample_weight = np.copy(sample_weight)
+            
         # upper bound on the cost function
-        C = np.dot(sample_weight, y * y) * 10
         if y_min is not None:
-            y[0] = y_min
-            sample_weight[0] = C
+            y[y < y_min] = y_min
         if y_max is not None:
-            y[-1] = y_max
-            sample_weight[-1] = C
+            y[y > y_max] = y_max
 
     solution = np.empty(len(y))
     y_ = _isotonic_regression(y, sample_weight, solution)
