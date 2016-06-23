@@ -338,6 +338,17 @@ def test_isotonic_duplicate_min_entry():
     assert_true(all_predictions_finite)
 
 
+def test_isotonic_ymin_ymax():
+    # Test case as reported in Issue #6921
+    x = np.array([1.26336413, 1.31853693, -0.57200917, 0.3072928, -0.70686507,
+                            -0.17614937, -1.59943059, 1.05908504, 1.3958263, 1.90580318,
+                            0.20992272, 0.02836316, -0.08092235, 0.44438247, 0.01791253,
+                            -0.3771914, -0.89577538, -0.37726249, -1.32687569, 0.18013201])
+    y = isotonic_regression(x, y_min=0, y_max=0.1)
+
+    assert(np.all(y > 0))
+    assert(np.all(y < 0.1))
+
 def test_isotonic_zero_weight_loop():
     # Test from @ogrisel's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/4297
