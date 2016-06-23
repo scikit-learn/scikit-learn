@@ -685,6 +685,7 @@ cdef class RegressionCriterion(Criterion):
         var = \sum_i^n (y_i - y_bar) ** 2
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
+
     cdef double sq_sum_total
 
     def __cinit__(self, SIZE_t n_outputs):
@@ -696,6 +697,7 @@ cdef class RegressionCriterion(Criterion):
             The number of targets to be predicted
         """
 
+        # Default values
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
@@ -771,19 +773,19 @@ cdef class RegressionCriterion(Criterion):
                 self.sq_sum_total += w_y_ik * y_ik
 
             self.weighted_n_node_samples += w
+
+        # Reset to pos=start
         self.reset()
 
     cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
         cdef SIZE_t n_bytes = self.n_outputs * sizeof(double)
-
         memset(self.sum_left, 0, n_bytes)
         memcpy(self.sum_right, self.sum_total, n_bytes)
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
-
 
     cdef void reverse_reset(self) nogil:
         """Reset the criterion at pos=end."""
@@ -925,6 +927,7 @@ cdef class MSE(RegressionCriterion):
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
+
 
         cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight

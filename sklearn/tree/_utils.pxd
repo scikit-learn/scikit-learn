@@ -39,6 +39,7 @@ cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
+
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil
 
