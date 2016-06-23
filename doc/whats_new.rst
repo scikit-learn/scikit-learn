@@ -279,6 +279,10 @@ Bug fixes
       (`#6817 <https://github.com/scikit-learn/scikit-learn/pull/6817>`_).
       By `Tom Dupre la Tour`_.
 
+    - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
+      with them as parameters, could not be passed to :func:`base.clone`.
+      By `Loic Eseve`_.
+
 
 API changes summary
 -------------------
