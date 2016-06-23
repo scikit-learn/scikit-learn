@@ -346,8 +346,8 @@ def test_isotonic_ymin_ymax():
                             -0.3771914, -0.89577538, -0.37726249, -1.32687569, 0.18013201])
     y = isotonic_regression(x, y_min=0, y_max=0.1)
 
-    assert(np.all(y > 0))
-    assert(np.all(y < 0.1))
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
 
 def test_isotonic_zero_weight_loop():
     # Test from @ogrisel's issue:
