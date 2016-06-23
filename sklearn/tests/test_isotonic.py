@@ -349,6 +349,7 @@ def test_isotonic_ymin_ymax():
     assert(np.all(y >= 0))
     assert(np.all(y <= 0.1))
 
+    
 def test_isotonic_zero_weight_loop():
     # Test from @ogrisel's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/4297
