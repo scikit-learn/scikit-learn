@@ -329,7 +329,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        print('extraction done')
+        logging.info('extraction done')
         Xy = np.asarray(Xy, dtype=object)
         for j in range(42):
             Xy[:, j] = Xy[:, j].astype(DT[j])

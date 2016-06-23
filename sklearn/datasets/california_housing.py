@@ -26,6 +26,7 @@ import os
 from os.path import exists
 from os import makedirs
 import tarfile
+import logging
 
 try:
     # Python 2
@@ -90,7 +91,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         makedirs(data_home)
     filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
-        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
+        logging.info('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
         archive_fileobj = BytesIO(urlopen(DATA_URL).read())
         fileobj = tarfile.open(
             mode="r:gz",

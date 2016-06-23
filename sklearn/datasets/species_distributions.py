@@ -38,6 +38,7 @@ Notes:
 from io import BytesIO
 from os import makedirs
 from os.path import exists
+import logging
 
 try:
     # Python 2
@@ -222,7 +223,7 @@ def fetch_species_distributions(data_home=None,
     archive_path = _pkl_filepath(data_home, DATA_ARCHIVE_NAME)
 
     if not exists(archive_path):
-        print('Downloading species data from %s to %s' % (SAMPLES_URL,
+        logging.info('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
         X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
 
@@ -233,7 +234,7 @@ def fetch_species_distributions(data_home=None,
             if 'test' in f:
                 test = _load_csv(fhandle)
 
-        print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
+        logging.info('Downloading coverage data from %s to %s' % (COVERAGES_URL,
                                                            data_home))
 
         X = np.load(BytesIO(urlopen(COVERAGES_URL).read()))
@@ -241,7 +242,7 @@ def fetch_species_distributions(data_home=None,
         coverages = []
         for f in X.files:
             fhandle = BytesIO(X[f])
-            print(' - converting', f)
+            logging.info(' - converting', f)
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages, dtype=dtype)
 
