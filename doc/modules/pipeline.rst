@@ -30,8 +30,8 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
-The :class:`Pipeline` is build using a list of ``(key, value)`` pairs, where
-the ``key`` a string containing the name you want to give this step and ``value``
+The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
+the ``key`` is a string containing the name you want to give this step and ``value``
 is an estimator object::
 
     >>> from sklearn.pipeline import Pipeline
