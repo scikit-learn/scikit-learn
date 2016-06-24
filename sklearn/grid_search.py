@@ -965,7 +965,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Does exhaustive search over a grid of parameters.
 
     :class:`ParameterSampler`:
-        A generator over parameter settins, constructed from
+        A generator over parameter settings, constructed from
         param_distributions.
 
     """
