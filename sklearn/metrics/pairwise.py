@@ -64,9 +64,9 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
 
     Specifically, this function first ensures that both X and Y are arrays,
     then checks that they are at least two dimensional while ensuring that
-    their elements are floats. Finally, the function checks that the size
-    of the second dimension of the two arrays is equal, or the equivalent
-    check for a precomputed distance matrix.
+    their elements are floats (or dtype if provided). Finally, the function
+    checks that the size of the second dimension of the two arrays is equal, or
+    the equivalent check for a precomputed distance matrix.
 
     Parameters
     ----------
@@ -77,6 +77,10 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     precomputed : bool
         True if X is to be treated as precomputed distances to the samples in
         Y.
+
+    dtype : string, type, list of types or None (default=None)
+        Data type required for X and Y. If None, the dtype will be an
+        appropriate float type selected by _return_float_dtype.
 
     Returns
     -------
