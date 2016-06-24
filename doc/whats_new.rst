@@ -281,7 +281,7 @@ Bug fixes
 
     - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
       with them as parameters, could not be passed to :func:`base.clone`.
-      By `Loic Eseve`_.
+      By `Loic Esteve`_.
 
 
 API changes summary
