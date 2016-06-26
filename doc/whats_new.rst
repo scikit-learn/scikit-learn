@@ -56,6 +56,11 @@ Bug fixes
      <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
      Thirion`_
 
+   - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
+     now support sparse input for prediction.
+     (`#6101 <https://github.com/scikit-learn/scikit-learn/pull/6101>`_)
+     By `Ibraim Ganiev`_.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
