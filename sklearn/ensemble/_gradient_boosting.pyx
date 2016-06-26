@@ -41,14 +41,14 @@ from numpy import float64 as np_float64
 cdef SIZE_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
-                                                     Node* root_node,
-                                                     double *value,
-                                                     double scale,
-                                                     Py_ssize_t k,
-                                                     Py_ssize_t K,
-                                                     Py_ssize_t n_samples,
-                                                     Py_ssize_t n_features,
-                                                     float64 *out):
+                                                      Node* root_node,
+                                                      double *value,
+                                                      double scale,
+                                                      Py_ssize_t k,
+                                                      Py_ssize_t K,
+                                                      Py_ssize_t n_samples,
+                                                      Py_ssize_t n_features,
+                                                      float64 *out):
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
     This function operates directly on the data arrays of the tree
@@ -99,7 +99,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
                 node = root_node + node.right_child
         out[i * K + k] += scale * value[node - root_node]
 
-@cython.nonecheck(False)
+
 def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators,
                                            object X, double scale,
                                            np.ndarray[float64, ndim=2] out):
@@ -179,7 +179,6 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     free(feature_to_sample)
 
 
-@cython.nonecheck(False)
 def predict_stages(np.ndarray[object, ndim=2] estimators,
                    object X, double scale,
                    np.ndarray[float64, ndim=2] out):
@@ -219,7 +218,6 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
 
-@cython.nonecheck(False)
 def predict_stage(np.ndarray[object, ndim=2] estimators,
                   int stage,
                   object X, double scale,
