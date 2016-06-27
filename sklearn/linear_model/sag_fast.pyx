@@ -264,9 +264,9 @@ def sag(SequentialDataset dataset,
     # the index (row number) of the current sample
     cdef int sample_ind
 
-    # the maximum change in weights, used to compute stopping criterea
+    # the maximum change in weights, used to compute stopping criteria
     cdef double max_change
-    # a holder variable for the max weight, used to compute stopping criterea
+    # a holder variable for the max weight, used to compute stopping criteria
     cdef double max_weight
 
     # the start time of the fit
