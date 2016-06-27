@@ -98,7 +98,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -346,7 +346,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -562,7 +562,7 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -702,7 +702,7 @@ def learning_curve(estimator, X, y, labels=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -915,7 +915,7 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
           - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various

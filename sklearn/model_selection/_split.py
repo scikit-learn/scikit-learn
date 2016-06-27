@@ -1385,7 +1385,7 @@ def check_cv(cv=3, y=None, classifier=False):
           - An iterable yielding train/test splits.
 
         For integer/None inputs, if classifier is True and ``y`` is either
-        binary or multiclass, :class:`StratifiedKFold` used. In all other
+        binary or multiclass, :class:`StratifiedKFold` is used. In all other
         cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
