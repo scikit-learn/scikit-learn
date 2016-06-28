@@ -657,19 +657,11 @@ def test_linearsvc_crammer_singer():
 
 def test_linearsvc_fit_sampleweight():
     # check correct result when sample_weight is 1
-    # check that SVR(kernel='linear') and LinearSVC() give
-    # comparable results
-
-    # Test basic routines using LinearSVC
     n_samples = len(X)
     unit_weight = np.ones(n_samples)
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    clf_unitweight = svm.LinearSVC(random_state=0).fit(X, Y,
-                                                  sample_weight=unit_weight)
-
-    # sanity check, by default should have intercept
-    assert_true(clf_unitweight.fit_intercept)
-    assert_array_almost_equal(clf_unitweight.intercept_, [0], decimal=3)
+    clf_unitweight = svm.LinearSVC(random_state=0).\
+        fit(X, Y, sample_weight=unit_weight)
 
     # check if same as sample_weight=None
     assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
@@ -681,8 +673,8 @@ def test_linearsvc_fit_sampleweight():
 
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
-    lsvc_unflat = svm.LinearSVC(random_state=0).fit(X, Y,
-                                                    sample_weight=random_weight)
+    lsvc_unflat = svm.LinearSVC(random_state=0).\
+        fit(X, Y, sample_weight=random_weight)
     pred1 = lsvc_unflat.predict(T)
 
     X_flat = np.repeat(X, random_weight, axis=0)

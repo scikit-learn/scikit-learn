@@ -119,12 +119,6 @@ def test_sample_weight_warning():
     for method in ['sigmoid', 'isotonic']:
         base_estimator = LinearSVC(random_state=42)
         calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
-        # LinearSVC does not currently support sample weights but they
-        # can still be used for the calibration step (with a warning)
-        msg = "LinearSVC does not support sample_weight."
-        assert_warns_message(
-            UserWarning, msg,
-            calibrated_clf.fit, X_train, y_train, sample_weight=sw_train)
         probs_with_sw = calibrated_clf.predict_proba(X_test)
 
         # As the weights are used for the calibration, they should still yield
