@@ -293,8 +293,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If the 
+        estimator is a classifier or if ``y`` is neither binary nor multiclass, 
+        :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

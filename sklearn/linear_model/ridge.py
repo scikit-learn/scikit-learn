@@ -1131,7 +1131,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used, else, :class:`KFold` is used.
+        :class:`sklearn.model_selection.StratifiedKFold` is used, else, 
+        :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
