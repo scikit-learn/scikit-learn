@@ -7,12 +7,14 @@
 #          Philippe Gervais <philippe.gervais@inria.fr>
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Giorgio Parini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
 import itertools
 
 import numpy as np
 from scipy.spatial import distance
+from scipy.spatial.distance import yule, dice, sokalsneath
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
@@ -527,6 +529,54 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     return D.reshape((-1, X.shape[1]))
 
 
+def _center_and_normalize(X, copy=False):
+    tol = np.finfo(X.dtype).eps * 100
+    # Make implicit copy
+    X = X - np.mean(X, axis=0)
+
+    norms = row_norms(X)
+    non_const_row = np.abs(norms) > tol
+    if non_const_row.all():  # if they are all above treshold
+        X /= norms[:, np.newaxis]
+    elif non_const_row.any() is False:
+        X[non_const_row, :] /= norms[non_const_row]
+        X[not non_const_row, :] = 0.0  # this hack will set correlation to 0
+    return X
+
+
+def _correlation_similarity(X, Y):
+    X, Y = check_pairwise_arrays(X, Y)
+
+    X_normalized = _center_and_normalize(X, copy=True)
+    if X is Y:
+        Y_normalized = X_normalized
+    else:
+        Y_normalized = _center_and_normalize(Y, copy=True)
+
+    K = safe_sparse_dot(X_normalized, Y_normalized.T)
+    return K
+
+
+def _correlation_distances(X, Y=None):
+    """
+    Fix for scipy.spatial.distance.correlation with constant input.
+    """
+
+    S = _correlation_similarity(X, Y)
+    S *= -1
+    S += 1
+
+    # Ensure non negativity.
+    # This may not be the case due to floating point rounding errors.
+    np.maximum(S, 0, out=S)
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        S.flat[::S.shape[0] + 1] = 0.0
+
+    return S
+
+
 def cosine_distances(X, Y=None):
     """Compute cosine distance between samples in X and Y.
 
@@ -556,7 +606,49 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
+
+    # Ensure non negativity.
+    # This may not be the case due to floating point rounding errors.
+    np.maximum(S, 0, out=S)
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        S.flat[::S.shape[0] + 1] = 0.0
+
     return S
+
+
+def _scipy_wrapper_binary_distances(X, Y, metric):
+    """
+    Catch those errors and return 0 instead
+        scipy.spatial.distance.yule         -> ZeroDivisionError
+        scipy.spatial.distance.dice         -> ZeroDivisionError
+        scipy.spatial.distance.sokalsneath  -> ValueError
+    """
+    if metric == 'yule' or metric == 'dice':
+        if metric == 'yule':
+            func = yule
+        else:
+            func = dice
+        error = ZeroDivisionError
+    elif metric == 'sokalsneath':
+        func = sokalsneath
+        error = ValueError
+
+    # They will be cast to float, but it's OK
+    X, Y = check_pairwise_arrays(X, Y)
+
+    mX, mY = X.shape[0], Y.shape[0]
+    K = np.zeros((mX, mY), dtype=np.double)
+
+    for i in np.arange(0, mX):
+        for j in np.arange(0, mY):
+            try:
+                K[i, j] = func(X[i, :], Y[j, :])
+            except error:
+                K[i, j] = 0.0
+
+    return K
 
 
 # Paired distances
@@ -1209,6 +1301,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
             raise TypeError("scipy distance metrics do not"
                             " support sparse matrices.")
         X, Y = check_pairwise_arrays(X, Y)
+
+        # Fixes errors raised by scipy with (almost) constant inputs
+        if metric == 'correlation':
+            return _correlation_distances(X, Y)
+        elif metric in ['yule', 'dice', 'sokalsneath']:
+            return _scipy_wrapper_binary_distances(X, Y, metric)
+
         if n_jobs == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
                                                       **kwds))

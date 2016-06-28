@@ -25,6 +25,7 @@ from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import _VALID_METRICS
 
 
 def test_gradient_descent_stops():
@@ -542,3 +543,35 @@ def test_index_offset():
     # Make sure translating between 1D and N-D indices are preserved
     assert_equal(_barnes_hut_tsne.test_index2offset(), 1)
     assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
+
+
+def test_constant_row_all():
+    binary_dist = ['yule', 'matching', 'dice', 'kulsinski', 'rogerstanimoto',
+                   'russellrao', 'sokalmichener', 'sokalsneath']
+
+    # Test correct handling of costant columns - real vectors
+    np.random.seed(42)
+    X = np.random.rand(10, 3)
+    for const in [0, 1]:
+        X[-1, :] = const
+        for metric in _VALID_METRICS:
+            # wminkowski is not compatible with tsne
+            if metric in binary_dist or metric == 'wminkowski':
+                continue
+            try:
+                tsne = TSNE(metric=metric)
+                tsne.fit_transform(X)
+            except ValueError:
+                assert False
+
+    # Test correct handling of costant columns - binary vectors
+    Y = np.random.randint(0, 1, (10, 10))
+    for const in [0, 1]:
+        Y[-1, :] = const
+        for metric in binary_dist:
+            try:
+                tsne = TSNE(metric=metric)
+                tsne.fit_transform(Y)
+            except ValueError:
+                print(metric + ' raised a ValueError.')
+                assert False
