@@ -82,6 +82,8 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
         Data type required for X and Y. If None, the dtype will be an
         appropriate float type selected by _return_float_dtype.
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
