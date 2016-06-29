@@ -13,6 +13,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
+from .optimal_nclusters_search import OptimalNClusterSearch
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
@@ -33,4 +34,5 @@ __all__ = ['AffinityPropagation',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',
-           'SpectralCoclustering']
+           'SpectralCoclustering',
+           'OptimalNClusterSearch']
