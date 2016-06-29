@@ -1209,7 +1209,8 @@ def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
     # 'ball_tree': uses sklearn.neighbors.dist_metrics
-    X = np.random.uniform(size=(6, 5))
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(6, 5))
     NN = neighbors.NearestNeighbors
 
     nn1 = NN(metric="jaccard", algorithm='brute').fit(X)
