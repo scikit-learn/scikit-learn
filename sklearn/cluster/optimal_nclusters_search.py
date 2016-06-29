@@ -202,6 +202,10 @@ class StabilitySearch(_NClusterSearchBase):
 
     def _estimator_fit(self, estimator, X, y, parameters):
         estimator.set_params(**parameters)
+        if parameters['n_clusters'] == 1:
+            warnings.warn('Put a warning.')
+            return np.nan, parameters
+
         draw_scores = np.empty(self.n_draws)
         for l, d in enumerate(self.data_):
             p1, p2 = np.split(d, 2)
@@ -284,6 +288,9 @@ class PhamSearch(_NClusterSearchBase):
         if self.n_clusters_values[0] == 0:
             scores[0, :] = 1.
 
+        # XXX change that to not modify the score
+        scores[scores > 0.85] = 1.
+
         return {
             'score': -scores.ravel(),
             'params': parameters[self._index].ravel(),
@@ -333,7 +340,7 @@ class GapSearch(_NClusterSearchBase):
         safety = np.array(safety).reshape(gap.shape)
 
         scores = (gap[self._index] - gap[1:][self._index[:-1]] +
-                  safety[1:][self._index[:-1]])
+                  safety[1:][self._index[:-1]]) >= 0
 
         return {
             'gap': gap[self._index].ravel(),
@@ -382,4 +389,4 @@ class OptimalNClusterSearch():
         self.results_ = self.scorer_.results_
         self.best_estimator_ = self.scorer_.best_estimator_
 
-        return self
+        return self.scorer_
