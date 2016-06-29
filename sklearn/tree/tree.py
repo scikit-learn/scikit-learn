@@ -297,9 +297,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 sample_weight = expanded_class_weight
 
         # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+        if self.min_weight_fraction_leaf != 0.:
+            if sample_weight is None:
+                sample_weight = np.repeat(1., n_samples)
+
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
+
         else:
             min_weight_leaf = 0.
 
@@ -577,7 +581,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        leaf node where weights are determined by sample_weight in the fit method.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -831,7 +835,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        leaf node where weights are determined by sample_weight in the fit method.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
