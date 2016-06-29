@@ -1207,8 +1207,8 @@ def test_dtype_convert():
 @ignore_warnings(category=DataConversionWarning)
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
-    #'brute'     : uses scipy.spatial.distance through pairwise_distances
-    #'ball_tree' : uses sklearn.neighbors.dist_metrics
+    # 'brute': uses scipy.spatial.distance through pairwise_distances
+    # 'ball_tree': uses sklearn.neighbors.dist_metrics
     X = np.random.uniform(size=(6, 5))
     NN = neighbors.NearestNeighbors
 
