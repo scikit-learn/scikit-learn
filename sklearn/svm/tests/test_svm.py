@@ -665,8 +665,7 @@ def test_linearsvc_fit_sampleweight():
 
     # check if same as sample_weight=None
     assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
-    assert_allclose(np.linalg.norm(clf.coef_),
-                    np.linalg.norm(clf_unitweight.coef_), 1, 0.0001)
+    assert_allclose(clf.coef_, clf_unitweight.coef_, 1, 0.0001)
 
     # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
     # X = X1 repeated n1 times, X2 repeated n2 times and so forth
@@ -683,8 +682,7 @@ def test_linearsvc_fit_sampleweight():
     pred2 = lsvc_flat.predict(T)
 
     assert_array_equal(pred1, pred2)
-    assert_allclose(np.linalg.norm(lsvc_unflat.coef_),
-                    np.linalg.norm(lsvc_flat.coef_), 1, 0.0001)
+    assert_allclose(lsvc_unflat.coef_, lsvc_flat.coef_, 1, 0.0001)
 
 
 def test_crammer_singer_binary():

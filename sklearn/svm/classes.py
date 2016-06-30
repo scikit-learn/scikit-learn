@@ -178,9 +178,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             Target vector relative to X
 
         sample_weight : array-like, shape = [n_samples], optional
-                        Array of weights that are assigned to individual
-                        samples. If not provided,
-                        then each sample is given unit weight.
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
 
         Returns
         -------
