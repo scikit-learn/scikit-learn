@@ -12,14 +12,20 @@ from math import sqrt, floor, ceil
 
 import numpy as np
 from scipy import linalg
+import scipy.sparse.linalg
 from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import check_array, check_random_state, gen_even_slices
-from ..utils.extmath import randomized_svd, row_norms
+from ..utils.extmath import randomized_svd, row_norms, norm
+from ..utils.random import choice
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
+
+
+# atoms with square norm below are considered zero
+_ATOM_NORM_TOLERANCE = 1e-10
 
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
@@ -256,9 +262,402 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     return code
 
 
-def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
-                 random_state=None):
-    """Update the dense dictionary factor in place.
+def _init_dict_from_samples(X, n_components, random_state):
+    samples_norms_squared = np.sum(X*X, axis=1)
+    nonzero_examples = list(
+        np.where(samples_norms_squared > _ATOM_NORM_TOLERANCE)[0])
+
+    if len(nonzero_examples) < n_components:
+        # this is not effective, but still allowed
+        replace = True
+    else:
+        replace = False
+    chosen_examples = choice(nonzero_examples, replace=replace,
+                             size=n_components, random_state=random_state)
+    return X[chosen_examples, :]
+
+
+def _worst_represented_example(X, dictionary, sparse_codes):
+    """Find the sample that has the most representation error."""
+
+    residuals = X - np.dot(sparse_codes, dictionary)
+    errors_squared = np.sum(residuals * residuals, axis=1)
+    worst_index = np.argmax(errors_squared)
+    return X[worst_index, :]
+
+
+def _init_dict(X, n_components, code_init, dict_init, method, random_state):
+    if code_init is not None and dict_init is not None:
+        code = np.array(code_init, order='F')
+        # Don't copy V, it will happen below
+        dictionary = dict_init
+    else:
+        if method == 'svd':
+            code, S, dictionary = linalg.svd(X, full_matrices=False)
+            dictionary = S[:, np.newaxis] * dictionary
+        elif method == 'sample':
+            n_samples = X.shape[0]
+            code = np.zeros((n_samples, n_components))
+            dictionary = _init_dict_from_samples(X, n_components, random_state)
+        else:
+            raise ValueError("Unknown init method " + method)
+
+    dict_size = len(dictionary)
+    if n_components <= dict_size:  # True even if n_components=None
+        code = code[:, :n_components]
+        dictionary = dictionary[:n_components, :]
+    else:
+        code = np.c_[code, np.zeros((len(code), n_components - dict_size))]
+        dictionary = np.r_[dictionary,
+                           np.zeros((n_components - dict_size,
+                                     dictionary.shape[1]))]
+    # Fortran-order dict, as we are going to access its row vectors
+    dictionary = np.array(dictionary, order='F')
+
+    return code, dictionary
+
+
+def _decompose_svd(residual):
+    """Decompose the residual using 1-rank SVD."""
+
+    # Sparse version is used because non-sparse does not allow to
+    # set the desired number of singular values.
+    U, S, V = scipy.sparse.linalg.svds(residual, 1)
+    # U is unitary, so d is normalized
+    d = U.ravel()
+    g = np.dot(V.T, S).ravel()
+    return d, g
+
+
+def _decompose_projections(residual, g_old):
+    """Decompose the residual using SVD-approximating projections."""
+
+    d = np.dot(residual, g_old)
+    d_norm = norm(d)
+    if d_norm >= _ATOM_NORM_TOLERANCE:
+        d /= d_norm
+    g = np.dot(residual.T, d)
+    return d, g
+
+
+def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
+    """Update single dictionary atom and the corresponding codes."""
+
+    atom_usages = np.nonzero(sparse_codes[:, atom_index])[0]
+    if len(atom_usages) == 0:
+        # replace with the new atom
+        atom = _worst_represented_example(X, dictionary, sparse_codes)
+        dictionary[atom_index, :] = atom / norm(atom)
+    elif len(atom_usages) == 1:
+        # update is trivial if the atom is used in only one sample
+        atom = X[atom_usages[0], :]
+        atom_norm = norm(atom)
+        dictionary[atom_index, :] = atom / atom_norm
+        sparse_codes[atom_usages[0], atom_index] = atom_norm
+    else:
+        dictionary[atom_index, :] = 0
+        representation = np.dot(sparse_codes[atom_usages, :], dictionary)
+        residual = (X[atom_usages, :] - representation).T
+        if approximate_svd:
+            atom, atom_codes = _decompose_projections(
+                residual, sparse_codes[atom_usages, atom_index])
+        else:
+            atom, atom_codes = _decompose_svd(residual)
+        dictionary[atom_index, :] = atom
+        sparse_codes[atom_usages, atom_index] = atom_codes.T
+
+    return dictionary, sparse_codes
+
+
+def _update_dict(dictionary, X, codes, method, verbose=0, random_state=None):
+    if method in ('lars', 'cd'):
+        dictionary, residual = _update_dict_cd(dictionary.T, X.T, codes.T,
+                                               verbose=verbose, return_r2=True,
+                                               random_state=random_state)
+    else:  # method in ('ksvd', 'exact_ksvd'):
+        approximate_svd = (method == 'ksvd')
+        n_components = dictionary.shape[0]
+
+        for atom_index in range(n_components):
+            dictionary, codes = _atom_update(
+                X, atom_index, dictionary, codes, approximate_svd)
+
+        residual = norm(X - np.dot(codes, dictionary))
+
+    return dictionary, codes, residual
+
+
+# TODO: --- TODO-later ---
+# TODO: add ``...`` for all code gists in the doc?
+# TODO: add math-typing for formulas
+
+
+# TODO: add notes how to get K-SVD and how to get old L1-dict-learning
+# TODO: why old dict_learning converges so fast?
+# TODO: returned errors are target values sometimes
+# TODO: validate str arguments in the sub-functions
+# TODO: questions:
+# TODO: * add paper reference for the L1 minimization (which paper?)
+# TODO: * rename old local variables in dict_learning?
+# TODO:   (incompatible because of callback(locals())
+# TODO: * code_init is useless?
+# TODO: * svd-init ignores code if it is given
+
+# TODO: * fix documentation for encode_method (lars -> lasso_lars,
+# TODO:   cd -> lasso_cd), add  other sparse coding methods
+# TODO: * callback only each 5-th iteration?
+# TODO: * rename error->cost
+def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
+                  n_nonzero_coefs=None,
+                  method='lars', coding_method=None,
+                  init_method='svd', n_jobs=1,
+                  dict_init=None, code_init=None, random_state=None,
+                  verbose=0, callback=None, return_n_iter=False):
+
+    """Solve a dictionary learning matrix factorization problem.
+
+    Find the best dictionary (D) and the corresponding sparse code (C)
+    for approximating the data matrix X: X ~= C*D.
+
+    The actual minimization problem depends on the sparse coding method
+    (see `encode_method` parameter documentation).
+
+    If the method is based on L1-minimization, the problem to solve is
+
+        (C^*, D^*) = argmin 0.5 || X - C D ||_2^2 + alpha * || C ||_1
+                      (C,D)
+            with || D_k ||_2 = 1 for all 0 <= k < n_components.
+
+    If the method is based on L0-minimization, the problem to solve is
+
+        (C^*, D^*) = argmin || X - C D ||_2^2  s.t.
+                      (C,D)
+                     ||C_i||_0 <= alpha for all i <= i < n_samples
+
+            with || D_k ||_2 = 1 for all 0 <= k < n_components.
+
+    The minimization is done by alternative iteration between sparse
+    coding (using encode_method) and dictionary update (using
+    dict_update_method).
+
+    In order to get the K-SVD dictionary learning method choose
+    ``encode_method='omp'``, ``dict_update_method='ksvd'`` and
+    ``init_method='sample'``.
+
+    In order to get L1 ###TODO###
+
+    Parameters
+    ----------
+    X : array of shape (n_samples, n_features)
+        Matrix with training data.
+
+    n_components : int
+        Number of dictionary atoms to extract.
+
+    alpha : float
+        Regularization coefficient for the L1 case.
+
+    max_iter : int
+        Maximum number of iterations to perform.
+
+    tol : float
+        Tolerance for early stopping.
+
+    n_nonzero_coefs: int, 0.1 * n_features by default
+        Number of nonzero coefficients to target in each column of the
+        solution. This is used by L0 dictionary learning methods.
+
+    method: {'lars', 'cd', 'ksvd', 'exact_ksvd'}
+        Method for dictionary learning.  The default ``coding_method``
+        depends on this argument.
+        lars : update dictionary using block component wise
+            coordinate descent.  Default ``coding_method`` is 'lasso_lars'.
+        cd: update dictionary using block component wise
+            coordinate descent.  Default ``coding_method`` is 'lasso_cd'.
+        ksvd : update atoms separately using approximate 1-svd
+            error matrix decomposition; in the most cases this
+            method is more preferable than the 'exact_ksvd' as it
+            gives good precision but works faster.  Default
+            ``coding_method`` is 'omp'.
+        exact_ksvd : update atoms separately using exact 1-svd
+            error matrix decomposition.  Default ``coding_method``
+            is 'omp'.
+
+    coding_method : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}
+        Method for sparse coding step.  Default value depends on the
+        value of ``method``.
+        L1-minimization methods:
+            lars : uses the least angle regression method
+                (linear_model.lars_path)
+            lasso_lars : uses Lars to compute the Lasso solution
+            lasso_cd : uses the coordinate descent method to compute the
+                Lasso solution (linear_model.Lasso). lasso_lars will be
+                faster if the estimated components are sparse.
+        L0-minimization methods:
+            omp : uses orthogonal matching pursuit to estimate the
+                sparse solution (linear_model.orthogonal_mp)
+            threshold : squashes to zero all coefficients less than
+                alpha from the projection dictionary * data.T
+
+
+    init_method : {'svd', 'sample'}
+        Method for the dictionary and code initialization.
+            svd : perform SVD decomposition to get dictionary and codes;
+            sample : take random samples from the training data as
+                dictionary components, set codes to code_init or zero.
+        If the dict_init parameter is given, this parameter is ignored.
+        The code_init parameter without dict_init parameter is ignored
+        by 'svd' and used for code initialization by 'sample'.
+
+    n_jobs : int
+        Number of parallel jobs to run, or -1 to autodetect.
+
+    dict_init : array of shape (n_components, n_features),
+        Initial value for the dictionary for warm restart scenarios.
+        If this parameter is given, the initialization method is
+        ignored.
+
+    code_init : array of shape (n_samples, n_components),
+        Initial value for the sparse code for warm restart scenarios.
+        If this parameters is given, but dict_init is not, the code
+        initialization may be used or may be ignored depending on the
+        init_method.
+
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    verbose : int
+        How much information the procedure will print.
+
+    callback : function
+        Callable that gets invoked every five iterations with dict
+        with local variables as argument.
+
+    return_n_iter : bool
+        Whether or not to return the number of iterations.
+
+
+    Returns
+    -------
+    code : array of shape (n_samples, n_components)
+        The sparse code factor (C) in the matrix factorization.
+
+    dictionary : array of shape (n_components, n_features),
+        The dictionary factor (D) in the matrix factorization.
+
+    errors : array
+        Vector of errors at each iteration.
+
+    n_iter : int
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to True.
+
+    Notes
+    -----
+    The L1 dictionary learning implementation is based on:
+    Kreutz-Delgado, Kenneth, et al., Dictionary learning algorithms
+    for sparse representation. Neural computation 15.2 (2003): 349-396.
+
+    The L0 dictionary learning implementation is based on:
+    Rubinstein, R., Zibulevsky, M. and Elad, M., Efficient Implementation
+    of the K-SVD Algorithm using Batch Orthogonal Matching Pursuit. Technical
+    Report- CS Technion, April 2008.
+    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+
+    See also
+    --------
+    dict_learning_online
+    DictionaryLearning
+    MiniBatchDictionaryLearning
+    SparsePCA
+    MiniBatchSparsePCA
+
+    """
+
+    if method in ('lars', 'cd'):
+        problem_type = 'L1'
+    elif method in ('ksvd', 'exact_ksvd'):
+        problem_type = 'L0'
+    else:
+        raise ValueError('Unknown dictionary learning method ' + method)
+    if coding_method is None:
+        if method in ('lars', 'cd'):
+            coding_method = 'lasso_' + method
+        else:
+            coding_method = 'omp'
+
+    t0 = time.time()
+    # Avoid integer division problems
+    alpha = float(alpha)
+    random_state = check_random_state(random_state)
+
+    if n_jobs == -1:
+        n_jobs = cpu_count()
+
+    code, dictionary = _init_dict(X, n_components, code_init, dict_init,
+                                  init_method, random_state)
+
+    residuals = 0
+
+    errors = []
+    current_cost = np.nan
+
+    if verbose == 1:
+        print('[dict_learning]', end=' ')
+
+    # If max_iter is 0, number of iterations returned should be zero
+    ii = -1
+
+    for ii in range(max_iter):
+        dt = (time.time() - t0)
+        if verbose == 1:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+        elif verbose:
+            print ("Iteration % 3i "
+                   "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                   % (ii, dt, dt / 60, current_cost))
+
+        # Update code
+        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
+                             n_nonzero_coefs=n_nonzero_coefs, init=code,
+                             n_jobs=n_jobs)
+        # Update dictionary
+        dictionary, codes, residuals = _update_dict(
+            dictionary.T, X.T, code.T, method,
+            verbose=verbose, random_state=random_state)
+        dictionary = dictionary.T
+
+        # Cost function
+        if problem_type == 'L1':
+            current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
+        else:
+            current_cost = residuals
+        errors.append(current_cost)
+
+        if ii > 0:
+            dE = errors[-2] - errors[-1]
+            # assert(dE >= -tol * errors[-1])
+            if dE < tol * errors[-1]:
+                if verbose == 1:
+                    # A line return
+                    print("")
+                elif verbose:
+                    print("--- Convergence reached after %d iterations" % ii)
+                break
+        if ii % 5 == 0 and callback is not None:
+            callback(locals())
+
+    if return_n_iter:
+        return code, dictionary, errors, ii + 1
+    else:
+        return code, dictionary, errors
+
+
+
+def _update_dict_cd(dictionary, Y, code, verbose=False, return_r2=False,
+                    random_state=None):
+    """Update the dense dictionary factor using coordinate descent.
 
     Parameters
     ----------
@@ -328,7 +727,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     return dictionary
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
+def dict_learning_old(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False):
@@ -470,7 +869,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
                              init=code, n_jobs=n_jobs)
         # Update dictionary
-        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
+        dictionary, residuals = _update_dict_cd(dictionary.T, X.T, code.T,
                                              verbose=verbose, return_r2=True,
                                              random_state=random_state)
         dictionary = dictionary.T
@@ -681,7 +1080,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         B += np.dot(this_X.T, this_code.T)
 
         # Update dictionary
-        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
+        dictionary = _update_dict_cd(dictionary, B, A, verbose=verbose,
                                   random_state=random_state)
         # XXX: Can the residuals be of any use?
 
@@ -852,6 +1251,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         return self
 
 
+# TODO: add all necessary params and docstring them
 class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     """Dictionary learning
 
@@ -957,6 +1357,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
     """
     def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
+                 n_nonzero_coefs=None,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
@@ -966,6 +1367,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs)
         self.alpha = alpha
+        self.n_nonzer_coefs = n_nonzero_coefs
         self.max_iter = max_iter
         self.tol = tol
         self.fit_algorithm = fit_algorithm
@@ -996,8 +1398,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             n_components = self.n_components
 
         V, U, E, self.n_iter_ = dict_learning(
-            X, n_components, self.alpha,
+            X, n_components, alpha=self.alpha,
             tol=self.tol, max_iter=self.max_iter,
+            n_nonzero_coefs=self.n_nonzer_coefs,
             method=self.fit_algorithm,
             n_jobs=self.n_jobs,
             code_init=self.code_init,

@@ -2,7 +2,7 @@
 """
 
 
-import numpy
+import numpy as np
 import scipy.sparse.linalg
 
 from ..base import BaseEstimator
@@ -20,9 +20,9 @@ _ATOM_NORM_TOLERANCE = 1e-6
 def _worst_represented_example(X, dictionary, sparse_codes):
     """Find the sample that has the most representation error."""
 
-    residuals = X - numpy.dot(sparse_codes, dictionary)
-    errors_squared = numpy.sum(residuals * residuals, axis=1)
-    worst_index = numpy.argmax(errors_squared)
+    residuals = X - np.dot(sparse_codes, dictionary)
+    errors_squared = np.sum(residuals * residuals, axis=1)
+    worst_index = np.argmax(errors_squared)
     return X[worst_index, :]
 
 
@@ -34,26 +34,27 @@ def _decompose_svd(residual):
     U, S, V = scipy.sparse.linalg.svds(residual, 1)
     # U is unitary, so d is normalized
     d = U.ravel()
-    g = numpy.dot(V.T, S).ravel()
+    g = np.dot(V.T, S).ravel()
     return d, g
 
 
 def _decompose_projections(residual, g_old):
     """Decompose the residual using SVD-approximating projections."""
 
-    d = numpy.dot(residual, g_old)
+    d = np.dot(residual, g_old)
     d_norm = norm(d)
     if d_norm >= _ATOM_NORM_TOLERANCE:
         d /= d_norm
-    g = numpy.dot(residual.T, d)
+    g = np.dot(residual.T, d)
     return d, g
 
 
 def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
     """Update single dictionary atom and the corresponding codes."""
 
-    atom_usages = numpy.nonzero(sparse_codes[:, atom_index])[0]
+    atom_usages = np.nonzero(sparse_codes[:, atom_index])[0]
     if len(atom_usages) == 0:
+        # replace with the new atom
         atom = _worst_represented_example(X, dictionary, sparse_codes)
         dictionary[atom_index, :] = atom / norm(atom)
     elif len(atom_usages) == 1:
@@ -64,7 +65,7 @@ def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
         sparse_codes[atom_usages[0], atom_index] = atom_norm
     else:
         dictionary[atom_index, :] = 0
-        representation = numpy.dot(sparse_codes[atom_usages, :], dictionary)
+        representation = np.dot(sparse_codes[atom_usages, :], dictionary)
         residual = (X[atom_usages, :] - representation).T
         if approximate_svd:
             atom, atom_codes = _decompose_projections(
@@ -79,14 +80,14 @@ def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
 
 def _reconstruction_error(X, dictionary, sparse_codes):
     """Calculate the total reconstruction error for data."""
-    errors = X - numpy.dot(sparse_codes, dictionary)
+    errors = X - np.dot(sparse_codes, dictionary)
     return norm(errors)
 
 
 def _init_dictionary_from_samples(X, n_components, random_state):
-    samples_norms_squared = numpy.sum(X*X, axis=1)
+    samples_norms_squared = np.sum(X*X, axis=1)
     nonzero_examples = list(
-        numpy.where(samples_norms_squared > _ATOM_NORM_TOLERANCE)[0])
+        np.where(samples_norms_squared > _ATOM_NORM_TOLERANCE)[0])
 
     if len(nonzero_examples) < n_components:
         # this is not effective, but still allowed
@@ -155,10 +156,6 @@ def learn_dictionary_ksvd(X, n_nonzero_coefs, n_components, iteration_count,
 
     Notes
     -----
-    This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
-    M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
-    Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
 
@@ -175,7 +172,7 @@ def learn_dictionary_ksvd(X, n_nonzero_coefs, n_components, iteration_count,
         dictionary = init_dictionary.copy()
 
     dictionary = normalize(dictionary)
-    sparse_codes = numpy.zeros((n_samples, n_components))
+    sparse_codes = np.zeros((n_samples, n_components))
 
     errors = []
     for iteration in range(iteration_count):
