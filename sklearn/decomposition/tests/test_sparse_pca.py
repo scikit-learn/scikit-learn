@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import if_not_mac_os
+from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from sklearn.utils import check_random_state
@@ -71,7 +71,7 @@ def test_fit_transform():
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
-@if_not_mac_os()
+@if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel():
     alpha = 1
     rng = np.random.RandomState(0)
@@ -89,10 +89,8 @@ def test_fit_transform_parallel():
 
 
 def test_transform_nan():
-    """
-    Test that SparsePCA won't return NaN when there is 0 feature in all
-    samples.
-    """
+    # Test that SparsePCA won't return NaN when there is 0 feature in all
+    # samples.
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     Y[:, 0] = 0

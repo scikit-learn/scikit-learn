@@ -17,12 +17,17 @@ from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
+from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
+
+    It implements a variant of Random Kitchen Sinks.[1]
+
+    Read more in the :ref:`User Guide <rbf_kernel_approx>`.
 
     Parameters
     ----------
@@ -41,6 +46,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     -----
     See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
     Benjamin Recht.
+
+    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
+    minimization with randomization in learning" by A. Rahimi and
+    Benjamin Recht.
+    (http://www.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
     def __init__(self, gamma=1., n_components=100, random_state=None):
@@ -89,6 +99,8 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'random_weights_')
+
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
@@ -100,6 +112,8 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
+
+    Read more in the :ref:`User Guide <skewed_chi_kernel_approx>`.
 
     Parameters
     ----------
@@ -173,6 +187,8 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        check_is_fitted(self, 'random_weights_')
+
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
         if (X < 0).any():
@@ -202,6 +218,8 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     Optimal choices for the sampling interval for certain data ranges can be
     computed (see the reference). The default values should be reasonable.
 
+    Read more in the :ref:`User Guide <additive_chi_kernel_approx>`.
+
     Parameters
     ----------
     sample_steps : int, optional
@@ -227,9 +245,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     References
     ----------
     See `"Efficient additive kernels via explicit feature maps"
-    <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
-    Vedaldi, A. and Zisserman, A., Computer Vision and Pattern Recognition 2010
-
+    <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>`_
+    A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
+    2011
     """
 
     def __init__(self, sample_steps=2, sample_interval=None):
@@ -268,6 +286,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
         """
+        msg = ("%(name)s is not fitted. Call fit to set the parameters before"
+               " calling transform")
+        check_is_fitted(self, "sample_interval_", msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
@@ -342,6 +363,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     Constructs an approximate feature map for an arbitrary kernel
     using a subset of the data as basis.
+
+    Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
 
     Parameters
     ----------
@@ -429,10 +452,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X : array-like, shape=(n_samples, n_feature)
             Training data.
         """
-
+        X = check_array(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
-        if not sp.issparse(X):
-            X = np.asarray(X)
         n_samples = X.shape[0]
 
         # get basis vectors
@@ -456,6 +477,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
+        S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
         self.components_ = basis
         self.component_indices_ = inds
@@ -477,11 +499,14 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
+        check_is_fitted(self, 'components_')
+        X = check_array(X, accept_sparse='csr')
 
+        kernel_params = self._get_kernel_params()
         embedded = pairwise_kernels(X, self.components_,
                                     metric=self.kernel,
                                     filter_params=True,
-                                    **self._get_kernel_params())
+                                    **kernel_params)
         return np.dot(embedded, self.normalization_.T)
 
     def _get_kernel_params(self):

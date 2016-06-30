@@ -120,7 +120,7 @@ efficient.
 The input matrix :math:`A` is preprocessed as follows:
 
 .. math::
-    A_n = R^{−1/2} A C^{−1/2}
+    A_n = R^{-1/2} A C^{-1/2}
 
 Where :math:`R` is the diagonal matrix with entry :math:`i` equal to
 :math:`\sum_{j} A_{ij}` and :math:`C` is the diagonal matrix with
@@ -140,7 +140,7 @@ are used to form the matrix :math:`Z`:
                         C^{-1/2} V
           \end{bmatrix}
 
-where the the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
+where the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
 1}`, and similarly for :math:`V`.
 
 Then the rows of :math:`Z` are clustered using :ref:`k-means
@@ -174,7 +174,7 @@ The :class:`SpectralBiclustering` algorithm assumes that the input
 data matrix has a hidden checkerboard structure. The rows and columns
 of a matrix with this structure may be partitioned so that the entries
 of any bicluster in the Cartesian product of row clusters and column
-clusters is are approximately constant. For instance, if there are two
+clusters are approximately constant. For instance, if there are two
 row partitions and three column partitions, each row will belong to
 three biclusters, and each column will belong to two biclusters.
 

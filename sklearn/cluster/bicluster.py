@@ -14,6 +14,7 @@ from scipy.sparse import issparse
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..externals import six
+from ..utils import check_random_state
 from ..utils.arpack import eigsh, svds
 
 from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
@@ -140,12 +141,18 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                 # some eigenvalues of A * A.T are negative, causing
                 # sqrt() to be np.nan. This causes some vectors in vt
                 # to be np.nan.
-                _, v = eigsh(safe_sparse_dot(array.T, array),
-                             ncv=self.n_svd_vecs)
+                A = safe_sparse_dot(array.T, array)
+                random_state = check_random_state(self.random_state)
+                # initialize with [-1,1] as in ARPACK
+                v0 = random_state.uniform(-1, 1, A.shape[0])
+                _, v = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
                 vt = v.T
             if np.any(np.isnan(u)):
-                _, u = eigsh(safe_sparse_dot(array, array.T),
-                             ncv=self.n_svd_vecs)
+                A = safe_sparse_dot(array, array.T)
+                random_state = check_random_state(self.random_state)
+                # initialize with [-1,1] as in ARPACK
+                v0 = random_state.uniform(-1, 1, A.shape[0])
+                _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
         assert_all_finite(u)
         assert_all_finite(vt)
@@ -181,6 +188,8 @@ class SpectralCoclustering(BaseSpectral):
     row and each column belongs to exactly one bicluster.
 
     Supports sparse matrices, as long as they are nonnegative.
+
+    Read more in the :ref:`User Guide <spectral_coclustering>`.
 
     Parameters
     ----------
@@ -293,6 +302,8 @@ class SpectralBiclustering(BaseSpectral):
     belong to three biclusters, and each column will belong to two
     biclusters. The outer product of the corresponding row and column
     label vectors gives this checkerboard structure.
+
+    Read more in the :ref:`User Guide <spectral_biclustering>`.
 
     Parameters
     ----------

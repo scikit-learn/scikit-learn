@@ -3,7 +3,7 @@ Multi-dimensional Scaling (MDS)
 """
 
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 
@@ -11,7 +11,7 @@ import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, check_symmetric
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..isotonic import IsotonicRegression
@@ -65,14 +65,10 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         Number of iterations run.
 
     """
+    similarities = check_symmetric(similarities, raise_exception=True)
+
     n_samples = similarities.shape[0]
     random_state = check_random_state(random_state)
-
-    if similarities.shape[0] != similarities.shape[1]:
-        raise ValueError("similarities must be a square array (shape=%d)" %
-                         n_samples)
-    if not np.allclose(similarities, similarities.T):
-        raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()
     sim_flat_w = sim_flat[sim_flat != 0]
@@ -278,6 +274,8 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
+    Read more in the :ref:`User Guide <multidimensional_scaling>`.
+
     Parameters
     ----------
     metric : boolean, optional, default: True
@@ -361,7 +359,7 @@ class MDS(BaseEstimator):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, init=None, y=None):
+    def fit(self, X, y=None, init=None):
         """
         Computes the position of the points in the embedding space
 
@@ -378,7 +376,7 @@ class MDS(BaseEstimator):
         self.fit_transform(X, init=init)
         return self
 
-    def fit_transform(self, X, init=None, y=None):
+    def fit_transform(self, X, y=None, init=None):
         """
         Fit the data from X, and returns the embedded coordinates
 
@@ -393,11 +391,12 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array.
 
         """
+        X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           " dissimilarity matrix from data. To use a custom "
                           "dissimilarity matrix, set "
-                          "``dissimilarity=precomputed``.")
+                          "``dissimilarity='precomputed'``.")
 
         if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X

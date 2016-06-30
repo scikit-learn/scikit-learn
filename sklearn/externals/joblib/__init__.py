@@ -14,7 +14,7 @@ data and has specific optimizations for `numpy` arrays. It is
 
 
     ============================== ============================================
-    **User documentation**:        http://packages.python.org/joblib
+    **User documentation**:        http://pythonhosted.org/joblib
 
     **Download packages**:         http://pypi.python.org/pypi/joblib#downloads
 
@@ -58,7 +58,6 @@ Main features
    inputs and  outputs: Python functions. Joblib can save their
    computation to disk and rerun it only if necessary::
 
-      >>> import numpy as np
       >>> from sklearn.externals.joblib import Memory
       >>> mem = Memory(cachedir='/tmp/joblib')
       >>> import numpy as np
@@ -75,7 +74,7 @@ Main features
       >>> c = square(a)
       >>> # The above call did not trigger an evaluation
 
-2) **Embarrassingly parallel helper:** to make is easy to write readable
+2) **Embarrassingly parallel helper:** to make it easy to write readable
    parallel code and debug it quickly::
 
       >>> from sklearn.externals.joblib import Parallel, delayed
@@ -87,7 +86,7 @@ Main features
 3) **Logging/tracing:** The different functionalities will
    progressively acquire better logging mechanism to help track what
    has been ran, and capture I/O easily. In addition, Joblib will
-   provide a few I/O primitives, to easily define define logging and
+   provide a few I/O primitives, to easily define logging and
    display streams, and provide a way of compiling a report.
    We want to be able to quickly inspect what has been run.
 
@@ -100,7 +99,23 @@ Main features
 
 """
 
-__version__ = '0.8.3'
+# PEP0440 compatible formatted version, see:
+# https://www.python.org/dev/peps/pep-0440/
+#
+# Generic release markers:
+# X.Y
+# X.Y.Z # For bugfix releases
+#
+# Admissible pre-release markers:
+# X.YaN # Alpha release
+# X.YbN # Beta release
+# X.YrcN # Release Candidate
+# X.Y # Final release
+#
+# Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+# 'X.Y.dev0' is the canonical version of 'X.Y.dev'
+#
+__version__ = '0.9.4'
 
 
 from .memory import Memory, MemorizedResult

@@ -15,7 +15,7 @@ from scipy.stats import chi2
 
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet, pinvh
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 
 
 # Minimum Covariance Determinant
@@ -58,6 +58,10 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     random_state : integer or numpy.RandomState, optional
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
+
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
 
     Returns
     -------
@@ -210,10 +214,16 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         Maximum number of iterations for the c_step procedure.
         (2 is enough to be close to the final solution. "Never" exceeds 20).
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, default None
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
 
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
+
+    verbose : boolean, default False
+        Control the output verbosity.
 
     See Also
     ---------
@@ -288,6 +298,8 @@ def fast_mcd(X, support_fraction=None,
              random_state=None):
     """Estimates the Minimum Covariance Determinant matrix.
 
+    Read more in the :ref:`User Guide <robust_covariance>`.
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -303,6 +315,10 @@ def fast_mcd(X, support_fraction=None,
         The generator used to randomly subsample. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
 
     Notes
     -----
@@ -345,11 +361,7 @@ def fast_mcd(X, support_fraction=None,
     """
     random_state = check_random_state(random_state)
 
-    X = np.asarray(X)
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. "
-                      "You may want to reshape your data array")
+    X = check_array(X, ensure_min_samples=2, estimator='fast_mcd')
     n_samples, n_features = X.shape
 
     # minimum breakdown value
@@ -497,6 +509,8 @@ class MinCovDet(EmpiricalCovariance):
     One should consider projection pursuit methods to deal with multi-modal
     datasets.
 
+    Read more in the :ref:`User Guide <robust_covariance>`.
+
     Parameters
     ----------
     store_precision : bool
@@ -591,6 +605,7 @@ class MinCovDet(EmpiricalCovariance):
             Returns self.
 
         """
+        X = check_array(X, ensure_min_samples=2, estimator='MinCovDet')
         random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank

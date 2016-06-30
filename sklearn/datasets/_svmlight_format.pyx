@@ -1,7 +1,7 @@
 # Optimized inner loop of load_svmlight_file.
 #
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -29,7 +29,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id):
     cdef array.array data, indices, indptr, query
     cdef bytes line
-    cdef char *hash_ptr, *line_cstr
+    cdef char *hash_ptr
+    cdef char *line_cstr
     cdef int idx, prev_idx
     cdef Py_ssize_t i
     cdef bytes qid_prefix = b('qid')
@@ -64,7 +65,10 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
         target, features = line_parts[0], line_parts[1:]
         if multilabel:
-            target = [float(y) for y in target.split(COMMA)]
+            if COLON in target:
+                target, features = [], line_parts[0:]
+            else:
+                target = [float(y) for y in target.split(COMMA)]
             target.sort()
             labels.append(tuple(target))
         else:
@@ -73,16 +77,16 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
         prev_idx = -1
         n_features = len(features)
-        if n_features and line_parts[1].startswith(qid_prefix):
-            _, value = line_parts[1].split(COLON, 1)
+        if n_features and features[0].startswith(qid_prefix):
+            _, value = features[0].split(COLON, 1)
             if query_id:
                 array.resize_smart(query, len(query) + 1)
                 query[len(query) - 1] = int(value)
-            line_parts.pop(1)
+            features.pop(0)
             n_features -= 1
 
-        for i in xrange(1, n_features + 1):
-            idx_s, value = line_parts[i].split(COLON, 1)
+        for i in xrange(0, n_features):
+            idx_s, value = features[i].split(COLON, 1)
             idx = int(idx_s)
             if idx < 0 or not zero_based and idx == 0:
                 raise ValueError(

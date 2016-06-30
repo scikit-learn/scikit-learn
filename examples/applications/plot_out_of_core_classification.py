@@ -40,12 +40,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from sklearn.externals import six
 from sklearn.externals.six.moves import html_parser
 from sklearn.externals.six.moves import urllib
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.naive_bayes import MultinomialNB
@@ -285,7 +284,7 @@ minibatch_size = 1000
 minibatch_iterators = iter_minibatches(data_stream, minibatch_size)
 total_vect_time = 0.0
 
-# Main loop : iterate on mini-batchs of examples
+# Main loop : iterate on mini-batches of examples
 for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 
     tick = time.time()
@@ -363,7 +362,7 @@ for cls_name, stats in sorted(cls_stats.items()):
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+bar_colors = ['b', 'g', 'r', 'c', 'm', 'y']
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
@@ -390,7 +389,6 @@ plt.show()
 
 # Plot prediction times
 plt.figure()
-#fig = plt.gcf()
 cls_runtime = []
 cls_names = list(sorted(cls_stats.keys()))
 for cls_name, stats in sorted(cls_stats.items()):
@@ -399,7 +397,6 @@ cls_runtime.append(parsing_time)
 cls_names.append('Read/Parse\n+Feat.Extr.')
 cls_runtime.append(vectorizing_time)
 cls_names.append('Hashing\n+Vect.')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,

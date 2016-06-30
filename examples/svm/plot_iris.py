@@ -30,7 +30,7 @@ kernel and its parameters.
 .. NOTE:: while plotting the decision function of classifiers for toy 2D
    datasets can help get an intuitive understanding of their respective
    expressive power, be aware that those intuitions don't always generalize to
-   more realistic high-dimensional problem.
+   more realistic high-dimensional problems.
 
 """
 print(__doc__)
@@ -70,7 +70,7 @@ titles = ['SVC with linear kernel',
 
 for i, clf in enumerate((svc, lin_svc, rbf_svc, poly_svc)):
     # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
     plt.subplot(2, 2, i + 1)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
 

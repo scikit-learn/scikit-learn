@@ -1,4 +1,4 @@
-"""Utilities to evaluate the clustering performance of models
+"""Utilities to evaluate the clustering performance of models.
 
 Functions named as *_score return a scalar value to maximize: the higher the
 better.
@@ -7,6 +7,8 @@ better.
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Wei LI <kuantkid@gmail.com>
 #          Diego Molla <dmolla-aliod@gmail.com>
+#          Arnaud Fouchet <foucheta@gmail.com>
+#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
 from math import log
@@ -16,6 +18,7 @@ from scipy.sparse import coo_matrix
 import numpy as np
 
 from .expected_mutual_info_fast import expected_mutual_information
+from ...utils.fixes import bincount
 
 
 def comb2(n):
@@ -25,7 +28,7 @@ def comb2(n):
 
 
 def check_clusterings(labels_true, labels_pred):
-    """Check that the two clusterings matching 1D integer arrays"""
+    """Check that the two clusterings matching 1D integer arrays."""
     labels_true = np.asarray(labels_true)
     labels_pred = np.asarray(labels_pred)
 
@@ -43,8 +46,8 @@ def check_clusterings(labels_true, labels_pred):
     return labels_true, labels_pred
 
 
-def contingency_matrix(labels_true, labels_pred, eps=None):
-    """Build a contengency matrix describing the relationship between labels.
+def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000):
+    """Build a contingency matrix describing the relationship between labels.
 
     Parameters
     ----------
@@ -59,6 +62,11 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
         matrix. This helps to stop NaN propagation.
         If ``None``, nothing is adjusted.
 
+    max_n_classes : int, optional (default=5000)
+        Maximal number of classeses handled for contingency_matrix.
+        This help to avoid Memory error with regression target
+        for mutual_information.
+
     Returns
     -------
     contingency: array, shape=[n_classes_true, n_classes_pred]
@@ -71,6 +79,14 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
     clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
+    if n_classes > max_n_classes:
+        raise ValueError("Too many classes for a clustering metric. If you "
+                         "want to increase the limit, pass parameter "
+                         "max_n_classes to the scoring function")
+    if n_clusters > max_n_classes:
+        raise ValueError("Too many clusters for a clustering metric. If you "
+                         "want to increase the limit, pass parameter "
+                         "max_n_classes to the scoring function")
     # Using coo_matrix to accelerate simple histogram calculation,
     # i.e. bins are consecutive integers
     # Currently, coo_matrix is faster than histogram2d for simple cases
@@ -86,8 +102,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
 
 # clustering measures
 
-def adjusted_rand_score(labels_true, labels_pred):
-    """Rand index adjusted for chance
+def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000):
+    """Rand index adjusted for chance.
 
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
@@ -108,6 +124,8 @@ def adjusted_rand_score(labels_true, labels_pred):
 
         adjusted_rand_score(a, b) == adjusted_rand_score(b, a)
 
+    Read more in the :ref:`User Guide <adjusted_rand_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -116,9 +134,14 @@ def adjusted_rand_score(labels_true, labels_pred):
     labels_pred : array, shape = [n_samples]
         Cluster labels to evaluate
 
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
+
     Returns
     -------
-    ari: float
+    ari : float
        Similarity score between -1.0 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
@@ -156,9 +179,9 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985`
-      http://www.springerlink.com/content/x64124718341j1j0/
+      http://link.springer.com/article/10.1007%2FBF01908075
 
-    .. [wk] http://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
     See also
     --------
@@ -172,12 +195,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     # Special limit cases: no clustering since the data is not split;
     # or trivial clustering where each document is assigned a unique cluster.
     # These are perfect matches hence return 1.0.
-    if (classes.shape[0] == clusters.shape[0] == 1
-            or classes.shape[0] == clusters.shape[0] == 0
-            or classes.shape[0] == clusters.shape[0] == len(labels_true)):
+    if (classes.shape[0] == clusters.shape[0] == 1 or
+            classes.shape[0] == clusters.shape[0] == 0 or
+            classes.shape[0] == clusters.shape[0] == len(labels_true)):
         return 1.0
 
-    contingency = contingency_matrix(labels_true, labels_pred)
+    contingency = contingency_matrix(labels_true, labels_pred,
+                                     max_n_classes=max_n_classes)
 
     # Compute the ARI using the contingency data
     sum_comb_c = sum(comb2(n_c) for n_c in contingency.sum(axis=1))
@@ -189,8 +213,9 @@ def adjusted_rand_score(labels_true, labels_pred):
     return ((sum_comb - prod_comb) / (mean_comb - prod_comb))
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred):
-    """Compute the homogeneity and completeness and V-Measure scores at once
+def homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                       max_n_classes=5000):
+    """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
     the clustering labeling to evaluate given the knowledge of a Ground
@@ -213,6 +238,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     ``label_pred`` will give the same score. This does not hold for
     homogeneity and completeness.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -220,6 +247,11 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
+
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
 
     Returns
     -------
@@ -246,7 +278,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     entropy_C = entropy(labels_true)
     entropy_K = entropy(labels_pred)
 
-    MI = mutual_info_score(labels_true, labels_pred)
+    MI = mutual_info_score(labels_true, labels_pred,
+                           max_n_classes=max_n_classes)
 
     homogeneity = MI / (entropy_C) if entropy_C else 1.0
     completeness = MI / (entropy_K) if entropy_K else 1.0
@@ -254,14 +287,14 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
     else:
-        v_measure_score = (2.0 * homogeneity * completeness
-                           / (homogeneity + completeness))
+        v_measure_score = (2.0 * homogeneity * completeness /
+                           (homogeneity + completeness))
 
     return homogeneity, completeness, v_measure_score
 
 
-def homogeneity_score(labels_true, labels_pred):
-    """Homogeneity metric of a cluster labeling given a ground truth
+def homogeneity_score(labels_true, labels_pred, max_n_classes=5000):
+    """Homogeneity metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies homogeneity if all of its clusters
     contain only data points which are members of a single class.
@@ -274,6 +307,8 @@ def homogeneity_score(labels_true, labels_pred):
     will return the :func:`completeness_score` which will be different in
     general.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -281,6 +316,11 @@ def homogeneity_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
+
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
 
     Returns
     -------
@@ -329,11 +369,12 @@ def homogeneity_score(labels_true, labels_pred):
       0.0...
 
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[0]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              max_n_classes)[0]
 
 
-def completeness_score(labels_true, labels_pred):
-    """Completeness metric of a cluster labeling given a ground truth
+def completeness_score(labels_true, labels_pred, max_n_classes=5000):
+    """Completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
@@ -346,6 +387,8 @@ def completeness_score(labels_true, labels_pred):
     will return the :func:`homogeneity_score` which will be different in
     general.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -353,6 +396,11 @@ def completeness_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
+
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
 
     Returns
     -------
@@ -397,10 +445,11 @@ def completeness_score(labels_true, labels_pred):
       0.0
 
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              max_n_classes)[1]
 
 
-def v_measure_score(labels_true, labels_pred):
+def v_measure_score(labels_true, labels_pred, max_n_classes=5000):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score`.
@@ -418,6 +467,8 @@ def v_measure_score(labels_true, labels_pred):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <homogeneity_completeness>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -425,6 +476,11 @@ def v_measure_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
+
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
 
     Returns
     -------
@@ -490,11 +546,13 @@ def v_measure_score(labels_true, labels_pred):
       0.0...
 
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              max_n_classes)[2]
 
 
-def mutual_info_score(labels_true, labels_pred, contingency=None):
-    """Mutual Information between two clusterings
+def mutual_info_score(labels_true, labels_pred, contingency=None,
+                      max_n_classes=5000):
+    """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`P(i)` is the probability of a random sample
@@ -518,6 +576,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -531,6 +591,11 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
 
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the mutual_info_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
+
     Returns
     -------
     mi: float
@@ -543,7 +608,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-        contingency = contingency_matrix(labels_true, labels_pred)
+        contingency = contingency_matrix(labels_true, labels_pred,
+                                         max_n_classes=max_n_classes)
     contingency = np.array(contingency, dtype='float')
     contingency_sum = np.sum(contingency)
     pi = np.sum(contingency, axis=1)
@@ -557,13 +623,13 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision
     log_outer = -np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())
-    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum))
-          + contingency_nm * log_outer)
+    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
+          contingency_nm * log_outer)
     return mi.sum()
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred):
-    """Adjusted Mutual Information between two clusterings
+def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
+    """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
     Information (MI) score to account for chance. It accounts for the fact that
@@ -585,6 +651,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Be mindful that this function is an order of magnitude slower than other
     metrics, such as the Adjusted Rand Index.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -592,6 +660,11 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
 
     Returns
     -------
@@ -631,7 +704,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
        <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
 
     .. [2] `Wikipedia entry for the Adjusted Mutual Information
-       <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -640,10 +713,11 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     clusters = np.unique(labels_pred)
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
-    if (classes.shape[0] == clusters.shape[0] == 1
-            or classes.shape[0] == clusters.shape[0] == 0):
+    if (classes.shape[0] == clusters.shape[0] == 1 or
+            classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
-    contingency = contingency_matrix(labels_true, labels_pred)
+    contingency = contingency_matrix(labels_true, labels_pred,
+                                     max_n_classes=max_n_classes)
     contingency = np.array(contingency, dtype='float')
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
@@ -656,8 +730,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred):
-    """Normalized Mutual Information between two clusterings
+def normalized_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
+    """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
@@ -676,6 +750,8 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
+    Read more in the :ref:`User Guide <mutual_info_score>`.
+
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
@@ -683,6 +759,11 @@ def normalized_mutual_info_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
+
+    max_n_classes: int, optional (default=5000)
+        Maximal number of classes handled by the adjusted_rand_score
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
 
     Returns
     -------
@@ -719,10 +800,11 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     clusters = np.unique(labels_pred)
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
-    if (classes.shape[0] == clusters.shape[0] == 1
-            or classes.shape[0] == clusters.shape[0] == 0):
+    if (classes.shape[0] == clusters.shape[0] == 1 or
+            classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
-    contingency = contingency_matrix(labels_true, labels_pred)
+    contingency = contingency_matrix(labels_true, labels_pred,
+                                     max_n_classes=max_n_classes)
     contingency = np.array(contingency, dtype='float')
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
@@ -734,12 +816,91 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     return nmi
 
 
+def fowlkes_mallows_score(labels_true, labels_pred, max_n_classes=5000):
+    """Measure the similarity of two clusterings of a set of points.
+
+    The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
+    the precision and recall::
+
+        FMI = TP / sqrt((TP + FP) * (TP + FN))
+
+    Where ``TP`` is the number of **True Positive** (i.e. the number of pair of
+    points that belongs in the same clusters in both ``labels_true`` and
+    ``labels_pred``), ``FP`` is the number of **False Positive** (i.e. the
+    number of pair of points that belongs in the same clusters in
+    ``labels_true`` and not in ``labels_pred``) and ``FN`` is the number of
+    **False Negative** (i.e the number of pair of points that belongs in the
+    same clusters in ``labels_pred`` and not in ``labels_True``).
+
+    The score ranges from 0 to 1. A high value indicates a good similarity
+    between two clusters.
+
+    Read more in the :ref:`User Guide <fowlkes_mallows_scores>`.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = (``n_samples``,)
+        A clustering of the data into disjoint subsets.
+
+    labels_pred : array, shape = (``n_samples``, )
+        A clustering of the data into disjoint subsets.
+
+    max_n_classes : int, optional (default=5000)
+        Maximal number of classes handled by the Fowlkes-Mallows
+        metric. Setting it too high can lead to MemoryError or OS
+        freeze
+
+    Returns
+    -------
+    score : float
+       The resulting Fowlkes-Mallows score.
+
+    Examples
+    --------
+
+    Perfect labelings are both homogeneous and complete, hence have
+    score 1.0::
+
+      >>> from sklearn.metrics.cluster import fowlkes_mallows_score
+      >>> fowlkes_mallows_score([0, 0, 1, 1], [0, 0, 1, 1])
+      1.0
+      >>> fowlkes_mallows_score([0, 0, 1, 1], [1, 1, 0, 0])
+      1.0
+
+    If classes members are completely split across different clusters,
+    the assignment is totally random, hence the FMI is null::
+
+      >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
+      0.0
+
+    References
+    ----------
+    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+       hierarchical clusterings". Journal of the American Statistical
+       Association
+       <http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf>`_
+
+    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
+           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+    """
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred,)
+    n_samples, = labels_true.shape
+
+    c = contingency_matrix(labels_true, labels_pred,
+                           max_n_classes=max_n_classes)
+    tk = np.dot(c.ravel(), c.ravel()) - n_samples
+    pk = np.sum(np.sum(c, axis=0) ** 2) - n_samples
+    qk = np.sum(np.sum(c, axis=1) ** 2) - n_samples
+
+    return tk / np.sqrt(pk * qk) if tk != 0. else 0.
+
+
 def entropy(labels):
     """Calculates the entropy for a labeling."""
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float)
+    pi = bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for

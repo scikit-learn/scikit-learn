@@ -108,7 +108,7 @@ div.navbar ul li a:hover {
     /*The min-height is added here, to prevent the element from shrinking
     too much, while the scripts are still loading the search-bar.
     Without it, layout glitches occur, as the element keeps dynamically
-    changing it's size while its loading-contents adjusts into position.*/
+    changing its size while its loading-contents adjusts into position.*/
     min-height: 42px;
 }
 
@@ -142,8 +142,10 @@ div.content-wrapper {
 }
 
 div.content {
-    margin-left: 210px;
-    padding-bottom: 10px;
+    z-index: 1;
+    position: relative;
+    background-color: #FFF;
+    padding-left: 15px;
 }
 
 div.example_digits {
@@ -254,6 +256,7 @@ div.sphinxsidebar {
     border-left-width: 0;
     border-bottom-width: 0;
     margin-top: 0;
+    position: absolute;
 }
 
 div.sphinxsidebar h3 {
@@ -277,9 +280,45 @@ div.sphinxsidebarwrapper {
 
 {% if theme_collapsiblesidebar|tobool %}
 /* for collapsible sidebar */
-div#sidebarbutton {
+.nav-trigger {
+    position: fixed;
+    clip: rect(0, 0, 0, 0);
+}
+
+.nav-trigger + label:after {
+    content: '»';
+}
+
+label[for="nav-trigger"] {
+    position: fixed;
+    margin-left: 0px;
+    padding-top: 100px;
+    z-index: 2;
+    width: 15px;
+    height: 80%;
+    cursor: pointer;
+    background-size: contain;
     background-color: #F6F6F6;
-    position: relative;
+    border-radius: 10px 0px 0px 10px;
+}
+
+label[for="nav-trigger"]:hover {
+    background-color: #D0D0D0;
+}
+
+.nav-trigger:checked + label {
+    margin-left: 200px;
+}
+
+.nav-trigger:checked + label:after {
+    content: '«';
+}
+
+.nav-trigger:checked ~ div.content {
+    margin-left: 200px;
+}
+.nav-trigger + label, div.content {
+    transition: left 0.4s;
 }
 {% endif %}
 
@@ -476,16 +515,23 @@ div.highlight-python pre {
     clear: right !important;
 }
 
-tt {
+tt, code {
     background-color: #ecf0f3;
     color: #222;
     /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
+    border: none;
+    padding: none;
 }
 
 a tt {
 	color: inherit;
+}
+
+
+a code {
+    color: inherit;
 }
 
 .viewcode-back {
@@ -628,122 +674,6 @@ div.sprint-wrapper:hover {
 }
 
 /*-----------------------The Examples Gallery-------------------------------*/
-
-/* ------- Fix maximum size of thumbnails in example gallery -------------- */
-.thumbnailContainer .figure img {
-    max-width: 160px;
-    max-height: 160px;
-    display: block;
-    margin: auto;
-}
-
-.thumbnailContainer {
-    float: left;
-    width: 182px;
-    height: 242px;
-    overflow: auto;
-}
-
-/* Standard browsers hover */
-
-.thumbnailContainer .figure:hover img ,
-.thumbnailContainer .figure:focus img,
-.thumbnailContainer  .figure:active img{
-  z-index: 100;
-  /* --> Full image size */
-  /*width: 240px;*/
-  /*height: 132px;*/
-  -webkit-background-size: 240px 160px; /* Saf3-4 */
-  -moz-background-size: 240px 160px; /* FF3.6 */
-  background-size: 240px 160px; /* Opera, IE9, Saf5, Chrome, FF4 */
-  /* --> Half of height sutraction (Full image height - Thumbnail image height) */
-  margin-top: -0px;
-  /* IE6+IE7 does not hover because of z-index stacking context bug:
-     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
-  /* --> Thumbnail image size */
-  *width: 160px;
-  *height: 145px;
-  *margin-top: 0;
-  *margin-left: 0;
-  background: transparent;
-}
-
-/* IE hover */
-
-.photos .photo:hover img,
-.photos .photo:focus img,
-.photos .photo:active img {
-  z-index: 100;
-  /* --> Full image size */
-  width: 240px;
-  height: 132px;
-  /* IE6+IE7 does not hover because of z-index stacking context bug:
-     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
-  /* --> Thumbnail image size */
-  *width: 160px;
-  *height: 145px;
-}
-
-/* Styling for example galleries */
-
-.thumbnailContainer .figure {
-    float: left;
-    margin: 10px;
-    -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
-    -moz-border-radius: 10px; /* FF1-3.6 */
-    border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
-    border: 2px solid #fff;
-    background-color: white;
-    /* --> Thumbnail image size */
-    width: 150px;
-    height: 100px;
-    -webkit-background-size: 150px 100px; /* Saf3-4 */
-    -moz-background-size: 150px 100px; /* FF3.6 */
-}
-
-.thumbnailContainer .figure img {
-    display: inline;
-}
-
-div.docstringWrapper p.caption {
-    display: block;
-    -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
-    -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
-    padding: 0px;
-    border: white;
-}
-
-div.docstringWrapper p {
-    display: none;
-    background-color: white;
-    -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
-    -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* FF3.5 - 3.6 */
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
-    padding: 13px;
-    margin-top: 0px;
-    border-style: solid;
-    border-width: 1px;
-}
-
-.class,
-.function {
-	clear: both
-}
-
-.documentwrapper {
-	position: absolute;  /* Internal floats are separate to external */
-}
-
-.section:after {
-    clear: both;
-}
-
-
-/* The hover-effect for the examples gallery was adapted from Martin Michálek's
-/* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
-
-/*------------------------------------------------------------------------*/
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
@@ -1259,10 +1189,6 @@ li#other-versions {
   z-index: 100;
 }
 
-div.container-index {
-  margin-left: -210px;
-}
-
 
 @media all and (max-width: 780px) {
   .fork-me {
@@ -1273,6 +1199,29 @@ div.container-index {
     display: none;
   }
 
+
+{% if theme_collapsiblesidebar|tobool %}
+  div.content {
+    margin-left: 200px;
+  }
+  .nav-trigger + label:after {
+    content: '«';
+  }
+  label[for="nav-trigger"] {
+    margin-left: 200px;
+  }
+
+  .nav-trigger:checked + label {
+    margin-left: 0px;
+  }
+  .nav-trigger:checked + label:after {
+    content: '»';
+  }
+  .nav-trigger:checked ~ div.content {
+    margin-left: 0px;
+  }
+
+{%- else %}
   .sphinxsidebar {
     display: none;
   }
@@ -1281,9 +1230,10 @@ div.container-index {
     margin-left: 0;
   }
 
+{% endif %}
 
   div.container-index {
-    margin-left: 0;
+    margin-left: -215px;
   }
 
 }

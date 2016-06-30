@@ -1,4 +1,4 @@
-"""
+r"""
 =====================================================================
 The Johnson-Lindenstrauss bound for embedding with random projections
 =====================================================================
@@ -8,7 +8,7 @@ The `Johnson-Lindenstrauss lemma`_ states that any high dimensional
 dataset can be randomly projected into a lower dimensional Euclidean
 space while controlling the distortion in the pairwise distances.
 
-.. _`Johnson-Lindenstrauss lemma`: http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+.. _`Johnson-Lindenstrauss lemma`: https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
 
 Theoretical bounds
@@ -18,7 +18,8 @@ The distortion introduced by a random projection `p` is asserted by
 the fact that `p` is defining an eps-embedding with good probability
 as defined by:
 
-  (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
+.. math::
+   (1 - eps) \|u - v\|^2 < \|p(u) - p(v)\|^2 < (1 + eps) \|u - v\|^2
 
 Where u and v are any rows taken from a dataset of shape [n_samples,
 n_features] and p is a projection by a random Gaussian N(0, 1) matrix
@@ -27,7 +28,8 @@ with shape [n_components, n_features] (or a sparse Achlioptas matrix).
 The minimum number of components to guarantees the eps-embedding is
 given by:
 
-  n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
+.. math::
+   n\_components >= 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
 
 
 The first plot shows that with an increasing number of samples ``n_samples``,
@@ -42,7 +44,7 @@ dimensions ``n_components`` for a given number of samples ``n_samples``
 Empirical validation
 ====================
 
-We validate the above bounds on the the digits dataset or on the 20 newsgroups
+We validate the above bounds on the digits dataset or on the 20 newsgroups
 text document (TF-IDF word frequencies) dataset:
 
 - for the digits dataset, some 8x8 gray level pixels data for 500
@@ -118,7 +120,6 @@ plt.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
 plt.xlabel("Number of observations to eps-embed")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
-plt.show()
 
 # range of admissible distortions
 eps_range = np.linspace(0.01, 0.99, 100)
@@ -136,7 +137,6 @@ plt.legend(["n_samples = %d" % n for n in n_samples_range], loc="upper right")
 plt.xlabel("Distortion eps")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
-plt.show()
 
 # Part 2: perform sparse random projection of some digits images which are
 # quite low dimensional and dense or documents of the 20 newsgroups dataset
@@ -174,7 +174,7 @@ for n_components in n_components_range:
         projected_data, squared=True).ravel()[nonzero]
 
     plt.figure()
-    plt.hexbin(dists, projected_dists, gridsize=100)
+    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu)
     plt.xlabel("Pairwise squared distances in original space")
     plt.ylabel("Pairwise squared distances in projected space")
     plt.title("Pairwise distances distribution for n_components=%d" %
@@ -192,7 +192,8 @@ for n_components in n_components_range:
     plt.ylabel("Distribution of samples pairs")
     plt.title("Histogram of pairwise distance rates for n_components=%d" %
               n_components)
-    plt.show()
 
     # TODO: compute the expected value of eps and add them to the previous plot
     # as vertical lines / region
+
+plt.show()

@@ -5,12 +5,14 @@
 # License: BSD 3 clause
 
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
+from ..utils.validation import check_is_fitted
 from .base import LinearRegression
-
+from ..utils.validation import has_fit_parameter
 
 _EPSILON = np.spacing(1)
 
@@ -58,6 +60,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     A detailed description of the algorithm can be found in the documentation
     of the ``linear_model`` sub-package.
+
+    Read more in the :ref:`User Guide <ransac_regression>`.
 
     Parameters
     ----------
@@ -131,6 +135,22 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             lambda dy: np.sum(np.abs(dy), axis=1)
 
+        NOTE: residual_metric is deprecated from 0.18 and will be removed in 0.20
+        Use ``loss`` instead.
+
+    loss: string, callable, optional, default "absolute_loss"
+        String inputs, "absolute_loss" and "squared_loss" are supported which
+        find the absolute loss and squared loss per sample
+        respectively.
+
+        If ``loss`` is a callable, then it should be a function that takes
+        two arrays as inputs, the true and predicted value and returns a 1-D
+        array with the ``i``th value of the array corresponding to the loss
+        on `X[i]`.
+
+        If the loss on a sample is greater than the ``residual_threshold``, then
+        this sample is classified as an outlier.
+
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -150,7 +170,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/RANSAC
+    .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
@@ -160,7 +180,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
                  stop_probability=0.99, residual_metric=None,
-                 random_state=None):
+                 loss='absolute_loss', random_state=None):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -173,8 +193,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.stop_probability = stop_probability
         self.residual_metric = residual_metric
         self.random_state = random_state
+        self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
@@ -184,6 +205,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values.
+
+        sample_weight: array-like, shape = [n_samples]
+            Individual weights for each sample
+            raises error if sample_weight is passed and base_estimator
+            fit method does not support it.
 
         Raises
         ------
@@ -195,8 +221,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         """
         X = check_array(X, accept_sparse='csr')
         y = check_array(y, ensure_2d=False)
-        if y.ndim == 1:
-            y = y.reshape(-1, 1)
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:
@@ -230,10 +254,33 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         else:
             residual_threshold = self.residual_threshold
 
-        if self.residual_metric is None:
-            residual_metric = lambda dy: np.sum(np.abs(dy), axis=1)
+        if self.residual_metric is not None:
+            warnings.warn(
+                "'residual_metric' will be removed in version 0.20. Use "
+                "'loss' instead.", DeprecationWarning)
+
+        if self.loss == "absolute_loss":
+            if y.ndim == 1:
+                loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
+            else:
+                loss_function = lambda \
+                    y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
+
+        elif self.loss == "squared_loss":
+            if y.ndim == 1:
+                loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
+            else:
+                loss_function = lambda \
+                    y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+
+        elif callable(self.loss):
+            loss_function = self.loss
+
         else:
-            residual_metric = self.residual_metric
+            raise ValueError(
+                "loss should be 'absolute_loss', 'squared_loss' or a callable."
+                "Got %s. " % self.loss)
+
 
         random_state = check_random_state(self.random_state)
 
@@ -241,6 +288,17 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             base_estimator.set_params(random_state=random_state)
         except ValueError:
             pass
+
+        estimator_fit_has_sample_weight = has_fit_parameter(base_estimator,
+                                                            "sample_weight")
+        estimator_name = type(base_estimator).__name__
+        if (sample_weight is not None and not
+                estimator_fit_has_sample_weight):
+            raise ValueError("%s does not support sample_weight. Samples"
+                             " weights are only used for the calibration"
+                             " itself." % estimator_name)
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
 
         n_inliers_best = 0
         score_best = np.inf
@@ -268,7 +326,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                 continue
 
             # fit model for current random sample set
-            base_estimator.fit(X_subset, y_subset)
+            if sample_weight is None:
+                base_estimator.fit(X_subset, y_subset)
+            else:
+                base_estimator.fit(X_subset, y_subset,
+                                   sample_weight=sample_weight[subset_idxs])
 
             # check if estimated model is valid
             if (self.is_model_valid is not None and not
@@ -277,10 +339,15 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # residuals of all data for current random sample model
             y_pred = base_estimator.predict(X)
-            if y_pred.ndim == 1:
-                y_pred = y_pred[:, None]
 
-            residuals_subset = residual_metric(y_pred - y)
+            # XXX: Deprecation: Remove this if block in 0.20
+            if self.residual_metric is not None:
+                diff = y_pred - y
+                if diff.ndim == 1:
+                    diff = diff.reshape(-1, 1)
+                residuals_subset = self.residual_metric(diff)
+            else:
+                residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold
@@ -289,6 +356,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             # less inliers -> skip current random sample
             if n_inliers_subset < n_inliers_best:
                 continue
+            if n_inliers_subset == 0:
+                raise ValueError("No inliers found, possible cause is "
+                    "setting residual_threshold ({0}) too low.".format(
+                    self.residual_threshold))
 
             # extract inlier data set
             inlier_idxs_subset = sample_idxs[inlier_mask_subset]
@@ -351,6 +422,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
+        check_is_fitted(self, 'estimator_')
+
         return self.estimator_.predict(X)
 
     def score(self, X, y):
@@ -371,4 +444,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         z : float
             Score of the prediction.
         """
+        check_is_fitted(self, 'estimator_')
+
         return self.estimator_.score(X, y)

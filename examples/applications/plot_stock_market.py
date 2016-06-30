@@ -68,15 +68,18 @@ import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import finance
+try:
+     from matplotlib.finance import quotes_historical_yahoo_ochl
+except ImportError:
+     # quotes_historical_yahoo_ochl was named quotes_historical_yahoo before matplotlib 1.4
+     from matplotlib.finance import quotes_historical_yahoo as quotes_historical_yahoo_ochl
 from matplotlib.collections import LineCollection
-
 from sklearn import cluster, covariance, manifold
 
 ###############################################################################
 # Retrieve the data from Internet
 
-# Choose a time period reasonnably calm (not too long ago so that we get
+# Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
 d1 = datetime.datetime(2003, 1, 1)
 d2 = datetime.datetime(2008, 1, 1)
@@ -130,7 +133,7 @@ symbol_dict = {
     'XRX': 'Xerox',
     'LMT': 'Lookheed Martin',
     'WMT': 'Wal-Mart',
-    'WAG': 'Walgreen',
+    'WBA': 'Walgreen',
     'HD': 'Home Depot',
     'GSK': 'GlaxoSmithKline',
     'PFE': 'Pfizer',
@@ -146,7 +149,7 @@ symbol_dict = {
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
+quotes = [quotes_historical_yahoo_ochl(symbol, d1, d2, asobject=True)
           for symbol in symbols]
 
 open = np.array([q.open for q in quotes]).astype(np.float)

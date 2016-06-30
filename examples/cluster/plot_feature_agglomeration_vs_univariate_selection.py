@@ -30,9 +30,9 @@ from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
 from sklearn.externals.joblib import Memory
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import KFold
 
 ###############################################################################
 # Generate data
@@ -60,7 +60,7 @@ y += noise_coef * noise  # add noise
 
 ###############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
-cv = KFold(len(y), 2)  # cross-validation generator for model selection
+cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
 cachedir = tempfile.mkdtemp()
 mem = Memory(cachedir=cachedir, verbose=1)
@@ -68,7 +68,7 @@ mem = Memory(cachedir=cachedir, verbose=1)
 # Ward agglomeration followed by BayesianRidge
 connectivity = grid_to_graph(n_x=size, n_y=size)
 ward = FeatureAgglomeration(n_clusters=10, connectivity=connectivity,
-                            memory=mem, n_components=1)
+                            memory=mem)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 # Select the optimal number of parcels with grid search
 clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1, cv=cv)
@@ -85,7 +85,7 @@ clf = Pipeline([('anova', anova), ('ridge', ridge)])
 clf = GridSearchCV(clf, {'anova__percentile': [5, 10, 20]}, cv=cv)
 clf.fit(X, y)  # set the best parameters
 coef_ = clf.best_estimator_.steps[-1][1].coef_
-coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_)
+coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_.reshape(1, -1))
 coef_selection_ = coef_.reshape(size, size)
 
 ###############################################################################

@@ -64,8 +64,8 @@ For instance::
     % python fetch_data.py
 
 
-Loading the 20 newgroups dataset
---------------------------------
+Loading the 20 newsgroups dataset
+---------------------------------
 
 The dataset is called "Twenty Newsgroups". Here is the official
 description, quoted from the `website
@@ -184,7 +184,7 @@ The most intuitive way to do so is the bags of words representation:
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
-larger that 100,000.
+larger than 100,000.
 
 If ``n_samples == 10000``, storing ``X`` as a numpy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
@@ -251,7 +251,7 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: http://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
 
 
 Both **tf** and **tf–idf** can be computed as follows::
@@ -351,7 +351,7 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5)),
+  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
   ... ])
   >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
   >>> predicted = text_clf.predict(docs_test)
@@ -367,19 +367,20 @@ analysis of the results::
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.94      0.82      0.87       319
-           comp.graphics       0.88      0.98      0.92       389
-                 sci.med       0.95      0.89      0.92       396
-  soc.religion.christian       0.90      0.95      0.92       398
+             alt.atheism       0.95      0.81      0.87       319
+           comp.graphics       0.88      0.97      0.92       389
+                 sci.med       0.94      0.90      0.92       396
+  soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
              avg / total       0.92      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[261,  10,  12,  36],
-         [  5, 380,   2,   2],
-         [  7,  32, 353,   4],
-         [  6,  11,   4, 377]])
+  array([[258,  11,  15,  35],
+         [  4, 379,   3,   3],
+         [  5,  33, 355,   3],
+         [  5,  10,   4, 379]])
+
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and christian are more often confused for one another than
@@ -392,7 +393,7 @@ with computer graphics.
   has many samples.
 
   By setting ``loss="hinge"`` and ``penalty="l2"`` we are configuring
-  the classifier model to tune it's parameters for the linear Support
+  the classifier model to tune its parameters for the linear Support
   Vector Machine cost function.
 
   Alternatively we could have used ``sklearn.svm.LinearSVC`` (Linear
@@ -419,7 +420,7 @@ parameters on a grid of possible values. We try out all classifiers
 on either words or bigrams, with or without idf, and with a penalty
 parameter of either 0.01 or 0.001 for the linear SVM::
 
-  >>> from sklearn.grid_search import GridSearchCV
+  >>> from sklearn.model_selection import GridSearchCV
   >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
   ...               'tfidf__use_idf': (True, False),
   ...               'clf__alpha': (1e-2, 1e-3),
@@ -442,24 +443,25 @@ to speed up the computation::
 The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
 that we can use to ``predict``::
 
-  >>> twenty_train.target_names[gs_clf.predict(['God is love'])]
+  >>> twenty_train.target_names[gs_clf.predict(['God is love'])[0]]
   'soc.religion.christian'
 
-but otherwise, it's a pretty large and clumsy object. We can, however, get the
-optimal parameters out by inspecting the object's ``grid_scores_`` attribute,
-which is a list of parameters/score pairs. To get the best scoring attributes,
-we can do::
+The object's ``best_score_`` and ``best_params_`` attributes store the best
+mean score and the parameters setting corresponding to that score::
 
-  >>> best_parameters, score, _ = max(gs_clf.grid_scores_, key=lambda x: x[1])
+  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
+  0.900...
   >>> for param_name in sorted(parameters.keys()):
-  ...     print("%s: %r" % (param_name, best_parameters[param_name]))
+  ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-  >>> score                                              # doctest: +ELLIPSIS
-  0.902...
+A more detailed summary of the search is available at ``gs_clf.results_``.
+
+The ``results_`` parameter can be easily imported into pandas as a
+``DataFrame`` for further inspection.
 
 .. note:
 
@@ -552,7 +554,7 @@ upon the completion of this tutorial:
   at the :ref:`Multiclass and multilabel section <multiclass>`
 
 * Try using :ref:`Truncated SVD <LSA>` for
-  `latent semantic analysis <http://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
+  `latent semantic analysis <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
 
 * Have a look at using
   :ref:`Out-of-core Classification

@@ -3,7 +3,7 @@
 Cross-validation on Digits Dataset Exercise
 =============================================
 
-A tutorial excercise using Cross-validation with an SVM on the Digits dataset.
+A tutorial exercise using Cross-validation with an SVM on the Digits dataset.
 
 This exercise is used in the :ref:`cv_generators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
@@ -12,7 +12,8 @@ print(__doc__)
 
 
 import numpy as np
-from sklearn import cross_validation, datasets, svm
+from sklearn.model_selection import cross_val_score
+from sklearn import datasets, svm
 
 digits = datasets.load_digits()
 X = digits.data
@@ -25,7 +26,7 @@ scores = list()
 scores_std = list()
 for C in C_s:
     svc.C = C
-    this_scores = cross_validation.cross_val_score(svc, X, y, n_jobs=1)
+    this_scores = cross_val_score(svc, X, y, n_jobs=1)
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 

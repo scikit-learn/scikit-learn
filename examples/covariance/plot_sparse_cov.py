@@ -39,8 +39,8 @@ Finally, the coefficients of the l1 precision estimate are biased toward
 zero: because of the penalty, they are all smaller than the corresponding
 ground truth value, as can be seen on the figure.
 
-Note that, the color range of the precision matrices is tweeked to
-improve readibility of the figure. The full range of values of the
+Note that, the color range of the precision matrices is tweaked to
+improve readability of the figure. The full range of values of the
 empirical precision is not displayed.
 
 The alpha parameter of the GraphLasso setting the sparsity of the model is

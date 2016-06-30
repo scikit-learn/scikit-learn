@@ -12,7 +12,7 @@ samples of the dataset.
 
 The main theoretical result behind the efficiency of random projection is the
 `Johnson-Lindenstrauss lemma (quoting Wikipedia)
-<http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
+<https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
 
   In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional
@@ -42,6 +42,8 @@ from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array
+from .exceptions import DataDimensionalityWarning
+from .exceptions import NotFittedError
 
 
 __all__ = ["SparseRandomProjection",
@@ -73,6 +75,8 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     number of features but instead depends on the size of the dataset:
     the larger the dataset, the higher is the minimal dimensionality of
     an eps-embedding.
+
+    Read more in the :ref:`User Guide <johnson_lindenstrauss>`.
 
     Parameters
     ----------
@@ -106,7 +110,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
     .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
            "An elementary proof of the Johnson-Lindenstrauss Lemma."
@@ -157,6 +161,8 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
         N(0, 1.0 / n_components).
 
+    Read more in the :ref:`User Guide <gaussian_random_matrix>`.
+
     Parameters
     ----------
     n_components : int,
@@ -201,6 +207,8 @@ def sparse_random_matrix(n_components, n_features, density='auto',
       - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
       -  0                              with probability 1 - 1 / s
       - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
+
+    Read more in the :ref:`User Guide <sparse_random_matrix>`.
 
     Parameters
     ----------
@@ -364,7 +372,8 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
                     "The number of components is higher than the number of"
                     " features: n_features < n_components (%s < %s)."
                     "The dimensionality of the problem will not be reduced."
-                    % (n_features, self.n_components))
+                    % (n_features, self.n_components),
+                    DataDimensionalityWarning)
 
             self.n_components_ = self.n_components
 
@@ -400,7 +409,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
         if self.components_ is None:
-            raise ValueError('No random projection matrix had been fit.')
+            raise NotFittedError('No random projection matrix had been fit.')
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -417,6 +426,8 @@ class GaussianRandomProjection(BaseRandomProjection):
     """Reduce dimensionality through Gaussian random projection
 
     The components of the random matrix are drawn from N(0, 1 / n_components).
+
+    Read more in the :ref:`User Guide <gaussian_random_matrix>`.
 
     Parameters
     ----------
@@ -502,6 +513,8 @@ class SparseRandomProjection(BaseRandomProjection):
       -  0                              with probability 1 - 1 / s
       - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
 
+    Read more in the :ref:`User Guide <sparse_random_matrix>`.
+
     Parameters
     ----------
     n_components : int or 'auto', optional (default = 'auto')
@@ -571,7 +584,7 @@ class SparseRandomProjection(BaseRandomProjection):
            http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,

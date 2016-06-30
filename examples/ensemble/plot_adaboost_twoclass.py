@@ -74,7 +74,9 @@ for i, n, c in zip(range(2), class_names, plot_colors):
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
 plt.legend(loc='upper right')
-plt.xlabel("Decision Boundary")
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Decision Boundary')
 
 # Plot the two-class decision scores
 twoclass_output = bdt.decision_function(X)
@@ -91,7 +93,9 @@ x1, x2, y1, y2 = plt.axis()
 plt.axis((x1, x2, y1, y2 * 1.2))
 plt.legend(loc='upper right')
 plt.ylabel('Samples')
-plt.xlabel('Decision Scores')
+plt.xlabel('Score')
+plt.title('Decision Scores')
 
-plt.subplots_adjust(wspace=0.25)
+plt.tight_layout()
+plt.subplots_adjust(wspace=0.35)
 plt.show()

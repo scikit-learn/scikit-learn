@@ -65,7 +65,7 @@ import numpy as np
 
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.externals import six
+from sklearn.externals.six import iteritems
 from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
@@ -132,9 +132,11 @@ def bicluster_ncut(i):
         return sys.float_info.max
     row_complement = np.nonzero(np.logical_not(cocluster.rows_[i]))[0]
     col_complement = np.nonzero(np.logical_not(cocluster.columns_[i]))[0]
-    weight = X[rows[:, np.newaxis], cols].sum()
-    cut = (X[row_complement[:, np.newaxis], cols].sum() +
-           X[rows[:, np.newaxis], col_complement].sum())
+    # Note: the following is identical to X[rows[:, np.newaxis], cols].sum() but
+    # much faster in scipy <= 0.16
+    weight = X[rows][:, cols].sum()
+    cut = (X[row_complement][:, cols].sum() +
+           X[rows][:, col_complement].sum())
     return cut / weight
 
 
@@ -143,11 +145,11 @@ def most_common(d):
 
     Like Counter.most_common in Python >=2.7.
     """
-    return sorted(six.iteritems(d), key=operator.itemgetter(1), reverse=True)
+    return sorted(iteritems(d), key=operator.itemgetter(1), reverse=True)
 
 
 bicluster_ncuts = list(bicluster_ncut(i)
-                       for i in xrange(len(newsgroups.target_names)))
+                       for i in range(len(newsgroups.target_names)))
 best_idx = np.argsort(bicluster_ncuts)[:5]
 
 print()

@@ -27,15 +27,16 @@ The simplest one is the interface for sample images, which is described
 below in the :ref:`sample_images` section.
 
 The dataset generation functions and the svmlight loader share a simplistic
-interface, returning a tuple ``(X, y)`` consisting of a n_samples x n_features
-numpy array X and an array of length n_samples containing the targets y.
+interface, returning a tuple ``(X, y)`` consisting of a ``n_samples`` *
+``n_features`` numpy array ``X`` and an array of length ``n_samples``
+containing the targets ``y``.
 
 The toy datasets as well as the 'real world' datasets and the datasets
 fetched from mldata.org have more sophisticated structure.
 These functions return a dictionary-like object holding at least two items:
-an array of shape ``n_samples`` * `` n_features`` with key ``data``
+an array of shape ``n_samples`` * ``n_features`` with key ``data``
 (except for 20newsgroups)
-and a NumPy array of length ``n_samples``, containing the target values,
+and a numpy array of length ``n_samples``, containing the target values,
 with key ``target``.
 
 The datasets also contain a description in ``DESCR`` and some contain
@@ -92,7 +93,7 @@ and pipeline on 2D data.
   The default coding of images is based on the ``uint8`` dtype to
   spare memory.  Often machine learning algorithms work best if the
   input is converted to a floating point representation first.  Also,
-  if you plan to use ``pylab.imshow`` don't forget to scale to the range
+  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
   0 - 1 as done in the following example.
 
 .. topic:: Examples:
@@ -254,6 +255,20 @@ features::
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
 
+.. make sure everything is in a toc tree
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    olivetti_faces
+    twenty_newsgroups
+    mldata
+    labeled_faces
+    covtype
+    rcv1
+
+
 .. include:: olivetti_faces.rst
 
 .. include:: twenty_newsgroups.rst
@@ -263,3 +278,29 @@ features::
 .. include:: labeled_faces.rst
 
 .. include:: covtype.rst
+
+.. include:: rcv1.rst
+
+.. _boston_house_prices:
+
+.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
+
+.. _breast_cancer:
+
+.. include:: ../../sklearn/datasets/descr/breast_cancer.rst
+
+.. _diabetes:
+
+.. include:: ../../sklearn/datasets/descr/diabetes.rst
+
+.. _digits:
+
+.. include:: ../../sklearn/datasets/descr/digits.rst
+
+.. _iris:
+
+.. include:: ../../sklearn/datasets/descr/iris.rst
+
+.. _linnerud:
+
+.. include:: ../../sklearn/datasets/descr/linnerud.rst

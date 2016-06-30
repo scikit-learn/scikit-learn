@@ -12,10 +12,12 @@ covariance estimator (the Minimum Covariance Determinant).
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 import scipy as sp
 from . import MinCovDet
 from ..base import ClassifierMixin
+from ..utils.validation import check_is_fitted
 
 
 class OutlierDetectionMixin(object):
@@ -36,7 +38,6 @@ class OutlierDetectionMixin(object):
     """
     def __init__(self, contamination=0.1):
         self.contamination = contamination
-        self.threshold = None
 
     def decision_function(self, X, raw_values=False):
         """Compute the decision function of the given observations.
@@ -62,14 +63,14 @@ class OutlierDetectionMixin(object):
             such as the One-Class SVM.
 
         """
+        check_is_fitted(self, 'threshold_')
         mahal_dist = self.mahalanobis(X)
         if raw_values:
             decision = mahal_dist
         else:
-            if self.threshold is None:
-                raise Exception("Please fit data before predicting")
+            check_is_fitted(self, 'threshold_')
             transformed_mahal_dist = mahal_dist ** 0.33
-            decision = self.threshold ** 0.33 - transformed_mahal_dist
+            decision = self.threshold_ ** 0.33 - transformed_mahal_dist
 
         return decision
 
@@ -90,12 +91,11 @@ class OutlierDetectionMixin(object):
             The values of the less outlying point's decision function.
 
         """
-        if self.threshold is None:
-            raise Exception("Please fit data before predicting")
+        check_is_fitted(self, 'threshold_')
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
             values = self.decision_function(X, raw_values=True)
-            is_inlier[values <= self.threshold] = 1
+            is_inlier[values <= self.threshold_] = 1
         else:
             raise NotImplementedError("You must provide a contamination rate.")
 
@@ -104,6 +104,8 @@ class OutlierDetectionMixin(object):
 
 class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
+
+    Read more in the :ref:`User Guide <outlier_detection>`.
 
     Attributes
     ----------
@@ -175,10 +177,7 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
         OutlierDetectionMixin.__init__(self, contamination=contamination)
 
     def fit(self, X, y=None):
-        """
-        """
         MinCovDet.fit(self, X)
-        self.threshold = sp.stats.scoreatpercentile(
+        self.threshold_ = sp.stats.scoreatpercentile(
             self.dist_, 100. * (1. - self.contamination))
-
         return self

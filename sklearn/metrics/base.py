@@ -7,7 +7,7 @@ Common code for all metrics
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
 #          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
@@ -19,8 +19,13 @@ import numpy as np
 from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
+from ..exceptions import UndefinedMetricWarning as _UndefinedMetricWarning
+from ..utils import deprecated
 
-class UndefinedMetricWarning(UserWarning):
+
+@deprecated("UndefinedMetricWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class UndefinedMetricWarning(_UndefinedMetricWarning):
     pass
 
 
@@ -56,6 +61,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    binary_metric : callable, returns shape [n_classes]
+        The binary metric function to use.
+
     Returns
     -------
     score : float or array of shape [n_classes]
@@ -75,7 +83,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     if y_type == "binary":
         return binary_metric(y_true, y_score, sample_weight=sample_weight)
 
-    check_consistent_length(y_true, y_score)
+    check_consistent_length(y_true, y_score, sample_weight)
     y_true = check_array(y_true)
     y_score = check_array(y_score)
 

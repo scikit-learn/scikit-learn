@@ -3,7 +3,7 @@
 # cython: wraparound=False
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.math cimport exp
 from scipy.special import gammaln
@@ -39,7 +39,7 @@ def expected_mutual_information(contingency, int n_samples):
     term1 = nijs / N
     # term2 is log((N*nij) / (a * b)) == log(N * nij) - log(a * b)
     # term2 uses the outer product
-    log_ab_outer = np.log(np.outer(a, b))
+    log_ab_outer = np.log(a)[:, np.newaxis] + np.log(b)
     # term2 uses N * nij
     log_Nnij = np.log(N * nijs)
     # term3 is large, and involved many factorials. Calculate these in log

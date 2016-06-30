@@ -22,18 +22,21 @@ from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.fixes import expit             # logistic function
+from ..utils.validation import check_is_fitted
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
-    binary hiddens. Parameters are estimated using Stochastic Maximum
+    binary hidden units. Parameters are estimated using Stochastic Maximum
     Likelihood (SML), also known as Persistent Contrastive Divergence (PCD)
     [2].
 
     The time complexity of this implementation is ``O(d ** 2)`` assuming
     d ~ n_features ~ n_components.
+
+    Read more in the :ref:`User Guide <rbm>`.
 
     Parameters
     ----------
@@ -116,7 +119,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float)
+        check_is_fitted(self, "components_")
+
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -206,13 +211,15 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_new : array-like, shape (n_samples, n_features)
             Values of the visible layer after one Gibbs step.
         """
-        rng = check_random_state(self.random_state)
-        h_ = self._sample_hiddens(v, rng)
-        v_ = self._sample_visibles(h_, rng)
+        check_is_fitted(self, "components_")
+        if not hasattr(self, "random_state_"):
+            self.random_state_ = check_random_state(self.random_state)
+        h_ = self._sample_hiddens(v, self.random_state_)
+        v_ = self._sample_visibles(h_, self.random_state_)
 
         return v_
 
-    def partial_fit(self, X):
+    def partial_fit(self, X, y=None):
         """Fit the model to the data X which should contain a partial
         segment of the data.
 
@@ -226,7 +233,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -295,6 +302,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free energy on X, then on a randomly corrupted version of X, and
         returns the log of the logistic function of the difference.
         """
+        check_is_fitted(self, "components_")
+
         v = check_array(X, accept_sparse='csr')
         rng = check_random_state(self.random_state)
 
@@ -325,7 +334,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float)
+        X = check_array(X, accept_sparse='csr', dtype=np.float64)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 

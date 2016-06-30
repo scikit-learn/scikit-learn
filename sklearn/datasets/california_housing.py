@@ -22,9 +22,11 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # License: BSD 3 clause
 
 from io import BytesIO
-from os.path import join, exists
+import os
+from os.path import exists
 from os import makedirs
-from zipfile import ZipFile
+import tarfile
+
 try:
     # Python 2
     from urllib2 import urlopen
@@ -35,11 +37,11 @@ except ImportError:
 import numpy as np
 
 from .base import get_data_home, Bunch
+from .base import _pkl_filepath
 from ..externals import joblib
 
 
-DATA_URL = "http://lib.stat.cmu.edu/modules.php?op=modload&name=Downloads&"\
-           "file=index&req=getit&lid=83"
+DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
 TARGET_FILENAME = "cal_housing.pkz"
 
 # Grab the module-level docstring to use as a description of the
@@ -49,6 +51,8 @@ MODULE_DOCS = __doc__
 
 def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
     ----------
@@ -84,22 +88,23 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    if not exists(join(data_home, TARGET_FILENAME)):
+    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
+    if not exists(filepath):
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
-        fhandle = urlopen(DATA_URL)
-        buf = BytesIO(fhandle.read())
-        zip_file = ZipFile(buf)
-        try:
-            cadata_fd = zip_file.open('cadata.txt', 'r')
-            cadata = BytesIO(cadata_fd.read())
-            # skip the first 27 lines (documentation)
-            cal_housing = np.loadtxt(cadata, skiprows=27)
-            joblib.dump(cal_housing, join(data_home, TARGET_FILENAME),
-                        compress=6)
-        finally:
-            zip_file.close()
+        archive_fileobj = BytesIO(urlopen(DATA_URL).read())
+        fileobj = tarfile.open(
+            mode="r:gz",
+            fileobj=archive_fileobj).extractfile(
+                'CaliforniaHousing/cal_housing.data')
+
+        cal_housing = np.loadtxt(fileobj, delimiter=',')
+        # Columns are not in the same order compared to the previous
+        # URL resource on lib.stat.cmu.edu
+        columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
+        cal_housing = cal_housing[:, columns_index]
+        joblib.dump(cal_housing, filepath, compress=6)
     else:
-        cal_housing = joblib.load(join(data_home, TARGET_FILENAME))
+        cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]
@@ -112,7 +117,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     # avg bed rooms = total bed rooms / households
     data[:, 3] /= data[:, 5]
 
-    # avg occupancy = population / housholds
+    # avg occupancy = population / households
     data[:, 5] = data[:, 4] / data[:, 5]
 
     # target in units of 100,000

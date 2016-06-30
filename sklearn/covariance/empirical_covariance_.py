@@ -52,7 +52,7 @@ def empirical_covariance(X, assume_centered=False):
 
     Parameters
     ----------
-    X : 2D ndarray, shape (n_samples, n_features)
+    X : ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
     assume_centered : Boolean
@@ -70,6 +70,8 @@ def empirical_covariance(X, assume_centered=False):
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
+
+    if X.shape[0] == 1:
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
 
@@ -78,11 +80,15 @@ def empirical_covariance(X, assume_centered=False):
     else:
         covariance = np.cov(X.T, bias=1)
 
+    if covariance.ndim == 0:
+        covariance = np.array([[covariance]])
     return covariance
 
 
 class EmpiricalCovariance(BaseEstimator):
     """Maximum likelihood covariance estimator
+
+    Read more in the :ref:`User Guide <covariance>`.
 
     Parameters
     ----------
@@ -164,6 +170,7 @@ class EmpiricalCovariance(BaseEstimator):
             Returns self.
 
         """
+        X = check_array(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -244,7 +251,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented")
-        # optionaly scale the error norm
+        # optionally scale the error norm
         if scaling:
             squared_norm = squared_norm / error.shape[0]
         # finally get either the squared norm or the norm
@@ -256,22 +263,19 @@ class EmpiricalCovariance(BaseEstimator):
         return result
 
     def mahalanobis(self, observations):
-        """Computes the Mahalanobis distances of given observations.
-
-        The provided observations are assumed to be centered. One may want to
-        center them using a location estimate first.
+        """Computes the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
         observations : array-like, shape = [n_observations, n_features]
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
-            distribution than the data used in fit (including centering).
+            distribution than the data used in fit.
 
         Returns
         -------
         mahalanobis_distance : array, shape = [n_observations,]
-            Mahalanobis distances of the observations.
+            Squared Mahalanobis distances of the observations.
 
         """
         precision = self.get_precision()

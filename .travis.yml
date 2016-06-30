@@ -1,21 +1,76 @@
+# make it explicit that we favor the new container-based travis workers
+sudo: false
+
 language: python
-virtualenv:
-  system_site_packages: true
+
+# Pre-install packages for the ubuntu distribution
+cache:
+  apt: true
+  # We use three different cache directory
+  # to work around a Travis bug with multi-platform cache
+  directories:
+  - $HOME/sklearn_build_ubuntu
+  - $HOME/sklearn_build_oldest
+  - $HOME/sklearn_build_latest
+  - $HOME/sklearn_build_numpy_dev
+  - $HOME/.cache/pip
+  - $HOME/download
+addons:
+  apt:
+    packages:
+      - libatlas3gf-base
+      - libatlas-dev
+      # only required by the DISTRIB="ubuntu" build:
+      - python-scipy
+
 env:
+  global:
+    # Directory where tests are run from
+    - TEST_DIR=/tmp/sklearn
+    - OMP_NUM_THREADS=4
+    - OPENBLAS_NUM_THREADS=4
   matrix:
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" INSTALL_ATLAS="true"
-      COVERAGE="true"
+    # This environment tests that scikit-learn can be built against
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
+    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
+      CACHED_BUILD_DIR="$HOME/sklearn_build_ubuntu" COVERAGE=true
     # This environment tests the oldest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
+      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
+      CACHED_BUILD_DIR="$HOME/sklearn_build_oldest"
     # This environment tests the newest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="true"
-      NUMPY_VERSION="1.8.1" SCIPY_VERSION="0.14.0"
-install: source continuous_integration/install.sh
-script: bash continuous_integration/test_script.sh
-after_success:
-    # Ignore coveralls failures as the coveralls server is not very reliable
-    # but we don't want travis to report a failure in the github UI just
-    # because the coverage report failed to be published.
-    - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
-cache: apt
+    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
+      CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+
+matrix:
+  allow_failures:
+    # allow_failures seems to be keyed on the python version
+    # We are using this to allow failures for DISTRIB=scipy-dev-wheels
+    - python: 3.5
+
+  include:
+    # This environment tests scikit-learn against numpy and scipy master
+    # installed from their CI wheels in a virtualenv with the Python
+    # interpreter provided by travis.
+    # Note: libatlas3gf-base is not allowed yet so we need 'sudo':
+    # https://github.com/travis-ci/apt-package-whitelist/issues/2407
+    # Once libatlas3gf-base is on the whitelist it will be possible to replace
+    # the before_install step with and addons/apt/packages declaration.
+    -  python: 3.5
+       env: DISTRIB="scipy-dev-wheels"
+            CACHED_BUILD_DIR="$HOME/sklearn_build_numpy_dev"
+       sudo: True
+       before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
+
+
+install: source build_tools/travis/install.sh
+script: bash build_tools/travis/test_script.sh
+after_success: source build_tools/travis/after_success.sh
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/4ffabb4df010b70cd624
+    on_success: change  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always

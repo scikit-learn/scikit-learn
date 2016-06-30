@@ -8,20 +8,24 @@ Nearest Centroid Classification
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
-from ..utils.validation import check_array, check_X_y
-
+from ..preprocessing import LabelEncoder
+from ..utils.validation import check_array, check_X_y, check_is_fitted
+from ..utils.sparsefuncs import csc_median_axis_0
+from ..utils.multiclass import check_classification_targets
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
     """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
     the class with the nearest centroid.
+
+    Read more in the :ref:`User Guide <nearest_centroid_classifier>`.
 
     Parameters
     ----------
@@ -30,6 +34,12 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
+        The centroids for the samples corresponding to each class is the point
+        from which the sum of the distances (according to the metric) of all
+        samples that belong to that particular class are minimized.
+        If the "manhattan" metric is provided, this centroid is the median and
+        for all other metrics, the centroid is now set to be the mean.
+
     shrink_threshold : float, optional (default = None)
         Threshold for shrinking centroids to remove features.
 
@@ -85,35 +95,59 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
-        if sp.issparse(X) and self.shrink_threshold:
+        # If X is sparse and the metric is "manhattan", store it in a csc
+        # format is easier to calculate the median.
+        if self.metric == 'manhattan':
+            X, y = check_X_y(X, y, ['csc'])
+        else:
+            X, y = check_X_y(X, y, ['csr', 'csc'])
+        is_X_sparse = sp.issparse(X)
+        if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
+        check_classification_targets(y)
 
         n_samples, n_features = X.shape
-        classes = np.unique(y)
-        self.classes_ = classes
+        le = LabelEncoder()
+        y_ind = le.fit_transform(y)
+        self.classes_ = classes = le.classes_
         n_classes = classes.size
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
 
-        # Mask mapping each class to it's members.
+        # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
-        for i, cur_class in enumerate(classes):
-            center_mask = y == cur_class
-            if sp.issparse(X):
+        # Number of clusters in each class.
+        nk = np.zeros(n_classes)
+
+        for cur_class in range(n_classes):
+            center_mask = y_ind == cur_class
+            nk[cur_class] = np.sum(center_mask)
+            if is_X_sparse:
                 center_mask = np.where(center_mask)[0]
-            self.centroids_[i] = X[center_mask].mean(axis=0)
+
+            # XXX: Update other averaging methods according to the metrics.
+            if self.metric == "manhattan":
+                # NumPy does not calculate median of sparse matrices.
+                if not is_X_sparse:
+                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                else:
+                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+            else:
+                if self.metric != 'euclidean':
+                    warnings.warn("Averaging for metrics other than "
+                                  "euclidean and manhattan not supported. "
+                                  "The average is set to be the mean."
+                                  )
+                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
 
         if self.shrink_threshold:
-            dataset_centroid_ = np.array(X.mean(axis=0))[0]
-            # Number of clusters in each class.
-            nk = np.array([np.sum(classes == cur_class)
-                           for cur_class in classes])
+            dataset_centroid_ = np.mean(X, axis=0)
+
             # m parameter for determining deviation
             m = np.sqrt((1. / nk) + (1. / n_samples))
             # Calculate deviation using the standard deviation of centroids.
-            variance = np.array(np.power(X - self.centroids_[y], 2))
+            variance = (X - self.centroids_[y_ind]) ** 2
             variance = variance.sum(axis=0)
             s = np.sqrt(variance / (n_samples - n_classes))
             s += np.median(s)  # To deter outliers from affecting the results.
@@ -125,11 +159,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             signs = np.sign(deviation)
             deviation = (np.abs(deviation) - self.shrink_threshold)
             deviation[deviation < 0] = 0
-            deviation = np.multiply(deviation, signs)
+            deviation *= signs
             # Now adjust the centroids using the deviation
-            msd = np.multiply(ms, deviation)
-            self.centroids_ = np.array([dataset_centroid_ + msd[i]
-                                        for i in xrange(n_classes)])
+            msd = ms * deviation
+            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
         return self
 
     def predict(self, X):
@@ -151,8 +184,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
+        check_is_fitted(self, 'centroids_')
+
         X = check_array(X, accept_sparse='csr')
-        if not hasattr(self, "centroids_"):
-            raise AttributeError("Model has not been trained yet.")
         return self.classes_[pairwise_distances(
             X, self.centroids_, metric=self.metric).argmin(axis=1)]

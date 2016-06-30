@@ -1,7 +1,7 @@
 """Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
 """
 
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
@@ -38,6 +38,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
     (X.T * X), whichever is more efficient.
 
+    Read more in the :ref:`User Guide <LSA>`.
+
     Parameters
     ----------
     n_components : int, default = 2
@@ -51,8 +53,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
 
-    n_iter : int, optional
+    n_iter : int, optional (default 5)
         Number of iterations for randomized SVD solver. Not used by ARPACK.
+        The default is larger than the default in `randomized_svd` to handle
+        sparse matrices that may have large slowly decaying spectrum.
 
     random_state : int or RandomState, optional
         (Seed for) pseudo-random number generator. If not given, the
@@ -78,14 +82,14 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import TruncatedSVD
     >>> from sklearn.random_projection import sparse_random_matrix
     >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
-    >>> svd = TruncatedSVD(n_components=5, random_state=42)
+    >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=5,
+    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
     >>> print(svd.explained_variance_ratio_) # doctest: +ELLIPSIS
-    [ 0.07825... 0.05528... 0.05445... 0.04997... 0.04134...]
+    [ 0.0782... 0.0552... 0.0544... 0.0499... 0.0413...]
     >>> print(svd.explained_variance_ratio_.sum()) # doctest: +ELLIPSIS
-    0.27930...
+    0.279...
 
     See also
     --------

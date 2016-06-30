@@ -10,20 +10,35 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import inspect
 import warnings
+import sys
+import functools
+import os
+import errno
 
 import numpy as np
 import scipy.sparse as sp
+import scipy
 
-np_version = []
-for x in np.__version__.split('.'):
-    try:
-        np_version.append(int(x))
-    except ValueError:
-        # x may be of the form dev-1ea1592
-        np_version.append(x)
-np_version = tuple(np_version)
+try:
+    from inspect import signature
+except ImportError:
+    from ..externals.funcsigs import signature
+
+
+def _parse_version(version_string):
+    version = []
+    for x in version_string.split('.'):
+        try:
+            version.append(int(x))
+        except ValueError:
+            # x may be of the form dev-1ea1592
+            version.append(x)
+    return tuple(version)
+
+
+np_version = _parse_version(np.__version__)
+sp_version = _parse_version(scipy.__version__)
 
 
 try:
@@ -52,7 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
-if 'order' in inspect.getargspec(np.copy)[0]:
+if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
         return np.copy(X, order='K')
@@ -63,7 +78,7 @@ else:
 
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
-                        np.divide(.4, 1, casting="unsafe", dtype=np.float))
+                        np.divide(.4, 1, casting="unsafe", dtype=np.float64))
             or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
@@ -94,7 +109,7 @@ try:
 except TypeError:
     # Compat where astype accepted no copy argument
     def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
+        if not copy and array.dtype == dtype:
             return array
         return array.astype(dtype)
 else:
@@ -178,6 +193,15 @@ except ImportError:
     def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         return np.argsort(a, axis=axis, order=order)
 
+try:
+    from numpy import partition
+except ImportError:
+    warnings.warn('Using `sort` instead of partition.'
+                  'Upgrade numpy to 1.8 for better performace on large number'
+                  'of clusters')
+    def partition(a, kth, axis=-1, kind='introselect', order=None):
+        return np.sort(a, axis=axis, order=order)
+
 
 try:
     from itertools import combinations_with_replacement
@@ -217,7 +241,7 @@ except ImportError:
         """
         def within_tol(x, y, atol, rtol):
             with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x-y), atol + rtol * abs(y))
+                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
             if np.isscalar(a) and np.isscalar(b):
                 result = bool(result)
             return result
@@ -300,3 +324,122 @@ if np_version < (1, 8):
             return flag[indx][rev_idx]
 else:
     from numpy import in1d
+
+
+if sp_version < (0, 15):
+    # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
+    from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
+else:
+    from scipy.sparse.linalg import lsqr as sparse_lsqr
+
+
+if sys.version_info < (2, 7, 0):
+    # partial cannot be pickled in Python 2.6
+    # http://bugs.python.org/issue1398
+    class partial(object):
+        def __init__(self, func, *args, **keywords):
+            functools.update_wrapper(self, func)
+            self.func = func
+            self.args = args
+            self.keywords = keywords
+
+        def __call__(self, *args, **keywords):
+            args = self.args + args
+            kwargs = self.keywords.copy()
+            kwargs.update(keywords)
+            return self.func(*args, **kwargs)
+else:
+    from functools import partial
+
+
+def parallel_helper(obj, methodname, *args, **kwargs):
+    """Helper to workaround Python 2 limitations of pickling instance methods"""
+    return getattr(obj, methodname)(*args, **kwargs)
+
+
+if np_version < (1, 6, 2):
+    # Allow bincount to accept empty arrays
+    # https://github.com/numpy/numpy/commit/40f0844846a9d7665616b142407a3d74cb65a040
+    def bincount(x, weights=None, minlength=None):
+        if len(x) > 0:
+            return np.bincount(x, weights, minlength)
+        else:
+            if minlength is None:
+                minlength = 0
+            minlength = np.asscalar(np.asarray(minlength, dtype=np.intp))
+            return np.zeros(minlength, dtype=np.intp)
+
+else:
+    from numpy import bincount
+
+
+if 'exist_ok' in signature(os.makedirs).parameters:
+    makedirs = os.makedirs
+else:
+    def makedirs(name, mode=0o777, exist_ok=False):
+        """makedirs(name [, mode=0o777][, exist_ok=False])
+
+        Super-mkdir; create a leaf directory and all intermediate ones.  Works
+        like mkdir, except that any intermediate path segment (not just the
+        rightmost) will be created if it does not exist. If the target
+        directory already exists, raise an OSError if exist_ok is False.
+        Otherwise no exception is raised.  This is recursive.
+
+        """
+
+        try:
+            os.makedirs(name, mode=mode)
+        except OSError as e:
+            if (not exist_ok or e.errno != errno.EEXIST
+                    or not os.path.isdir(name)):
+                raise
+
+
+if np_version < (1, 8, 1):
+    def array_equal(a1, a2):
+        # copy-paste from numpy 1.8.1
+        try:
+            a1, a2 = np.asarray(a1), np.asarray(a2)
+        except:
+            return False
+        if a1.shape != a2.shape:
+            return False
+        return bool(np.asarray(a1 == a2).all())
+else:
+    from numpy import array_equal
+
+if sp_version < (0, 13, 0):
+    def rankdata(a, method='average'):
+        if method not in ('average', 'min', 'max', 'dense', 'ordinal'):
+            raise ValueError('unknown method "{0}"'.format(method))
+
+        arr = np.ravel(np.asarray(a))
+        algo = 'mergesort' if method == 'ordinal' else 'quicksort'
+        sorter = np.argsort(arr, kind=algo)
+
+        inv = np.empty(sorter.size, dtype=np.intp)
+        inv[sorter] = np.arange(sorter.size, dtype=np.intp)
+
+        if method == 'ordinal':
+            return inv + 1
+
+        arr = arr[sorter]
+        obs = np.r_[True, arr[1:] != arr[:-1]]
+        dense = obs.cumsum()[inv]
+
+        if method == 'dense':
+            return dense
+
+        # cumulative counts of each unique value
+        count = np.r_[np.nonzero(obs)[0], len(obs)]
+
+        if method == 'max':
+            return count[dense]
+
+        if method == 'min':
+            return count[dense - 1] + 1
+
+        # average method
+        return .5 * (count[dense] + count[dense - 1] + 1)
+else:
+    from scipy.stats import rankdata

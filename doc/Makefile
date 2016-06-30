@@ -44,7 +44,7 @@ html:
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
 html-noplot:
-	$(SPHINXBUILD) -D plot_gallery=False -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
+	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable."
 
@@ -100,3 +100,6 @@ download-data:
 optipng:
 	find _build auto_examples */generated -name '*.png' -print0 \
 	  | xargs -0 -n 1 -P 4 optipng -o10
+
+dist: html latexpdf
+	cp _build/latex/user_guide.pdf _build/html/stable/_downloads/scikit-learn-docs.pdf

@@ -1,6 +1,8 @@
+
 import numpy as np
 from scipy import sparse
 
+from sklearn.base import clone
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -9,10 +11,10 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
-from sklearn import grid_search
+from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
-
+ 
 
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
@@ -75,7 +77,7 @@ def _check_statistics(X, X_true,
 
 
 def test_imputation_shape():
-    """Verify the shapes of the imputed matrix for different strategies."""
+    # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
@@ -88,8 +90,8 @@ def test_imputation_shape():
 
 
 def test_imputation_mean_median_only_zero():
-    """Test imputation using the mean and median strategies, when
-       missing_values == 0."""
+    # Test imputation using the mean and median strategies, when
+    # missing_values == 0.
     X = np.array([
         [np.nan, 0, 0,  0,  5],
         [np.nan, 1, 0,  np.nan,  3],
@@ -121,9 +123,21 @@ def test_imputation_mean_median_only_zero():
                       statistics_median, 0)
 
 
+def safe_median(arr, *args, **kwargs):
+    # np.median([]) raises a TypeError for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.median(arr, *args, **kwargs)
+
+
+def safe_mean(arr, *args, **kwargs):
+    # np.mean([]) raises a RuntimeWarning for numpy >= 1.10.1
+    length = arr.size if hasattr(arr, 'size') else len(arr)
+    return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
+
+
 def test_imputation_mean_median():
-    """Test imputation using the mean and median strategies, when
-       missing_values != 0."""
+    # Test imputation using the mean and median strategies, when
+    # missing_values != 0.
     rng = np.random.RandomState(0)
 
     dim = 10
@@ -134,9 +148,9 @@ def test_imputation_mean_median():
     values = np.arange(1, shape[0]+1)
     values[4::2] = - values[4::2]
 
-    tests = [("mean", "NaN", lambda z, v, p: np.mean(np.hstack((z, v)))),
+    tests = [("mean", "NaN", lambda z, v, p: safe_mean(np.hstack((z, v)))),
              ("mean", 0, lambda z, v, p: np.mean(v)),
-             ("median", "NaN", lambda z, v, p: np.median(np.hstack((z, v)))),
+             ("median", "NaN", lambda z, v, p: safe_median(np.hstack((z, v)))),
              ("median", 0, lambda z, v, p: np.median(v))]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -192,8 +206,7 @@ def test_imputation_mean_median():
 
 
 def test_imputation_median_special_cases():
-    """Test median imputation with sparse boundary cases
-    """
+    # Test median imputation with sparse boundary cases
     X = np.array([
         [0, np.nan, np.nan],  # odd: implicit zero
         [5, np.nan, np.nan],  # odd: explicit nonzero
@@ -222,7 +235,7 @@ def test_imputation_median_special_cases():
 
 
 def test_imputation_most_frequent():
-    """Test imputation using the most-frequent strategy."""
+    # Test imputation using the most-frequent strategy.
     X = np.array([
         [-1, -1,  0,  5],
         [-1,  2, -1,  3],
@@ -245,7 +258,7 @@ def test_imputation_most_frequent():
 
 
 def test_imputation_pipeline_grid_search():
-    """Test imputation within a pipeline + gridsearch."""
+    # Test imputation within a pipeline + gridsearch.
     pipeline = Pipeline([('imputer', Imputer(missing_values=0)),
                          ('tree', tree.DecisionTreeRegressor(random_state=0))])
 
@@ -257,12 +270,12 @@ def test_imputation_pipeline_grid_search():
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
     Y = sparse_random_matrix(l, 1, density=0.10).toarray()
-    gs = grid_search.GridSearchCV(pipeline, parameters)
+    gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
 
 def test_imputation_pickle():
-    """Test for pickling imputers."""
+    # Test for pickling imputers.
     import pickle
 
     l = 100
@@ -281,7 +294,7 @@ def test_imputation_pickle():
 
 
 def test_imputation_copy():
-    """Test imputation with copy"""
+    # Test imputation with copy
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
     # copy=True, dense => copy
@@ -346,3 +359,50 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+
+def check_indicator(X, expected_imputed_features, axis):
+    n_samples, n_features = X.shape
+    imputer = Imputer(missing_values=-1, strategy='mean', axis=axis)
+    imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
+    Xt = imputer.fit_transform(X)
+    Xt_with_in = imputer_with_in.fit_transform(X)
+    imputed_features_mask = X[:, expected_imputed_features] == -1
+    n_features_new = Xt.shape[1]
+    n_imputed_features = len(imputer_with_in.imputed_features_)
+    assert_array_equal(imputer.imputed_features_, expected_imputed_features)
+    assert_array_equal(imputer_with_in.imputed_features_,
+                       expected_imputed_features)
+    assert_equal(Xt_with_in.shape,
+                 (n_samples, n_features_new + n_imputed_features))
+    assert_array_equal(Xt_with_in, np.hstack((Xt, imputed_features_mask)))
+    imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
+    assert_array_equal(Xt_with_in,
+                       imputer_with_in.fit_transform(sparse.csc_matrix(X)).A)
+    assert_array_equal(Xt_with_in,
+                       imputer_with_in.fit_transform(sparse.csr_matrix(X)).A)
+
+
+def test_indicator_features():
+    # one feature with all missng values
+    X = np.array([
+       [-1,  -1,   2,   3],
+       [4,  -1,   6,  -1],
+       [8,  -1,  10,  11],
+       [12,  -1,  -1,  15],
+       [16,  -1,  18,  19]
+    ])
+    check_indicator(X, np.array([0, 2, 3]), axis=0)
+    check_indicator(X, np.array([0, 1, 2, 3]), axis=1)
+
+    # one feature with all missing values and one with no missing value
+    # when axis=0 the feature gets discarded
+    X = np.array([
+       [-1,  -1,   1,   3],
+       [4,  -1,   0,  -1],
+       [8,  -1,   1,  0],
+       [0,  -1,   0,  15],
+       [16,  -1,   1,  19]
+    ])
+    check_indicator(X, np.array([0, 3]), axis=0)
+    check_indicator(X, np.array([0, 1, 3]), axis=1)

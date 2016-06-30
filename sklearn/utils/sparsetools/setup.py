@@ -17,6 +17,8 @@ def configuration(parent_package='', top_path=None):
                          #libraries=libraries
                          )
 
+    config.add_subpackage('tests')
+
     return config
 
 if __name__ == '__main__':

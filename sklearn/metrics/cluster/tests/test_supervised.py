@@ -10,6 +10,7 @@ from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.cluster import fowlkes_mallows_score
 from sklearn.metrics.cluster import entropy
 
 from sklearn.utils.testing import assert_raise_message
@@ -109,19 +110,19 @@ def test_non_consicutive_labels():
 
 def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
                              seed=42):
-    """Compute score for random uniform cluster labelings"""
-    random_labels = np.random.RandomState(seed).random_integers
+    # Compute score for random uniform cluster labelings
+    random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(k_range), n_runs))
     for i, k in enumerate(k_range):
         for j in range(n_runs):
-            labels_a = random_labels(low=0, high=k - 1, size=n_samples)
-            labels_b = random_labels(low=0, high=k - 1, size=n_samples)
+            labels_a = random_labels(low=0, high=k, size=n_samples)
+            labels_b = random_labels(low=0, high=k, size=n_samples)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
 
 
 def test_adjustment_for_chance():
-    """Check that adjusted scores are almost zero on random labels"""
+    # Check that adjusted scores are almost zero on random labels
     n_clusters_range = [2, 10, 50, 90]
     n_samples = 100
     n_runs = 10
@@ -134,7 +135,7 @@ def test_adjustment_for_chance():
 
 
 def test_adjusted_mutual_info_score():
-    """Compute the Adjusted Mutual Information and test against known values"""
+    # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     # Mutual information
@@ -158,6 +159,12 @@ def test_adjusted_mutual_info_score():
     assert_almost_equal(ami, 0.37, 2)
 
 
+def test_expected_mutual_info_overflow():
+    # Test for regression where contingency cell exceeds 2**16
+    # leading to overflow in np.outer, resulting in EMI > 1
+    assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
+
+
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
@@ -177,22 +184,66 @@ def test_contingency_matrix():
 
 
 def test_exactly_zero_info_score():
-    """Check numerical stability when information is exactly zero"""
+    # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = np.ones(i, dtype=np.int),\
             np.arange(i, dtype=np.int)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                                                  max_n_classes=1e4), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b,
+                                     max_n_classes=1e4), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b,
+                                                max_n_classes=1e4), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b,
+                                                  max_n_classes=1e4), 0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
-    """Check relation between v_measure, entropy and mutual information"""
+    # Check relation between v_measure, entropy and mutual information
     for i in np.logspace(1, 4, 4).astype(np.int):
         random_state = np.random.RandomState(seed)
-        labels_a, labels_b = random_state.random_integers(0, 10, i),\
-            random_state.random_integers(0, 10, i)
+        labels_a, labels_b = random_state.randint(0, 10, i),\
+            random_state.randint(0, 10, i)
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
+
+
+def test_max_n_classes():
+    rng = np.random.RandomState(seed=0)
+    labels_true = rng.rand(53)
+    labels_pred = rng.rand(53)
+    labels_zero = np.zeros(53)
+    labels_true[:2] = 0
+    labels_zero[:3] = 1
+    labels_pred[:2] = 0
+    for score_func in score_funcs:
+        expected = ("Too many classes for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_true, labels_pred,
+                             max_n_classes=50)
+        expected = ("Too many clusters for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_zero, labels_pred,
+                             max_n_classes=50)
+
+
+def test_fowlkes_mallows_score():
+    # General case
+    score = fowlkes_mallows_score([0, 0, 0, 1, 1, 1],
+                                  [0, 0, 1, 1, 2, 2])
+    assert_almost_equal(score, 4. / np.sqrt(12. * 6.))
+
+    # Perfect match but where the label names changed
+    perfect_score = fowlkes_mallows_score([0, 0, 0, 1, 1, 1],
+                                          [1, 1, 1, 0, 0, 0])
+    assert_almost_equal(perfect_score, 1.)
+
+    # Worst case
+    worst_score = fowlkes_mallows_score([0, 0, 0, 0, 0, 0],
+                                        [0, 1, 2, 3, 4, 5])
+    assert_almost_equal(worst_score, 0.)

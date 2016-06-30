@@ -1,25 +1,26 @@
-.. currentmodule:: sklearn.grid_search
+
+
+.. currentmodule:: sklearn.model_selection
 
 .. _grid_search:
 
-===============================================
-Grid Search: Searching for estimator parameters
-===============================================
+===========================================
+Tuning the hyper-parameters of an estimator
+===========================================
 
-Parameters that are not directly learnt within estimators can be set by
-searching a parameter space for the best :ref:`cross_validation` score.
-Typical examples include ``C``, ``kernel`` and ``gamma`` for Support Vector
-Classifier, ``alpha`` for Lasso, etc.
+Hyper-parameters are parameters that are not directly learnt within estimators.
+In scikit-learn they are passed as arguments to the constructor of the
+estimator classes. Typical examples include ``C``, ``kernel`` and ``gamma``
+for Support Vector Classifier, ``alpha`` for Lasso, etc.
+
+It is possible and recommended to search the hyper-parameter space for the
+best :ref:`cross_validation` score.
 
 Any parameter provided when constructing an estimator may be optimized in this
-manner.  Specifically, to find the names and current values for all parameters
+manner. Specifically, to find the names and current values for all parameters
 for a given estimator, use::
 
   estimator.get_params()
-
-Such parameters are often referred to as *hyperparameters* (particularly in
-Bayesian learning), distinguishing them from the parameters optimised in a
-machine learning procedure.
 
 A search consists of:
 
@@ -29,16 +30,20 @@ A search consists of:
 - a cross-validation scheme; and
 - a :ref:`score function <gridsearch_scoring>`.
 
+Some models allow for specialized, efficient parameter search strategies,
+:ref:`outlined below <alternative_cv>`.
 Two generic approaches to sampling search candidates are provided in
 scikit-learn: for given values, :class:`GridSearchCV` exhaustively considers
 all parameter combinations, while :class:`RandomizedSearchCV` can sample a
 given number of candidates from a parameter space with a specified
-distribution.
+distribution. After describing these tools we detail
+:ref:`best practice <grid_search_tips>` applicable to both approaches.
 
-.. seealso
-
-   :ref:`pipeline` describes building composite estimators whose
-   parameter space can be searched with these tools.
+Note that it is common that a small subset of those parameters can have a large
+impact on the predictive or computation performance of the model while others
+can be left to their default values. It is recommend to read the docstring of
+the estimator class to get a finer understanding of their expected behavior,
+possibly by reading the enclosed reference to the literature.  
 
 Exhaustive Grid Search
 ======================
@@ -61,35 +66,7 @@ The :class:`GridSearchCV` instance implements the usual estimator API: when
 "fitting" it on a dataset all the possible combinations of parameter values are
 evaluated and the best combination is retained.
 
-.. topic:: Model selection: development and evaluation
-
-  Model selection with ``GridSearchCV`` can be seen as a way to use the
-  labeled data to "train" the parameters of the grid.
-
-  When evaluating the resulting model it is important to do it on
-  held-out samples that were not seen during the grid search process:
-  it is recommended to split the data into a **development set** (to
-  be fed to the ``GridSearchCV`` instance) and an **evaluation set**
-  to compute performance metrics.
-
-  This can be done by using the :func:`cross_validation.train_test_split`
-  utility function.
-
-.. currentmodule:: sklearn.grid_search
-
-.. _gridsearch_scoring:
-
-Scoring functions for parameter search
---------------------------------------
-
-By default, :class:`GridSearchCV` uses the ``score`` function of the estimator
-to evaluate a parameter setting. These are the
-:func:`sklearn.metrics.accuracy_score` for classification and
-:func:`sklearn.metrics.r2_score` for regression.  For some applications, other
-scoring functions are better suited (for example in unbalanced classification,
-the accuracy score is often uninformative). An alternative scoring function
-can be specified via the ``scoring`` parameter to :class:`GridSearchCV`.  See
-:ref:`scoring_parameter` for more details.
+.. currentmodule:: sklearn.model_selection
 
 .. topic:: Examples:
 
@@ -102,11 +79,7 @@ can be specified via the ``scoring`` parameter to :class:`GridSearchCV`.  See
       classifier (here a linear SVM trained with SGD with either elastic
       net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
 
-.. note::
-
-  Computations can be run in parallel if your OS supports it, by using
-  the keyword ``n_jobs=-1``, see function signature for more details.
-
+.. _randomized_parameter_search:
 
 Randomized Parameter Optimization
 =================================
@@ -128,7 +101,7 @@ For each parameter, either a distribution over possible values or a list of
 discrete choices (which will be sampled uniformly) can be specified::
 
   [{'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
-    'kernel': ['rbf'], 'class_weight':['auto', None]}]
+    'kernel': ['rbf'], 'class_weight':['balanced', None]}]
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
@@ -159,6 +132,67 @@ increasing ``n_iter`` will always lead to a finer search.
       Random search for hyper-parameter optimization,
       The Journal of Machine Learning Research (2012)
 
+.. _grid_search_tips:
+
+Tips for parameter search
+=========================
+
+.. _gridsearch_scoring:
+
+Specifying an objective metric
+------------------------------
+
+By default, parameter search uses the ``score`` function of the estimator
+to evaluate a parameter setting. These are the
+:func:`sklearn.metrics.accuracy_score` for classification and
+:func:`sklearn.metrics.r2_score` for regression.  For some applications,
+other scoring functions are better suited (for example in unbalanced
+classification, the accuracy score is often uninformative). An alternative
+scoring function can be specified via the ``scoring`` parameter to
+:class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
+specialized cross-validation tools described below.
+See :ref:`scoring_parameter` for more details.
+
+Composite estimators and parameter spaces
+-----------------------------------------
+
+:ref:`pipeline` describes building composite estimators whose
+parameter space can be searched with these tools.
+
+Model selection: development and evaluation
+-------------------------------------------
+
+Model selection by evaluating various parameter settings can be seen as a way
+to use the labeled data to "train" the parameters of the grid.
+
+When evaluating the resulting model it is important to do it on
+held-out samples that were not seen during the grid search process:
+it is recommended to split the data into a **development set** (to
+be fed to the ``GridSearchCV`` instance) and an **evaluation set**
+to compute performance metrics.
+
+This can be done by using the :func:`train_test_split`
+utility function.
+
+Parallelism
+-----------
+
+:class:`GridSearchCV` and :class:`RandomizedSearchCV` evaluate each parameter
+setting independently.  Computations can be run in parallel if your OS
+supports it, by using the keyword ``n_jobs=-1``. See function signature for
+more details.
+
+Robustness to failure
+---------------------
+
+Some parameter settings may result in a failure to ``fit`` one or more folds
+of the data.  By default, this will cause the entire search to fail, even if
+some parameter settings could be fully evaluated. Setting ``error_score=0``
+(or `=np.NaN`) will make the procedure robust to such failure, issuing a
+warning and setting the score for that fold to 0 (or `NaN`), but completing
+the search.
+
+.. _alternative_cv:
 
 Alternatives to brute force parameter search
 ============================================

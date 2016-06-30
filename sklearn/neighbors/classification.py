@@ -3,7 +3,7 @@
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
@@ -24,12 +24,14 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                            SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing the k-nearest neighbors vote.
 
+    Read more in the :ref:`User Guide <classification>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
         Number of neighbors to use by default for :meth:`k_neighbors` queries.
 
-    weights : str or callable
+    weights : str or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -40,8 +42,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
-
-        Uniform weights are used by default.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -72,8 +72,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params: dict, optional (default = None)
-        additional keyword arguments for the metric function.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Doesn't affect :meth:`fit` method.
 
     Examples
     --------
@@ -107,17 +112,18 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
        but different labels, the results will depend on the ordering of the
        training data.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, **kwargs):
+                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 **kwargs):
 
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, **kwargs)
+                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -125,8 +131,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -167,8 +174,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -192,10 +200,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        else:
-            # Some weights may be infinite (zero distance), which can cause
-            # downstream NaN values when used for normalization.
-            weights[np.isinf(weights)] = np.finfo('f').max
 
         all_rows = np.arange(X.shape[0])
         probabilities = []
@@ -223,6 +227,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing a vote among neighbors within a given radius
+
+    Read more in the :ref:`User Guide <classification>`.
 
     Parameters
     ----------
@@ -278,8 +284,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
 
-    metric_params: dict, optional (default = None)
-        additional keyword arguments for the metric function.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -304,7 +310,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, radius=1.0, weights='uniform',
@@ -323,8 +329,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------

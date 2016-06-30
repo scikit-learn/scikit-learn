@@ -90,10 +90,10 @@ Classification
 :class:`DecisionTreeClassifier` is a class capable of performing multi-class
 classification on a dataset.
 
-As other classifiers, :class:`DecisionTreeClassifier` take as input two
-arrays: an array X of size ``[n_samples, n_features]`` holding the training
-samples, and an array Y of integer values, size ``[n_samples]``, holding
-the class labels for the training samples::
+As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
+an array X, sparse or dense, of size ``[n_samples, n_features]``  holding the
+training samples, and an array Y of integer values, size ``[n_samples]``,
+holding the class labels for the training samples::
 
     >>> from sklearn import tree
     >>> X = [[0, 0], [1, 1]]
@@ -101,10 +101,16 @@ the class labels for the training samples::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(X, Y)
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
     >>> clf.predict([[2., 2.]])
     array([1])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba([[2., 2.]])
+    array([[ 0.,  1.]])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -123,7 +129,6 @@ Once trained, we can export the tree in `Graphviz
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
-    >>> from sklearn.externals.six import StringIO
     >>> with open("iris.dot", 'w') as f:
     ...     f = tree.export_graphviz(clf, out_file=f)
 
@@ -145,6 +150,21 @@ a PDF file (or any other supported file type) directly in Python::
     >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
+The :func:`export_graphviz` exporter also supports a variety of aesthetic
+options, including coloring nodes by their class (or value for regression) and
+using explicit variable and class names if desired. IPython notebooks can also
+render these plots inline using the `Image()` function::
+
+    >>> from IPython.display import Image  # doctest: +SKIP
+    >>> dot_data = StringIO()  # doctest: +SKIP
+    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
+                             feature_names=iris.feature_names,  # doctest: +SKIP
+                             class_names=iris.target_names,  # doctest: +SKIP
+                             filled=True, rounded=True,  # doctest: +SKIP
+                             special_characters=True)  # doctest: +SKIP
+    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> Image(graph.create_png())  # doctest: +SKIP
+
 .. only:: html
 
     .. figure:: ../images/iris.svg
@@ -155,10 +175,16 @@ a PDF file (or any other supported file type) directly in Python::
     .. figure:: ../images/iris.pdf
        :align: center
 
-After being fitted, the model can then be used to predict new values::
+After being fitted, the model can then be used to predict the class of samples::
 
-    >>> clf.predict(iris.data[0, :])
+    >>> clf.predict(iris.data[:1, :])
     array([0])
+
+Alternatively, the probability of each class can be predicted, which is the
+fraction of training samples of the same class in a leaf::
+
+    >>> clf.predict_proba(iris.data[:1, :])
+    array([[ 1.,  0.,  0.]])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -194,7 +220,6 @@ instead of integer values::
     >>> clf = clf.fit(X, y)
     >>> clf.predict([[1, 1]])
     array([ 0.5])
-
 
 .. topic:: Examples:
 
@@ -286,10 +311,13 @@ total cost over the entire trees (by summing the cost at each node) of
 Scikit-learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. By presorting the feature over all
-relevant samples, and retaining a running label count, we reduce the complexity
+new split point along a given feature. Presorting the feature over all
+relevant samples, and retaining a running label count, will reduce the complexity
 at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`.
+total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
+for all tree based algorithms. By default it is turned on for gradient boosting,
+where in general it makes training faster, but turned off for all other algorithms as
+it tends to slow down training when training deep trees.
 
 
 Tips on practical use
@@ -314,7 +342,8 @@ Tips on practical use
   * Use ``min_samples_split`` or ``min_samples_leaf`` to control the number of
     samples at a leaf node.  A very small number will usually mean the tree
     will overfit, whereas a large number will prevent the tree from learning
-    the data.  Try ``min_samples_leaf=5`` as an initial value.
+    the data. Try ``min_samples_leaf=5`` as an initial value. If the sample size
+    varies greatly, a float number can be used as percentage in these two parameters.
     The main difference between the two is that ``min_samples_leaf`` guarantees
     a minimum number of samples in a leaf, while ``min_samples_split`` can
     create arbitrary small leaves, though ``min_samples_split`` is more common
@@ -336,6 +365,13 @@ Tips on practical use
 
   * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
+
+  * If the input matrix X is very sparse, it is recommended to convert to sparse
+    ``csc_matrix`` before calling fit and sparse ``csr_matrix`` before calling
+    predict. Training time can be orders of magnitude faster for a sparse
+    matrix input compared to a dense matrix when features have zero values in
+    most of the samples.
+
 
 
 .. _tree_algorithms:
@@ -373,8 +409,8 @@ and threshold that yield the largest information gain at each node.
 
 scikit-learn uses an optimised version of the CART algorithm.
 
-.. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+.. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
+.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
 
 
 .. _tree_mathematical_formulation:
@@ -439,7 +475,7 @@ Cross-Entropy
 
 .. math::
 
-    H(X_m) = \sum_k p_{mk} \log(p_{mk})
+    H(X_m) = - \sum_k p_{mk} \log(p_{mk})
 
 and Misclassification
 
@@ -463,9 +499,9 @@ criterion to minimise is the Mean Squared Error
 
 .. topic:: References:
 
-    * http://en.wikipedia.org/wiki/Decision_tree_learning
+    * https://en.wikipedia.org/wiki/Decision_tree_learning
 
-    * http://en.wikipedia.org/wiki/Predictive_analytics
+    * https://en.wikipedia.org/wiki/Predictive_analytics
 
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.

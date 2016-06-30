@@ -1,9 +1,32 @@
 .. -*- mode: rst -*-
 
-|Travis|_
+|Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
 
-.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
+.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
+
+.. |Coveralls| image:: https://coveralls.io/repos/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
+.. _Coveralls: https://coveralls.io/r/scikit-learn/scikit-learn
+
+.. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
+.. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
+
+.. |Python27| image:: https://img.shields.io/badge/python-2.7-blue.svg
+.. _Python27: https://badge.fury.io/py/scikit-learn
+
+.. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
+.. _Python35: https://badge.fury.io/py/scikit-learn
+
+.. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
+.. _PyPi: https://badge.fury.io/py/scikit-learn
+
+
+.. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
+.. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
+
 
 scikit-learn
 ============
@@ -34,12 +57,13 @@ Important links
 Dependencies
 ============
 
-scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.4.
+scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.5.
 (using the same codebase thanks to an embedded copy of
-`six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3.
+`six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3 and 3.4.
 
-The required dependencies to build the software are NumPy >= 1.6.2,
-SciPy >= 0.9 and a working C/C++ compiler.
+The required dependencies to build the software are NumPy >= 1.6.1,
+SciPy >= 0.9 and a working C/C++ compiler. For the development version,
+you will also require Cython >=0.23.
 
 For running the examples Matplotlib >= 1.1.1 is required and for running the
 tests you need nose >= 1.1.2.
@@ -68,6 +92,8 @@ To install for all users on Unix/Linux::
   python setup.py build
   sudo python setup.py install
 
+For more detailed installation instructions,
+see the web page http://scikit-learn.org/stable/install.html
 
 Development
 ===========

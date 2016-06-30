@@ -10,7 +10,7 @@ About us
 Citing scikit-learn
 -------------------
 
-If you use scikit-learn in scientific publication, we would appreciate
+If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
  `Scikit-learn: Machine Learning in Python
@@ -31,6 +31,27 @@ citations to the following paper:
     year={2011}
    }
 
+If you want to cite scikit-learn for its API or design, you may also want to consider the
+following paper:
+
+`API design for machine learning software: experiences from the scikit-learn
+project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+
+Bibtex entry::
+
+    @inproceedings{sklearn_api,
+      author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                   Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                   Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                   and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                   Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+      title     = {{API} design for machine learning software: experiences from the scikit-learn
+                   project},
+      booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+      year      = {2013},
+      pages = {108--122},
+    }
+
 Artwork
 -------
 
@@ -42,31 +63,55 @@ High quality PNG and SVG logos are available in the `doc/logos/ <https://github.
 Funding
 -------
 
-`INRIA <http://inria.fr>`_ actively supports this project. It has
-provided funding for Fabian Pedregosa to work on this project full
-time in the period 2010-2012. It also hosts coding sprints and other
-events.
+`INRIA <https://www.inria.fr>`_ actively supports this project. It has
+provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
+(2012-2013) and Olivier Grisel (2013-2015) to work on this project
+full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
+   :width: 200pt
    :align: center
 
+`Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
+funded one year for a developer to work on the project full-time
+(2014-2015).
 
-`Google <http://code.google.com/opensource/>`_ sponsored David
-Cournapeau with a Summer of Code Scholarship in the summer of 2007,
-`Vlad Niculae`_ in 2011, and `Vlad Niculae`_ and Immanuel Bayer in 2012 . It also provided funding for sprints and events
-around scikit-learn. If
+.. image:: images/cds-logo.png
+   :width: 200pt
+   :align: center
+
+`NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
+funds Andreas Mueller (2014-2015) to work on this project. The Moore-Sloan Data Science
+Environment also funds several students to work on the project part-time.
+
+.. image:: images/nyu_short_color.png
+   :width: 200pt
+   :align: center
+
+The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
+to work on scikit-learn through the
+`Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
+program.
+
+- 2007 - David Cournapeau
+- 2011 - `Vlad Niculae`_
+- 2012 - `Vlad Niculae`_, Immanuel Bayer.
+- 2013 - `Kemal Eren`_, Nicolas Trésegnie
+- 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
+
+It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
-<http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
+<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <http://www.debian.org>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
-College <http://www.dartmouth.edu/~psych/>`_).
+College <http://pbs.dartmouth.edu>`_).
 
-The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
+The `PSF <https://www.python.org/psf/>`_ helped find and manage funding for our
 2011 Granada sprint. More information can be found `here
-<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`_
+<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`__
 
 `tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
@@ -76,12 +121,12 @@ Donating to the project
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are interested in donating to the project or to one of our code-sprints, you can use
-the *Paypal* button below or the `NumFOCUS Donations Page <http://numfocus.org/donatejoin/>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
+the *Paypal* button below or the `NumFOCUS Donations Page <http://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
-<http://numfocus.org/donations>`_, a non-profit-organization which is
+<http://www.numfocus.org>`_, a non-profit-organization which is
 managed by a board of `Scipy community members
-<http://numfocus.org/board>`_. NumFOCUS's mission is to foster
+<http://www.numfocus.org/board>`_. NumFOCUS's mission is to foster
 scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.
@@ -127,30 +172,30 @@ The 2013' Paris international sprint
 
 
 .. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
-   :width: 150px
+   :width: 120pt
    :target: http://www.telecom-paristech.fr/
 
 
-.. |tinyclues| image:: http://www.tinyclues.com/item/50b77d01e4b0bff132989dfd?format=original
-   :width: 150px
-   :target: http://www.tinyclues.fr
+.. |tinyclues| image:: http://www.tinyclues.com/static/img/logo.png
+   :width: 120pt
+   :target: http://www.tinyclues.com/
 
 
 .. |afpy| image:: http://www.afpy.org/logo.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.afpy.org
 
 
 .. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.svi.cnrs-bellevue.fr
 
 .. |FNRS| image:: http://www.fnrs.be/uploaddocs/images/COMMUNIQUER/FRS-FNRS_rose_transp.png
-   :width: 150px
+   :width: 120pt
    :target: http://www.frs-fnrs.be/
 
 .. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
-   :width: 150px
+   :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 
    IAP VII/19 - DYSCO
@@ -159,7 +204,8 @@ The 2013' Paris international sprint
 
   </div>
 
-*For more information on this sprint, see* `here <https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`_
+*For more information on this sprint, see* `here
+<https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`__
 
 
 Infrastructure support

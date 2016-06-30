@@ -7,9 +7,10 @@ estimator, as a chain of transforms and estimators.
 #         Virgile Fritsch
 #         Alexandre Gramfort
 #         Lars Buitinck
-# Licence: BSD
+# License: BSD
 
 from collections import defaultdict
+from warnings import warn
 
 import numpy as np
 from scipy import sparse
@@ -18,13 +19,11 @@ from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import tosequence
+from .utils.metaestimators import if_delegate_has_method
 from .externals.six import iteritems
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
-
-# One round of beers on me if someone finds out why the backslash
-# is needed in the Attributes section so as not to upset sphinx.
 
 class Pipeline(BaseEstimator):
     """Pipeline of transforms with a final estimator.
@@ -39,12 +38,20 @@ class Pipeline(BaseEstimator):
     For this, it enables setting parameters of the various steps using their
     names and the parameter name separated by a '__', as in the example below.
 
+    Read more in the :ref:`User Guide <pipeline>`.
+
     Parameters
     ----------
-    steps: list
+    steps : list
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+    Attributes
+    ----------
+    named_steps : dict
+        Read-only attribute to access any step parameter by user given name.
+        Keys are step names and values are steps parameters.
 
     Examples
     --------
@@ -69,25 +76,31 @@ class Pipeline(BaseEstimator):
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.77...
+    >>> # getting the selected features chosen by anova_filter
+    >>> anova_svm.named_steps['anova'].get_support()
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([ True,  True,  True, False, False,  True, False,  True,  True, True,
+           False, False,  True, False,  True, False, False, False, False,
+           True], dtype=bool)
     """
 
     # BaseEstimator interface
 
     def __init__(self, steps):
-        self.named_steps = dict(steps)
         names, estimators = zip(*steps)
-        if len(self.named_steps) != len(steps):
-            raise ValueError("Names provided are not unique: %s" % (names,))
+        if len(dict(steps)) != len(steps):
+            raise ValueError("Provided step names are not unique: %s"
+                             % (names,))
 
         # shallow copy of steps
-        self.steps = tosequence(zip(names, estimators))
+        self.steps = tosequence(steps)
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
         for t in transforms:
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
-                raise TypeError("All intermediate steps a the chain should "
+                raise TypeError("All intermediate steps of the chain should "
                                 "be transforms and implement fit and transform"
                                 " '%s' (type %s) doesn't)" % (t, type(t)))
 
@@ -96,15 +109,29 @@ class Pipeline(BaseEstimator):
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
+    @property
+    def _estimator_type(self):
+        return self.steps[-1][1]._estimator_type
+
     def get_params(self, deep=True):
         if not deep:
             return super(Pipeline, self).get_params(deep=False)
         else:
-            out = self.named_steps.copy()
+            out = self.named_steps
             for name, step in six.iteritems(self.named_steps):
                 for key, value in six.iteritems(step.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+
+            out.update(super(Pipeline, self).get_params(deep=False))
             return out
+
+    @property
+    def named_steps(self):
+        return dict(self.steps)
+
+    @property
+    def _final_estimator(self):
+        return self.steps[-1][1]
 
     # Estimator interface
 
@@ -125,6 +152,15 @@ class Pipeline(BaseEstimator):
     def fit(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of the
+            pipeline.
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps of
+            the pipeline.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
@@ -133,71 +169,175 @@ class Pipeline(BaseEstimator):
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
-        estimator."""
+        estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps of
+            the pipeline.
+        """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         if hasattr(self.steps[-1][-1], 'fit_transform'):
             return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
         else:
             return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
         final estimator. Valid only if the final estimator implements
-        predict."""
+        predict.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt)
 
+    @if_delegate_has_method(delegate='_final_estimator')
+    def fit_predict(self, X, y=None, **fit_params):
+        """Applies fit_predict of last step in pipeline after transforms.
+
+        Applies fit_transforms of a pipeline to the data, followed by the
+        fit_predict method of the final estimator in the pipeline. Valid
+        only if the final estimator implements fit_predict.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of
+            the pipeline.
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps
+            of the pipeline.
+        """
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
-        predict_proba."""
+        predict_proba.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def decision_function(self, X):
         """Applies transforms to the data, and the decision_function method of
         the final estimator. Valid only if the final estimator implements
-        decision_function."""
+        decision_function.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].decision_function(Xt)
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def predict_log_proba(self, X):
+        """Applies transforms to the data, and the predict_log_proba method of
+        the final estimator. Valid only if the final estimator implements
+        predict_log_proba.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def transform(self, X):
         """Applies transforms to the data, and the transform method of the
         final estimator. Valid only if the final estimator implements
-        transform."""
+        transform.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
+        """
         Xt = X
         for name, transform in self.steps:
             Xt = transform.transform(Xt)
         return Xt
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def inverse_transform(self, X):
+        """Applies inverse transform to the data.
+        Starts with the last step of the pipeline and applies
+        ``inverse_transform`` in inverse order of the pipeline steps.
+        Valid only if all steps of the pipeline implement inverse_transform.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to inverse transform. Must fulfill output requirements of the
+            last step of the pipeline.
+        """
         if X.ndim == 1:
+            warn("From version 0.19, a 1d X will not be reshaped in"
+                 " pipeline.inverse_transform any more.", FutureWarning)
             X = X[None, :]
         Xt = X
         for name, step in self.steps[::-1]:
             Xt = step.inverse_transform(Xt)
         return Xt
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def score(self, X, y=None):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
-        score."""
+        score.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to score. Must fulfill input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Targets used for scoring. Must fulfill label requirements for all
+            steps of the pipeline.
+        """
         Xt = X
         for name, transform in self.steps[:-1]:
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
+
+    @property
+    def classes_(self):
+        return self.steps[-1][-1].classes_
 
     @property
     def _pairwise(self):
@@ -230,17 +370,17 @@ def make_pipeline(*steps):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
-    does not permit, naming the estimators. Instead, they will be given names
-    automatically based on their types.
+    does not permit, naming the estimators. Instead, their names will be set
+    to the lowercase of their types automatically.
 
     Examples
     --------
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
-    >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
+    >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))    # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB())])
+                    ('gaussiannb', GaussianNB(priors=None))])
 
     Returns
     -------
@@ -255,7 +395,7 @@ def _fit_one_transformer(transformer, X, y):
 
 def _transform_one(transformer, name, X, transformer_weights):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         return transformer.transform(X) * transformer_weights[name]
     return transformer.transform(X)
 
@@ -263,7 +403,7 @@ def _transform_one(transformer, name, X, transformer_weights):
 def _fit_transform_one(transformer, name, X, y, transformer_weights,
                        **fit_params):
     if transformer_weights is not None and name in transformer_weights:
-        # if we have a weight for this transformer, muliply output
+        # if we have a weight for this transformer, multiply output
         if hasattr(transformer, 'fit_transform'):
             X_transformed = transformer.fit_transform(X, y, **fit_params)
             return X_transformed * transformer_weights[name], transformer
@@ -284,6 +424,8 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
+
+    Read more in the :ref:`User Guide <feature_union>`.
 
     Parameters
     ----------
@@ -394,6 +536,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             for name, trans in self.transformer_list:
                 for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
+            out.update(super(FeatureUnion, self).get_params(deep=False))
             return out
 
     def _update_transformer_list(self, transformers):
@@ -417,13 +560,16 @@ def make_union(*transformers):
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
-                 transformer_list=[('pca', PCA(copy=True, n_components=None,
-                                               whiten=False)),
-                                   ('truncatedsvd',
-                                    TruncatedSVD(algorithm='randomized',
-                                                 n_components=2, n_iter=5,
-                                                 random_state=None, tol=0.0))],
-                 transformer_weights=None)
+           transformer_list=[('pca',
+                              PCA(copy=True, iterated_power=4,
+                                  n_components=None, random_state=None,
+                                  svd_solver='auto', tol=0.0, whiten=False)),
+                             ('truncatedsvd',
+                              TruncatedSVD(algorithm='randomized',
+                              n_components=2, n_iter=5,
+                              random_state=None, tol=0.0))],
+           transformer_weights=None)
+
 
     Returns
     -------

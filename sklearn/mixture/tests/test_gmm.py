@@ -1,4 +1,9 @@
+# These tests are those of the deprecated GMM class
+
 import unittest
+import copy
+import sys
+import warnings
 
 from nose.tools import assert_true
 import numpy as np
@@ -7,15 +12,19 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raise_message
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.utils.testing import ignore_warnings
+
 
 rng = np.random.RandomState(0)
 
 
 def test_sample_gaussian():
-    """
-    Test sample generation from mixture.sample_gaussian where covariance
-    is diagonal, spherical and full
-    """
+    # Test sample generation from mixture.sample_gaussian where covariance
+    # is diagonal, spherical and full
 
     n_features, n_samples = 2, 300
     axis = 1
@@ -50,7 +59,6 @@ def test_sample_gaussian():
     from sklearn.mixture import sample_gaussian
     x = sample_gaussian([0, 0], [[4, 3], [1, .1]],
                         covariance_type='full', random_state=42)
-    print(x)
     assert_true(np.isfinite(x).all())
 
 
@@ -64,11 +72,9 @@ def _naive_lmvnpdf_diag(X, mu, cv):
 
 
 def test_lmvnpdf_diag():
-    """
-    test a slow and naive implementation of lmvnpdf and
-    compare it to the vectorized version (mixture.lmvnpdf) to test
-    for correctness
-    """
+    # test a slow and naive implementation of lmvnpdf and
+    # compare it to the vectorized version (mixture.lmvnpdf) to test
+    # for correctness
     n_features, n_components, n_samples = 2, 3, 10
     mu = rng.randint(10) * rng.rand(n_components, n_features)
     cv = (rng.rand(n_components, n_features) + 1.0) ** 2
@@ -107,6 +113,20 @@ def test_lmvnpdf_full():
     assert_array_almost_equal(lpr, reference)
 
 
+def test_lvmpdf_full_cv_non_positive_definite():
+    n_features, n_samples = 2, 10
+    rng = np.random.RandomState(0)
+    X = rng.randint(10) * rng.rand(n_samples, n_features)
+    mu = np.mean(X, 0)
+    cv = np.array([[[-1, 0], [0, 1]]])
+    expected_message = "'covars' must be symmetric, positive-definite"
+    assert_raise_message(ValueError, expected_message,
+                         mixture.log_multivariate_normal_density,
+                         X, mu, cv, 'full')
+
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
 def test_GMM_attributes():
     n_components, n_features = 10, 4
     covariance_type = 'diag'
@@ -155,6 +175,8 @@ class GMMTester():
             'full': np.array([make_spd_matrix(self.n_features, random_state=0)
                               + 5 * self.I for x in range(self.n_components)])}
 
+    # This function tests the deprecated old GMM class
+    @ignore_warnings(category=DeprecationWarning)
     def test_eval(self):
         if not self.do_test_eval:
             return  # DPGMM does not support setting the means and
@@ -182,9 +204,12 @@ class GMMTester():
                                   np.ones(n_samples))
         assert_array_equal(responsibilities.argmax(axis=1), gaussidx)
 
+    # This function tests the deprecated old GMM class
+    @ignore_warnings(category=DeprecationWarning)
     def test_sample(self, n=100):
         g = self.model(n_components=self.n_components,
-                       covariance_type=self.covariance_type, random_state=rng)
+                       covariance_type=self.covariance_type,
+                       random_state=rng)
         # Make sure the means are far apart so responsibilities.argmax()
         # picks the actual component used to generate the observations.
         g.means_ = 20 * self.means
@@ -194,6 +219,8 @@ class GMMTester():
         samples = g.sample(n)
         self.assertEqual(samples.shape, (n, self.n_features))
 
+    # This function tests the deprecated old GMM class
+    @ignore_warnings(category=DeprecationWarning)
     def test_train(self, params='wmc'):
         g = mixture.GMM(n_components=self.n_components,
                         covariance_type=self.covariance_type)
@@ -235,26 +262,32 @@ class GMMTester():
             " threshold of %f, for model %s. The likelihoods are %s."
             % (delta_min, self.threshold, self.covariance_type, trainll))
 
+    # This function tests the deprecated old GMM class
+    @ignore_warnings(category=DeprecationWarning)
     def test_train_degenerate(self, params='wmc'):
-        """ Train on degenerate data with 0 in some dimensions
-        """
-        # Create a training set by sampling from the predefined distribution.
+        # Train on degenerate data with 0 in some dimensions
+        # Create a training set by sampling from the predefined
+        # distribution.
         X = rng.randn(100, self.n_features)
         X.T[1:] = 0
-        g = self.model(n_components=2, covariance_type=self.covariance_type,
+        g = self.model(n_components=2,
+                       covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-3, n_iter=5,
                        init_params=params)
         g.fit(X)
         trainll = g.score(X)
         self.assertTrue(np.sum(np.abs(trainll / 100 / X.shape[1])) < 5)
 
+    # This function tests the deprecated old GMM class
+    @ignore_warnings(category=DeprecationWarning)
     def test_train_1d(self, params='wmc'):
-        """ Train on 1-D data
-        """
-        # Create a training set by sampling from the predefined distribution.
+        # Train on 1-D data
+        # Create a training set by sampling from the predefined
+        # distribution.
         X = rng.randn(100, 1)
-        #X.T[1:] = 0
-        g = self.model(n_components=2, covariance_type=self.covariance_type,
+        # X.T[1:] = 0
+        g = self.model(n_components=2,
+                       covariance_type=self.covariance_type,
                        random_state=rng, min_covar=1e-7, n_iter=5,
                        init_params=params)
         g.fit(X)
@@ -264,6 +297,8 @@ class GMMTester():
         else:
             self.assertTrue(np.sum(np.abs(trainll / 100)) < 2)
 
+    # This function tests the deprecated old GMM class
+    @ignore_warnings(category=DeprecationWarning)
     def score(self, g, X):
         return g.score(X).sum()
 
@@ -292,8 +327,10 @@ class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
     setUp = GMMTester._setUp
 
 
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
 def test_multiple_init():
-    """Test that multiple inits does not much worse than a single one"""
+    # Test that multiple inits does not much worse than a single one
     X = rng.randn(30, 5)
     X[:10] += 2
     g = mixture.GMM(n_components=2, covariance_type='spherical',
@@ -304,8 +341,9 @@ def test_multiple_init():
     assert_true(train2 >= train1 - 1.e-2)
 
 
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
 def test_n_parameters():
-    """Test that the right number of parameters is estimated"""
     n_samples, n_dim, n_components = 7, 5, 2
     X = rng.randn(n_samples, n_dim)
     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
@@ -316,8 +354,62 @@ def test_n_parameters():
         assert_true(g._n_parameters() == n_params[cv_type])
 
 
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_1d_1component():
+    # Test all of the covariance_types return the same BIC score for
+    # 1-dimensional, 1 component fits.
+    n_samples, n_dim, n_components = 100, 1, 1
+    X = rng.randn(n_samples, n_dim)
+    g_full = mixture.GMM(n_components=n_components, covariance_type='full',
+                         random_state=rng, min_covar=1e-7, n_iter=1)
+    g_full.fit(X)
+    g_full_bic = g_full.bic(X)
+    for cv_type in ['tied', 'diag', 'spherical']:
+        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                        random_state=rng, min_covar=1e-7, n_iter=1)
+        g.fit(X)
+        assert_array_almost_equal(g.bic(X), g_full_bic)
+
+
+def assert_fit_predict_correct(model, X):
+    model2 = copy.deepcopy(model)
+
+    predictions_1 = model.fit(X).predict(X)
+    predictions_2 = model2.fit_predict(X)
+
+    assert adjusted_rand_score(predictions_1, predictions_2) == 1.0
+
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_fit_predict():
+    """
+    test that gmm.fit_predict is equivalent to gmm.fit + gmm.predict
+    """
+    lrng = np.random.RandomState(101)
+
+    n_samples, n_dim, n_comps = 100, 2, 2
+    mu = np.array([[8, 8]])
+    component_0 = lrng.randn(n_samples, n_dim)
+    component_1 = lrng.randn(n_samples, n_dim) + mu
+    X = np.vstack((component_0, component_1))
+
+    for m_constructor in (mixture.GMM, mixture.VBGMM, mixture.DPGMM):
+        model = m_constructor(n_components=n_comps, covariance_type='full',
+                              min_covar=1e-7, n_iter=5,
+                              random_state=np.random.RandomState(0))
+        assert_fit_predict_correct(model, X)
+
+    model = mixture.GMM(n_components=n_comps, n_iter=0)
+    z = model.fit_predict(X)
+    assert np.all(z == 0), "Quick Initialization Failed!"
+
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
 def test_aic():
-    """ Test the aic and bic criteria"""
+    # Test the aic and bic criteria
     n_samples, n_dim, n_components = 50, 3, 2
     X = rng.randn(n_samples, n_dim)
     SGH = 0.5 * (X.var() + np.log(2 * np.pi))  # standard gaussian entropy
@@ -334,6 +426,86 @@ def test_aic():
         assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
 
 
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def check_positive_definite_covars(covariance_type):
+    r"""Test that covariance matrices do not become non positive definite
+
+    Due to the accumulation of round-off errors, the computation of the
+    covariance  matrices during the learning phase could lead to non-positive
+    definite covariance matrices. Namely the use of the formula:
+
+    .. math:: C = (\sum_i w_i  x_i x_i^T) - \mu \mu^T
+
+    instead of:
+
+    .. math:: C = \sum_i w_i (x_i - \mu)(x_i - \mu)^T
+
+    while mathematically equivalent, was observed a ``LinAlgError`` exception,
+    when computing a ``GMM`` with full covariance matrices and fixed mean.
+
+    This function ensures that some later optimization will not introduce the
+    problem again.
+    """
+    rng = np.random.RandomState(1)
+    # we build a dataset with 2 2d component. The components are unbalanced
+    # (respective weights 0.9 and 0.1)
+    X = rng.randn(100, 2)
+    X[-10:] += (3, 3)  # Shift the 10 last points
+
+    gmm = mixture.GMM(2, params="wc", covariance_type=covariance_type,
+                      min_covar=1e-3)
+
+    # This is a non-regression test for issue #2640. The following call used
+    # to trigger:
+    # numpy.linalg.linalg.LinAlgError: 2-th leading minor not positive definite
+    gmm.fit(X)
+
+    if covariance_type == "diag" or covariance_type == "spherical":
+        assert_greater(gmm.covars_.min(), 0)
+    else:
+        if covariance_type == "tied":
+            covs = [gmm.covars_]
+        else:
+            covs = gmm.covars_
+
+        for c in covs:
+            assert_greater(np.linalg.det(c), 0)
+
+
+def test_positive_definite_covars():
+    # Check positive definiteness for all covariance types
+    for covariance_type in ["full", "tied", "diag", "spherical"]:
+        yield check_positive_definite_covars, covariance_type
+
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_verbose_first_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=1)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
+
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_verbose_second_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=2)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout

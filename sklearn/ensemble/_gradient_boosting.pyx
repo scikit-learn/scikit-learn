@@ -4,7 +4,7 @@
 #
 # Author: Peter Prettenhofer
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 cimport cython
 
@@ -12,7 +12,9 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.tree._tree cimport Tree, Node
+from sklearn.tree._tree cimport Node
+from sklearn.tree._tree cimport Tree
+
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64

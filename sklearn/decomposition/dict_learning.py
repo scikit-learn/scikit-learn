@@ -8,7 +8,7 @@ import time
 import sys
 import itertools
 
-from math import sqrt, floor, ceil
+from math import sqrt, ceil
 
 import numpy as np
 from scipy import linalg
@@ -18,9 +18,11 @@ from numpy.lib.stride_tricks import as_strided
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
-from ..utils import check_array, check_random_state, gen_even_slices
+from ..utils import (check_array, check_random_state, gen_even_slices,
+                     gen_batches, _get_n_jobs)
 from ..utils.extmath import randomized_svd, row_norms, norm
 from ..utils.random import choice
+from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -30,7 +32,7 @@ _ATOM_NORM_TOLERANCE = 1e-10
 
 def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                    regularization=None, copy_cov=True,
-                   init=None, max_iter=1000):
+                   init=None, max_iter=1000, check_input=True, verbose=0):
     """Generic sparse coding
 
     Each column of the result is the solution to a Lasso problem.
@@ -77,6 +79,12 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
+    check_input: boolean, optional
+        If False, the input arrays X and dictionary will not be checked.
+
+    verbose: int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
+
     Returns
     -------
     code: array of shape (n_components, n_features)
@@ -101,8 +109,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         alpha = float(regularization) / n_features  # account for scaling
         try:
             err_mgt = np.seterr(all='ignore')
+
+            # Not passing in verbose=max(0, verbose-1) because Lars.fit already
+            # corrects the verbosity level.
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
-                                   verbose=False, normalize=False,
+                                   verbose=verbose, normalize=False,
                                    precompute=gram, fit_path=False)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
@@ -111,16 +122,23 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'lasso_cd':
         alpha = float(regularization) / n_features  # account for scaling
-        clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
-                    max_iter=max_iter, warm_start=True)
+
+        # TODO: Make verbosity argument for Lasso?
+        # sklearn.linear_model.coordinate_descent.enet_path has a verbosity
+        # argument that we could pass in from Lasso.
+        clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
+                    precompute=gram, max_iter=max_iter, warm_start=True)
         clf.coef_ = init
-        clf.fit(dictionary.T, X.T)
+        clf.fit(dictionary.T, X.T, check_input=check_input)
         new_code = clf.coef_
 
     elif algorithm == 'lars':
         try:
             err_mgt = np.seterr(all='ignore')
-            lars = Lars(fit_intercept=False, verbose=False, normalize=False,
+
+            # Not passing in verbose=max(0, verbose-1) because Lars.fit already
+            # corrects the verbosity level.
+            lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
                         precompute=gram, n_nonzero_coefs=int(regularization),
                         fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
@@ -133,9 +151,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                     np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
-        new_code = orthogonal_mp_gram(gram, cov, regularization, None,
-                                      row_norms(X, squared=True),
-                                      copy_Xy=copy_cov).T
+        # TODO: Should verbose argument be passed to this?
+        new_code = orthogonal_mp_gram(
+            Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
+            tol=None, norms_squared=row_norms(X, squared=True),
+            copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
@@ -146,13 +166,15 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                   n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=1):
+                  max_iter=1000, n_jobs=1, check_input=True, verbose=0):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
     The goal is to find a sparse array `code` such that::
 
         X ~= code * dictionary
+
+    Read more in the :ref:`User Guide <SparseCoder>`.
 
     Parameters
     ----------
@@ -188,7 +210,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     alpha: float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
-        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
@@ -208,6 +230,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     n_jobs: int, optional
         Number of parallel jobs to run.
 
+    check_input: boolean, optional
+        If False, the input arrays X and dictionary will not be checked.
+
+    verbose : int, optional
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
+
     Returns
     -------
     code: array of shape (n_samples, n_components)
@@ -220,14 +248,21 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
-    dictionary = check_array(dictionary)
-    X = check_array(X)
+    if check_input:
+        if algorithm == 'lasso_cd':
+            dictionary = check_array(dictionary, order='C', dtype='float64')
+            X = check_array(X, order='C', dtype='float64')
+        else:
+            dictionary = check_array(dictionary)
+            X = check_array(X)
+
     n_samples, n_features = X.shape
     n_components = dictionary.shape[0]
 
     if gram is None and algorithm != 'threshold':
         gram = np.dot(dictionary, dictionary.T)
-    if cov is None:
+
+    if cov is None and algorithm != 'lasso_cd':
         copy_cov = False
         cov = np.dot(dictionary, X.T)
 
@@ -241,21 +276,33 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
             regularization = 1.
 
     if n_jobs == 1 or algorithm == 'threshold':
-        return _sparse_encode(X, dictionary, gram, cov=cov,
+        code = _sparse_encode(X,
+                              dictionary, gram, cov=cov,
                               algorithm=algorithm,
                               regularization=regularization, copy_cov=copy_cov,
-                              init=init, max_iter=max_iter)
+                              init=init,
+                              max_iter=max_iter,
+                              check_input=False,
+                              verbose=verbose)
+        # This ensure that dimensionality of code is always 2,
+        # consistant with the case n_jobs > 1
+        if code.ndim == 1:
+            code = code[np.newaxis, :]
+        return code
 
     # Enter parallel code block
     code = np.empty((n_samples, n_components))
-    slices = list(gen_even_slices(n_samples, n_jobs))
+    slices = list(gen_even_slices(n_samples, _get_n_jobs(n_jobs)))
 
-    code_views = Parallel(n_jobs=n_jobs)(
+    code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_sparse_encode)(
-            X[this_slice], dictionary, gram, cov[:, this_slice], algorithm,
+            X[this_slice], dictionary, gram,
+            cov[:, this_slice] if cov is not None else None,
+            algorithm,
             regularization=regularization, copy_cov=copy_cov,
             init=init[this_slice] if init is not None else None,
-            max_iter=max_iter)
+            max_iter=max_iter,
+            check_input=False)
         for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
@@ -742,6 +789,8 @@ def dict_learning_old(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     where V is the dictionary and U is the sparse code.
 
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
+
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
@@ -810,7 +859,6 @@ def dict_learning_old(X, n_components, alpha, max_iter=100, tol=1e-8,
     SparsePCA
     MiniBatchSparsePCA
     """
-
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method %r not supported as a fit algorithm.'
                          % method)
@@ -861,9 +909,9 @@ def dict_learning_old(X, n_components, alpha, max_iter=100, tol=1e-8,
             sys.stdout.write(".")
             sys.stdout.flush()
         elif verbose:
-            print ("Iteration % 3i "
-                   "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                   % (ii, dt, dt / 60, current_cost))
+            print("Iteration % 3i "
+                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                  % (ii, dt, dt / 60, current_cost))
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
@@ -915,6 +963,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     where V is the dictionary and U is the sparse code. This is
     accomplished by repeatedly iterating over mini-batches by slicing
     the input data.
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -1002,6 +1052,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     MiniBatchSparsePCA
 
     """
+    if n_components is None:
+        n_components = X.shape[1]
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -1020,7 +1072,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = randomized_svd(X, n_components)
+        _, S, dictionary = randomized_svd(X, n_components,
+                                          random_state=random_state)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
     if n_components <= r:
@@ -1028,18 +1081,21 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     else:
         dictionary = np.r_[dictionary,
                            np.zeros((n_components - r, dictionary.shape[1]))]
-    dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
         print('[dict_learning]', end=' ')
 
-    n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
     else:
         X_train = X
-    batches = np.array_split(X_train, n_batches)
+
+    dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
+                             copy=False)
+    X_train = check_array(X_train, order='C', dtype=np.float64, copy=False)
+
+    batches = gen_batches(n_samples, batch_size)
     batches = itertools.cycle(batches)
 
     # The covariance of the dictionary
@@ -1054,7 +1110,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
 
-    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
+    for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
+        this_X = X_train[batch]
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -1100,7 +1157,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         elif verbose == 1:
             print('|', end=' ')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
-                             n_jobs=n_jobs)
+                             n_jobs=n_jobs, check_input=False)
         if verbose > 1:
             dt = (time.time() - t0)
             print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
@@ -1148,6 +1205,8 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
+        check_is_fitted(self, 'components_')
+
         # XXX : kwargs is not documented
         X = check_array(X)
         n_samples, n_features = X.shape
@@ -1178,6 +1237,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     The goal is to find a sparse array `code` such that::
 
         X ~= code * dictionary
+
+    Read more in the :ref:`User Guide <SparseCoder>`.
 
     Parameters
     ----------
@@ -1264,6 +1325,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
+
     Parameters
     ----------
     n_components : int,
@@ -1285,6 +1348,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+        .. versionadded:: 0.17
+           *cd* coordinate descent method to improve speed.
+
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
         Algorithm used to transform the data
@@ -1296,6 +1362,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         omp: uses orthogonal matching pursuit to estimate the sparse solution
         threshold: squashes to zero all coefficients less than alpha from
         the projection ``dictionary * X'``
+
+        .. versionadded:: 0.17
+           *lasso_cd* coordinate descent method to improve speed.
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
@@ -1407,8 +1476,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             dict_init=self.dict_init,
             verbose=self.verbose,
             random_state=random_state,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = U
         self.error_ = E
         return self
@@ -1425,6 +1493,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
 
     Parameters
     ----------
@@ -1559,21 +1629,16 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X)
-        if self.n_components is None:
-            n_components = X.shape[1]
-        else:
-            n_components = self.n_components
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, n_components, self.alpha,
+            X, self.n_components, self.alpha,
             n_iter=self.n_iter, return_code=False,
             method=self.fit_algorithm,
             n_jobs=self.n_jobs, dict_init=self.dict_init,
             batch_size=self.batch_size, shuffle=self.shuffle,
             verbose=self.verbose, random_state=random_state,
             return_inner_stats=True,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1618,8 +1683,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             batch_size=len(X), shuffle=False,
             verbose=self.verbose, return_code=False,
             iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats,
-            )
+            return_inner_stats=True, inner_stats=inner_stats)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do

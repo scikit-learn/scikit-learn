@@ -5,6 +5,7 @@
 import numpy as np
 
 from ..utils import check_random_state, check_array
+from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -16,6 +17,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
+
+    Read more in the :ref:`User Guide <SparsePCA>`.
 
     Parameters
     ----------
@@ -152,6 +155,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
+        check_is_fitted(self, 'components_')
+
         X = check_array(X)
         ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
@@ -168,6 +173,8 @@ class MiniBatchSparsePCA(SparsePCA):
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
+
+    Read more in the :ref:`User Guide <SparsePCA>`.
 
     Parameters
     ----------
@@ -272,7 +279,6 @@ class MiniBatchSparsePCA(SparsePCA):
             shuffle=self.shuffle,
             n_jobs=self.n_jobs, method=self.method,
             random_state=random_state,
-            return_n_iter=True
-            )
+            return_n_iter=True)
         self.components_ = Vt.T
         return self

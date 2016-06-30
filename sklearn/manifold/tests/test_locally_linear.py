@@ -9,6 +9,7 @@ from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -39,7 +40,6 @@ def test_lle_simple_grid():
     # note: ARPACK is numerically unstable, so this test will fail for
     #       some random seeds.  We choose 2 because the tests pass.
     rng = np.random.RandomState(2)
-    tol = 0.1
 
     # grid of equidistant points in 2D, n_components = n_dim
     X = np.array(list(product(range(5), repeat=2)))
@@ -101,6 +101,19 @@ def test_lle_manifold():
                         tol * reconstruction_error, msg=details)
 
 
+# Test the error raised when parameter passed to lle is invalid
+def test_lle_init_parameters():
+    X = np.random.rand(5, 3)
+
+    clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
+    msg = "unrecognized eigen_solver 'error'"
+    assert_raise_message(ValueError, msg, clf.fit, X)
+
+    clf = manifold.LocallyLinearEmbedding(method="error")
+    msg = "unrecognized method 'error'"
+    assert_raise_message(ValueError, msg, clf.fit, X)
+
+
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
     # only checks that no error is raised.
@@ -121,8 +134,3 @@ def test_singular_matrix():
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

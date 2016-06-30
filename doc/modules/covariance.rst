@@ -248,6 +248,7 @@ paper. It is the same algorithm as in the R ``glasso`` package.
      graphical lasso" <http://biostatistics.oxfordjournals.org/content/9/3/432.short>`_,
      Biostatistics 9, pp 432, 2008
 
+.. _robust_covariance:
 
 Robust Covariance Estimation
 ============================
@@ -279,7 +280,7 @@ empirical covariance matrix is then rescaled to compensate the
 performed selection of observations ("consistency step").  Having
 computed the Minimum Covariance Determinant estimator, one can give
 weights to observations according to their Mahalanobis distance,
-leading the a reweighted estimate of the covariance matrix of the data
+leading to a reweighted estimate of the covariance matrix of the data
 set ("reweighting step").
 
 Rousseeuw and Van Driessen [4] developed the FastMCD algorithm in order

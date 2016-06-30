@@ -1,5 +1,7 @@
 import nose
-from nose.tools import assert_true
+from nose.tools import assert_equal, assert_true
+from sklearn.utils.testing import clean_warning_registry
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -17,10 +19,10 @@ Y2 = [2, 1, 0, 0]
 
 
 def test_l1_min_c():
-    losses = ['l2', 'log']
+    losses = ['squared_hinge', 'log']
     Xs = {'sparse': sparse_X, 'dense': dense_X}
     Ys = {'two-classes': Y1, 'multi-class': Y2}
-    intercepts = {'no-intercept':  {'fit_intercept': False},
+    intercepts = {'no-intercept': {'fit_intercept': False},
                   'fit-intercept': {'fit_intercept': True,
                                     'intercept_scaling': 10}}
 
@@ -36,12 +38,21 @@ def test_l1_min_c():
                     yield check
 
 
+def test_l2_deprecation():
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as w:
+        assert_equal(l1_min_c(dense_X, Y1, "l2"),
+                     l1_min_c(dense_X, Y1, "squared_hinge"))
+        assert_equal(w[0].category, DeprecationWarning)
+
+
 def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        'log':  LogisticRegression(penalty='l1'),
-        'l2':  LinearSVC(loss='l2', penalty='l1', dual=False),
+        'log': LogisticRegression(penalty='l1'),
+        'squared_hinge': LinearSVC(loss='squared_hinge',
+                                   penalty='l1', dual=False),
     }[loss]
 
     clf.fit_intercept = fit_intercept

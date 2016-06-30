@@ -36,15 +36,12 @@ should be used when applicable.
 
 - :func:`check_X_y`: check that X and y have consistent length, calls
   check_array on X, and column_or_1d on y. For multilabel classification or
-  multitarget regression, specify multi_ouput=True, in which case check_array
+  multitarget regression, specify multi_output=True, in which case check_array
   will be called on y.
 
 - :func:`indexable`: check that all input arrays have consistent length and can
   be sliced or indexed using safe_index.  This is used to validate input for
   cross-validation.
-
-- :func:`warn_if_not_float`: Warn if input is not a floating-point value.
-  the input ``X`` is assumed to have ``X.dtype``.
 
 If your code relies on a random number generator, it should never use
 functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
@@ -96,7 +93,7 @@ Efficient Linear Algebra & Array Operations
   by directly calling the BLAS
   ``nrm2`` function.  This is more stable than ``scipy.linalg.norm``.  See
   `Fabian's blog post
-  <http://fseoane.net/blog/2011/computing-the-vector-norm/>`_ for a discussion.
+  <http://fa.bianp.net/blog/2011/computing-the-vector-norm>`_ for a discussion.
 
 - :func:`extmath.fast_logdet`: efficiently compute the log of the determinant
   of a matrix.
@@ -147,7 +144,7 @@ efficiently process ``scipy.sparse`` data.
 
 - :func:`sparsefuncs.inplace_csr_row_normalize_l1` and
   :func:`sparsefuncs.inplace_csr_row_normalize_l2`: can be used to normalize
-  individual sparse samples to unit l1 or l2 norm as done in
+  individual sparse samples to unit L1 or L2 norm as done in
   :class:`sklearn.preprocessing.Normalizer`.
 
 - :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
@@ -162,7 +159,8 @@ Graph Routines
 - :func:`graph.single_source_shortest_path_length`:
   (not currently used in scikit-learn)
   Return the shortest path from a single source
-  to all connected nodes on a graph.  Code is adapted from networkx.
+  to all connected nodes on a graph.  Code is adapted from `networkx
+  <https://networkx.github.io/>`_.
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
 
@@ -172,7 +170,7 @@ Graph Routines
   both dense and sparse connectivity matrices.
 
 - :func:`graph_shortest_path.graph_shortest_path`:
-  (used in :class:``sklearn.manifold.Isomap``)
+  (used in :class:`sklearn.manifold.Isomap`)
   Return the shortest path between all pairs of connected points on a directed
   or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
   algorithm are available.  The algorithm is most efficient when the
@@ -238,7 +236,7 @@ Testing Functions
   requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
 
 - :func:`testing.all_estimators` : returns a list of all estimators in
-  sklearn to test for consistent behavior and interfaces.
+  scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function
 ==========================================
@@ -295,5 +293,5 @@ Warnings and Exceptions
 
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
-- :class:`ConvergenceWarning`: Custom warning to catch convergence problems.
-  Used in ``sklearn.covariance.graph_lasso``.
+- :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
+  convergence problems. Used in ``sklearn.covariance.graph_lasso``.

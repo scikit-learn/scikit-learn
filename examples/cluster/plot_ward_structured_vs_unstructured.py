@@ -65,7 +65,7 @@ plt.title('Without connectivity constraints (time %.2fs)' % elapsed_time)
 ###############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
 from sklearn.neighbors import kneighbors_graph
-connectivity = kneighbors_graph(X, n_neighbors=10)
+connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
 
 ###############################################################################
 # Compute clustering

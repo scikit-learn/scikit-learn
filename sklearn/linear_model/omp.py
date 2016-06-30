@@ -15,12 +15,13 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
-from ..cross_validation import _check_cv as check_cv
+from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
 
 import scipy
 solve_triangular_args = {}
 if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+    # check_finite=False is an optimization available only in scipy >=0.12
     solve_triangular_args = {'check_finite': False}
 
 
@@ -89,7 +90,13 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
     indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
-    L = np.empty((max_features, max_features), dtype=X.dtype)
+    if solve_triangular_args:
+        # new scipy, don't need to initialize because check_finite=False
+        L = np.empty((max_features, max_features), dtype=X.dtype)
+    else:
+        # old scipy, we need the garbage upper triangle to be non-Inf
+        L = np.zeros((max_features, max_features), dtype=X.dtype)
+
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -138,7 +145,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
               copy_Gram=True, copy_Xy=True, return_path=False):
     """Orthogonal Matching Pursuit step on a precomputed Gram matrix.
 
-    This function uses the the Cholesky decomposition method.
+    This function uses the Cholesky decomposition method.
 
     Parameters
     ----------
@@ -204,7 +211,12 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     n_active = 0
 
     max_features = len(Gram) if tol is not None else n_nonzero_coefs
-    L = np.empty((max_features, max_features), dtype=Gram.dtype)
+    if solve_triangular_args:
+        # new scipy, don't need to initialize because check_finite=False
+        L = np.empty((max_features, max_features), dtype=Gram.dtype)
+    else:
+        # old scipy, we need the garbage upper triangle to be non-Inf
+        L = np.zeros((max_features, max_features), dtype=Gram.dtype)
     L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
@@ -269,31 +281,33 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     When parametrized by error using the parameter `tol`:
     argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
-    X: array, shape (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
-    y: array, shape (n_samples,) or (n_samples, n_targets)
+    y : array, shape (n_samples,) or (n_samples, n_targets)
         Input targets
 
-    n_nonzero_coefs: int
+    n_nonzero_coefs : int
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol: float
+    tol : float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute: {True, False, 'auto'},
+    precompute : {True, False, 'auto'},
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
-    copy_X: bool, optional
+    copy_X : bool, optional
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    return_path: bool, optional. Default: False
+    return_path : bool, optional. Default: False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
@@ -302,7 +316,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Returns
     -------
-    coef: array, shape (n_features,) or (n_features, n_targets)
+    coef : array, shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -362,7 +376,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         else:
             norms_squared = None
         return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
-                                  copy_Gram=copy_X, copy_Xy=False)
+                                  copy_Gram=copy_X, copy_Xy=False,
+                                  return_path=return_path)
 
     if return_path:
         coef = np.zeros((X.shape[1], y.shape[1], X.shape[1]))
@@ -373,8 +388,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     for k in range(y.shape[1]):
         out = _cholesky_omp(
             X, y[:, k], n_nonzero_coefs, tol,
-            copy_X=copy_X, return_path=return_path
-            )
+            copy_X=copy_X, return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
             coef = coef[:, :, :len(idx)]
@@ -403,34 +417,36 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     Solves n_targets Orthogonal Matching Pursuit problems using only
     the Gram matrix X.T * X and the product X.T * y.
 
+    Read more in the :ref:`User Guide <omp>`.
+
     Parameters
     ----------
-    Gram: array, shape (n_features, n_features)
+    Gram : array, shape (n_features, n_features)
         Gram matrix of the input data: X.T * X
 
-    Xy: array, shape (n_features,) or (n_features, n_targets)
+    Xy : array, shape (n_features,) or (n_features, n_targets)
         Input targets multiplied by X: X.T * y
 
-    n_nonzero_coefs: int
+    n_nonzero_coefs : int
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol: float
+    tol : float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared: array-like, shape (n_targets,)
+    norms_squared : array-like, shape (n_targets,)
         Squared L2 norms of the lines of y. Required if tol is not None.
 
-    copy_Gram: bool, optional
+    copy_Gram : bool, optional
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy: bool, optional
+    copy_Xy : bool, optional
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    return_path: bool, optional. Default: False
+    return_path : bool, optional. Default: False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
@@ -439,7 +455,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Returns
     -------
-    coef: array, shape (n_features,) or (n_features, n_targets)
+    coef : array, shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -504,8 +520,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
             Gram, Xy[:, k], n_nonzero_coefs,
             norms_squared[k] if tol is not None else None, tol,
             copy_Gram=copy_Gram, copy_Xy=copy_Xy,
-            return_path=return_path
-            )
+            return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
             coef = coef[:, :, :len(idx)]
@@ -526,7 +541,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
 
 class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
-    """Orthogonal Mathching Pursuit model (OMP)
+    """Orthogonal Matching Pursuit model (OMP)
 
     Parameters
     ----------
@@ -542,14 +557,23 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If False, the regressors X are assumed to be already normalized.
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -606,14 +630,13 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         Returns
         -------
-        self: object
+        self : object
             returns an instance of self.
         """
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
-        X, y, X_mean, y_mean, X_std, Gram, Xy = \
+        X, y, X_offset, y_offset, X_scale, Gram, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
 
@@ -641,7 +664,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                 copy_Gram=True, copy_Xy=True,
                 return_n_iter=True)
         self.coef_ = coef_.T
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
 
@@ -674,6 +697,13 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -718,7 +748,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
 
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Mathching Pursuit model (OMP)
+    """Cross-validated Orthogonal Matching Pursuit model (OMP)
 
     Parameters
     ----------
@@ -732,16 +762,33 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If False, the regressors X are assumed to be already normalized.
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to `False`.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 10% of ``n_features`` but at least 5 if available.
 
-    cv : cross-validation generator, optional
-        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
-        a 5-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -749,6 +796,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
+
+    Read more in the :ref:`User Guide <omp>`.
 
     Attributes
     ----------
@@ -805,8 +854,10 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         self : object
             returns an instance of self.
         """
-        X, y = check_X_y(X, y)
-        cv = check_cv(self.cv, X, y, classifier=False)
+        X, y = check_X_y(X, y, y_numeric=True, ensure_min_features=2,
+                         estimator=self)
+        X = as_float_array(X, copy=False, force_all_finite=False)
+        cv = check_cv(self.cv, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter
                     else self.max_iter)
@@ -814,7 +865,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             delayed(_omp_path_residues)(
                 X[train], y[train], X[test], y[test], self.copy,
                 self.fit_intercept, self.normalize, max_iter)
-            for train, test in cv)
+            for train, test in cv.split(X))
 
         min_early_stop = min(fold.shape[0] for fold in cv_paths)
         mse_folds = np.array([(fold[:min_early_stop] ** 2).mean(axis=1)

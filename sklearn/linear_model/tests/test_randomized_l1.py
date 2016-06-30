@@ -14,7 +14,7 @@ from sklearn.linear_model.randomized_l1 import (lasso_stability_path,
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model.base import center_data
+from sklearn.linear_model.base import _preprocess_data
 
 diabetes = load_diabetes()
 X = diabetes.data
@@ -27,7 +27,7 @@ F, _ = f_regression(X, y)
 
 
 def test_lasso_stability_path():
-    """Check lasso stability path"""
+    # Check lasso stability path
     # Load diabetes data and add noisy features
     scaling = 0.3
     coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
@@ -39,7 +39,7 @@ def test_lasso_stability_path():
 
 
 def test_randomized_lasso():
-    """Check randomized lasso"""
+    # Check randomized lasso
     scaling = 0.3
     selection_threshold = 0.5
 
@@ -76,7 +76,7 @@ def test_randomized_lasso():
 
 
 def test_randomized_logistic():
-    """Check randomized sparse logistic regression"""
+    # Check randomized sparse logistic regression
     iris = load_iris()
     X = iris.data[:, [0, 2]]
     y = iris.target
@@ -102,7 +102,7 @@ def test_randomized_logistic():
 
 
 def test_randomized_logistic_sparse():
-    """Check randomized sparse logistic regression on sparse data"""
+    # Check randomized sparse logistic regression on sparse data
     iris = load_iris()
     X = iris.data[:, [0, 2]]
     y = iris.target
@@ -110,7 +110,8 @@ def test_randomized_logistic_sparse():
     y = y[y != 2]
 
     # center here because sparse matrices are usually not centered
-    X, y, _, _, _ = center_data(X, y, True, True)
+    # labels should not be centered
+    X, _, _, _, _ = _preprocess_data(X, y, True, True)
 
     X_sp = sparse.csr_matrix(X)
 

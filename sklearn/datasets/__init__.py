@@ -8,6 +8,7 @@ from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
 from .base import load_iris
+from .base import load_breast_cancer
 from .base import load_linnerud
 from .base import load_boston
 from .base import get_data_home
@@ -15,6 +16,7 @@ from .base import clear_data_home
 from .base import load_sample_images
 from .base import load_sample_image
 from .covtype import fetch_covtype
+from .kddcup99 import fetch_kddcup99
 from .mlcomp import load_mlcomp
 from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
@@ -49,6 +51,8 @@ from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
+from .rcv1 import fetch_rcv1
+
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',
@@ -61,12 +65,15 @@ __all__ = ['clear_data_home',
            'fetch_species_distributions',
            'fetch_california_housing',
            'fetch_covtype',
+           'fetch_rcv1',
+           'fetch_kddcup99',
            'get_data_home',
            'load_boston',
            'load_diabetes',
            'load_digits',
            'load_files',
            'load_iris',
+           'load_breast_cancer',
            'load_lfw_pairs',
            'load_lfw_people',
            'load_linnerud',

@@ -21,7 +21,7 @@ X, _ = make_blobs(n_samples=60, n_features=2, centers=centers,
 
 
 def test_affinity_propagation():
-    """Affinity Propagation algorithm """
+    # Affinity Propagation algorithm
     # Compute similarities
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
@@ -60,7 +60,7 @@ def test_affinity_propagation():
 
 
 def test_affinity_propagation_predict():
-    """Test AffinityPropagation.predict"""
+    # Test AffinityPropagation.predict
     af = AffinityPropagation(affinity="euclidean")
     labels = af.fit_predict(X)
     labels2 = af.predict(X)
@@ -68,7 +68,7 @@ def test_affinity_propagation_predict():
 
 
 def test_affinity_propagation_predict_error():
-    """Test exception in AffinityPropagation.predict"""
+    # Test exception in AffinityPropagation.predict
     # Not fitted.
     af = AffinityPropagation(affinity="euclidean")
     assert_raises(ValueError, af.predict, X)

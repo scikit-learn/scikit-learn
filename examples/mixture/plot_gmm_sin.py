@@ -22,41 +22,17 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from sklearn import mixture
-from sklearn.externals.six.moves import xrange
 
-# Number of samples per component
-n_samples = 100
-
-# Generate random sample following a sine curve
-np.random.seed(0)
-X = np.zeros((n_samples, 2))
-step = 4 * np.pi / n_samples
-
-for i in xrange(X.shape[0]):
-    x = i * step - 6
-    X[i, 0] = x + np.random.normal(0, 0.1)
-    X[i, 1] = 3 * (np.sin(x) + np.random.normal(0, .2))
+color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
+                              'darkorange'])
 
 
-color_iter = itertools.cycle(['r', 'g', 'b', 'c', 'm'])
-
-
-for i, (clf, title) in enumerate([
-        (mixture.GMM(n_components=10, covariance_type='full', n_iter=100),
-         "Expectation-maximization"),
-        (mixture.DPGMM(n_components=10, covariance_type='full', alpha=0.01,
-                       n_iter=100),
-         "Dirichlet Process,alpha=0.01"),
-        (mixture.DPGMM(n_components=10, covariance_type='diag', alpha=100.,
-                       n_iter=100),
-         "Dirichlet Process,alpha=100.")]):
-
-    clf.fit(X)
-    splot = plt.subplot(3, 1, 1 + i)
-    Y_ = clf.predict(X)
+def plot_results(X, Y_, means, covariances, index, title):
+    splot = plt.subplot(3, 1, 1 + index)
     for i, (mean, covar, color) in enumerate(zip(
-            clf.means_, clf._get_covars(), color_iter)):
+            means, covariances, color_iter)):
         v, w = linalg.eigh(covar)
+        v = 2. * np.sqrt(2.) * np.sqrt(v)
         u = w[0] / linalg.norm(w[0])
         # as the DP will not use every component it has access to
         # unless it needs it, we shouldn't plot the redundant
@@ -67,16 +43,48 @@ for i, (clf, title) in enumerate([
 
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])
-        angle = 180 * angle / np.pi  # convert to degrees
-        ell = mpl.patches.Ellipse(mean, v[0], v[1], 180 + angle, color=color)
+        angle = 180. * angle / np.pi  # convert to degrees
+        ell = mpl.patches.Ellipse(mean, v[0], v[1], 180. + angle, color=color)
         ell.set_clip_box(splot.bbox)
         ell.set_alpha(0.5)
         splot.add_artist(ell)
 
-    plt.xlim(-6, 4 * np.pi - 6)
-    plt.ylim(-5, 5)
+    plt.xlim(-6., 4. * np.pi - 6.)
+    plt.ylim(-5., 5.)
     plt.title(title)
     plt.xticks(())
     plt.yticks(())
 
+
+# Number of samples per component
+n_samples = 100
+
+# Generate random sample following a sine curve
+np.random.seed(0)
+X = np.zeros((n_samples, 2))
+step = 4. * np.pi / n_samples
+
+for i in range(X.shape[0]):
+    x = i * step - 6.
+    X[i, 0] = x + np.random.normal(0, 0.1)
+    X[i, 1] = 3. * (np.sin(x) + np.random.normal(0, .2))
+
+# Fit a Gaussian mixture with EM using ten components
+gmm = mixture.GaussianMixture(n_components=10, covariance_type='full',
+                              max_iter=100).fit(X)
+plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
+             'Expectation-maximization')
+
+# Fit a Dirichlet process Gaussian mixture using ten components
+dpgmm = mixture.DPGMM(n_components=10, covariance_type='full', alpha=0.01,
+                      n_iter=100).fit(X)
+plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm._get_covars(), 1,
+             'Dirichlet Process,alpha=0.01')
+
+
+# Fit a Dirichlet process Gaussian mixture using ten components
+dpgmm = mixture.DPGMM(n_components=10, covariance_type='diag', alpha=100.,
+                      n_iter=100).fit(X)
+plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm._get_covars(), 2,
+             'Dirichlet Process,alpha=100.')
 plt.show()

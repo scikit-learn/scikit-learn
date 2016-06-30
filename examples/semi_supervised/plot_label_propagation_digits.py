@@ -17,7 +17,7 @@ At the end, the top 10 most uncertain predictions will be shown.
 print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,8 +27,7 @@ from scipy import stats
 from sklearn import datasets
 from sklearn.semi_supervised import label_propagation
 
-from sklearn.metrics import metrics
-from sklearn.metrics.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)
@@ -62,7 +61,7 @@ cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 print("Label Spreading model: %d labeled & %d unlabeled points (%d total)" %
       (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
-print(metrics.classification_report(true_labels, predicted_labels))
+print(classification_report(true_labels, predicted_labels))
 
 print("Confusion matrix")
 print(cm)

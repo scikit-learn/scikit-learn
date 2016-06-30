@@ -3,9 +3,10 @@
 # cython: wraparound=False
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck <larsmans@gmail.com>
+#         Lars Buitinck
+#         Danny Sullivan <dsullivan7@hotmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 cimport cython
 from libc.limits cimport INT_MAX
@@ -16,6 +17,8 @@ cimport numpy as np
 cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int, double *, int, double *, int) nogil
     void dscal "cblas_dscal"(int, double, double *, int) nogil
+    void daxpy "cblas_daxpy" (int, double, const double*,
+                              int, double*, int) nogil
 
 
 np.import_array()
@@ -33,6 +36,8 @@ cdef class WeightVector(object):
     ----------
     w : ndarray, dtype=double, order='C'
         The numpy array which backs the weight vector.
+    aw : ndarray, dtype=double, order='C'
+        The numpy array which backs the average_weight vector.
     w_data_ptr : double*
         A pointer to the data of the numpy array.
     wscale : double
@@ -43,7 +48,9 @@ cdef class WeightVector(object):
         The squared norm of ``w``.
     """
 
-    def __cinit__(self, np.ndarray[double, ndim=1, mode='c'] w):
+    def __cinit__(self,
+                  np.ndarray[double, ndim=1, mode='c'] w,
+                  np.ndarray[double, ndim=1, mode='c'] aw):
         cdef double *wdata = <double *>w.data
 
         if w.shape[0] > INT_MAX:
@@ -54,6 +61,12 @@ cdef class WeightVector(object):
         self.wscale = 1.0
         self.n_features = w.shape[0]
         self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
+
+        self.aw = aw
+        if self.aw is not None:
+            self.aw_data_ptr = <double *>aw.data
+            self.average_a = 0.0
+            self.average_b = 1.0
 
     cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
                   double c) nogil:
@@ -90,6 +103,45 @@ cdef class WeightVector(object):
             w_data_ptr[idx] += val * (c / wscale)
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+
+    # Update the average weights according to the sparse trick defined
+    # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
+    # by Leon Bottou
+    cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
+                          double c, double num_iter) nogil:
+        """Updates the average weight vector.
+
+        Parameters
+        ----------
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.intc*
+            The array which holds the feature indices of ``x``.
+        xnnz : int
+            The number of non-zero features of ``x``.
+        c : double
+            The scaling constant for the example.
+        num_iter : double
+            The total number of iterations.
+        """
+        cdef int j
+        cdef int idx
+        cdef double val
+        cdef double mu = 1.0 / num_iter
+        cdef double average_a = self.average_a
+        cdef double wscale = self.wscale
+        cdef double* aw_data_ptr = self.aw_data_ptr
+
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
+            aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
+
+        # Once the sample has been processed
+        # update the average_a and average_b
+        if num_iter > 1:
+            self.average_b /= (1.0 - mu)
+        self.average_a += mu * self.average_b * wscale
 
     cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
                     int xnnz) nogil:
@@ -131,6 +183,14 @@ cdef class WeightVector(object):
 
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
+        if self.aw is not None:
+            daxpy(<int>self.aw.shape[0], self.average_a,
+                  <double *>self.w.data, 1, <double *>self.aw.data, 1)
+            dscal(<int>self.aw.shape[0], 1.0 / self.average_b,
+                  <double *>self.aw.data, 1)
+            self.average_a = 0.0
+            self.average_b = 1.0
+
         dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
         self.wscale = 1.0
 

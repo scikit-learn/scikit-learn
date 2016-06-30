@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.exceptions import DataDimensionalityWarning
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -113,24 +114,24 @@ def check_input_with_sparse_random_matrix(random_matrix):
 
 
 def test_basic_property_of_random_matrix():
-    """Check basic properties of random matrix generation"""
+    # Check basic properties of random matrix generation
     for random_matrix in all_random_matrix:
-        check_input_size_random_matrix(random_matrix)
-        check_size_generated(random_matrix)
-        check_zero_mean_and_unit_norm(random_matrix)
+        yield check_input_size_random_matrix, random_matrix
+        yield check_size_generated, random_matrix
+        yield check_zero_mean_and_unit_norm, random_matrix
 
     for random_matrix in all_sparse_random_matrix:
-        check_input_with_sparse_random_matrix(random_matrix)
+        yield check_input_with_sparse_random_matrix, random_matrix
 
         random_matrix_dense = \
             lambda n_components, n_features, random_state: random_matrix(
                 n_components, n_features, random_state=random_state,
                 density=1.0)
-        check_zero_mean_and_unit_norm(random_matrix_dense)
+        yield check_zero_mean_and_unit_norm, random_matrix_dense
 
 
 def test_gaussian_random_matrix():
-    """Check some statical properties of Gaussian random matrix"""
+    # Check some statical properties of Gaussian random matrix
     # Check that the random matrix follow the proper distribution.
     # Let's say that each element of a_{ij} of A is taken from
     #   a_ij ~ N(0.0, 1 / n_components).
@@ -144,7 +145,7 @@ def test_gaussian_random_matrix():
 
 
 def test_sparse_random_matrix():
-    """Check some statical properties of sparse random matrix"""
+    # Check some statical properties of sparse random matrix
     n_components = 100
     n_features = 500
 
@@ -210,7 +211,7 @@ def test_sparse_random_projection_transformer_invalid_density():
 def test_random_projection_transformer_invalid_input():
     for RandomProjection in all_RandomProjection:
         assert_raises(ValueError,
-                      RandomProjection(n_components='auto').fit, [0, 1, 2])
+                      RandomProjection(n_components='auto').fit, [[0, 1, 2]])
 
         assert_raises(ValueError,
                       RandomProjection(n_components=-10).fit, data)
@@ -336,7 +337,7 @@ def test_warning_n_components_greater_than_n_features():
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
-        assert_warns(UserWarning,
+        assert_warns(DataDimensionalityWarning,
                      RandomProjection(n_components=n_features + 1).fit, data)
 
 

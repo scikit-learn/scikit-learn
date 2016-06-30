@@ -24,12 +24,15 @@ import gc
 import numpy as np
 import matplotlib.pyplot as plt
 
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from scipy.stats import scoreatpercentile
 from sklearn.datasets.samples_generator import make_regression
 from sklearn.ensemble.forest import RandomForestRegressor
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.stochastic_gradient import SGDRegressor
 from sklearn.svm.classes import SVR
+from sklearn.utils import shuffle
 
 
 def _not_in_sphinx():
@@ -42,7 +45,7 @@ def atomic_benchmark_estimator(estimator, X_test, verbose=False):
     n_instances = X_test.shape[0]
     runtimes = np.zeros(n_instances, dtype=np.float)
     for i in range(n_instances):
-        instance = X_test[i, :]
+        instance = X_test[[i], :]
         start = time.time()
         estimator.predict(instance)
         runtimes[i] = time.time() - start
@@ -93,27 +96,22 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
     """Generate a regression dataset with the given parameters."""
     if verbose:
         print("generating dataset...")
+
     X, y, coef = make_regression(n_samples=n_train + n_test,
                                  n_features=n_features, noise=noise, coef=True)
-    X_train = X[:n_train]
-    y_train = y[:n_train]
-    X_test = X[n_train:]
-    y_test = y[n_train:]
-    idx = np.arange(n_train)
-    np.random.seed(13)
-    np.random.shuffle(idx)
-    X_train = X_train[idx]
-    y_train = y_train[idx]
 
-    std = X_train.std(axis=0)
-    mean = X_train.mean(axis=0)
-    X_train = (X_train - mean) / std
-    X_test = (X_test - mean) / std
+    random_seed = 13
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=n_train, random_state=random_seed)
+    X_train, y_train = shuffle(X_train, y_train, random_state=random_seed)
 
-    std = y_train.std(axis=0)
-    mean = y_train.mean(axis=0)
-    y_train = (y_train - mean) / std
-    y_test = (y_test - mean) / std
+    X_scaler = StandardScaler()
+    X_train = X_scaler.fit_transform(X_train)
+    X_test = X_scaler.transform(X_test)
+
+    y_scaler = StandardScaler()
+    y_train = y_scaler.fit_transform(y_train[:, None])[:, 0]
+    y_test = y_scaler.transform(y_test[:, None])[:, 0]
 
     gc.collect()
     if verbose:
@@ -132,6 +130,7 @@ def boxplot_runtimes(runtimes, pred_type, configuration):
     pred_type : 'bulk' or 'atomic'
 
     """
+
     fig, ax1 = plt.subplots(figsize=(10, 6))
     bp = plt.boxplot(runtimes, )
 
@@ -140,9 +139,7 @@ def boxplot_runtimes(runtimes, pred_type, configuration):
                                       estimator_conf['instance']),
                                   estimator_conf['complexity_label']) for
                  estimator_conf in configuration['estimators']]
-    xtick_names = plt.setp(ax1, xticklabels=cls_infos)
-    plt.setp(xtick_names)
-
+    plt.setp(ax1, xticklabels=cls_infos)
     plt.setp(bp['boxes'], color='black')
     plt.setp(bp['whiskers'], color='black')
     plt.setp(bp['fliers'], color='red', marker='+')
@@ -242,7 +239,7 @@ def benchmark_throughputs(configuration, duration_secs=0.1):
         start_time = time.time()
         n_predictions = 0
         while (time.time() - start_time) < duration_secs:
-            estimator_config['instance'].predict(X_test[0])
+            estimator_config['instance'].predict(X_test[[0]])
             n_predictions += 1
         throughputs[estimator_config['name']] = n_predictions / duration_secs
     return throughputs

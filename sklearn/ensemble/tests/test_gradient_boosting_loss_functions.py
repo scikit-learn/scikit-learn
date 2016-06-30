@@ -19,10 +19,8 @@ from sklearn.ensemble.gradient_boosting import _weighted_percentile
 
 
 def test_binomial_deviance():
-    """Check binomial deviance loss.
-
-    Check against alternative definitions in ESLII.
-    """
+    # Check binomial deviance loss.
+    # Check against alternative definitions in ESLII.
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
@@ -55,7 +53,7 @@ def test_binomial_deviance():
 
 
 def test_log_odds_estimator():
-    """Check log odds estimator. """
+    # Check log odds estimator.
     est = LogOddsEstimator()
     assert_raises(ValueError, est.fit, None, np.array([1]))
 
@@ -78,7 +76,7 @@ def test_sample_weight_smoke():
 
 
 def test_sample_weight_init_estimators():
-    """Smoke test for init estimators with sample weights. """
+    # Smoke test for init estimators with sample weights.
     rng = check_random_state(13)
     X = rng.rand(100, 2)
     sample_weight = np.ones(100)
@@ -115,37 +113,37 @@ def test_sample_weight_init_estimators():
 
 
 def test_weighted_percentile():
-    y = np.empty(102, dtype=np.float)
+    y = np.empty(102, dtype=np.float64)
     y[:50] = 0
     y[-51:] = 2
     y[-1] = 100000
     y[50] = 1
-    sw = np.ones(102, dtype=np.float)
+    sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
     assert score == 1
 
 
 def test_weighted_percentile_equal():
-    y = np.empty(102, dtype=np.float)
+    y = np.empty(102, dtype=np.float64)
     y.fill(0.0)
-    sw = np.ones(102, dtype=np.float)
+    sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
     assert score == 0
 
 
 def test_weighted_percentile_zero_weight():
-    y = np.empty(102, dtype=np.float)
+    y = np.empty(102, dtype=np.float64)
     y.fill(1.0)
-    sw = np.ones(102, dtype=np.float)
+    sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
     score = _weighted_percentile(y, sw, 50)
     assert score == 1.0
 
 
 def test_sample_weight_deviance():
-    """Test if deviance supports sample weights. """
+    # Test if deviance supports sample weights.
     rng = check_random_state(13)
     X = rng.rand(100, 2)
     sample_weight = np.ones(100)

@@ -5,7 +5,6 @@
     Layout for scikit-learn, after a design made by Angel Soler
     (http://angelsoler.net)
 
-    Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
     Update: Next-page button added - 16/03/2012 - Jaques Grobler
 
 
@@ -13,7 +12,7 @@
     :license: BSD
 #}
 {% extends "basic/layout.html" %}
-
+{% set css_files = css_files + ["_static/gallery.css"] %}
 
 {% block htmltitle %}
   {{ super() }}
@@ -25,9 +24,6 @@
 
 {% block extrahead %}
   {% if pagename != 'index' %}
-   {% if theme_collapsiblesidebar|tobool %}
-       <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
-   {% endif %}
   {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
@@ -42,9 +38,6 @@
            $(this).css('background-color', '#A7D6E2');
        }
     );
-    var bodywrapper = $('.bodywrapper');
-    var sidebarbutton = $('#sidebarbutton');
-    sidebarbutton.css({'height': '900px'});
   </script>
 {% endblock %}
 
@@ -70,29 +63,28 @@
         {%- block navbar -%}
         <div class="navbar">
             <ul>
-                <li><a href="{{pathto('../dev/index')}}">Home</a></li>
-                <li><a href="{{pathto('../dev/install')}}">Installation</a></li>
+                <li><a href="{{pathto('index')}}">Home</a></li>
+                <li><a href="{{pathto('install')}}">Installation</a></li>
                 <li class="btn-li"><div class="btn-group">
-		      <a href="{{pathto('documentation')}}">Documentation</a>
-		      <a class="btn dropdown-toggle" data-toggle="dropdown">
-			     <span class="caret"></span>
-		      </a>
-		      <ul class="dropdown-menu">
-			<li class="link-title">Scikit-learn 0.16 (development)</li>
-			<li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
-			<li><a href="{{ pathto('user_guide') }}">User guide</a></li>
-			<li><a href="{{ pathto('modules/classes') }}">API</a></li>
-			<li><a href="{{ pathto('faq') }}">FAQ</a></li>
-			<li class="divider"></li>
-		        <li><a href="http://scikit-learn.org/stable/documentation.html">Stable</a></li>
-			<li><a href="http://scikit-learn.org/0.14/">Scikit-learn 0.14</a></li>
-		        <li><a href="http://scikit-learn.org/0.13/">Scikit-learn 0.13</a></li>
-		        <li><a href="http://scikit-learn.org/0.12/">Scikit-learn 0.12</a></li>
-		        <li><a href="http://scikit-learn.org/0.11/">Scikit-learn 0.11</a></li>
-		        <li><a href="{{ pathto('documentation')}}">More versions...</a></li>
-		      </ul>
-		    </div>
-		</li>
+              <a href="{{pathto('documentation')}}">Documentation</a>
+              <a class="btn dropdown-toggle" data-toggle="dropdown">
+                 <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+            <li class="link-title">Scikit-learn 0.18 (development)</li>
+            <li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
+            <li><a href="{{ pathto('user_guide') }}">User guide</a></li>
+            <li><a href="{{ pathto('modules/classes') }}">API</a></li>
+            <li><a href="{{ pathto('faq') }}">FAQ</a></li>
+            <li><a href="{{ pathto('developers/contributing') }}">Contributing</a></li>
+            <li class="divider"></li>
+                <li><a href="http://scikit-learn.org/stable/documentation.html">Scikit-learn 0.17 (stable)</a></li>
+                <li><a href="http://scikit-learn.org/0.16/documentation.html">Scikit-learn 0.16</a></li>
+                <li><a href="http://scikit-learn.org/0.15/documentation.html">Scikit-learn 0.15</a></li>
+				<li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
+              </ul>
+            </div>
+        </li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             </ul>
 
@@ -131,7 +123,7 @@
 		<!-- Carousel items -->
 		<div class="carousel-inner">
 		  <div class="active item">
-		    <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
+		    <a href="{{ pathto('auto_examples/classification/plot_classifier_comparison') }}">
 		      <div class="crop-wrapper" style="width: 380px; height: 190px; overflow: hidden">
 			<img src="_images/plot_classifier_comparison_carousel.png"
 			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
@@ -157,8 +149,8 @@
 		      <img src="_images/plot_adaboost_twoclass_carousel.png"></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{pathto('auto_examples/gaussian_process/plot_gp_regression') }}">
-		      <img src="_images/plot_gp_regression_carousel.png"></a>
+		    <a href="{{pathto('auto_examples/gaussian_process/plot_gpr_co2') }}">
+		      <img src="_images/plot_gpr_co2_carousel.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/manifold/plot_compare_methods') }}">
@@ -169,8 +161,8 @@
 		      <img src="_images/plot_gmm_pdf.png"></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
-		      <img src="_images/plot_lena_ward_segmentation.png"></a>
+		    <a href="{{ pathto('auto_examples/cluster/plot_face_ward_segmentation') }}">
+		      <img src="_images/plot_face_ward_segmentation.png"></a>
 		  </div>
 		</div>
 		<!-- Carousel nav -->
@@ -276,6 +268,10 @@
     {{ toc }}
     </div>
 </div>
+{% if theme_collapsiblesidebar|tobool %}
+<input type="checkbox" id="nav-trigger" class="nav-trigger" checked />
+<label for="nav-trigger"></label>
+{% endif %}
 {% endif %}
 
 

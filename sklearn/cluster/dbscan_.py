@@ -4,65 +4,81 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
 
 # Author: Robert Layton <robertlayton@gmail.com>
+#         Joel Nothman <joel.nothman@gmail.com>
+#         Lars Buitinck
 #
 # License: BSD 3 clause
 
 import numpy as np
+from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..utils import check_random_state
+from ..utils import check_array, check_consistent_length
+from ..utils.fixes import astype
 from ..neighbors import NearestNeighbors
+
+from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
-           algorithm='auto', leaf_size=30, p=2, random_state=None):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
     """Perform DBSCAN clustering from vector array or distance matrix.
+
+    Read more in the :ref:`User Guide <dbscan>`.
 
     Parameters
     ----------
-    X: array [n_samples, n_samples] or [n_samples, n_features]
-        Array of distances between samples, or a feature array.
-        The array is treated as a feature array unless the metric is given as
-        'precomputed'.
+    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+            array of shape (n_samples, n_samples)
+        A feature array, or array of distances between samples if
+        ``metric='precomputed'``.
 
-    eps: float, optional
+    eps : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood.
 
-    min_samples: int, optional
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+    min_samples : int, optional
+        The number of samples (or total weight) in a neighborhood for a point
+        to be considered as a core point. This includes the point itself.
 
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors for DBSCAN.
 
-    algorithm: {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
         See NearestNeighbors module documentation for details.
 
-    leaf_size: int, optional (default = 30)
+    leaf_size : int, optional (default = 30)
         Leaf size passed to BallTree or cKDTree. This can affect the speed
         of the construction and query, as well as the memory required
         to store the tree. The optimal value depends
         on the nature of the problem.
 
-    p: float, optional
+    p : float, optional
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
-    random_state: numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+    sample_weight : array, shape (n_samples,), optional
+        Weight of each sample, such that a sample with a weight of at least
+        ``min_samples`` is by itself a core sample; a sample with negative
+        weight may inhibit its eps-neighbor from being core.
+        Note that weights are absolute, and default to 1.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Returns
     -------
-    core_samples: array [n_core_samples]
+    core_samples : array [n_core_samples]
         Indices of core samples.
 
     labels : array [n_samples]
@@ -71,6 +87,15 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     Notes
     -----
     See examples/cluster/plot_dbscan.py for an example.
+
+    This implementation bulk-computes all neighborhood queries, which increases
+    the memory complexity to O(n.d) where d is the average number of neighbors,
+    while original DBSCAN had memory complexity O(n).
+
+    Sparse neighborhoods can be precomputed using
+    :func:`NearestNeighbors.radius_neighbors_graph
+    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
+    with ``mode='distance'``.
 
     References
     ----------
@@ -82,96 +107,51 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
 
-    X = np.asarray(X)
-    n = X.shape[0]
-
-    # If index order not given, create random order.
-    random_state = check_random_state(random_state)
-    index_order = random_state.permutation(n)
-
-    # check for known metric powers
-    distance_matrix = True
-    if metric == 'precomputed':
-        D = pairwise_distances(X, metric=metric)
-    else:
-        distance_matrix = False
-        neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
-                                           leaf_size=leaf_size,
-                                           metric=metric, p=p)
-        neighbors_model.fit(X)
+    X = check_array(X, accept_sparse='csr')
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
+        check_consistent_length(X, sample_weight)
 
     # Calculate neighborhood for all samples. This leaves the original point
-    # in, which needs to be considered later (i.e. point i is the
+    # in, which needs to be considered later (i.e. point i is in the
     # neighborhood of point i. While True, its useless information)
-    neighborhoods = []
-    if distance_matrix:
-        neighborhoods = [np.where(x <= eps)[0] for x in D]
+    if metric == 'precomputed' and sparse.issparse(X):
+        neighborhoods = np.empty(X.shape[0], dtype=object)
+        X.sum_duplicates()  # XXX: modifies X's internals in-place
+        X_mask = X.data <= eps
+        masked_indices = astype(X.indices, np.intp, copy=False)[X_mask]
+        masked_indptr = np.cumsum(X_mask)[X.indptr[1:] - 1]
+        # insert the diagonal: a point is its own neighbor, but 0 distance
+        # means absence from sparse matrix data
+        masked_indices = np.insert(masked_indices, masked_indptr,
+                                   np.arange(X.shape[0]))
+        masked_indptr = masked_indptr[:-1] + np.arange(1, X.shape[0])
+        # split into rows
+        neighborhoods[:] = np.split(masked_indices, masked_indptr)
+    else:
+        neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
+                                           leaf_size=leaf_size,
+                                           metric=metric, p=p,
+                                           n_jobs=n_jobs)
+        neighbors_model.fit(X)
+        # This has worst case O(n^2) memory complexity
+        neighborhoods = neighbors_model.radius_neighbors(X, eps,
+                                                         return_distance=False)
+
+    if sample_weight is None:
+        n_neighbors = np.array([len(neighbors)
+                                for neighbors in neighborhoods])
+    else:
+        n_neighbors = np.array([np.sum(sample_weight[neighbors])
+                                for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(n, dtype=np.int)
+    labels = -np.ones(X.shape[0], dtype=np.intp)
 
     # A list of all core samples found.
-    core_samples = []
-
-    # label_num is the label given to the new cluster
-    label_num = 0
-
-    # Look at all samples and determine if they are core.
-    # If they are then build a new cluster from them.
-    for index in index_order:
-        # Already classified
-        if labels[index] != -1:
-            continue
-
-        # get neighbors from neighborhoods or ballTree
-        index_neighborhood = []
-        if distance_matrix:
-            index_neighborhood = neighborhoods[index]
-        else:
-            index_neighborhood = neighbors_model.radius_neighbors(
-                X[index], eps, return_distance=False)[0]
-
-        # Too few samples to be core
-        if len(index_neighborhood) < min_samples:
-            continue
-
-        core_samples.append(index)
-        labels[index] = label_num
-        # candidates for new core samples in the cluster.
-        candidates = [index]
-
-        while len(candidates) > 0:
-            new_candidates = []
-            # A candidate is a core point in the current cluster that has
-            # not yet been used to expand the current cluster.
-            for c in candidates:
-                c_neighborhood = []
-                if distance_matrix:
-                    c_neighborhood = neighborhoods[c]
-                else:
-                    c_neighborhood = neighbors_model.radius_neighbors(
-                        X[c], eps, return_distance=False)[0]
-                noise = np.where(labels[c_neighborhood] == -1)[0]
-                noise = c_neighborhood[noise]
-                labels[noise] = label_num
-                for neighbor in noise:
-                    n_neighborhood = []
-                    if distance_matrix:
-                        n_neighborhood = neighborhoods[neighbor]
-                    else:
-                        n_neighborhood = neighbors_model.radius_neighbors(
-                            X[neighbor], eps, return_distance=False)[0]
-                    # check if its a core point as well
-                    if len(n_neighborhood) >= min_samples:
-                        # is new core point
-                        new_candidates.append(neighbor)
-                        core_samples.append(neighbor)
-            # Update candidates for next round of cluster expansion.
-            candidates = new_candidates
-        # Current cluster finished.
-        # Next core point found will start a new cluster.
-        label_num += 1
-    return core_samples, labels
+    core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
+    dbscan_inner(core_samples, neighborhoods, labels)
+    return np.where(core_samples)[0], labels
 
 
 class DBSCAN(BaseEstimator, ClusterMixin):
@@ -181,23 +161,48 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     Finds core samples of high density and expands clusters from them.
     Good for data which contains clusters of similar density.
 
+    Read more in the :ref:`User Guide <dbscan>`.
+
     Parameters
     ----------
     eps : float, optional
         The maximum distance between two samples for them to be considered
         as in the same neighborhood.
+
     min_samples : int, optional
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+        The number of samples (or total weight) in a neighborhood for a point
+        to be considered as a core point. This includes the point itself.
+
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.calculate_distance for its
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square.
-    random_state : numpy.RandomState, optional
-        The generator used to initialize the centers. Defaults to numpy.random.
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors for DBSCAN.
+
+        .. versionadded:: 0.17
+           metric *precomputed* to accept precomputed sparse matrix.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        The algorithm to be used by the NearestNeighbors module
+        to compute pointwise distances and find nearest neighbors.
+        See NearestNeighbors module documentation for details.
+
+    leaf_size : int, optional (default = 30)
+        Leaf size passed to BallTree or cKDTree. This can affect the speed
+        of the construction and query, as well as the memory required
+        to store the tree. The optimal value depends
+        on the nature of the problem.
+
+    p : float, optional
+        The power of the Minkowski metric to be used to calculate distance
+        between points.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Attributes
     ----------
@@ -213,7 +218,16 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_dbscan.py for an example.
+
+    This implementation bulk-computes all neighborhood queries, which increases
+    the memory complexity to O(n.d) where d is the average number of neighbors,
+    while original DBSCAN had memory complexity O(n).
+
+    Sparse neighborhoods can be precomputed using
+    :func:`NearestNeighbors.radius_neighbors_graph
+    <sklearn.neighbors.NearestNeighbors.radius_neighbors_graph>`
+    with ``mode='distance'``.
 
     References
     ----------
@@ -224,29 +238,61 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 algorithm='auto', leaf_size=30, p=None, random_state=None):
+                 algorithm='auto', leaf_size=30, p=None, n_jobs=1):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.p = p
-        self.random_state = random_state
+        self.n_jobs = n_jobs
 
-    def fit(self, X):
+    def fit(self, X, y=None, sample_weight=None):
         """Perform DBSCAN clustering from features or distance matrix.
 
         Parameters
         ----------
-        X: array [n_samples, n_samples] or [n_samples, n_features]
-            Array of distances between samples, or a feature array.
-            The array is treated as a feature array unless the metric is
-            given as 'precomputed'.
-        params: dict
-            Overwrite keywords from __init__.
+        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+                array of shape (n_samples, n_samples)
+            A feature array, or array of distances between samples if
+            ``metric='precomputed'``.
+        sample_weight : array, shape (n_samples,), optional
+            Weight of each sample, such that a sample with a weight of at least
+            ``min_samples`` is by itself a core sample; a sample with negative
+            weight may inhibit its eps-neighbor from being core.
+            Note that weights are absolute, and default to 1.
         """
-        X = np.asarray(X)
-        clust = dbscan(X, **self.get_params())
+        X = check_array(X, accept_sparse='csr')
+        clust = dbscan(X, sample_weight=sample_weight,
+                       **self.get_params())
         self.core_sample_indices_, self.labels_ = clust
-        self.components_ = X[self.core_sample_indices_].copy()
+        if len(self.core_sample_indices_):
+            # fix for scipy sparse indexing issue
+            self.components_ = X[self.core_sample_indices_].copy()
+        else:
+            # no core samples
+            self.components_ = np.empty((0, X.shape[1]))
         return self
+
+    def fit_predict(self, X, y=None, sample_weight=None):
+        """Performs clustering on X and returns cluster labels.
+
+        Parameters
+        ----------
+        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+                array of shape (n_samples, n_samples)
+            A feature array, or array of distances between samples if
+            ``metric='precomputed'``.
+        sample_weight : array, shape (n_samples,), optional
+            Weight of each sample, such that a sample with a weight of at least
+            ``min_samples`` is by itself a core sample; a sample with negative
+            weight may inhibit its eps-neighbor from being core.
+            Note that weights are absolute, and default to 1.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            cluster labels
+        """
+        self.fit(X, sample_weight=sample_weight)
+        return self.labels_

@@ -4,7 +4,7 @@ Parameter estimation using grid search with cross-validation
 ============================================================
 
 This examples shows how a classifier is optimized by cross-validation,
-which is done using the :class:`sklearn.grid_search.GridSearchCV` object
+which is done using the :class:`sklearn.model_selection.GridSearchCV` object
 on a development set that comprises only half of the available labeled data.
 
 The performance of the selected hyper-parameters and trained model is
@@ -19,8 +19,8 @@ sections on :ref:`cross_validation` and :ref:`grid_search`.
 from __future__ import print_function
 
 from sklearn import datasets
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.svm import SVC
 
@@ -50,18 +50,21 @@ for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
     print()
 
-    clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5, scoring=score)
+    clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5,
+                       scoring='%s_macro' % score)
     clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
     print()
-    print(clf.best_estimator_)
+    print(clf.best_params_)
     print()
     print("Grid scores on development set:")
     print()
-    for params, mean_score, scores in clf.grid_scores_:
+    means = clf.results_['test_mean_score']
+    stds = clf.results_['test_std_score']
+    for i in range(len(clf.results_['params'])):
         print("%0.3f (+/-%0.03f) for %r"
-              % (mean_score, scores.std() / 2, params))
+              % (means[i], stds[i] * 2, clf.results_['params'][i]))
     print()
 
     print("Detailed classification report:")

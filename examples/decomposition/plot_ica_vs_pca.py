@@ -61,7 +61,7 @@ S_ica_ /= S_ica_.std(axis=0)
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    plt.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10,
+    plt.scatter(S[:, 0], S[:, 1], s=2, marker='o', zorder=10,
                 color='steelblue', alpha=0.5)
     if axis_list is not None:
         colors = ['orange', 'red']

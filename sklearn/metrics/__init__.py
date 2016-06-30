@@ -3,15 +3,19 @@ The :mod:`sklearn.metrics` module includes score functions, performance metrics
 and pairwise metrics and distance computations.
 """
 
+
 from .ranking import auc
 from .ranking import average_precision_score
+from .ranking import coverage_error
 from .ranking import label_ranking_average_precision_score
+from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
 
 from .classification import accuracy_score
 from .classification import classification_report
+from .classification import cohen_kappa_score
 from .classification import confusion_matrix
 from .classification import f1_score
 from .classification import fbeta_score
@@ -24,6 +28,7 @@ from .classification import precision_recall_fscore_support
 from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
+from .classification import brier_score_loss
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -34,8 +39,10 @@ from .cluster import homogeneity_completeness_v_measure
 from .cluster import homogeneity_score
 from .cluster import mutual_info_score
 from .cluster import normalized_mutual_info_score
+from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
+from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 
 from .pairwise import euclidean_distances
@@ -47,13 +54,12 @@ from .pairwise import pairwise_kernels
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
+from .regression import median_absolute_error
 from .regression import r2_score
 
 from .scorer import make_scorer
 from .scorer import SCORERS
-
-# Deprecated in 0.16
-from .ranking import auc_score
+from .scorer import get_scorer
 
 __all__ = [
     'accuracy_score',
@@ -66,21 +72,25 @@ __all__ = [
     'completeness_score',
     'confusion_matrix',
     'consensus_score',
+    'coverage_error',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
     'fbeta_score',
+    'get_scorer',
     'hamming_loss',
     'hinge_loss',
     'homogeneity_completeness_v_measure',
     'homogeneity_score',
     'jaccard_similarity_score',
     'label_ranking_average_precision_score',
+    'label_ranking_loss',
     'log_loss',
     'make_scorer',
     'matthews_corrcoef',
     'mean_absolute_error',
     'mean_squared_error',
+    'median_absolute_error',
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
@@ -100,4 +110,5 @@ __all__ = [
     'silhouette_score',
     'v_measure_score',
     'zero_one_loss',
+    'brier_score_loss',
 ]

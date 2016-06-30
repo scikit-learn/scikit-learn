@@ -36,6 +36,8 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
 
     **kwargs : domain specific kwargs to be passed to the dataset loader.
 
+    Read more in the :ref:`User Guide <datasets>`.
+
     Returns
     -------
 

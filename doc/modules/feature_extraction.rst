@@ -127,11 +127,12 @@ determines the sign of the value stored in the output matrix for a feature.
 This way, collisions are likely to cancel out rather than accumulate error,
 and the expected mean of any output feature's value is zero.
 
-If ``non_negative=True`` is passed to the constructor,
-the absolute value is taken.
-This undoes some of the collision handling,
-but allows the output to be passed to estimators like :class:`MultinomialNB`
-or ``chi2`` feature selectors that expect non-negative inputs.
+If ``non_negative=True`` is passed to the constructor, the absolute
+value is taken.  This undoes some of the collision handling, but allows
+the output to be passed to estimators like
+:class:`sklearn.naive_bayes.MultinomialNB` or
+:class:`sklearn.feature_selection.chi2`
+feature selectors that expect non-negative inputs.
 
 :class:`FeatureHasher` accepts either mappings
 (like Python's ``dict`` and its variants in the ``collections`` module),
@@ -397,12 +398,12 @@ suitable for usage by a classifier it is very common to use the tf–idf
 transform.
 
 Tf means **term-frequency** while tf–idf means term-frequency times
-**inverse document-frequency**. This is a originally a term weighting
+**inverse document-frequency**. This was originally a term weighting
 scheme developed for information retrieval (as a ranking function
 for search engines results), that has also found good use in document
 classification and clustering.
 
-This normalization is implemented by the :class:`text.TfidfTransformer`
+This normalization is implemented by the :class:`TfidfTransformer`
 class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -551,7 +552,7 @@ For an introduction to Unicode and character encodings in general,
 see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
 About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
 
-.. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
+.. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
 
 Applications and examples
@@ -575,7 +576,7 @@ Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`example_applications_topics_extraction_with_nmf.py`
+  * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation
@@ -747,9 +748,9 @@ An interesting development of using a :class:`HashingVectorizer` is the ability
 to perform `out-of-core`_ scaling. This means that we can learn from data that
 does not fit into the computer's main memory.
 
-.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm. 
+.. _out-of-core: https://en.wikipedia.org/wiki/Out-of-core_algorithm
 
-A strategy to implement out-of-core scaling is to stream data to the estimator 
+A strategy to implement out-of-core scaling is to stream data to the estimator
 in mini-batches. Each mini-batch is vectorized using :class:`HashingVectorizer`
 so as to guarantee that the input space of the estimator has always the same
 dimensionality. The amount of memory used at any time is thus bounded by the
@@ -757,7 +758,7 @@ size of a mini-batch. Although there is no limit to the amount of data that can
 be ingested using such an approach, from a practical point of view the learning
 time is often limited by the CPU time one wants to spend on the task.
 
-For a full-fledged example of out-of-core scaling in a text classification 
+For a full-fledged example of out-of-core scaling in a text classification
 task see :ref:`example_applications_plot_out_of_core_classification.py`.
 
 Customizing the vectorizer classes
@@ -807,7 +808,8 @@ Some tips and tricks:
     splitting, filtering based on part-of-speech, etc. are not included in the
     scikit-learn codebase, but can be added by customizing either the
     tokenizer or the analyzer.
-    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using NLTK::
+    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
+    `NLTK <http://www.nltk.org>`_::
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
@@ -824,6 +826,7 @@ Some tips and tricks:
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
 
+.. _image_feature_extraction:
 
 Image feature extraction
 ========================
@@ -889,8 +892,8 @@ features or samples. For instance Ward clustering
 (:ref:`hierarchical_clustering`) can cluster together only neighboring pixels
 of an image, thus forming contiguous patches:
 
-.. figure:: ../auto_examples/cluster/images/plot_lena_ward_segmentation_001.png
-   :target: ../auto_examples/cluster/plot_lena_ward_segmentation.html
+.. figure:: ../auto_examples/cluster/images/plot_face_ward_segmentation_001.png
+   :target: ../auto_examples/cluster/plot_face_ward_segmentation.html
    :align: center
    :scale: 40
 
@@ -908,9 +911,8 @@ or similarity matrices.
 
 .. note:: **Examples**
 
-   * :ref:`example_cluster_plot_lena_ward_segmentation.py`
+   * :ref:`example_cluster_plot_face_ward_segmentation.py`
 
    * :ref:`example_cluster_plot_segmentation_toy.py`
 
    * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
-

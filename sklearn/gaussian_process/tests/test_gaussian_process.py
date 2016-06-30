@@ -3,7 +3,7 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 """
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from nose.tools import raises
 from nose.tools import assert_true
@@ -13,6 +13,7 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
+from sklearn.datasets import make_regression
 from sklearn.utils.testing import assert_greater
 
 
@@ -24,12 +25,9 @@ y = f(X).ravel()
 
 def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
             random_start=10, beta0=None):
-    """
-    MLE estimation of a one-dimensional Gaussian Process model.
-    Check random start optimization.
-
-    Test the interpolating property.
-    """
+    # MLE estimation of a one-dimensional Gaussian Process model.
+    # Check random start optimization.
+    # Test the interpolating property.
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
                          random_start=random_start, verbose=False).fit(X, y)
@@ -42,12 +40,9 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
             random_start=10, beta0=None):
-    """
-    MLE estimation of a two-dimensional Gaussian Process model accounting for
-    anisotropy. Check random start optimization.
-
-    Test the interpolating property.
-    """
+    # MLE estimation of a two-dimensional Gaussian Process model accounting for
+    # anisotropy. Check random start optimization.
+    # Test the interpolating property.
     b, kappa, e = 5., .5, .1
     g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
     X = np.array([[-4.61611719, -6.00099547],
@@ -71,18 +66,16 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
-    assert_true(np.all(gp.theta_ >= thetaL)) # Lower bounds of hyperparameters
-    assert_true(np.all(gp.theta_ <= thetaU)) # Upper bounds of hyperparameters
+    eps = np.finfo(gp.theta_.dtype).eps
+    assert_true(np.all(gp.theta_ >= thetaL - eps))  # Lower bounds of hyperparameters
+    assert_true(np.all(gp.theta_ <= thetaU + eps))  # Upper bounds of hyperparameters
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
                random_start=10, beta0=None):
-    """
-    MLE estimation of a two-dimensional Gaussian Process model accounting for
-    anisotropy. Check random start optimization.
-
-    Test the GP interpolation for 2D output
-    """
+    # MLE estimation of a two-dimensional Gaussian Process model accounting for
+    # anisotropy. Check random start optimization.
+    # Test the GP interpolation for 2D output
     b, kappa, e = 5., .5, .1
     g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
     f = lambda x: np.vstack((g(x), g(x))).T
@@ -112,10 +105,8 @@ def test_wrong_number_of_outputs():
 
 
 def test_more_builtin_correlation_models(random_start=1):
-    """
-    Repeat test_1d and test_2d for several built-in correlation
-    models specified as strings.
-    """
+    # Repeat test_1d and test_2d for several built-in correlation
+    # models specified as strings.
     all_corr = ['absolute_exponential', 'squared_exponential', 'cubic',
                 'linear']
 
@@ -126,10 +117,8 @@ def test_more_builtin_correlation_models(random_start=1):
 
 
 def test_ordinary_kriging():
-    """
-    Repeat test_1d and test_2d with given regression weights (beta0) for
-    different regression models (Ordinary Kriging).
-    """
+    # Repeat test_1d and test_2d with given regression weights (beta0) for
+    # different regression models (Ordinary Kriging).
     test_1d(regr='linear', beta0=[0., 0.5])
     test_1d(regr='quadratic', beta0=[0., 0.5, 0.5])
     test_2d(regr='linear', beta0=[0., 0.5, 0.5])
@@ -145,10 +134,8 @@ def test_no_normalize():
 
 
 def test_random_starts():
-    """
-    Test that an increasing number of random-starts of GP fitting only
-    increases the reduced likelihood function of the optimal theta.
-    """
+    # Test that an increasing number of random-starts of GP fitting only
+    # increases the reduced likelihood function of the optimal theta.
     n_samples, n_features = 50, 3
     np.random.seed(0)
     rng = np.random.RandomState(0)
@@ -165,3 +152,19 @@ def test_random_starts():
         rlf = gp.reduced_likelihood_function()[0]
         assert_greater(rlf, best_likelihood - np.finfo(np.float32).eps)
         best_likelihood = rlf
+
+
+def test_mse_solving():
+    # test the MSE estimate to be sane.
+    # non-regression test for ignoring off-diagonals of feature covariance,
+    # testing with nugget that renders covariance useless, only
+    # using the mean function, with low effective rank of data
+    gp = GaussianProcess(corr='absolute_exponential', theta0=1e-4,
+                         thetaL=1e-12, thetaU=1e-2, nugget=1e-2,
+                         optimizer='Welch', regr="linear", random_state=0)
+
+    X, y = make_regression(n_informative=3, n_features=60, noise=50,
+                           random_state=0, effective_rank=1)
+
+    gp.fit(X, y)
+    assert_greater(1000, gp.predict(X, eval_MSE=True)[1].mean())

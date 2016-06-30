@@ -4,6 +4,8 @@ import tempfile
 import warnings
 import nose
 import numpy
+from pickle import loads
+from pickle import dumps
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -14,7 +16,9 @@ from sklearn.datasets import load_digits
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
+from sklearn.datasets.base import Bunch
 
 from sklearn.externals.six import b, u
 
@@ -177,9 +181,45 @@ def test_load_iris():
     assert_true(res.DESCR)
 
 
+def test_load_breast_cancer():
+    res = load_breast_cancer()
+    assert_equal(res.data.shape, (569, 30))
+    assert_equal(res.target.size, 569)
+    assert_equal(res.target_names.size, 2)
+    assert_true(res.DESCR)
+
+
 def test_load_boston():
     res = load_boston()
     assert_equal(res.data.shape, (506, 13))
     assert_equal(res.target.size, 506)
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
+
+
+def test_loads_dumps_bunch():
+    bunch = Bunch(x="x")
+    bunch_from_pkl = loads(dumps(bunch))
+    bunch_from_pkl.x = "y"
+    assert_equal(bunch_from_pkl['x'], bunch_from_pkl.x)
+
+
+def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
+    bunch = Bunch(key='original')
+    # This reproduces a problem when Bunch pickles have been created
+    # with scikit-learn 0.16 and are read with 0.17. Basically there
+    # is a suprising behaviour because reading bunch.key uses
+    # bunch.__dict__ (which is non empty for 0.16 Bunch objects)
+    # whereas assigning into bunch.key uses bunch.__setattr__. See
+    # https://github.com/scikit-learn/scikit-learn/issues/6196 for
+    # more details
+    bunch.__dict__['key'] = 'set from __dict__'
+    bunch_from_pkl = loads(dumps(bunch))
+    # After loading from pickle the __dict__ should have been ignored
+    assert_equal(bunch_from_pkl.key, 'original')
+    assert_equal(bunch_from_pkl['key'], 'original')
+    # Making sure that changing the attr does change the value
+    # associated with __getitem__ as well
+    bunch_from_pkl.key = 'changed'
+    assert_equal(bunch_from_pkl.key, 'changed')
+    assert_equal(bunch_from_pkl['key'], 'changed')

@@ -13,7 +13,7 @@ Supervised learning: predicting an output variable from high-dimensional observa
    are trying to predict, usually called "target" or "labels". Most often,
    ``y`` is a 1D array of length ``n_samples``.
 
-   All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_
+   All supervised `estimators <https://en.wikipedia.org/wiki/Estimator>`_
    in scikit-learn implement a ``fit(X, y)`` method to fit the model
    and a ``predict(X)`` method that, given unlabeled observations ``X``,
    returns the predicted labels ``y``.
@@ -59,7 +59,7 @@ k-Nearest neighbors classifier
 -------------------------------
 
 The simplest possible classifier is the
-`nearest neighbor <http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
+`nearest neighbor <https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
 given a new observation ``X_test``, find in the training set (i.e. the data
 used to train the estimator) the observation with the closest feature vector.
 (Please see the :ref:`Nearest Neighbors section<neighbors>` of the online
@@ -95,7 +95,8 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-                   metric_params=None, n_neighbors=5, p=2, weights='uniform')
+               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+               weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -127,7 +128,7 @@ require more training data than the current estimated size of the entire
 internet (±1000 Exabytes or so).
 
 This is called the
-`curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
+`curse of dimensionality  <https://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
 and is a core problem that machine learning addresses.
 
 Linear model: from regression to sparsity
@@ -154,7 +155,7 @@ Linear regression
 .. currentmodule:: sklearn.linear_model
 
 :class:`LinearRegression`,
-in it's simplest form, fits a linear model to the data set by adjusting
+in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
@@ -211,15 +212,15 @@ induces high variance:
     >>> test = np.c_[ 0, 2].T
     >>> regr = linear_model.LinearRegression()
 
-    >>> import pylab as pl # doctest: +SKIP
-    >>> pl.figure() # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt # doctest: +SKIP
+    >>> plt.figure() # doctest: +SKIP
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
-    ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    pl.scatter(this_X, y, s=3)  # doctest: +SKIP
+    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...    plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
 
 
@@ -237,14 +238,14 @@ regression:
 
     >>> regr = linear_model.Ridge(alpha=.1)
 
-    >>> pl.figure() # doctest: +SKIP
+    >>> plt.figure() # doctest: +SKIP
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
-    ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    pl.scatter(this_X, y, s=3) # doctest: +SKIP
+    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...    plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
@@ -264,9 +265,9 @@ diabetes dataset rather than our synthetic data::
 
     Capturing in the fitted parameters noise that prevents the model to
     generalize to new data is called
-    `overfitting <http://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
+    `overfitting <https://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
     by the ridge regression is called a
-    `regularization <http://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
+    `regularization <https://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
 
 .. _sparsity:
 
@@ -327,7 +328,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, positive=False, precompute='auto',
+       max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
@@ -338,7 +339,7 @@ application of Occam's razor: *prefer simpler models*.
     Different algorithms can be used to solve the same mathematical
     problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
-    `coordinate decent <http://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
+    `coordinate decent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
     provides the :class:`LassoLars` object using the *LARS* algorthm,
     which is very efficient for problems in which the weight vector estimated
@@ -355,7 +356,7 @@ Classification
    :align: right
 
 For classification, as in the labeling
-`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
+`iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
 regression is not the right approach as it will give too much weight to
 data far from the decision frontier. A linear approach is to fit a sigmoid
 function or **logistic** function:
@@ -371,8 +372,8 @@ function or **logistic** function:
     >>> logistic.fit(iris_X_train, iris_y_train)
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
               fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0)
+              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
+              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
 
 This is known as :class:`LogisticRegression`.
 
@@ -453,9 +454,10 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='linear', max_iter=-1, probability=False, random_state=None,
-      shrinking=True, tol=0.001, verbose=False)
+    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+        decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
+        max_iter=-1, probability=False, random_state=None, shrinking=True,
+        tol=0.001, verbose=False)
 
 
 .. warning:: **Normalizing data**

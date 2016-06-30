@@ -8,7 +8,7 @@ import operator
 import array
 
 from sklearn.utils import check_random_state
-
+from sklearn.utils.fixes import astype
 from ._random import sample_without_replacement
 
 __all__ = ['sample_without_replacement', 'choice']
@@ -39,7 +39,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
 
     p : 1-D array-like, optional
         The probabilities associated with each entry in a.
-        If not given the sample assumes a uniform distribtion over all
+        If not given the sample assumes a uniform distribution over all
         entries in a.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -224,8 +224,8 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    Return
-    ------
+    Returns
+    -------
     random_matrix : sparse csc matrix of size (n_samples, n_outputs)
 
     """
@@ -238,7 +238,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
         if classes[j].dtype.kind != 'i':
             raise ValueError("class dtype %s is not supported" %
                              classes[j].dtype)
-        classes[j] = classes[j].astype(int)
+        classes[j] = astype(classes[j], np.int64, copy=False)
 
         # use uniform distribution if no class_probability is given
         if class_probability is None:
@@ -264,6 +264,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_prob_j = np.insert(class_prob_j, 0, 0.0)
 
         # If there are nonzero classes choose randomly using class_probability
+        rng = check_random_state(random_state)
         if classes[j].shape[0] > 1:
             p_nonzero = 1 - class_prob_j[classes[j] == 0]
             nnz = int(n_samples * p_nonzero)
@@ -278,7 +279,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
             classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),
-                                          np.random.rand(nnz))
+                                          rng.rand(nnz))
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 

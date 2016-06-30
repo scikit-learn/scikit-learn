@@ -1,6 +1,6 @@
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# Licence: BSD3
+# License: BSD3
 
 import numpy as np
 
@@ -11,13 +11,15 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
+from sklearn.utils.testing import ignore_warnings
 
 
+# Ignore warnings from switching to more power iterations in randomized_svd
+@ignore_warnings
 def test_factor_analysis():
-    """Test FactorAnalysis ability to recover the data covariance structure
-    """
+    # Test FactorAnalysis ability to recover the data covariance structure
     rng = np.random.RandomState(0)
     n_samples, n_features, n_components = 20, 5, 3
 
@@ -71,7 +73,6 @@ def test_factor_analysis():
     fa1.max_iter = 1
     fa1.verbose = True
     assert_warns(ConvergenceWarning, fa1.fit, X)
-    assert_warns(DeprecationWarning, FactorAnalysis, verbose=1)
 
     # Test get_covariance and get_precision with n_components == n_features
     # with n_components < n_features and with n_components == 0

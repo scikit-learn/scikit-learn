@@ -18,6 +18,7 @@ from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
                                  MultiTaskLassoCV)
+from .huber import HuberRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
@@ -32,13 +33,14 @@ from .perceptron import Perceptron
 from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
 from .ransac import RANSACRegressor
+from .theil_sen import TheilSenRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
            'ElasticNet',
            'ElasticNetCV',
            'Hinge',
-           'Huber',
+           'HuberRegressor',
            'Lars',
            'LarsCV',
            'Lasso',
@@ -69,6 +71,7 @@ __all__ = ['ARDRegression',
            'SGDClassifier',
            'SGDRegressor',
            'SquaredLoss',
+           'TheilSenRegressor',
            'enet_path',
            'lars_path',
            'lasso_path',

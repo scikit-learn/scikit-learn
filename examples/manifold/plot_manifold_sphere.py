@@ -24,7 +24,7 @@ high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
 the low-dimensional space. Here the manifold problem matches fairly
 that of representing a flat map of the Earth, as with
-`map projection <http://en.wikipedia.org/wiki/Map_projection>`_
+`map projection <https://en.wikipedia.org/wiki/Map_projection>`_
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
@@ -103,7 +103,7 @@ t1 = time()
 print("%s: %.2g sec" % ('ISO', t1 - t0))
 
 ax = fig.add_subplot(257)
-plt.scatter(trans_data[0], trans_data[1],  c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("%s (%.2g sec)" % ('Isomap', t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -117,7 +117,7 @@ t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(258)
-plt.scatter(trans_data[0], trans_data[1],  c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("MDS (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -132,7 +132,7 @@ t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(259)
-plt.scatter(trans_data[0], trans_data[1],  c=colors, cmap=plt.cm.rainbow)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("Spectral Embedding (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
@@ -145,8 +145,8 @@ trans_data = tsne.fit_transform(sphere_data).T
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 
-ax = fig.add_subplot(250)
-plt.scatter(trans_data[0], trans_data[1],  c=colors, cmap=plt.cm.rainbow)
+ax = fig.add_subplot(2, 5, 10)
+plt.scatter(trans_data[0], trans_data[1], c=colors, cmap=plt.cm.rainbow)
 plt.title("t-SNE (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())

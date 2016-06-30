@@ -37,7 +37,7 @@ def test_sample_without_replacement_algorithms():
 
 def check_edge_case_of_sample_int(sample_without_replacement):
 
-    # n_poluation < n_sample
+    # n_population < n_sample
     assert_raises(ValueError, sample_without_replacement, 0, 1)
     assert_raises(ValueError, sample_without_replacement, 1, 2)
 
@@ -129,7 +129,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
-    # Edge case proabilites 1.0 and 0.0
+    # Edge case probabilities 1.0 and 0.0
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilites = [np.array([1.0, 0.0]), np.array([0.0, 1.0, 0.0])]
 
@@ -175,13 +175,8 @@ def test_random_choice_csc_errors():
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
 
-    # Given proabilites don't sum to 1
+    # Given probabilities don't sum to 1
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
     class_probabilites = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilites, 1)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()

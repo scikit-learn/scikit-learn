@@ -1,4 +1,5 @@
 import itertools
+import pickle
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
@@ -7,6 +8,10 @@ import scipy
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from nose import SkipTest
+
+
+def dist_func(x1, x2, p):
+    return np.sum((x1 - x2) ** p) ** (1. / p)
 
 
 def cmp_version(version1, version2):
@@ -99,6 +104,30 @@ class TestMetrics:
         D12 = dm.pairwise(self.X1_bool)
         assert_array_almost_equal(D12, D_true)
 
+    def test_pickle(self):
+        for metric, argdict in self.metrics.items():
+            keys = argdict.keys()
+            for vals in itertools.product(*argdict.values()):
+                kwargs = dict(zip(keys, vals))
+                yield self.check_pickle, metric, kwargs
+
+        for metric in self.bool_metrics:
+            yield self.check_pickle_bool, metric
+
+    def check_pickle_bool(self, metric):
+        dm = DistanceMetric.get_metric(metric)
+        D1 = dm.pairwise(self.X1_bool)
+        dm2 = pickle.loads(pickle.dumps(dm))
+        D2 = dm2.pairwise(self.X1_bool)
+        assert_array_almost_equal(D1, D2)
+
+    def check_pickle(self, metric, kwargs):
+        dm = DistanceMetric.get_metric(metric, **kwargs)
+        D1 = dm.pairwise(self.X1)
+        dm2 = pickle.loads(pickle.dumps(dm))
+        D2 = dm2.pairwise(self.X1)
+        assert_array_almost_equal(D1, D2)
+
 
 def test_haversine_metric():
     def haversine_slow(x1, x2):
@@ -122,20 +151,21 @@ def test_haversine_metric():
 
 
 def test_pyfunc_metric():
-    def dist_func(x1, x2, p):
-        return np.sum((x1 - x2) ** p) ** (1. / p)
-
     X = np.random.random((10, 3))
 
     euclidean = DistanceMetric.get_metric("euclidean")
     pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
 
+    # Check if both callable metric and predefined metric initialized
+    # DistanceMetric object is picklable
+    euclidean_pkl = pickle.loads(pickle.dumps(euclidean))
+    pyfunc_pkl = pickle.loads(pickle.dumps(pyfunc))
+
     D1 = euclidean.pairwise(X)
     D2 = pyfunc.pairwise(X)
 
+    D1_pkl = euclidean_pkl.pairwise(X)
+    D2_pkl = pyfunc_pkl.pairwise(X)
+
     assert_array_almost_equal(D1, D2)
-
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+    assert_array_almost_equal(D1_pkl, D2_pkl)

@@ -38,19 +38,19 @@ account for the different amount of training samples?`
 
 The figures below are used to illustrate the effect of scaling our
 `C` to compensate for the change in the number of samples, in the
-case of using an `L1` penalty, as well as the `L2` penalty.
+case of using an `l1` penalty, as well as the `l2` penalty.
 
-L1-penalty case
+l1-penalty case
 -----------------
-In the `L1` case, theory says that prediction consistency
+In the `l1` case, theory says that prediction consistency
 (i.e. that under given hypothesis, the estimator
 learned predicts as well as a model knowing the true distribution)
-is not possible because of the bias of the `L1`. It does say, however,
+is not possible because of the bias of the `l1`. It does say, however,
 that model consistency, in terms of finding the right set of non-zero
 parameters as well as their signs, can be achieved by scaling
 `C1`.
 
-L2-penalty case
+l2-penalty case
 -----------------
 The theory says that in order to achieve prediction consistency, the
 penalty parameter should be kept constant
@@ -63,17 +63,17 @@ The two figures below plot the values of `C` on the `x-axis` and the
 corresponding cross-validation scores on the `y-axis`, for several different
 fractions of a generated data-set.
 
-In the `L1` penalty case, the cross-validation-error correlates best with
+In the `l1` penalty case, the cross-validation-error correlates best with
 the test-error, when scaling our `C` with the number of samples, `n`,
 which can be seen in the first figure.
 
-For the `L2` penalty case, the best result comes from the case where `C`
+For the `l2` penalty case, the best result comes from the case where `C`
 is not scaled.
 
 .. topic:: Note:
 
     Two separate datasets are used for the two different plots. The reason
-    behind this is the `L1` case works better on sparse data, while `L2`
+    behind this is the `l1` case works better on sparse data, while `l2`
     is better suited to the non-sparse case.
 """
 print(__doc__)
@@ -88,11 +88,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.svm import LinearSVC
-from sklearn.cross_validation import ShuffleSplit
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import GridSearchCV
 from sklearn.utils import check_random_state
 from sklearn import datasets
-
 
 rnd = check_random_state(1)
 
@@ -100,24 +99,25 @@ rnd = check_random_state(1)
 n_samples = 100
 n_features = 300
 
-# L1 data (only 5 informative features)
+# l1 data (only 5 informative features)
 X_1, y_1 = datasets.make_classification(n_samples=n_samples,
                                         n_features=n_features, n_informative=5,
                                         random_state=1)
 
-# L2 data: non sparse, but less features
+# l2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
 X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
 X_2 += 5 * rnd.randn(n_samples, n_features / 5)
 
-clf_sets = [(LinearSVC(penalty='L1', loss='L2', dual=False,
+clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-3),
              np.logspace(-2.3, -1.3, 10), X_1, y_1),
-            (LinearSVC(penalty='L2', loss='L2', dual=True,
+            (LinearSVC(penalty='l2', loss='squared_hinge', dual=True,
                        tol=1e-4),
              np.logspace(-4.5, -2, 10), X_2, y_2)]
 
-colors = ['b', 'g', 'r', 'c']
+colors = ['navy', 'cyan', 'darkorange']
+lw = 2
 
 for fignum, (clf, cs, X, y) in enumerate(clf_sets):
     # set up the plot for each regressor
@@ -128,10 +128,10 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
         # To get nice curve, we need a large number of iterations to
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
-                            cv=ShuffleSplit(n=n_samples, train_size=train_size,
-                                            n_iter=250, random_state=1))
+                            cv=ShuffleSplit(train_size=train_size, n_iter=250,
+                                            random_state=1))
         grid.fit(X, y)
-        scores = [x[1] for x in grid.grid_scores_]
+        scores = grid.results_['test_mean_score']
 
         scales = [(1, 'No scaling'),
                   ((n_samples * train_size), '1/n_samples'),
@@ -143,7 +143,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
             plt.ylabel('CV Score')
             grid_cs = cs * float(scaler)  # scale the C's
             plt.semilogx(grid_cs, scores, label="fraction %.2f" %
-                         train_size)
+                         train_size, color=colors[k], lw=lw)
             plt.title('scaling=%s, penalty=%s, loss=%s' %
                       (name, clf.penalty, clf.loss))
 

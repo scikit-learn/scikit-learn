@@ -15,7 +15,7 @@ from sklearn.linear_model import Perceptron
 
 
 def test_base():
-    """Check BaseEnsemble methods."""
+    # Check BaseEnsemble methods.
     ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=3)
 
     iris = load_iris()
@@ -34,8 +34,8 @@ def test_base():
 
 
 def test_base_zero_n_estimators():
-    """Check that instantiating a BaseEnsemble with n_estimators<=0 raises
-    a ValueError."""
+    # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
+    # a ValueError.
     ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=0)
     iris = load_iris()
     assert_raise_message(ValueError,

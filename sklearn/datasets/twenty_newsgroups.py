@@ -28,8 +28,8 @@ The `fetch_20newsgroups` function will not vectorize the data into numpy
 arrays but the dataset lists the filenames of the posts and their categories
 as target labels.
 
-The `fetch_20newsgroups_tfidf` function will in addition do a simple tf-idf
-vectorization step.
+The `fetch_20newsgroups_vectorized` function will in addition do a simple
+tf-idf vectorization step.
 
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
@@ -49,6 +49,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import Bunch
 from .base import load_files
+from .base import _pkl_filepath
 from ..utils import check_random_state
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
@@ -83,12 +84,13 @@ def download_20newsgroups(target_dir, cache_path):
     if os.path.exists(archive_path):
         # Download is not complete as the .tar.gz file is removed after
         # download.
-        logger.warn("Download was incomplete, downloading again.")
+        logger.warning("Download was incomplete, downloading again.")
         os.remove(archive_path)
 
-    logger.warn("Downloading dataset from %s (14 MB)", URL)
+    logger.warning("Downloading dataset from %s (14 MB)", URL)
     opener = urlopen(URL)
-    open(archive_path, 'wb').write(opener.read())
+    with open(archive_path, 'wb') as f:
+        f.write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
@@ -98,7 +100,8 @@ def download_20newsgroups(target_dir, cache_path):
     cache = dict(train=load_files(train_path, encoding='latin1'),
                  test=load_files(test_path, encoding='latin1'))
     compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
-    open(cache_path, 'wb').write(compressed_content)
+    with open(cache_path, 'wb') as f:
+        f.write(compressed_content)
 
     shutil.rmtree(target_dir)
     return cache
@@ -154,6 +157,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        download_if_missing=True):
     """Load the filenames and data from the 20 newsgroups dataset.
 
+    Read more in the :ref:`User Guide <20newsgroups>`.
+
     Parameters
     ----------
     subset: 'train' or 'test', 'all', optional
@@ -161,7 +166,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         for the test set, 'all' for both, with shuffled ordering.
 
     data_home: optional, default: None
-        Specify an download and cache folder for the datasets. If None,
+        Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     categories: None or collection of string or unicode
@@ -196,7 +201,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    cache_path = os.path.join(data_home, CACHE_NAME)
+    cache_path = _pkl_filepath(data_home, CACHE_NAME)
     twenty_home = os.path.join(data_home, "20news_home")
     cache = None
     if os.path.exists(cache_path):
@@ -214,6 +219,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     if cache is None:
         if download_if_missing:
+            logger.info("Downloading 20news dataset. "
+                        "This may take a few minutes.")
             cache = download_20newsgroups(target_dir=twenty_home,
                                           cache_path=cache_path)
         else:
@@ -234,10 +241,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-        data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
+
+    data.description = 'the 20 newsgroups by date dataset'
 
     if 'headers' in remove:
         data.data = [strip_newsgroup_header(text) for text in data.data]
@@ -284,6 +292,8 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
 
+    Read more in the :ref:`User Guide <20newsgroups>`.
+
     Parameters
     ----------
 
@@ -317,7 +327,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     filebase = '20newsgroup_vectorized'
     if remove:
         filebase += 'remove-' + ('-'.join(remove))
-    target_file = os.path.join(data_home, filebase + ".pk")
+    target_file = _pkl_filepath(data_home, filebase + ".pkl")
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,

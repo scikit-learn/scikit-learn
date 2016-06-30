@@ -10,8 +10,8 @@ There are several ways to get in touch with the developers.
 Mailing List
 ============
 
-- The main mailing list is `scikit-learn-general
-  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-general>`_.
+- The main mailing list is `scikit-learn
+  <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
 - There is also a commit list `scikit-learn-commits
   <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_,
@@ -93,17 +93,9 @@ Documentation resources
 This documentation is relative to |release|. Documentation for other
 versions can be found here:
 
+    * `0.17 <http://scikit-learn.org/0.17/>`_
+    * `0.16 <http://scikit-learn.org/0.16/>`_
     * `0.15 <http://scikit-learn.org/0.15/>`_
-    * `0.14 <http://scikit-learn.org/0.14/>`_
-    * `0.13 <http://scikit-learn.org/0.13/>`_
-    * `0.12 <http://scikit-learn.org/0.12/>`_
-    * `0.11 <http://scikit-learn.org/0.11/>`_
-    * `0.10 <http://scikit-learn.org/0.10/>`_
-    * `0.9 <http://scikit-learn.org/0.9/>`_
-    * `0.8 <http://scikit-learn.org/0.8/>`_
-    * `0.7 <http://scikit-learn.org/0.7/>`_
-    * `0.6 <http://scikit-learn.org/0.6/>`_
-    * `0.5 <http://scikit-learn.org/0.5/>`_
 
 Printable pdf documentation for all versions can be found `here
 <http://sourceforge.net/projects/scikit-learn/files/documentation/>`_.

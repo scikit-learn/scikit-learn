@@ -11,11 +11,9 @@ from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
@@ -38,22 +36,29 @@ def toarray(a):
 
 
 def test_label_binarizer():
-    lb = LabelBinarizer()
-
     # one-class case defaults to negative label
+    # For dense case:
     inp = ["pos", "pos", "pos", "pos"]
+    lb = LabelBinarizer(sparse_output=False)
     expected = np.array([[0, 0, 0, 0]]).T
     got = lb.fit_transform(inp)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
+    # For sparse case:
+    lb = LabelBinarizer(sparse_output=True)
+    got = lb.fit_transform(inp)
+    assert_true(issparse(got))
+    assert_array_equal(lb.classes_, ["pos"])
+    assert_array_equal(expected, got.toarray())
+    assert_array_equal(lb.inverse_transform(got.toarray()), inp)
+
+    lb = LabelBinarizer(sparse_output=False)
     # two-class case
     inp = ["neg", "pos", "pos", "neg"]
     expected = np.array([[0, 1, 1, 0]]).T
     got = lb.fit_transform(inp)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
     assert_array_equal(lb.classes_, ["neg", "pos"])
     assert_array_equal(expected, got)
 
@@ -72,7 +77,6 @@ def test_label_binarizer():
                          [1, 0, 0, 0]])
     got = lb.fit_transform(inp)
     assert_array_equal(lb.classes_, ['0', 'eggs', 'ham', 'spam'])
-    assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -96,53 +100,6 @@ def test_label_binarizer_unseen_labels():
     assert_array_equal(expected, got)
 
 
-@ignore_warnings
-def test_label_binarizer_column_y():
-    # first for binary classification vs multi-label with 1 possible class
-    # lists are multi-label, array is multi-class :-/
-    inp_list = [[1], [2], [1]]
-    inp_array = np.array(inp_list)
-
-    multilabel_indicator = np.array([[1, 0], [0, 1], [1, 0]])
-    binaryclass_array = np.array([[0], [1], [0]])
-
-    lb_1 = LabelBinarizer()
-    out_1 = lb_1.fit_transform(inp_list)
-
-    lb_2 = LabelBinarizer()
-    out_2 = lb_2.fit_transform(inp_array)
-
-    assert_array_equal(out_1, multilabel_indicator)
-    assert_true(assert_warns(DeprecationWarning, getattr, lb_1, "multilabel_"))
-    assert_false(assert_warns(DeprecationWarning, getattr, lb_1,
-                              "indicator_matrix_"))
-
-    assert_array_equal(out_2, binaryclass_array)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb_2,
-                              "multilabel_"))
-
-    # second for multiclass classification vs multi-label with multiple
-    # classes
-    inp_list = [[1], [2], [1], [3]]
-    inp_array = np.array(inp_list)
-
-    # the indicator matrix output is the same in this case
-    indicator = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]])
-
-    lb_1 = LabelBinarizer()
-    out_1 = lb_1.fit_transform(inp_list)
-
-    lb_2 = LabelBinarizer()
-    out_2 = lb_2.fit_transform(inp_array)
-
-    assert_array_equal(out_1, out_2)
-    assert_true(assert_warns(DeprecationWarning, getattr, lb_1, "multilabel_"))
-
-    assert_array_equal(out_2, indicator)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb_2,
-                              "multilabel_"))
-
-
 def test_label_binarizer_set_label_encoding():
     lb = LabelBinarizer(neg_label=-2, pos_label=0)
 
@@ -150,7 +107,6 @@ def test_label_binarizer_set_label_encoding():
     inp = np.array([0, 1, 1, 0])
     expected = np.array([[-2, 0, 0, -2]]).T
     got = lb.fit_transform(inp)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -164,17 +120,15 @@ def test_label_binarizer_set_label_encoding():
                          [-2, -2, +2, -2],
                          [+2, -2, -2, -2]])
     got = lb.fit_transform(inp)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
 @ignore_warnings
 def test_label_binarizer_errors():
-    """Check that invalid arguments yield ValueError"""
+    # Check that invalid arguments yield ValueError
     one_class = np.array([0, 0, 0, 0])
     lb = LabelBinarizer().fit(one_class)
-    assert_false(assert_warns(DeprecationWarning, getattr, lb, "multilabel_"))
 
     multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
@@ -182,13 +136,6 @@ def test_label_binarizer_errors():
     lb = LabelBinarizer()
     assert_raises(ValueError, lb.transform, [])
     assert_raises(ValueError, lb.inverse_transform, [])
-
-    y = np.array([[0, 1, 0], [1, 1, 1]])
-    classes = np.arange(3)
-    assert_raises(ValueError, label_binarize, y, classes, multilabel=True,
-                  neg_label=2, pos_label=1)
-    assert_raises(ValueError, label_binarize, y, classes, multilabel=True,
-                  neg_label=2, pos_label=2)
 
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
@@ -200,6 +147,10 @@ def test_label_binarizer_errors():
     assert_raises(ValueError, _inverse_binarize_thresholding,
                   y=csr_matrix([[1, 2], [2, 1]]), output_type="foo",
                   classes=[1, 2], threshold=0)
+
+    # Sequence of seq type should raise ValueError
+    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
+    assert_raises(ValueError, LabelBinarizer().fit_transform, y_seq_of_seqs)
 
     # Fail on the number of classes
     assert_raises(ValueError, _inverse_binarize_thresholding,
@@ -218,7 +169,7 @@ def test_label_binarizer_errors():
 
 
 def test_label_encoder():
-    """Test LabelEncoder's transform and inverse_transform methods"""
+    # Test LabelEncoder's transform and inverse_transform methods
     le = LabelEncoder()
     le.fit([1, 1, 4, 5, -1, 0])
     assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
@@ -228,9 +179,13 @@ def test_label_encoder():
                        [0, 1, 4, 4, 5, -1, -1])
     assert_raises(ValueError, le.transform, [0, 6])
 
+    le.fit(["apple", "orange"])
+    msg = "bad input shape"
+    assert_raise_message(ValueError, msg, le.transform, "apple")
+
 
 def test_label_encoder_fit_transform():
-    """Test fit_transform"""
+    # Test fit_transform
     le = LabelEncoder()
     ret = le.fit_transform([1, 1, 4, 5, -1, 0])
     assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
@@ -241,10 +196,15 @@ def test_label_encoder_fit_transform():
 
 
 def test_label_encoder_errors():
-    """Check that invalid arguments yield ValueError"""
+    # Check that invalid arguments yield ValueError
     le = LabelEncoder()
     assert_raises(ValueError, le.transform, [])
     assert_raises(ValueError, le.inverse_transform, [])
+
+    # Fail on unseen labels
+    le = LabelEncoder()
+    le.fit([1, 2, 3, 1, -1])
+    assert_raises(ValueError, le.inverse_transform, [-1])
 
 
 def test_sparse_output_multilabel_binarizer():
@@ -360,8 +320,7 @@ def test_multilabel_binarizer_given_classes():
 
 
 def test_multilabel_binarizer_same_length_sequence():
-    """Ensure sequences of the same length are not interpreted as a 2-d array
-    """
+    # Ensure sequences of the same length are not interpreted as a 2-d array
     inp = [[1], [0], [2]]
     indicator_mat = np.array([[0, 1, 0],
                               [1, 0, 0],
@@ -436,6 +395,13 @@ def test_label_binarize_with_class_order():
     # Modified class order
     out = label_binarize([1, 6], classes=[1, 6, 4, 2])
     expected = np.array([[1, 0, 0, 0], [0, 1, 0, 0]])
+    assert_array_equal(out, expected)
+
+    out = label_binarize([0, 1, 2, 3], classes=[3, 2, 0, 1])
+    expected = np.array([[0, 0, 1, 0],
+                         [0, 0, 0, 1],
+                         [0, 1, 0, 0],
+                         [1, 0, 0, 0]])
     assert_array_equal(out, expected)
 
 
@@ -513,7 +479,6 @@ def test_label_binarize_multiclass():
 
 
 def test_label_binarize_multilabel():
-    y_seq = [(1,), (0, 1, 2), tuple()]
     y_ind = np.array([[0, 1, 0], [1, 1, 1], [0, 0, 0]])
     classes = [0, 1, 2]
     pos_label = 2
@@ -527,32 +492,8 @@ def test_label_binarize_multilabel():
         yield (check_binarized_results, y, classes, pos_label, neg_label,
                expected)
 
-    deprecation_message = ("Direct support for sequence of sequences " +
-                           "multilabel representation will be unavailable " +
-                           "from version 0.17. Use sklearn.preprocessing." +
-                           "MultiLabelBinarizer to convert to a label " +
-                           "indicator representation.")
-
-    assert_warns_message(DeprecationWarning, deprecation_message,
-                         check_binarized_results, y_seq, classes, pos_label,
-                         neg_label, expected)
-
     assert_raises(ValueError, label_binarize, y, classes, neg_label=-1,
                   pos_label=pos_label, sparse_output=True)
-
-
-def test_deprecation_inverse_binarize_thresholding():
-    deprecation_message = ("Direct support for sequence of sequences " +
-                           "multilabel representation will be unavailable " +
-                           "from version 0.17. Use sklearn.preprocessing." +
-                           "MultiLabelBinarizer to convert to a label " +
-                           "indicator representation.")
-
-    assert_warns_message(DeprecationWarning, deprecation_message,
-                         _inverse_binarize_thresholding,
-                         y=csr_matrix([[1, 0], [0, 1]]),
-                         output_type="multilabel-sequences",
-                         classes=[1, 2], threshold=0)
 
 
 def test_invalid_input_label_binarize():
@@ -566,7 +507,3 @@ def test_inverse_binarize_multiclass():
                                                    [0, 0, 0]]),
                                        np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
-
-if __name__ == "__main__":
-    import nose
-    nose.runmodule()

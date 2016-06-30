@@ -24,6 +24,8 @@ TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation
 
+    Read more in the :ref:`User Guide <kernel_density>`.
+
     Parameters
     ----------
     bandwidth : float
@@ -110,7 +112,7 @@ class KernelDensity(BaseEstimator):
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Fit the Kernel Density model on the data.
 
         Parameters
@@ -156,7 +158,7 @@ class KernelDensity(BaseEstimator):
         log_density -= np.log(N)
         return log_density
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Compute the total log probability under the model.
 
         Parameters
