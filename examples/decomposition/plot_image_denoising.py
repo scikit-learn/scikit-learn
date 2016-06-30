@@ -4,7 +4,6 @@ Image denoising using dictionary learning
 =========================================
 
 An example comparing the effect of reconstructing noisy fragments
-
 of a raccoon face image using firstly online :ref:`DictionaryLearning` and
 various transform methods.
 
@@ -44,7 +43,7 @@ import numpy as np
 import scipy as sp
 
 from sklearn.decomposition import (MiniBatchDictionaryLearning,
-                                   DictionaryLearningKSVD)
+                                   DictionaryLearning)
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 from sklearn.utils.testing import SkipTest
@@ -89,7 +88,7 @@ print('done in %.2fs.' % (time() - t0))
 ###############################################################################
 # Learn the dictionary from reference patches
 
-def learn_and_show(sparse_coder):
+def learn_and_show(sparse_coder, name):
     t0 = time()
     dictionary = sparse_coder.fit(data).components_
     dt = time() - t0
@@ -102,30 +101,27 @@ def learn_and_show(sparse_coder):
                    interpolation='nearest')
         plt.xticks(())
         plt.yticks(())
-    plt.suptitle('Dictionary learned from Lena patches\n' +
+    plt.suptitle('Dictionary learned from face patches with {}\n'.format(name) +
                  'Train time %.1fs on %d patches' % (dt, len(data)),
                  fontsize=16)
     plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
-print('Learning the dictionary with L1...')
-coder_l1 = MiniBatchDictionaryLearning(n_components=100, alpha=1, n_iter=500)
-learn_and_show(coder_l1)
+print('Learning the dictionary with LARS...')
+coder_lars = MiniBatchDictionaryLearning(n_components=100, alpha=1, n_iter=500)
+learn_and_show(coder_lars, 'LARS')
 print('Learning the dictionary with K-SVD...')
-coder_ksvd = DictionaryLearningKSVD(n_components=100, fit_n_nonzero_coefs=2,
-                                    iteration_count=25, n_jobs=6)
-learn_and_show(coder_ksvd)
+coder_ksvd = DictionaryLearning(fit_algorithm='ksvd', n_components=100,
+                                n_nonzero_coefs=2, max_iter=10,
+                                init_method='sample')
+learn_and_show(coder_ksvd, 'K-SVD')
+
 plt.figure(figsize=(4.2, 4))
-for i, comp in enumerate(V[:100]):
-    plt.subplot(10, 10, i + 1)
-    plt.imshow(comp.reshape(patch_size), cmap=plt.cm.gray_r,
-               interpolation='nearest')
-    plt.xticks(())
-    plt.yticks(())
-plt.suptitle('Dictionary learned from face patches\n' +
-             'Train time %.1fs on %d patches' % (dt, len(data)),
-             fontsize=16)
-plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+plt.plot(coder_ksvd.error_)
+plt.title('K-SVD reconstruction error')
+plt.xlabel('iteration')
+plt.ylabel('error')
+
 
 ###############################################################################
 # Display the distorted image
@@ -172,25 +168,32 @@ transform_algorithms = [
      {'transform_n_nonzero_coefs': 5}),
     ('Thresholding\n alpha=0.1', 'threshold', {'transform_alpha': .1})]
 
-reconstructions = {}
-for title, transform_algorithm, kwargs in transform_algorithms:
-    print(title + '...')
-    reconstructions[title] = face.copy()
-    t0 = time()
-    dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
-    code = dico.transform(data)
-    patches = np.dot(code, V)
+def test_reconstruction(sparse_coder, dict_name):
+    reconstructions = {}
+    for title, transform_algorithm, kwargs in transform_algorithms:
+        print(title + '...')
+        reconstructions[title] = face.copy()
+        t0 = time()
+        sparse_coder.set_params(transform_algorithm=transform_algorithm,
+                                **kwargs)
+        code = sparse_coder.transform(data)
+        dictionary = sparse_coder.components_
+        patches = np.dot(code, dictionary)
+        patches += intercept
+        patches = patches.reshape(len(data), *patch_size)
+        if transform_algorithm == 'threshold':
+            patches -= patches.min()
+            patches /= patches.max()
+        reconstructions[title][:, width // 2:] = reconstruct_from_patches_2d(
+            patches, (height, width // 2))
+        dt = time() - t0
+        print('done in %.2fs.' % dt)
+        show_with_diff(reconstructions[title], face,
+                       dict_name + '\n' + title + ' (time: %.1fs)' % dt)
 
-    patches += intercept
-    patches = patches.reshape(len(data), *patch_size)
-    if transform_algorithm == 'threshold':
-        patches -= patches.min()
-        patches /= patches.max()
-    reconstructions[title][:, width // 2:] = reconstruct_from_patches_2d(
-        patches, (height, width // 2))
-    dt = time() - t0
-    print('done in %.2fs.' % dt)
-    show_with_diff(reconstructions[title], face,
-                   title + ' (time: %.1fs)' % dt)
+    plt.show()
 
-plt.show()
+print('Reconstructions for L1 dictionary.')
+test_reconstruction(coder_lars, 'LARS dictionary')
+print('Reconstructions for K-SVD dictionary.')
+test_reconstruction(coder_ksvd, 'K-SVD dictionary')

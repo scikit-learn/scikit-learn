@@ -14,7 +14,6 @@ from .fastica_ import FastICA, fastica
 from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             DictionaryLearning, MiniBatchDictionaryLearning,
                             SparseCoder)
-from .ksvd import learn_dictionary_ksvd, DictionaryLearningKSVD
 from .factor_analysis import FactorAnalysis
 from ..utils.extmath import randomized_svd
 from .online_lda import LatentDirichletAllocation

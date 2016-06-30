@@ -1,9 +1,11 @@
 import numpy as np
 from sklearn.utils import check_array
+from sklearn.utils.extmath import norm
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
@@ -13,6 +15,7 @@ from sklearn.utils.testing import TempMemmap
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
+from sklearn.decomposition.dict_learning import dict_learning
 from sklearn.decomposition import dict_learning_online
 from sklearn.decomposition import sparse_encode
 
@@ -22,21 +25,37 @@ n_samples, n_features = 10, 8
 X = rng_global.randn(n_samples, n_features)
 
 
-def test_dict_learning_shapes():
+def test_dict_learning_lars_shapes():
     n_components = 5
-    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    dico = DictionaryLearning(n_components, fit_algorithm='lars',
+                              random_state=0).fit(X)
+    assert_true(dico.components_.shape == (n_components, n_features))
+
+def test_dict_learning_ksvd_shapes():
+    n_components = 5
+    dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
+                              random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
-def test_dict_learning_overcomplete():
+def test_dict_learning_lars_overcomplete():
     n_components = 12
-    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    dico = DictionaryLearning(n_components, fit_algorithm='lars',
+                              random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
-def test_dict_learning_reconstruction():
+def test_dict_learning_ksvd_overcomplete():
     n_components = 12
-    dico = DictionaryLearning(n_components, transform_algorithm='omp',
+    dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
+                              random_state=0).fit(X)
+    assert_true(dico.components_.shape == (n_components, n_features))
+
+
+def test_dict_learning_lars_reconstruction():
+    n_components = 12
+    dico = DictionaryLearning(n_components, fit_algorithm='lars',
+                              transform_algorithm='omp',
                               transform_alpha=0.001, random_state=0)
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
@@ -49,10 +68,38 @@ def test_dict_learning_reconstruction():
     # nonzero atoms is right.
 
 
-def test_dict_learning_reconstruction_parallel():
+def test_dict_learning_ksvd_reconstruction():
+    n_components = 12
+    dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
+                              transform_algorithm='omp',
+                              transform_alpha=0.001, random_state=0)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
+def test_dict_learning_lars_reconstruction_parallel():
     # regression test that parallel reconstruction works with n_jobs=-1
     n_components = 12
-    dico = DictionaryLearning(n_components, transform_algorithm='omp',
+    dico = DictionaryLearning(n_components, fit_algorithm='lars',
+                              transform_algorithm='omp',
+                              transform_alpha=0.001, random_state=0, n_jobs=-1)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
+def test_dict_learning_ksvd_reconstruction_parallel():
+    # regression test that parallel reconstruction works with n_jobs=-1
+    n_components = 12
+    dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
+                              transform_algorithm='omp',
                               transform_alpha=0.001, random_state=0, n_jobs=-1)
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
@@ -71,9 +118,23 @@ def test_dict_learning_lassocd_readonly_data():
         assert_array_almost_equal(np.dot(code, dico.components_), X_read_only, decimal=2)
 
 
-def test_dict_learning_nonzero_coefs():
+def test_dict_learning_lars_nonzero_coefs():
     n_components = 4
-    dico = DictionaryLearning(n_components, transform_algorithm='lars',
+    dico = DictionaryLearning(n_components, fit_algorithm='lars',
+                              transform_algorithm='lars',
+                              transform_n_nonzero_coefs=3, random_state=0)
+    code = dico.fit(X).transform(X[np.newaxis, 1])
+    assert_true(len(np.flatnonzero(code)) == 3)
+
+    dico.set_params(transform_algorithm='omp')
+    code = dico.transform(X[np.newaxis, 1])
+    assert_equal(len(np.flatnonzero(code)), 3)
+
+
+def test_dict_learning_ksvd_nonzero_coefs():
+    n_components = 4
+    dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
+                              transform_algorithm='lars',
                               transform_n_nonzero_coefs=3, random_state=0)
     code = dico.fit(X).transform(X[np.newaxis, 1])
     assert_true(len(np.flatnonzero(code)) == 3)
@@ -99,6 +160,21 @@ def test_dict_learning_split():
 
     assert_array_equal(split_code[:, :n_components] -
                        split_code[:, n_components:], code)
+
+
+def test_dict_learning_ksvd_error_path():
+    """Check that errors decrease and the last error is correct."""
+
+    n_components = 7
+    n_nonzero_coefs = 2
+    codes, dictionary, errors = dict_learning(
+        X, n_nonzero_coefs=n_nonzero_coefs, max_iter=10,
+        method='ksvd', n_components=n_components, random_state=rng_global)
+
+    for prev_error, error in zip(errors[:-1], errors[1:]):
+        assert_less_equal(error, prev_error)
+    last_residue = X - np.dot(codes, dictionary)
+    assert_equal(errors[-1], norm(last_residue))
 
 
 def test_dict_learning_online_shapes():

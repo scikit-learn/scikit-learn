@@ -324,15 +324,6 @@ def _init_dict_from_samples(X, n_components, random_state):
     return X[chosen_examples, :]
 
 
-def _worst_represented_example(X, dictionary, sparse_codes):
-    """Find the sample that has the most representation error."""
-
-    residuals = X - np.dot(sparse_codes, dictionary)
-    errors_squared = np.sum(residuals * residuals, axis=1)
-    worst_index = np.argmax(errors_squared)
-    return X[worst_index, :]
-
-
 def _init_dict(X, n_components, code_init, dict_init, method, random_state):
     if code_init is not None and dict_init is not None:
         code = np.array(code_init, order='F')
@@ -364,6 +355,15 @@ def _init_dict(X, n_components, code_init, dict_init, method, random_state):
     return code, dictionary
 
 
+def _worst_represented_example(X, dictionary, sparse_codes):
+    """Find the sample that has the most representation error."""
+
+    residuals = X - np.dot(sparse_codes, dictionary)
+    errors_squared = np.sum(residuals * residuals, axis=1)
+    worst_index = np.argmax(errors_squared)
+    return X[worst_index, :]
+
+
 def _decompose_svd(residual):
     """Decompose the residual using 1-rank SVD."""
 
@@ -387,8 +387,12 @@ def _decompose_projections(residual, g_old):
     return d, g
 
 
-def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
-    """Update single dictionary atom and the corresponding codes."""
+def _ksvd_atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
+    """Update single dictionary atom and the corresponding codes.
+
+    Use SVD decomposition to preserve sparsity.
+
+    """
 
     atom_usages = np.nonzero(sparse_codes[:, atom_index])[0]
     if len(atom_usages) == 0:
@@ -416,17 +420,89 @@ def _atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
     return dictionary, sparse_codes
 
 
+def _update_dict_cd(dictionary, Y, code, verbose=False, return_r2=False,
+                    random_state=None):
+    """Update the dense dictionary factor using coordinate descent.
+
+    Parameters
+    ----------
+    dictionary: array of shape (n_features, n_components)
+        Value of the dictionary at the previous iteration.
+
+    Y: array of shape (n_features, n_samples)
+        Data matrix.
+
+    code: array of shape (n_components, n_samples)
+        Sparse coding of the data against which to optimize the dictionary.
+
+    verbose:
+        Degree of output the procedure will print.
+
+    return_r2: bool
+        Whether to compute and return the residual sum of squares corresponding
+        to the computed solution.
+
+    random_state: int or RandomState
+        Pseudo number generator state used for random sampling.
+
+    Returns
+    -------
+    dictionary: array of shape (n_features, n_components)
+        Updated dictionary.
+
+    """
+    n_components = len(code)
+    n_samples = Y.shape[0]
+    random_state = check_random_state(random_state)
+    # Residuals, computed 'in-place' for efficiency
+    R = -np.dot(dictionary, code)
+    R += Y
+    R = np.asfortranarray(R)
+    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
+    for k in range(n_components):
+        # R <- 1.0 * U_k * V_k^T + R
+        R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+        dictionary[:, k] = np.dot(R, code[k, :].T)
+        # Scale k'th atom
+        atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
+        if atom_norm_square < 1e-20:
+            if verbose == 1:
+                sys.stdout.write("+")
+                sys.stdout.flush()
+            elif verbose:
+                print("Adding new random atom")
+            dictionary[:, k] = random_state.randn(n_samples)
+            # Setting corresponding coefs to 0
+            code[k, :] = 0.0
+            dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
+                                            dictionary[:, k]))
+        else:
+            dictionary[:, k] /= sqrt(atom_norm_square)
+            # R <- -1.0 * U_k * V_k^T + R
+            R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
+    if return_r2:
+        R **= 2
+        # R is fortran-ordered. For numpy version < 1.6, sum does not
+        # follow the quick striding first, and is thus inefficient on
+        # fortran ordered data. We take a flat view of the data with no
+        # striding
+        R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
+        R = np.sum(R)
+        return dictionary, R
+    return dictionary
+
+
 def _update_dict(dictionary, X, codes, method, verbose=0, random_state=None):
     if method in ('lars', 'cd'):
         dictionary, residual = _update_dict_cd(dictionary.T, X.T, codes.T,
                                                verbose=verbose, return_r2=True,
                                                random_state=random_state)
+        dictionary = dictionary.T
     else:  # method in ('ksvd', 'exact_ksvd'):
         approximate_svd = (method == 'ksvd')
         n_components = dictionary.shape[0]
-
         for atom_index in range(n_components):
-            dictionary, codes = _atom_update(
+            dictionary, codes = _ksvd_atom_update(
                 X, atom_index, dictionary, codes, approximate_svd)
 
         residual = norm(X - np.dot(codes, dictionary))
@@ -434,26 +510,12 @@ def _update_dict(dictionary, X, codes, method, verbose=0, random_state=None):
     return dictionary, codes, residual
 
 
-# TODO: --- TODO-later ---
-# TODO: add ``...`` for all code gists in the doc?
 # TODO: add math-typing for formulas
+# TODO: update DictionaryLearning doc
 
+# TODO: read-check all new docs
+# TODO: check final diff
 
-# TODO: add notes how to get K-SVD and how to get old L1-dict-learning
-# TODO: why old dict_learning converges so fast?
-# TODO: returned errors are target values sometimes
-# TODO: validate str arguments in the sub-functions
-# TODO: questions:
-# TODO: * add paper reference for the L1 minimization (which paper?)
-# TODO: * rename old local variables in dict_learning?
-# TODO:   (incompatible because of callback(locals())
-# TODO: * code_init is useless?
-# TODO: * svd-init ignores code if it is given
-
-# TODO: * fix documentation for encode_method (lars -> lasso_lars,
-# TODO:   cd -> lasso_cd), add  other sparse coding methods
-# TODO: * callback only each 5-th iteration?
-# TODO: * rename error->cost
 def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
                   n_nonzero_coefs=None,
                   method='lars', coding_method=None,
@@ -467,15 +529,15 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
     for approximating the data matrix X: X ~= C*D.
 
     The actual minimization problem depends on the sparse coding method
-    (see `encode_method` parameter documentation).
+    (see `coding_method` parameter documentation).
 
-    If the method is based on L1-minimization, the problem to solve is
+    If the method is based on L1-minimization, the problem to solve is::
 
         (C^*, D^*) = argmin 0.5 || X - C D ||_2^2 + alpha * || C ||_1
                       (C,D)
             with || D_k ||_2 = 1 for all 0 <= k < n_components.
 
-    If the method is based on L0-minimization, the problem to solve is
+    If the method is based on L0-minimization, the problem to solve is::
 
         (C^*, D^*) = argmin || X - C D ||_2^2  s.t.
                       (C,D)
@@ -484,14 +546,16 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
             with || D_k ||_2 = 1 for all 0 <= k < n_components.
 
     The minimization is done by alternative iteration between sparse
-    coding (using encode_method) and dictionary update (using
-    dict_update_method).
+    coding (using ``coding_method``) and dictionary update (depending on
+    ``method``).
+
+    The default method is L1-minimization based on LARS (``method='lars'```,
+    ``coding_method='lasso_lars'``) with SVD initialization
+    (``init_method='svd'``).
 
     In order to get the K-SVD dictionary learning method choose
-    ``encode_method='omp'``, ``dict_update_method='ksvd'`` and
-    ``init_method='sample'``.
-
-    In order to get L1 ###TODO###
+    ``method='ksvd'`` (``coding_method`` is then set to ``'omp'`` by default)
+    and ``init_method='sample'``.
 
     Parameters
     ----------
@@ -593,7 +657,7 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
         The dictionary factor (D) in the matrix factorization.
 
     errors : array
-        Vector of errors at each iteration.
+        Vector of errors (or cost) at each iteration.
 
     n_iter : int
         Number of iterations run. Returned only if `return_n_iter` is
@@ -635,7 +699,8 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
 
     t0 = time.time()
     # Avoid integer division problems
-    alpha = float(alpha)
+    if alpha is not None:
+        alpha = float(alpha)
     random_state = check_random_state(random_state)
 
     if n_jobs == -1:
@@ -666,264 +731,19 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
                    % (ii, dt, dt / 60, current_cost))
 
         # Update code
-        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
-                             n_nonzero_coefs=n_nonzero_coefs, init=code,
-                             n_jobs=n_jobs)
+        code = sparse_encode(X, dictionary, algorithm=coding_method,
+                             alpha=alpha, n_nonzero_coefs=n_nonzero_coefs,
+                             init=code, n_jobs=n_jobs)
         # Update dictionary
         dictionary, codes, residuals = _update_dict(
-            dictionary.T, X.T, code.T, method,
+            dictionary, X, code, method,
             verbose=verbose, random_state=random_state)
-        dictionary = dictionary.T
 
         # Cost function
         if problem_type == 'L1':
             current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
         else:
             current_cost = residuals
-        errors.append(current_cost)
-
-        if ii > 0:
-            dE = errors[-2] - errors[-1]
-            # assert(dE >= -tol * errors[-1])
-            if dE < tol * errors[-1]:
-                if verbose == 1:
-                    # A line return
-                    print("")
-                elif verbose:
-                    print("--- Convergence reached after %d iterations" % ii)
-                break
-        if ii % 5 == 0 and callback is not None:
-            callback(locals())
-
-    if return_n_iter:
-        return code, dictionary, errors, ii + 1
-    else:
-        return code, dictionary, errors
-
-
-
-def _update_dict_cd(dictionary, Y, code, verbose=False, return_r2=False,
-                    random_state=None):
-    """Update the dense dictionary factor using coordinate descent.
-
-    Parameters
-    ----------
-    dictionary: array of shape (n_features, n_components)
-        Value of the dictionary at the previous iteration.
-
-    Y: array of shape (n_features, n_samples)
-        Data matrix.
-
-    code: array of shape (n_components, n_samples)
-        Sparse coding of the data against which to optimize the dictionary.
-
-    verbose:
-        Degree of output the procedure will print.
-
-    return_r2: bool
-        Whether to compute and return the residual sum of squares corresponding
-        to the computed solution.
-
-    random_state: int or RandomState
-        Pseudo number generator state used for random sampling.
-
-    Returns
-    -------
-    dictionary: array of shape (n_features, n_components)
-        Updated dictionary.
-
-    """
-    n_components = len(code)
-    n_samples = Y.shape[0]
-    random_state = check_random_state(random_state)
-    # Residuals, computed 'in-place' for efficiency
-    R = -np.dot(dictionary, code)
-    R += Y
-    R = np.asfortranarray(R)
-    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    for k in range(n_components):
-        # R <- 1.0 * U_k * V_k^T + R
-        R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-        dictionary[:, k] = np.dot(R, code[k, :].T)
-        # Scale k'th atom
-        atom_norm_square = np.dot(dictionary[:, k], dictionary[:, k])
-        if atom_norm_square < 1e-20:
-            if verbose == 1:
-                sys.stdout.write("+")
-                sys.stdout.flush()
-            elif verbose:
-                print("Adding new random atom")
-            dictionary[:, k] = random_state.randn(n_samples)
-            # Setting corresponding coefs to 0
-            code[k, :] = 0.0
-            dictionary[:, k] /= sqrt(np.dot(dictionary[:, k],
-                                            dictionary[:, k]))
-        else:
-            dictionary[:, k] /= sqrt(atom_norm_square)
-            # R <- -1.0 * U_k * V_k^T + R
-            R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
-    if return_r2:
-        R **= 2
-        # R is fortran-ordered. For numpy version < 1.6, sum does not
-        # follow the quick striding first, and is thus inefficient on
-        # fortran ordered data. We take a flat view of the data with no
-        # striding
-        R = as_strided(R, shape=(R.size, ), strides=(R.dtype.itemsize,))
-        R = np.sum(R)
-        return dictionary, R
-    return dictionary
-
-
-def dict_learning_old(X, n_components, alpha, max_iter=100, tol=1e-8,
-                  method='lars', n_jobs=1, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None,
-                  return_n_iter=False):
-    """Solves a dictionary learning matrix factorization problem.
-
-    Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving::
-
-        (U^*, V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
-                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
-
-    where V is the dictionary and U is the sparse code.
-
-    Read more in the :ref:`User Guide <DictionaryLearning>`.
-
-    Parameters
-    ----------
-    X: array of shape (n_samples, n_features)
-        Data matrix.
-
-    n_components: int,
-        Number of dictionary atoms to extract.
-
-    alpha: int,
-        Sparsity controlling parameter.
-
-    max_iter: int,
-        Maximum number of iterations to perform.
-
-    tol: float,
-        Tolerance for the stopping condition.
-
-    method: {'lars', 'cd'}
-        lars: uses the least angle regression method to solve the lasso problem
-        (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). Lars will be faster if
-        the estimated components are sparse.
-
-    n_jobs: int,
-        Number of parallel jobs to run, or -1 to autodetect.
-
-    dict_init: array of shape (n_components, n_features),
-        Initial value for the dictionary for warm restart scenarios.
-
-    code_init: array of shape (n_samples, n_components),
-        Initial value for the sparse code for warm restart scenarios.
-
-    callback:
-        Callable that gets invoked every five iterations.
-
-    verbose:
-        Degree of output the procedure will print.
-
-    random_state: int or RandomState
-        Pseudo number generator state used for random sampling.
-
-    return_n_iter : bool
-        Whether or not to return the number of iterations.
-
-    Returns
-    -------
-    code: array of shape (n_samples, n_components)
-        The sparse code factor in the matrix factorization.
-
-    dictionary: array of shape (n_components, n_features),
-        The dictionary factor in the matrix factorization.
-
-    errors: array
-        Vector of errors at each iteration.
-
-    n_iter : int
-        Number of iterations run. Returned only if `return_n_iter` is
-        set to True.
-
-    See also
-    --------
-    dict_learning_online
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
-    """
-    if method not in ('lars', 'cd'):
-        raise ValueError('Coding method %r not supported as a fit algorithm.'
-                         % method)
-    method = 'lasso_' + method
-
-    t0 = time.time()
-    # Avoid integer division problems
-    alpha = float(alpha)
-    random_state = check_random_state(random_state)
-
-    if n_jobs == -1:
-        n_jobs = cpu_count()
-
-    # Init the code and the dictionary with SVD of Y
-    if code_init is not None and dict_init is not None:
-        code = np.array(code_init, order='F')
-        # Don't copy V, it will happen below
-        dictionary = dict_init
-    else:
-        code, S, dictionary = linalg.svd(X, full_matrices=False)
-        dictionary = S[:, np.newaxis] * dictionary
-    r = len(dictionary)
-    if n_components <= r:  # True even if n_components=None
-        code = code[:, :n_components]
-        dictionary = dictionary[:n_components, :]
-    else:
-        code = np.c_[code, np.zeros((len(code), n_components - r))]
-        dictionary = np.r_[dictionary,
-                           np.zeros((n_components - r, dictionary.shape[1]))]
-
-    # Fortran-order dict, as we are going to access its row vectors
-    dictionary = np.array(dictionary, order='F')
-
-    residuals = 0
-
-    errors = []
-    current_cost = np.nan
-
-    if verbose == 1:
-        print('[dict_learning]', end=' ')
-
-    # If max_iter is 0, number of iterations returned should be zero
-    ii = -1
-
-    for ii in range(max_iter):
-        dt = (time.time() - t0)
-        if verbose == 1:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-        elif verbose:
-            print("Iteration % 3i "
-                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                  % (ii, dt, dt / 60, current_cost))
-
-        # Update code
-        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
-                             init=code, n_jobs=n_jobs)
-        # Update dictionary
-        dictionary, residuals = _update_dict_cd(dictionary.T, X.T, code.T,
-                                             verbose=verbose, return_r2=True,
-                                             random_state=random_state)
-        dictionary = dictionary.T
-
-        # Cost function
-        current_cost = 0.5 * residuals + alpha * np.sum(np.abs(code))
         errors.append(current_cost)
 
         if ii > 0:
@@ -1312,7 +1132,6 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         return self
 
 
-# TODO: add all necessary params and docstring them
 class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     """Dictionary learning
 
@@ -1429,8 +1248,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                  n_nonzero_coefs=None,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 n_jobs=1, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None):
+                 n_jobs=1, code_init=None, dict_init=None, init_method='svd',
+                 verbose=False, split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1442,6 +1261,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.fit_algorithm = fit_algorithm
         self.code_init = code_init
         self.dict_init = dict_init
+        self.init_method = init_method
         self.verbose = verbose
         self.random_state = random_state
 
@@ -1474,6 +1294,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             n_jobs=self.n_jobs,
             code_init=self.code_init,
             dict_init=self.dict_init,
+            init_method=self.init_method,
             verbose=self.verbose,
             random_state=random_state,
             return_n_iter=True)
