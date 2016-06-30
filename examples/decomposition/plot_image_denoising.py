@@ -4,12 +4,8 @@ Image denoising using dictionary learning
 =========================================
 
 An example comparing the effect of reconstructing noisy fragments
-<<<<<<< HEAD
-of the Lena image using different dictionary learning algorithms
-(:ref:`DictionaryLearning` and :ref:`DictionaryLearningKSVD`) and
-=======
+
 of a raccoon face image using firstly online :ref:`DictionaryLearning` and
->>>>>>> origin/master
 various transform methods.
 
 The dictionary is fitted on the distorted left half of the image, and
@@ -120,12 +116,6 @@ coder_ksvd = DictionaryLearningKSVD(n_components=100, fit_n_nonzero_coefs=2,
                                     iteration_count=25, n_jobs=6)
 learn_and_show(coder_ksvd)
 plt.figure(figsize=(4.2, 4))
-<<<<<<< HEAD
-plt.plot(coder_ksvd.error_)
-plt.title('K-SVD reconstuction error')
-plt.xlabel('iteration')
-plt.ylabel('error')
-=======
 for i, comp in enumerate(V[:100]):
     plt.subplot(10, 10, i + 1)
     plt.imshow(comp.reshape(patch_size), cmap=plt.cm.gray_r,
@@ -136,8 +126,6 @@ plt.suptitle('Dictionary learned from face patches\n' +
              'Train time %.1fs on %d patches' % (dt, len(data)),
              fontsize=16)
 plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
-
->>>>>>> origin/master
 
 ###############################################################################
 # Display the distorted image
@@ -184,42 +172,6 @@ transform_algorithms = [
      {'transform_n_nonzero_coefs': 5}),
     ('Thresholding\n alpha=0.1', 'threshold', {'transform_alpha': .1})]
 
-<<<<<<< HEAD
-def test_reconstruction(sparse_coder):
-    reconstructions = {}
-    for title, transform_algorithm, kwargs in transform_algorithms:
-        print(title + '...')
-        reconstructions[title] = lena.copy()
-        t0 = time()
-        sparse_coder.set_params(transform_algorithm=transform_algorithm,
-                                **kwargs)
-        code = sparse_coder.transform(data)
-        dictionary = sparse_coder.components_
-        patches = np.dot(code, dictionary)
-
-        if transform_algorithm == 'threshold':
-            patches -= patches.min()
-            patches /= patches.max()
-
-        patches += intercept
-        patches = patches.reshape(len(data), *patch_size)
-        if transform_algorithm == 'threshold':
-            patches -= patches.min()
-            patches /= patches.max()
-        reconstructions[title][:, height // 2:] = reconstruct_from_patches_2d(
-            patches, (width, height // 2))
-        dt = time() - t0
-        print('done in %.2fs.' % dt)
-        show_with_diff(reconstructions[title], lena,
-                       title + ' (time: %.1fs)' % dt)
-
-    plt.show()
-
-print('Reconstructions for L1 dictionary.')
-test_reconstruction(coder_l1)
-print('Reconstructions for K-SVD dictionary.')
-test_reconstruction(coder_ksvd)
-=======
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
     print(title + '...')
@@ -242,4 +194,3 @@ for title, transform_algorithm, kwargs in transform_algorithms:
                    title + ' (time: %.1fs)' % dt)
 
 plt.show()
->>>>>>> origin/master
