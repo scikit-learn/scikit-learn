@@ -348,12 +348,13 @@ def test_radius_neighbors_classifier_outlier_labeling():
     # Test radius-based classifier when no neighbors found and outliers
     # are labeled.
 
-    X = np.array([[1.0, 1.0], [2.0, 2.0], [0.99,0.99], [0.98, 0.98], [2.01,2.01]])
+    X = np.array([[1.0, 1.0], [2.0, 2.0], [0.99, 0.99], 
+                  [0.98, 0.98], [2.01, 2.01]])
     y  = np.array([1, 2, 1, 1, 2])
     radius = 0.1
 
     z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
-    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01,2.01]])    # one outlier
+    z2 = np.array([[1.4, 1.4], [1.01, 1.01], [2.01, 2.01]])    # one outlier
     correct_labels1 = np.array([1, 2])
     correct_labels2 = np.array([-1, 1, 2])
 
