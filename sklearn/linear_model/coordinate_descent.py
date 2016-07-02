@@ -1,4 +1,4 @@
-#` Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Gael Varoquaux <gael.varoquaux@inria.fr>
@@ -700,7 +700,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=False)
-
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -722,6 +721,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
+
         for k in xrange(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -747,8 +747,8 @@ class ElasticNet(LinearModel, RegressorMixin):
             self.n_iter_ = self.n_iter_[0]
 
         self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
-
         self._set_intercept(X_offset, y_offset, X_scale)
+
         # return self for chaining fit and predict calls
         return self
 
