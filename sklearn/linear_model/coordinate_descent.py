@@ -1,4 +1,4 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#` Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Gael Varoquaux <gael.varoquaux@inria.fr>
@@ -375,13 +375,23 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already float64 Fortran ordered when bypassing
     # checks
     if check_input:
-        X = check_array(X, 'csc', order='F', copy=copy_X)
-        y = check_array(y, 'csc', order='F', copy=False,
+        if X.dtype is np.float32:
+            X = check_array(X, 'csc', dtype=np.float32, order='F', copy=copy_X)
+            y = check_array(y, 'csc', dtype=np.float32, order='F', copy=False,
                         ensure_2d=False)
-        if Xy is not None:
-            # Xy should be a 1d contiguous array or a 2D C ordered array
-            Xy = check_array(Xy, order='C', copy=False,
-                             ensure_2d=False)
+            if Xy is not None:
+                # Xy should be a 1d contiguous array or a 2D C ordered array
+                Xy = check_array(Xy, dtype=np.float32, order='C', copy=False,
+                                 ensure_2d=False)
+        else:
+            X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
+            y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+                            ensure_2d=False)
+            if Xy is not None:
+                # Xy should be a 1d contiguous array or a 2D C ordered array
+                Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
+                                 ensure_2d=False)
+
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -457,7 +467,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, rng, random, positive)
         elif precompute is False:
-            print "model: enet_coordinate_descent"
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random,
                 positive)
@@ -657,7 +666,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
 
-        print "test test"
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -672,16 +680,27 @@ class ElasticNet(LinearModel, RegressorMixin):
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
-            y = np.asarray(y)
-            X, y = check_X_y(X, y, accept_sparse='csc',
-                             order='F',
-                             copy=self.copy_X and self.fit_intercept,
-                             multi_output=True, y_numeric=True)
-            y = check_array(y, order='F', copy=False,
-                            ensure_2d=False)
+            if sparse.issparse(X):
+                y = np.asarray(y, dtype=np.float64)
+                X, y = check_X_y(X, y, accept_sparse='csc',
+                                 order='F', dtype=np.float64,
+                                 copy=self.copy_X and self.fit_intercept,
+                                 multi_output=True, y_numeric=True)
+                y = check_array(y, order='F', copy=False, dtype=np.float64,
+                                ensure_2d=False)
+            else:
+                y = np.asarray(y)
+                X, y = check_X_y(X, y, accept_sparse='csc',
+                                 order='F', dtype=[np.float64, np.float32],
+                                 copy=self.copy_X and self.fit_intercept,
+                                 multi_output=True, y_numeric=True)
+                y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
+                                ensure_2d=False)
+
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=False)
+
         if y.ndim == 1:
             y = y[:, np.newaxis]
         if Xy is not None and Xy.ndim == 1:
@@ -703,7 +722,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
-
         for k in xrange(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -729,8 +747,8 @@ class ElasticNet(LinearModel, RegressorMixin):
             self.n_iter_ = self.n_iter_[0]
 
         self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
-        self._set_intercept(X_offset, y_offset, X_scale)
 
+        self._set_intercept(X_offset, y_offset, X_scale)
         # return self for chaining fit and predict calls
         return self
 
