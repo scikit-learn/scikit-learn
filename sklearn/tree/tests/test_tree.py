@@ -699,6 +699,9 @@ def test_beta():
         # verify leaf nodes without beta have impurity 0
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
+        assert_equal(est.beta, 0.,
+                     "Failed, beta = {0} != 0".format(
+                         est.beta))
         est.fit(X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or

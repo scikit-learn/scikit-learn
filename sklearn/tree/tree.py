@@ -309,7 +309,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             min_weight_leaf = 0.
 
         if not 0. <= beta:
-            raise ValueError("beta must be greater than 0")
+            raise ValueError("beta must be greater or equal to 0")
 
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
