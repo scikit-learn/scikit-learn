@@ -499,6 +499,15 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
         Xs, transformers = zip(*result)
         self._update_transformer_list(transformers)
+        
+        Xnew = []
+        for Xi in Xs:
+            if Xi.ndim == 1:
+                Xnew.append(Xi.reshape(-1,1))
+            else:
+                Xnew.append(Xi)
+        Xs = tuple(Xnew)
+        
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -522,6 +531,15 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, name, X, self.transformer_weights)
             for name, trans in self.transformer_list)
+            
+        Xnew = []
+        for Xi in Xs:
+            if Xi.ndim == 1:
+                Xnew.append(Xi.reshape(-1,1))
+            else:
+                Xnew.append(Xi)
+        Xs = tuple(Xnew)
+        
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
