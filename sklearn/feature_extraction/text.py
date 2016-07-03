@@ -240,7 +240,7 @@ class VectorizerMixin(object):
                              self.analyzer)
 
     def _validate_vocabulary(self):
-        vocabulary = self.vocabulary
+        vocabulary = self.vocabulary_
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):
                 vocab = {}
@@ -664,7 +664,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
         self.ngram_range = ngram_range
-        self.vocabulary = vocabulary
+        self.vocabulary_ = vocabulary
         self.binary = binary
         self.dtype = dtype
 
