@@ -635,6 +635,121 @@ class StratifiedKFold(_BaseKFold):
         """
         return super(StratifiedKFold, self).split(X, y, labels)
 
+class HomogeneousTimeSeriesCV(_BaseKFold):
+    """Homogeneous Time Series cross-validator
+
+    Provides train/test indices to split time series data in train/test sets.
+
+    This cross-validation object is a variation of KFold.
+    In iteration k, it returns first k folds as train set and k+1 fold as
+    test set.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> htscv = HomogeneousTimeSeriesCV(n_folds=4)
+    >>> htscv.get_n_splits(X)
+    3
+    >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
+    HomogeneousTimeSeriesCV(n_folds=2)
+    >>> for train_index, test_index in htscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0] TEST: [1]
+    TRAIN: [0 1] TEST: [2]
+    TRAIN: [0 1 2] TEST: [3]
+
+    Notes
+    -----
+    The first ``n_samples % n_folds`` folds have size
+    ``n_samples // n_folds + 1``, other folds have size
+    ``n_samples // n_folds``, where ``n_samples`` is the number of samples.
+
+    Number of splitting iterations in this cross-validator, n_folds-1,
+    is not equal to other KFold based cross-validators'.
+
+    See also
+    --------
+    """
+    def __init__(self, n_folds=3):
+        super(HomogeneousTimeSeriesCV, self).__init__(n_folds,
+                                                      shuffle=False,
+                                                      random_state=None)
+
+    def split(self, X, y=None, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        X, y, labels = indexable(X, y, labels)
+        n_samples = _num_samples(X)
+        if self.n_folds > n_samples:
+            raise ValueError(
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of samples: {1}.").format(self.n_folds,
+                                                             n_samples))
+        n_folds = self.n_folds
+        indices = np.arange(n_samples)
+        fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
+        fold_sizes[:n_samples % n_folds] += 1
+        current = 0
+        for fold_size in fold_sizes:
+            start, stop = current, current + fold_size
+            if current != 0:
+                yield indices[:start], indices[start:stop]
+            current = stop
+
+    def get_n_splits(self, X=None, y=None, labels=None):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        labels : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        return self.n_folds-1
+
+
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
 

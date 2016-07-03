@@ -30,6 +30,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import HomogeneousTimeSeriesCV
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import LeaveOneLabelOut
 from sklearn.model_selection import LeavePOut
@@ -983,6 +984,39 @@ def test_label_kfold():
     assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
                          next, LabelKFold(n_folds=3).split(X, y, labels))
 
+
+def test_homogeneous_time_series_cv():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+
+    # Should fail if there are more folds than samples
+    assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
+                         next,
+                         HomogeneousTimeSeriesCV(n_folds=9).split(X))
+
+    htscv = HomogeneousTimeSeriesCV(3)
+
+    # Manually check that Homogeneous Time Series CV preserves the data
+    # ordering on toy datasets
+    splits = htscv.split(X[:-1])
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [4, 5])
+
+    splits = HomogeneousTimeSeriesCV(3).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [5, 6])
+
+    # Check get_n_splits returns the number of folds - 1
+    assert_equal(2, htscv.get_n_splits())
 
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
