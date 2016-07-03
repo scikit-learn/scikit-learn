@@ -681,6 +681,54 @@ def test_min_weight_fraction_leaf():
         yield check_min_weight_fraction_leaf, name, "multilabel", True
 
 
+def test_beta():
+    # Test if beta creates leaves with impurity [0, beta) when
+    # min_samples_leaf = 1 and min_samples_split = 2.
+    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    y = iris.target
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    # we set max leaf nodes to a number greater than the total nodes
+    # possible, thus ensuring that the leaves generated have impurity
+    # of 0 when there is no beta stopping used.
+    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
+        TreeEstimator = ALL_TREES[name]
+        beta = .5
+
+        # verify leaf nodes without beta have impurity 0
+        est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+        for node in range(est.tree_.node_count):
+            if (est.tree_.children_left[node] == TREE_LEAF or
+                est.tree_.children_right[node] == TREE_LEAF):
+                assert_equal(est.tree_.impurity[node], 0.,
+                             "Failed with {0} "
+                             "beta={1}".format(
+                                 est.tree_.impurity[node],
+                                 est.beta))
+
+        # verify leaf nodes have impurity [0,beta) when using beta
+        est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                            beta=beta,
+                            random_state=0)
+        est.fit(X, y)
+        for node in range(est.tree_.node_count):
+            if (est.tree_.children_left[node] == TREE_LEAF or
+                est.tree_.children_right[node] == TREE_LEAF):
+                assert_greater_equal(est.tree_.impurity[node], 0,
+                                     "Failed with {0} "
+                                     "beta={1}".format(
+                                         est.tree_.impurity[node],
+                                         est.beta))
+                assert_less(est.tree_.impurity[node], beta,
+                            "Failed with {0} "
+                            "beta={1}".format(
+                                est.tree_.impurity[node],
+                                est.beta))
+
+
 def test_pickle():
 
     for name, TreeEstimator in ALL_TREES.items():
