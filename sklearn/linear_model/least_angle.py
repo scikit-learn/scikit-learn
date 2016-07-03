@@ -1063,9 +1063,18 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    ``best_score_`` : float
+        Best cross validation score on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     See also
     --------
-    lars_path, LassoLars, LassoLarsCV
+    lars_path, LassoLars, LassoLarsCV, Lasso, LassoCV
     """
 
     method = 'lar'
@@ -1148,11 +1157,14 @@ class LarsCV(Lars):
         # Select the alpha that minimizes left-out error
         i_best_alpha = np.argmin(mse_path.mean(axis=-1))
         best_alpha = all_alphas[i_best_alpha]
+        best_mse = mse_path[i_best_alpha]
 
         # Store our parameters
         self.alpha_ = best_alpha
         self.cv_alphas_ = all_alphas
         self.cv_mse_path_ = mse_path
+        self.best_score_ = best_mse
+        self.best_params_ = {'alpha': best_alpha}
 
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
@@ -1272,6 +1284,15 @@ class LassoLarsCV(LarsCV):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    ``best_score_`` : float
+        Best cross validation score on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     Notes
     -----
 
@@ -1382,6 +1403,15 @@ class LassoLarsIC(LassoLars):
         alphas. The alpha which has the smallest information criteria
         is chosen.
 
+    ``best_score_`` : float
+        Best cross validation score on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1485,4 +1515,6 @@ class LassoLarsIC(LassoLars):
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
+        self.best_score_ = mean_squared_error
+        self.best_params_ = {'alpha': self.alpha_}
         return self
