@@ -119,9 +119,9 @@ def test_precomputed():
     # Gram matrix for test data but compute KT[i,j]
     # for support vectors j only.
     KT = np.zeros_like(KT)
-    for i in range(len(T)):
+    for i, t_i in enumerate(T):
         for j in clf.support_:
-            KT[i, j] = np.dot(T[i], X[j])
+            KT[i, j] = np.dot(t_i, X[j])
 
     pred = clf.predict(KT)
     assert_array_equal(pred, true_result)
@@ -155,9 +155,9 @@ def test_precomputed():
     # Gram matrix for test data but compute KT[i,j]
     # for support vectors j only.
     K = np.zeros_like(K)
-    for i in range(len(iris.data)):
+    for i, x in enumerate(iris.data):
         for j in clf.support_:
-            K[i, j] = np.dot(iris.data[i], iris.data[j])
+            K[i, j] = np.dot(x, iris.data[j])
 
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)

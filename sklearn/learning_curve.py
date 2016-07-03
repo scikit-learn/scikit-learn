@@ -132,8 +132,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     # HACK as long as boolean indices are allowed in cv generators
     if cv[0][0].dtype == bool:
         new_cv = []
-        for i in range(len(cv)):
-            new_cv.append((np.nonzero(cv[i][0])[0], np.nonzero(cv[i][1])[0]))
+        for i, cv_i in enumerate(cv):
+            new_cv.append((np.nonzero(cv_i[0])[0], np.nonzero(cv_i[1])[0]))
         cv = new_cv
 
     n_max_training_samples = len(cv[0][0])

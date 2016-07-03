@@ -260,7 +260,7 @@ class VectorizerMixin(object):
                 indices = set(six.itervalues(vocabulary))
                 if len(indices) != len(vocabulary):
                     raise ValueError("Vocabulary contains repeated indices.")
-                for i in xrange(len(vocabulary)):
+                for i, _ in enumerate(vocabulary):
                     if i not in indices:
                         msg = ("Vocabulary of size %d doesn't contain index "
                                "%d." % (len(vocabulary), i))

@@ -112,7 +112,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
                             random_state)
     assert_true(sp.issparse(got))
 
-    for k in range(len(classes)):
+    for k, _ in enumerate(classes):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
@@ -125,7 +125,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
                             random_state=random_state)
     assert_true(sp.issparse(got))
 
-    for k in range(len(classes)):
+    for k, _ in enumerate(classes):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 
@@ -137,7 +137,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
                             random_state)
     assert_true(sp.issparse(got))
 
-    for k in range(len(classes)):
+    for k, _ in enumerate(classes):
         p = np.bincount(got.getcol(k).toarray().ravel(),
                         minlength=len(class_probabilites[k])) / n_samples
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
@@ -151,7 +151,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
                             random_state=random_state)
     assert_true(sp.issparse(got))
 
-    for k in range(len(classes)):
+    for k, _ in enumerate(classes):
         p = np.bincount(got.getcol(k).toarray().ravel()) / n_samples
         assert_array_almost_equal(class_probabilites[k], p, decimal=1)
 

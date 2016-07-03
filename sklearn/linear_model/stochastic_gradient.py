@@ -454,7 +454,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
                                 sample_weight)
-            for i in range(len(self.classes_)))
+            for i, _ in enumerate(self.classes_))
 
         for i, (_, intercept) in enumerate(result):
             self.intercept_[i] = intercept

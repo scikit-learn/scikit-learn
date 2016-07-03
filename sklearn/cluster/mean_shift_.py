@@ -190,7 +190,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         delayed(_mean_shift_single_seed)
         (seed, X, nbrs, max_iter) for seed in seeds)
     # copy results in a dictionary
-    for i in range(len(seeds)):
+    for i, _ in enumerate(seeds):
         if all_res[i] is not None:
             center_intensity_dict[all_res[i][0]] = all_res[i][1]
 

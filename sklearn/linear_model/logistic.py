@@ -1705,7 +1705,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
                 w = np.mean([coefs_paths[i][best_indices[i]]
-                             for i in range(len(folds))], axis=0)
+                             for i, _ in enumerate(folds)], axis=0)
                 self.C_.append(np.mean(self.Cs_[best_indices]))
 
             if self.multi_class == 'multinomial':

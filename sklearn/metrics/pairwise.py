@@ -702,8 +702,8 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
         # Check the matrix first (it is usually done by the metric)
         X, Y = check_paired_arrays(X, Y)
         distances = np.zeros(len(X))
-        for i in range(len(X)):
-            distances[i] = metric(X[i], Y[i])
+        for i, x in enumerate(X):
+            distances[i] = metric(x, Y[i])
         return distances
     else:
         raise ValueError('Unknown distance %s' % metric)

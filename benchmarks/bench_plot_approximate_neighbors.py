@@ -74,7 +74,7 @@ def calc_accuracy(X, queries, n_queries, n_neighbors, exact_neighbors,
                                        return_distance=False)
     average_time_approx = (time() - t0) / n_queries
 
-    for i in range(len(queries)):
+    for i, _ in enumerate(queries):
         accuracy += np.in1d(approx_neighbors[i], exact_neighbors[i]).mean()
 
     accuracy /= n_queries
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     plt.legend(legend_rects, legend_labels,
                loc='upper left')
 
-    for i in range(len(params_list)):
+    for i, _ in enumerate(params_list):
         plt.scatter(n_samples, accuracies[:, i], c=colors[i])
         plt.plot(n_samples, accuracies[:, i], c=colors[i])
     plt.ylim([0, 1.3])
@@ -153,7 +153,7 @@ if __name__ == '__main__':
     plt.legend(legend_rects, legend_labels,
                loc='upper left')
 
-    for i in range(len(params_list)):
+    for i, _ in enumerate(params_list):
         plt.scatter(n_samples, speed_ups[:, i], c=colors[i])
         plt.plot(n_samples, speed_ups[:, i], c=colors[i])
     plt.ylim(0, np.max(speed_ups))

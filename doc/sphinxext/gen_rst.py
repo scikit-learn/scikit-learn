@@ -165,9 +165,9 @@ def parse_sphinx_searchindex(searchindex):
                     raise RuntimeError('error when parsing dict')
                 value = dict_str[pos + 2: pos_tmp].split(',')
                 # try to convert elements to int
-                for i in range(len(value)):
+                for i, v in enumerate(value):
                     try:
-                        value[i] = int(value[i])
+                        v = int(v)
                     except ValueError:
                         pass
             elif dict_str[pos + 1] == '{':

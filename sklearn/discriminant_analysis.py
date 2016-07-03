@@ -707,7 +707,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         X = check_array(X)
         norm2 = []
-        for i in range(len(self.classes_)):
+        for i, _ in enumerate(self.classes_):
             R = self.rotations_[i]
             S = self.scalings_[i]
             Xm = X - self.means_[i]

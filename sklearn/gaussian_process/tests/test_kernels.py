@@ -202,12 +202,11 @@ def test_kernel_clone():
                 assert_equal(attr_value.n_elements,
                              attr_value_cloned.n_elements)
             elif np.iterable(attr_value):
-                for i in range(len(attr_value)):
-                    if np.iterable(attr_value[i]):
-                        assert_array_equal(attr_value[i],
-                                           attr_value_cloned[i])
+                for i, v in enumerate(attr_value):
+                    if np.iterable(v):
+                        assert_array_equal(v, attr_value_cloned[i])
                     else:
-                        assert_equal(attr_value[i], attr_value_cloned[i])
+                        assert_equal(v, attr_value_cloned[i])
             else:
                 assert_equal(attr_value, attr_value_cloned)
             if not isinstance(attr_value, Hashable):
