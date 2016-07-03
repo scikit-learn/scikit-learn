@@ -30,7 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
-from ..utils.fixes import frombuffer_empty, bincount
+from ..utils.fixes import frombuffer_empty, bincount, sp_version
 from ..utils.validation import check_is_fitted
 
 __all__ = ['CountVectorizer',
@@ -747,8 +747,19 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
-        indptr = _make_int_array()
+        if sp_version >= (0, 14):
+            # We can use 64-bit indices
+            # NOTE: long on Windows is only 32 bits
+            # j_indices stores feature indices, likely to be < 2^31
+            j_indices = _make_long_array()
+            # indptr stores indices into j_indices, which can be large
+            indptr = _make_long_array()
+        else:
+            # Sparse arrays only support 32-bit integers
+            # j_indices stores feature indices, likely to be < 2^31
+            j_indices = _make_int_array()
+            # indptr stores indices into j_indices, which can be large
+            indptr = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
             for feature in analyze(doc):
@@ -766,8 +777,16 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
+        if sp_version >= (0, 14):
+            # We can use 64-bit indices
+            # int_ == "l" (long)
+            # NOTE: long on Windows is only 32 bits
+            j_indices = frombuffer_empty(j_indices, dtype=np.int_)
+            indptr = np.frombuffer(indptr, dtype=np.int_)
+        else:
+            # Sparse arrays only support 32-bit integers
+            j_indices = frombuffer_empty(j_indices, dtype=np.intc)
+            indptr = np.frombuffer(indptr, dtype=np.intc)
         values = np.ones(len(j_indices))
 
         X = sp.csr_matrix((values, j_indices, indptr),
@@ -911,6 +930,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
     return array.array(str("i"))
+
+def _make_long_array():
+    """Construct an array.array of a type suitable for large scipy.sparse indices.
+
+    scipy 0.14 and later can construct sparse matrices with 64 bit integer indices.
+
+    NOTE: long on Windows is only 32 bits
+    """
+    return array.array(str("l"))
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
