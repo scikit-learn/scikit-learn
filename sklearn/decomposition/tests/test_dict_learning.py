@@ -71,6 +71,32 @@ def test_dict_learning_lars_reconstruction():
 def test_dict_learning_ksvd_reconstruction():
     n_components = 12
     dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
+                              transform_algorithm='omp', init_method='sample',
+                              transform_alpha=0.001, random_state=0)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
+def test_dict_learning_exact_ksvd_reconstruction():
+    n_components = 12
+    dico = DictionaryLearning(n_components, fit_algorithm='exact_ksvd',
+                              transform_algorithm='omp', init_method='sample',
+                              transform_alpha=0.001, random_state=0)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='lasso_lars')
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
+def test_dict_learning_ksvd_svd_init_reconstruction():
+    n_components = 12
+    dico = DictionaryLearning(n_components, fit_algorithm='ksvd',
                               transform_algorithm='omp',
                               transform_alpha=0.001, random_state=0)
     code = dico.fit(X).transform(X)
