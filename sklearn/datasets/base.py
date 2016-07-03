@@ -378,6 +378,67 @@ def load_breast_cancer():
                  feature_names=feature_names)
 
 
+def load_yeast():
+    """Load and return the yeast dataset.
+
+    The yeast dataset is a multi-variate classification dataset.
+
+    =================    ====================================
+    Classes                                                10
+    Samples per class    463(CYT), 5(ERL), 35(EXC), 44(ME1),
+                         51(ME2), 163(ME3),244(MIT), 429(NUC),
+                         20(POX), 30(VAC)
+    Samples total                                        1484
+    Dimensionality                                          9
+    Features                                   real, positive
+    =================   =====================================
+    Returns
+    -------
+    data : Bunch
+        Dictionary-like object, the interesting attributes are:
+        'data', the data to learn, 'target', the classification labels,
+        'target_names', the meaning of the labels, 'feature_names', the
+        meaning of the features, and 'DESCR', the
+        full description of the dataset.
+
+    Examples
+    --------
+    Let's say you are interested in the samples 10, 250, and 500, and want to
+    know their class name.
+
+    >>> from sklearn.datasets import load_yeast
+    >>> data = load_yeast()
+    >>> data.target[[10, 250, 500]]
+    array(['NUC', 'POX', 'CYT'],
+          dtype='|S3')
+    >>> list(data.target_names)
+    ['CYT', 'ERL', 'EXC', 'ME1', 'ME2', 'ME3', 'MIT', 'NUC', 'POX', 'VAC']
+"""
+    module_path = dirname(__file__)
+    with open(join(module_path, 'data', 'yeast.csv')) as csv_file:
+        data_file = csv.reader(csv_file)
+        first_line = next(data_file)
+        n_samples = int(first_line[0])
+        n_features = int(first_line[1])
+        target_names = np.array(first_line[2:])
+        data = np.empty((n_samples, n_features), dtype=str)
+        target = np.empty((n_samples,), dtype='|S3')
+
+        for count, value in enumerate(data_file):
+            data[count] = np.asarray(value[:-3], dtype=str)
+            target[count] = np.asarray(value[-3], dtype=str)
+
+    with open(join(module_path, 'descr', 'yeast.rst')) as rst_file:
+        fdescr = rst_file.read()
+
+    feature_names = np.array(['Sequence Name', 'mcg', 'gvh', 'alm', 'mit',
+                              'erl', 'pox', 'vac', 'nuc'])
+    return Bunch(data=data, target=target,
+                 target_names=target_names,
+                 DESCR=fdescr,
+                 feature_names=feature_names)
+
+
 def load_digits(n_class=10):
     """Load and return the digits dataset (classification).
 
