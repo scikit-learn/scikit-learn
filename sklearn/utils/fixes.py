@@ -106,15 +106,23 @@ except TypeError:
 
 try:
     np.array(5).astype(float, copy=False)
-except TypeError:
-    # Compat where astype accepted no copy argument
-    def astype(array, dtype, copy=True):
-        if not copy and array.dtype == dtype:
-            return array
-        return array.astype(dtype)
-else:
-    astype = np.ndarray.astype
 
+except TypeError:
+    np_astype_copy_supported = False
+
+else:
+    np_astype_copy_supported = True
+
+
+def astype(array, dtype, copy=True):
+    if not copy and array.dtype == dtype:
+        return array
+    elif sp.issparse(array):
+        return array.astype(dtype)
+    elif np_astype_copy_supported:
+        return array.astype(dtype, copy=copy)
+    else:
+        return array.astype(dtype)
 
 try:
     with warnings.catch_warnings(record=True):
