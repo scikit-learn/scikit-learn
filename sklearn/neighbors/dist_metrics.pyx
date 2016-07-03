@@ -1091,16 +1091,6 @@ cdef class PyFuncDistance(DistanceMetric):
     """
     def __init__(self, func, **kwargs):
         self.func = func
-        x = np.random.random(10)
-        try:
-            d = self.func(x, x, **kwargs)
-        except TypeError:
-            raise ValueError("func must be a callable taking two arrays")
-
-        try:
-            d = float(d)
-        except TypeError:
-            raise ValueError("func must return a float")
 
         self.kwargs = kwargs
 
