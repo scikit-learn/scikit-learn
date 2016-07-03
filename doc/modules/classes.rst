@@ -1179,7 +1179,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.MaxAbsScaler
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
-   preprocessing.OneHotEncoder
+   preprocessing.CategoricalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.RobustScaler
    preprocessing.StandardScaler
