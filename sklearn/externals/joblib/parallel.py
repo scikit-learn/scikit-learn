@@ -7,10 +7,7 @@ Helpers for embarrassingly parallel code.
 
 from __future__ import division
 
-import os
 import sys
-import gc
-import warnings
 from math import sqrt
 import functools
 import time
@@ -23,21 +20,18 @@ except:
     import pickle
 
 from ._multiprocessing_helpers import mp
-if mp is not None:
-    from .pool import MemmapingPool
-    from multiprocessing.pool import ThreadPool
 
 from .format_stack import format_exc, format_outer_frames
 from .logger import Logger, short_format_time
 from .my_exceptions import TransportableException, _mk_exception
 from .disk import memstr_to_kbytes
+from ._backends import MultiProcessingBackend, ThreadingBackend
 from ._compat import _basestring
 
 
-VALID_BACKENDS = ['multiprocessing', 'threading']
-
-# Environment variables to protect against bad situations when nesting
-JOBLIB_SPAWNED_PROCESS = "__JOBLIB_SPAWNED_PARALLEL__"
+VALID_BACKENDS = {'multiprocessing' : MultiProcessingBackend,
+                  'threading': ThreadingBackend}
+VALID_BACKENDS['default'] = VALID_BACKENDS['multiprocessing']
 
 # In seconds, should be big enough to hide multiprocessing dispatching
 # overhead.
@@ -48,17 +42,6 @@ MIN_IDEAL_BATCH_DURATION = .2
 # Should not be too high to avoid stragglers: long jobs running alone
 # on a single worker while other workers have no work to process any more.
 MAX_IDEAL_BATCH_DURATION = 2
-
-# Under Linux or OS X the default start method of multiprocessing
-# can cause third party libraries to crash. Under Python 3.4+ it is possible
-# to set an environment variable to switch the default start method from
-# 'fork' to 'forkserver' or 'spawn' to avoid this issue albeit at the cost
-# of causing semantic changes and some additional pool instanciation overhead.
-if hasattr(mp, 'get_context'):
-    method = os.environ.get('JOBLIB_START_METHOD', '').strip() or None
-    DEFAULT_MP_CONTEXT = mp.get_context(method=method)
-else:
-    DEFAULT_MP_CONTEXT = None
 
 
 class BatchedCalls(object):
@@ -225,6 +208,17 @@ class BatchCompletionCallBack(object):
 
 
 ###############################################################################
+def set_parallel_backend(name, cls):
+    """ Register a new Parallel backend. 
+    
+    The new backend can then be selected by passing its name as the backend argument
+    to the Parallel class. Moreover, the default backend can be overwritten by setting
+    the name to 'default'.
+    """
+
+    VALID_BACKENDS[name] = cls
+
+###############################################################################
 class Parallel(Logger):
     ''' Helper class for readable parallel mapping.
 
@@ -251,6 +245,8 @@ class Parallel(Logger):
                 explicitly releases the GIL (for instance a Cython loop wrapped
                 in a "with nogil" block or an expensive call to a library such
                 as NumPy).
+              - finally, you can register backends by calling set_parallel_backend.
+                This will allow you to implement a backend of your liking.
         verbose: int, optional
             The verbosity level: if non zero, progress messages are
             printed. Above 50, the output is sent to stdout.
@@ -413,25 +409,37 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   5 out of   6 | elapsed:    0.0s remaining:    0.0s
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
     '''
-    def __init__(self, n_jobs=1, backend='multiprocessing', verbose=0,
+    def __init__(self, n_jobs=1, backend='default', verbose=0,
                  pre_dispatch='2 * n_jobs', batch_size='auto',
                  temp_folder=None, max_nbytes='1M', mmap_mode='r'):
+        self.n_jobs = n_jobs
         self.verbose = verbose
-        self._mp_context = DEFAULT_MP_CONTEXT
+        self.pre_dispatch = pre_dispatch
+
+        if isinstance(max_nbytes, _basestring):
+            max_nbytes = 1024 * memstr_to_kbytes(max_nbytes)
+
+        self.poolargs = dict(
+            max_nbytes=max_nbytes,
+            mmap_mode=mmap_mode,
+            temp_folder=temp_folder,
+            verbose=max(0, self.verbose - 50),
+        )
+
         if backend is None:
             # `backend=None` was supported in 0.8.2 with this effect
-            backend = "multiprocessing"
+            backend = "default"
         elif hasattr(backend, 'Pool') and hasattr(backend, 'Lock'):
             # Make it possible to pass a custom multiprocessing context as
             # backend to change the start method to forkserver or spawn or
             # preload modules on the forkserver helper process.
-            self._mp_context = backend
-            backend = "multiprocessing"
+            self.poolargs['context'] = backend
+            backend = MultiProcessingBackend
         if backend not in VALID_BACKENDS:
             raise ValueError("Invalid backend: %s, expected one of %r"
-                             % (backend, VALID_BACKENDS))
-        self.backend = backend
-        self.n_jobs = n_jobs
+                             % (backend, VALID_BACKENDS.keys()))
+        self.backend = VALID_BACKENDS[backend]
+
         if (batch_size == 'auto'
                 or isinstance(batch_size, Integral) and batch_size > 0):
             self.batch_size = batch_size
@@ -440,13 +448,6 @@ class Parallel(Logger):
                 "batch_size must be 'auto' or a positive integer, got: %r"
                 % batch_size)
 
-        self.pre_dispatch = pre_dispatch
-        self._temp_folder = temp_folder
-        if isinstance(max_nbytes, _basestring):
-            self._max_nbytes = 1024 * memstr_to_kbytes(max_nbytes)
-        else:
-            self._max_nbytes = max_nbytes
-        self._mmap_mode = mmap_mode
         # Not starting the pool in the __init__ is a design decision, to be
         # able to close it ASAP, and not burden the user with closing it
         # unless they choose to use the context manager API with a with block.
@@ -468,88 +469,32 @@ class Parallel(Logger):
         self._terminate_pool()
         self._managed_pool = False
 
-    def _effective_n_jobs(self):
-        n_jobs = self.n_jobs
-        if n_jobs == 0:
-            raise ValueError('n_jobs == 0 in Parallel has no meaning')
-        elif mp is None or n_jobs is None:
-            # multiprocessing is not available or disabled, fallback
-            # to sequential mode
-            return 1
-        elif n_jobs < 0:
-            n_jobs = max(mp.cpu_count() + 1 + n_jobs, 1)
-        return n_jobs
-
     def _initialize_pool(self):
         """Build a process or thread pool and return the number of workers"""
-        n_jobs = self._effective_n_jobs()
+        self._pool = self.backend()
+
         # The list of exceptions that we will capture
         self.exceptions = [TransportableException]
 
+        n_jobs = self._pool.effective_n_jobs(self.n_jobs)
         if n_jobs == 1:
             # Sequential mode: do not use a pool instance to avoid any
             # useless dispatching overhead
             self._pool = None
-        elif self.backend == 'threading':
-            self._pool = ThreadPool(n_jobs)
-        elif self.backend == 'multiprocessing':
-            if mp.current_process().daemon:
-                # Daemonic processes cannot have children
-                self._pool = None
-                warnings.warn(
-                    'Multiprocessing-backed parallel loops cannot be nested,'
-                    ' setting n_jobs=1',
-                    stacklevel=3)
-                return 1
-            elif threading.current_thread().name != 'MainThread':
-                # Prevent posix fork inside in non-main posix threads
-                self._pool = None
-                warnings.warn(
-                    'Multiprocessing backed parallel loops cannot be nested'
-                    ' below threads, setting n_jobs=1',
-                    stacklevel=3)
-                return 1
-            else:
-                already_forked = int(os.environ.get(JOBLIB_SPAWNED_PROCESS, 0))
-                if already_forked:
-                    raise ImportError('[joblib] Attempting to do parallel computing '
-                            'without protecting your import on a system that does '
-                            'not support forking. To use parallel-computing in a '
-                            'script, you must protect your main loop using "if '
-                            "__name__ == '__main__'"
-                            '". Please see the joblib documentation on Parallel '
-                            'for more information'
-                        )
-                # Set an environment variable to avoid infinite loops
-                os.environ[JOBLIB_SPAWNED_PROCESS] = '1'
+            return 1
 
-                # Make sure to free as much memory as possible before forking
-                gc.collect()
-                poolargs = dict(
-                    max_nbytes=self._max_nbytes,
-                    mmap_mode=self._mmap_mode,
-                    temp_folder=self._temp_folder,
-                    verbose=max(0, self.verbose - 50),
-                )
-                if self._mp_context is not None:
-                    # Use Python 3.4+ multiprocessing context isolation
-                    poolargs['context'] = self._mp_context
-                self._pool = MemmapingPool(n_jobs, **poolargs)
+        self.exceptions.extend(self._pool.get_exceptions())
 
-                # We are using multiprocessing, we also want to capture
-                # KeyboardInterrupts
-                self.exceptions.extend([KeyboardInterrupt, WorkerInterrupt])
-        else:
-            raise ValueError("Unsupported backend: %s" % self.backend)
-        return n_jobs
+        return self._pool.initialize(n_jobs, self.poolargs)
+
+    def _effective_n_jobs(self):
+        if self._pool:
+            return self._pool.effective_n_jobs(self.n_jobs)
+        return 1
 
     def _terminate_pool(self):
         if self._pool is not None:
-            self._pool.close()
-            self._pool.terminate()  # terminate does a join()
-            self._pool = None
-            if self.backend == 'multiprocessing':
-                os.environ.pop(JOBLIB_SPAWNED_PROCESS, 0)
+            self._pool.terminate()
 
     def _dispatch(self, batch):
         """Queue the batch for computing, with or without multiprocessing
