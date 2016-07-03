@@ -19,6 +19,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import deprecated
 
+from sklearn.base import TransformerMixin
+from sklearn.utils.mocking import MockDataFrame
 
 #############################################################################
 # A few test classes
@@ -252,3 +254,44 @@ def test_score_sample_weight():
                                    sample_weight=sample_weight),
                          msg="Unweighted and weighted scores "
                              "are unexpectedly equal")
+
+
+def test_clone_pandas_dataframe():
+    class MockDataFrameWithEq(MockDataFrame):
+        """implemenets __eq__ operator to leverage the current test."""
+        def __eq__(self, other):
+            return self.array == other.array
+
+    class DummyEstimator(BaseEstimator, TransformerMixin):
+        """This is a dummpy class for generating numerical features
+
+        This feature extractor extracts numerical features from pandas data
+        frame.
+
+        Parameters
+        ----------
+
+        df: pandas data frame
+            The pandas data frame parameter.
+
+        Notes
+        -----
+        """
+        def __init__(self, df, toto):
+            self.df = df
+            self.toto = toto
+
+        def fit(self, X, y=None):
+            pass
+
+        def transform(self, X, y=None):
+            pass
+
+    # build and clone estimator
+    d = np.arange(10)
+    df = MockDataFrameWithEq(d)
+    e = DummyEstimator(df, toto=1)
+    cloned_e = clone(e)
+
+    # the test
+    assert_equal(e.toto, cloned_e.toto)
