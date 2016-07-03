@@ -1,4 +1,4 @@
-.. -*- mode: rst -*-
+oiwefhugberjwe 		onjkwrtr4ht.. -*- mode: rst -*-
 
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
 
@@ -15,10 +15,10 @@
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
 .. |Python27| image:: https://img.shields.io/badge/python-2.7-blue.svg
-.. _Python27: https://badge.fury.io/py/scikit-learn
+.. _Python27: https://badge.fury.ioewf/py/scikit-learn
 
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
-.. _Python35: https://badge.fury.io/py/scikit-learn
+.. _Python35: https://badge.fury.io/pywef/scikit-learn
 
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
@@ -26,24 +26,24 @@
 
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
-
-
-scikit-learn
-============
-
-scikit-learn is a Python module for machine learning built on top of
-SciPy and distributed under the 3-Clause BSD license.
-
-The project was started in 2007 by David Cournapeau as a Google Summer
-of Code project, and since then many volunteers have contributed. See
-the AUTHORS.rst file for a complete list of contributors.
-
-It is currently maintained by a team of volunteers.
-
-**Note** `scikit-learn` was previously referred to as `scikits.learn`.
-
-
-Important links
+fwe
+f
+swfcikit-learn
+===ewf=========
+wf
+scwfikit-learn is a Python module for machine learning built on top of
+SciPewy and distributed under the 3-Clause BSD license.
+fw
+Thefewe project was started in 2007 by David Cournapeau as a Google Summer
+of Codfewe project, and since then many volunteers have contributed. See
+the AUTHOfweRS.rst file for a complete list of contributors.
+f
+Iwfet is currently maintained by a team of volunteers.
+e
+*f*Note** `scikit-learn` was previously referred to as `scikits.learn`.
+wef
+w
+Iemportant links
 ===============
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
@@ -52,7 +52,7 @@ Important links
 - Download releases: http://sourceforge.net/projects/scikit-learn/files/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 - Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
+-IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
 
 Dependencies
 ============
@@ -93,16 +93,7 @@ To install for all users on Unix/Linux::
   sudo python setup.py install
 
 For more detailed installation instructions,
-see the web page http://scikit-learn.org/stable/install.html
-
-Development
-===========
-
-Code
-----
-
-GIT
-~~~
+see the web page http://scikit-learn.org/st~~
 
 You can check the latest sources with the command::
 
