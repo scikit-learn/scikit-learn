@@ -441,6 +441,10 @@ def test_max_features():
         clf.fit(iris.data, iris.target)
         assert_equal(clf.max_features_, 2)
 
+        # use values of beta that are invalid for classification
+        clf = TreeClassifier(beta=2.0)
+        assert_raises(ValueError, clf.fit, X, y)
+
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
@@ -492,6 +496,13 @@ def test_max_features():
 
         est = TreeEstimator(max_features="foobar")
         assert_raises(ValueError, est.fit, X, y)
+
+        # use values of beta that are invalid
+        clf = TreeClassifier(beta=-1.0)
+        assert_raises(ValueError, clf.fit, X, y)
+
+        clf = TreeClassifier(beta="foobar")
+        assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_error():
