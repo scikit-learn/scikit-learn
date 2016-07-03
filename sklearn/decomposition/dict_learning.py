@@ -310,6 +310,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
 
 def _init_dict_from_samples(X, n_components, random_state):
+    """Set random samples from data as initial dictionary atoms."""
+
     samples_norms_squared = np.sum(X*X, axis=1)
     nonzero_examples = list(
         np.where(samples_norms_squared > _ATOM_NORM_TOLERANCE)[0])
@@ -325,6 +327,8 @@ def _init_dict_from_samples(X, n_components, random_state):
 
 
 def _init_dict(X, n_components, code_init, dict_init, method, random_state):
+    """Initialize dictionary for learning."""
+
     if code_init is not None and dict_init is not None:
         code = np.array(code_init, order='F')
         # Don't copy V, it will happen below
@@ -387,7 +391,8 @@ def _decompose_projections(residual, g_old):
     return d, g
 
 
-def _ksvd_atom_update(X, atom_index, dictionary, sparse_codes, approximate_svd):
+def _ksvd_atom_update(X, atom_index, dictionary, sparse_codes,
+                      approximate_svd):
     """Update single dictionary atom and the corresponding codes.
 
     Use SVD decomposition to preserve sparsity.
@@ -493,6 +498,8 @@ def _update_dict_cd(dictionary, Y, code, verbose=False, return_r2=False,
 
 
 def _update_dict(dictionary, X, codes, method, verbose=0, random_state=None):
+    """Update dictionary with given data and sparse codes."""
+
     if method in ('lars', 'cd'):
         dictionary, residual = _update_dict_cd(dictionary.T, X.T, codes.T,
                                                verbose=verbose, return_r2=True,
@@ -509,12 +516,6 @@ def _update_dict(dictionary, X, codes, method, verbose=0, random_state=None):
 
     return dictionary, codes, residual
 
-
-# TODO: add math-typing for formulas
-# TODO: update DictionaryLearning doc
-
-# TODO: read-check all new docs
-# TODO: check final diff
 
 def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
                   n_nonzero_coefs=None,
@@ -609,7 +610,6 @@ def dict_learning(X, n_components, alpha=None, max_iter=100, tol=1e-8,
                 sparse solution (linear_model.orthogonal_mp)
             threshold : squashes to zero all coefficients less than
                 alpha from the projection dictionary * data.T
-
 
     init_method : {'svd', 'sample'}
         Method for the dictionary and code initialization.
@@ -1135,14 +1135,25 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     """Dictionary learning
 
-    Finds a dictionary (a set of atoms) that can best be used to represent data
-    using a sparse code.
+    Finds a dictionary D (a set of atoms) that can best be used to represent
+    data using a sparse code C: X ~= C*D.
 
-    Solves the optimization problem::
+    The actual minimization problem depends on the sparse coding method
+    (see `fit_algorithm` parameter documentation).
 
-        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
-                    (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+    If the method is based on L1-minimization, the problem to solve is::
+
+        (C^*, D^*) = argmin 0.5 || X - C D ||_2^2 + alpha * || C ||_1
+                      (C,D)
+            with || D_k ||_2 = 1 for all 0 <= k < n_components.
+
+    If the method is based on L0-minimization, the problem to solve is::
+
+        (C^*, D^*) = argmin || X - C D ||_2^2  s.t.
+                      (C,D)
+                     ||C_i||_0 <= alpha for all i <= i < n_samples
+
+            with || D_k ||_2 = 1 for all 0 <= k < n_components.
 
     Read more in the :ref:`User Guide <DictionaryLearning>`.
 
@@ -1152,7 +1163,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         number of dictionary elements to extract
 
     alpha : float,
-        sparsity controlling parameter
+        sparsity controlling parameter for L1 dictionary learning methods.
 
     max_iter : int,
         maximum number of iterations to perform
@@ -1160,12 +1171,29 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     tol : float,
         tolerance for numerical error
 
-    fit_algorithm : {'lars', 'cd'}
-        lars: uses the least angle regression method to solve the lasso problem
-        (linear_model.lars_path)
-        cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). Lars will be faster if
-        the estimated components are sparse.
+    n_nonzero_coefs: int, 0.1 * n_features by default
+        number of nonzero coefficients to target in each column of the
+        solution. This is used by L0 dictionary learning methods.
+
+    fit_algorithm : {'lars', 'cd', 'ksvd', 'exact_ksvd'}
+        Method for dictionary learning.
+        lars : update dictionary using block component wise
+            coordinate descent and the least angle regression method
+            to solve the lasso problem (linear_model.lars_path) for
+            sparse coding.
+        cd: update dictionary using block component wise
+            coordinate descent and the coordinate descent method to
+            compute the Lasso solution (linear_model.Lasso) for sparse
+            coding. Lars will be faster if the estimated components are
+            sparse.
+        ksvd : update atoms separately using approximate 1-svd
+            error matrix decomposition; in the most cases this
+            method is more preferable than the 'exact_ksvd' as it
+            gives good precision but works faster. The sparse coder
+            for learning is OMP.
+        exact_ksvd : update atoms separately using exact 1-svd
+            error matrix decomposition. The sparse coder for learning
+            is OMP.
 
         .. versionadded:: 0.17
            *cd* coordinate descent method to improve speed.
@@ -1212,6 +1240,15 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     dict_init : array of shape (n_components, n_features),
         initial values for the dictionary, for warm restart
+
+    init_method : {'svd', 'sample'}
+        Method for the dictionary and code initialization.
+            svd : perform SVD decomposition to get dictionary and codes;
+            sample : take random samples from the training data as
+                dictionary components, set codes to code_init or zero.
+        If the dict_init parameter is given, this parameter is ignored.
+        The code_init parameter without dict_init parameter is ignored
+        by 'svd' and used for code initialization by 'sample'.
 
     verbose :
         degree of verbosity of the printed output
