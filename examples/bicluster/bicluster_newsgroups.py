@@ -110,14 +110,14 @@ print("Coclustering...")
 start_time = time()
 cocluster.fit(X)
 y_cocluster = cocluster.row_labels_
-print("Done in {:.2f}s. V-measure: {:.4f}".format(
+print("Done in {0:.2f}s. V-measure: {1:.4f}".format(
     time() - start_time,
     v_measure_score(y_cocluster, y_true)))
 
 print("MiniBatchKMeans...")
 start_time = time()
 y_kmeans = kmeans.fit_predict(X)
-print("Done in {:.2f}s. V-measure: {:.4f}".format(
+print("Done in {0:.2f}s. V-measure: {1:.4f}".format(
     time() - start_time,
     v_measure_score(y_kmeans, y_true)))
 
@@ -165,7 +165,7 @@ for idx, cluster in enumerate(best_idx):
     counter = defaultdict(int)
     for i in cluster_docs:
         counter[document_names[i]] += 1
-    cat_string = ", ".join("{:.0f}% {}".format(float(c) / n_rows * 100, name)
+    cat_string = ", ".join("{0:.0f}% {1}".format(float(c) / n_rows * 100, name)
                            for name, c in most_common(counter)[:3])
 
     # words
@@ -178,7 +178,7 @@ for idx, cluster in enumerate(best_idx):
     important_words = list(feature_names[cluster_words[i]]
                            for i in word_scores.argsort()[:-11:-1])
 
-    print("bicluster {} : {} documents, {} words".format(
+    print("bicluster {0} : {1} documents, {2} words".format(
         idx, n_rows, n_cols))
-    print("categories   : {}".format(cat_string))
-    print("words        : {}\n".format(', '.join(important_words)))
+    print("categories   : {0}".format(cat_string))
+    print("words        : {0}\n".format(', '.join(important_words)))

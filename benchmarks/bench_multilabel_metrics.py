@@ -124,7 +124,7 @@ def _plot(results, metrics, formats, title, x_ticks, x_label,
     for i, metric in enumerate(metrics):
         for j, format in enumerate(formats):
             ax.plot(x_ticks, results[i, j].flat,
-                    label='{}, {}'.format(metric, format),
+                    label='{0}, {1}'.format(metric, format),
                     marker=format_markers[j],
                     color=metric_colors[i % len(metric_colors)])
     ax.set_xlabel(x_label)

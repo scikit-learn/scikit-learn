@@ -63,6 +63,6 @@ for i in range(len(degrees)):
     plt.xlim((0, 1))
     plt.ylim((-2, 2))
     plt.legend(loc="best")
-    plt.title("Degree {}\nMSE = {:.2e}(+/- {:.2e})".format(
+    plt.title("Degree {0}\nMSE = {1:.2e}(+/- {2:.2e})".format(
         degrees[i], -scores.mean(), scores.std()))
 plt.show()

@@ -171,7 +171,7 @@ if opts.n_components:
     print("done in %fs" % (time() - t0))
 
     explained_variance = svd.explained_variance_ratio_.sum()
-    print("Explained variance of the SVD step: {}%".format(
+    print("Explained variance of the SVD step: {0}%".format(
         int(explained_variance * 100)))
 
     print()
