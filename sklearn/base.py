@@ -292,6 +292,11 @@ class BaseEstimator(object):
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
 
+    @classmethod
+    def check_estimator(cls):
+        from .utils.estimator_checks import check_estimator
+        check_estimator(cls)
+
 
 ###############################################################################
 class ClassifierMixin(object):
