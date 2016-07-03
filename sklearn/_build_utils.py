@@ -17,6 +17,9 @@ def get_blas_info():
                 # how do we do that now?
                 return True
             if x[0] == "ATLAS_INFO":
+                if "None" in x[1] and 'openblas' in blas_info.get('libraries', []):
+                    # allow compilation with OpenBLAS
+                    return False
                 if "None" in x[1]:
                     # this one turned up on FreeBSD
                     return True
