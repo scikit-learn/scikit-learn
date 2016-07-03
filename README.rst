@@ -52,6 +52,7 @@ Important links
 - Download releases: http://sourceforge.net/projects/scikit-learn/files/
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 - Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- Gitter chat room: https://gitter.im/scikit-learn/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
 
 Dependencies
