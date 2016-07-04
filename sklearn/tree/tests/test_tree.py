@@ -441,10 +441,6 @@ def test_max_features():
         clf.fit(iris.data, iris.target)
         assert_equal(clf.max_features_, 2)
 
-        # use values of beta that are invalid for classification
-        clf = TreeClassifier(beta=2.0)
-        assert_raises(ValueError, clf.fit, X, y)
-
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
@@ -497,13 +493,6 @@ def test_max_features():
         est = TreeEstimator(max_features="foobar")
         assert_raises(ValueError, est.fit, X, y)
 
-        # use values of beta that are invalid
-        clf = TreeClassifier(beta=-1.0)
-        assert_raises(ValueError, clf.fit, X, y)
-
-        clf = TreeClassifier(beta="foobar")
-        assert_raises(ValueError, clf.fit, X, y)
-
 
 def test_error():
     # Test that it gives proper exception on deficient input.
@@ -515,6 +504,10 @@ def test_error():
         est.fit(X, y)
         X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         assert_raises(ValueError, est.predict_proba, X2)
+
+        # invalid type for beta parameter in classification
+        est = TreeEstimator(beta=2.0)
+        assert_raises(ValueError, est.fit, X, y)
 
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
@@ -535,6 +528,8 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(beta=-1.0).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(beta="foobar").fit, X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
