@@ -683,16 +683,14 @@ def test_min_weight_fraction_leaf():
 
 
 def test_min_impurity_split():
-    # Test if min_impurity_split creates leaves with impurity [0, min_impurity_split) when
-    # min_samples_leaf = 1 and min_samples_split = 2.
+    # test if min_impurity_split creates leaves with impurity
+    # [0, min_impurity_split) when min_samples_leaf = 1 and
+    # min_samples_split = 2.
     X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    # we set max leaf nodes to a number greater than the total nodes
-    # possible, thus ensuring that the leaves generated have impurity
-    # of 0 when there is no min_impurity_split stopping used.
     for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
         TreeEstimator = ALL_TREES[name]
         min_impurity_split = .5
