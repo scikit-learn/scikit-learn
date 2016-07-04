@@ -505,10 +505,6 @@ def test_error():
         X2 = [[-2, -1, 1]]  # wrong feature shape for sample
         assert_raises(ValueError, est.predict_proba, X2)
 
-        # invalid type for beta parameter in classification
-        est = TreeEstimator(beta=2.0)
-        assert_raises(ValueError, est.fit, X, y)
-
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
@@ -528,8 +524,7 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(beta=-1.0).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(beta="foobar").fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit, X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -687,8 +682,8 @@ def test_min_weight_fraction_leaf():
         yield check_min_weight_fraction_leaf, name, "multilabel", True
 
 
-def test_beta():
-    # Test if beta creates leaves with impurity [0, beta) when
+def test_min_impurity_split():
+    # Test if min_impurity_split creates leaves with impurity [0, min_impurity_split) when
     # min_samples_leaf = 1 and min_samples_split = 2.
     X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
     y = iris.target
@@ -697,30 +692,30 @@ def test_beta():
     # by setting max_leaf_nodes
     # we set max leaf nodes to a number greater than the total nodes
     # possible, thus ensuring that the leaves generated have impurity
-    # of 0 when there is no beta stopping used.
+    # of 0 when there is no min_impurity_split stopping used.
     for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
         TreeEstimator = ALL_TREES[name]
-        beta = .5
+        min_impurity_split = .5
 
-        # verify leaf nodes without beta have impurity 0
+        # verify leaf nodes without min_impurity_split have impurity 0
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_equal(est.beta, 0.,
-                     "Failed, beta = {0} != 0".format(
-                         est.beta))
+        assert_equal(est.min_impurity_split, 0.,
+                     "Failed, min_impurity_split = {0} != 0".format(
+                         est.min_impurity_split))
         est.fit(X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
                 est.tree_.children_right[node] == TREE_LEAF):
                 assert_equal(est.tree_.impurity[node], 0.,
                              "Failed with {0} "
-                             "beta={1}".format(
+                             "min_impurity_split={1}".format(
                                  est.tree_.impurity[node],
-                                 est.beta))
+                                 est.min_impurity_split))
 
-        # verify leaf nodes have impurity [0,beta) when using beta
+        # verify leaf nodes have impurity [0,min_impurity_split) when using min_impurity_split
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                            beta=beta,
+                            min_impurity_split=min_impurity_split,
                             random_state=0)
         est.fit(X, y)
         for node in range(est.tree_.node_count):
@@ -728,14 +723,14 @@ def test_beta():
                 est.tree_.children_right[node] == TREE_LEAF):
                 assert_greater_equal(est.tree_.impurity[node], 0,
                                      "Failed with {0} "
-                                     "beta={1}".format(
+                                     "min_impurity_split={1}".format(
                                          est.tree_.impurity[node],
-                                         est.beta))
-                assert_less(est.tree_.impurity[node], beta,
+                                         est.min_impurity_split))
+                assert_less(est.tree_.impurity[node], min_impurity_split,
                             "Failed with {0} "
-                            "beta={1}".format(
+                            "min_impurity_split={1}".format(
                                 est.tree_.impurity[node],
-                                est.beta))
+                                est.min_impurity_split))
 
 
 def test_pickle():

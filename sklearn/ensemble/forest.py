@@ -805,9 +805,9 @@ class RandomForestClassifier(ForestClassifier):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    beta : float, optional (default=0.)
-        Threshold for early stopping in tree growth. If the impurity
-        of a node is below the threshold, the node is a leaf.
+    min_impurity_split : float, optional (default=0.)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -903,7 +903,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -916,7 +916,7 @@ class RandomForestClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "beta",
+                              "max_features", "max_leaf_nodes", "min_impurity_split",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -933,7 +933,7 @@ class RandomForestClassifier(ForestClassifier):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-        self.beta = beta
+        self.min_impurity_split = min_impurity_split
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1007,9 +1007,9 @@ class RandomForestRegressor(ForestRegressor):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    beta : float, optional (default=0.)
-        Threshold for early stopping in tree growth. If the impurity
-        of a node is below the threshold, the node is a leaf.
+    min_impurity_split : float, optional (default=0.)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
@@ -1074,7 +1074,7 @@ class RandomForestRegressor(ForestRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -1086,7 +1086,7 @@ class RandomForestRegressor(ForestRegressor):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "beta",
+                              "max_features", "max_leaf_nodes", "min_impurity_split",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1102,7 +1102,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-        self.beta = beta
+        self.min_impurity_split = min_impurity_split
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1172,9 +1172,9 @@ class ExtraTreesClassifier(ForestClassifier):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    beta : float, optional (default=0.)
-        Threshold for early stopping in tree growth. If the impurity
-        of a node is below the threshold, the node is a leaf.
+    min_impurity_split : float, optional (default=0.)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
@@ -1271,7 +1271,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1284,7 +1284,7 @@ class ExtraTreesClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "beta",
+                              "max_features", "max_leaf_nodes", "min_impurity_split",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1301,7 +1301,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-        self.beta = beta
+        self.min_impurity_split = min_impurity_split
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1373,9 +1373,9 @@ class ExtraTreesRegressor(ForestRegressor):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    beta : float, optional (default=0.)
-        Threshold for early stopping in tree growth. If the impurity
-        of a node is below the threshold, the node is a leaf.
+    min_impurity_split : float, optional (default=0.)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
@@ -1441,7 +1441,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1453,7 +1453,7 @@ class ExtraTreesRegressor(ForestRegressor):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "beta",
+                              "max_features", "max_leaf_nodes", "min_impurity_split",
                               "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1469,7 +1469,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
-        self.beta = beta
+        self.min_impurity_split = min_impurity_split
 
 class RandomTreesEmbedding(BaseForest):
     """An ensemble of totally random trees.
@@ -1523,9 +1523,9 @@ class RandomTreesEmbedding(BaseForest):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
-    beta : float, optional (default=0.)
-        Threshold for early stopping in tree growth. If the impurity
-        of a node is below the threshold, the node is a leaf.
+    min_impurity_split : float, optional (default=0.)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
 
     sparse_output : bool, optional (default=True)
         Whether or not to return a sparse CSR matrix, as default behavior,
@@ -1571,7 +1571,7 @@ class RandomTreesEmbedding(BaseForest):
                  min_samples_leaf=1,
                  min_weight_fraction_leaf=0.,
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  sparse_output=True,
                  n_jobs=1,
                  random_state=None,
@@ -1582,7 +1582,7 @@ class RandomTreesEmbedding(BaseForest):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes", "beta",
+                              "max_features", "max_leaf_nodes", "min_impurity_split",
                               "random_state"),
             bootstrap=False,
             oob_score=False,
@@ -1598,7 +1598,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
-        self.beta = beta
+        self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
 
     def _set_oob_score(self, X, y):

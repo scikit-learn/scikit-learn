@@ -90,7 +90,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_features,
                  max_leaf_nodes,
                  random_state,
-                 beta,
+                 min_impurity_split,
                  class_weight=None,
                  presort=False):
         self.criterion = criterion
@@ -102,7 +102,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
-        self.beta = beta
+        self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
 
@@ -154,7 +154,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
 
         random_state = check_random_state(self.random_state)
-        beta = self.beta
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
@@ -308,16 +307,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             min_weight_leaf = 0.
 
-        if not isinstance(beta, float):
-            raise ValueError("beta must be a float")
-        if is_classification:
-            if not 0. <= beta <= 1.:
-                raise ValueError("beta must be in range [0., 1.] "
-                                 "in classification")
-        else:
-            if not 0. <= beta:
-                raise ValueError("beta must be greater than or equal "
-                                 "to 0. in regression")
+        if not 0. <= self.min_impurity_split:
+            raise ValueError("min_impurity_split must be greater than or equal "
+                             "to 0")
 
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
@@ -374,13 +366,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
                                             min_samples_leaf,
                                             min_weight_leaf,
-                                            max_depth, beta)
+                                            max_depth, self.min_impurity_split)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
                                            min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
-                                           max_leaf_nodes, beta)
+                                           max_leaf_nodes, self.min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
@@ -623,9 +615,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    beta : float, optional (default=0.)
-        Threshold for early stopping in tree growth. If the impurity
-        of a node is below the threshold, the node is a leaf.
+    min_impurity_split : float, optional (default=0.)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -704,7 +696,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  class_weight=None,
                  presort=False):
         super(DecisionTreeClassifier, self).__init__(
@@ -718,7 +710,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
             random_state=random_state,
-            beta=beta,
+            min_impurity_split=min_impurity_split,
             presort=presort)
 
     def predict_proba(self, X, check_input=True):
@@ -869,7 +861,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    beta : float, optional (default=0.)
+    min_impurity_split : float, optional (default=0.)
         Threshold for early stopping in tree growth. If the impurity
         of a node is below the threshold, the node is a leaf.
 
@@ -942,7 +934,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  presort=False):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
@@ -954,7 +946,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state,
-            beta=beta,
+            min_impurity_split=min_impurity_split,
             presort=presort)
 
 
@@ -992,7 +984,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
@@ -1004,7 +996,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
-            beta=beta,
+            min_impurity_split=min_impurity_split,
             random_state=random_state)
 
 
@@ -1041,7 +1033,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 beta=0.,
+                 min_impurity_split=0.,
                  max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
@@ -1052,5 +1044,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            beta=beta,
+            min_impurity_split=min_impurity_split,
             random_state=random_state)
