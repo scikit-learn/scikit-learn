@@ -551,6 +551,10 @@ def test_confusion_matrix_multiclass_subset_labels():
     assert_array_equal(cm, [[18, 2],
                             [24, 3]])
 
+    bad_label = np.max(y_true) + 1
+    assert_raises(ValueError, confusion_matrix, y_true, y_pred,
+                  labels=bad_label)
+
 
 def test_classification_report_multiclass():
     # Test performance report
