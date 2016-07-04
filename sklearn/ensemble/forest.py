@@ -1471,6 +1471,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_split = min_impurity_split
 
+
 class RandomTreesEmbedding(BaseForest):
     """An ensemble of totally random trees.
 

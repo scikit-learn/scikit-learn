@@ -35,7 +35,7 @@ ctypedef np.npy_intp SIZE_t
 
 # constant to mark tree leafs
 cdef int LEAF = -1
-
+# trivial comment to force recompilation
 cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 Node* root_node,
                                                 double *value,
