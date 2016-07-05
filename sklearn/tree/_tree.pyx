@@ -68,16 +68,11 @@ cdef SIZE_t INITIAL_STACK_SIZE = 10
 cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 
 # Repeat struct definition for numpy
-SPLITVALUE_DTYPE = np.dtype({
-    'names': ['threshold', 'cat_split'],
-    'formats': [np.float64, np.uint64],
-    'offsets': [0, 0]
-})
 NODE_DTYPE = np.dtype({
-    'names': ['left_child', 'right_child', 'feature', 'split_value',
+    'names': ['left_child', 'right_child', 'feature', 'threshold',
               'impurity', 'n_node_samples', 'weighted_n_node_samples',
               '_bit_cache'],
-    'formats': [np.intp, np.intp, np.intp, SPLITVALUE_DTYPE, np.float64,
+    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64,
                 np.intp, np.float64, np.intp],
     'offsets': [
         <Py_ssize_t> &(<Node*> NULL).left_child,
@@ -589,11 +584,7 @@ cdef class Tree:
 
     property threshold:
         def __get__(self):
-            return self._get_node_ndarray()['split_value']['threshold'][:self.node_count]
-
-    property split_value:
-        def __get__(self):
-            return self._get_node_ndarray()['split_value'][:self.node_count]
+            return self._get_node_ndarray()['threshold'][:self.node_count]
 
     property impurity:
         def __get__(self):
