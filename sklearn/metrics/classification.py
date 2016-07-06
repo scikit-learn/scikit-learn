@@ -240,7 +240,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
-        if np.intersect1d(labels, y_true).size == 0:
+        if np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
