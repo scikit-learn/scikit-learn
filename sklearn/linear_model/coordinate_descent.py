@@ -372,7 +372,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
         if X.dtype is np.float32:
