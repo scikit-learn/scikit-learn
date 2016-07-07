@@ -185,6 +185,7 @@ def test_kernel_stationary():
 
 def test_kernel_clone():
     """ Test that sklearn's clone works correctly on kernels. """
+    bounds = (1e-5, 1e5)
     for kernel in kernels:
         kernel_cloned = clone(kernel)
 
@@ -213,6 +214,26 @@ def test_kernel_clone():
             if not isinstance(attr_value, Hashable):
                 # modifiable attributes must not be identical
                 assert_not_equal(id(attr_value), id(attr_value_cloned))
+
+        # This test is to verify that using set_params does not
+        # break clone on kernels.
+        # This used to break because in kernels such as the RBF, non-trivial
+        # logic that modified the length scale used to be in the constructor
+        # See https://github.com/scikit-learn/scikit-learn/issues/6961
+        # for more details.
+        params = kernel.get_params()
+        if 'length_scale' in params:
+            length_scale = params['length_scale']
+            if np.iterable(length_scale):
+                params['length_scale'] = length_scale[0]
+                params['length_scale_bounds'] = bounds
+            else:
+                params['length_scale'] = [length_scale] * 2
+                params['length_scale_bounds'] = bounds * 2
+        kernel_cloned.set_params(**params)
+        kernel_cloned_clone = clone(kernel_cloned)
+        assert_equal(kernel_cloned_clone, kernel_cloned)
+        assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
 
 
 def test_matern_kernel():
