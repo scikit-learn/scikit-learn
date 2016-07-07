@@ -1105,3 +1105,91 @@ class RandomizedSearchCV(BaseSearchCV):
                                           self.n_iter,
                                           random_state=self.random_state)
         return self._fit(X, y, labels, sampled_params)
+
+
+class MultiModelSearch():
+    """Run Hyperparameter search across multiple estimator classes.
+
+    Parameters
+    ----------
+    estimators : dict {est_name: est_instance}
+         Estimators you want to run the search on.
+    param_set : dict {est_name: param_dict}
+        Parameter space to pass to the search strategy
+    search_cv: string, optional (default='grid')
+        Search strategy to use. Currently supports GridSearchCV and
+        RandomizedSearchCV.
+    n_iter: int, optional (default = 10)
+        If using RandomizedSearchCV, this will be passed as number of
+        iterations.
+    **kwargs:
+        Other arguments to pass to the gridsearch (e.g. n_jobs).
+    """
+    def __init__(self, estimators, param_set, search_cv='grid',
+                 n_iter=10, **kwargs):
+        self.estimators = estimators
+        self.param_set = param_set
+        self.search_cv = search_cv
+        self.search_args = kwargs
+        self.strats = ['grid', 'random']
+        self.n_iter = n_iter
+        self._scores = {}
+        self._estimators = {}
+        self._params = {}
+        self._keys = self.estimators.keys()
+        self._results = {}
+
+    def fit(self, X, y):
+        if self.search_cv not in self.strats:
+            raise KeyError(
+                'Selection Strategy {} no recognized. Possible '
+                'values are {}'.format(
+                    self.search_cv, ' ,'.join(self.strats))
+            )
+        for key in self._keys:
+            est = self.estimators[key]
+            params = self.param_set[key]
+            selector = None
+            if self.search_cv == 'grid':
+                selector = GridSearchCV(est, params, **self.search_args)
+            elif self.search_cv == 'random':
+                selector = RandomizedSearchCV(
+                    est, params, n_iter=self.n_iter, **self.search_args)
+            selector.fit(X, y)
+            self._scores[key] = selector.best_score_
+            self._estimators[key] = selector.best_estimator_
+            self._params[key] = selector.best_params_
+            self._results[key] = selector.results_
+        return self
+
+    @property
+    def best_key_(self):
+        return max(self._scores.items(), key=operator.itemgetter(1))[0]
+
+    @property
+    def best_estimator_(self):
+        return self._estimators[self.best_key_]
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict(self, X):
+        return self.best_estimator_.predict(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_proba(self, X):
+        return self.best_estimator_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_log_proba(self, X):
+        return self.best_estimator_.predict_log_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def decision_function(self, X):
+        return self.best_estimator_.decision_function(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def transform(self, X):
+        return self.best_estimator_.transform(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def inverse_transform(self, X):
+        return self.best_estimator_.inverse_transform(X)
