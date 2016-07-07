@@ -139,7 +139,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
@@ -390,7 +390,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.cross_validation import cross_val_predict
+    >>> from sklearn.model_selection import cross_val_predict
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
