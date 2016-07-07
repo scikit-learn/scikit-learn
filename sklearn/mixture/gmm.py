@@ -104,6 +104,12 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
         (n_features,) if `1`
         (n_features, n_samples) otherwise
     """
+    _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None)
+
+
+def _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None):
     rng = check_random_state(random_state)
     n_dim = len(mean)
     rand = rng.randn(n_dim, n_samples)
@@ -425,7 +431,7 @@ class _GMMBase(BaseEstimator):
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
-                X[comp_in_X] = sample_gaussian(
+                X[comp_in_X] = _sample_gaussian(
                     self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
