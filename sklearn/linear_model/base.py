@@ -557,8 +557,8 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy)
     if hasattr(precompute, '__array__') and (
-            fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
-            or normalize and not np.allclose(X_scale, np.ones(n_features))):
+            fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
+            normalize and not np.allclose(X_scale, np.ones(n_features))):
         warnings.warn("Gram matrix was provided but X was centered"
                       " to fit intercept, "
                       "or X was normalized : recomputing Gram matrix.",
