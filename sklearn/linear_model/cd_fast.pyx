@@ -315,14 +315,14 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sparse_enet_coordinate_descent(double[:] w,
-                            double alpha, double beta,
-                            np.ndarray[double, ndim=1, mode='c'] X_data,
+def sparse_enet_coordinate_descent(floating [:] w,
+                            floating alpha, floating beta,
+                            np.ndarray[floating, ndim=1, mode='c'] X_data,
                             np.ndarray[int, ndim=1, mode='c'] X_indices,
                             np.ndarray[int, ndim=1, mode='c'] X_indptr,
-                            np.ndarray[double, ndim=1] y,
-                            double[:] X_mean, int max_iter,
-                            double tol, object rng, bint random=0,
+                            np.ndarray[floating, ndim=1] y,
+                            floating[:] X_mean, int max_iter,
+                            floating tol, object rng, bint random=0,
                             bint positive=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -338,31 +338,42 @@ def sparse_enet_coordinate_descent(double[:] w,
 
     # compute norms of the columns of X
     cdef unsigned int ii
-    cdef double[:] norm_cols_X = np.zeros(n_features, np.float64)
+    cdef floating[:] norm_cols_X
 
     cdef unsigned int startptr = X_indptr[0]
     cdef unsigned int endptr
 
     # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
+    cdef unsigned int n_tasks
 
     # initial value of the residuals
-    cdef double[:] R = y.copy()
+    cdef floating[:] R = y.copy()
 
-    cdef double[:] X_T_R = np.zeros(n_features)
-    cdef double[:] XtA = np.zeros(n_features)
+    cdef floating[:] X_T_R
+    cdef floating[:] XtA
 
-    cdef double tmp
-    cdef double w_ii
-    cdef double d_w_max
-    cdef double w_max
-    cdef double d_w_ii
-    cdef double X_mean_ii
-    cdef double R_sum = 0.0
-    cdef double normalize_sum
-    cdef double gap = tol + 1.0
-    cdef double d_w_tol = tol
-    cdef double dual_norm_XtA
+    if floating is float:
+        norm_cols_X = np.zeros(n_features, dtype=np.float32)
+        n_tasks = y.strides[0] / sizeof(float)
+        X_T_R = np.zeros(n_features, dtype=np.float32)
+        XtA = np.zeros(n_features, dtype=np.float32)
+    else:
+        norm_cols_X = np.zeros(n_features, np.float64)
+        n_tasks = y.strides[0] / sizeof(DOUBLE)
+        X_T_R = np.zeros(n_features)
+        XtA = np.zeros(n_features)
+
+    cdef floating tmp
+    cdef floating w_ii
+    cdef floating d_w_max
+    cdef floating w_max
+    cdef floating d_w_ii
+    cdef floating X_mean_ii
+    cdef floating R_sum = 0.0
+    cdef floating normalize_sum
+    cdef floating gap = tol + 1.0
+    cdef floating d_w_tol = tol
+    cdef floating dual_norm_XtA
     cdef unsigned int jj
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
