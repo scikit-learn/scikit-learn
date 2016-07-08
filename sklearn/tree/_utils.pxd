@@ -122,9 +122,6 @@ cdef class MinMaxHeap:
     cdef MinMaxHeapRecord* heap_
     cdef bint mode
 
-    cdef void heapify_up(self, MinMaxHeapRecord* heap, SIZE_t pos) nogil
-    cdef void heapify_down(self, MinMaxHeapRecord* heap, SIZE_t pos,
-                           SIZE_t heap_length) nogil
     cdef bint is_empty(self) nogil
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data) nogil

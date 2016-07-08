@@ -309,8 +309,10 @@ cdef class PriorityHeap:
 cdef class MinMaxHeap:
     """A priority queue implemented as a binary heap.
 
-    The heap invariant is that the impurity improvement of the parent record
-    is larger then the impurity improvement of the children.
+    The heap invariant is that the impurity improvement of the parent record is
+    larger then the impurity improvement of the children. The MinHeap is
+    essentially an array sorted in ascending order, and a MaxHeap is an array
+    sorted in descending order.
 
     Attributes
     ----------
@@ -349,51 +351,6 @@ cdef class MinMaxHeap:
     def __dealloc__(self):
         free(self.heap_)
 
-    cdef void heapify_up(self, MinMaxHeapRecord* heap, SIZE_t pos) nogil:
-        """Restore heap invariant from
-           ``pos`` upwards. """
-        if pos == 0:
-            return
-
-        cdef SIZE_t parent_pos = (pos - 1) / 2
-
-        if self.mode == 1:
-            if heap[parent_pos].data < heap[pos].data:
-                heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
-                self.heapify_up(heap, parent_pos)
-        else:
-            if heap[parent_pos].data > heap[pos].data:
-                heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
-                self.heapify_up(heap, parent_pos)
-
-    cdef void heapify_down(self, MinMaxHeapRecord* heap, SIZE_t pos,
-                           SIZE_t heap_length) nogil:
-        """Restore heap invariant from
-           ``pos`` downwards. """
-        cdef SIZE_t left_pos = 2 * (pos + 1) - 1
-        cdef SIZE_t right_pos = 2 * (pos + 1)
-        cdef SIZE_t candidate = pos
-
-        if self.mode == 1:
-            if (left_pos < heap_length and
-                heap[left_pos].data > heap[candidate].data):
-                candidate = left_pos
-
-            if (right_pos < heap_length and
-                heap[right_pos].data > heap[candidate].data):
-                candidate = right_pos
-        else:
-            if (left_pos < heap_length and
-                heap[left_pos].data < heap[candidate].data):
-                candidate = left_pos
-
-            if (right_pos < heap_length and
-                heap[right_pos].data < heap[candidate].data):
-                candidate = right_pos
-        if candidate != pos:
-            heap[pos], heap[candidate] = heap[candidate], heap[pos]
-            self.heapify_down(heap, candidate, heap_length)
-
     cdef bint is_empty(self) nogil:
         return self.heap_ptr <= 0
 
@@ -406,6 +363,7 @@ cdef class MinMaxHeap:
         Returns 0 if successful; -1 on out of memory error.
         """
         cdef SIZE_t heap_ptr = self.heap_ptr
+        cdef SIZE_t i
         cdef MinMaxHeapRecord* heap = NULL
 
         # Resize if capacity not sufficient
@@ -423,8 +381,19 @@ cdef class MinMaxHeap:
         heap = self.heap_
         heap[heap_ptr].data = data
 
-        # Heapify up
-        self.heapify_up(heap, heap_ptr)
+        # bubble last element up according to mode
+        # max heap, sorted in descending order
+        i = heap_ptr
+        if self.mode == 1:
+            while(i != 0 and heap[i].data > heap[i-1].data):
+                heap[i], heap[i-1] = heap[i-1], heap[i]
+                i = i-1
+
+        # min heap, sorted in ascending order
+        else:
+            while(i != 0 and heap[i].data < heap[i-1].data):
+                heap[i], heap[i-1] = heap[i-1], heap[i]
+                i = i-1
 
         # Increase element count
         self.heap_ptr = heap_ptr + 1
@@ -441,29 +410,25 @@ cdef class MinMaxHeap:
             return -1
 
         # find element to remove
-        for i in range(0, heap_ptr):
+        for i in range(heap_ptr):
             if heap[i].data == value:
                 idx_to_remove = i
                 break
         # should we throw an error if the element isn't found?
         # it shouldn't happen, but better to fail noisily...?
 
-        # put the last element where we want to remove
-        heap[i], heap[heap_ptr - 1] = heap[heap_ptr - 1], heap[i]
-
-        # Restore heap invariant
-        if heap_ptr > 1:
-            self.heapify_down(heap, 0, heap_ptr - 1)
+        # move after the removed element over by one
+        for i in range(idx_to_remove, heap_ptr-1):
+            heap[i] = heap[i+1]
 
         self.heap_ptr = heap_ptr - 1
-
         return 0
-
 
     cdef int pop(self, DOUBLE_t* res) nogil:
         """Remove top element from heap."""
         cdef SIZE_t heap_ptr = self.heap_ptr
         cdef MinMaxHeapRecord* heap = self.heap_
+        cdef SIZE_t i
 
         if heap_ptr <= 0:
             return -1
@@ -471,15 +436,11 @@ cdef class MinMaxHeap:
         # Take first element
         res[0] = heap[0].data
 
-        # Put last element to the front
-        heap[0], heap[heap_ptr - 1] = heap[heap_ptr - 1], heap[0]
-
-        # Restore heap invariant
-        if heap_ptr > 1:
-            self.heapify_down(heap, 0, heap_ptr - 1)
+        # move after the removed element over by one
+        for i in range(0, heap_ptr-1):
+            heap[i] = heap[i+1]
 
         self.heap_ptr = heap_ptr - 1
-
         return 0
 
     cdef int peek(self, DOUBLE_t* res) nogil:
