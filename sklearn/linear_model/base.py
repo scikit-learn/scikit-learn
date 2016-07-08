@@ -273,6 +273,10 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         """Set the intercept_
         """
         if self.fit_intercept:
+            dtype = self.coef_.dtype
+            X_offset = np.asarray(X_offset, dtype)
+            y_offset = np.asarray(y_offset, dtype)
+            X_scale = np.asarray(X_scale, dtype)
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
