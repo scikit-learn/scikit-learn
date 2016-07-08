@@ -405,8 +405,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
             X_sparse_scaling = params['X_offset'] / params['X_scale']
+            X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
-            X_sparse_scaling = np.zeros(n_features)
+            X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
     # X should be normalized and fit already if function is called
     # from ElasticNet.fit
@@ -684,22 +685,13 @@ class ElasticNet(LinearModel, RegressorMixin):
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
-            if sparse.issparse(X):
-                y = np.asarray(y, dtype=np.float64)
-                X, y = check_X_y(X, y, accept_sparse='csc',
-                                 order='F', dtype=np.float64,
-                                 copy=self.copy_X and self.fit_intercept,
-                                 multi_output=True, y_numeric=True)
-                y = check_array(y, order='F', copy=False, dtype=np.float64,
-                                ensure_2d=False)
-            else:
-                y = np.asarray(y)
-                X, y = check_X_y(X, y, accept_sparse='csc',
-                                 order='F', dtype=[np.float64, np.float32],
-                                 copy=self.copy_X and self.fit_intercept,
-                                 multi_output=True, y_numeric=True)
-                y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
-                                ensure_2d=False)
+            y = np.asarray(y)
+            X, y = check_X_y(X, y, accept_sparse='csc',
+                                order='F', dtype=[np.float64, np.float32],
+                                copy=self.copy_X and self.fit_intercept,
+                                multi_output=True, y_numeric=True)
+            y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
+                            ensure_2d=False)
 
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
