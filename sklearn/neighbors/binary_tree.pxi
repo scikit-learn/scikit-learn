@@ -293,7 +293,6 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
-    >>> from sklearn.neighbors import KDTree
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
