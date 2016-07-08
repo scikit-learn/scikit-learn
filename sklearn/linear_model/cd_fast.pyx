@@ -352,16 +352,24 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef floating[:] X_T_R
     cdef floating[:] XtA
 
+    # fused types version of BLAS functions
+    cdef DOT dot
+    cdef ASUM asum
+
     if floating is float:
         norm_cols_X = np.zeros(n_features, dtype=np.float32)
         n_tasks = y.strides[0] / sizeof(float)
         X_T_R = np.zeros(n_features, dtype=np.float32)
         XtA = np.zeros(n_features, dtype=np.float32)
+        dot = sdot
+        asum = sasum
     else:
         norm_cols_X = np.zeros(n_features, np.float64)
         n_tasks = y.strides[0] / sizeof(DOUBLE)
         X_T_R = np.zeros(n_features)
         XtA = np.zeros(n_features)
+        dot = ddot
+        asum = dasum
 
     cdef floating tmp
     cdef floating w_ii
@@ -370,6 +378,10 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef floating d_w_ii
     cdef floating X_mean_ii
     cdef floating R_sum = 0.0
+    cdef floating R_norm2
+    cdef floating w_norm2
+    cdef floating A_norm2
+    cdef floating l1_norm
     cdef floating normalize_sum
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
@@ -406,7 +418,7 @@ def sparse_enet_coordinate_descent(floating [:] w,
             startptr = endptr
 
         # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
+        tol *= dot(n_samples, <floating*>&y[0], 1, <floating*>&y[0], 1)
 
         for n_iter in range(max_iter):
 
@@ -494,10 +506,10 @@ def sparse_enet_coordinate_descent(floating [:] w,
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = ddot(n_samples, <DOUBLE*>&R[0], 1, <DOUBLE*>&R[0], 1)
+                R_norm2 = dot(n_samples, <floating*>&R[0], 1, <floating*>&R[0], 1)
 
                 # w_norm2 = np.dot(w, w)
-                w_norm2 = ddot(n_features, <DOUBLE*>&w[0], 1, <DOUBLE*>&w[0], 1)
+                w_norm2 = dot(n_features, <floating*>&w[0], 1, <floating*>&w[0], 1)
                 if (dual_norm_XtA > alpha):
                     const = alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * const**2
@@ -506,13 +518,13 @@ def sparse_enet_coordinate_descent(floating [:] w,
                     const = 1.0
                     gap = R_norm2
 
-                l1_norm = dasum(n_features, <DOUBLE*>&w[0], 1)
+                l1_norm = asum(n_features, <floating*>&w[0], 1)
 
                 # The expression inside ddot is equivalent to np.dot(R.T, y)
-                gap += (alpha * l1_norm - const * ddot(
+                gap += (alpha * l1_norm - const * dot(
                             n_samples,
-                            <DOUBLE*>&R[0], 1,
-                            <DOUBLE*>&y[0], n_tasks
+                            <floating*>&R[0], 1,
+                            <floating*>&y[0], n_tasks
                             )
                         + 0.5 * beta * (1 + const ** 2) * w_norm2)
 
