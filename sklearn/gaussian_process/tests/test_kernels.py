@@ -189,7 +189,8 @@ def test_kernel_clone():
     for kernel in kernels:
         kernel_cloned = clone(kernel)
 
-        # XXX: Should thie be fixed?
+        # XXX: Should this be fixed?
+        # This differs from the sklearn's estimators equality check.
         assert_equal(kernel, kernel_cloned)
         assert_not_equal(id(kernel), id(kernel_cloned))
 
