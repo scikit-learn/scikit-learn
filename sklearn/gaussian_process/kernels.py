@@ -92,6 +92,13 @@ class Hyperparameter(namedtuple('Hyperparameter',
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
+    def __eq__(self, other):
+        return (self.name == other.name and
+                self.value_type == other.value_type and
+                np.all(self.bounds == other.bounds) and
+                self.n_elements == other.n_elements and
+                self.fixed == other.fixed)
+
 
 class Kernel(six.with_metaclass(ABCMeta)):
     """Base class for all kernels."""

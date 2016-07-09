@@ -189,31 +189,19 @@ def test_kernel_clone():
     for kernel in kernels:
         kernel_cloned = clone(kernel)
 
+        # XXX: Should thie be fixed?
         assert_equal(kernel, kernel_cloned)
         assert_not_equal(id(kernel), id(kernel_cloned))
-        for attr in kernel.__dict__.keys():
-            attr_value = getattr(kernel, attr)
-            attr_value_cloned = getattr(kernel_cloned, attr)
+
+        # Check that all constructor parameters are equal.
+        assert_equal(kernel.get_params(), kernel_cloned.get_params())
+
+        for attr in dir(kernel):
+
             if attr.startswith("hyperparameter_"):
-                assert_equal(attr_value.name, attr_value_cloned.name)
-                assert_equal(attr_value.value_type,
-                             attr_value_cloned.value_type)
-                assert_array_equal(attr_value.bounds,
-                                   attr_value_cloned.bounds)
-                assert_equal(attr_value.n_elements,
-                             attr_value_cloned.n_elements)
-            elif np.iterable(attr_value):
-                for i in range(len(attr_value)):
-                    if np.iterable(attr_value[i]):
-                        assert_array_equal(attr_value[i],
-                                           attr_value_cloned[i])
-                    else:
-                        assert_equal(attr_value[i], attr_value_cloned[i])
-            else:
+                attr_value = getattr(kernel, attr)
+                attr_value_cloned = getattr(kernel_cloned, attr)
                 assert_equal(attr_value, attr_value_cloned)
-            if not isinstance(attr_value, Hashable):
-                # modifiable attributes must not be identical
-                assert_not_equal(id(attr_value), id(attr_value_cloned))
 
         # This test is to verify that using set_params does not
         # break clone on kernels.
@@ -232,7 +220,8 @@ def test_kernel_clone():
                 params['length_scale_bounds'] = bounds * 2
         kernel_cloned.set_params(**params)
         kernel_cloned_clone = clone(kernel_cloned)
-        assert_equal(kernel_cloned_clone, kernel_cloned)
+        assert_equal(kernel_cloned_clone.get_params(),
+                     kernel_cloned.get_params())
         assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
 
 
