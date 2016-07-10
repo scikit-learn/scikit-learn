@@ -25,10 +25,9 @@ from .utils.metaestimators import if_delegate_has_method
 __all__ = ['Pipeline', 'FeatureUnion']
 
 
-class _BasePipeline(BaseEstimator):
-    """Handles parameter management for classifiers composed of named steps."""
-
-    __metaclass__ = ABCMeta
+class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
+    """Handles parameter management for classifiers composed of named steps.
+    """
 
     @abstractmethod
     def __init__(self):

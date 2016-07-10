@@ -89,7 +89,7 @@ This is particularly important for doing grid searches::
 
     >>> from sklearn.model_selection import GridSearchCV
     >>> params = dict(reduce_dim__n_components=[2, 5, 10],
-    ...               clf__C=[0.1, 10, 100])
+    ...               svm__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)
 
 Individual steps may also be replaced as parameters, and non-final steps may be
