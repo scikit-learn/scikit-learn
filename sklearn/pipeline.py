@@ -461,7 +461,8 @@ class Pipeline(_BasePipeline):
         """
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
+            if transform is not None:
+                Xt = transform.transform(Xt)
         return self.steps[-1][-1].score(Xt, y)
 
     @property
