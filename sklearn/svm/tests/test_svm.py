@@ -655,6 +655,36 @@ def test_linearsvc_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
+def test_linearsvc_fit_sampleweight():
+    # check correct result when sample_weight is 1
+    n_samples = len(X)
+    unit_weight = np.ones(n_samples)
+    clf = svm.LinearSVC(random_state=0).fit(X, Y)
+    clf_unitweight = svm.LinearSVC(random_state=0).\
+        fit(X, Y, sample_weight=unit_weight)
+
+    # check if same as sample_weight=None
+    assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
+    assert_allclose(clf.coef_, clf_unitweight.coef_, 1, 0.0001)
+
+    # check that fit(X)  = fit([X1, X2, X3],sample_weight = [n1, n2, n3]) where
+    # X = X1 repeated n1 times, X2 repeated n2 times and so forth
+
+    random_state = check_random_state(0)
+    random_weight = random_state.randint(0, 10, n_samples)
+    lsvc_unflat = svm.LinearSVC(random_state=0).\
+        fit(X, Y, sample_weight=random_weight)
+    pred1 = lsvc_unflat.predict(T)
+
+    X_flat = np.repeat(X, random_weight, axis=0)
+    y_flat = np.repeat(Y, random_weight, axis=0)
+    lsvc_flat = svm.LinearSVC(random_state=0).fit(X_flat, y_flat)
+    pred2 = lsvc_flat.predict(T)
+
+    assert_array_equal(pred1, pred2)
+    assert_allclose(lsvc_unflat.coef_, lsvc_flat.coef_, 1, 0.0001)
+
+
 def test_crammer_singer_binary():
     # Test Crammer-Singer formulation in the binary case
     X, y = make_classification(n_classes=2, random_state=0)

@@ -165,7 +165,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -176,6 +176,11 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         y : array-like, shape = [n_samples]
             Target vector relative to X
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
 
         Returns
         -------
@@ -210,7 +215,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss)
+            self.loss, sample_weight=sample_weight)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -340,6 +345,11 @@ class LinearSVR(LinearModel, RegressorMixin):
 
         y : array-like, shape = [n_samples]
             Target vector relative to X
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
 
         Returns
         -------
