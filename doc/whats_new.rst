@@ -164,7 +164,8 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
      By `Jatin Shah`_ and `Raghav R V`_.
 
-   - :class:`linear_model.RANSACRegressor` now supports ``sample_weights``.
+   - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
+     :class:`svm.LinearSVR` now support ``sample_weights``.
      By `Imaculate`_.
 
    - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
