@@ -1705,69 +1705,69 @@ class BM25Vectorizer(CountVectorizer):
         return self._bm25.smooth_idf
 
 
-def fit(self, raw_documents, y=None):
-    """Learn vocabulary and idf from training set.
+    def fit(self, raw_documents, y=None):
+        """Learn vocabulary and idf from training set.
 
-    Parameters
-    ----------
-    raw_documents : iterable
-        an iterable which yields either str, unicode or file objects
+        Parameters
+        ----------
+        raw_documents : iterable
+            an iterable which yields either str, unicode or file objects
 
-    Returns
-    -------
-    self : BM25Vectorizer
-    """
-    X = super(BM25Vectorizer, self).fit_transform(raw_documents)
-    self._bm25.fit(X)
-    return self
+        Returns
+        -------
+        self : BM25Vectorizer
+        """
+        X = super(BM25Vectorizer, self).fit_transform(raw_documents)
+        self._bm25.fit(X)
+        return self
+
+ 
+    def fit_transform(self, raw_documents, y=None):
+        """Learn vocabulary and idf, return term-document matrix.
+
+        This is equivalent to fit followed by transform, but more efficiently
+        implemented.
+
+        Parameters
+        ----------
+        raw_documents : iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        X : sparse matrix, [n_samples, n_features]
+            bm25-weighted document-term matrix.
+        """
+        X = super(BM25Vectorizer, self).fit_transform(raw_documents)
+        self._bm25.fit(X)
+        # X is already a transformed view of raw_documents so
+        # we set copy to False
+        return self._bm25.transform(X, copy=False)
 
 
-def fit_transform(self, raw_documents, y=None):
-    """Learn vocabulary and idf, return term-document matrix.
+    def transform(self, raw_documents, copy=True):
+        """Transform documents to document-term matrix.
 
-    This is equivalent to fit followed by transform, but more efficiently
-    implemented.
+        Uses the vocabulary and document frequencies (df) learned by fit (or
+        fit_transform).
 
-    Parameters
-    ----------
-    raw_documents : iterable
-        an iterable which yields either str, unicode or file objects
+        Parameters
+        ----------
+        raw_documents : iterable
+            an iterable which yields either str, unicode or file objects
 
-    Returns
-    -------
-    X : sparse matrix, [n_samples, n_features]
-        bm25-weighted document-term matrix.
-    """
-    X = super(BM25Vectorizer, self).fit_transform(raw_documents)
-    self._bm25.fit(X)
-    # X is already a transformed view of raw_documents so
-    # we set copy to False
-    return self._bm25.transform(X, copy=False)
+        copy : boolean, default True
+            Whether to copy X and operate on the copy or perform in-place
+            operations.
 
+        Returns
+        -------
+        X : sparse matrix, [n_samples, n_features]
+            bm25-weighted document-term matrix.
+        """
 
-def transform(self, raw_documents, copy=True):
-    """Transform documents to document-term matrix.
-
-    Uses the vocabulary and document frequencies (df) learned by fit (or
-    fit_transform).
-
-    Parameters
-    ----------
-    raw_documents : iterable
-        an iterable which yields either str, unicode or file objects
-
-    copy : boolean, default True
-        Whether to copy X and operate on the copy or perform in-place
-        operations.
-
-    Returns
-    -------
-    X : sparse matrix, [n_samples, n_features]
-        bm25-weighted document-term matrix.
-    """
-
-    X = super(TfidfVectorizer, self).transform(raw_documents)
-    return self._bm25.transform(X, copy=False)
+        X = super(TfidfVectorizer, self).transform(raw_documents)
+        return self._bm25.transform(X, copy=False)
 
 
 
