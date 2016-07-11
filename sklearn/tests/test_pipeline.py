@@ -74,13 +74,18 @@ class MultT(TransfT):
         self.mult = mult
 
     def transform(self, X):
-        return X * self.mult
+        return np.asarray(X) * self.mult
 
     def inverse_transform(self, X):
-        return X / self.mult
+        return np.asarray(X) / self.mult
 
     def predict(self, X):
-        return (X * self.mult).sum(axis=1)
+        return (np.asarray(X) * self.mult).sum(axis=1)
+
+    predict_proba = predict_log_proba = decision_function = predict
+
+    def score(self, X, y=None):
+        return np.sum(X)
 
 
 class FitParamT(BaseEstimator):
@@ -395,47 +400,38 @@ def test_set_pipeline_step_none():
         return Pipeline([('m2', mult2), ('m3', mult3), ('est', mult5)])
 
     pipeline = make()
-    fit_transform = lambda: pipeline.fit_transform(X, y)
-    predict = lambda: pipeline.predict(X)
-    inverse_transform = lambda Xinv: pipeline.inverse_transform(
-        np.asarray(Xinv))
 
     exp = 2 * 3 * 5
-    assert_array_equal([[exp]], fit_transform())
-    assert_array_equal([exp], predict())
-    assert_array_equal(X, inverse_transform([[exp]]))
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline.set_params(m3=None)
     exp = 2 * 5
-    assert_array_equal([[exp]], fit_transform())
-    assert_array_equal([exp], predict())
-    assert_array_equal(X, inverse_transform([[exp]]))
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline.set_params(m2=None)
     exp = 5
-    assert_array_equal([[exp]], fit_transform())
-    assert_array_equal([exp], predict())
-    assert_array_equal(X, inverse_transform([[exp]]))
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
+    # for other methods, ensure no AttributeErrors on None:
+    other_methods = ['predict_proba', 'predict_log_proba',
+                     'decision_function', 'transform', 'score']
+    for method in other_methods:
+        getattr(pipeline, method)(X)
 
     pipeline.set_params(m2=mult2)
     exp = 2 * 5
-    assert_array_equal([[exp]], fit_transform())
-    assert_array_equal([exp], predict())
-    assert_array_equal(X, inverse_transform([[exp]]))
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline = make()
     assert_raises(TypeError, pipeline.set_params, est=None)
-
-
-def test_pipeline_attributes():
-    """Ensure that the Pipeline only provides post-fit methods that are present
-    on the last step"""
-
-    def make(method):
-        """Make a pipeline whose estimator has specified method"""
-        transf = TransfT()
-        setattr(transf, method, lambda *args, **kwargs: True)
-        return Pipeline([('est', transf)]).fit([[1]], [1])
 
 
 def test_make_pipeline():
@@ -564,6 +560,7 @@ def test_X1d_inverse_transform():
     X = np.ones(10)
     msg = "1d X will not be reshaped in pipeline.inverse_transform"
     assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
+
 
 def test_set_feature_union_steps():
     mult2 = MultT(2)

@@ -358,7 +358,8 @@ class Pipeline(_BasePipeline):
         """
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
+            if transform is not None:
+                Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -435,7 +436,7 @@ class Pipeline(_BasePipeline):
         -------
         Xt : array-like, shape = [n_samples, n_features]
         """
-        if X.ndim == 1:
+        if hasattr(X, 'ndim') and X.ndim == 1:
             warn("From version 0.19, a 1d X will not be reshaped in"
                  " pipeline.inverse_transform any more.", FutureWarning)
             X = X[None, :]
