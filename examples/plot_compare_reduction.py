@@ -37,7 +37,7 @@ N_FEATURES_OPTIONS = [2, 4, 8]
 C_OPTIONS = [1, 10, 100, 1000]
 param_grid = [
     {
-        'reduce_dim': [PCA(), NMF()],
+        'reduce_dim': [PCA(iterated_power=7), NMF()],
         'reduce_dim__n_components': N_FEATURES_OPTIONS,
         'classify__C': C_OPTIONS
     },
