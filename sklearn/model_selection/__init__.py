@@ -20,6 +20,7 @@ from ._validation import permutation_test_score
 from ._validation import validation_curve
 
 from ._search import GridSearchCV
+from ._search import MultiModelSearch
 from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
@@ -27,6 +28,7 @@ from ._search import fit_grid_point
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
+           'MultiModelSearch',
            'KFold',
            'LabelKFold',
            'LabelShuffleSplit',
