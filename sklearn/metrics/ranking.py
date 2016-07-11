@@ -23,6 +23,7 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
+from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
@@ -296,6 +297,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     check_consistent_length(y_true, y_score)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
 

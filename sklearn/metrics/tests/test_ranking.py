@@ -200,6 +200,16 @@ def test_roc_curve_multi():
     assert_raises(ValueError, roc_curve, y_true, probas_pred)
 
 
+def test_roc_curve_nan_inf():
+    invalids =[([0, 1], [np.inf, np.inf]),
+               ([0, 1], [np.nan, np.nan]),
+               ([0, 1], [np.nan, np.inf])]
+
+    for y_true, y_score in invalids:
+        assert_raise_message(ValueError, "contains NaN, infinity",
+                             roc_curve, y_true, y_score)
+
+
 def test_roc_curve_confidence():
     # roc_curve for confidence scores
     y_true, _, probas_pred = make_prediction(binary=True)
