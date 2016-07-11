@@ -99,7 +99,7 @@ class Pipeline(_BasePipeline):
     cross-validated together while setting different parameters.
     For this, it enables setting parameters of the various steps using their
     names and the parameter name separated by a '__', as in the example below.
-    A step's estimator may be replaced in entirety by setting the parameter
+    A step's estimator may be replaced entirely by setting the parameter
     with its name.
 
     Read more in the :ref:`User Guide <pipeline>`.
@@ -300,8 +300,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Data samples, where n_samples in the number of samples and
-            n_features is the number of features.
+            Data samples, where ``n_sampless`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -349,8 +349,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Data samples, where n_samples in the number of samples and
-            n_features is the number of features.
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -368,8 +368,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Data samples, where n_samples in the number of samples and
-            n_features is the number of features.
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -388,8 +388,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Data samples, where n_samples in the number of samples and
-            n_features is the number of features.
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -408,8 +408,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Data samples, where n_samples in the number of samples and
-            n_features is the number of features.
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -428,8 +428,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         Xt : array-like, shape = [n_samples, n_transformed_features]
-            Data samples, where n_samples in the number of samples and
-            n_features is the number of features.
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -452,8 +452,8 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Evaluation data, where n_samples in the number of samples and
-            n_features is the number of features.
+            Evaluation data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
@@ -551,7 +551,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
     several feature extraction mechanisms into a single transformer.
 
     Parameters of the transformers may be set using its name and the parameter
-    name separated by a '__'. A transformer may be replaced in entirety by
+    name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name.
 
     Read more in the :ref:`User Guide <feature_union>`.
