@@ -106,7 +106,7 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
-def test_sample_weight_warning():
+def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
                                random_state=42)
