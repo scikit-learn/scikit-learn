@@ -16,18 +16,17 @@ the grid search.
 # Authors: Robert McGibbon, Joel Nothman
 
 from __future__ import print_function, division
-print(__doc__)
-
-from operator import attrgetter
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA, NMF
 from sklearn.feature_selection import SelectKBest, chi2
+
+print(__doc__)
 
 pipe = Pipeline([
     ('reduce_dim', PCA()),
@@ -50,12 +49,11 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=3, n_jobs=-2, param_grid=param_grid)
+grid = GridSearchCV(pipe, cv=3, n_jobs=2, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
-mean_scores = np.array([entry.mean_validation_score
-                        for entry in grid.grid_scores_])
+mean_scores = np.array(grid.results_['test_mean_score'])
 # scores are in the order of param_grid iteration, which is alphabetical
 mean_scores = mean_scores.reshape(len(C_OPTIONS), -1, len(N_FEATURES_OPTIONS))
 # select score for best C
