@@ -9,9 +9,10 @@ import scipy.stats
 
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.feature_selection.univariate_selection import _chisquare
-
-from nose.tools import assert_raises
-from numpy.testing import assert_equal, assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_no_warnings
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -33,22 +34,22 @@ def test_chi2():
 
     chi2 = mkchi2(k=1).fit(X, y)
     chi2 = mkchi2(k=1).fit(X, y)
-    assert_equal(chi2.get_support(indices=True), [0])
-    assert_equal(chi2.transform(X), np.array(X)[:, [0]])
+    assert_array_equal(chi2.get_support(indices=True), [0])
+    assert_array_equal(chi2.transform(X), np.array(X)[:, [0]])
 
     chi2 = mkchi2(k=2).fit(X, y)
-    assert_equal(sorted(chi2.get_support(indices=True)), [0, 2])
+    assert_array_equal(sorted(chi2.get_support(indices=True)), [0, 2])
 
     Xsp = csr_matrix(X, dtype=np.float64)
     chi2 = mkchi2(k=2).fit(Xsp, y)
-    assert_equal(sorted(chi2.get_support(indices=True)), [0, 2])
+    assert_array_equal(sorted(chi2.get_support(indices=True)), [0, 2])
     Xtrans = chi2.transform(Xsp)
-    assert_equal(Xtrans.shape, [Xsp.shape[0], 2])
+    assert_array_equal(Xtrans.shape, [Xsp.shape[0], 2])
 
     # == doesn't work on scipy.sparse matrices
     Xtrans = Xtrans.toarray()
     Xtrans2 = mkchi2(k=2).fit_transform(Xsp, y).toarray()
-    assert_equal(Xtrans, Xtrans2)
+    assert_array_equal(Xtrans, Xtrans2)
 
 
 def test_chi2_coo():
@@ -64,6 +65,13 @@ def test_chi2_negative():
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     for X in (X, np.array(X), csr_matrix(X)):
         assert_raises(ValueError, chi2, X, y)
+
+
+def test_chi2_unused_feature():
+    # Unused feature should evaluate to NaN
+    chi, p = assert_no_warnings(chi2, [[1, 0], [0, 0]], [1, 0])
+    assert_array_equal(chi, [1, np.nan])
+    assert_array_equal(p[1], np.nan)
 
 
 def test_chisquare():
