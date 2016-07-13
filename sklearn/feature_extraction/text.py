@@ -93,7 +93,7 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
-    else:               # assume it's a collection
+    else:  # assume it's a collection
         return frozenset(stop)
 
 
@@ -174,7 +174,7 @@ class VectorizerMixin(object):
                 while offset + n < w_len:
                     offset += 1
                     ngrams.append(w[offset:offset + n])
-                if offset == 0:   # count a short word (w_len < n) only once
+                if offset == 0:  # count a short word (w_len < n) only once
                     break
         return ngrams
 
@@ -422,6 +422,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -502,6 +503,7 @@ def _document_frequency(X):
         return bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
+
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
@@ -673,7 +675,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
+                        max_features <= 0):
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
@@ -911,8 +913,8 @@ def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
     return array.array(str("i"))
 
-class BM25Transformer(BaseEstimator, TransformerMixin):
 
+class BM25Transformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a BM25 weighted representation
 
     BM25 is a weighting scheme that differs from tf-idf in three main ways:
@@ -1063,6 +1065,7 @@ class BM25Transformer(BaseEstimator, TransformerMixin):
             return np.ravel(self._beta_diag.sum(axis=0))
         else:
             return None
+
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a normalized tf or tf-idf representation
@@ -1373,7 +1376,6 @@ class TfidfVectorizer(CountVectorizer):
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
-
         super(TfidfVectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
@@ -1382,7 +1384,6 @@ class TfidfVectorizer(CountVectorizer):
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=binary,
             dtype=dtype)
-
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
@@ -1489,6 +1490,7 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
 
 class BM25Vectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of BM25 weighted features.
@@ -1663,8 +1665,7 @@ class BM25Vectorizer(CountVectorizer):
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
                  vocabulary=None, binary=False, dtype=np.int64,
-                 smooth_idf = True, k=2, b=0.75):
-
+                 smooth_idf=True, k=2, b=0.75):
         super(BM25Vectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
@@ -1702,6 +1703,7 @@ class BM25Vectorizer(CountVectorizer):
 
     @property
     def idf_(self):
+<<<<<<< Updated upstream
         return self._bm25.smooth_idf
 
 
@@ -1724,6 +1726,76 @@ class BM25Vectorizer(CountVectorizer):
  
     def fit_transform(self, raw_documents, y=None):
         """Learn vocabulary and idf, return term-document matrix.
+
+        This is equivalent to fit followed by transform, but more efficiently
+        implemented.
+
+        Parameters
+        ----------
+        raw_documents : iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        X : sparse matrix, [n_samples, n_features]
+            bm25-weighted document-term matrix.
+        """
+        X = super(BM25Vectorizer, self).fit_transform(raw_documents)
+        self._bm25.fit(X)
+        # X is already a transformed view of raw_documents so
+        # we set copy to False
+        return self._bm25.transform(X, copy=False)
+=======
+        return self._bm25.idf_
+>>>>>>> Stashed changes
+
+    @property
+    def beta_(self):
+        return self._bm25.beta_
+
+<<<<<<< Updated upstream
+    def transform(self, raw_documents, copy=True):
+        """Transform documents to document-term matrix.
+
+        Uses the vocabulary and document frequencies (df) learned by fit (or
+        fit_transform).
+=======
+
+    def fit(self, raw_documents, y=None):
+        """Learn vocabulary and idf from training set.
+>>>>>>> Stashed changes
+
+        Parameters
+        ----------
+        raw_documents : iterable
+            an iterable which yields either str, unicode or file objects
+
+<<<<<<< Updated upstream
+        copy : boolean, default True
+            Whether to copy X and operate on the copy or perform in-place
+            operations.
+
+        Returns
+        -------
+        X : sparse matrix, [n_samples, n_features]
+            bm25-weighted document-term matrix.
+        """
+
+        X = super(TfidfVectorizer, self).transform(raw_documents)
+        return self._bm25.transform(X, copy=False)
+=======
+        Returns
+        -------
+        self : BM25Vectorizer
+        """
+        X = super(BM25Vectorizer, self).fit_transform(raw_documents)
+        self._bm25.fit(X)
+        return self
+
+
+    def fit_transform(self, raw_documents, y=None):
+        """Learn vocabulary and idf, return term-document matrix.
+>>>>>>> Stashed changes
 
         This is equivalent to fit followed by transform, but more efficiently
         implemented.
@@ -1766,15 +1838,5 @@ class BM25Vectorizer(CountVectorizer):
             bm25-weighted document-term matrix.
         """
 
-        X = super(TfidfVectorizer, self).transform(raw_documents)
+        X = super(BM25Vectorizer, self).transform(raw_documents)
         return self._bm25.transform(X, copy=False)
-
-
-
-
-
-
-
-
-
-
