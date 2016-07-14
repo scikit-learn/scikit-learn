@@ -12,7 +12,7 @@ and can be found here:
 """
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 cimport cython
 cimport numpy as np

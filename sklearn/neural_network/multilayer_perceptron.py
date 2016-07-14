@@ -4,7 +4,7 @@
 # Authors: Issam H. Laradji <issam.laradji@gmail.com>
 #          Andreas Mueller
 #          Jiyuan Qian
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 

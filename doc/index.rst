@@ -205,13 +205,13 @@
                     <h4>News</h4>
                     <ul>
                     <li><em>On-going development:</em>
-                    <a href="whats_new.html"><em>What's new</em> (Changelog)</a>
+                    <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
-                    <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html#version-0-17">Changelog</a>).
                     </li>
-                    <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html#version-0-16">Changelog</a>).
                     </li>
-                    <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html#version-0-15">Changelog</a>).
                     </li>
                     <li><em>July 14-20th, 2014: international sprint.</em>
                     During this week-long sprint, we gathered 18 of the core
@@ -225,7 +225,7 @@
                     <a href="http://www.inria.fr/">Inria</a>,
                     and <a href="http://www.tinyclues.com/">tinyclues</a>.
                     </li>
-                    <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html#version-0-14">Changelog</a>).
                     </li>
                     </ul>
                 </div>

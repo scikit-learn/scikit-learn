@@ -23,7 +23,7 @@ print(__doc__)
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>s
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 from matplotlib import pyplot as plt

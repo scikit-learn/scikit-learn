@@ -1,7 +1,7 @@
 """Testing for Gaussian process classification """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 

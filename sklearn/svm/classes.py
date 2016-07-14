@@ -6,7 +6,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import check_X_y
+from ..utils import check_X_y, column_or_1d
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 
@@ -165,7 +165,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -176,6 +176,11 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         y : array-like, shape = [n_samples]
             Target vector relative to X
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
 
         Returns
         -------
@@ -210,7 +215,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss)
+            self.loss, sample_weight=sample_weight)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -329,7 +334,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.dual = dual
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -340,6 +345,11 @@ class LinearSVR(LinearModel, RegressorMixin):
 
         y : array-like, shape = [n_samples]
             Target vector relative to X
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
 
         Returns
         -------
@@ -374,7 +384,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, loss=self.loss,
-            epsilon=self.epsilon)
+            epsilon=self.epsilon, sample_weight=sample_weight)
         self.coef_ = self.coef_.ravel()
 
         return self
@@ -765,6 +775,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     intercept_ : array, shape = [1]
         Constants in decision function.
+
+    sample_weight : array-like, shape = [n_samples]
+            Individual weights for each sample
 
     Examples
     --------

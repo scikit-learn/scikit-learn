@@ -3,7 +3,7 @@ Multi-dimensional Scaling (MDS)
 """
 
 # author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 

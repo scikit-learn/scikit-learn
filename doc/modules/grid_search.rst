@@ -201,7 +201,7 @@ Model specific cross-validation
 -------------------------------
 
 
-Some models can fit data for a range of value of some parameter almost
+Some models can fit data for a range of values of some parameter almost
 as efficiently as fitting the estimator for a single value of the
 parameter. This feature can be leveraged to perform a more efficient
 cross-validation used for model selection of this parameter.

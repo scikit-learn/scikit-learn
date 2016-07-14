@@ -7,7 +7,7 @@
 #         Rob Zinkov (passive-aggressive)
 #         Lars Buitinck
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 
 import numpy as np
@@ -482,8 +482,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (4) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
+        (5) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -503,9 +503,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     intercept : float
         The fitted intercept term.
     average_weights : array shape=[n_features]
-        The averaged weights accross iterations
+        The averaged weights across iterations
     average_intercept : float
-        The averaged intercept accross iterations
+        The averaged intercept across iterations
     """
     return _plain_sgd(weights,
                       intercept,

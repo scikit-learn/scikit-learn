@@ -39,7 +39,7 @@ w = np.zeros(n_features)
 relevant_features = np.random.randint(0, n_features, 10)
 for i in relevant_features:
     w[i] = stats.norm.rvs(loc=0, scale=1. / np.sqrt(lambda_))
-# Create noite with a precision alpha of 50.
+# Create noise with a precision alpha of 50.
 alpha_ = 50.
 noise = stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
 # Create the target

@@ -21,7 +21,7 @@ The module structure is the following:
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 

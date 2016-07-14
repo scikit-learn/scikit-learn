@@ -35,7 +35,7 @@ it in the issue: https://gist.github.com
 -->
 
 #### Expected Results
-<!-- Example: No error is throw. Please paste or describe the expected results.-->
+<!-- Example: No error is thrown. Please paste or describe the expected results.-->
 
 #### Actual Results
 <!-- Please paste or specifically describe the actual output or traceback. -->
