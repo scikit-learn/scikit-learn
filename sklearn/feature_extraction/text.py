@@ -917,7 +917,7 @@ def _make_int_array():
 class BM25Transformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a BM25 weighted representation
 
-    BM25 is a weighting scheme that differs from tf-idf in three main ways:
+    BM25 is a weighting scheme that differs from tf-idf in two main ways:
         1.) As the frequency of a given term in a document increases, the weight
             of that term approaches the hyperparameter k asymptotically.
 
