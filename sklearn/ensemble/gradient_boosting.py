@@ -726,7 +726,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                  min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', categorical='none'):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -744,13 +744,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
         self.presort = presort
+        self.categorical = categorical
         self.category_map_ = None
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
-                   categorical, random_state, X_idx_sorted, X_csc=None,
-                   X_csr=None):
+                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -775,15 +775,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                presort=self.presort,
+                categorical=self.categorical)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             tree.fit(X_csc if X_csc is not None else X, residual,
-                     sample_weight=sample_weight, categorical=categorical,
-                     check_input=False, X_idx_sorted=X_idx_sorted)
+                     sample_weight=sample_weight, check_input=False,
+                     X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
             loss.update_terminal_regions(
@@ -924,7 +925,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             raise NotFittedError("Estimator not fitted, call `fit`"
                                  " before making predictions`.")
 
-    def fit(self, X, y, sample_weight=None, categorical='None', monitor=None):
+    def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -944,15 +945,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             ignored while searching for a split in each node. In the case of
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
-
-        categorical : array-like or str
-            Array of feature indices, boolean array of length
-            n_features, ``'All'``, or ``'None'``.  Indicates which
-            features should be considered as categorical rather than
-            ordinal. The maximum number of categories per feature is
-            64, though the real-world limit will be much lower because
-            evaluating splits has :math:`O(2^N)` time complexity, for
-            :math:`N` categories.
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
@@ -986,7 +978,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Preprocess categorical variables
         X, _, self.category_map_ = preproc_categorical(
-            X, categorical, check_input=True)
+            X, self.categorical, check_input=True)
 
         random_state = check_random_state(self.random_state)
         self._check_params()
@@ -1031,9 +1023,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                                  dtype=np.int32)
 
         # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, categorical,
-                                    random_state, begin_at_stage, monitor,
-                                    X_idx_sorted)
+        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
+                                    begin_at_stage, monitor, X_idx_sorted)
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -1043,9 +1034,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return self
 
-    def _fit_stages(self, X, y, y_pred, sample_weight, categorical,
-                    random_state, begin_at_stage=0, monitor=None,
-                    X_idx_sorted=None):
+    def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
+                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -1088,7 +1078,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, categorical, random_state,
+                                     sample_mask, random_state,
                                      X_idx_sorted, X_csc, X_csr)
 
             # track deviance (= loss)
@@ -1393,6 +1383,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. The maximum number of categories per feature is
+        64, though the real-world limit will be much lower because
+        evaluating splits has :math:`O(2^N)` time complexity, for
+        :math:`N` categories.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1445,7 +1444,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto'):
+                 presort='auto', categorical='none'):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1456,7 +1455,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_features=max_features,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort)
+            presort=presort, categorical=categorical)
 
     def _validate_y(self, y):
         check_classification_targets(y)
@@ -1744,6 +1743,15 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         .. versionadded:: 0.17
            optional parameter *presort*.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. The maximum number of categories per feature is
+        64, though the real-world limit will be much lower because
+        evaluating splits has :math:`O(2^N)` time complexity, for
+        :math:`N` categories.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1792,7 +1800,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', categorical='none'):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1803,7 +1811,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             max_features=max_features,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort)
+            presort=presort, categorical=categorical)
 
     def predict(self, X):
         """Predict regression target for X.

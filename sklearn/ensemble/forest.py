@@ -91,8 +91,8 @@ def _generate_unsampled_indices(random_state, n_samples):
 
     return unsampled_indices
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, categorical,
-                          tree_idx, n_trees, verbose=0, class_weight=None):
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx,
+                          n_trees, verbose=0, class_weight=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -115,11 +115,9 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, categorical,
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
 
-        tree.fit(X, y, sample_weight=curr_sample_weight,
-                 categorical=categorical, check_input=False)
+        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
-        tree.fit(X, y, sample_weight=sample_weight,
-                 categorical=categorical, check_input=False)
+        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
     return tree
 
@@ -215,7 +213,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
-    def fit(self, X, y, sample_weight=None, categorical='None'):
+    def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -236,19 +234,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
 
-        categorical : array-like or str
-            Array of feature indices, boolean array of length
-            n_features, ``'All'``, or ``'None'``.  Indicates which
-            features should be considered as categorical rather than
-            ordinal. For decision trees, the maximum number of
-            categories per feature is 64, though the real-world limit
-            will be much lower because evaluating splits has
-            :math:`O(2^N)` time complexity, for :math:`N`
-            categories. Extra-randomized trees do not have this
-            limitation because they do not try to find the best
-            split. For these trees, the maximum number of categories
-            per feature is :math:`2^{31}`.
-
         Returns
         -------
         self : object
@@ -264,7 +249,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Preprocess categorical variables
         X, _, self.category_map_ = preproc_categorical(
-            X, categorical, check_input=True)
+            X, self.categorical, check_input=True)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -336,7 +321,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                              backend="threading")(
                 delayed(_parallel_build_trees)(
-                    t, self, X, y, sample_weight, categorical, i, len(trees),
+                    t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight)
                 for i, t in enumerate(trees))
 
@@ -829,6 +814,19 @@ class RandomForestClassifier(ForestClassifier):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
+
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
@@ -922,6 +920,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
+                 categorical="none",
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -935,7 +934,7 @@ class RandomForestClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "random_state"),
+                              "random_state", "categorical"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -951,6 +950,7 @@ class RandomForestClassifier(ForestClassifier):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
+        self.categorical = categorical
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1022,6 +1022,19 @@ class RandomForestRegressor(ForestRegressor):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
+
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
@@ -1085,6 +1098,7 @@ class RandomForestRegressor(ForestRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
+                 categorical="none",
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -1097,7 +1111,7 @@ class RandomForestRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "random_state"),
+                              "random_state", "categorical"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1112,6 +1126,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
+        self.categorical = categorical
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1180,6 +1195,19 @@ class ExtraTreesClassifier(ForestClassifier):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
+
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
@@ -1276,6 +1304,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
+                 categorical="none",
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1289,7 +1318,7 @@ class ExtraTreesClassifier(ForestClassifier):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "random_state"),
+                              "random_state", "categorical"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1305,6 +1334,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
+        self.categorical = categorical
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1374,6 +1404,19 @@ class ExtraTreesRegressor(ForestRegressor):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
+
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
@@ -1438,6 +1481,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  max_leaf_nodes=None,
+                 categorical="none",
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1450,7 +1494,7 @@ class ExtraTreesRegressor(ForestRegressor):
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "random_state"),
+                              "random_state", "categorical"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1465,6 +1509,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
+        self.categorical = categorical
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1541,6 +1586,19 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1567,14 +1625,15 @@ class RandomTreesEmbedding(BaseForest):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 categorical="none"):
         super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
-                              "random_state"),
+                              "random_state", "categorical"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -1590,6 +1649,7 @@ class RandomTreesEmbedding(BaseForest):
         self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
         self.sparse_output = sparse_output
+        self.categorical = categorical
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
