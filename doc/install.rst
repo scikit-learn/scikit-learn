@@ -28,15 +28,22 @@ or ``conda``::
 
     conda install scikit-learn
 
-**We don't recommend installing scipy or numpy using pip on linux**,
-as this will involve a lengthy build-process with many dependencies.
-Without careful configuration, building numpy yourself can lead to an installation
-that is much slower than it should be. 
+**We don't recommend installing scipy or numpy using pip on Linux**,
+as this will involve a lengthy build process with many dependencies.
+Without careful configuration, building numpy yourself is likely to lead to an
+installation that is much slower than it should be.
 If you are using Linux, consider using your package manager to install
 scikit-learn. It is usually the easiest way, but might not provide the newest
 version.
 If you haven't already installed numpy and scipy and can't install them via
-your operation system, it is recommended to use a third party distribution.
+your operating system, we recommended using a third-party distribution.
+
+If you must install scikit-learn and its dependencies with pip, you can install
+it as ``scikit-learn[alldeps]``. We strongly recommend against doing this
+unless you are familiar with how to correctly build numpy and scipy. The most
+common use case for this is in a ``requirements.txt`` file used as part of an
+automated build process for a PaaS application or a Docker image. This option
+is not intended for manual installation from the command line.
 
 Third-party Distributions
 ==========================
