@@ -122,7 +122,7 @@ def preproc_categorical(X, categorical, check_input):
         raise NotImplementedError("Categorical features not supported with"
                                   " sparse inputs")
 
-    n_categories = np.full(n_features, -1, dtype=np.int32)
+    n_categories = -np.ones(n_features, dtype=np.int32)
     category_map = [{}] * n_features
     if categorical.size > 0 and check_input:
         X = np.copy(X)
