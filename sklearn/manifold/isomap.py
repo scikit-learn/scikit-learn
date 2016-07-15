@@ -25,7 +25,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         number of neighbors to consider for each point (if mode='k').
 
     radius : float
-        radius to consider for each point (case mode='radius').
+        radius to consider for each point (if mode='radius').
 
     mode : string ['k'|'radius']
         neighborhood function.
