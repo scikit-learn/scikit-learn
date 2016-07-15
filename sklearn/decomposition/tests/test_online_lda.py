@@ -80,7 +80,8 @@ def test_lda_partial_fit():
     # (same as test_lda_batch)
     rng = np.random.RandomState(0)
     n_topics, X = _build_sparse_mtx()
-    lda = LatentDirichletAllocation(n_topics=n_topics, learning_offset=10.,
+    lda = LatentDirichletAllocation(n_topics=n_topics, 
+                                    learning_method='online', learning_offset=10.,
                                     total_samples=100, random_state=rng)
     for i in xrange(3):
         lda.partial_fit(X)
@@ -216,6 +217,7 @@ def test_lda_partial_fit_multi_jobs():
     rng = np.random.RandomState(0)
     n_topics, X = _build_sparse_mtx()
     lda = LatentDirichletAllocation(n_topics=n_topics, n_jobs=2,
+                                    learning_method='online',
                                     learning_offset=5., total_samples=30,
                                     random_state=rng)
     for i in range(2):
