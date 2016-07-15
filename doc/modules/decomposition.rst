@@ -802,8 +802,7 @@ between :math:`q(z,\theta,\beta)` and the true posterior
 :class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
 both online and batch update method.
 While batch method updates variational variables after each full pass through the data,
-online method updates variational variables from mini-batch data points. Therefore,
-online method usually converges faster than batch method.
+online method updates variational variables from mini-batch data points.
 
 .. note::
 
