@@ -155,7 +155,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         to `1 / n_topics`.
         In the literature, this is called `eta`.
 
-    learning_method : 'batch' | 'online', default='online'
+    learning_method : 'batch' | 'online', default='batch'
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
@@ -246,7 +246,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_topics=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method='online',
+                 topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
