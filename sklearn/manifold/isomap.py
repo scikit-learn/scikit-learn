@@ -5,7 +5,7 @@
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors
+from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..utils import check_array
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
@@ -25,7 +25,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         number of neighbors to consider for each point (if mode='k').
 
     radius : float
-        radius to consider for each point (case mode='radius').
+        radius to consider for each point (if mode='radius').
 
     mode : string ['k'|'radius']
         neighborhood function.
@@ -114,6 +114,7 @@ class Isomap(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
         X = check_array(X)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                      radius=self.radius,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
@@ -124,7 +125,7 @@ class Isomap(BaseEstimator, TransformerMixin):
             kng = self.nbrs_.kneighbors_graph(mode='distance')
         elif self.mode == 'radius':
             kng = self.nbrs_.radius_neighbors_graph(mode='distance')
-        
+
         # Build the full geodesic distance matrix from graph of distances kng
         self.dist_matrix_ = graph_shortest_path(kng,
                                                 method=self.path_method,
