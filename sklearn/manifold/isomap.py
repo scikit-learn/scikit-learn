@@ -5,7 +5,7 @@
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..neighbors import NearestNeighbors
 from ..utils import check_array
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
@@ -22,7 +22,17 @@ class Isomap(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_neighbors : integer
-        number of neighbors to consider for each point.
+        number of neighbors to consider for each point (if mode='k').
+
+    radius : float
+        radius to consider for each point (if mode='radius').
+
+    mode : string ['k'|'radius']
+        neighborhood function.
+
+        'k' : k nearest neighbors.
+
+        'radius' : neighbors into radius range.
 
     n_components : integer
         number of coordinates for the manifold
@@ -87,10 +97,12 @@ class Isomap(BaseEstimator, TransformerMixin):
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
 
-    def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
-                 tol=0, max_iter=None, path_method='auto',
+    def __init__(self, n_neighbors=5, radius=1., mode='k', n_components=2,
+                 eigen_solver='auto', tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=1):
         self.n_neighbors = n_neighbors
+        self.radius = radius
+        self.mode = mode
         self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -106,18 +118,25 @@ class Isomap(BaseEstimator, TransformerMixin):
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
+
+        # Get the neighbor graph of distances
+        if self.mode == 'k':
+            kng = self.nbrs_.kneighbors_graph(mode='distance')
+        elif self.mode == 'radius':
+            kng = self.nbrs_.radius_neighbors_graph(mode='distance')
+        
+        # Build the full geodesic distance matrix from graph of distances kng
+        self.dist_matrix_ = graph_shortest_path(kng,
+                                                method=self.path_method,
+                                                directed=False)
+
+        # Do classic MDS on geodesic distance matrix
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               mode='distance', n_jobs=self.n_jobs)
-
-        self.dist_matrix_ = graph_shortest_path(kng,
-                                                method=self.path_method,
-                                                directed=False)
         G = self.dist_matrix_ ** 2
         G *= -0.5
 
