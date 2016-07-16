@@ -1760,7 +1760,7 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
 
     labels = np.unique(y_true)
 
-    if len(labels) != 2:
+    if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
                          "Provided labels %s." % labels)
 
