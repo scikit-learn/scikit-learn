@@ -10,27 +10,31 @@ from __future__ import print_function
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+import warnings
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, deprecated
 from ..utils.extmath import logsumexp, pinvh, squared_norm
 from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import _GMMBase
 
-
+@deprecated("The function digamma is deprecated and "
+            "will be removed in 0.20.")
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
 
-
+@deprecated("The function gammaln is deprecated and "
+            "will be removed in 0.20.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 
-
+@deprecated("The function log_normalize is deprecated and "
+            "will be removed in 0.20.")
 def log_normalize(v, axis=0):
     """Normalized probabilities from unnormalized log-probabilites"""
     v = np.rollaxis(v, axis)
@@ -42,7 +46,8 @@ def log_normalize(v, axis=0):
     v /= np.sum(v, axis=0)
     return np.swapaxes(v, 0, axis)
 
-
+@deprecated("The function wishart_log_det is deprecated and "
+            "will be removed in 0.20.")
 def wishart_log_det(a, b, detB, n_features):
     """Expected value of the log of the determinant of a Wishart
 
@@ -52,7 +57,8 @@ def wishart_log_det(a, b, detB, n_features):
     l += n_features * np.log(2)
     return l + detB
 
-
+@deprecated("The function wishart_logz is deprecated and "
+            "will be removed in 0.20.")
 def wishart_logz(v, s, dets, n_features):
     "The logarithm of the normalization constant for the wishart distribution"
     z = 0.
@@ -61,7 +67,6 @@ def wishart_logz(v, s, dets, n_features):
     z += 0.5 * v * np.log(dets)
     z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
-
 
 def _bound_wishart(a, B, detB):
     """Returns a function of the dof, scale matrix and its determinant
@@ -105,7 +110,8 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
     return bound
 
-
+@deprecated("The class DBGMM is deprecated and "
+            "will be removed in 0.20. This class no longer works.")
 class DPGMM(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
@@ -605,7 +611,8 @@ class DPGMM(_GMMBase):
 
         return z
 
-
+@deprecated("The class VBGMM is deprecated and "
+            "will be removed in 0.20. This class no longer works.")
 class VBGMM(DPGMM):
     """Variational Inference for the Gaussian Mixture Model
 
