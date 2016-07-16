@@ -33,6 +33,7 @@ Website: http://scikit-learn.org
 scikit-learn is a Python module for machine learning built on top of
 SciPy and distributed under the 3-Clause BSD license.
 
+<<<<<<< 18852978821063655c852f46eff0eff4765e8182
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
 the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
@@ -40,25 +41,19 @@ the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 It is currently maintained by a team of volunteers.
 
 
+=======
+>>>>>>> Update install
 Installation
 ------------
 
 Dependencies
 ~~~~~~~~~~~~
 
-scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.5.
-(using the same codebase thanks to an embedded copy of
-`six <http://pythonhosted.org/six/>`_). It should also work with Python 3.3 and 3.4.
+Scikit-learn requires::
 
-The required dependencies to build the software are NumPy >= 1.6.1,
-SciPy >= 0.9 and a working C/C++ compiler. For the development version,
-you will also require Cython >=0.23.
-
-For running the examples Matplotlib >= 1.1.1 is required and for running the
-tests you need nose >= 1.1.2.
-
-This configuration matches the Ubuntu Precise 12.04 LTS release from April
-2012.
+- Python (>= 2.6 or >= 3.3),
+- NumPy (>= 1.6.1),
+- SciPy (>= 0.9).
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -67,24 +62,30 @@ CBLAS exists in many implementations; see `Linear algebra libraries
 <http://scikit-learn.org/stable/modules/computational_performance.html#linear-algebra-libraries>`_
 for known issues.
 
-
 User installation
 ~~~~~~~~~~~~~~~~~
 
-**conda? pip?**
+If you already have a working installation of numpy and scipy,
+the easiest way to install scikit-learn is using ``pip`` ::
 
-This package uses distutils, which is the default way of installing
-python modules. To install in your home directory, use::
+    pip install -U scikit-learn
 
-  python setup.py install --user
+or ``conda``::
 
-To install for all users on Unix/Linux::
+    conda install scikit-learn
 
-  python setup.py build
-  sudo python setup.py install
+**We don't recommend installing scipy or numpy using pip on linux**,
+as this will involve a lengthy build-process with many dependencies.
+Without careful configuration, building numpy yourself can lead to an installation
+that is much slower than it should be. 
+If you are using Linux, consider using your package manager to install
+scikit-learn. It is usually the easiest way, but might not provide the newest
+version.
+If you haven't already installed numpy and scipy and can't install them via
+your operation system, it is recommended to use a third party distribution.
 
-For more detailed installation instructions,
-see the web page http://scikit-learn.org/stable/install.html
+The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
+
 
 Documentation
 -------------
@@ -92,9 +93,14 @@ Documentation
 - HTML documentation (stable release): http://scikit-learn.org
 - HTML documentation (development version): http://scikit-learn.org/dev/
 
-
 Development
 -----------
+
+We welcome new contributors of all experience levels. The scikit-learn
+community goals are to be helpful, welcoming, and effective. The
+`Contributor's Guide <http://scikit-learn.org/stable/developers/index.html>`_ 
+has detailed information about contributing code, documentation, tests, and
+more. We've included some basic information in this README.
 
 Important links
 ~~~~~~~~~~~~~~~
