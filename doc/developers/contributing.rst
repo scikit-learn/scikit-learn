@@ -597,8 +597,8 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         # actual implementation
         pass
 
-    @deprecated("Function 'zero_one' has been renamed to "
-                "'zero_one_loss' and will be removed in release 0.15."
+    @deprecated("Function 'zero_one' was renamed to 'zero_one_loss' "
+                "in version 0.13 and will be removed in release 0.15. "
                 "Default behavior is changed from 'normalize=False' to "
                 "'normalize=True'")
     def zero_one(y_true, y_pred, normalize=False):
@@ -609,7 +609,7 @@ use the decorator ``deprecated`` on a property.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
     @property
-    @deprecated("Attribute labels_ is deprecated and "
+    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
@@ -621,10 +621,17 @@ In following example, k is deprecated and renamed to n_clusters::
 
     def example_function(n_clusters=8, k=None):
         if k is not None:
-            warnings.warn("'k' was renamed to n_clusters and will "
-                          "be removed in 0.15.",
+            warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                          "will be removed in 0.15.",
                           DeprecationWarning)
             n_clusters = k
+
+
+As in these examples, the warning message should always give both the
+version in which the deprecation happened and the version in which the
+behavior will be removed. If the change happened in version 0.x-dev, 
+the message should say the change happened in version 0.x and the removal 
+will be in 0.(x+2).
 
 
 .. currentmodule:: sklearn
