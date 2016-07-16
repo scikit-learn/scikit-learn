@@ -1714,7 +1714,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
            [ 0.,  1.,  0.,  1.,  0.,  1.,  0.,  0.,  0.],
            [ 0.,  1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.]])
 
-
     See also
     --------
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
