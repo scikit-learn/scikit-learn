@@ -134,6 +134,7 @@ def test_lvmpdf_full_cv_non_positive_definite():
     assert_raise_message(ValueError, expected_message,
                          mixture.log_multivariate_normal_density,
                          X, mu, cv, 'full')
+    exp_msg = "The class GMM is deprecated and will be removed in 0.20."
     r = assert_warns_message(DeprecationWarning, exp_msg,
                              mixture.log_multivariate_normal_density,
                              X, mu, cv, 'full')
