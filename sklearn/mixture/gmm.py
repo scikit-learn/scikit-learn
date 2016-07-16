@@ -24,7 +24,7 @@ from sklearn.externals.six.moves import zip
 
 EPS = np.finfo(float).eps
 
-
+@deprecated("The class GMM is deprecated and will be removed in 0.20.")
 def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
     """Compute the log probability under a multivariate Gaussian distribution.
 
@@ -757,6 +757,7 @@ def _validate_covars(covars, covariance_type, n_components):
                          "'spherical', 'tied', 'diag', 'full'")
 
 
+@deprecated("The class GMM is deprecated and will be removed in 0.20.")
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):
     """Create all the covariance matrices from a given template."""
