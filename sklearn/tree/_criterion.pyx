@@ -29,8 +29,7 @@ np.import_array()
 from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
-from ._utils cimport MedianHeap
-from ._utils cimport MinMaxHeapRecord
+from ._utils cimport WeightedMedianHeap
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -964,7 +963,7 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
@@ -973,7 +972,6 @@ cdef class MAE(RegressionCriterion):
     """Mean absolute error impurity criterion"""
     def __dealloc__(self):
         """Destructor."""
-
         free(self.node_medians)
 
     cdef np.ndarray left_child_heaps
@@ -1039,14 +1037,13 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t w = 1.0
 
         # Fill accumulators with MedianHeaps
         with gil:
             for k in range(self.n_outputs):
-                self.left_child_heaps[k] = MedianHeap(self.n_node_samples)
-                self.right_child_heaps[k] = MedianHeap(self.n_node_samples)
+                self.left_child_heaps[k] = WeightedMedianHeap(self.n_node_samples)
+                self.right_child_heaps[k] = WeightedMedianHeap(self.n_node_samples)
 
         cdef void** left_child_heaps = <void**> self.left_child_heaps.data
         cdef void** right_child_heaps = <void**> self.right_child_heaps.data
@@ -1059,16 +1056,16 @@ cdef class MAE(RegressionCriterion):
 
             for k in range(self.n_outputs):
                 y_ik = y[i * y_stride + k]
-                w_y_ik = w * y_ik
 
                 # push all values to the right side,
                 # since pos = start initially anyway
-                (<MedianHeap> right_child_heaps[k]).push(w_y_ik)
+                (<WeightedMedianHeap> right_child_heaps[k]).push(y_ik, w)
 
             self.weighted_n_node_samples += w
+
         # calculate the node medians
         for k in range(self.n_outputs):
-            (<MedianHeap> right_child_heaps[k]).get_median(&(self.node_medians[k]))
+            (<WeightedMedianHeap> right_child_heaps[k]).get_median(&(self.node_medians[k]))
 
         # Reset to pos=start
         self.reset()
@@ -1078,7 +1075,8 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t i
         cdef SIZE_t k
-        cdef DOUBLE_t popped
+        cdef DOUBLE_t popped_value
+        cdef DOUBLE_t popped_weight
 
         cdef void** left_child_heaps = <void**> self.left_child_heaps.data
         cdef void** right_child_heaps = <void**> self.right_child_heaps.data
@@ -1092,10 +1090,12 @@ cdef class MAE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             # if left has no elements, it's already reset
-            for i in range((<MedianHeap> left_child_heaps[k]).size()):
+            for i in range((<WeightedMedianHeap> left_child_heaps[k]).size()):
                 # remove everything from left and put it into right
-                (<MedianHeap> left_child_heaps[k]).pop(&popped)
-                (<MedianHeap> right_child_heaps[k]).push(popped)
+                (<WeightedMedianHeap> left_child_heaps[k]).pop(&popped_value,
+                                                               &popped_weight)
+                (<WeightedMedianHeap> right_child_heaps[k]).push(popped_value,
+                                                         popped_weight)
 
     cdef void reverse_reset(self) nogil:
         """Reset the criterion at pos=end."""
@@ -1104,7 +1104,8 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
 
-        cdef DOUBLE_t popped
+        cdef DOUBLE_t popped_value
+        cdef DOUBLE_t popped_weight
         cdef void** left_child_heaps = <void**> self.left_child_heaps.data
         cdef void** right_child_heaps = <void**> self.right_child_heaps.data
 
@@ -1112,10 +1113,12 @@ cdef class MAE(RegressionCriterion):
         # left should have all elements.
         for k in range(self.n_outputs):
             # if right has no elements, it's already reset
-            for i in range((<MedianHeap> right_child_heaps[k]).size()):
+            for i in range((<WeightedMedianHeap> right_child_heaps[k]).size()):
                 # remove everything from right and put it into left
-                (<MedianHeap> right_child_heaps[k]).pop(&popped)
-                (<MedianHeap> left_child_heaps[k]).push(popped)
+                (<WeightedMedianHeap> right_child_heaps[k]).pop(&popped_value,
+                                                                &popped_weight)
+                (<WeightedMedianHeap> left_child_heaps[k]).push(popped_value,
+                                                                popped_weight)
 
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
@@ -1134,7 +1137,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
 
         # Update statistics up to new_pos
         #
@@ -1151,11 +1153,9 @@ cdef class MAE(RegressionCriterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    w_y_ik = w * y_ik
-
-                    # remove w_y_ik from right and add to left
-                    (<MedianHeap> right_child_heaps[k]).remove(w_y_ik)
-                    (<MedianHeap> left_child_heaps[k]).push(w_y_ik)
+                    # remove y_ik with weight w from right and add to left
+                    (<WeightedMedianHeap> right_child_heaps[k]).remove(y_ik, w)
+                    (<WeightedMedianHeap> left_child_heaps[k]).push(y_ik, w)
 
                 self.weighted_n_left += w
         else:
@@ -1169,15 +1169,13 @@ cdef class MAE(RegressionCriterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    w_y_ik = w * y_ik
-
-                    # remove w_y_ik from left and add to right
-                    (<MedianHeap> left_child_heaps[k]).remove(w_y_ik)
-                    (<MedianHeap> right_child_heaps[k]).push(w_y_ik)
+                    # remove y_ik from left and add to right
+                    (<WeightedMedianHeap> left_child_heaps[k]).remove(y_ik, w)
+                    (<WeightedMedianHeap> right_child_heaps[k]).push(y_ik, w)
 
                 self.weighted_n_left -= w
 
-        self.weighted_n_right = (self.weighted_n_node_samples - 
+        self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         self.pos = new_pos
 
@@ -1196,7 +1194,6 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w_y_ik
 
@@ -1206,13 +1203,9 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
                 y_ik = y[i * self.y_stride + k]
-                w_y_ik = w * y_ik
 
-                impurity += <double> fabs((<double> w_y_ik) - self.node_medians[k])
+                impurity += <double> fabs((<double> y_ik) - self.node_medians[k])
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* impurity_left,
@@ -1231,8 +1224,6 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t median
 
         cdef void** left_child_heaps = <void**> self.left_child_heaps.data
@@ -1242,29 +1233,22 @@ cdef class MAE(RegressionCriterion):
         impurity_right[0] = 0.0
 
         for k in range(self.n_outputs):
-            (<MedianHeap> left_child_heaps[k]).get_median(&median)
+            (<WeightedMedianHeap> left_child_heaps[k]).get_median(&median)
             for p in range(start, pos):
                 i = samples[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
                 y_ik = y[i * self.y_stride + k]
-                w_y_ik = w * y_ik
-                impurity_left[0] += <double>fabs((<double> w_y_ik) - median)
+
+                impurity_left[0] += <double>fabs((<double> y_ik) - median)
         impurity_left[0] /= <double>((pos - start) * self.n_outputs)
 
         for k in range(self.n_outputs):
-            (<MedianHeap> right_child_heaps[k]).get_median(&median)
+            (<WeightedMedianHeap> right_child_heaps[k]).get_median(&median)
             for p in range(pos, end):
                 i = samples[p]
 
-                if sample_weight != NULL:
-                    w = sample_weight[i]
-
                 y_ik = y[i * self.y_stride + k]
-                w_y_ik = w * y_ik
-                impurity_right[0] += <double>fabs((<double> w_y_ik) - median)
+                impurity_right[0] += <double>fabs((<double> y_ik) - median)
         impurity_right[0] /= <double>((end - pos) * self.n_outputs)
 
 

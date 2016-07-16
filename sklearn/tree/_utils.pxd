@@ -109,39 +109,46 @@ cdef class PriorityHeap:
                            SIZE_t heap_length) nogil
 
 # =============================================================================
-# MinMaxHeap data structure
+# WeightedPQueue data structure
 # =============================================================================
 
-# A record stored in the MinMaxHeap
-cdef struct MinMaxHeapRecord:
+# A record stored in the WeightedPQueue
+cdef struct WeightedPQueueRecord:
     DOUBLE_t data
+    DOUBLE_t weight
 
-cdef class MinMaxHeap:
+cdef class WeightedPQueue:
     cdef SIZE_t capacity
-    cdef SIZE_t heap_ptr
-    cdef MinMaxHeapRecord* heap_
-    cdef bint mode
+    cdef SIZE_t array_ptr
+    cdef WeightedPQueueRecord* array_
 
     cdef bint is_empty(self) nogil
     cdef SIZE_t size(self) nogil
-    cdef int push(self, DOUBLE_t data) nogil
-    cdef int remove(self, DOUBLE_t value) nogil
-    cdef int pop(self, DOUBLE_t* res) nogil
-    cdef int peek(self, DOUBLE_t* res) nogil
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int remove(self, DOUBLE_t value, DOUBLE_t weight) nogil
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef int peek(self, DOUBLE_t* res, DOUBLE_t* weight) nogil
+    cdef int get_index_data(self, SIZE_t idx, DOUBLE_t* value, DOUBLE_t* weight) nogil
 
 # =============================================================================
 # MedianHeap data structure
 # =============================================================================
 
-cdef class MedianHeap:
+cdef class WeightedMedianHeap:
     cdef SIZE_t initial_capacity
     cdef SIZE_t current_capacity
-    cdef MinMaxHeap right_min_heap
-    cdef MinMaxHeap left_max_heap
+    cdef WeightedPQueue samples
+    cdef DOUBLE_t total_weight
+    cdef SIZE_t k
+    cdef DOUBLE_t sum_w_0_k # represents sum(weights[0:k])
+                            # = w[0] + w[1] + ... + w[k-1]
 
     cdef SIZE_t size(self) nogil
-    cdef int pop(self, DOUBLE_t* res) nogil
-    cdef int push(self, DOUBLE_t data) nogil
-    cdef int remove(self, DOUBLE_t data) nogil
-    cdef int get_median(self, DOUBLE_t* data) nogil
-    cdef int rebalance(self) nogil
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int update_median_parameters_post_push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef int update_median_parameters_post_remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int get_median(self, double* median) nogil

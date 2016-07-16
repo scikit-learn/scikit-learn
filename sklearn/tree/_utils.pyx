@@ -303,220 +303,263 @@ cdef class PriorityHeap:
         return 0
 
 # =============================================================================
-# MinMaxHeap data structure
+# WeightedPQueue data structure
 # =============================================================================
 
-cdef class MinMaxHeap:
-    """A priority queue implemented as a binary heap.
-
-    The heap invariant is that the impurity improvement of the parent record is
-    larger then the impurity improvement of the children. The MinHeap is
-    essentially an array sorted in ascending order, and a MaxHeap is an array
-    sorted in descending order.
+cdef class WeightedPQueue:
+    """A priority queue class, always sorted in increasing order.
 
     Attributes
     ----------
     capacity : SIZE_t
-        The capacity of the heap
+        The capacity of the array
 
-    heap_ptr : SIZE_t
-        The water mark of the heap; the heap grows from left to right in the
-        array ``heap_``. heap_ptr is always less than capacity.
+    array_ptr : SIZE_t
+        The water mark of the array; the array grows from left to right in the
+        array ``array_``. array_ptr is always less than capacity.
 
-    heap_ : MinMaxHeapRecord*
-        The array of heap records. The maximum element is on the left;
-        the heap grows from left to right
-
-    mode : bint
-        The mode of the heap. When the value of the ``mode`` parameter passed
-        in at construction is ``max``, the heap is a Max-Heap and mode is set
-        to 1. When the value of the ``mode`` parameter passed in at
-        construction is not ``max``, the heap is a Min-Heap and mode is set
-        to 0.
+    array_ : WeightedPQueueRecord*
+        The array of array records. The minimum element is on the left;
+        the array grows from left to right
     """
 
-    def __cinit__(self, SIZE_t capacity, str mode):
+    def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
-        if mode == "max":
-            self.mode = 1
-        else:
-            self.mode = 0
+        self.array_ptr = 0
 
-        self.heap_ptr = 0
+        self.array_ = <WeightedPQueueRecord*> calloc(capacity, sizeof(WeightedPQueueRecord))
 
-        self.heap_ = <MinMaxHeapRecord*> calloc(capacity, sizeof(MinMaxHeapRecord))
-        if self.heap_ == NULL:
+        if self.array_ == NULL:
             raise MemoryError()
 
     def __dealloc__(self):
-        free(self.heap_)
+        free(self.array_)
 
     cdef bint is_empty(self) nogil:
-        return self.heap_ptr <= 0
+        return self.array_ptr <= 0
 
     cdef SIZE_t size(self) nogil:
-        return self.heap_ptr
+        return self.array_ptr
 
-    cdef int push(self, DOUBLE_t data) nogil:
-        """Push record on the priority heap.
-
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+        """Push record on the array.
         Returns 0 if successful; -1 on out of memory error.
         """
-        cdef SIZE_t heap_ptr = self.heap_ptr
+        cdef SIZE_t array_ptr = self.array_ptr
         cdef SIZE_t i
-        cdef MinMaxHeapRecord* heap = NULL
+        cdef WeightedPQueueRecord* array
 
         # Resize if capacity not sufficient
-        if heap_ptr >= self.capacity:
+        if array_ptr >= self.capacity:
             self.capacity *= 2
-            heap = <MinMaxHeapRecord*> realloc(self.heap_,
+            array = <WeightedPQueueRecord*> realloc(self.array_,
                                                self.capacity *
-                                               sizeof(MinMaxHeapRecord))
-            if heap == NULL:
+                                               sizeof(WeightedPQueueRecord))
+
+            if array == NULL:
                 # no free; __dealloc__ handles that
                 return -1
-            self.heap_ = heap
+            self.array_ = array
 
-        # Put element as last element of heap
-        heap = self.heap_
-        heap[heap_ptr].data = data
+        # Put element as last element of array
+        array = self.array_
+        array[array_ptr].data = data
+        array[array_ptr].weight = weight
 
-        # bubble last element up according to mode
-        # max heap, sorted in descending order
-        i = heap_ptr
-        if self.mode == 1:
-            while(i != 0 and heap[i].data > heap[i-1].data):
-                heap[i], heap[i-1] = heap[i-1], heap[i]
-                i = i-1
-
-        # min heap, sorted in ascending order
-        else:
-            while(i != 0 and heap[i].data < heap[i-1].data):
-                heap[i], heap[i-1] = heap[i-1], heap[i]
-                i = i-1
+        # bubble last element up according until it is sorted
+        # in ascending order
+        i = array_ptr
+        while(i != 0 and array[i].data < array[i-1].data):
+            array[i], array[i-1] = array[i-1], array[i]
+            i -= 1
 
         # Increase element count
-        self.heap_ptr = heap_ptr + 1
+        self.array_ptr = array_ptr + 1
         return 0
 
-    cdef int remove(self, DOUBLE_t value) nogil:
-        """Remove a specific value from heap"""
-        cdef SIZE_t heap_ptr = self.heap_ptr
-        cdef MinMaxHeapRecord* heap = self.heap_
+    cdef int remove(self, DOUBLE_t value, DOUBLE_t weight) nogil:
+        """Remove a specific value from array"""
+        cdef SIZE_t array_ptr = self.array_ptr
+        cdef WeightedPQueueRecord* array = self.array_
         cdef SIZE_t idx_to_remove = -1
         cdef SIZE_t i
 
-        if heap_ptr <= 0:
+        if array_ptr <= 0:
             return -1
 
         # find element to remove
-        for i in range(heap_ptr):
-            if heap[i].data == value:
+        for i in range(array_ptr):
+            if array[i].data == value and array[i].weight == weight:
                 idx_to_remove = i
                 break
+
         # should we throw an error if the element isn't found?
         # it shouldn't happen, but better to fail noisily...?
+        if idx_to_remove == -1:
+            with gil:
+                raise ValueError()
 
         # move after the removed element over by one
-        for i in range(idx_to_remove, heap_ptr-1):
-            heap[i] = heap[i+1]
+        for i in range(idx_to_remove, array_ptr-1):
+            array[i] = array[i+1]
 
-        self.heap_ptr = heap_ptr - 1
+        self.array_ptr = array_ptr - 1
         return 0
 
-    cdef int pop(self, DOUBLE_t* res) nogil:
-        """Remove top element from heap."""
-        cdef SIZE_t heap_ptr = self.heap_ptr
-        cdef MinMaxHeapRecord* heap = self.heap_
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
+        """Remove top element from array."""
+        cdef SIZE_t array_ptr = self.array_ptr
+        cdef WeightedPQueueRecord* array = self.array_
         cdef SIZE_t i
 
-        if heap_ptr <= 0:
+        if array_ptr <= 0:
             return -1
 
         # Take first element
-        res[0] = heap[0].data
+        data[0] = array[0].data
+        weight[0] = array[0].weight
 
         # move after the removed element over by one
-        for i in range(0, heap_ptr-1):
-            heap[i] = heap[i+1]
+        for i in range(0, array_ptr-1):
+            array[i] = array[i+1]
 
-        self.heap_ptr = heap_ptr - 1
+        self.array_ptr = array_ptr - 1
         return 0
 
-    cdef int peek(self, DOUBLE_t* res) nogil:
-        """Write the top element from heap to a pointer."""
-        cdef SIZE_t heap_ptr = self.heap_ptr
-        cdef MinMaxHeapRecord* heap = self.heap_
-        if heap_ptr <= 0:
+    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
+        """Write the top element from array to a pointer."""
+        cdef SIZE_t array_ptr = self.array_ptr
+        cdef WeightedPQueueRecord* array = self.array_
+        if array_ptr <= 0:
             return -1
         # Take first value
-        res[0] = heap[0].data
+        data[0] = array[0].data
+        weight[0] = array[0].weight
+        return 0
+
+    cdef int get_index_data(self, SIZE_t idx, DOUBLE_t* value,
+                                 DOUBLE_t* weight) nogil:
+        """Write value and weight at the specified index to a pointer."""
+        cdef SIZE_t array_ptr = self.array_ptr
+        cdef WeightedPQueueRecord* array = self.array_
+
+        if array_ptr <= 0:
+            return -1
+        # Take value at idx
+        value[0] = array[idx].data
+
+        # Take weight at idx
+        weight[0] = array[idx].weight
         return 0
 
 # =============================================================================
-# MedianHeap data structure
+# WeightedMedianHeap data structure
 # =============================================================================
 
-cdef class MedianHeap:
+cdef class WeightedMedianHeap:
 
     def __cinit__(self, SIZE_t initial_capacity):
         self.initial_capacity = initial_capacity
         self.current_capacity = 0
-        self.left_max_heap = MinMaxHeap(initial_capacity, "max")
-        self.right_min_heap = MinMaxHeap(initial_capacity, "min")
+        self.samples = WeightedPQueue(initial_capacity)
+        self.total_weight = 0
+        self.k = 0
+        self.sum_w_0_k = 0
 
     cdef SIZE_t size(self) nogil:
         return self.current_capacity
 
-    cdef int push(self, DOUBLE_t data) nogil:
-        """Push a value to the MedianHeap to be considered
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+        """Push a value and its associated weight
+        to the WeightedMedianHeap to be considered
         in the median calculation
         """
         cdef double current_median
         cdef int return_value
 
-        if self.current_capacity == 0:
-            return_value = self.left_max_heap.push(data)
-        else:
-            self.get_median(&current_median)
-            if current_median <= data:
-                # data is greater than or equal to current median, so it goes on min heap
-                return_value = self.right_min_heap.push(data)
-            else:
-                # data is less than current median, so it goes on max heap
-                return_value = self.left_max_heap.push(data)
-        self.rebalance()
+        return_value = self.samples.push(data, weight)
         self.current_capacity += 1
+        self.total_weight += weight
+        self.update_median_parameters_post_push(data, weight)
         return return_value
 
-    cdef int remove(self, DOUBLE_t data) nogil:
+    cdef int update_median_parameters_post_push(self, DOUBLE_t data,
+                                                DOUBLE_t weight) nogil:
+        """Update the parameters used in the median calculation,
+        namely `k` and `sum_w_0_k` after an insertion"""
+        cdef double current_median
+
+        # trivial case of one element.
+        if self.current_capacity == 1:
+            self.k = 1
+            self.sum_w_0_k = self.total_weight
+            return 0
+
+        # get the current weighted median
+        self.get_median(&current_median)
+
+        # check if the value inserted is the same as the current median
+        if data == current_median:
+            # k stays the same, but add weight to sum_w_0_k
+            self.sum_w_0_k += weight
+            return 0
+
+        if data < current_median:
+            # inserting below the median, so increment k and
+            # then update self.sum_w_0_k accordingly by adding
+            # the weight that was added.
+            self.k += 1
+            # update sum_w_0_k by adding the weight added
+            self.sum_w_0_k += weight
+
+            # minimize k such that sum(W[0:k]) >= total_weight / 2
+            # minimum value of k is 1
+            while(self.k != 1 and (self.sum_w_0_k - self.get_weight_from_index(self.k-1) >= self.total_weight / 2)):
+                # ordering of these statements is very important
+                self.k -= 1
+                self.sum_w_0_k -= self.get_weight_from_index(self.k)
+            return 0
+
+        if data > current_median:
+            # inserting above the median
+            # minimize k such that sum(W[0:k]) >= total_weight / 2
+            while(self.k != self.current_capacity and self.sum_w_0_k < self.total_weight / 2):
+                self.k += 1
+                self.sum_w_0_k += self.get_weight_from_index(self.k-1)
+            return 0
+
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil:
+        """Given an index between [0,self.current_capacity], access
+        the appropriate heap and return the requested weight"""
+        cdef DOUBLE_t value
+        cdef DOUBLE_t weight
+
+        self.samples.get_index_data(index, &value, &weight)
+        return weight
+
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil:
+        """Given an index between [0,self.current_capacity], access
+            the appropriate heap and return the requested value"""
+        cdef DOUBLE_t value
+        cdef DOUBLE_t weight
+
+        self.samples.get_index_data(index, &value, &weight)
+        return value
+
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Remove a value from the MedianHeap, removing it
         from consideration in the median calculation
         """
-        cdef double current_median
+        cdef double current_unweighted_median
         cdef int return_value
 
-        self.get_median(&current_median)
-        if current_median == data:
-            # data is the same value as current median, it is in
-            # the bigger one
-            if self.right_min_heap.size() > self.left_max_heap.size():
-                # it is in the right
-                return_value = self.right_min_heap.remove(data)
-            else:
-                # it is in the left
-                return_value = self.left_max_heap.remove(data)
-        elif current_median < data:
-            # data is greater than or equal to current median, so it is on min heap
-            return_value = self.right_min_heap.remove(data)
-        else:
-            # data is less than current median, so it is on max heap
-            return_value = self.left_max_heap.remove(data)
-        self.rebalance()
+        return_value = self.samples.remove(data, weight)
         self.current_capacity -= 1
+        self.total_weight -= weight
+        self.update_median_parameters_post_remove(data, weight)
         return return_value
 
-    cdef int pop(self, DOUBLE_t* res) nogil:
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
         """Pop a value from the MedianHeap, starting from the
         left and moving to the right.
         """
@@ -526,75 +569,68 @@ cdef class MedianHeap:
         if self.current_capacity == 0:
             return -1
 
-        if self.left_max_heap.size() != 0:
-            # pop from the left
-            return_value = self.left_max_heap.pop(res)
-        elif self.right_min_heap.size() != 0:
-            # pop from right
-            return_value = self.right_min_heap.pop(res)
-        else:
-            return -1
-        self.rebalance()
+        return_value = self.samples.pop(data, weight)
         self.current_capacity -= 1
+        self.total_weight -= weight[0]
+        self.update_median_parameters_post_remove(data[0],
+                                                  weight[0])
         return return_value
 
-    cdef int get_median(self, double* data) nogil:
-        """Return the current median"""
-        if self.current_capacity == 0:
+    cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
+                                                  DOUBLE_t weight) nogil:
+        """Update the parameters used in the median calculation,
+        namely `k` and `sum_w_0_k` after a removal"""
+        cdef DOUBLE_t current_median
+        # trivial case of one element.
+        if self.current_capacity == 1:
+            self.k = 1
+            self.sum_w_0_k = self.total_weight
+            return 0
+
+        # get the current weighted median
+        self.get_median(&current_median)
+
+        # check if the value removed is the same as the current median
+        if data == current_median:
+            # k stays the same, but remove weight from sum_w_0_k
+            self.sum_w_0_k -= weight
+            return 0
+
+        if data < current_median:
+            # removing below the median, so decrement k and
+            # then update self.sum_w_0_k accordingly by subtracting
+            # the removed weight
+            self.k -= 1
+            # update sum_w_0_k by removing the weight at index k
+            self.sum_w_0_k -= weight
+
+            # minimize k such that sum(W[0:k]) >= total_weight / 2
+            # by incrementing k and updating sum_w_0_k accordingly
+            # until the condition is met.
+            while(self.k != self.current_capacity and self.sum_w_0_k < self.total_weight / 2):
+                # ordering of these statements is very important
+                self.k += 1
+                self.sum_w_0_k += self.get_weight_from_index(self.k-1)
+            return 0
+
+        if data > current_median:
+            # removing above the median
+            # minimize k such that sum(W[0:k]) >= total_weight / 2
+            while(self.k != 1 and self.sum_w_0_k - self.get_weight_from_index(self.k-1) >= self.total_weight / 2):
+                # mind the ordering
+                self.k -= 1
+                self.sum_w_0_k -= self.get_weight_from_index(self.k)
+            return 0
+
+    cdef int get_median(self, double* median) nogil:
+        """Write the median to a pointer, taking into account
+        sample weights."""
+        if self.sum_w_0_k < (self.total_weight / 2.0):
             return -1
-
-        cdef SIZE_t left_max_heap_size = self.left_max_heap.size()
-        cdef SIZE_t right_min_heap_size = self.right_min_heap.size()
-        cdef DOUBLE_t left_max_heap_median
-        cdef DOUBLE_t right_min_heap_median
-
-        if self.current_capacity < 2:
-            # there is only one thing, so set the median to be that
-            if left_max_heap_size >= 1:
-                self.left_max_heap.peek(&left_max_heap_median)
-                data[0] = left_max_heap_median
-            else:
-                self.right_min_heap.peek(&right_min_heap_median)
-                data[0] = right_min_heap_median
-            return 0
-        self.left_max_heap.peek(&left_max_heap_median)
-        self.right_min_heap.peek(&right_min_heap_median)
-
-        if left_max_heap_size == right_min_heap_size:
-            # take the average of the two
-            data[0] = (left_max_heap_median +
-                            right_min_heap_median) / 2.0
-        elif left_max_heap_size > right_min_heap_size:
-            # left max heap larger, so median is at its' top
-            data[0] = left_max_heap_median
-        else:
-            # right min heap is larger, so median is at its' top
-            data[0] = right_min_heap_median
-        return 0
-
-    cdef int rebalance(self) nogil:
-        """Rebalance the left max heap and the left min heap to have a
-        one element or less difference in size"""
-        cdef SIZE_t left_max_heap_size = self.left_max_heap.size()
-        cdef SIZE_t right_min_heap_size = self.right_min_heap.size()
-        cdef SIZE_t size_difference = left_max_heap_size - right_min_heap_size
-        cdef DOUBLE_t popped
-        cdef SIZE_t i
-
-        if size_difference >= -1 and size_difference <= 1:
-            # no balancing needed
-            return 0
-
-        if size_difference > 1:
-            # left max heap bigger
-            for i in range(0, size_difference - 1):
-                # pop from left max heap and push into right min heap
-                self.left_max_heap.pop(&popped)
-                self.right_min_heap.push(popped)
-        else:
-            # right min heap bigger
-            for i in range(0, (size_difference * -1) - 1):
-                # pop from right min heap and push into left max heap
-                self.right_min_heap.pop(&popped)
-                self.left_max_heap.push(popped)
+        if self.sum_w_0_k == (self.total_weight / 2.0):
+            # split median
+            median[0] = (self.get_value_from_index(self.k) + self.get_value_from_index(self.k-1))/2
+        if self.sum_w_0_k > (self.total_weight / 2.0):
+            # whole median
+            median[0] = self.get_value_from_index(self.k-1)
         return 0
