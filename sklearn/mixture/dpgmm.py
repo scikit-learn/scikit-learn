@@ -10,7 +10,6 @@ from __future__ import print_function
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
-import warnings
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
