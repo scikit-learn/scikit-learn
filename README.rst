@@ -1,9 +1,4 @@
 .. -*- mode: rst -*-
-scikit-learn
-============
-
-Website: http://scikit-learn.org
-
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
@@ -30,9 +25,13 @@ Website: http://scikit-learn.org
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
+scikit-learn
+============
+
 scikit-learn is a Python module for machine learning built on top of
 SciPy and distributed under the 3-Clause BSD license.
 
+<<<<<<< 154635e629fd5585ff5bb4ad782315e2c5610177
 <<<<<<< 18852978821063655c852f46eff0eff4765e8182
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
@@ -43,6 +42,10 @@ It is currently maintained by a team of volunteers.
 
 =======
 >>>>>>> Update install
+=======
+Website: http://scikit-learn.org
+
+>>>>>>> Fix changes re: @amuller
 Installation
 ------------
 
@@ -74,16 +77,6 @@ or ``conda``::
 
     conda install scikit-learn
 
-**We don't recommend installing scipy or numpy using pip on linux**,
-as this will involve a lengthy build-process with many dependencies.
-Without careful configuration, building numpy yourself can lead to an installation
-that is much slower than it should be. 
-If you are using Linux, consider using your package manager to install
-scikit-learn. It is usually the easiest way, but might not provide the newest
-version.
-If you haven't already installed numpy and scipy and can't install them via
-your operation system, it is recommended to use a third party distribution.
-
 The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
 
 
@@ -92,6 +85,7 @@ Documentation
 
 - HTML documentation (stable release): http://scikit-learn.org
 - HTML documentation (development version): http://scikit-learn.org/dev/
+
 
 Development
 -----------
@@ -149,6 +143,7 @@ Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
 with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
+
 Project history
 ---------------
 
@@ -159,7 +154,6 @@ the AUTHORS.rst file for a complete list of contributors.
 The project is currently maintained by a team of volunteers.
 
 **Note** `scikit-learn` was previously referred to as `scikits.learn`.
-
 
 
 Communication
