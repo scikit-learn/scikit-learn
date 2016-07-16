@@ -222,7 +222,7 @@ def test_transformer_n_iter():
             else:
                 yield check_transformer_n_iter, name, estimator
 
-
+@ignore_warnings(category=DeprecationWarning)
 def test_get_params_invariance():
     # Test for estimators that support get_params, that
     # get_params(deep=False) is a subset of get_params(deep=True)
