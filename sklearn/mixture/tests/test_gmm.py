@@ -82,8 +82,9 @@ def test_lmvnpdf_diag():
     ref = _naive_lmvnpdf_diag(X, mu, cv)
     lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
-    exp_msg = "The class GMM is deprecated and will be removed in 0.20."
-    r = assert_warns_message(DeprecationWarning, exp_msg,
+    r = assert_warns_message(DeprecationWarning, exp_msg,"The function"
+                             " log_multivariate_normal_daensity is "
+                             "deprecated and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
                              X, mu, cv, 'diag')
 
@@ -101,8 +102,9 @@ def test_lmvnpdf_spherical():
     lpr = mixture.log_multivariate_normal_density(X, mu, spherecv,
                                                   'spherical')
     assert_array_almost_equal(lpr, reference)
-    exp_msg = "The class GMM is deprecated and will be removed in 0.20."
-    r = assert_warns_message(DeprecationWarning, exp_msg,
+    r = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
                              X, mu, cv, 'spherical')
 
@@ -119,8 +121,9 @@ def test_lmvnpdf_full():
     reference = _naive_lmvnpdf_diag(X, mu, cv)
     lpr = mixture.log_multivariate_normal_density(X, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
-    exp_msg = "The class GMM is deprecated and will be removed in 0.20."
-    r = assert_warns_message(DeprecationWarning, exp_msg,
+    r = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
                              X, mu, fullcv, 'full')
 
@@ -134,8 +137,9 @@ def test_lvmpdf_full_cv_non_positive_definite():
     assert_raise_message(ValueError, expected_message,
                          mixture.log_multivariate_normal_density,
                          X, mu, cv, 'full')
-    exp_msg = "The class GMM is deprecated and will be removed in 0.20."
-    r = assert_warns_message(DeprecationWarning, exp_msg,
+    r = assert_warns_message(DeprecationWarning,"The function" 
+                             " log_multivariate_normal_density is "
+                             "deprecated and will be removed in 0.20.",     
                              mixture.log_multivariate_normal_density,
                              X, mu, cv, 'full')
 
