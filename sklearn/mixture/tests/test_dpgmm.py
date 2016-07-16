@@ -7,8 +7,10 @@ from sklearn.mixture import DPGMM, VBGMM
 from sklearn.mixture.dpgmm import log_normalize
 from sklearn.datasets import make_blobs
 from sklearn.utils.testing import assert_array_less, assert_equal
+from sklearn.utils.testing import assert_warns_message
 from sklearn.mixture.tests.test_gmm import GMMTester
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.mixture.dpgmm import digamma, gammaln
 
 np.seterr(all='warn')
 
@@ -89,10 +91,24 @@ def test_verbose_second_level():
             sys.stdout = old_stdout
 
 
+def test_digamma():
+    assert_warns_message(DeprecationWarning, "The function digamma is"
+                        " deprecated and will be removed in 0.20.",
+                        digamma, 3)
+
+def test_gammaln():
+    assert_warns_message(DeprecationWarning, "The function gammaln is"
+                        " deprecated and will be removed in 0.20.",
+                        gammaln, 3)
+
+
 def test_log_normalize():
     v = np.array([0.1, 0.8, 0.01, 0.09])
     a = np.log(2 * v)
     assert np.allclose(v, log_normalize(a), rtol=0.01)
+    assert_warns_message(DeprecationWarning, "The function log_normalize is"
+                        " deprecated and will be removed in 0.20.",
+                        log_normalize, a)
 
 
 def do_model(self, **kwds):
