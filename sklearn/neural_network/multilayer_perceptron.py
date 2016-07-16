@@ -909,7 +909,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
-
+                
+        self.label_binarizer_.fit(self.classes_)                 
         y = self.label_binarizer_.transform(y)
         return X, y
 
