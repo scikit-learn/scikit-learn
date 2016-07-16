@@ -224,7 +224,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, [n_topics, n_features]
         Topic word distribution. ``components_[i, j]`` represents word j in
-        topic `i`. In the literature, this is called lambda.
+        topic `i`. In the literature, this is called phi.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
