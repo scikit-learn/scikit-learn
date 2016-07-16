@@ -24,13 +24,13 @@ from .gmm import _GMMBase
 
 
 @deprecated("The function digamma is deprecated in 0.18 and "
-            "will be removed in 0.20.")
+            "will be removed in 0.20. Use scipy.special.digamma instead.")
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
 
 
 @deprecated("The function gammaln is deprecated in 0.18 and "
-            "will be removed in 0.20.")
+            "will be removed in 0.20. Use scipy.special.gammaln isntead.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 
@@ -116,8 +116,9 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     return bound
 
 
-@deprecated("The class DPGMM is deprecated in 0.18 and "
-            "will be removed in 0.20. This class no longer works.")
+@deprecated("The DPGMM class is not working correctly and it's better "
+            "to not use it. DPGMM is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 class DPGMM(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
@@ -618,8 +619,9 @@ class DPGMM(_GMMBase):
         return z
 
 
-@deprecated("The class VBGMM is deprecated in 0.18 and "
-            "will be removed in 0.20. This class no longer works.")
+@deprecated("The VBGMM class is not working correctly and it's better"
+            " to not use it. VBGMM is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 class VBGMM(DPGMM):
     """Variational Inference for the Gaussian Mixture Model
 

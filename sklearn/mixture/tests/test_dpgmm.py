@@ -95,14 +95,15 @@ def test_verbose_second_level():
 
 def test_digamma():
     assert_warns_message(DeprecationWarning, "The function digamma is"
-                         " deprecated in 0.18 and will be removed in 0.20.",
-                         digamma, 3)
+                         " deprecated in 0.18 and will be removed in 0.20. "
+                         "Use scipy.special.digamma instead.", digamma, 3)
 
 
 def test_gammaln():
     assert_warns_message(DeprecationWarning, "The function gammaln"
                          " is deprecated in 0.18 and will be removed"
-                         " in 0.20.", gammaln, 3)
+                         " in 0.20. Use scipy.special.gammaln isntead.",
+                         gammaln, 3)
 
 
 def test_log_normalize():
@@ -132,9 +133,10 @@ def test_wishart_logz():
 
 
 def test_DPGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The class DPGMM is"
-                         " deprecated in 0.18 and will be removed in 0.20."
-                         " This class no longer works.", DPGMM)
+    assert_warns_message(DeprecationWarning, "The DPGMM class is"
+                         " not working correctly and it's better "
+                         "to not use it. DPGMM is deprecated in 0.18 "
+                         "and will be removed in 0.20.", DPGMM)
 
 
 def do_model(self, **kwds):
@@ -171,9 +173,10 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
 
 
 def test_VBGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The class VBGMM is"
-                         " deprecated in 0.18 and will be removed in "
-                         "0.20. This class no longer works.", VBGMM)
+    assert_warns_message(DeprecationWarning, "The VBGMM class is"
+                         " not working correctly and it's better"
+                         " to not use it. VBGMM is deprecated in 0.18"
+                         " and will be removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):
