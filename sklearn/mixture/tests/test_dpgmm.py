@@ -17,6 +17,7 @@ from sklearn.mixture.dpgmm import wishart_log_det, wishart_logz
 np.seterr(all='warn')
 
 
+@ignore_warning(category=DeprecationWarning)
 def test_class_weights():
     # check that the class weights are updated
     # simple 3 cluster dataset
@@ -34,6 +35,7 @@ def test_class_weights():
         assert_array_less(dpgmm.weights_[~active], .05)
 
 
+@ignore_warning(category=DeprecationWarning)
 def test_verbose_boolean():
     # checks that the output for the verbose output is the same
     # for the flag values '1' and 'True'
