@@ -23,15 +23,18 @@ from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import _GMMBase
 
+
 @deprecated("The function digamma is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
 
+
 @deprecated("The function gammaln is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
+
 
 @deprecated("The function log_normalize is deprecated in 0.18 and "
             "will be removed in 0.20.")
@@ -46,6 +49,7 @@ def log_normalize(v, axis=0):
     v /= np.sum(v, axis=0)
     return np.swapaxes(v, 0, axis)
 
+
 @deprecated("The function wishart_log_det is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def wishart_log_det(a, b, detB, n_features):
@@ -57,6 +61,7 @@ def wishart_log_det(a, b, detB, n_features):
     l += n_features * np.log(2)
     return l + detB
 
+
 @deprecated("The function wishart_logz is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def wishart_logz(v, s, dets, n_features):
@@ -67,6 +72,7 @@ def wishart_logz(v, s, dets, n_features):
     z += 0.5 * v * np.log(dets)
     z += np.sum(gammaln(0.5 * (v - np.arange(n_features) + 1)))
     return z
+
 
 def _bound_wishart(a, B, detB):
     """Returns a function of the dof, scale matrix and its determinant
@@ -109,6 +115,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
         for k in range(n_components):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
     return bound
+
 
 @deprecated("The class DPGMM is deprecated in 0.18 and "
             "will be removed in 0.20. This class no longer works.")
@@ -610,6 +617,7 @@ class DPGMM(_GMMBase):
         self._set_weights()
 
         return z
+
 
 @deprecated("The class VBGMM is deprecated in 0.18 and "
             "will be removed in 0.20. This class no longer works.")
