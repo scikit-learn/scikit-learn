@@ -268,7 +268,7 @@ class PCA(_BasePCA):
     """
 
     def __init__(self, n_components=None, copy=True, whiten=False,
-                 svd_solver='auto', tol=0.0, iterated_power=4,
+                 svd_solver='auto', tol=0.0, iterated_power=None,
                  random_state=None):
         self.n_components = n_components
         self.copy = copy
