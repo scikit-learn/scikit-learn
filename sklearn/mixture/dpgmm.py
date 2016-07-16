@@ -30,7 +30,7 @@ def digamma(x):
 
 
 @deprecated("The function gammaln is deprecated in 0.18 and "
-            "will be removed in 0.20. Use scipy.special.gammaln isntead.")
+            "will be removed in 0.20. Use scipy.special.gammaln instead.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 

@@ -102,7 +102,7 @@ def test_digamma():
 def test_gammaln():
     assert_warns_message(DeprecationWarning, "The function gammaln"
                          " is deprecated in 0.18 and will be removed"
-                         " in 0.20. Use scipy.special.gammaln isntead.",
+                         " in 0.20. Use scipy.special.gammaln instead.",
                          gammaln, 3)
 
 
