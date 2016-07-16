@@ -168,7 +168,7 @@ first, you need to install `numpy <http://www.numpy.org/>`_ and `scipy
 
 wheel packages (.whl files) for scikit-learn from `pypi
 <https://pypi.python.org/pypi/scikit-learn/>`_ can be installed with the `pip
-<https://pip.readthedocs.org/en/stable/installing/>`_ utility.
+<https://pip.readthedocs.io/en/stable/installing/>`_ utility.
 open a console and type the following to install or upgrade scikit-learn to the
 latest stable release::
 
@@ -279,7 +279,7 @@ path environment variable.
 -------------
 
 for 32-bit python it is possible use the standalone installers for
-`microsoft visual c++ express 2008 <http://go.microsoft.com/?linkid=7729279>`_
+`microsoft visual c++ express 2008 <http://download.microsoft.com/download/A/5/4/A54BADB6-9C3F-478D-8657-93B3FC9FE62D/vcsetup.exe>`_
 for python 2 or microsoft visual c++ express 2010 for python 3.
 
 once installed you should be able to build scikit-learn without any
@@ -301,7 +301,7 @@ as a new drive with a ``setup.exe`` installer in it.
 
 - for python 2 you need sdk **v7.0**: `ms windows sdk for windows 7 and .net
   framework 3.5 sp1
-  <http://www.microsoft.com/en-us/download/details.aspx?id=18950>`_
+  <https://www.microsoft.com/en-us/download/details.aspx?id=18950>`_
 
 - for python 3 you need sdk **v7.1**: `ms windows sdk for windows 7 and .net
   framework 4
@@ -377,7 +377,7 @@ testing scikit-learn once installed
 -----------------------------------
 
 testing requires having the `nose
-<https://nose.readthedocs.org/en/latest/>`_ library. after
+<https://nose.readthedocs.io/en/latest/>`_ library. after
 installation, the package can be tested by executing *from outside* the
 source directory::
 

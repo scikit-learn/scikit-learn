@@ -246,7 +246,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            http://www.cs.ucsc.edu/~optas/papers/jl.pdf
@@ -581,7 +581,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf

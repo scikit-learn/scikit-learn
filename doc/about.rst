@@ -113,7 +113,7 @@ The `PSF <https://www.python.org/psf/>`_ helped find and manage funding for our
 2011 Granada sprint. More information can be found `here
 <https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`__
 
-`tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
+`tinyclues <https://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
 
 
@@ -126,7 +126,7 @@ the *Paypal* button below or the `NumFOCUS Donations Page <http://www.numfocus.o
 All donations will be handled by `NumFOCUS
 <http://www.numfocus.org>`_, a non-profit-organization which is
 managed by a board of `Scipy community members
-<http://www.numfocus.org/board>`_. NumFOCUS's mission is to foster
+<http://www.numfocus.org/board.html>`_. NumFOCUS's mission is to foster
 scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.
@@ -176,14 +176,14 @@ The 2013' Paris international sprint
    :target: http://www.telecom-paristech.fr/
 
 
-.. |tinyclues| image:: http://www.tinyclues.com/static/img/logo.png
+.. |tinyclues| image:: https://www.tinyclues.com/static/img/logo.png
    :width: 120pt
-   :target: http://www.tinyclues.com/
+   :target: https://www.tinyclues.com/
 
 
-.. |afpy| image:: http://www.afpy.org/logo.png
+.. |afpy| image:: https://www.afpy.org/logo.png
    :width: 120pt
-   :target: http://www.afpy.org
+   :target: https://www.afpy.org
 
 
 .. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png
@@ -211,13 +211,13 @@ The 2013' Paris international sprint
 Infrastructure support
 ----------------------
 
-- We would like to thank `Rackspace <http://www.rackspace.com>`_ for providing
-  us with a free `Rackspace Cloud <http://www.rackspace.com/cloud/>`_ account to
+- We would like to thank `Rackspace <https://www.rackspace.com>`_ for providing
+  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account to
   automatically build the documentation and the example gallery from for the
   development version of scikit-learn using `this tool
   <https://github.com/scikit-learn/sklearn-docbuilder>`_.
 
 - We would also like to thank `Shining Panda
-  <https://www.shiningpanda-ci.com/>`_ for free CPU time on their Continuous
+  <http://web.archive.org/web/20130303184615/https://www.shiningpanda-ci.com/>`_ for free CPU time on their Continuous
   Integration server.
 

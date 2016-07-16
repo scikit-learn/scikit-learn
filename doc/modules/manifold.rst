@@ -146,7 +146,7 @@ The overall complexity of Isomap is
 .. topic:: References:
 
    * `"A global geometric framework for nonlinear dimensionality reduction"
-     <http://www.sciencemag.org/content/290/5500/2319.full>`_
+     <http://science.sciencemag.org/content/290/5500/2319.full>`_
      Tenenbaum, J.B.; De Silva, V.; & Langford, J.C.  Science 290 (5500)
 
 .. _locally_linear_embedding:

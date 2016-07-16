@@ -45,7 +45,7 @@ and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, then look up the 
-[Git documentation](http://git-scm.com/documentation) on the web.)
+[Git documentation](https://git-scm.com/documentation) on the web.)
 
 Contributing Pull Requests
 --------------------------
@@ -197,7 +197,7 @@ README file in the doc/ directory for more information.
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
 [matplotlib](http://matplotlib.sourceforge.net/), and
-[pillow](http://pillow.readthedocs.org/en/latest/).
+[pillow](http://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give

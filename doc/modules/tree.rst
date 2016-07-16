@@ -410,7 +410,7 @@ and threshold that yield the largest information gain at each node.
 scikit-learn uses an optimised version of the CART algorithm.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
 
 
 .. _tree_mathematical_formulation:
