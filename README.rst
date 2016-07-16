@@ -1,4 +1,8 @@
 .. -*- mode: rst -*-
+scikit-learn
+============
+
+Website: http://scikit-learn.org
 
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
 
@@ -23,13 +27,8 @@
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
 
-
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
-
-
-scikit-learn
-============
 
 scikit-learn is a Python module for machine learning built on top of
 SciPy and distributed under the 3-Clause BSD license.
@@ -40,22 +39,12 @@ the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
-**Note** `scikit-learn` was previously referred to as `scikits.learn`.
 
-
-Important links
-===============
-
-- Official source code repo: https://github.com/scikit-learn/scikit-learn
-- HTML documentation (stable release): http://scikit-learn.org
-- HTML documentation (development version): http://scikit-learn.org/dev/
-- Download releases: http://sourceforge.net/projects/scikit-learn/files/
-- Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
-- Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
-- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
+Installation
+------------
 
 Dependencies
-============
+~~~~~~~~~~~~
 
 scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.5.
 (using the same codebase thanks to an embedded copy of
@@ -79,8 +68,10 @@ CBLAS exists in many implementations; see `Linear algebra libraries
 for known issues.
 
 
-Install
-=======
+User installation
+~~~~~~~~~~~~~~~~~
+
+**conda? pip?**
 
 This package uses distutils, which is the default way of installing
 python modules. To install in your home directory, use::
@@ -95,33 +86,42 @@ To install for all users on Unix/Linux::
 For more detailed installation instructions,
 see the web page http://scikit-learn.org/stable/install.html
 
+Documentation
+-------------
+
+- HTML documentation (stable release): http://scikit-learn.org
+- HTML documentation (development version): http://scikit-learn.org/dev/
+
+
 Development
-===========
+-----------
 
-Code
-----
+Important links
+~~~~~~~~~~~~~~~
 
-GIT
-~~~
+- Official source code repo: https://github.com/scikit-learn/scikit-learn
+- Download releases: http://sourceforge.net/projects/scikit-learn/files/
+- Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
+
+Source code
+~~~~~~~~~~~
 
 You can check the latest sources with the command::
 
     git clone https://github.com/scikit-learn/scikit-learn.git
 
+or if you have write privileges::
 
-Contributing
-~~~~~~~~~~~~
+    git clone git@github.com:scikit-learn/scikit-learn.git
+
+Setting up a development environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Quick tutorial on how to go about setting up your environment to
 contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 
-Before opening a Pull Request, have a look at the
-full Contributing page to make sure your code complies
-with our guidelines: http://scikit-learn.org/stable/developers/index.html
-
-
 Testing
--------
+~~~~~~~
 
 After installation, you can launch the test suite from outside the
 source directory (you will need to have the ``nose`` package installed)::
@@ -139,3 +139,30 @@ for more information.
 
     Random number generation can be controlled during testing by setting
     the ``SKLEARN_SEED`` environment variable.
+
+Submitting a Pull Request
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before opening a Pull Request, have a look at the
+full Contributing page to make sure your code complies
+with our guidelines: http://scikit-learn.org/stable/developers/index.html
+
+Project history
+---------------
+
+The project was started in 2007 by David Cournapeau as a Google Summer
+of Code project, and since then many volunteers have contributed. See
+the AUTHORS.rst file for a complete list of contributors.
+
+The project is currently maintained by a team of volunteers.
+
+**Note** `scikit-learn` was previously referred to as `scikits.learn`.
+
+
+
+Communication
+-------------
+
+- Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
+
