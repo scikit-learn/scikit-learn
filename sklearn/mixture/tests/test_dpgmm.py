@@ -11,6 +11,8 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.mixture.tests.test_gmm import GMMTester
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.mixture.dpgmm import digamma, gammaln
+from sklearn.mixture.dpgmm import wishart_log_det, wishart_logz
+
 
 np.seterr(all='warn')
 
@@ -110,6 +112,17 @@ def test_log_normalize():
                         " deprecated and will be removed in 0.20.",
                         log_normalize, a)
 
+def test_wishart_log_det():
+    a = np.array([0.1, 0.8, 0.01, 0.09])
+    b = np.array([0.2, 0.7, 0.05, 0.1])
+    assert_warns_message(DeprecationWarning, "The function wishart_log_det"
+                        " is deprecated and will be removed in 0.20.",
+                        wishart_log_det, a, b, 2, 4) 
+
+def test_wishart_logz():
+    assert_warns_message(DeprecationWarning, "The function wishart_logz"
+                        " is deprecated and will be removed in 0.20.",
+                        wishart_logz,3, np.identity(3),1, 3)
 
 def do_model(self, **kwds):
     return VBGMM(verbose=False, **kwds)
