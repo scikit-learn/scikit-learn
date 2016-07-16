@@ -107,10 +107,11 @@ def test_gammaln():
 def test_log_normalize():
     v = np.array([0.1, 0.8, 0.01, 0.09])
     a = np.log(2 * v)
-    assert np.allclose(v, log_normalize(a), rtol=0.01)
-    assert_warns_message(DeprecationWarning, "The function log_normalize is"
+    result = assert_warns_message(DeprecationWarning, "The function log_normalize is"
                         " deprecated and will be removed in 0.20.",
                         log_normalize, a)
+    assert np.allclose(v, result, rtol=0.01)
+
 
 def test_wishart_log_det():
     a = np.array([0.1, 0.8, 0.01, 0.09])
