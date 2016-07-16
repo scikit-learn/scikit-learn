@@ -7,7 +7,7 @@ from sklearn.mixture import DPGMM, VBGMM
 from sklearn.mixture.dpgmm import log_normalize
 from sklearn.datasets import make_blobs
 from sklearn.utils.testing import assert_array_less, assert_equal
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns_message, ignore_warnings
 from sklearn.mixture.tests.test_gmm import GMMTester
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.mixture.dpgmm import digamma, gammaln
@@ -17,7 +17,7 @@ from sklearn.mixture.dpgmm import wishart_log_det, wishart_logz
 np.seterr(all='warn')
 
 
-@ignore_warning(category=DeprecationWarning)
+@ignore_warnings(category=DeprecationWarning)
 def test_class_weights():
     # check that the class weights are updated
     # simple 3 cluster dataset
@@ -35,7 +35,7 @@ def test_class_weights():
         assert_array_less(dpgmm.weights_[~active], .05)
 
 
-@ignore_warning(category=DeprecationWarning)
+@ignore_warnings(category=DeprecationWarning)
 def test_verbose_boolean():
     # checks that the output for the verbose output is the same
     # for the flag values '1' and 'True'
