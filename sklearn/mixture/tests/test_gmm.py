@@ -83,7 +83,7 @@ def test_lmvnpdf_diag():
     lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
     r = assert_warns_message(DeprecationWarning, exp_msg,"The function"
-                             " log_multivariate_normal_daensity is "
+                             " log_multivariate_normal_density is "
                              "deprecated and will be removed in 0.18.",
                              mixture.log_multivariate_normal_density,
                              X, mu, cv, 'diag')
