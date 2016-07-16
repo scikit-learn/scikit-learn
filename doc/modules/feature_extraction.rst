@@ -321,6 +321,19 @@ requested explicitly::
   ...     ['this', 'is', 'text', 'document', 'to', 'analyze'])
   True
 
+You can customize the way sentences are tokenzied by modifying the
+``token_pattern`` keyword argument with a customized regular expression.
+For example, if you want to include words with apostrophes, you can try:
+
+  >>> vectorizer2 = CountVectorizer(
+  ...     token_pattern=r"(?u)\b[a-zA-Z0-9_'][a-zA-Z0-9_']+\b"
+  ... )
+  >>> analyze2 = vectorizer2.build_analyzer()
+  >>> analyze2("I couldn't find my wallet. I'll be back with cash.") == (
+  ...     ["couldn't", 'find', 'my', 'wallet', "i'll", 'be', 'back', 
+  ...      'with', 'cash'])
+  True
+
 Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
