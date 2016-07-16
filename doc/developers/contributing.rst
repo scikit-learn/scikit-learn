@@ -146,7 +146,7 @@ rules before submitting a pull request:
     * If your pull request addresses an issue, please use the title to describe
       the issue and mention the issue number in the pull request description to
       ensure a link is created to the original issue.
-      
+
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
@@ -262,7 +262,7 @@ following rules before submitting:
      import numpy; print("NumPy", numpy.__version__)
      import scipy; print("SciPy", scipy.__version__)
      import sklearn; print("Scikit-Learn", sklearn.__version__)
-   
+
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
    `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
@@ -863,23 +863,41 @@ If a dependency on scikit-learn is okay for your code,
 you can prevent a lot of boilerplate code
 by deriving a class from ``BaseEstimator``
 and optionally the mixin classes in ``sklearn.base``.
-E.g., here's a custom classifier::
+E.g., below is a custom classifier. For more information on this example, see
+`scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
 
   >>> import numpy as np
   >>> from sklearn.base import BaseEstimator, ClassifierMixin
-  >>> class MajorityClassifier(BaseEstimator, ClassifierMixin):
-  ...     """Predicts the majority class of its training data."""
-  ...     def __init__(self):
-  ...         pass
+  >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+  >>> from sklearn.utils.multiclass import unique_labels
+  >>> from sklearn.metrics import euclidean_distances
+  >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+  ...
+  ...     def __init__(self, demo_param='demo'):
+  ...         self.demo_param = demo_param
   ...
   ...     def fit(self, X, y):
-  ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
-  ...                                            return_inverse=True)
-  ...         self.majority_ = np.argmax(np.bincount(indices))
+  ...
+  ...         # Check that X and y have correct shape
+  ...         X, y = check_X_y(X, y)
+  ...         # Store the classes seen during fit
+  ...         self.classes_ = unique_labels(y)
+  ...
+  ...         self.X_ = X
+  ...         self.y_ = y
+  ...         # Return the classifier
   ...         return self
   ...
   ...     def predict(self, X):
-  ...         return np.repeat(self.classes_[self.majority_], len(X))
+  ...
+  ...         # Check is fit had been called
+  ...         check_is_fitted(self, ['X_', 'y_'])
+  ...
+  ...         # Input validation
+  ...         X = check_array(X)
+  ...
+  ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
+  ...         return self.y_[closest]
 
 
 get_params and set_params
