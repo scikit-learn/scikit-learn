@@ -23,17 +23,17 @@ from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import _GMMBase
 
-@deprecated("The function digamma is deprecated and "
+@deprecated("The function digamma is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
 
-@deprecated("The function gammaln is deprecated and "
+@deprecated("The function gammaln is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 
-@deprecated("The function log_normalize is deprecated and "
+@deprecated("The function log_normalize is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def log_normalize(v, axis=0):
     """Normalized probabilities from unnormalized log-probabilites"""
@@ -46,7 +46,7 @@ def log_normalize(v, axis=0):
     v /= np.sum(v, axis=0)
     return np.swapaxes(v, 0, axis)
 
-@deprecated("The function wishart_log_det is deprecated and "
+@deprecated("The function wishart_log_det is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def wishart_log_det(a, b, detB, n_features):
     """Expected value of the log of the determinant of a Wishart
@@ -57,7 +57,7 @@ def wishart_log_det(a, b, detB, n_features):
     l += n_features * np.log(2)
     return l + detB
 
-@deprecated("The function wishart_logz is deprecated and "
+@deprecated("The function wishart_logz is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def wishart_logz(v, s, dets, n_features):
     "The logarithm of the normalization constant for the wishart distribution"
@@ -110,7 +110,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
     return bound
 
-@deprecated("The class DBGMM is deprecated and "
+@deprecated("The class DPGMM is deprecated in 0.18 and "
             "will be removed in 0.20. This class no longer works.")
 class DPGMM(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
@@ -611,7 +611,7 @@ class DPGMM(_GMMBase):
 
         return z
 
-@deprecated("The class VBGMM is deprecated and "
+@deprecated("The class VBGMM is deprecated in 0.18 and "
             "will be removed in 0.20. This class no longer works.")
 class VBGMM(DPGMM):
     """Variational Inference for the Gaussian Mixture Model

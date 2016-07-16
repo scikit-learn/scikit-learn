@@ -95,35 +95,43 @@ def test_verbose_second_level():
 
 def test_digamma():
     assert_warns_message(DeprecationWarning, "The function digamma is"
-                        " deprecated and will be removed in 0.20.",
+                        " deprecated in 0.18 and will be removed in 0.20.",
                         digamma, 3)
-
+    
 def test_gammaln():
-    assert_warns_message(DeprecationWarning, "The function gammaln is"
-                        " deprecated and will be removed in 0.20.",
-                        gammaln, 3)
+    assert_warns_message(DeprecationWarning, "The function gammaln"
+                        " is deprecated in 0.18 and will be removed"
+                        " in 0.20.", gammaln, 3)
 
 
 def test_log_normalize():
     v = np.array([0.1, 0.8, 0.01, 0.09])
     a = np.log(2 * v)
-    result = assert_warns_message(DeprecationWarning, "The function log_normalize is"
-                        " deprecated and will be removed in 0.20.",
-                        log_normalize, a)
+    result = assert_warns_message(DeprecationWarning, "The function "
+                        "log_normalize is deprecated in 0.18 and will"
+                        " be removed in 0.20.", log_normalize, a)
     assert np.allclose(v, result, rtol=0.01)
 
 
 def test_wishart_log_det():
     a = np.array([0.1, 0.8, 0.01, 0.09])
     b = np.array([0.2, 0.7, 0.05, 0.1])
-    assert_warns_message(DeprecationWarning, "The function wishart_log_det"
-                        " is deprecated and will be removed in 0.20.",
+    assert_warns_message(DeprecationWarning, "The function "
+                        "wishart_log_det is deprecated in 0.18 and"
+                        " will be removed in 0.20.",
                         wishart_log_det, a, b, 2, 4) 
 
 def test_wishart_logz():
-    assert_warns_message(DeprecationWarning, "The function wishart_logz"
-                        " is deprecated and will be removed in 0.20.",
-                        wishart_logz,3, np.identity(3),1, 3)
+    assert_warns_message(DeprecationWarning, "The function "
+                        "wishart_logz is deprecated in 0.18 and "
+                        "will be removed in 0.20.", wishart_logz, 
+                        3, np.identity(3), 1, 3)
+
+def test_DPGMM_deprecation():
+    assert_warns_message(DeprecationWarning, "The class DPGMM is"
+                        " deprecated in 0.18 and will be removed in 0.20."
+                        " This class no longer works.", DPGMM)
+
 
 def do_model(self, **kwds):
     return VBGMM(verbose=False, **kwds)
@@ -157,6 +165,10 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
     covariance_type = 'full'
     setUp = GMMTester._setUp
 
+def test_VBGMM_deprecation():
+    assert_warns_message(DeprecationWarning, "The class VBGMM is"
+                        " deprecated in 0.18 and will be removed in "
+                        "0.20. This class no longer works.", VBGMM)
 
 class VBGMMTester(GMMTester):
     model = do_model
