@@ -371,7 +371,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise'):
+                 error_score='raise', return_train_score=False):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -383,6 +383,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
+        self.return_train_score = return_train_score
 
     @property
     def _estimator_type(self):
@@ -533,16 +534,28 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             pre_dispatch=pre_dispatch
         )(delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
                                   train, test, self.verbose, parameters,
-                                  self.fit_params, return_parameters=True,
+                                  self.fit_params,
+                                  return_train_score=self.return_train_score,
+                                  return_parameters=True,
                                   error_score=self.error_score)
           for parameters in parameter_iterable
           for train, test in cv.split(X, y, labels))
 
-        test_scores, test_sample_counts, _, parameters = zip(*out)
+        # if one choose to see train score, out will have train score info.
+        if self.return_train_score:
+            train_scores, test_scores, test_sample_counts, _, parameters =\
+                zip(*out)
+        else:
+            test_scores, test_sample_counts, _, parameters = zip(*out)
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
 
+        # if one choose to return train score, reshape the train_scores array
+        if self.return_train_score:
+            train_scores = np.array(train_scores,
+                                    dtype=np.float64).reshape(n_candidates,
+                                                              n_splits)
         test_scores = np.array(test_scores,
                                dtype=np.float64).reshape(n_candidates,
                                                          n_splits)
@@ -552,17 +565,39 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Computed the (weighted) mean and std for all the candidates
         weights = test_sample_counts if self.iid else None
-        means = np.average(test_scores, axis=1, weights=weights)
-        stds = np.sqrt(np.average((test_scores - means[:, np.newaxis]) ** 2,
-                                  axis=1, weights=weights))
+
+        time = np.array(_, dtype=np.float64).reshape(n_candidates, n_splits)
+        time_means = np.average(time, axis=1, weights=weights)
+        time_stds =  np.sqrt(
+                np.average((time - time_means[:, np.newaxis]) ** 2,
+                           axis=1, weights=weights))
+        if self.return_train_score:
+            train_means = np.average(train_scores, axis=1, weights=weights)
+            train_stds = np.sqrt(
+                np.average((train_scores - train_means[:, np.newaxis]) ** 2,
+                           axis=1, weights=weights))
+        test_means = np.average(test_scores, axis=1, weights=weights)
+        test_stds = np.sqrt(
+            np.average((test_scores - test_means[:, np.newaxis]) ** 2, axis=1,
+                       weights=weights))
 
         results = dict()
         for split_i in range(n_splits):
             results["test_split%d_score" % split_i] = test_scores[:, split_i]
-        results["test_mean_score"] = means
-        results["test_std_score"] = stds
+        results["test_mean_score"] = test_means
+        results["test_std_score"] = test_stds
 
-        ranks = np.asarray(rankdata(-means, method='min'), dtype=np.int32)
+        if self.return_train_score:
+            for split_i in range(n_splits):
+                results["train_split%d_score" % split_i] =\
+                    train_scores[:, split_i]
+            results["train_mean_score"] = train_means
+            results["train_std_score"] = train_stds
+
+        results["test_mean_time"] = time_means
+        results["test_std_time"] = time_stds
+
+        ranks = np.asarray(rankdata(-test_means, method='min'), dtype=np.int32)
 
         best_index = np.flatnonzero(ranks == 1)[0]
         best_parameters = candidate_params[best_index]
@@ -848,11 +883,13 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise'):
+                 pre_dispatch='2*n_jobs', error_score='raise',
+                 return_train_score=False):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch, error_score=error_score)
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1074,15 +1111,15 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise'):
-
+                 error_score='raise', return_train_score=False):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-            estimator=estimator, scoring=scoring, fit_params=fit_params,
-            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-            pre_dispatch=pre_dispatch, error_score=error_score)
+              estimator=estimator, scoring=scoring, fit_params=fit_params,
+              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+              pre_dispatch=pre_dispatch, error_score=error_score,
+              return_train_score=return_train_score)
 
     def fit(self, X, y=None, labels=None):
         """Run fit on the estimator with randomly drawn parameters.
