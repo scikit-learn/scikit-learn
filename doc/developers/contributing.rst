@@ -489,7 +489,7 @@ In addition, we add the following guidelines:
 
 
 A good example of code that we like can be found `here
-<http://web.archive.org/web/20110527163743/https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
+<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
 Input validation
 ----------------

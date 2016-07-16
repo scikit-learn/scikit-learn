@@ -28,7 +28,7 @@ User questions
   tag.
 
 - For general theoretical or methodological Machine Learning questions
-  `stack exchange <http://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms>`_ is probably a more
+  `stack exchange <http://stats.stackexchange.com/>`_ is probably a more
   suitable venue.
 
 In both cases please use a descriptive question in the title field (e.g.

@@ -33,7 +33,7 @@ The following people have been core contributors to scikit-learn's development a
   * Edouard Duchesnay
   * `Tom Dupré la Tour <https://github.com/TomDLT>`_
   * Alexander Fabisch
-  * `Virgile Fritsch <http://web.archive.org/web/20101019075308/http://parietal.saclay.inria.fr/Members/virgile-fritsch>`_
+  * `Virgile Fritsch <https://team.inria.fr/parietal/vfritsch/>`_
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
   * `Angel Soler Gollonet <http://webylimonada.com>`_
   * Chris Filo Gorgolewski

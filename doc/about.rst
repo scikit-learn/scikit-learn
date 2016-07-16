@@ -218,6 +218,6 @@ Infrastructure support
   <https://github.com/scikit-learn/sklearn-docbuilder>`_.
 
 - We would also like to thank `Shining Panda
-  <http://web.archive.org/web/20130303184615/https://www.shiningpanda-ci.com/>`_ for free CPU time on their Continuous
+  <http://shiningpanda.com/>`_ for free CPU time on their Continuous
   Integration server.
 
