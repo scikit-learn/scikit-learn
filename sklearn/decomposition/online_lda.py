@@ -14,6 +14,7 @@ Link: http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
@@ -155,10 +156,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         to `1 / n_topics`.
         In the literature, this is called `eta`.
 
-    learning_method : 'batch' | 'online', default='batch'
+    learning_method : 'batch' | 'online', default='online'
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
+        The default learning method will be changed to 'batch' in the 0.19 release.
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -246,7 +248,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_topics=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method='batch',
+                 topic_word_prior=None, learning_method=None,
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
@@ -283,7 +285,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid 'learning_offset' parameter: %r"
                              % self.learning_offset)
 
-        if self.learning_method not in ("batch", "online"):
+        if self.learning_method not in ("batch", "online", None):
             raise ValueError("Invalid 'learning_method' parameter: %r"
                              % self.learning_method)
 
@@ -499,6 +501,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
+        if learning_method == None:
+            warnings.warn("The default value for 'learning_method' will be"
+                          "changed from 'online' to 'batch' in 0.19.",
+                          DeprecationWarning)          
+            learning_method = 'online'
+
         batch_size = self.batch_size
 
         # initialize parameters
