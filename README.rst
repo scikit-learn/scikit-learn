@@ -108,6 +108,10 @@ You can check the latest sources with the command::
 
     git clone https://github.com/scikit-learn/scikit-learn.git
 
+or if you have write privileges::
+
+    git clone git@github.com:scikit-learn/scikit-learn.git
+
 
 Contributing
 ~~~~~~~~~~~~
