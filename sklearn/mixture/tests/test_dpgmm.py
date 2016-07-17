@@ -7,12 +7,17 @@ from sklearn.mixture import DPGMM, VBGMM
 from sklearn.mixture.dpgmm import log_normalize
 from sklearn.datasets import make_blobs
 from sklearn.utils.testing import assert_array_less, assert_equal
+from sklearn.utils.testing import assert_warns_message, ignore_warnings
 from sklearn.mixture.tests.test_gmm import GMMTester
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.mixture.dpgmm import digamma, gammaln
+from sklearn.mixture.dpgmm import wishart_log_det, wishart_logz
+
 
 np.seterr(all='warn')
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_class_weights():
     # check that the class weights are updated
     # simple 3 cluster dataset
@@ -30,6 +35,7 @@ def test_class_weights():
         assert_array_less(dpgmm.weights_[~active], .05)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_verbose_boolean():
     # checks that the output for the verbose output is the same
     # for the flag values '1' and 'True'
@@ -59,6 +65,7 @@ def test_verbose_boolean():
             sys.stdout = old_stdout
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_verbose_first_level():
     # simple 3 cluster dataset
     X, y = make_blobs(random_state=1)
@@ -74,6 +81,7 @@ def test_verbose_first_level():
             sys.stdout = old_stdout
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_verbose_second_level():
     # simple 3 cluster dataset
     X, y = make_blobs(random_state=1)
@@ -89,10 +97,56 @@ def test_verbose_second_level():
             sys.stdout = old_stdout
 
 
+@ignore_warnings(category=DeprecationWarning)
+def test_digamma():
+    assert_warns_message(DeprecationWarning, "The function digamma is"
+                         " deprecated in 0.18 and will be removed in 0.20. "
+                         "Use scipy.special.digamma instead.", digamma, 3)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_gammaln():
+    assert_warns_message(DeprecationWarning, "The function gammaln"
+                         " is deprecated in 0.18 and will be removed"
+                         " in 0.20. Use scipy.special.gammaln instead.",
+                         gammaln, 3)
+
+
+@ignore_warnings(category=DeprecationWarning)
 def test_log_normalize():
     v = np.array([0.1, 0.8, 0.01, 0.09])
     a = np.log(2 * v)
-    assert np.allclose(v, log_normalize(a), rtol=0.01)
+    result = assert_warns_message(DeprecationWarning, "The function "
+                                  "log_normalize is deprecated in 0.18 and"
+                                  " will be removed in 0.20.",
+                                  log_normalize, a)
+    assert np.allclose(v, result, rtol=0.01)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_wishart_log_det():
+    a = np.array([0.1, 0.8, 0.01, 0.09])
+    b = np.array([0.2, 0.7, 0.05, 0.1])
+    assert_warns_message(DeprecationWarning, "The function "
+                         "wishart_log_det is deprecated in 0.18 and"
+                         " will be removed in 0.20.",
+                         wishart_log_det, a, b, 2, 4)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_wishart_logz():
+    assert_warns_message(DeprecationWarning, "The function "
+                         "wishart_logz is deprecated in 0.18 and "
+                         "will be removed in 0.20.", wishart_logz,
+                         3, np.identity(3), 1, 3)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_DPGMM_deprecation():
+    assert_warns_message(DeprecationWarning, "The DPGMM class is"
+                         " not working correctly and it's better "
+                         "to not use it. DPGMM is deprecated in 0.18 "
+                         "and will be removed in 0.20.", DPGMM)
 
 
 def do_model(self, **kwds):
@@ -126,6 +180,14 @@ class TestDPGMMWithTiedCovars(unittest.TestCase, DPGMMTester):
 class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
     covariance_type = 'full'
     setUp = GMMTester._setUp
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_VBGMM_deprecation():
+    assert_warns_message(DeprecationWarning, "The VBGMM class is"
+                         " not working correctly and it's better"
+                         " to not use it. VBGMM is deprecated in 0.18"
+                         " and will be removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):
