@@ -36,8 +36,8 @@ list. Those sites may already have an answer to your question. They provide a
 convenient search interface, and access to many users that may not be on the mailing list.
 
 For bug reports or feature requests, please make use of the
-<issue tracker on Github 'https://github.com/scikit-learn/scikit-learn/issues'>
-or the <mailing list 'https://mail.python.org/mailman/listinfo/scikit-learn'>.
+`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`
+or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>.
 
 Please do not email the authors directly with bug reports or feature requests.
 
