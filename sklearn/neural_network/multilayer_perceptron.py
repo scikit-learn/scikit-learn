@@ -26,6 +26,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.multiclass import type_of_target
 
 
 _STOCHASTIC_ALGOS = ['sgd', 'adam']
@@ -899,9 +900,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                          multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
-        self.label_binarizer_.fit(y)
-
+            
         if not hasattr(self, 'classes_') or not incremental:
+            self.label_binarizer_.fit(y)
             self.classes_ = self.label_binarizer_.classes_
         else:
             classes = self.label_binarizer_.classes_
@@ -909,8 +910,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
-                
-        self.label_binarizer_.fit(self.classes_)                 
+        
         y = self.label_binarizer_.transform(y)
         return X, y
 
@@ -986,6 +986,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     def _partial_fit(self, X, y, classes=None):
         _check_partial_fit_first_call(self, classes)
+        if not hasattr(self.label_binarizer_, "classes_"):
+            if type_of_target(y).startswith('multilabel'):
+                self.label_binarizer_.fit(y)
+            else:
+                self.label_binarizer_.fit(classes)
 
         super(MLPClassifier, self)._partial_fit(X, y)
 
