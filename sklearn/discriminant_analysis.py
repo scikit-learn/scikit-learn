@@ -146,6 +146,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     .. versionchanged:: 0.17
        Deprecated :class:`lda.LDA` have been moved to *LinearDiscriminantAnalysis*.
 
+    Read more in the :ref:`User Guide <lda_qda>`.
+
     Parameters
     ----------
     solver : string, optional
