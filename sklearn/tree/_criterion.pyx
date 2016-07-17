@@ -1149,7 +1149,7 @@ cdef class MAE(RegressionCriterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    # remove y_ik with weight w from right and add to left
+                    # remove y_ik and its weight w from right and add to left
                     (<WeightedMedianHeap> right_child_heaps[k]).remove(y_ik, w)
                     (<WeightedMedianHeap> left_child_heaps[k]).push(y_ik, w)
 
