@@ -822,13 +822,17 @@ class GridSearchCV(BaseSearchCV):
             'test_split0_score' : [0.8, 0.7, 0.8, 0.9],
             'test_split1_score' : [0.82, 0.5, 0.7, 0.78],
             'test_mean_score'   : [0.81, 0.60, 0.75, 0.82],
+            'test_mean_time'    : [ 0.00073,  0.00063,  0.00043,  0.00049]
+            'test_std_time'     : [ 1.62e-4,   3.37e-5,   1.42e-5, 1.1e-5]
             'test_std_score'    : [0.02, 0.01, 0.03, 0.03],
             'test_rank_score'   : [2, 4, 3, 1],
             'params'            : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
         NOTE that the key ``'params'`` is used to store a list of parameter
-        settings dict for all the parameter candidates.
+        settings dict for all the parameter candidates.  Besides,
+        'train_mean_score', 'train_split*_score', ... will be present when
+        return_train_score is set to True.
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
@@ -1026,6 +1030,9 @@ class RandomizedSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
+    return_train_score: boolean, default=False
+        If "True", the results_ attribute will include training scores.
+
     Attributes
     ----------
     results_ : dict of numpy (masked) ndarrays
@@ -1053,13 +1060,17 @@ class RandomizedSearchCV(BaseSearchCV):
             'test_split0_score' : [0.8, 0.9, 0.7],
             'test_split1_score' : [0.82, 0.5, 0.7],
             'test_mean_score'   : [0.81, 0.7, 0.7],
+            'test_mean_time'    : [0.00073, 0.00063, 0.00043]
+            'test_std_time'     : [1.62e-4, 3.37e-5, 1.1e-5]
             'test_std_score'    : [0.02, 0.2, 0.],
             'test_rank_score'   : [3, 1, 1],
             'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
         NOTE that the key ``'params'`` is used to store a list of parameter
-        settings dict for all the parameter candidates.
+        settings dict for all the parameter candidates.  Besides,
+        'train_mean_score', 'train_split*_score', ... will be present when
+        return_train_score is set to True.
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
