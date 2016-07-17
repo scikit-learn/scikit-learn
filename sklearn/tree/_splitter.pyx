@@ -35,7 +35,7 @@ from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
 
 cdef double INFINITY = np.inf
-# SPURIOUS COMMENT TO FORCE RECYTHONIZE. REMOVE ME.
+
 # Mitigate precision differences between 32 bit and 64 bit
 cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 

@@ -377,7 +377,8 @@ cdef class WeightedPQueue:
         return 0
 
     cdef int remove(self, DOUBLE_t value, DOUBLE_t weight) nogil:
-        """Remove a specific value from array"""
+        """Remove a specific value/weight record from the array.
+        Returns 0 if successful, -1 if record not found."""
         cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
         cdef SIZE_t idx_to_remove = -1
@@ -392,13 +393,11 @@ cdef class WeightedPQueue:
                 idx_to_remove = i
                 break
 
-        # should we throw an error if the element isn't found?
-        # it shouldn't happen, but better to fail noisily...?
         if idx_to_remove == -1:
-            with gil:
-                raise ValueError()
+            return -1
 
-        # move after the removed element over by one
+        # shift the elements after the removed element
+        # to the left.
         for i in range(idx_to_remove, array_ptr-1):
             array[i] = array[i+1]
 
@@ -406,7 +405,8 @@ cdef class WeightedPQueue:
         return 0
 
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
-        """Remove top element from array."""
+        """Remove the top (minimum) element from array.
+        Returns 0 if successful, -1 if nothing to remove."""
         cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
         cdef SIZE_t i
@@ -414,11 +414,11 @@ cdef class WeightedPQueue:
         if array_ptr <= 0:
             return -1
 
-        # Take first element
         data[0] = array[0].data
         weight[0] = array[0].weight
 
-        # move after the removed element over by one
+        # shift the elements after the removed element
+        # to the left.
         for i in range(0, array_ptr-1):
             array[i] = array[i+1]
 
@@ -426,7 +426,8 @@ cdef class WeightedPQueue:
         return 0
 
     cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
-        """Write the top element from array to a pointer."""
+        """Write the top element from array to a pointer.
+        Returns 0 if successful, -1 if nothing to write."""
         cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
         if array_ptr <= 0:
@@ -444,11 +445,9 @@ cdef class WeightedPQueue:
 
         if array_ptr <= 0 or index >= array_ptr:
             with gil:
-                print index
-                print array_ptr
-                print "FALIED ON WEIGHT"
-            return -1
-        # Take weight at idx
+                raise ValueError("Tried to access element "
+                                 "at index out of bounds.")
+        # get weight at index
         return array[index].weight
 
     cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil:
@@ -459,11 +458,9 @@ cdef class WeightedPQueue:
 
         if array_ptr <= 0 or index >= array_ptr:
             with gil:
-                print index
-                print array_ptr
-                print "FALIED ON VALUE"
-            return -1
-        # Take value at idx
+                raise ValueError("Tried to access element "
+                                 "at index out of bounds.")
+        # get value at index
         return array[index].data
 
 # =============================================================================
@@ -480,6 +477,7 @@ cdef class WeightedMedianHeap:
         self.sum_w_0_k = 0
 
     cdef SIZE_t size(self) nogil:
+        """Return the number of samples in the WeightedMedianHeap"""
         return self.samples.size()
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
@@ -510,12 +508,6 @@ cdef class WeightedMedianHeap:
         # get the original weighted median
         self.get_median(&current_median)
         self.total_weight += weight
-        # check if the value inserted is the same as the current median
-        # if data == current_median:
-        #     # k stays the same, but add weight to sum_w_0_k
-        #     self.k += 1
-        #     self.sum_w_0_k += weight
-        #     return 0
 
         if data < current_median:
             # inserting below the median, so increment k and
@@ -527,17 +519,19 @@ cdef class WeightedMedianHeap:
 
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             # minimum value of k is 1
-            while(self.k > 1 and (self.sum_w_0_k - self.samples.get_weight_from_index(self.k-1) >= self.total_weight / 2.0)):
-                # ordering of these statements is very important
+            while(self.k > 1 and (self.sum_w_0_k -
+                                  self.samples.get_weight_from_index(self.k-1)
+                                  >= self.total_weight / 2.0)):
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
 
             return 0
 
         if data >= current_median:
-            # inserting above the median
+            # inserting above or at the median
             # minimize k such that sum(W[0:k]) >= total_weight / 2
-            while(self.k < self.samples.size() and self.sum_w_0_k < self.total_weight / 2.0):
+            while(self.k < self.samples.size() and
+                  (self.sum_w_0_k < self.total_weight / 2.0)):
                 self.k += 1
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
@@ -591,20 +585,11 @@ cdef class WeightedMedianHeap:
         self.get_median(&current_median)
         self.total_weight -= weight
 
-        # check if the value removed is the same as the current median
-        # if data == current_median:
-        #     # with gil:
-        #     #     print "removing at median"
-        #     # k stays the same, but remove weight from sum_w_0_k
-        #     self.sum_w_0_k -= weight
-        #     return 0
-
         if data < current_median:
             # removing below the median, so decrement k and
             # then update self.sum_w_0_k accordingly by subtracting
             # the removed weight
-            # with gil:
-            #     print "removing below median"
+
             self.k -= 1
             # update sum_w_0_k by removing the weight at index k
             self.sum_w_0_k -= weight
@@ -612,19 +597,18 @@ cdef class WeightedMedianHeap:
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             # by incrementing k and updating sum_w_0_k accordingly
             # until the condition is met.
-            while(self.k < self.samples.size() and self.sum_w_0_k < self.total_weight / 2.0):
-                # ordering of these statements is very important
+            while(self.k < self.samples.size() and
+                  (self.sum_w_0_k < self.total_weight / 2.0)):
                 self.k += 1
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
 
         if data >= current_median:
             # removing above the median
-            # with gil:
-            #     print "removing above median"
             # minimize k such that sum(W[0:k]) >= total_weight / 2
-            while(self.k > 1 and self.sum_w_0_k - self.samples.get_weight_from_index(self.k-1) >= self.total_weight / 2.0):
-                # mind the ordering
+            while(self.k > 1 and ((self.sum_w_0_k -
+                                  self.samples.get_weight_from_index(self.k-1))
+                                  >= self.total_weight / 2.0)):
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
             return 0
@@ -632,15 +616,12 @@ cdef class WeightedMedianHeap:
     cdef int get_median(self, double* median) nogil:
         """Write the median to a pointer, taking into account
         sample weights."""
-        # with gil:
-        #     print "entered get_median"
         if self.sum_w_0_k < (self.total_weight / 2.0):
-            # with gil:
-            #     raise ValueError()
             return -1
         if self.sum_w_0_k == (self.total_weight / 2.0):
             # split median
-            median[0] = (<double> (self.samples.get_value_from_index(self.k) + self.samples.get_value_from_index(self.k-1)) / 2.0)
+            median[0] = (self.samples.get_value_from_index(self.k) +
+                         self.samples.get_value_from_index(self.k-1)) / 2.0
         if self.sum_w_0_k > (self.total_weight / 2.0):
             # whole median
             median[0] = self.samples.get_value_from_index(self.k-1)

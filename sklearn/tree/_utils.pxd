@@ -141,8 +141,8 @@ cdef class WeightedMedianHeap:
     cdef WeightedPQueue samples
     cdef DOUBLE_t total_weight
     cdef SIZE_t k
-    cdef DOUBLE_t sum_w_0_k # represents sum(weights[0:k])
-                            # = w[0] + w[1] + ... + w[k-1]
+    cdef DOUBLE_t sum_w_0_k            # represents sum(weights[0:k])
+                                       # = w[0] + w[1] + ... + w[k-1]
 
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
