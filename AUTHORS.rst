@@ -72,6 +72,6 @@ or the <mailing list 'https://mail.python.org/mailman/listinfo/scikit-learn'>.
 If you are not sure whether you have a found a bug,
 or you have a more general question about
 machine learning, please consult 'Stack Overflow <http://stackoverflow.com>'
-or 'Cross Validated <stats.stackexchange.com>' before contacting the mailing
+or 'Cross Validated <http://stats.stackexchange.com>' before contacting the mailing
 list. Those sites may already have an answer to your question. They provide
 convenient search, and access to many users that may not be on the mailing list.

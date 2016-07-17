@@ -31,7 +31,7 @@ What's the best way to ask questions about scikit-learn?
 We of course want to help scikit-learn users. But for broader questions about
 using the package or about machine learning, we suggest searching 
 'Stack Overflow <http://stackoverflow.com>' or 
-'Cross Validated <stats.stackexchange.com>' before contacting the mailing
+'Cross Validated <http://stats.stackexchange.com>' before contacting the mailing
 list. Those sites may already have an answer to your question. They provide a
 convenient search interface, and access to many users that may not be on the mailing list.
 
