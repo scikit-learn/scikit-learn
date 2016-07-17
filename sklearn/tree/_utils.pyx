@@ -173,7 +173,7 @@ cdef class Stack:
 # PriorityHeap data structure
 # =============================================================================
 
-cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
+cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
     """Restore heap invariant parent.improvement > child.improvement from
        ``pos`` upwards. """
     if pos == 0:
@@ -183,9 +183,9 @@ cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
 
     if heap[parent_pos].improvement < heap[pos].improvement:
         heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
-        self.heapify_up(heap, parent_pos)
+        heapify_up(heap, parent_pos)
 
-cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
+cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos,
                        SIZE_t heap_length) nogil:
     """Restore heap invariant parent.improvement > children.improvement from
        ``pos`` downwards. """
@@ -203,7 +203,7 @@ cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
 
     if largest != pos:
         heap[pos], heap[largest] = heap[largest], heap[pos]
-        self.heapify_down(heap, largest, heap_length)
+        heapify_down(heap, largest, heap_length)
 
 
 cdef class PriorityHeap:
