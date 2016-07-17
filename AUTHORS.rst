@@ -67,11 +67,11 @@ The following people have been core contributors to scikit-learn's development a
 
 Please do not email the authors directly with bug reports or feature requests.
 To address those concerns, please make use of the
-`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`
-or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`.
+`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_
+or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 If you are not sure whether you have a found a bug,
 or you have a more general question about
-machine learning, please consult `Stack Overflow <http://stackoverflow.com>'
-or 'Cross Validated <http://stats.stackexchange.com>' before contacting the mailing
+machine learning, please consult `Stack Overflow <http://stackoverflow.com>`_
+or `Cross Validated <http://stats.stackexchange.com>`_ before contacting the mailing
 list. Those sites may already have an answer to your question. They provide
 convenient search, and access to many users that may not be on the mailing list.
