@@ -169,7 +169,7 @@ def getfullargspec(func):
     try:
         return inspect.getfullargspec(func)
     except AttributeError:
-        arg_spec = inspect.getargspec(func)
+        arg_spec = inspect.signature(func)
         import collections
         tuple_fields = ('args varargs varkw defaults kwonlyargs '
                         'kwonlydefaults annotations')
