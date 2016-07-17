@@ -541,7 +541,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
           for parameters in parameter_iterable
           for train, test in cv.split(X, y, labels))
 
-        # if one choose to see train score, out will have train score info.
+        # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
             train_scores, test_scores, test_sample_counts, _, parameters =\
                 zip(*out)
@@ -761,6 +761,9 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
+    return_train_score: boolean, default=False
+        If "True", the results_ attribute will include training scores.
+
 
     Examples
     --------
@@ -779,13 +782,13 @@ class GridSearchCV(BaseSearchCV):
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
            fit_params={}, iid=..., n_jobs=1,
-           param_grid=..., pre_dispatch=..., refit=...,
+           param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
            scoring=..., verbose=...)
     >>> sorted(clf.results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ['param_C', 'param_kernel', 'params', 'test_mean_score',...
-     'test_rank_score', 'test_split0_score', 'test_split1_score',...
-     'test_split2_score', 'test_std_score']
+    ['param_C', 'param_kernel', 'params', 'test_mean_score', 'test_mean_time',
+     'test_rank_score', 'test_split0_score', 'test_split1_score',
+     'test_split2_score', 'test_std_score', 'test_std_time']
 
     Attributes
     ----------
