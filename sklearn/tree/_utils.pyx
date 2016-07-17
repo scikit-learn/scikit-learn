@@ -326,7 +326,6 @@ cdef class WeightedPQueue:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.array_ptr = 0
-
         self.array_ = <WeightedPQueueRecord*> calloc(capacity, sizeof(WeightedPQueueRecord))
 
         if self.array_ == NULL:
@@ -346,15 +345,15 @@ cdef class WeightedPQueue:
         Returns 0 if successful; -1 on out of memory error.
         """
         cdef SIZE_t array_ptr = self.array_ptr
+        cdef WeightedPQueueRecord* array = NULL
         cdef SIZE_t i
-        cdef WeightedPQueueRecord* array
 
         # Resize if capacity not sufficient
         if array_ptr >= self.capacity:
             self.capacity *= 2
             array = <WeightedPQueueRecord*> realloc(self.array_,
-                                               self.capacity *
-                                               sizeof(WeightedPQueueRecord))
+                                                    self.capacity *
+                                                    sizeof(WeightedPQueueRecord))
 
             if array == NULL:
                 # no free; __dealloc__ handles that
@@ -437,20 +436,35 @@ cdef class WeightedPQueue:
         weight[0] = array[0].weight
         return 0
 
-    cdef int get_index_data(self, SIZE_t idx, DOUBLE_t* value,
-                                 DOUBLE_t* weight) nogil:
-        """Write value and weight at the specified index to a pointer."""
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil:
+        """Given an index between [0,self.current_capacity], access
+        the appropriate heap and return the requested weight"""
         cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
 
-        if array_ptr <= 0:
+        if array_ptr <= 0 or index >= array_ptr:
+            with gil:
+                print index
+                print array_ptr
+                print "FALIED ON WEIGHT"
+            return -1
+        # Take weight at idx
+        return array[index].weight
+
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil:
+        """Given an index between [0,self.current_capacity], access
+        the appropriate heap and return the requested value"""
+        cdef SIZE_t array_ptr = self.array_ptr
+        cdef WeightedPQueueRecord* array = self.array_
+
+        if array_ptr <= 0 or index >= array_ptr:
+            with gil:
+                print index
+                print array_ptr
+                print "FALIED ON VALUE"
             return -1
         # Take value at idx
-        value[0] = array[idx].data
-
-        # Take weight at idx
-        weight[0] = array[idx].weight
-        return 0
+        return array[index].data
 
 # =============================================================================
 # WeightedMedianHeap data structure
@@ -460,14 +474,13 @@ cdef class WeightedMedianHeap:
 
     def __cinit__(self, SIZE_t initial_capacity):
         self.initial_capacity = initial_capacity
-        self.current_capacity = 0
         self.samples = WeightedPQueue(initial_capacity)
         self.total_weight = 0
         self.k = 0
         self.sum_w_0_k = 0
 
     cdef SIZE_t size(self) nogil:
-        return self.current_capacity
+        return self.samples.size()
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Push a value and its associated weight
@@ -478,8 +491,6 @@ cdef class WeightedMedianHeap:
         cdef int return_value
 
         return_value = self.samples.push(data, weight)
-        self.current_capacity += 1
-        self.total_weight += weight
         self.update_median_parameters_post_push(data, weight)
         return return_value
 
@@ -490,19 +501,21 @@ cdef class WeightedMedianHeap:
         cdef double current_median
 
         # trivial case of one element.
-        if self.current_capacity == 1:
+        if self.size() == 1:
             self.k = 1
+            self.total_weight = weight
             self.sum_w_0_k = self.total_weight
             return 0
 
-        # get the current weighted median
+        # get the original weighted median
         self.get_median(&current_median)
-
+        self.total_weight += weight
         # check if the value inserted is the same as the current median
-        if data == current_median:
-            # k stays the same, but add weight to sum_w_0_k
-            self.sum_w_0_k += weight
-            return 0
+        # if data == current_median:
+        #     # k stays the same, but add weight to sum_w_0_k
+        #     self.k += 1
+        #     self.sum_w_0_k += weight
+        #     return 0
 
         if data < current_median:
             # inserting below the median, so increment k and
@@ -514,37 +527,20 @@ cdef class WeightedMedianHeap:
 
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             # minimum value of k is 1
-            while(self.k != 1 and (self.sum_w_0_k - self.get_weight_from_index(self.k-1) >= self.total_weight / 2)):
+            while(self.k > 1 and (self.sum_w_0_k - self.samples.get_weight_from_index(self.k-1) >= self.total_weight / 2.0)):
                 # ordering of these statements is very important
                 self.k -= 1
-                self.sum_w_0_k -= self.get_weight_from_index(self.k)
+                self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
+
             return 0
 
-        if data > current_median:
+        if data >= current_median:
             # inserting above the median
             # minimize k such that sum(W[0:k]) >= total_weight / 2
-            while(self.k != self.current_capacity and self.sum_w_0_k < self.total_weight / 2):
+            while(self.k < self.samples.size() and self.sum_w_0_k < self.total_weight / 2.0):
                 self.k += 1
-                self.sum_w_0_k += self.get_weight_from_index(self.k-1)
+                self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
-
-    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil:
-        """Given an index between [0,self.current_capacity], access
-        the appropriate heap and return the requested weight"""
-        cdef DOUBLE_t value
-        cdef DOUBLE_t weight
-
-        self.samples.get_index_data(index, &value, &weight)
-        return weight
-
-    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil:
-        """Given an index between [0,self.current_capacity], access
-            the appropriate heap and return the requested value"""
-        cdef DOUBLE_t value
-        cdef DOUBLE_t weight
-
-        self.samples.get_index_data(index, &value, &weight)
-        return value
 
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Remove a value from the MedianHeap, removing it
@@ -554,8 +550,6 @@ cdef class WeightedMedianHeap:
         cdef int return_value
 
         return_value = self.samples.remove(data, weight)
-        self.current_capacity -= 1
-        self.total_weight -= weight
         self.update_median_parameters_post_remove(data, weight)
         return return_value
 
@@ -566,12 +560,10 @@ cdef class WeightedMedianHeap:
         cdef int return_value
 
         # no elements to pop
-        if self.current_capacity == 0:
+        if self.samples.size() == 0:
             return -1
 
         return_value = self.samples.pop(data, weight)
-        self.current_capacity -= 1
-        self.total_weight -= weight[0]
         self.update_median_parameters_post_remove(data[0],
                                                   weight[0])
         return return_value
@@ -581,25 +573,38 @@ cdef class WeightedMedianHeap:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
         cdef DOUBLE_t current_median
+        # reset parameters because empty
+        if self.samples.size() == 0:
+            self.k = 0
+            self.total_weight = 0
+            self.sum_w_0_k = 0
+            return 0
+
         # trivial case of one element.
-        if self.current_capacity == 1:
+        if self.samples.size() == 1:
             self.k = 1
+            self.total_weight -= weight
             self.sum_w_0_k = self.total_weight
             return 0
 
         # get the current weighted median
         self.get_median(&current_median)
+        self.total_weight -= weight
 
         # check if the value removed is the same as the current median
-        if data == current_median:
-            # k stays the same, but remove weight from sum_w_0_k
-            self.sum_w_0_k -= weight
-            return 0
+        # if data == current_median:
+        #     # with gil:
+        #     #     print "removing at median"
+        #     # k stays the same, but remove weight from sum_w_0_k
+        #     self.sum_w_0_k -= weight
+        #     return 0
 
         if data < current_median:
             # removing below the median, so decrement k and
             # then update self.sum_w_0_k accordingly by subtracting
             # the removed weight
+            # with gil:
+            #     print "removing below median"
             self.k -= 1
             # update sum_w_0_k by removing the weight at index k
             self.sum_w_0_k -= weight
@@ -607,30 +612,36 @@ cdef class WeightedMedianHeap:
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             # by incrementing k and updating sum_w_0_k accordingly
             # until the condition is met.
-            while(self.k != self.current_capacity and self.sum_w_0_k < self.total_weight / 2):
+            while(self.k < self.samples.size() and self.sum_w_0_k < self.total_weight / 2.0):
                 # ordering of these statements is very important
                 self.k += 1
-                self.sum_w_0_k += self.get_weight_from_index(self.k-1)
+                self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
 
-        if data > current_median:
+        if data >= current_median:
             # removing above the median
+            # with gil:
+            #     print "removing above median"
             # minimize k such that sum(W[0:k]) >= total_weight / 2
-            while(self.k != 1 and self.sum_w_0_k - self.get_weight_from_index(self.k-1) >= self.total_weight / 2):
+            while(self.k > 1 and self.sum_w_0_k - self.samples.get_weight_from_index(self.k-1) >= self.total_weight / 2.0):
                 # mind the ordering
                 self.k -= 1
-                self.sum_w_0_k -= self.get_weight_from_index(self.k)
+                self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
             return 0
 
     cdef int get_median(self, double* median) nogil:
         """Write the median to a pointer, taking into account
         sample weights."""
+        # with gil:
+        #     print "entered get_median"
         if self.sum_w_0_k < (self.total_weight / 2.0):
+            # with gil:
+            #     raise ValueError()
             return -1
         if self.sum_w_0_k == (self.total_weight / 2.0):
             # split median
-            median[0] = (self.get_value_from_index(self.k) + self.get_value_from_index(self.k-1))/2
+            median[0] = (<double> (self.samples.get_value_from_index(self.k) + self.samples.get_value_from_index(self.k-1)) / 2.0)
         if self.sum_w_0_k > (self.total_weight / 2.0):
             # whole median
-            median[0] = self.get_value_from_index(self.k-1)
+            median[0] = self.samples.get_value_from_index(self.k-1)
         return 0

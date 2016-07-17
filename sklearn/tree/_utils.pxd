@@ -128,7 +128,9 @@ cdef class WeightedPQueue:
     cdef int remove(self, DOUBLE_t value, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
     cdef int peek(self, DOUBLE_t* res, DOUBLE_t* weight) nogil
-    cdef int get_index_data(self, SIZE_t idx, DOUBLE_t* value, DOUBLE_t* weight) nogil
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
+
 
 # =============================================================================
 # MedianHeap data structure
@@ -136,7 +138,6 @@ cdef class WeightedPQueue:
 
 cdef class WeightedMedianHeap:
     cdef SIZE_t initial_capacity
-    cdef SIZE_t current_capacity
     cdef WeightedPQueue samples
     cdef DOUBLE_t total_weight
     cdef SIZE_t k
@@ -146,8 +147,6 @@ cdef class WeightedMedianHeap:
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int update_median_parameters_post_push(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
-    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
     cdef int update_median_parameters_post_remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
