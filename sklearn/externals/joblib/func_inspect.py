@@ -169,7 +169,11 @@ def getfullargspec(func):
     try:
         return inspect.getfullargspec(func)
     except AttributeError:
-        arg_spec = inspect.signature(func)
+        if 3 > sys.version_info[0]:
+           argspec = inspect.getargspec(func)
+        else:
+           # getargspec deprecated in python3
+           argspec = inspect.signature(func)
         import collections
         tuple_fields = ('args varargs varkw defaults kwonlyargs '
                         'kwonlydefaults annotations')
