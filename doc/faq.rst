@@ -28,16 +28,16 @@ issues <easy_issues>`.
 
 What's the best way to ask questions about scikit-learn?
 --------------------------------------------------------------
-We of course want to help scikit-learn users. But for broader questions about
-using the package or about machine learning, we suggest searching 
-`Stack Overflow <http://stackoverflow.com>`_ or 
-`Cross Validated <http://stats.stackexchange.com>`_ before contacting the mailing
-list. Those sites may already have an answer to your question. They provide a
-convenient search interface, and access to many users that may not be on the mailing list.
-
 For bug reports or feature requests, please make use of the
 `issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_
 or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+
+We of course want to help scikit-learn users, but we suggest searching 
+`Stack Overflow <http://stackoverflow.com>`_ or 
+`Cross Validated <http://stats.stackexchange.com>`_ before contacting the mailing
+list. Those sites may already have an answer to your question. They provide a
+convenient search interface, and access to a community of users that may not be on the mailing list.
+Those sites can also provide answers to questions about machine learning in general.
 
 Please do not email the authors directly with bug reports or feature requests.
 
