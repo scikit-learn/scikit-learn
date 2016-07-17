@@ -173,37 +173,37 @@ cdef class Stack:
 # PriorityHeap data structure
 # =============================================================================
 
-    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
-        """Restore heap invariant parent.improvement > child.improvement from
-           ``pos`` upwards. """
-        if pos == 0:
-            return
+cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
+    """Restore heap invariant parent.improvement > child.improvement from
+       ``pos`` upwards. """
+    if pos == 0:
+        return
 
-        cdef SIZE_t parent_pos = (pos - 1) / 2
+    cdef SIZE_t parent_pos = (pos - 1) / 2
 
-        if heap[parent_pos].improvement < heap[pos].improvement:
-            heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
-            self.heapify_up(heap, parent_pos)
+    if heap[parent_pos].improvement < heap[pos].improvement:
+        heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
+        self.heapify_up(heap, parent_pos)
 
-    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
-                           SIZE_t heap_length) nogil:
-        """Restore heap invariant parent.improvement > children.improvement from
-           ``pos`` downwards. """
-        cdef SIZE_t left_pos = 2 * (pos + 1) - 1
-        cdef SIZE_t right_pos = 2 * (pos + 1)
-        cdef SIZE_t largest = pos
+cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
+                       SIZE_t heap_length) nogil:
+    """Restore heap invariant parent.improvement > children.improvement from
+       ``pos`` downwards. """
+    cdef SIZE_t left_pos = 2 * (pos + 1) - 1
+    cdef SIZE_t right_pos = 2 * (pos + 1)
+    cdef SIZE_t largest = pos
 
-        if (left_pos < heap_length and
-                heap[left_pos].improvement > heap[largest].improvement):
-            largest = left_pos
+    if (left_pos < heap_length and
+            heap[left_pos].improvement > heap[largest].improvement):
+        largest = left_pos
 
-        if (right_pos < heap_length and
-                heap[right_pos].improvement > heap[largest].improvement):
-            largest = right_pos
+    if (right_pos < heap_length and
+            heap[right_pos].improvement > heap[largest].improvement):
+        largest = right_pos
 
-        if largest != pos:
-            heap[pos], heap[largest] = heap[largest], heap[pos]
-            self.heapify_down(heap, largest, heap_length)
+    if largest != pos:
+        heap[pos], heap[largest] = heap[largest], heap[pos]
+        self.heapify_down(heap, largest, heap_length)
 
 
 cdef class PriorityHeap:
