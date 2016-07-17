@@ -11,6 +11,7 @@ import inspect
 import warnings
 import re
 import os
+import sys
 
 from ._compat import _basestring
 from .logger import pformat
