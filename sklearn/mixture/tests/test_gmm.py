@@ -360,7 +360,7 @@ def test_n_parameters():
     for cv_type in ['full', 'tied', 'diag', 'spherical']:
         with ignore_warnings(category=DeprecationWarning):
             g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-                        random_state=rng, min_covar=1e-7, n_iter=1)
+                            random_state=rng, min_covar=1e-7, n_iter=1)
             g.fit(X)
             assert_true(g._n_parameters() == n_params[cv_type])
 

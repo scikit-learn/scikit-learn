@@ -148,7 +148,7 @@ def test_DPGMM_deprecation():
                          "to not use it. DPGMM is deprecated in 0.18 "
                          "and will be removed in 0.20.", DPGMM)
 
- 
+
 def do_model(self, **kwds):
     return VBGMM(verbose=False, **kwds)
 
