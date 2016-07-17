@@ -5,7 +5,7 @@
 # Author: Peter Prettenhofer
 #
 # License: BSD 3 clause
-# spurious comment to force recythonization
+
 cimport cython
 
 from libc.stdlib cimport free
