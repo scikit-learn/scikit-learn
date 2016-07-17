@@ -173,36 +173,6 @@ cdef class Stack:
 # PriorityHeap data structure
 # =============================================================================
 
-cdef class PriorityHeap:
-    """A priority queue implemented as a binary heap.
-
-    The heap invariant is that the impurity improvement of the parent record
-    is larger then the impurity improvement of the children.
-
-    Attributes
-    ----------
-    capacity : SIZE_t
-        The capacity of the heap
-
-    heap_ptr : SIZE_t
-        The water mark of the heap; the heap grows from left to right in the
-        array ``heap_``. The following invariant holds ``heap_ptr < capacity``.
-
-    heap_ : PriorityHeapRecord*
-        The array of heap records. The maximum element is on the left;
-        the heap grows from left to right
-    """
-
-    def __cinit__(self, SIZE_t capacity):
-        self.capacity = capacity
-        self.heap_ptr = 0
-        self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
-        if self.heap_ == NULL:
-            raise MemoryError()
-
-    def __dealloc__(self):
-        free(self.heap_)
-
     cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
         """Restore heap invariant parent.improvement > child.improvement from
            ``pos`` upwards. """
@@ -234,6 +204,37 @@ cdef class PriorityHeap:
         if largest != pos:
             heap[pos], heap[largest] = heap[largest], heap[pos]
             self.heapify_down(heap, largest, heap_length)
+
+
+cdef class PriorityHeap:
+    """A priority queue implemented as a binary heap.
+
+    The heap invariant is that the impurity improvement of the parent record
+    is larger then the impurity improvement of the children.
+
+    Attributes
+    ----------
+    capacity : SIZE_t
+        The capacity of the heap
+
+    heap_ptr : SIZE_t
+        The water mark of the heap; the heap grows from left to right in the
+        array ``heap_``. The following invariant holds ``heap_ptr < capacity``.
+
+    heap_ : PriorityHeapRecord*
+        The array of heap records. The maximum element is on the left;
+        the heap grows from left to right
+    """
+
+    def __cinit__(self, SIZE_t capacity):
+        self.capacity = capacity
+        self.heap_ptr = 0
+        self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
+        if self.heap_ == NULL:
+            raise MemoryError()
+
+    def __dealloc__(self):
+        free(self.heap_)
 
     cdef bint is_empty(self) nogil:
         return self.heap_ptr <= 0
@@ -274,7 +275,7 @@ cdef class PriorityHeap:
         heap[heap_ptr].improvement = improvement
 
         # Heapify up
-        self.heapify_up(heap, heap_ptr)
+        heapify_up(heap, heap_ptr)
 
         # Increase element count
         self.heap_ptr = heap_ptr + 1
@@ -296,7 +297,7 @@ cdef class PriorityHeap:
 
         # Restore heap invariant
         if heap_ptr > 1:
-            self.heapify_down(heap, 0, heap_ptr - 1)
+            heapify_down(heap, 0, heap_ptr - 1)
 
         self.heap_ptr = heap_ptr - 1
 
