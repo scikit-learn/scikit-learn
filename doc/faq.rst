@@ -32,7 +32,7 @@ For bug reports or feature requests, please make use of the
 `issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_
 or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
-We of course want to help scikit-learn users, but we suggest searching 
+Helping users is important to us, but we suggest searching 
 `Stack Overflow <http://stackoverflow.com>`_ or 
 `Cross Validated <http://stats.stackexchange.com>`_ before contacting the mailing
 list. Those sites may already have an answer to your question. They provide a
