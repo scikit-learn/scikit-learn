@@ -1,4 +1,4 @@
-# cython: cdivision=Truex
+# cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
 
