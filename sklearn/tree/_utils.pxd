@@ -106,6 +106,8 @@ cdef class PriorityHeap:
     cdef PriorityHeapRecord* heap_
 
     cdef bint is_empty(self) nogil
+    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil
+    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,

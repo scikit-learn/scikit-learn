@@ -854,7 +854,7 @@ cdef class RegressionCriterion(Criterion):
 
                 self.weighted_n_left -= w
 
-        self.weighted_n_right = (self.weighted_n_node_samples - 
+        self.weighted_n_right = (self.weighted_n_node_samples -
                                  self.weighted_n_left)
         for k in range(self.n_outputs):
             sum_right[k] = sum_total[k] - sum_left[k]
@@ -965,7 +965,7 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
@@ -1268,7 +1268,7 @@ cdef class MAE(RegressionCriterion):
 cdef class FriedmanMSE(MSE):
     """Mean squared error impurity criterion with improvement score by Friedman
 
-    Uses the formula (35) in Friedmans original Gradient Boosting paper:
+    Uses the formula (35) in Friedman's original Gradient Boosting paper:
 
         diff = mean_left - mean_right
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
@@ -1321,5 +1321,5 @@ cdef class FriedmanMSE(MSE):
         diff = (self.weighted_n_right * total_sum_left -
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right * 
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
                                self.weighted_n_node_samples))

@@ -173,40 +173,6 @@ cdef class Stack:
 # PriorityHeap data structure
 # =============================================================================
 
-cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
-    """Restore heap invariant parent.improvement > child.improvement from
-       ``pos`` upwards. """
-    if pos == 0:
-        return
-
-    cdef SIZE_t parent_pos = (pos - 1) / 2
-
-    if heap[parent_pos].improvement < heap[pos].improvement:
-        heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
-        heapify_up(heap, parent_pos)
-
-
-cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos,
-                       SIZE_t heap_length) nogil:
-    """Restore heap invariant parent.improvement > children.improvement from
-       ``pos`` downwards. """
-    cdef SIZE_t left_pos = 2 * (pos + 1) - 1
-    cdef SIZE_t right_pos = 2 * (pos + 1)
-    cdef SIZE_t largest = pos
-
-    if (left_pos < heap_length and
-            heap[left_pos].improvement > heap[largest].improvement):
-        largest = left_pos
-
-    if (right_pos < heap_length and
-            heap[right_pos].improvement > heap[largest].improvement):
-        largest = right_pos
-
-    if largest != pos:
-        heap[pos], heap[largest] = heap[largest], heap[pos]
-        heapify_down(heap, largest, heap_length)
-
-
 cdef class PriorityHeap:
     """A priority queue implemented as a binary heap.
 
@@ -239,6 +205,38 @@ cdef class PriorityHeap:
 
     cdef bint is_empty(self) nogil:
         return self.heap_ptr <= 0
+
+    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil:
+        """Restore heap invariant parent.improvement > child.improvement from
+           ``pos`` upwards. """
+        if pos == 0:
+            return
+
+        cdef SIZE_t parent_pos = (pos - 1) / 2
+
+        if heap[parent_pos].improvement < heap[pos].improvement:
+            heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
+            self.heapify_up(heap, parent_pos)
+
+    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
+                           SIZE_t heap_length) nogil:
+        """Restore heap invariant parent.improvement > children.improvement from
+           ``pos`` downwards. """
+        cdef SIZE_t left_pos = 2 * (pos + 1) - 1
+        cdef SIZE_t right_pos = 2 * (pos + 1)
+        cdef SIZE_t largest = pos
+
+        if (left_pos < heap_length and
+                heap[left_pos].improvement > heap[largest].improvement):
+            largest = left_pos
+
+        if (right_pos < heap_length and
+                heap[right_pos].improvement > heap[largest].improvement):
+            largest = right_pos
+
+        if largest != pos:
+            heap[pos], heap[largest] = heap[largest], heap[pos]
+            self.heapify_down(heap, largest, heap_length)
 
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
@@ -276,7 +274,7 @@ cdef class PriorityHeap:
         heap[heap_ptr].improvement = improvement
 
         # Heapify up
-        heapify_up(heap, heap_ptr)
+        self.heapify_up(heap, heap_ptr)
 
         # Increase element count
         self.heap_ptr = heap_ptr + 1
@@ -298,7 +296,7 @@ cdef class PriorityHeap:
 
         # Restore heap invariant
         if heap_ptr > 1:
-            heapify_down(heap, 0, heap_ptr - 1)
+            self.heapify_down(heap, 0, heap_ptr - 1)
 
         self.heap_ptr = heap_ptr - 1
 
