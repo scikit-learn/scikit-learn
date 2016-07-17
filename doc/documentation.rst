@@ -93,5 +93,9 @@ Documentation of scikit-learn 0.18.dev0
                     scope or not well established enough for scikit-learn.
                     </blockquote>
                 </div>
-
+                <div class="span4 box">
+                    <h2><a href="presentations.html">installation</a></h2>
+                    <blockquote>How to install sci-kit learn, and what the prerequisites are. 
+                    </blockquote>
+                </div>
             </div>
