@@ -398,16 +398,16 @@ suitable for usage by a classifier it is very common to use the tf–idf
 transform.
 
 Tf means **term-frequency** while tf–idf means term-frequency times
-**inverse document-frequency**: 
-:math:`\text{tf-idf(t,d)}=\text{tf(t,d)} \times \text{idf(t)}`. 
+**inverse document-frequency**:
+:math:`\text{tf-idf(t,d)}=\text{tf(t,d)} \times \text{idf(t)}`.
 
-This was originally a term weighting scheme developed for information retrieval 
-(as a ranking function for search engines results) that has also found good 
+This was originally a term weighting scheme developed for information retrieval
+(as a ranking function for search engines results) that has also found good
 use in document classification and clustering.
 
-Please note that the tf-idfs computed in scikit-learn's 
+Please note that the tf-idfs computed in scikit-learn's
 :class:`TfidfTransformer` and :class:`TfidfVectorizer` differ slightly from the
-standard textbook notation, which is typically defines the idf as as
+standard textbook notation that defines the idf as:
 
 :math:`\text{idf}(t) = log{\frac{n_d}{1+\text{df}(d,t)}},`
 
@@ -458,7 +458,7 @@ content of the documents::
 
 Each row is normalized to have unit Euclidean norm:
 
-:math:`v_{norm} = \frac{v}{||v||_2} = \frac{v}{\sqrt{v{_1}^2 + 
+:math:`v_{norm} = \frac{v}{||v||_2} = \frac{v}{\sqrt{v{_1}^2 +
 v{_2}^2 + \dots + v{_n}^2}}`
 
 For example, we can compute the tf-idf of the first term in the first
@@ -468,7 +468,7 @@ document in the `counts` array as follows:
 
 :math:`\text{df}(d, t)_{\text{term1}} = 6`
 
-:math:`\text{idf}(d, t)_{\text{term1}} = 
+:math:`\text{idf}(d, t)_{\text{term1}} =
 log \frac{n_d}{\text{df}(d, t)} + 1 = log(1)+1 = 1`
 
 :math:`\text{tf-idf}_{\text{term1}} = \text{tf} \times \text{idf} = 3 \times 1 = 3`
@@ -488,11 +488,11 @@ and the vector of raw tf-idfs:
 Then, applying the Euclidean (L2) norm, we obtain the following tf-idfs
 for document 1:
 
-:math:`\frac{[3, 0, 2.0986]}{\sqrt{\big(3^2 + 0^2 + 2.0986^2\big)}} 
+:math:`\frac{[3, 0, 2.0986]}{\sqrt{\big(3^2 + 0^2 + 2.0986^2\big)}}
 = [ 0.819,  0,  0.573].`
 
-Furthermore, the default parameter `smooth_idf=True` adds "1" to the numerator 
-and  denominator as if an extra document was seen containing every term in the 
+Furthermore, the default parameter `smooth_idf=True` adds "1" to the numerator
+and  denominator as if an extra document was seen containing every term in the
 collection exactly once, which prevents zero divisions:
 
 :math:`\text{idf}(t) = log{\frac{1 + n_d}{1+\text{df}(d,t)}} + 1`
@@ -504,7 +504,7 @@ Using this modification, the tf-idf of the third term in document 1 changes to
 
 And the L2-normalized tf-idf changes to
 
-:math:`\frac{[3, 0, 1.8473]}{\sqrt{\big(3^2 + 0^2 + 1.8473^2\big)}} 
+:math:`\frac{[3, 0, 1.8473]}{\sqrt{\big(3^2 + 0^2 + 1.8473^2\big)}}
 = [0.8515, 0, 0.5243]`::
 
   >>> tfidf=TfidfTransformer()

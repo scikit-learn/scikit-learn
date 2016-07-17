@@ -928,15 +928,20 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     The formula that is used to compute the tf-idf of term t is
     tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
-    idf(d, t) = log [ n / df(d, t) ] + 1,
+    idf(d, t) = log [ n / df(d, t) ] + 1 (if `smooth_idf=False`),
     where n is the total number of documents and df(d, t) is the
     document frequency; the document frequency is the number of documents d
     that contain term t. The effect of adding "1" to the idf in the equation
     above is that terms with zero idf, i.e., terms  that occur in all documents
     in a training set, will not be entirely ignored.
     (Note that the idf formula above differs from the standard
-    textbook notation, which defines the idf as
+    textbook notation that defines the idf as
     idf(d, t) = log [ n / (df(d, t) + 1) ]).
+
+    If `smooth_idf=True` (the default), the constant "1" is added to the
+    numerator and denominator of the idf as if an extra document was seen
+    containing every term in the collection exactly once, which prevents
+    zero divisions: idf(d, t) = log [ (1 + n) / 1 + df(d, t) ] + 1.
 
     Furthermore, the formulas used to compute tf and idf depend
     on parameter settings that correspond to the SMART notation used in IR
