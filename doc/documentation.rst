@@ -93,5 +93,12 @@ Documentation of scikit-learn 0.18.dev0
                     scope or not well established enough for scikit-learn.
                     </blockquote>
                 </div>
+                <div class="span4 box">
+                    <h2><a href="install.html">Installation</a></h2>
+                    <blockquote>Steps to install the latest release 
+                    of scikit-learn 
+                    </blockquote>
+                </div>
+
 
             </div>
