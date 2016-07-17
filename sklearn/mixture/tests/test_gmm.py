@@ -80,14 +80,12 @@ def test_lmvnpdf_diag():
     X = rng.randint(10) * rng.rand(n_samples, n_features)
 
     ref = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
-    assert_array_almost_equal(lpr, ref)
-    r = assert_warns_message(DeprecationWarning, "The function"
+    lpr = assert_warns_message(DeprecationWarning, "The function"
                              " log_multivariate_normal_density is "
                              "deprecated in 0.18 and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
                              X, mu, cv, 'diag')
-
+    assert_array_almost_equal(lpr, ref)
 
 
 def test_lmvnpdf_spherical():
@@ -99,15 +97,12 @@ def test_lmvnpdf_spherical():
 
     cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, spherecv,
-                                                  'spherical')
-    assert_array_almost_equal(lpr, reference)
-    r = assert_warns_message(DeprecationWarning, "The function"
+    lpr = assert_warns_message(DeprecationWarning, "The function"
                              " log_multivariate_normal_density is "
                              "deprecated in 0.18 and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
                              X, mu, spherecv, 'spherical')
-
+    assert_array_almost_equal(lpr, reference)
 
 def test_lmvnpdf_full():
     n_features, n_components, n_samples = 2, 3, 10
@@ -119,13 +114,13 @@ def test_lmvnpdf_full():
     fullcv = np.array([np.diag(x) for x in cv])
 
     reference = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, fullcv, 'full')
-    assert_array_almost_equal(lpr, reference)
-    r = assert_warns_message(DeprecationWarning, "The function"
+    lpr = assert_warns_message(DeprecationWarning, "The function"
                              " log_multivariate_normal_density is "
                              "deprecated in 0.18 and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
                              X, mu, fullcv, 'full')
+    assert_array_almost_equal(lpr, reference)
+
 
 def test_lvmpdf_full_cv_non_positive_definite():
     n_features, n_samples = 2, 10
@@ -137,11 +132,7 @@ def test_lvmpdf_full_cv_non_positive_definite():
     assert_raise_message(ValueError, expected_message,
                          mixture.log_multivariate_normal_density,
                          X, mu, cv, 'full')
-    r = assert_warns_message(DeprecationWarning,"The function" 
-                             " log_multivariate_normal_density is "
-                             "deprecated in 0.18 and will be removed in 0.20.",
-                             mixture.log_multivariate_normal_density,
-                             X, mu, cv, 'full')
+
 
 # This function tests the deprecated old GMM class
 @ignore_warnings(category=DeprecationWarning)
