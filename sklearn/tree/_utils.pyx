@@ -185,6 +185,7 @@ cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
         heap[parent_pos], heap[pos] = heap[pos], heap[parent_pos]
         heapify_up(heap, parent_pos)
 
+
 cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos,
                        SIZE_t heap_length) nogil:
     """Restore heap invariant parent.improvement > children.improvement from
