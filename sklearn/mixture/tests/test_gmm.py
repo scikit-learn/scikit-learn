@@ -351,174 +351,173 @@ def test_multiple_init():
     assert_true(train2 >= train1 - 1.e-2)
 
 
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def test_n_parameters():
-#     n_samples, n_dim, n_components = 7, 5, 2
-#     X = rng.randn(n_samples, n_dim)
-#     n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
-#     for cv_type in ['full', 'tied', 'diag', 'spherical']:
-#         g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-#                         random_state=rng, min_covar=1e-7, n_iter=1)
-#         with ignore_warnings(category=DeprecationWarning):
-#             g.fit(X)
-#             assert_true(g._n_parameters() == n_params[cv_type])
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_n_parameters():
+    n_samples, n_dim, n_components = 7, 5, 2
+    X = rng.randn(n_samples, n_dim)
+    n_params = {'spherical': 13, 'diag': 21, 'tied': 26, 'full': 41}
+    for cv_type in ['full', 'tied', 'diag', 'spherical']:
+        with ignore_warnings(category=DeprecationWarning):
+            g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                        random_state=rng, min_covar=1e-7, n_iter=1)
+            g.fit(X)
+            assert_true(g._n_parameters() == n_params[cv_type])
 
 
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def test_1d_1component():
-#     # Test all of the covariance_types return the same BIC score for
-#     # 1-dimensional, 1 component fits.
-#     n_samples, n_dim, n_components = 100, 1, 1
-#     X = rng.randn(n_samples, n_dim)
-#     g_full = mixture.GMM(n_components=n_components, covariance_type='full',
-#                          random_state=rng, min_covar=1e-7, n_iter=1)
-#     with ignore_warnings(category=DeprecationWarning):
-#         g_full.fit(X)
-#         g_full_bic = g_full.bic(X)
-#     for cv_type in ['tied', 'diag', 'spherical']:
-#         g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-#                         random_state=rng, min_covar=1e-7, n_iter=1)
-#         with ignore_warnings(category=DeprecationWarning):
-#             g.fit(X)
-#             assert_array_almost_equal(g.bic(X), g_full_bic)
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_1d_1component():
+    # Test all of the covariance_types return the same BIC score for
+    # 1-dimensional, 1 component fits.
+    n_samples, n_dim, n_components = 100, 1, 1
+    X = rng.randn(n_samples, n_dim)
+    g_full = mixture.GMM(n_components=n_components, covariance_type='full',
+                         random_state=rng, min_covar=1e-7, n_iter=1)
+    with ignore_warnings(category=DeprecationWarning):
+        g_full.fit(X)
+        g_full_bic = g_full.bic(X)
+        for cv_type in ['tied', 'diag', 'spherical']:
+            g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                            random_state=rng, min_covar=1e-7, n_iter=1)
+            g.fit(X)
+            assert_array_almost_equal(g.bic(X), g_full_bic)
 
 
-# def assert_fit_predict_correct(model, X):
-#     model2 = copy.deepcopy(model)
+def assert_fit_predict_correct(model, X):
+    model2 = copy.deepcopy(model)
 
-#     predictions_1 = model.fit(X).predict(X)
-#     predictions_2 = model2.fit_predict(X)
+    predictions_1 = model.fit(X).predict(X)
+    predictions_2 = model2.fit_predict(X)
 
-#     assert adjusted_rand_score(predictions_1, predictions_2) == 1.0
-
-
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def test_fit_predict():
-#     """
-#     test that gmm.fit_predict is equivalent to gmm.fit + gmm.predict
-#     """
-#     lrng = np.random.RandomState(101)
-
-#     n_samples, n_dim, n_comps = 100, 2, 2
-#     mu = np.array([[8, 8]])
-#     component_0 = lrng.randn(n_samples, n_dim)
-#     component_1 = lrng.randn(n_samples, n_dim) + mu
-#     X = np.vstack((component_0, component_1))
-
-#     for m_constructor in (mixture.GMM, mixture.VBGMM, mixture.DPGMM):
-#         model = m_constructor(n_components=n_comps, covariance_type='full',
-#                               min_covar=1e-7, n_iter=5,
-#                               random_state=np.random.RandomState(0))
-#         assert_fit_predict_correct(model, X)
-
-#     model = mixture.GMM(n_components=n_comps, n_iter=0)
-#     z = model.fit_predict(X)
-#     assert np.all(z == 0), "Quick Initialization Failed!"
+    assert adjusted_rand_score(predictions_1, predictions_2) == 1.0
 
 
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def test_aic():
-#     # Test the aic and bic criteria
-#     n_samples, n_dim, n_components = 50, 3, 2
-#     X = rng.randn(n_samples, n_dim)
-#     SGH = 0.5 * (X.var() + np.log(2 * np.pi))  # standard gaussian entropy
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_fit_predict():
+    """
+    test that gmm.fit_predict is equivalent to gmm.fit + gmm.predict
+    """
+    lrng = np.random.RandomState(101)
 
-#     for cv_type in ['full', 'tied', 'diag', 'spherical']:
-#         g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
-#                         random_state=rng, min_covar=1e-7)
-#         g.fit(X)
-#         aic = 2 * n_samples * SGH * n_dim + 2 * g._n_parameters()
-#         bic = (2 * n_samples * SGH * n_dim +
-#                np.log(n_samples) * g._n_parameters())
-#         bound = n_dim * 3. / np.sqrt(n_samples)
-#         assert_true(np.abs(g.aic(X) - aic) / n_samples < bound)
-#         assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
+    n_samples, n_dim, n_comps = 100, 2, 2
+    mu = np.array([[8, 8]])
+    component_0 = lrng.randn(n_samples, n_dim)
+    component_1 = lrng.randn(n_samples, n_dim) + mu
+    X = np.vstack((component_0, component_1))
 
+    for m_constructor in (mixture.GMM, mixture.VBGMM, mixture.DPGMM):
+        model = m_constructor(n_components=n_comps, covariance_type='full',
+                              min_covar=1e-7, n_iter=5,
+                              random_state=np.random.RandomState(0))
+        assert_fit_predict_correct(model, X)
 
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def check_positive_definite_covars(covariance_type):
-#     r"""Test that covariance matrices do not become non positive definite
-
-#     Due to the accumulation of round-off errors, the computation of the
-#     covariance  matrices during the learning phase could lead to non-positive
-#     definite covariance matrices. Namely the use of the formula:
-
-#     .. math:: C = (\sum_i w_i  x_i x_i^T) - \mu \mu^T
-
-#     instead of:
-
-#     .. math:: C = \sum_i w_i (x_i - \mu)(x_i - \mu)^T
-
-#     while mathematically equivalent, was observed a ``LinAlgError`` exception,
-#     when computing a ``GMM`` with full covariance matrices and fixed mean.
-
-#     This function ensures that some later optimization will not introduce the
-#     problem again.
-#     """
-#     rng = np.random.RandomState(1)
-#     # we build a dataset with 2 2d component. The components are unbalanced
-#     # (respective weights 0.9 and 0.1)
-#     X = rng.randn(100, 2)
-#     X[-10:] += (3, 3)  # Shift the 10 last points
-
-#     gmm = mixture.GMM(2, params="wc", covariance_type=covariance_type,
-#                       min_covar=1e-3)
-
-#     # This is a non-regression test for issue #2640. The following call used
-#     # to trigger:
-#     # numpy.linalg.linalg.LinAlgError: 2-th leading minor not positive definite
-#     gmm.fit(X)
-
-#     if covariance_type == "diag" or covariance_type == "spherical":
-#         assert_greater(gmm.covars_.min(), 0)
-#     else:
-#         if covariance_type == "tied":
-#             covs = [gmm.covars_]
-#         else:
-#             covs = gmm.covars_
-
-#         for c in covs:
-#             assert_greater(np.linalg.det(c), 0)
+    model = mixture.GMM(n_components=n_comps, n_iter=0)
+    z = model.fit_predict(X)
+    assert np.all(z == 0), "Quick Initialization Failed!"
 
 
-# def test_positive_definite_covars():
-#     # Check positive definiteness for all covariance types
-#     for covariance_type in ["full", "tied", "diag", "spherical"]:
-#         yield check_positive_definite_covars, covariance_type
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_aic():
+    # Test the aic and bic criteria
+    n_samples, n_dim, n_components = 50, 3, 2
+    X = rng.randn(n_samples, n_dim)
+    SGH = 0.5 * (X.var() + np.log(2 * np.pi))  # standard gaussian entropy
+
+    for cv_type in ['full', 'tied', 'diag', 'spherical']:
+        g = mixture.GMM(n_components=n_components, covariance_type=cv_type,
+                        random_state=rng, min_covar=1e-7)
+        g.fit(X)
+        aic = 2 * n_samples * SGH * n_dim + 2 * g._n_parameters()
+        bic = (2 * n_samples * SGH * n_dim +
+               np.log(n_samples) * g._n_parameters())
+        bound = n_dim * 3. / np.sqrt(n_samples)
+        assert_true(np.abs(g.aic(X) - aic) / n_samples < bound)
+        assert_true(np.abs(g.bic(X) - bic) / n_samples < bound)
 
 
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def test_verbose_first_level():
-#     # Create sample data
-#     X = rng.randn(30, 5)
-#     X[:10] += 2
-#     g = mixture.GMM(n_components=2, n_init=2, verbose=1)
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def check_positive_definite_covars(covariance_type):
+    r"""Test that covariance matrices do not become non positive definite
 
-#     old_stdout = sys.stdout
-#     sys.stdout = StringIO()
-#     try:
-#         g.fit(X)
-#     finally:
-#         sys.stdout = old_stdout
+    Due to the accumulation of round-off errors, the computation of the
+    covariance  matrices during the learning phase could lead to non-positive
+    definite covariance matrices. Namely the use of the formula:
+
+    .. math:: C = (\sum_i w_i  x_i x_i^T) - \mu \mu^T
+
+    instead of:
+
+    .. math:: C = \sum_i w_i (x_i - \mu)(x_i - \mu)^T
+
+    while mathematically equivalent, was observed a ``LinAlgError`` exception,
+    when computing a ``GMM`` with full covariance matrices and fixed mean.
+
+    This function ensures that some later optimization will not introduce the
+    problem again.
+    """
+    rng = np.random.RandomState(1)
+    # we build a dataset with 2 2d component. The components are unbalanced
+    # (respective weights 0.9 and 0.1)
+    X = rng.randn(100, 2)
+    X[-10:] += (3, 3)  # Shift the 10 last points
+
+    gmm = mixture.GMM(2, params="wc", covariance_type=covariance_type,
+                      min_covar=1e-3)
+
+    # This is a non-regression test for issue #2640. The following call used
+    # to trigger:
+    # numpy.linalg.linalg.LinAlgError: 2-th leading minor not positive definite
+    gmm.fit(X)
+
+    if covariance_type == "diag" or covariance_type == "spherical":
+        assert_greater(gmm.covars_.min(), 0)
+    else:
+        if covariance_type == "tied":
+            covs = [gmm.covars_]
+        else:
+            covs = gmm.covars_
+
+        for c in covs:
+            assert_greater(np.linalg.det(c), 0)
 
 
-# # This function tests the deprecated old GMM class
-# @ignore_warnings(category=DeprecationWarning)
-# def test_verbose_second_level():
-#     # Create sample data
-#     X = rng.randn(30, 5)
-#     X[:10] += 2
-#     g = mixture.GMM(n_components=2, n_init=2, verbose=2)
+def test_positive_definite_covars():
+    # Check positive definiteness for all covariance types
+    for covariance_type in ["full", "tied", "diag", "spherical"]:
+        yield check_positive_definite_covars, covariance_type
 
-#     old_stdout = sys.stdout
-#     sys.stdout = StringIO()
-#     try:
-#         g.fit(X)
-#     finally:
-#         sys.stdout = old_stdout
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_verbose_first_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=1)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
+
+
+# This function tests the deprecated old GMM class
+@ignore_warnings(category=DeprecationWarning)
+def test_verbose_second_level():
+    # Create sample data
+    X = rng.randn(30, 5)
+    X[:10] += 2
+    g = mixture.GMM(n_components=2, n_init=2, verbose=2)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        g.fit(X)
+    finally:
+        sys.stdout = old_stdout
