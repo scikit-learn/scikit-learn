@@ -221,6 +221,7 @@ class TestVBGMMWithFullCovars(unittest.TestCase, VBGMMTester):
 def test_vbgmm_no_modify_alpha():
     alpha = 2.
     n_components = 3
-    vbgmm = VBGMM(n_components=n_components, alpha=alpha)
+    X, y = make_blobs(random_state=1)
+    vbgmm = VBGMM(n_components=n_components, alpha=alpha, n_iter=1)
     assert_equal(vbgmm.alpha, alpha)
-    assert_equal(vbgmm.alpha_, float(alpha) / n_components)
+    assert_equal(vbgmm.fit(X).alpha_, float(alpha) / n_components)

@@ -727,9 +727,35 @@ class VBGMM(_DPGMMBase):
             n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = alpha
 
-    @property
-    def alpha_(self):
-        return float(self.alpha) / self.n_components
+    def _fit(self, X, y=None):
+        """Estimate model parameters with the variational
+        algorithm.
+
+        For a full derivation and description of the algorithm see
+        doc/modules/dp-derivation.rst
+        or
+        http://scikit-learn.org/stable/modules/dp-derivation.html
+
+        A initialization step is performed before entering the em
+        algorithm. If you want to avoid this step, set the keyword
+        argument init_params to the empty string '' when when creating
+        the object. Likewise, if you would like just to do an
+        initialization, set n_iter=0.
+
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
+        """
+        self.alpha_ = float(self.alpha) / self.n_components
+        return super(VBGMM, self)._fit(X, y)
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
