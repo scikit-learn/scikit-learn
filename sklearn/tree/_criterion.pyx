@@ -1220,10 +1220,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t start = self.start
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
-        # with gil:
-        #     print "start {}".format(start)
-        #     print "pos {}".format(pos)
-        #     print "end {}".format(end)
 
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
@@ -1237,8 +1233,6 @@ cdef class MAE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             (<WeightedMedianHeap> left_child_heaps[k]).get_median(&median)
-            # with gil:
-                # print "median {}".format(median)
             for p in range(start, pos):
                 i = samples[p]
 
@@ -1246,13 +1240,9 @@ cdef class MAE(RegressionCriterion):
 
                 impurity_left[0] += <double>fabs((<double> y_ik) - median)
         impurity_left[0] /= <double>((pos - start) * self.n_outputs)
-        # with gil:
-            # print "impurity_left[0] {}".format(impurity_left[0])
 
         for k in range(self.n_outputs):
             (<WeightedMedianHeap> right_child_heaps[k]).get_median(&median)
-            # with gil:
-                # print "median {}".format(median)
             for p in range(pos, end):
                 i = samples[p]
 
@@ -1260,8 +1250,6 @@ cdef class MAE(RegressionCriterion):
 
                 impurity_right[0] += <double>fabs((<double> y_ik) - median)
         impurity_right[0] /= <double>((end - pos) * self.n_outputs)
-        # with gil:
-            # print "impurity_right[0] {}".format(impurity_right[0])
 
 
 cdef class FriedmanMSE(MSE):
