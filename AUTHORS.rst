@@ -63,7 +63,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Jake VanderPlas <http://www.astro.washington.edu/users/vanderplas/>`_
   * Nelle Varoquaux
   * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
-  * Ron Weissz
+  * Ron Weiss
 
 Please do not email the authors directly with bug reports or feature requests.
 To address those concerns, please make use of the
