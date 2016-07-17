@@ -222,7 +222,6 @@ def test_transformer_n_iter():
             else:
                 yield check_transformer_n_iter, name, estimator
 
-@ignore_warnings(category=DeprecationWarning)
 def test_get_params_invariance():
     # Test for estimators that support get_params, that
     # get_params(deep=False) is a subset of get_params(deep=True)
@@ -232,8 +231,8 @@ def test_get_params_invariance():
                                 include_other=True)
     for name, Estimator in estimators:
         if hasattr(Estimator, 'get_params'):
-            # The ProjectedGradientNMF class is deprecated
-            if issubclass(Estimator, ProjectedGradientNMF):
+            # If class is deprecated, ignore deprecated warnings
+            if hasattr(Estimator.__init__, "deprecated_original"):
                 with ignore_warnings():
                     yield check_get_params_invariance, name, Estimator
             else:
