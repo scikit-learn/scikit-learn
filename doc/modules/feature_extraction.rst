@@ -407,7 +407,7 @@ use in document classification and clustering.
 
 Please note that the tf-idfs computed in scikit-learn's
 :class:`TfidfTransformer` and :class:`TfidfVectorizer` differ slightly from the
-standard textbook notation that defines the idf as:
+standard textbook notation that defines the idf as
 
 :math:`\text{idf}(t) = log{\frac{n_d}{1+\text{df}(d,t)}},`
 
@@ -423,7 +423,7 @@ This normalization is implemented by the :class:`TfidfTransformer`
 class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
-  >>> transformer = TfidfTransformer()
+  >>> transformer = TfidfTransformer(smooth_idf=False)
   >>> transformer   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   TfidfTransformer(norm=...'l2', smooth_idf=False, sublinear_tf=False,
                    use_idf=True)
