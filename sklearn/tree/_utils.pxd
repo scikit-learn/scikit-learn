@@ -104,9 +104,6 @@ cdef class PriorityHeap:
                   double impurity, double impurity_left,
                   double impurity_right) nogil
     cdef int pop(self, PriorityHeapRecord* res) nogil
-    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil
-    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos,
-                           SIZE_t heap_length) nogil
 
 # =============================================================================
 # WeightedPQueue data structure
