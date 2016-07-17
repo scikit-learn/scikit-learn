@@ -371,7 +371,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise', return_train_score=False):
+                 error_score='raise', return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -543,10 +543,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            train_scores, test_scores, test_sample_counts, _, parameters =\
+            train_scores, test_scores, test_sample_counts, time, parameters =\
                 zip(*out)
         else:
-            test_scores, test_sample_counts, _, parameters = zip(*out)
+            test_scores, test_sample_counts, time, parameters = zip(*out)
 
         candidate_params = parameters[::n_splits]
         n_candidates = len(candidate_params)
@@ -563,23 +563,23 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
 
-        # Computed the (weighted) mean and std for all the candidates
+        # Computed the (weighted) mean and std for test scores
         weights = test_sample_counts if self.iid else None
-
-        time = np.array(_, dtype=np.float64).reshape(n_candidates, n_splits)
-        time_means = np.average(time, axis=1, weights=weights)
-        time_stds =  np.sqrt(
-                np.average((time - time_means[:, np.newaxis]) ** 2,
-                           axis=1, weights=weights))
-        if self.return_train_score:
-            train_means = np.average(train_scores, axis=1, weights=weights)
-            train_stds = np.sqrt(
-                np.average((train_scores - train_means[:, np.newaxis]) ** 2,
-                           axis=1, weights=weights))
         test_means = np.average(test_scores, axis=1, weights=weights)
         test_stds = np.sqrt(
             np.average((test_scores - test_means[:, np.newaxis]) ** 2, axis=1,
                        weights=weights))
+
+        time = np.array(time, dtype=np.float64).reshape(n_candidates, n_splits)
+        time_means = np.average(time, axis=1)
+        time_stds =  np.sqrt(
+            np.average((time - time_means[:, np.newaxis]) ** 2,
+                       axis=1))
+        if self.return_train_score:
+            train_means = np.average(train_scores, axis=1)
+            train_stds = np.sqrt(
+                np.average((train_scores - train_means[:, np.newaxis]) ** 2,
+                           axis=1))
 
         results = dict()
         for split_i in range(n_splits):
@@ -761,8 +761,9 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
-    return_train_score: boolean, default=False
-        If "True", the results_ attribute will include training scores.
+    return_train_score: boolean, default=True
+        If ``'False'``, the results_ attribute will not include training
+        scores.
 
 
     Examples
@@ -788,7 +789,7 @@ class GridSearchCV(BaseSearchCV):
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['param_C', 'param_kernel', 'params', 'test_mean_score', 'test_mean_time',
      'test_rank_score', 'test_split0_score', 'test_split1_score',
-     'test_split2_score', 'test_std_score', 'test_std_time']
+     'test_split2_score', 'test_std_score', ...]
 
     Attributes
     ----------
@@ -822,17 +823,21 @@ class GridSearchCV(BaseSearchCV):
             'test_split0_score' : [0.8, 0.7, 0.8, 0.9],
             'test_split1_score' : [0.82, 0.5, 0.7, 0.78],
             'test_mean_score'   : [0.81, 0.60, 0.75, 0.82],
-            'test_mean_time'    : [ 0.00073,  0.00063,  0.00043,  0.00049]
-            'test_std_time'     : [ 1.62e-4,   3.37e-5,   1.42e-5, 1.1e-5]
+            'train_split0_score': [0.9, 0.8, 0.85, 1.]
+            'train_split1_score': [0.95, 0.7, 0.8, 0.8]
+            'train_mean_score'  : [0.93, 0.75, 0.83, 0.9]
+            'test_mean_time'    : [0.00073, 0.00063, 0.00043, 0.00049]
+            'test_std_time'     : [1.62e-4, 3.37e-5, 1.42e-5, 1.1e-5]
             'test_std_score'    : [0.02, 0.01, 0.03, 0.03],
             'test_rank_score'   : [2, 4, 3, 1],
+            ...
             'params'            : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
         NOTE that the key ``'params'`` is used to store a list of parameter
         settings dict for all the parameter candidates.  Besides,
-        'train_mean_score', 'train_split*_score', ... will be present when
-        return_train_score is set to True.
+        ``'train_mean_score'``, ``'train_split*_score'``, ... will be present
+        when return_train_score=True.
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
@@ -1030,8 +1035,9 @@ class RandomizedSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
-    return_train_score: boolean, default=False
-        If "True", the results_ attribute will include training scores.
+    return_train_score: boolean, default=True
+        If ``'False'``, the results_ attribute will not include training
+        scores.
 
     Attributes
     ----------
@@ -1060,10 +1066,14 @@ class RandomizedSearchCV(BaseSearchCV):
             'test_split0_score' : [0.8, 0.9, 0.7],
             'test_split1_score' : [0.82, 0.5, 0.7],
             'test_mean_score'   : [0.81, 0.7, 0.7],
+            'train_split0_score': [0.9, 0.8, 0.85]
+            'train_split1_score': [0.95, 0.7, 0.8]
+            'train_mean_score'  : [0.93, 0.75, 0.83]
             'test_mean_time'    : [0.00073, 0.00063, 0.00043]
             'test_std_time'     : [1.62e-4, 3.37e-5, 1.1e-5]
             'test_std_score'    : [0.02, 0.2, 0.],
             'test_rank_score'   : [3, 1, 1],
+            ...
             'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
@@ -1130,10 +1140,10 @@ class RandomizedSearchCV(BaseSearchCV):
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-              estimator=estimator, scoring=scoring, fit_params=fit_params,
-              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-              pre_dispatch=pre_dispatch, error_score=error_score,
-              return_train_score=return_train_score)
+             estimator=estimator, scoring=scoring, fit_params=fit_params,
+             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+             pre_dispatch=pre_dispatch, error_score=error_score,
+             return_train_score=return_train_score)
 
     def fit(self, X, y=None, labels=None):
         """Run fit on the estimator with randomly drawn parameters.
