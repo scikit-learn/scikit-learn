@@ -324,16 +324,16 @@ class TestGMMWithDiagonalCovars(unittest.TestCase, GMMTester):
     setUp = GMMTester._setUp
 
 
-# class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
-#     covariance_type = 'tied'
-#     model = mixture.GMM
-#     setUp = GMMTester._setUp
+class TestGMMWithTiedCovars(unittest.TestCase, GMMTester):
+    covariance_type = 'tied'
+    model = mixture.GMM
+    setUp = GMMTester._setUp
 
 
-# class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
-#     covariance_type = 'full'
-#     model = mixture.GMM
-#     setUp = GMMTester._setUp
+class TestGMMWithFullCovars(unittest.TestCase, GMMTester):
+    covariance_type = 'full'
+    model = mixture.GMM
+    setUp = GMMTester._setUp
 
 
 # This function tests the deprecated old GMM class
