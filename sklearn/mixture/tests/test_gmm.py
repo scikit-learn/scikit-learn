@@ -12,11 +12,10 @@ from numpy.testing import (assert_array_equal, assert_array_almost_equal,
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import (assert_greater, assert_raise_message,
+                                   assert_warns_message, ignore_warnings)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.utils.testing import ignore_warnings
 
 
 rng = np.random.RandomState(0)
@@ -81,7 +80,11 @@ def test_lmvnpdf_diag():
     X = rng.randint(10) * rng.rand(n_samples, n_features)
 
     ref = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
+    lpr = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated in 0.18 and will be removed in 0.20.",
+                             mixture.log_multivariate_normal_density,
+                             X, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
 
 
@@ -94,10 +97,12 @@ def test_lmvnpdf_spherical():
 
     cv = np.tile(spherecv, (n_features, 1))
     reference = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, spherecv,
-                                                  'spherical')
+    lpr = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated in 0.18 and will be removed in 0.20.",
+                             mixture.log_multivariate_normal_density,
+                             X, mu, spherecv, 'spherical')
     assert_array_almost_equal(lpr, reference)
-
 
 def test_lmvnpdf_full():
     n_features, n_components, n_samples = 2, 3, 10
@@ -109,7 +114,11 @@ def test_lmvnpdf_full():
     fullcv = np.array([np.diag(x) for x in cv])
 
     reference = _naive_lmvnpdf_diag(X, mu, cv)
-    lpr = mixture.log_multivariate_normal_density(X, mu, fullcv, 'full')
+    lpr = assert_warns_message(DeprecationWarning, "The function"
+                             " log_multivariate_normal_density is "
+                             "deprecated in 0.18 and will be removed in 0.20.",
+                             mixture.log_multivariate_normal_density,
+                             X, mu, fullcv, 'full')
     assert_array_almost_equal(lpr, reference)
 
 
