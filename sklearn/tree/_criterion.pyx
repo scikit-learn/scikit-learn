@@ -960,7 +960,7 @@ cdef class MSE(RegressionCriterion):
 
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
-            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0
+            impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
