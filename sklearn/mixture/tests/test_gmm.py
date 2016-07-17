@@ -82,7 +82,7 @@ def test_lmvnpdf_diag():
     ref = _naive_lmvnpdf_diag(X, mu, cv)
     lpr = mixture.log_multivariate_normal_density(X, mu, cv, 'diag')
     assert_array_almost_equal(lpr, ref)
-    r = assert_warns_message(DeprecationWarning, exp_msg,"The function"
+    r = assert_warns_message(DeprecationWarning, "The function"
                              " log_multivariate_normal_density is "
                              "deprecated in 0.18 and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
@@ -106,7 +106,7 @@ def test_lmvnpdf_spherical():
                              " log_multivariate_normal_density is "
                              "deprecated in 0.18 and will be removed in 0.20.",
                              mixture.log_multivariate_normal_density,
-                             X, mu, cv, 'spherical')
+                             X, mu, spherecv, 'spherical')
 
 
 def test_lmvnpdf_full():
