@@ -65,7 +65,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Gael Varoquaux <http://gael-varoquaux.info/blog/>`_
   * Ron Weissz
 
-Please do not contact the authors directly with bug reports or feature requests.
+Please do not email the authors directly with bug reports or feature requests.
 To address those concerns, please make use of the
 <issue tracker on Github 'https://github.com/scikit-learn/scikit-learn/issues'>
 or the <mailing list 'https://mail.python.org/mailman/listinfo/scikit-learn'>.
@@ -74,4 +74,4 @@ or you have a more general question about
 machine learning, please consult 'Stack Overflow <http://stackoverflow.com>'
 or 'Cross Validated <stats.stackexchange.com>' before contacting the mailing
 list. Those sites may already have an answer to your question. They provide
-convenient search and access to many users that may not be on the mailing list.
+convenient search, and access to many users that may not be on the mailing list.
