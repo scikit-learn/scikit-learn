@@ -814,7 +814,6 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
 
         # Update statistics up to new_pos
         #
@@ -833,8 +832,7 @@ cdef class RegressionCriterion(Criterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    w_y_ik = w * y_ik
-                    sum_left[k] += w_y_ik
+                    sum_left[k] += w * y_ik
 
                 self.weighted_n_left += w
         else:
@@ -848,8 +846,7 @@ cdef class RegressionCriterion(Criterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    w_y_ik = w * y_ik
-                    sum_left[k] -= w_y_ik
+                    sum_left[k] -= w * y_ik
 
                 self.weighted_n_left -= w
 
