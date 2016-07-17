@@ -343,6 +343,16 @@ def test_partial_fit_classification():
         pred2 = mlp.predict(X)
         assert_array_equal(pred1, pred2)
         assert_greater(mlp.score(X, y), 0.95)
+        
+def test_partial_fit_bug_6994():
+    # Non regression test for bug 6994
+    # Tests for labeling errors in partial fit
+
+    clf = MLPClassifier()
+    clf.partial_fit([[1],[2],[3]],["a", "b", "c"], 
+                    classes=["a", "b", "c", "d"])
+    clf.partial_fit([[4]],["d"])
+    assert clf.score([[1],[2],[3],[4]],["a","b","c","d"]) >= 0
 
 
 def test_partial_fit_regression():
