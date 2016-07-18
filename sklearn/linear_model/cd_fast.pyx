@@ -170,17 +170,18 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef ASUM asum
 
     if floating is float:
-        R = np.empty(n_samples, dtype=np.float32)
-        XtA = np.empty(n_features, dtype=np.float32)
+        dtype = np.float32
         dot = sdot
         axpy = saxpy
         asum = sasum
     else:
-        R = np.empty(n_samples)
-        XtA = np.empty(n_features)
+        dtype = np.float64
         dot = ddot
         axpy = daxpy
         asum = dasum
+
+    R = np.empty(n_samples, dtype=dtype)
+    XtA = np.empty(n_features, dtype=dtype)
 
     cdef floating tmp
     cdef floating w_ii
@@ -350,19 +351,19 @@ def sparse_enet_coordinate_descent(floating [:] w,
     cdef ASUM asum
 
     if floating is float:
-        norm_cols_X = np.zeros(n_features, dtype=np.float32)
+        dtype = np.float32
         n_tasks = y.strides[0] / sizeof(float)
-        X_T_R = np.zeros(n_features, dtype=np.float32)
-        XtA = np.zeros(n_features, dtype=np.float32)
         dot = sdot
         asum = sasum
     else:
-        norm_cols_X = np.zeros(n_features, np.float64)
+        dtype = np.float64
         n_tasks = y.strides[0] / sizeof(DOUBLE)
-        X_T_R = np.zeros(n_features)
-        XtA = np.zeros(n_features)
         dot = ddot
         asum = dasum
+
+    norm_cols_X = np.zeros(n_features, dtype=dtype)
+    X_T_R = np.zeros(n_features, dtype=dtype)
+    XtA = np.zeros(n_features, dtype=dtype)
 
     cdef floating tmp
     cdef floating w_ii
