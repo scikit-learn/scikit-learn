@@ -619,6 +619,13 @@ def test_grid_search_results():
     for search, iid in zip((grid_search, grid_search_iid), (False, True)):
         assert_equal(iid, search.iid)
         results = search.results_
+        # Check if score and timing are reasonable
+        assert_true(all(results['test_rank_score'] >= 1))
+        assert_true(all(results[k] >= 0) for k in score_keys
+                    if k is not 'test_rank_score')
+        assert_true(all(results[k] <= 1) for k in score_keys
+                    if not k.endswith('time') and
+                    k is not 'test_rank_score')
         # Check results structure
         check_results_array_types(results, param_keys, score_keys)
         check_results_keys(results, param_keys, score_keys, n_candidates)
