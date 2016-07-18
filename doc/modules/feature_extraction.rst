@@ -507,8 +507,8 @@ And the L2-normalized tf-idf changes to
 :math:`\frac{[3, 0, 1.8473]}{\sqrt{\big(3^2 + 0^2 + 1.8473^2\big)}}
 = [0.8515, 0, 0.5243]`::
 
-  >>> tfidf=TfidfTransformer()
-  >>> tfidf.fit_transform(counts).toarray()
+  >>> transformer = TfidfTransformer()
+  >>> transformer.fit_transform(counts).toarray()
   array([[ 0.85151335,  0.        ,  0.52433293],
          [ 1.        ,  0.        ,  0.        ],
          [ 1.        ,  0.        ,  0.        ],
