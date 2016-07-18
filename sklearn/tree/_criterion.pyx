@@ -267,7 +267,7 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_left = <double*> calloc(n_elements, sizeof(double))
         self.sum_right = <double*> calloc(n_elements, sizeof(double))
 
-        if (self.sum_total == NULL or 
+        if (self.sum_total == NULL or
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
