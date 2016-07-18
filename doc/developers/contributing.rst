@@ -146,7 +146,7 @@ rules before submitting a pull request:
     * If your pull request addresses an issue, please use the title to describe
       the issue and mention the issue number in the pull request description to
       ensure a link is created to the original issue.
-      
+
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
@@ -262,7 +262,7 @@ following rules before submitting:
      import numpy; print("NumPy", numpy.__version__)
      import scipy; print("SciPy", scipy.__version__)
      import sklearn; print("Scikit-Learn", sklearn.__version__)
-   
+
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
    `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
@@ -597,8 +597,8 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         # actual implementation
         pass
 
-    @deprecated("Function 'zero_one' has been renamed to "
-                "'zero_one_loss' and will be removed in release 0.15."
+    @deprecated("Function 'zero_one' was renamed to 'zero_one_loss' "
+                "in version 0.13 and will be removed in release 0.15. "
                 "Default behavior is changed from 'normalize=False' to "
                 "'normalize=True'")
     def zero_one(y_true, y_pred, normalize=False):
@@ -609,7 +609,7 @@ use the decorator ``deprecated`` on a property.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
     @property
-    @deprecated("Attribute labels_ is deprecated and "
+    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
@@ -621,10 +621,18 @@ In following example, k is deprecated and renamed to n_clusters::
 
     def example_function(n_clusters=8, k=None):
         if k is not None:
-            warnings.warn("'k' was renamed to n_clusters and will "
-                          "be removed in 0.15.",
-                          DeprecationWarning)
+            warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                          "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+
+As in these examples, the warning message should always give both the
+version in which the deprecation happened and the version in which the
+behavior will be removed. If the change happened in version 0.x-dev, 
+the message should say the change happened in version 0.x and the removal 
+will be in 0.(x+2). For example, if the change was made in version
+0.18-dev, the message should say the change happened in version 0.18 and
+removal will be in version 0.20.
 
 
 .. currentmodule:: sklearn
@@ -863,23 +871,41 @@ If a dependency on scikit-learn is okay for your code,
 you can prevent a lot of boilerplate code
 by deriving a class from ``BaseEstimator``
 and optionally the mixin classes in ``sklearn.base``.
-E.g., here's a custom classifier::
+E.g., below is a custom classifier. For more information on this example, see
+`scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
 
   >>> import numpy as np
   >>> from sklearn.base import BaseEstimator, ClassifierMixin
-  >>> class MajorityClassifier(BaseEstimator, ClassifierMixin):
-  ...     """Predicts the majority class of its training data."""
-  ...     def __init__(self):
-  ...         pass
+  >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+  >>> from sklearn.utils.multiclass import unique_labels
+  >>> from sklearn.metrics import euclidean_distances
+  >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+  ...
+  ...     def __init__(self, demo_param='demo'):
+  ...         self.demo_param = demo_param
   ...
   ...     def fit(self, X, y):
-  ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
-  ...                                            return_inverse=True)
-  ...         self.majority_ = np.argmax(np.bincount(indices))
+  ...
+  ...         # Check that X and y have correct shape
+  ...         X, y = check_X_y(X, y)
+  ...         # Store the classes seen during fit
+  ...         self.classes_ = unique_labels(y)
+  ...
+  ...         self.X_ = X
+  ...         self.y_ = y
+  ...         # Return the classifier
   ...         return self
   ...
   ...     def predict(self, X):
-  ...         return np.repeat(self.classes_[self.majority_], len(X))
+  ...
+  ...         # Check is fit had been called
+  ...         check_is_fitted(self, ['X_', 'y_'])
+  ...
+  ...         # Input validation
+  ...         X = check_array(X)
+  ...
+  ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
+  ...         return self.y_[closest]
 
 
 get_params and set_params
