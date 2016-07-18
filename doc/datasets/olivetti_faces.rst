@@ -5,13 +5,13 @@ The Olivetti faces dataset
 ==========================
 
 
-This dataset contains a set of face images taken between April 1992 and April
+`This dataset contains a set of face image`_ taken between April 1992 and April
 1994 at AT&T Laboratories Cambridge. The
 :func:`sklearn.datasets.fetch_olivetti_faces` function is the data
 fetching / caching function that downloads the data
 archive from AT&T.
 
-.. _This dataset contains a set of face images_: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+.. _This dataset contains a set of face images: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 As described on the original website:
 
