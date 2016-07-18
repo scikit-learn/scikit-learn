@@ -328,7 +328,8 @@ cdef class WeightedPQueue:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.array_ptr = 0
-        self.array_ = <WeightedPQueueRecord*> calloc(capacity, sizeof(WeightedPQueueRecord))
+        self.array_ = <WeightedPQueueRecord*> calloc(capacity,
+                                                     sizeof(WeightedPQueueRecord))
 
         if self.array_ == NULL:
             raise MemoryError()
@@ -485,9 +486,8 @@ cdef class WeightedMedianHeap:
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Push a value and its associated weight
         to the WeightedMedianHeap to be considered
-        in the median calculation
+        in the median calculation.
         """
-        cdef double current_median
         cdef int return_value
 
         return_value = self.samples.push(data, weight)
@@ -508,7 +508,7 @@ cdef class WeightedMedianHeap:
             return 0
 
         # get the original weighted median
-        self.get_median(&current_median)
+        current_median = self.get_median()
         self.total_weight += weight
 
         if data < current_median:
@@ -521,8 +521,8 @@ cdef class WeightedMedianHeap:
 
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             # minimum value of k is 1
-            while(self.k > 1 and (self.sum_w_0_k -
-                                  self.samples.get_weight_from_index(self.k-1)
+            while(self.k > 1 and ((self.sum_w_0_k -
+                                   self.samples.get_weight_from_index(self.k-1))
                                   >= self.total_weight / 2.0)):
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
@@ -568,7 +568,7 @@ cdef class WeightedMedianHeap:
                                                   DOUBLE_t weight) nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
-        cdef DOUBLE_t current_median
+        cdef double current_median
         # reset parameters because empty
         if self.samples.size() == 0:
             self.k = 0
@@ -584,7 +584,7 @@ cdef class WeightedMedianHeap:
             return 0
 
         # get the current weighted median
-        self.get_median(&current_median)
+        current_median = self.get_median()
         self.total_weight -= weight
 
         if data < current_median:
@@ -609,22 +609,19 @@ cdef class WeightedMedianHeap:
             # removing above the median
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             while(self.k > 1 and ((self.sum_w_0_k -
-                                  self.samples.get_weight_from_index(self.k-1))
+                                   self.samples.get_weight_from_index(self.k-1))
                                   >= self.total_weight / 2.0)):
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
             return 0
 
-    cdef int get_median(self, double* median) nogil:
+    cdef double get_median(self) nogil:
         """Write the median to a pointer, taking into account
         sample weights."""
-        if self.sum_w_0_k < (self.total_weight / 2.0):
-            return -1
         if self.sum_w_0_k == (self.total_weight / 2.0):
             # split median
-            median[0] = (self.samples.get_value_from_index(self.k) +
-                         self.samples.get_value_from_index(self.k-1)) / 2.0
+            return (self.samples.get_value_from_index(self.k) +
+                    self.samples.get_value_from_index(self.k-1)) / 2.0
         if self.sum_w_0_k > (self.total_weight / 2.0):
             # whole median
-            median[0] = self.samples.get_value_from_index(self.k-1)
-        return 0
+            return self.samples.get_value_from_index(self.k-1)

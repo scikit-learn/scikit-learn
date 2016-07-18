@@ -1061,7 +1061,7 @@ cdef class MAE(RegressionCriterion):
 
         # calculate the node medians
         for k in range(self.n_outputs):
-            (<WeightedMedianHeap> right_child_heaps[k]).get_median(&(self.node_medians[k]))
+            self.node_medians[k] = (<WeightedMedianHeap> right_child_heaps[k]).get_median()
 
         # Reset to pos=start
         self.reset()
@@ -1229,7 +1229,7 @@ cdef class MAE(RegressionCriterion):
         impurity_right[0] = 0.0
 
         for k in range(self.n_outputs):
-            (<WeightedMedianHeap> left_child_heaps[k]).get_median(&median)
+            median = (<WeightedMedianHeap> left_child_heaps[k]).get_median()
             for p in range(start, pos):
                 i = samples[p]
 
@@ -1239,7 +1239,7 @@ cdef class MAE(RegressionCriterion):
         impurity_left[0] /= <double>((pos - start) * self.n_outputs)
 
         for k in range(self.n_outputs):
-            (<WeightedMedianHeap> right_child_heaps[k]).get_median(&median)
+            median = (<WeightedMedianHeap> right_child_heaps[k]).get_median()
             for p in range(pos, end):
                 i = samples[p]
 

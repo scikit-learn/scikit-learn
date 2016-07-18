@@ -2,6 +2,7 @@
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
 
@@ -143,8 +144,10 @@ cdef class WeightedMedianHeap:
 
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef int update_median_parameters_post_push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int update_median_parameters_post_push(self, DOUBLE_t data,
+                                                DOUBLE_t weight) nogil
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
-    cdef int update_median_parameters_post_remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef int get_median(self, double* median) nogil
+    cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
+                                                  DOUBLE_t weight) nogil
+    cdef double get_median(self) nogil
