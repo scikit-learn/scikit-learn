@@ -21,7 +21,7 @@ ctypedef np.uint32_t UINT32_t
 ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
                          int incY) nogil
 ctypedef void (*AXPY)(int N, floating alpha, floating *X, int incX,
-                          floating *Y, int incY) nogil
+                      floating *Y, int incY) nogil
 ctypedef floating (*ASUM)(int N, floating *X, int incX) nogil
 
 np.import_array()
@@ -115,8 +115,8 @@ cdef extern from "cblas.h":
                              float *Y, int incY) nogil
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY
                              ) nogil
-    float sdot "cblas_sdot"(int N, float *X, int incX, float *Y, int incY
-                             ) nogil
+    float sdot "cblas_sdot"(int N, float *X, int incX, float *Y,
+                            int incY) nogil
     double dasum "cblas_dasum"(int N, double *X, int incX) nogil
     float sasum "cblas_sasum"(int N, float *X, int incX) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
