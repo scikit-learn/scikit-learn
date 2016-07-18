@@ -52,13 +52,8 @@ GitHub, clone, and develop on a branch. Steps:
 Click the 'Pull request' button to send your changes to the project's maintainers for
 review. This will send an email to the committers.
 
-<<<<<<< HEAD
-(If any of the above seems like magic to you, then look up the 
-[Git documentation](https://git-scm.com/documentation) on the web.)
-=======
 (If any of the above seems like magic to you, please look up the 
-[Git documentation](http://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
->>>>>>> 1a8ddbede3ec810cb29c222fcd4332e82523e9f3
+[Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
 Pull Request Checklist
 ----------------------
