@@ -11,7 +11,7 @@ This dataset contains a set of face images taken between April 1992 and April
 fetching / caching function that downloads the data
 archive from AT&T.
 
-.. _This dataset contains a set of face images: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+.. _This dataset contains a set of face images_: http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 As described on the original website:
 

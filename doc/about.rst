@@ -176,7 +176,7 @@ The 2013' Paris international sprint
    :target: http://www.telecom-paristech.fr/
 
 
-.. |tinyclues| image:: https://www.tinyclues.com/static/img/logo.png
+.. |tinyclues| image:: https://www.tinyclues.com/web/wp-content/uploads/2016/06/Tinyclues-PNG-logo.png
    :width: 120pt
    :target: https://www.tinyclues.com/
 
@@ -190,7 +190,7 @@ The 2013' Paris international sprint
    :width: 120pt
    :target: http://www.svi.cnrs-bellevue.fr
 
-.. |FNRS| image:: http://www.fnrs.be/uploaddocs/images/COMMUNIQUER/FRS-FNRS_rose_transp.png
+.. |FNRS| image:: http://www.fnrs.be/en/images/FRS-FNRS_rose_transp.png
    :width: 120pt
    :target: http://www.frs-fnrs.be/
 
