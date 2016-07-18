@@ -680,7 +680,6 @@ def test_enet_float_precision():
         y = dtype(y)
         ignore_warnings(clf.fit)(X, y)
 
-        assert_equal(clf.coef_.dtype, dtype)
         coef[dtype] = clf.coef_
 
     assert_array_almost_equal(coef[np.float32], coef[np.float64],
