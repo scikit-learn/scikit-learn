@@ -725,7 +725,7 @@ cdef class RegressionCriterion(Criterion):
         self.sum_left = <double*> calloc(n_outputs, sizeof(double))
         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
 
-        if (self.sum_total == NULL or
+        if (self.sum_total == NULL or 
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
@@ -1165,7 +1165,7 @@ cdef class MAE(RegressionCriterion):
 
                 for k in range(self.n_outputs):
                     y_ik = y[i * self.y_stride + k]
-                    # remove y_ik from left and add to right
+                    # remove y_ik and its weight w from left and add to right
                     (<WeightedMedianHeap> left_child_heaps[k]).remove(y_ik, w)
                     (<WeightedMedianHeap> right_child_heaps[k]).push(y_ik, w)
 
