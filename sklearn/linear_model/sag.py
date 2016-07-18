@@ -110,10 +110,10 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
 
     max_iter: int, optional
         The max number of passes over the training data if the stopping
-        criterea is not reached. Defaults to 1000.
+        criteria is not reached. Defaults to 1000.
 
     tol: double, optional
-        The stopping criterea for the weights. The iterations will stop when
+        The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
 
     verbose: integer, optional

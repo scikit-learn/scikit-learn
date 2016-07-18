@@ -21,6 +21,18 @@ class ChangedBehaviorWarning(_ChangedBehaviorWarning):
 
 
 ##############################################################################
+def _first_and_last_element(arr):
+    """Returns first and last element of numpy array or sparse matrix."""
+    if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
+        # numpy array or sparse matrix with .data attribute
+        data = arr.data if sparse.issparse(arr) else arr
+        return data.flat[0], data.flat[-1]
+    else:
+        # Sparse matrices without .data attribute. Only dok_matrix at
+        # the time of writing, in this case indexing is fast
+        return arr[0, 0], arr[-1, -1]
+
+
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
@@ -73,9 +85,8 @@ def clone(estimator, safe=True):
                 equality_test = (
                     param1.shape == param2.shape
                     and param1.dtype == param2.dtype
-                    # We have to use '.flat' for 2D arrays
-                    and param1.flat[0] == param2.flat[0]
-                    and param1.flat[-1] == param2.flat[-1]
+                    and (_first_and_last_element(param1) ==
+                         _first_and_last_element(param2))
                 )
             else:
                 equality_test = np.all(param1 == param2)
@@ -92,8 +103,8 @@ def clone(estimator, safe=True):
             else:
                 equality_test = (
                     param1.__class__ == param2.__class__
-                    and param1.data[0] == param2.data[0]
-                    and param1.data[-1] == param2.data[-1]
+                    and (_first_and_last_element(param1) ==
+                         _first_and_last_element(param2))
                     and param1.nnz == param2.nnz
                     and param1.shape == param2.shape
                 )
@@ -242,7 +253,7 @@ class BaseEstimator(object):
         """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The former have parameters of the form
+        (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
 

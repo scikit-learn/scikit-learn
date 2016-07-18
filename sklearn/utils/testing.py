@@ -406,12 +406,12 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
     exceptions : exception or tuple of exception
         Name of the estimator
 
-    func : callable
+    function : callable
         Calable object to raise error
 
-    *args : the positional arguments to `func`.
+    *args : the positional arguments to `function`.
 
-    **kw : the keyword arguments to `func`
+    **kw : the keyword arguments to `function`
     """
     try:
         function(*args, **kwargs)

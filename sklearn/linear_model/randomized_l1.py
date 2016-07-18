@@ -546,7 +546,7 @@ def _lasso_stability_path(X, y, mask, weights, eps):
                                      alpha_min=alpha_min)
     # Scale alpha by alpha_max
     alphas /= alphas[0]
-    # Sort alphas in assending order
+    # Sort alphas in ascending order
     alphas = alphas[::-1]
     coefs = coefs[:, ::-1]
     # Get rid of the alphas that are too small
@@ -564,7 +564,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          sample_fraction=0.75,
                          eps=4 * np.finfo(np.float).eps, n_jobs=1,
                          verbose=False):
-    """Stabiliy path based on randomized Lasso estimates
+    """Stability path based on randomized Lasso estimates
 
     Read more in the :ref:`User Guide <randomized_l1>`.
 

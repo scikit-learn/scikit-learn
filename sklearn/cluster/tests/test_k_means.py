@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
-from sklearn.utils.testing import if_not_mac_os
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -64,7 +63,8 @@ def test_elkan_results():
     for X in [X_normal, X_blobs]:
         km_full.fit(X)
         km_elkan.fit(X)
-        assert_array_almost_equal(km_elkan.cluster_centers_, km_full.cluster_centers_)
+        assert_array_almost_equal(km_elkan.cluster_centers_,
+                                  km_full.cluster_centers_)
         assert_array_equal(km_elkan.labels_, km_full.labels_)
 
 
@@ -287,14 +287,18 @@ def test_k_means_explicit_init_shape():
         msg = "does not match the number of features of the data"
         assert_raises_regex(ValueError, msg, km.fit, X)
         # for callable init
-        km = Class(n_init=1, init=lambda X_, k, random_state: X_[:, :2], n_clusters=len(X))
+        km = Class(n_init=1,
+                   init=lambda X_, k, random_state: X_[:, :2],
+                   n_clusters=len(X))
         assert_raises_regex(ValueError, msg, km.fit, X)
         # mismatch of number of clusters
         msg = "does not match the number of clusters"
         km = Class(n_init=1, init=X[:2, :], n_clusters=3)
         assert_raises_regex(ValueError, msg, km.fit, X)
         # for callable init
-        km = Class(n_init=1, init=lambda X_, k, random_state: X_[:2, :], n_clusters=3)
+        km = Class(n_init=1,
+                   init=lambda X_, k, random_state: X_[:2, :],
+                   n_clusters=3)
         assert_raises_regex(ValueError, msg, km.fit, X)
 
 
@@ -640,33 +644,33 @@ def test_predict_minibatch_random_init_sparse_input():
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
 
 
-def test_input_dtypes():
+def test_int_input():
     X_list = [[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]]
-    X_int = np.array(X_list, dtype=np.int32)
-    X_int_csr = sp.csr_matrix(X_int)
-    init_int = X_int[:2]
+    for dtype in [np.int32, np.int64]:
+        X_int = np.array(X_list, dtype=dtype)
+        X_int_csr = sp.csr_matrix(X_int)
+        init_int = X_int[:2]
 
-    fitted_models = [
-        KMeans(n_clusters=2).fit(X_list),
-        KMeans(n_clusters=2).fit(X_int),
-        KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_list),
-        KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
-        # mini batch kmeans is very unstable on such a small dataset hence
-        # we use many inits
-        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
-        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
-        MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
-        MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int, n_init=1).fit(X_list),
-        MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int, n_init=1).fit(X_int),
-        MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int, n_init=1).fit(X_int_csr),
-    ]
-    expected_labels = [0, 1, 1, 0, 0, 1]
-    scores = np.array([v_measure_score(expected_labels, km.labels_)
-                       for km in fitted_models])
-    assert_array_equal(scores, np.ones(scores.shape[0]))
+        fitted_models = [
+            KMeans(n_clusters=2).fit(X_int),
+            KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
+            # mini batch kmeans is very unstable on such a small dataset hence
+            # we use many inits
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
+            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
+            MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            init=init_int, n_init=1).fit(X_int),
+            MiniBatchKMeans(n_clusters=2, batch_size=2,
+                            init=init_int, n_init=1).fit(X_int_csr),
+        ]
+
+        for km in fitted_models:
+            assert_equal(km.cluster_centers_.dtype, np.float64)
+
+        expected_labels = [0, 1, 1, 0, 0, 1]
+        scores = np.array([v_measure_score(expected_labels, km.labels_)
+                        for km in fitted_models])
+        assert_array_equal(scores, np.ones(scores.shape[0]))
 
 
 def test_transform():
@@ -771,4 +775,57 @@ def test_x_squared_norms_init_centroids():
 def test_max_iter_error():
 
     km = KMeans(max_iter=-1)
-    assert_raise_message(ValueError, 'Number of iterations should be', km.fit, X)
+    assert_raise_message(ValueError, 'Number of iterations should be',
+                         km.fit, X)
+
+
+def test_float_precision():
+    km = KMeans(n_init=1, random_state=30)
+    mb_km = MiniBatchKMeans(n_init=1, random_state=30)
+
+    inertia = {}
+    X_new = {}
+    centers = {}
+
+    for estimator in [km, mb_km]:
+        for is_sparse in [False, True]:
+            for dtype in [np.float64, np.float32]:
+                if is_sparse:
+                    X_test = sp.csr_matrix(X_csr, dtype=dtype)
+                else:
+                    X_test = dtype(X)
+                estimator.fit(X_test)
+                # dtype of cluster centers has to be the dtype of the input data
+                assert_equal(estimator.cluster_centers_.dtype, dtype)
+                inertia[dtype] = estimator.inertia_
+                X_new[dtype] = estimator.transform(X_test)
+                centers[dtype] = estimator.cluster_centers_
+                # make sure predictions correspond to the correct label
+                assert_equal(estimator.predict(X_test[0]), estimator.labels_[0])
+                if hasattr(estimator, 'partial_fit'):
+                    estimator.partial_fit(X_test[0:3])
+                    # dtype of cluster centers has to stay the same after partial_fit
+                    assert_equal(estimator.cluster_centers_.dtype, dtype)
+
+            # compare arrays with low precision since the difference between
+            # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
+            assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
+                                    decimal=4)
+            assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
+                                      decimal=4)
+            assert_array_almost_equal(centers[np.float32], centers[np.float64],
+                                      decimal=4)
+
+
+def test_KMeans_init_centers():
+    # This test is used to check KMeans won't mutate the user provided input array silently
+    # even if input data and init centers have the same type
+    X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
+    init_centers = np.array([[0.0, 0.0], [5.0, 5.0], [-5.0, -5.0]])
+    for dtype in [np.int32, np.int64, np.float32, np.float64]:
+        X_test = dtype(X_small)
+        init_centers_test = dtype(init_centers)
+        assert_array_equal(init_centers, init_centers_test)
+        km = KMeans(init=init_centers_test, n_clusters=3)
+        km.fit(X_test)
+        assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))

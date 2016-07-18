@@ -129,24 +129,19 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         y = y[::-1]
         sample_weight = sample_weight[::-1]
 
-    if y_min is not None or y_max is not None:
-        y = np.copy(y)
-        sample_weight = np.copy(sample_weight)
-        # upper bound on the cost function
-        C = np.dot(sample_weight, y * y) * 10
-        if y_min is not None:
-            y[0] = y_min
-            sample_weight[0] = C
-        if y_max is not None:
-            y[-1] = y_max
-            sample_weight[-1] = C
-
     solution = np.empty(len(y))
     y_ = _isotonic_regression(y, sample_weight, solution)
-    if increasing:
-        return y_
-    else:
-        return y_[::-1]
+    if not increasing:
+        y_ = y_[::-1]
+
+    if y_min is not None or y_max is not None:
+        # Older versions of np.clip don't accept None as a bound, so use np.inf
+        if y_min is None:
+            y_min = -np.inf
+        if y_max is None:
+            y_max = np.inf
+        np.clip(y_, y_min, y_max, y_)
+    return y_
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
