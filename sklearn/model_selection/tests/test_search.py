@@ -990,4 +990,3 @@ def test_scoring_is_not_metric():
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3,
                                scoring=f1_score)
     assert_raises_regexp(ValueError, 'make_scorer', grid_search.fit, X, y)
-    grid_search.fit(X, y)
