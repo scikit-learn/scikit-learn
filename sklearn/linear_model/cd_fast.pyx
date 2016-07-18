@@ -202,6 +202,12 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
+    cdef floating *X_data = <floating*> X.data
+    cdef floating *y_data = <floating*> y.data
+    cdef floating *w_data = <floating*> w.data
+    cdef floating *R_data = <floating*> R.data
+    cdef floating *XtA_data = <floating*> XtA.data
+
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
@@ -209,13 +215,10 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     with nogil:
         # R = y - np.dot(X, w)
         for i in range(n_samples):
-            R[i] = y[i] - dot(n_features,
-                            <floating*>(X.data + i * sizeof(floating)),
-                            n_samples, <floating*>w.data, 1)
+            R[i] = y[i] - dot(n_features, &X_data[i], n_samples, w_data, 1)
 
         # tol *= np.dot(y, y)
-        tol *= dot(n_samples, <floating*>y.data, n_tasks,
-                    <floating*>y.data, n_tasks)
+        tol *= dot(n_samples, y_data, n_tasks, y_data, n_tasks)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -233,14 +236,11 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
-                    axpy(n_samples, w_ii,
-                        <floating*>(X.data + ii * n_samples * sizeof(floating)),
-                        1, <floating*>R.data, 1)
+                    axpy(n_samples, w_ii, &X_data[ii * n_samples], 1,
+                         R_data, 1)
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = dot(n_samples,
-                        <floating*>(X.data + ii * n_samples * sizeof(floating)),
-                        1, <floating*>R.data, 1)
+                tmp = dot(n_samples, &X_data[ii * n_samples], 1, R_data, 1)
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -250,9 +250,8 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
-                    axpy(n_samples, -w[ii],
-                        <floating*>(X.data + ii * n_samples * sizeof(floating)),
-                        1, <floating*>R.data, 1)
+                    axpy(n_samples, -w[ii], &X_data[ii * n_samples], 1,
+                         R_data, 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -263,31 +262,27 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                     w_max = fabs(w[ii])
 
             if (w_max == 0.0
-                    or d_w_max / w_max < d_w_tol
-                    or n_iter == max_iter - 1):
+                or d_w_max / w_max < d_w_tol
+                or n_iter == max_iter - 1):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
 
                 # XtA = np.dot(X.T, R) - beta * w
                 for i in range(n_features):
-                    XtA[i] = dot(
-                        n_samples,
-                        <floating*>(X.data + i * n_samples *sizeof(floating)),
-                        1, <floating*>R.data, 1) - beta * w[i]
+                    XtA[i] = dot(n_samples, &X_data[i * n_samples],
+                                 1, R_data, 1) - beta * w[i]
 
                 if positive:
-                    dual_norm_XtA = max(n_features, <floating*>XtA.data)
+                    dual_norm_XtA = max(n_features, XtA_data)
                 else:
-                    dual_norm_XtA = abs_max(n_features, <floating*>XtA.data)
+                    dual_norm_XtA = abs_max(n_features, XtA_data)
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = dot(n_samples, <floating*>R.data, 1,
-                            <floating*>R.data, 1)
+                R_norm2 = dot(n_samples, R_data, 1, R_data, 1)
 
                 # w_norm2 = np.dot(w, w)
-                w_norm2 = dot(n_features, <floating*>w.data, 1,
-                            <floating*>w.data, 1)
+                w_norm2 = dot(n_features, w_data, 1, w_data, 1)
 
                 if (dual_norm_XtA > alpha):
                     const = alpha / dual_norm_XtA
@@ -297,13 +292,11 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                     const = 1.0
                     gap = R_norm2
 
-                l1_norm = asum(n_features, <floating*>w.data, 1)
+                l1_norm = asum(n_features, w_data, 1)
 
                 # np.dot(R.T, y)
-                gap += (alpha * l1_norm - const * dot(
-                            n_samples,
-                            <floating*>R.data, 1,
-                            <floating*>y.data, n_tasks)
+                gap += (alpha * l1_norm
+                        - const * dot(n_samples, R_data, 1, y_data, n_tasks)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
