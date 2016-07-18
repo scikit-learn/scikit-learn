@@ -1305,5 +1305,5 @@ cdef class FriedmanMSE(MSE):
         diff = (self.weighted_n_right * total_sum_left -
                 self.weighted_n_left * total_sum_right) / self.n_outputs
 
-        return (diff * diff / (self.weighted_n_left * self.weighted_n_right * 
+        return (diff * diff / (self.weighted_n_left * self.weighted_n_right *
                                self.weighted_n_node_samples))
