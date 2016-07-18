@@ -375,22 +375,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        if X.dtype is np.float32:
-            X = check_array(X, 'csc', dtype=np.float32, order='F', copy=copy_X)
-            y = check_array(y, 'csc', dtype=np.float32, order='F', copy=False,
+        X = check_array(X, 'csc', dtype=[np.float64, np.float32], order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
                         ensure_2d=False)
-            if Xy is not None:
-                # Xy should be a 1d contiguous array or a 2D C ordered array
-                Xy = check_array(Xy, dtype=np.float32, order='C', copy=False,
-                                 ensure_2d=False)
-        else:
-            X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-            y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
-                            ensure_2d=False)
-            if Xy is not None:
-                # Xy should be a 1d contiguous array or a 2D C ordered array
-                Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
-                                 ensure_2d=False)
+        if Xy is not None:
+            # Xy should be a 1d contiguous array or a 2D C ordered array
+            Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
+                             ensure_2d=False)
 
     n_samples, n_features = X.shape
 
