@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import strip_accents_ascii
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import BM25Transformer
+from sklearn.feature_extraction.text import Bm25Transformer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -312,7 +312,7 @@ def test_bm25_no_smoothing():
     X = [[1, 1, 0, 0],
          [0, 2, 2, 0],
          [0, 1, 1, 2]]
-    tr = BM25Transformer(smooth_idf=False, k=2, b=0.75)
+    tr = Bm25Transformer(smooth_idf=False, k=2, b=0.75)
     bm25_act = tr.fit_transform(X).toarray()
     bm25_exp = np.array([[2.62326536, 1.25, 0., 0.],
                          [0., 1.39534884, 1.9611141, 0.],

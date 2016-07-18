@@ -31,7 +31,7 @@ from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_non_negative, check_array
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -914,10 +914,10 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class BM25Transformer(BaseEstimator, TransformerMixin):
-    """Transform a count matrix to a BM25 weighted representation
+class Bm25Transformer(BaseEstimator, TransformerMixin):
+    """Transform a count matrix to a Bm25 weighted representation
 
-    BM25 is a weighting scheme that differs from tf-idf in two main ways:
+    Bm25 is a weighting scheme that differs from tf-idf in two main ways:
         1.) As the frequency of a given term in a document increases, the weight
             of that term approaches the hyperparameter k asymptotically.
 
@@ -982,19 +982,30 @@ class BM25Transformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
+
+        check_array(X, accept_sparse=['csr', 'csc'])
+
         if not sp.issparse(X):
             X = sp.csc_matrix(X)
 
         n_samples, n_features = X.shape
+
+        # if X is an array of zeros, raise ValueError
+        if X.sum() == 0:
+            raise ValueError("X is an array of zeros")
+
+        # raise value error if there are negative values in X
+        check_non_negative(X, "Bm25Transformer")
+
         df = _document_frequency(X)
 
         # perform idf smoothing if required
         df += int(self.smooth_idf)
-        n_samples += int(self.smooth_idf)
+        n_samples_calc = n_samples + int(self.smooth_idf)
 
         # log+1 instead of log makes sure terms with zero idf don't get
         # suppressed entirely.
-        idf = np.log(float(n_samples) / df) + 1.0
+        idf = np.log(float(n_samples_calc) / df) + 1.0
         self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, n=n_features)
 
         # sum along rows for document lengths
@@ -1493,7 +1504,7 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
 
-class BM25Vectorizer(CountVectorizer):
+class Bm25Vectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of BM25 weighted features.
 
      Equivalent to CountVectorizer followed by BM25Transformer.
@@ -1641,7 +1652,7 @@ class BM25Vectorizer(CountVectorizer):
 
      See also
      --------
-     BM25Transformer
+     Bm25Transformer
         Apply BM25 weighting scheme to a document-term sparse matrix
 
      CountVectorizer
@@ -1668,7 +1679,7 @@ class BM25Vectorizer(CountVectorizer):
                  vocabulary=None, binary=False, dtype=np.int64,
                  smooth_idf=True, k=2, b=0.75):
 
-        super(BM25Vectorizer, self).__init__(
+        super(Bm25Vectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
@@ -1677,7 +1688,7 @@ class BM25Vectorizer(CountVectorizer):
             max_features=max_features, vocabulary=vocabulary, binary=binary,
             dtype=dtype)
 
-        self._bm25 = BM25Transformer(smooth_idf=smooth_idf, k=k, b=b)
+        self._bm25 = Bm25Transformer(smooth_idf=smooth_idf, k=k, b=b)
 
     @property
     def smooth_idf(self):
@@ -1723,9 +1734,9 @@ class BM25Vectorizer(CountVectorizer):
 
         Returns
         -------
-        self : BM25Vectorizer
+        self : Bm25Vectorizer
         """
-        X = super(BM25Vectorizer, self).fit_transform(raw_documents)
+        X = super(Bm25Vectorizer, self).fit_transform(raw_documents)
         self._bm25.fit(X)
         return self
  
@@ -1745,7 +1756,7 @@ class BM25Vectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             bm25-weighted document-term matrix.
         """
-        X = super(BM25Vectorizer, self).fit_transform(raw_documents)
+        X = super(Bm25Vectorizer, self).fit_transform(raw_documents)
         self._bm25.fit(X)
         # X is already a transformed view of raw_documents so
         # we set copy to False
@@ -1771,7 +1782,7 @@ class BM25Vectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             bm25-weighted document-term matrix.
         """
-        X = super(BM25Vectorizer, self).transform(raw_documents)
+        X = super(Bm25Vectorizer, self).transform(raw_documents)
         return self._bm25.transform(X, copy=False)
 
 
