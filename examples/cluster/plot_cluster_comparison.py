@@ -165,7 +165,8 @@ for i_dataset, (dataset, params) in enumerate(datasets):
         if i_dataset == 0:
             plt.title(name, size=18)
 
-        colors = np.array(list(islice(cycle('bgrcmyk'), max(y_pred) + 1)))
+        colors = np.array(list(islice(cycle('bgrcmyk'),
+                                      int(max(y_pred) + 1))))
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-2.5, 2.5)
