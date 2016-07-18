@@ -15,6 +15,7 @@ from sklearn.utils.fixes import sp_version
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
@@ -982,3 +983,11 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_scoring_is_not_metric():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3,
+                               scoring=f1_score)
+    assert_raises_regexp(ValueError, 'make_scorer', grid_search.fit, X, y)
+    grid_search.fit(X, y)

@@ -204,7 +204,8 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-def check_scoring(estimator, scoring=None, allow_none=False):
+def check_scoring(estimator, scoring=None, allow_none=False,
+                  metric_check_y=None):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -233,8 +234,21 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
-    elif has_scoring:
+    if isinstance(scoring, six.string_types):
         return get_scorer(scoring)
+    elif has_scoring:
+        # Heuristic to ensure user has not passed a metric
+        try:
+            scoring(metric_check_y, metric_check_y)
+        except Exception:
+            pass
+        else:
+            raise ValueError('scoring value looks like it is a metric '
+                             'function rather than a scorer. A scorer should '
+                             'require an estimator as its first parameter. '
+                             'Please use `make_scorer` to convert a metric '
+                             'to a scorer.')
+        return scoring
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
     elif allow_none:
