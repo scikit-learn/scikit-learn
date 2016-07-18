@@ -725,11 +725,9 @@ set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Further, any cluster has
-at least ``min_samples`` points in it, following the definition of a core
-sample. For any sample that is not a core sample, and does have a
-distance higher than ``eps`` to any core sample, it is considered an outlier by
-the algorithm.
+Any core sample is part of a cluster, by definition. Any sample that is not a 
+core sample, and is at least ``eps`` in distance from any core sample, is 
+considered an outlier by the algorithm.
 
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
