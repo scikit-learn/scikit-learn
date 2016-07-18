@@ -667,7 +667,7 @@ def test_lasso_non_float_y():
 
 
 def test_enet_float_precision():
-	# Generate dataset
+    # Generate dataset
     X, y, X_test, y_test = build_dataset(n_samples=200, n_features=100,
                                          n_informative_features=100)
     # Here we have a small number of iterations, and thus the
