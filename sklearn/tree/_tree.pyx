@@ -14,7 +14,7 @@
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
 # License: BSD 3 clause
-
+# another trivial comment
 from cpython cimport Py_INCREF, PyObject
 
 from libc.stdlib cimport free
