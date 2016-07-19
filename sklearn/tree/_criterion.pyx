@@ -1035,7 +1035,7 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t k
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w = 1.0
-        # Fill accumulators with MedianHeaps
+
         with gil:
             for k in range(self.n_outputs):
                 self.left_child_heaps[k] = WeightedMedianHeap(self.n_node_samples)
@@ -1071,8 +1071,8 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t i
         cdef SIZE_t k
-        cdef DOUBLE_t popped_value
-        cdef DOUBLE_t popped_weight
+        cdef DOUBLE_t value
+        cdef DOUBLE_t weight
 
         cdef void** left_child_heaps = <void**> self.left_child_heaps.data
         cdef void** right_child_heaps = <void**> self.right_child_heaps.data
@@ -1088,10 +1088,10 @@ cdef class MAE(RegressionCriterion):
             # if left has no elements, it's already reset
             for i in range((<WeightedMedianHeap> left_child_heaps[k]).size()):
                 # remove everything from left and put it into right
-                (<WeightedMedianHeap> left_child_heaps[k]).pop(&popped_value,
-                                                               &popped_weight)
-                (<WeightedMedianHeap> right_child_heaps[k]).push(popped_value,
-                                                         popped_weight)
+                (<WeightedMedianHeap> left_child_heaps[k]).pop(&value,
+                                                               &weight)
+                (<WeightedMedianHeap> right_child_heaps[k]).push(value,
+                                                                 weight)
 
     cdef void reverse_reset(self) nogil:
         """Reset the criterion at pos=end."""
@@ -1100,8 +1100,8 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_left = self.weighted_n_node_samples
         self.pos = self.end
 
-        cdef DOUBLE_t popped_value
-        cdef DOUBLE_t popped_weight
+        cdef DOUBLE_t value
+        cdef DOUBLE_t weight
         cdef void** left_child_heaps = <void**> self.left_child_heaps.data
         cdef void** right_child_heaps = <void**> self.right_child_heaps.data
 
@@ -1111,10 +1111,10 @@ cdef class MAE(RegressionCriterion):
             # if right has no elements, it's already reset
             for i in range((<WeightedMedianHeap> right_child_heaps[k]).size()):
                 # remove everything from right and put it into left
-                (<WeightedMedianHeap> right_child_heaps[k]).pop(&popped_value,
-                                                                &popped_weight)
-                (<WeightedMedianHeap> left_child_heaps[k]).push(popped_value,
-                                                                popped_weight)
+                (<WeightedMedianHeap> right_child_heaps[k]).pop(&value,
+                                                                &weight)
+                (<WeightedMedianHeap> left_child_heaps[k]).push(value,
+                                                                weight)
 
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
