@@ -14,7 +14,7 @@
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
 # License: BSD 3 clause
-# trivial comment for recythonize
+
 from ._criterion cimport Criterion
 
 from libc.stdlib cimport free
