@@ -13,6 +13,13 @@ ask on the `Mailing List <http://scikit-learn.org/stable/support.html>`_
 Q&A communities with Machine Learning practitioners
 ----------------------------------------------------
 
+  :Metaoptimize/QA:
+    A (now-defuct) forum for Machine Learning, Natural Language Processing and
+    other Data Analytics discussions: http://metaoptimize.com/qa
+
+    A good starting point is the discussion on `good freely available
+    textbooks on machine learning`_.
+	
   :Stack Exchange:
 
     http://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms
