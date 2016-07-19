@@ -314,15 +314,17 @@ cdef class WeightedPQueue:
     Attributes
     ----------
     capacity : SIZE_t
-        The capacity of the array
+        The capacity of the priority queue.
 
     array_ptr : SIZE_t
-        The water mark of the array; the array grows from left to right in the
-        array ``array_``. array_ptr is always less than capacity.
+        The water mark of the priority queue; the priority queue grows from
+        left to right in the array ``array_``. ``array_ptr`` is always
+        less than ``capacity``.
 
     array_ : WeightedPQueueRecord*
-        The array of array records. The minimum element is on the left;
-        the array grows from left to right
+        The array of priority queue records. The minimum element is on the
+        left at index 0, and the maximum element is on the right at index
+        ``array_ptr-1``.
     """
 
     def __cinit__(self, SIZE_t capacity):
@@ -464,10 +466,42 @@ cdef class WeightedPQueue:
         return array[index].data
 
 # =============================================================================
-# WeightedMedianHeap data structure
+# WeightedMedianCalculator data structure
 # =============================================================================
 
-cdef class WeightedMedianHeap:
+cdef class WeightedMedianCalculator:
+    """A class to handle calculation of the weighted median from streams of
+    data. To do so, it maintains a parameter ``k`` such that the sum of the
+    weights in the range [0,k) is greater than or equal to half of the total
+    weight. By minimizing the value of ``k`` that fulfills this constraint,
+    calculating the median is done by either taking the value of the sample
+    at index ``k-1`` of ``samples`` (samples[k-1].data) or the average of
+    the samples at index ``k-1`` and ``k`` of ``samples``
+    ((samples[k-1] + samples[k]) / 2).
+
+    Attributes
+    ----------
+    initial_capacity : SIZE_t
+        The initial capacity of the WeightedMedianCalculator.
+
+    samples : WeightedPQueue
+        Holds the samples (consisting of values and their weights) used in the
+        weighted median calculation.
+
+    total_weight : DOUBLE_t
+        The sum of the weights of items in ``samples``. Represents the total
+        weight of all samples used in the median calculation.
+
+    k : SIZE_t
+        Index used to calculate the median.
+
+    sum_w_0_k : DOUBLE_t
+        The sum of the weights from samples[0:k]. Used in the weighted
+        median calculation; minimizing the value of ``k`` such that
+        ``sum_w_0_k`` >= ``total_weight / 2`` provides a mechanism for
+        calculating the median in constant time.
+
+    """
 
     def __cinit__(self, SIZE_t initial_capacity):
         self.initial_capacity = initial_capacity
@@ -477,12 +511,13 @@ cdef class WeightedMedianHeap:
         self.sum_w_0_k = 0
 
     cdef SIZE_t size(self) nogil:
-        """Return the number of samples in the WeightedMedianHeap"""
+        """Return the number of samples in the
+        WeightedMedianCalculator"""
         return self.samples.size()
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Push a value and its associated weight
-        to the WeightedMedianHeap to be considered
+        to the WeightedMedianCalculator to be considered
         in the median calculation.
         """
         cdef int return_value
@@ -566,7 +601,7 @@ cdef class WeightedMedianHeap:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
         cdef double current_median
-        # reset parameters because empty
+        # reset parameters because it there are no elements
         if self.samples.size() == 0:
             self.k = 0
             self.total_weight = 0

@@ -131,10 +131,10 @@ cdef class WeightedPQueue:
 
 
 # =============================================================================
-# MedianHeap data structure
+# WeightedMedianCalculator data structure
 # =============================================================================
 
-cdef class WeightedMedianHeap:
+cdef class WeightedMedianCalculator:
     cdef SIZE_t initial_capacity
     cdef WeightedPQueue samples
     cdef DOUBLE_t total_weight
