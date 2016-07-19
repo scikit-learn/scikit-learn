@@ -45,7 +45,7 @@ cdef class Criterion:
                                     # weighted count of each label. For regression,
                                     # the sum of w*y. sum_total[k] is equal to
                                     # sum_{i=start}^{end-1} w[samples[i]]*y[samples[i], k],
-                                    # where k is output index. 
+                                    # where k is output index.
     cdef double* sum_left           # Same as above, but for the left side of the split
     cdef double* sum_right          # same as above, but for the right side of the split
 
