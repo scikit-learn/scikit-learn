@@ -120,14 +120,15 @@ cdef extern from "cblas.h":
     double dasum "cblas_dasum"(int N, double *X, int incX) nogil
     float sasum "cblas_sasum"(int N, float *X, int incX) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
-                double *X, int incX, double *Y, int incY, double *A, int lda) nogil
-    void dgemv "cblas_dgemv"(CBLAS_ORDER Order,
-                      CBLAS_TRANSPOSE TransA, int M, int N,
-                      double alpha, double *A, int lda,
-                      double *X, int incX, double beta,
-                      double *Y, int incY) nogil
+                           double *X, int incX, double *Y, int incY,
+                           double *A, int lda) nogil
+    void dgemv "cblas_dgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
+                             int M, int N, double alpha, double *A, int lda,
+                             double *X, int incX, double beta,
+                             double *Y, int incY) nogil
     double dnrm2 "cblas_dnrm2"(int N, double *X, int incX) nogil
-    void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y, int incY) nogil
+    void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y,
+                             int incY) nogil
     void dscal "cblas_dscal"(int N, double alpha, double *X, int incX) nogil
 
 
