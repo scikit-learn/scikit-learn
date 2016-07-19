@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_equal
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -179,6 +180,13 @@ def test_load_iris():
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
+
+    #test return_X_y option
+    X_y_tuple = load_iris(return_X_y=True)
+    bunch = load_iris()
+    assert_true(isinstance(X_y_tuple,tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 
 def test_load_breast_cancer():
