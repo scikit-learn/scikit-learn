@@ -431,9 +431,8 @@ cdef class WeightedPQueue:
     cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
         """Write the top element from array to a pointer.
         Returns 0 if successful, -1 if nothing to write."""
-        cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
-        if array_ptr <= 0:
+        if self.array_ptr <= 0:
             return -1
         # Take first value
         data[0] = array[0].data
@@ -443,10 +442,8 @@ cdef class WeightedPQueue:
     cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil:
         """Given an index between [0,self.current_capacity], access
         the appropriate heap and return the requested weight"""
-        cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
-
-        if array_ptr <= 0 or index >= array_ptr:
+        if self.array_ptr <= 0 or index >= self.array_ptr:
             with gil:
                 raise ValueError("Tried to access element "
                                  "at index out of bounds.")
