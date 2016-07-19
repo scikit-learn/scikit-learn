@@ -17,7 +17,7 @@ Q&A communities with Machine Learning practitioners
     A (now-defuct) forum for Machine Learning, Natural Language Processing and
     other Data Analytics discussions: http://metaoptimize.com/qa
 
-    A good starting point is the discussion on `good freely available
+    A useful resource that can still be accessed via archives is a topic on `good freely available
     textbooks on machine learning`_.
 	
   :Stack Exchange:
