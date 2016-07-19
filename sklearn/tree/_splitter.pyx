@@ -14,7 +14,7 @@
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
 # License: BSD 3 clause
-# another trivial comment
+
 from ._criterion cimport Criterion
 
 from libc.stdlib cimport free
