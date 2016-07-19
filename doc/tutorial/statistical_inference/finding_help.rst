@@ -22,7 +22,7 @@ Q&A communities with Machine Learning practitioners
 	
   :Stack Exchange:
 
-    http://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms
+    The Stack Exchange family of sites hosts `multiple subdomains for Machine Learning questions`_. 
 
   :Quora.com:
 
@@ -36,6 +36,8 @@ Q&A communities with Machine Learning practitioners
 
 
 .. _`good freely available textbooks on machine learning`: http://web.archive.org/web/20121028182048/http://metaoptimize.com/qa/questions/186/good-freely-available-textbooks-on-machine-learning?
+
+.. _`multiple subdomains for Machine Learning questions`: http://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms
 
 .. _`How do I learn machine learning?`: https://www.quora.com/How-do-I-learn-machine-learning-1
 
