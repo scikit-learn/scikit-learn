@@ -262,16 +262,21 @@ def load_iris(return_X_y=False):
      ----------
     return_X_y : boolean, default=False.
         If True, returns (data, target) instead of a Bunch object.
-        See below for more information about the `data` and `target` object
+        See below for more information about the `data` and `target` object.
 
     Returns
     -------
+    if return_X_y == false
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
         full description of the dataset.
+    
+    if return_X_y == true
+    (data,target) : tuple
+
 
     Examples
     --------
