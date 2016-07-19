@@ -157,7 +157,7 @@ for code sprints, as well as towards the organization budget of the project [#f1
 .. [#f1] Regarding the organization budget in particular, we might use some of the donated funds to pay for other project expenses such as DNS, hosting or continuous integration services.
 
 
-The 2013' Paris international sprint
+The 2013 Paris international sprint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|

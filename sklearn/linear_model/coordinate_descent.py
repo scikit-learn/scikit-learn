@@ -1001,7 +1001,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     intercepts = y_offset[:, np.newaxis] - np.dot(X_offset, coefs)
     if sparse.issparse(X_test):
         n_order, n_features, n_alphas = coefs.shape
-        # Work around for sparse matices since coefs is a 3-D numpy array.
+        # Work around for sparse matrices since coefs is a 3-D numpy array.
         coefs_feature_major = np.rollaxis(coefs, 1)
         feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
         X_test_coefs = safe_sparse_dot(X_test, feature_2d)
