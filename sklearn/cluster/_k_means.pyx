@@ -22,6 +22,9 @@ from sklearn.utils.fixes import bincount
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
+ctypedef floating (*DOT)(int N, floating *X, int incX, floating *Y,
+                         int incY)
+
 cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
     float sdot "cblas_sdot"(int N, float *X, int incX, float *Y, int incY)
@@ -56,28 +59,26 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
+        DOT dot
 
     if floating is float:
         center_squared_norms = np.zeros(n_clusters, dtype=np.float32)
         x_stride = X.strides[1] / sizeof(float)
         center_stride = centers.strides[1] / sizeof(float)
+        dot = sdot
     else:
         center_squared_norms = np.zeros(n_clusters, dtype=np.float64)
         x_stride = X.strides[1] / sizeof(DOUBLE)
         center_stride = centers.strides[1] / sizeof(DOUBLE)
+        dot = ddot
 
     if n_samples == distances.shape[0]:
         store_distances = 1
 
     for center_idx in range(n_clusters):
-        if floating is float:
-            center_squared_norms[center_idx] = sdot(
-                n_features, &centers[center_idx, 0], center_stride,
-                &centers[center_idx, 0], center_stride)
-        else:
-            center_squared_norms[center_idx] = ddot(
-                n_features, &centers[center_idx, 0], center_stride,
-                &centers[center_idx, 0], center_stride)
+        center_squared_norms[center_idx] = dot(
+            n_features, &centers[center_idx, 0], center_stride,
+            &centers[center_idx, 0], center_stride)
 
     for sample_idx in range(n_samples):
         min_dist = -1
@@ -85,12 +86,8 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[floating, ndim=2] X,
             dist = 0.0
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
-            if floating is float:
-                dist += sdot(n_features, &X[sample_idx, 0], x_stride,
-                             &centers[center_idx, 0], center_stride)
-            else:
-                dist += ddot(n_features, &X[sample_idx, 0], x_stride,
-                             &centers[center_idx, 0], center_stride)
+            dist += dot(n_features, &X[sample_idx, 0], x_stride,
+                        &centers[center_idx, 0], center_stride)
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
@@ -132,21 +129,20 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
         DOUBLE inertia = 0.0
         DOUBLE min_dist
         DOUBLE dist
+        DOT dot
 
     if floating is float:
         center_squared_norms = np.zeros(n_clusters, dtype=np.float32)
+        dot = sdot
     else:
         center_squared_norms = np.zeros(n_clusters, dtype=np.float64)
+        dot = ddot
 
     if n_samples == distances.shape[0]:
         store_distances = 1
 
     for center_idx in range(n_clusters):
-        if floating is float:
-            center_squared_norms[center_idx] = sdot(
-                n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
-        else:
-            center_squared_norms[center_idx] = ddot(
+            center_squared_norms[center_idx] = dot(
                 n_features, &centers[center_idx, 0], 1, &centers[center_idx, 0], 1)
 
     for sample_idx in range(n_samples):
