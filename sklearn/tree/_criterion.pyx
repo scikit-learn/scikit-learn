@@ -1236,7 +1236,7 @@ cdef class MAE(RegressionCriterion):
                 y_ik = y[i * self.y_stride + k]
 
                 impurity_left[0] += <double>fabs((<double> y_ik) - median)
-        impurity_left[0] /= <double>((pos - start) * self.n_outputs)
+        impurity_left[0] /= <double>((self.weighted_n_left) * self.n_outputs)
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> right_child[k]).get_median()
@@ -1246,7 +1246,7 @@ cdef class MAE(RegressionCriterion):
                 y_ik = y[i * self.y_stride + k]
 
                 impurity_right[0] += <double>fabs((<double> y_ik) - median)
-        impurity_right[0] /= <double>((end - pos) * self.n_outputs)
+        impurity_right[0] /= <double>((self.weighted_n_right) * self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):

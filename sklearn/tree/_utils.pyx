@@ -511,16 +511,20 @@ cdef class WeightedMedianCalculator:
         in the median calculation.
         """
         cdef int return_value
+        cdef double original_median
 
+        if self.size() != 0:
+            original_median = self.get_median()
         return_value = self.samples.push(data, weight)
-        self.update_median_parameters_post_push(data, weight)
+        self.update_median_parameters_post_push(data, weight,
+                                                original_median)
         return return_value
 
     cdef int update_median_parameters_post_push(self, DOUBLE_t data,
-                                                DOUBLE_t weight) nogil:
+                                                DOUBLE_t weight,
+                                                double original_median) nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after an insertion"""
-        cdef double current_median
 
         # trivial case of one element.
         if self.size() == 1:
@@ -530,10 +534,9 @@ cdef class WeightedMedianCalculator:
             return 0
 
         # get the original weighted median
-        current_median = self.get_median()
         self.total_weight += weight
 
-        if data < current_median:
+        if data < original_median:
             # inserting below the median, so increment k and
             # then update self.sum_w_0_k accordingly by adding
             # the weight that was added.
@@ -548,10 +551,9 @@ cdef class WeightedMedianCalculator:
                                   >= self.total_weight / 2.0)):
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
-
             return 0
 
-        if data >= current_median:
+        if data >= original_median:
             # inserting above or at the median
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             while(self.k < self.samples.size() and
@@ -564,11 +566,15 @@ cdef class WeightedMedianCalculator:
         """Remove a value from the MedianHeap, removing it
         from consideration in the median calculation
         """
-        cdef double current_unweighted_median
         cdef int return_value
+        cdef double original_median
+
+        if self.size() != 0:
+            original_median = self.get_median()
 
         return_value = self.samples.remove(data, weight)
-        self.update_median_parameters_post_remove(data, weight)
+        self.update_median_parameters_post_remove(data, weight,
+                                                  original_median)
         return return_value
 
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil:
@@ -576,6 +582,10 @@ cdef class WeightedMedianCalculator:
         left and moving to the right.
         """
         cdef int return_value
+        cdef double original_median
+
+        if self.size() != 0:
+            original_median = self.get_median()
 
         # no elements to pop
         if self.samples.size() == 0:
@@ -583,14 +593,15 @@ cdef class WeightedMedianCalculator:
 
         return_value = self.samples.pop(data, weight)
         self.update_median_parameters_post_remove(data[0],
-                                                  weight[0])
+                                                  weight[0],
+                                                  original_median)
         return return_value
 
     cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
-                                                  DOUBLE_t weight) nogil:
+                                                  DOUBLE_t weight,
+                                                  double original_median) nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
-        cdef double current_median
         # reset parameters because it there are no elements
         if self.samples.size() == 0:
             self.k = 0
@@ -606,10 +617,9 @@ cdef class WeightedMedianCalculator:
             return 0
 
         # get the current weighted median
-        current_median = self.get_median()
         self.total_weight -= weight
 
-        if data < current_median:
+        if data < original_median:
             # removing below the median, so decrement k and
             # then update self.sum_w_0_k accordingly by subtracting
             # the removed weight
@@ -627,7 +637,7 @@ cdef class WeightedMedianCalculator:
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
 
-        if data >= current_median:
+        if data >= original_median:
             # removing above the median
             # minimize k such that sum(W[0:k]) >= total_weight / 2
             while(self.k > 1 and ((self.sum_w_0_k -
