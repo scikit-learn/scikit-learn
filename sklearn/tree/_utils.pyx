@@ -13,7 +13,6 @@
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
-from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
@@ -330,8 +329,7 @@ cdef class WeightedPQueue:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.array_ptr = 0
-        self.array_ = <WeightedPQueueRecord*> calloc(capacity,
-                                                     sizeof(WeightedPQueueRecord))
+        safe_realloc(&self.array_, capacity)
 
         if self.array_ == NULL:
             raise MemoryError()

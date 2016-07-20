@@ -973,7 +973,7 @@ cdef class MAE(RegressionCriterion):
 
     cdef np.ndarray left_child
     cdef np.ndarray right_child
-    cdef double* node_medians
+    cdef DOUBLE_t* node_medians
 
     def __cinit__(self, SIZE_t n_outputs):
         """Initialize parameters for this criterion.
@@ -1005,7 +1005,7 @@ cdef class MAE(RegressionCriterion):
         self.node_medians = NULL
 
         # Allocate memory for the accumulators
-        self.node_medians = <double*> calloc(n_outputs, sizeof(double))
+        safe_realloc(&self.node_medians, n_outputs)
 
         if (self.node_medians == NULL):
             raise MemoryError()
@@ -1119,7 +1119,7 @@ cdef class MAE(RegressionCriterion):
     cdef void update(self, SIZE_t new_pos) nogil:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
 
-        cdef double* sample_weight = self.sample_weight
+        cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
         cdef void** left_child = <void**> self.left_child.data
@@ -1180,7 +1180,7 @@ cdef class MAE(RegressionCriterion):
 
         cdef SIZE_t k
         for k in range(self.n_outputs):
-            dest[k] = self.node_medians[k]
+            dest[k] = <double> self.node_medians[k]
 
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
@@ -1201,7 +1201,7 @@ cdef class MAE(RegressionCriterion):
 
                 y_ik = y[i * self.y_stride + k]
 
-                impurity += <double> fabs((<double> y_ik) - self.node_medians[k])
+                impurity += <double> fabs((<double> y_ik) - <double> self.node_medians[k])
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
     cdef void children_impurity(self, double* impurity_left,
