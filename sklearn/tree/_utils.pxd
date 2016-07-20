@@ -123,6 +123,7 @@ cdef class WeightedPQueue:
     cdef WeightedPQueueRecord* array_
 
     cdef bint is_empty(self) nogil
+    cdef void reset(self) nogil
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
@@ -146,6 +147,7 @@ cdef class WeightedMedianCalculator:
 
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef void reset(self) nogil
     cdef int update_median_parameters_post_push(self, DOUBLE_t data,
                                                 DOUBLE_t weight,
                                                 DOUBLE_t original_median) nogil

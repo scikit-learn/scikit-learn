@@ -1018,6 +1018,15 @@ cdef class MAE(RegressionCriterion):
                    SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w = 1.0
+        cdef bint init_med_calculators
+
+        if self.n_node_samples == 0:
+            init_med_calculators = 0
 
         # Initialize fields
         self.y = y
@@ -1030,20 +1039,25 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
-        cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w = 1.0
+        cdef void** left_child
+        cdef void** right_child
 
-        with gil:
+        # initialize WeightedMedianCalculators
+        if init_med_calculators == 0:
+            with gil:
+                for k in range(self.n_outputs):
+                    self.left_child[k] = WeightedMedianCalculator(self.n_node_samples)
+                    self.right_child[k] = WeightedMedianCalculator(self.n_node_samples)
+        # already initialized, so reset WeightedMedianCalculators
+        else:
+            left_child = <void**> self.left_child.data
+            right_child = <void**> self.right_child.data
             for k in range(self.n_outputs):
-                self.left_child[k] = WeightedMedianCalculator(self.n_node_samples)
-                self.right_child[k] = WeightedMedianCalculator(self.n_node_samples)
+                (<WeightedMedianCalculator> left_child[k]).reset()
+                (<WeightedMedianCalculator> right_child[k]).reset()
 
-        cdef void** left_child = <void**> self.left_child.data
-        cdef void** right_child = <void**> self.right_child.data
-
+        left_child = <void**> self.left_child.data
+        right_child = <void**> self.right_child.data
         for p in range(start, end):
             i = samples[p]
 
@@ -1058,7 +1072,6 @@ cdef class MAE(RegressionCriterion):
                 (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
 
             self.weighted_n_node_samples += w
-
         # calculate the node medians
         for k in range(self.n_outputs):
             self.node_medians[k] = (<WeightedMedianCalculator> right_child[k]).get_median()

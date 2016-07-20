@@ -13,6 +13,7 @@
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
+from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
@@ -337,6 +338,12 @@ cdef class WeightedPQueue:
     def __dealloc__(self):
         free(self.array_)
 
+    cdef void reset(self) nogil:
+        """Reset the WeightedPQueue to its state at construction"""
+        self.array_ptr = 0
+        self.array_ = <WeightedPQueueRecord*> calloc(self.capacity,
+                                                     sizeof(WeightedPQueueRecord))
+
     cdef bint is_empty(self) nogil:
         return self.array_ptr <= 0
 
@@ -504,6 +511,13 @@ cdef class WeightedMedianCalculator:
         """Return the number of samples in the
         WeightedMedianCalculator"""
         return self.samples.size()
+
+    cdef void reset(self) nogil:
+        """Reset the WeightedMedianCalculator to its state at construction"""
+        self.samples.reset()
+        self.total_weight = 0
+        self.k = 0
+        self.sum_w_0_k = 0
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Push a value and its associated weight
