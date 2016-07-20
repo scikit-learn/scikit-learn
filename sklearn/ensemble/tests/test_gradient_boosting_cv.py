@@ -1,5 +1,4 @@
 import numpy as np
-from itertools import product
 
 from sklearn import datasets
 from sklearn.ensemble import GradientBoostingClassifierCV
@@ -14,34 +13,34 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-def test_no_param():
 
+def test_no_param():
     gbcv = GradientBoostingClassifierCV(max_iterations=1000)
     gbcv.fit(iris.data, iris.target)
     gbcv.best_params_['n_estimators'] < 1000
 
-def test_single_param():
 
+def test_single_param():
     gbcv = GradientBoostingClassifierCV(max_iterations=1000, learning_rate=0.1,
                                         max_depth=3)
     gbcv.fit(iris.data, iris.target)
     gbcv.best_params_['n_estimators'] < 1000
 
-def test_param_grid():
 
+def test_param_grid():
     gbcv = GradientBoostingClassifierCV(max_iterations=1000,
                                         learning_rate=[0.1, 0.3],
-                                        max_depth=[3,4])
+                                        max_depth=[3, 4])
     gbcv.fit(iris.data, iris.target)
     gbcv.best_params_['n_estimators'] < 1000
 
-def test_predict():
 
-    X_train = iris.data[:100,:]
+def test_predict():
+    X_train = iris.data[:100, :]
     y_train = iris.target[:100]
 
-    X_test = iris.data[100:,:]
-    y_test = iris.target[100:]
+    X_validation = iris.data[100:, :]
+    y_validation = iris.target[100:]
 
     params = {'learning_rate': [0.1, 0.3], 'max_depth': [3, 4]}
     gbcv = GradientBoostingClassifierCV(**params)
