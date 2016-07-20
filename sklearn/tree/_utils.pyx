@@ -381,7 +381,7 @@ cdef class WeightedPQueue:
         self.array_ptr = array_ptr + 1
         return 0
 
-    cdef int remove(self, DOUBLE_t value, DOUBLE_t weight) nogil:
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Remove a specific value/weight record from the array.
         Returns 0 if successful, -1 if record not found."""
         cdef SIZE_t array_ptr = self.array_ptr
@@ -394,7 +394,7 @@ cdef class WeightedPQueue:
 
         # find element to remove
         for i in range(array_ptr):
-            if array[i].data == value and array[i].weight == weight:
+            if array[i].data == data and array[i].weight == weight:
                 idx_to_remove = i
                 break
 
@@ -445,23 +445,15 @@ cdef class WeightedPQueue:
         """Given an index between [0,self.current_capacity], access
         the appropriate heap and return the requested weight"""
         cdef WeightedPQueueRecord* array = self.array_
-        if self.array_ptr <= 0 or index >= self.array_ptr:
-            with gil:
-                raise ValueError("Tried to access element "
-                                 "at index out of bounds.")
+
         # get weight at index
         return array[index].weight
 
     cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil:
         """Given an index between [0,self.current_capacity], access
         the appropriate heap and return the requested value"""
-        cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = self.array_
 
-        if array_ptr <= 0 or index >= array_ptr:
-            with gil:
-                raise ValueError("Tried to access element "
-                                 "at index out of bounds.")
         # get value at index
         return array[index].data
 

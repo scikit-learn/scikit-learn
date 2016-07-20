@@ -123,9 +123,9 @@ cdef class WeightedPQueue:
     cdef bint is_empty(self) nogil
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef int remove(self, DOUBLE_t value, DOUBLE_t weight) nogil
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
-    cdef int peek(self, DOUBLE_t* res, DOUBLE_t* weight) nogil
+    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
     cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
     cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
 
