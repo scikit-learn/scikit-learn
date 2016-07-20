@@ -266,7 +266,6 @@ def load_iris(return_X_y=False):
 
     Returns
     -------
-    if return_X_y == false
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
@@ -274,8 +273,7 @@ def load_iris(return_X_y=False):
         meaning of the features, and 'DESCR', the
         full description of the dataset.
     
-    if return_X_y == true
-    (data,target) : tuple
+    (data,target) : tuple if return_X_y == true
 
 
     Examples
