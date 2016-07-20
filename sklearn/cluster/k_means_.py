@@ -1169,6 +1169,8 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
 class MiniBatchKMeans(KMeans):
     """Mini-Batch K-Means clustering
 
+    Read more in the :ref:`User Guide <mini_batch_kmeans>`.
+
     Parameters
     ----------
 
@@ -1262,6 +1264,15 @@ class MiniBatchKMeans(KMeans):
     Notes
     -----
     See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+
+    See also
+    --------
+
+    KMeans:
+        The classic implementation of the clustering method based on the
+        Lloyd's algorithm. It consumes the whole set of input data at each
+        iteration.
+
     """
 
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
