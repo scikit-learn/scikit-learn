@@ -511,7 +511,7 @@ cdef class WeightedMedianCalculator:
         in the median calculation.
         """
         cdef int return_value
-        cdef double original_median
+        cdef DOUBLE_t original_median
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -522,7 +522,7 @@ cdef class WeightedMedianCalculator:
 
     cdef int update_median_parameters_post_push(self, DOUBLE_t data,
                                                 DOUBLE_t weight,
-                                                double original_median) nogil:
+                                                DOUBLE_t original_median) nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after an insertion"""
 
@@ -567,7 +567,7 @@ cdef class WeightedMedianCalculator:
         from consideration in the median calculation
         """
         cdef int return_value
-        cdef double original_median
+        cdef DOUBLE_t original_median
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -647,7 +647,7 @@ cdef class WeightedMedianCalculator:
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
             return 0
 
-    cdef double get_median(self) nogil:
+    cdef DOUBLE_t get_median(self) nogil:
         """Write the median to a pointer, taking into account
         sample weights."""
         if self.sum_w_0_k == (self.total_weight / 2.0):
