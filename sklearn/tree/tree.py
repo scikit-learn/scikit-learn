@@ -338,7 +338,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 criterion = CRITERIA_CLF[self.criterion](self.n_outputs_,
                                                          self.n_classes_)
             else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_,
+                                                         n_samples)
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 

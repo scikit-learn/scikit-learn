@@ -687,13 +687,16 @@ cdef class RegressionCriterion(Criterion):
 
     cdef double sq_sum_total
 
-    def __cinit__(self, SIZE_t n_outputs):
+    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
         n_outputs: SIZE_t
             The number of targets to be predicted
+
+        n_samples: SIZE_t
+            The total number of samples to fit on
         """
 
         # Default values
@@ -975,13 +978,16 @@ cdef class MAE(RegressionCriterion):
     cdef np.ndarray right_child
     cdef DOUBLE_t* node_medians
 
-    def __cinit__(self, SIZE_t n_outputs):
+    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
         n_outputs: SIZE_t
             The number of targets to be predicted
+
+        n_samples: SIZE_t
+            The total number of samples to fit on
         """
 
         # Default values
@@ -1012,6 +1018,10 @@ cdef class MAE(RegressionCriterion):
 
         self.left_child = np.empty(n_outputs, dtype='object')
         self.right_child = np.empty(n_outputs, dtype='object')
+        # initialize WeightedMedianCalculators
+        for k in range(n_outputs):
+            self.left_child[k] = WeightedMedianCalculator(n_samples)
+            self.right_child[k] = WeightedMedianCalculator(n_samples)
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
@@ -1022,10 +1032,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w = 1.0
-        cdef bint init_med_calculators
-
-        if self.n_node_samples == 0:
-            init_med_calculators = 0
 
         # Initialize fields
         self.y = y
@@ -1041,22 +1047,13 @@ cdef class MAE(RegressionCriterion):
         cdef void** left_child
         cdef void** right_child
 
-        # initialize WeightedMedianCalculators
-        if init_med_calculators == 0:
-            with gil:
-                for k in range(self.n_outputs):
-                    self.left_child[k] = WeightedMedianCalculator(self.n_node_samples)
-                    self.right_child[k] = WeightedMedianCalculator(self.n_node_samples)
-        # already initialized, so reset WeightedMedianCalculators
-        else:
-            left_child = <void**> self.left_child.data
-            right_child = <void**> self.right_child.data
-            for k in range(self.n_outputs):
-                (<WeightedMedianCalculator> left_child[k]).reset()
-                (<WeightedMedianCalculator> right_child[k]).reset()
-
         left_child = <void**> self.left_child.data
         right_child = <void**> self.right_child.data
+
+        for k in range(self.n_outputs):
+            (<WeightedMedianCalculator> left_child[k]).reset()
+            (<WeightedMedianCalculator> right_child[k]).reset()
+
         for p in range(start, end):
             i = samples[p]
 
