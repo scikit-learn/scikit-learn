@@ -159,7 +159,7 @@ def check_boston_criterion(name, criterion):
 
 
 def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", )):
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
         yield check_boston_criterion, name, criterion
 
 
@@ -244,7 +244,7 @@ def test_importances():
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
         yield check_importances, name, criterion, X, y
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse"]):
+    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
         yield check_importances, name, criterion, X, y
 
 
