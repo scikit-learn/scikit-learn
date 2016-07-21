@@ -969,7 +969,10 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 cdef class MAE(RegressionCriterion):
-    """Mean absolute error impurity criterion"""
+    """Mean absolute error impurity criterion
+
+       MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
+       value and f_i is the predicted value."""
     def __dealloc__(self):
         """Destructor."""
         free(self.node_medians)
