@@ -117,6 +117,14 @@ New features
      and Harabaz score to evaluate the resulting clustering of a set of points.
      By `Arnaud Fouchet`_ and `Thierry Guillemot`_.
 
+   - Added a new splitting criterion for :class:`tree.DecisionTreeRegressor`,
+     the mean absolute error. This criterion can also be used in
+     :class:`ensemble.ExtraTreesRegressor`,
+     :class:`ensemble.RandomForestRegressor`, and the gradient boosting
+     estimators. (`#6667
+     <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
+     Liu`_.
+
 Enhancements
 ............
 
@@ -145,6 +153,11 @@ Enhancements
      accept the parameter ``min_samples_split`` and ``min_samples_leaf``
      provided as a percentage of the training samples. By
      `yelite`_ and `Arnaud Joly`_.
+
+   - Gradient boosting estimators accept the parameter ``criterion`` to specify
+     to splitting criterion used in built decision trees. (`#6667
+     <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
+     Liu`_.
 
    - Codebase does not contain C/C++ cython generated files: they are
      generated during build. Distribution packages will still contain generated
@@ -4280,3 +4293,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sebastian Säger: https://github.com/ssaeger
 
 .. _YenChen Lin: https://github.com/yenchenlin
+
+.. _Nelson Liu: https://github.com/nelson-liu
