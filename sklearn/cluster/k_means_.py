@@ -1261,17 +1261,17 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
-    Notes
-    -----
-    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
-
     See also
     --------
 
-    KMeans:
+    KMeans
         The classic implementation of the clustering method based on the
         Lloyd's algorithm. It consumes the whole set of input data at each
         iteration.
+
+    Notes
+    -----
+    See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
     """
 
