@@ -19,10 +19,12 @@ from libc.stdlib cimport calloc
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.math cimport exp, fabs, log
 
 import numpy as np
 cimport numpy as np
 np.import_array()
+from weighted import median
 
 from ._utils cimport log
 from ._utils cimport safe_realloc
@@ -958,6 +960,120 @@ cdef class MSE(RegressionCriterion):
         for k in range(self.n_outputs):
             impurity_left[0] -= (sum_left[k] / self.weighted_n_left) ** 2.0
             impurity_right[0] -= (sum_right[k] / self.weighted_n_right) ** 2.0 
+
+        impurity_left[0] /= self.n_outputs
+        impurity_right[0] /= self.n_outputs
+
+
+cdef class MAE(RegressionCriterion):
+    """Mean absolute error impurity criterion.
+    """
+
+    cdef void node_value(self, double* dest) nogil:
+        """Compute the node value of samples[start:end] into dest."""
+
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t w = 1.0
+
+        cdef DOUBLE_t y_ik
+
+        # memset(y_values, 0, (end - start) * sizeof(double))
+        # memset(weights_values, 0, (end - start) * sizeof(double))
+
+        for k in range(self.n_outputs):
+
+            y_values, weights_values = [], []
+
+            for p in range(start, end):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+                
+                y_ik = y[i * self.y_stride + k]
+
+                y_values.append(y_ik)
+                weights_values.append(w)
+
+            dest[k] = median(np.array(y_values), weights_values)
+
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of
+           samples[start:end]."""
+
+        cdef SIZE_t k
+        cdef double impurity = 0.0
+
+        cdef double* median_k
+
+        self.node_value(&median_k)
+
+        for k in range(self.n_outputs):
+
+            for p in range(start, end):
+                i = samples[p]
+                
+                y_ik = y[i * y_stride + k]
+                impurity += fabs(y_ik - median[k]) / self.n_node_samples
+
+        return impurity / self.n_outputs
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end]).
+        """
+
+        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t start = self.start
+
+        cdef double impurity_total = self.node_impurity()
+
+        cdef SIZE_t i
+        cdef SIZE_t p
+        cdef SIZE_t k
+        cdef DOUBLE_t y_ik
+
+        for k in range(self.n_outputs):
+
+            y_values, weights_values = [], []
+
+            for p in range(start, pos):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+                
+                y_ik = y[i * y_stride + k]
+
+                y_values.append(y_ik)
+                weights_values.append(w)
+
+            median[k] = median(np.numpy(y_values), np.numpy(weights_values))
+
+        for k in range(self.n_outputs):
+
+            for p in range(start, pos):
+
+                i = samples[p]
+
+                y_ik = y[i * y_stride + k]
+                impurity_left[0] += fabs(y_ik - median[k]) / (pos - start)
+
+        impurity_right[0] = impurity_total - impurity_left[0]
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs

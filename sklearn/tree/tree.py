@@ -56,7 +56,7 @@ DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE}
+CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE, "mae": _criterion.MAE}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
                    "random": _splitter.RandomSplitter}
@@ -782,9 +782,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Parameters
     ----------
     criterion : string, optional (default="mse")
-        The function to measure the quality of a split. The only supported
-        criterion is "mse" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion.
+        The function to measure the quality of a split. Supported criterions
+        are "mse" for the mean squared error, which is equal to
+        variance reduction as feature selection criterion and "mae" for mean
+        absolute deviation.
 
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported
