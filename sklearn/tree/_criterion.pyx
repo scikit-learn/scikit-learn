@@ -1018,9 +1018,8 @@ cdef class MAE(RegressionCriterion):
                    SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
+
+        cdef SIZE_t i, p, k
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w = 1.0
         cdef bint init_med_calculators
@@ -1082,8 +1081,7 @@ cdef class MAE(RegressionCriterion):
     cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
 
-        cdef SIZE_t i
-        cdef SIZE_t k
+        cdef SIZE_t i, k
         cdef DOUBLE_t value
         cdef DOUBLE_t weight
 
@@ -1094,8 +1092,8 @@ cdef class MAE(RegressionCriterion):
         self.weighted_n_right = self.weighted_n_node_samples
         self.pos = self.start
 
-        # reset the medianheaps, left should have no elements and
-        # right should have all elements.
+        # reset the WeightedMedianCalculators, left should have no
+        # elements and right should have all elements.
 
         for k in range(self.n_outputs):
             # if left has no elements, it's already reset
@@ -1118,8 +1116,8 @@ cdef class MAE(RegressionCriterion):
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
 
-        # reverse_reset the medianheaps, right should have no elements and
-        # left should have all elements.
+        # reverse reset the WeightedMedianCalculators, right should have no
+        # elements and left should have all elements.
         for k in range(self.n_outputs):
             # if right has no elements, it's already reset
             for i in range((<WeightedMedianCalculator> right_child[k]).size()):
@@ -1141,9 +1139,7 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t* y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
-        cdef SIZE_t i
-        cdef SIZE_t p
-        cdef SIZE_t k
+        cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik
 
@@ -1223,6 +1219,7 @@ cdef class MAE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end]).
         """
+
         cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
