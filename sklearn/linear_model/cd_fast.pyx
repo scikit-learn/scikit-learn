@@ -117,6 +117,8 @@ cdef extern from "cblas.h":
                              ) nogil
     float sdot "cblas_sdot"(int N, float *X, int incX, float *Y,
                             int incY) nogil
+    double dsdot "cblas_dsdot"(int N, float *X, int incX, float *Y,
+                               int incY) nogil
     double dasum "cblas_dasum"(int N, double *X, int incX) nogil
     float sasum "cblas_sasum"(int N, float *X, int incX) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
@@ -184,7 +186,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
     R = np.empty(n_samples, dtype=dtype)
     XtA = np.empty(n_features, dtype=dtype)
 
-    cdef floating tmp
+    cdef double tmp
     cdef floating w_ii
     cdef floating d_w_max
     cdef floating w_max
@@ -242,7 +244,10 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                          R_data, 1)
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = dot(n_samples, &X_data[ii * n_samples], 1, R_data, 1)
+                if floating is float:
+                    tmp = dsdot(n_samples, &X_data[ii * n_samples], 1, R_data, 1)
+                else:
+                    tmp = dot(n_samples, &X_data[ii * n_samples], 1, R_data, 1)
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
