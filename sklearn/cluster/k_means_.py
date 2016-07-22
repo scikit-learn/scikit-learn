@@ -799,7 +799,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Alternative online implementation that does incremental updates
         of the centers positions using mini-batches.
         For large scale learning (say n_samples > 10k) MiniBatchKMeans is
-        probably much faster to than the default batch implementation.
+        probably much faster than the default batch implementation.
 
     Notes
     ------
