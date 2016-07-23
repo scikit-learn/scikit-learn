@@ -14,6 +14,7 @@ np.import_array()
 
 from sklearn.tree._tree cimport Node
 from sklearn.tree._tree cimport Tree
+from sklearn.tree._utils cimport goes_left
 
 
 ctypedef np.int32_t int32
@@ -31,6 +32,7 @@ from numpy import float64 as np_float64
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
 ctypedef np.npy_intp SIZE_t
+ctypedef np.npy_int32 INT32_t
 
 
 # constant to mark tree leafs
@@ -44,6 +46,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
                                                 Py_ssize_t K,
                                                 Py_ssize_t n_samples,
                                                 Py_ssize_t n_features,
+                                                INT32_t* n_categories,
                                                 float64 *out):
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -78,6 +81,9 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         ``n_samples == X.shape[0]``.
     n_features : int
         The number of features; ``n_samples == X.shape[1]``.
+    n_categories : INT32_t pointer
+        Pointer to array of shape [n_features] containing the number of
+        categories for each feature, or -1 for non-categorical features.
     out : np.float64_t pointer
         The pointer to the data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
@@ -90,7 +96,8 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
         node = root_node
         # While node not a leaf
         while node.left_child != -1 and node.right_child != -1:
-            if X[i * n_features + node.feature] <= node.threshold:
+            if goes_left(X[i * n_features + node.feature], node.split_value,
+                         n_categories[node.feature], node._bit_cache):
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
@@ -116,6 +123,8 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
         for k in range(K):
             tree = estimators[i, k].tree_
 
+            tree.populate_bit_caches()
+
             # avoid buffer validation by casting to ndarray
             # and get data pointer
             # need brackets because of casting operator priority
@@ -123,8 +132,11 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 <DTYPE_t*> X.data,
                 tree.nodes, tree.value,
                 scale, k, K, X.shape[0], X.shape[1],
+                tree.n_categories,
                 <float64 *> (<np.ndarray> out).data)
             ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
+
+            tree.delete_bit_caches()
 
 
 @cython.nonecheck(False)
@@ -204,65 +216,73 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     underlying_stack = np_zeros((stack_capacity,), dtype=np.intp)
     node_stack = <Node **>(<np.ndarray> underlying_stack).data
 
-    for i in range(X.shape[0]):
-        # init stacks for new example
-        stack_size = 1
-        node_stack[0] = root_node
-        weight_stack[0] = 1.0
-        total_weight = 0.0
+    tree.populate_bit_caches()
 
-        while stack_size > 0:
-            # get top node on stack
-            stack_size -= 1
-            current_node = node_stack[stack_size]
+    try:
+        for i in range(X.shape[0]):
+            # init stacks for new example
+            stack_size = 1
+            node_stack[0] = root_node
+            weight_stack[0] = 1.0
+            total_weight = 0.0
 
-            if current_node.left_child == LEAF:
-                out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
-                          learn_rate
-                total_weight += weight_stack[stack_size]
-            else:
-                # non-terminal node
-                feature_index = array_index(current_node.feature, target_feature)
-                if feature_index != -1:
-                    # split feature in target set
-                    # push left or right child on stack
-                    if X[i, feature_index] <= current_node.threshold:
-                        # left
-                        node_stack[stack_size] = (root_node +
-                                                  current_node.left_child)
-                    else:
-                        # right
-                        node_stack[stack_size] = (root_node +
-                                                  current_node.right_child)
-                    stack_size += 1
+            while stack_size > 0:
+                # get top node on stack
+                stack_size -= 1
+                current_node = node_stack[stack_size]
+
+                if current_node.left_child == LEAF:
+                    out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
+                              learn_rate
+                    total_weight += weight_stack[stack_size]
                 else:
-                    # split feature in complement set
-                    # push both children onto stack
+                    # non-terminal node
+                    feature_index = array_index(current_node.feature, target_feature)
+                    if feature_index != -1:
+                        # split feature in target set
+                        # push left or right child on stack
+                        if goes_left(X[i, feature_index], current_node.split_value,
+                                     tree.n_categories[current_node.feature],
+                                     current_node._bit_cache):
+                            # left
+                            node_stack[stack_size] = (root_node +
+                                                      current_node.left_child)
+                        else:
+                            # right
+                            node_stack[stack_size] = (root_node +
+                                                      current_node.right_child)
+                        stack_size += 1
+                    else:
+                        # split feature in complement set
+                        # push both children onto stack
 
-                    # push left child
-                    node_stack[stack_size] = root_node + current_node.left_child
-                    current_weight = weight_stack[stack_size]
-                    left_sample_frac = root_node[current_node.left_child].n_node_samples / \
-                                       <double>current_node.n_node_samples
-                    if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
-                        raise ValueError("left_sample_frac:%f, "
-                                         "n_samples current: %d, "
-                                         "n_samples left: %d"
-                                         % (left_sample_frac,
-                                            current_node.n_node_samples,
-                                            root_node[current_node.left_child].n_node_samples))
-                    weight_stack[stack_size] = current_weight * left_sample_frac
-                    stack_size +=1
+                        # push left child
+                        node_stack[stack_size] = root_node + current_node.left_child
+                        current_weight = weight_stack[stack_size]
+                        left_sample_frac = root_node[current_node.left_child].n_node_samples / \
+                                           <double>current_node.n_node_samples
+                        if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
+                            raise ValueError("left_sample_frac:%f, "
+                                             "n_samples current: %d, "
+                                             "n_samples left: %d"
+                                             % (left_sample_frac,
+                                                current_node.n_node_samples,
+                                                root_node[current_node.left_child].n_node_samples))
+                        weight_stack[stack_size] = current_weight * left_sample_frac
+                        stack_size +=1
 
-                    # push right child
-                    node_stack[stack_size] = root_node + current_node.right_child
-                    weight_stack[stack_size] = current_weight * \
-                                               (1.0 - left_sample_frac)
-                    stack_size +=1
+                        # push right child
+                        node_stack[stack_size] = root_node + current_node.right_child
+                        weight_stack[stack_size] = current_weight * \
+                                                   (1.0 - left_sample_frac)
+                        stack_size +=1
 
-        if not (0.999 < total_weight < 1.001):
-            raise ValueError("Total weight should be 1.0 but was %.9f" %
-                             total_weight)
+            if not (0.999 < total_weight < 1.001):
+                raise ValueError("Total weight should be 1.0 but was %.9f" %
+                                 total_weight)
+
+    finally:
+        tree.delete_bit_caches()
 
 
 def _random_sample_mask(np.npy_intp n_total_samples,

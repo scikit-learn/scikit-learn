@@ -5,6 +5,8 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 
+import sys
+
 import numpy as np
 
 from sklearn.base import BaseEstimator
@@ -419,40 +421,49 @@ def test_parallel_classification():
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
                                                         random_state=rng)
-
+    print('nocats checkpoint 1', file=sys.stderr)
     ensemble = BaggingClassifier(DecisionTreeClassifier(),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
     # predict_proba
+    print('nocats checkpoint 2', file=sys.stderr)
     ensemble.set_params(n_jobs=1)
     y1 = ensemble.predict_proba(X_test)
+    print('nocats checkpoint 3', file=sys.stderr)
     ensemble.set_params(n_jobs=2)
     y2 = ensemble.predict_proba(X_test)
     assert_array_almost_equal(y1, y2)
 
+    print('nocats checkpoint 4', file=sys.stderr)
     ensemble = BaggingClassifier(DecisionTreeClassifier(),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
+    print('nocats checkpoint 5', file=sys.stderr)
     y3 = ensemble.predict_proba(X_test)
     assert_array_almost_equal(y1, y3)
 
     # decision_function
+    print('nocats checkpoint 6', file=sys.stderr)
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
+    print('nocats checkpoint 7', file=sys.stderr)
     ensemble.set_params(n_jobs=1)
     decisions1 = ensemble.decision_function(X_test)
+    print('nocats checkpoint 8', file=sys.stderr)
     ensemble.set_params(n_jobs=2)
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
+    print('nocats checkpoint 9', file=sys.stderr)
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
+    print('nocats checkpoint 10', file=sys.stderr)
     decisions3 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions3)
 

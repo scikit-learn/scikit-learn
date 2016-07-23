@@ -20,6 +20,7 @@ import numbers
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
+from itertools import count
 
 import numpy as np
 from scipy.sparse import issparse
@@ -28,6 +29,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
+from ..externals.six.moves import zip
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array
 from ..utils import check_random_state
@@ -64,6 +66,119 @@ DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
 SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
                     "random": _splitter.RandomSparseSplitter}
 
+
+# =============================================================================
+# Support functions
+# =============================================================================
+def preproc_categorical(X, categorical, check_input):
+    """Preprocess categorical features by mapping them to
+    range(n_categories). Used for fitting.
+
+    Parameters
+    ----------
+    X : array-like, shape=(n_samples, n_features)
+        Feature array
+    categorical : array-like or str
+        Specification of which features are categorical. See fit().
+    check_input : bool
+        If False, bypass creation of category map and transformation
+        of X. Use only if you know what you are doing.
+
+    Returns
+    -------
+    X : array, shape=(n_samples, n_features)
+        Transformed copy of the feature array (or the original if
+        there are no categorical features)
+    n_categories : array, shape=(n_features,)
+        Number of categories for each feature (-1 if non-categorical)
+    category_map : list, length n_features
+        For each feature, a dictionary relating values to transformed
+        values, or an empty dictionary for non-categorical features
+
+    """
+    n_features = np.shape(X)[1]
+    if isinstance(categorical, str):
+        if categorical == 'none':
+            categorical = np.array([])
+        elif categorical == 'all':
+            categorical = np.arange(n_features)
+        else:
+            # Should have been caught in the constructor, but just in case
+            raise ValueError("Invalid value for categorical: {}. Allowed"
+                             " strings are 'all' or 'none'"
+                             "".format(categorical))
+    categorical = np.asarray(categorical)
+    if categorical.dtype == np.bool:
+        if categorical.shape != (n_features,):
+            raise ValueError("Shape of boolean parameter categorical must"
+                             " be (n_features,)")
+        categorical = np.nonzero(categorical)[0]
+    if (len(categorical.shape) != 1 or
+        categorical.size > n_features or
+        (categorical.size > 0 and
+         (np.min(categorical) < 0 or
+          np.max(categorical) >= n_features))):
+        raise ValueError("Invalid shape or invalid feature index for"
+                         " parameter categorical")
+    if issparse(X) and categorical.size > 0:
+        raise NotImplementedError("Categorical features not supported with"
+                                  " sparse inputs")
+
+    n_categories = -np.ones(n_features, dtype=np.int32)
+    category_map = [{}] * n_features
+    if categorical.size > 0 and check_input:
+        X = np.copy(X)
+    for feature in categorical:
+        rounded = np.round(X[:, feature]).astype(np.int64)
+        unique_rounded = np.unique(rounded)
+        if check_input:
+            category_map[feature] = dict(zip(unique_rounded, count()))
+            X[:, feature] = np.array([category_map[feature][x]
+                                      for x in rounded], dtype=DTYPE)
+        n_categories[feature] = len(unique_rounded)
+
+    return X, n_categories, category_map
+
+
+def validate_categorical(X, category_map):
+    """Map categorical features onto sequential integers. Used for
+    predicting.
+
+    Parameters
+    ----------
+    X : array-like, shape=(n_samples, n_features)
+        Feature array
+    category_map : list, length n_features
+        For each feature, a dictionary relating values to transformed
+        values, or an empty dictionary for non-categorical features
+
+    Returns
+    -------
+    X : array, shape=(n_samples, n_features)
+        Transformed copy of the feature array (or the original if
+        there are no categorical features)
+    """
+    if category_map is None:
+        return X
+
+    n_categories = np.array([len(x) for x in category_map])
+    categorical_features = np.nonzero(n_categories > 0)[0]
+    if categorical_features.size > 0:
+        if issparse(X):
+            raise NotImplementedError("Categorical features not supported"
+                                      " with sparse inputs")
+        X = np.copy(X)
+    for feature in categorical_features:
+        rounded = np.round(X[:, feature]).astype('int64')
+        new_cat = set(rounded) - set(category_map[feature])
+        new_cat_map = dict(zip(new_cat, count(n_categories[feature])))
+        X[:, feature] = np.array(
+            [category_map[feature].get(x, new_cat_map.get(x))
+             for x in rounded]).astype(DTYPE)
+
+    return X
+
+
 # =============================================================================
 # Base decision tree
 # =============================================================================
@@ -89,7 +204,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_leaf_nodes,
                  random_state,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 categorical='none'):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -101,14 +217,25 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_leaf_nodes = max_leaf_nodes
         self.class_weight = class_weight
         self.presort = presort
+        self.categorical = categorical
 
         self.n_features_ = None
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
+        self.category_map_ = None
 
         self.tree_ = None
         self.max_features_ = None
+
+        # Input validation for parameter categorical
+        if isinstance(self.categorical, str):
+            if categorical not in ('all', 'none'):
+                raise ValueError("Invalid value for categorical: {}. Allowed"
+                                 " strings are 'all' or 'none'"
+                                 "".format(categorical))
+        elif len(np.shape(categorical)) != 1:
+            raise ValueError("Invalid shape for parameter categorical")
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -135,7 +262,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         X_idx_sorted : array-like, shape = [n_samples, n_features], optional
             The indexes of the sorted training input samples. If many tree
@@ -296,6 +423,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 sample_weight = expanded_class_weight
 
+        # Do preprocessing of categorical variables
+        X, n_categories, self.category_map_ = preproc_categorical(
+            X, self.categorical, check_input)
+
         # Set min_weight_leaf from min_weight_fraction_leaf
         if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
             min_weight_leaf = (self.min_weight_fraction_leaf *
@@ -338,19 +469,33 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                          self.n_classes_)
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
+        if is_classification:
+            use_shortcut = (self.n_classes_.tolist() == [2] and
+                            (isinstance(criterion, _criterion.Gini) or
+                             isinstance(criterion, _criterion.Entropy)))
+        else:
+            use_shortcut = isinstance(criterion, _criterion.MSE)
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
         splitter = self.splitter
-        if not isinstance(self.splitter, Splitter):
+        if not isinstance(splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
                                                 self.max_features_,
                                                 min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state,
-                                                self.presort)
+                                                self.presort,
+                                                use_shortcut)
+
+        if (not isinstance(splitter, _splitter.RandomSplitter) and
+                np.max(n_categories) > 64):
+            raise ValueError('A feature with {} categories was detected; to'
+                             ' use more than 64, use ExtraTree rather than'
+                             ' DecisionTree.'.format(np.max(n_categories)))
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        self.tree_.n_categories = n_categories
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -365,7 +510,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                            max_depth,
                                            max_leaf_nodes)
 
-        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+        builder.build(self.tree_, X, y, sample_weight, n_categories,
+                      X_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -411,7 +557,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         Returns
         -------
@@ -420,6 +566,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
 
         X = self._validate_X_predict(X, check_input)
+        if check_input:
+            X = validate_categorical(X, self.category_map_)
+
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
 
@@ -461,7 +610,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         Returns
         -------
@@ -472,6 +621,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             numbering.
         """
         X = self._validate_X_predict(X, check_input)
+        if check_input:
+            X = validate_categorical(X, self.category_map_)
+
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):
@@ -613,6 +765,19 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -684,7 +849,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  random_state=None,
                  max_leaf_nodes=None,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 categorical='none'):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -696,7 +862,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
             random_state=random_state,
-            presort=presort)
+            presort=presort,
+            categorical=categorical)
 
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
@@ -706,7 +873,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you are doing.
 
         Parameters
         ----------
@@ -723,6 +890,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         X = self._validate_X_predict(X, check_input)
+        if check_input:
+            X = validate_categorical(X, self.category_map_)
+
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
@@ -852,6 +1022,19 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. For decision trees, the maximum number of
+        categories per feature is 64, though the real-world limit
+        will be much lower because evaluating splits has
+        :math:`O(2^N)` time complexity, for :math:`N`
+        categories. Extra-randomized trees do not have this
+        limitation because they do not try to find the best
+        split. For these trees, the maximum number of categories
+        per feature is :math:`2^{31}`.
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -914,7 +1097,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 presort=False):
+                 presort=False,
+                 categorical='none'):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -925,7 +1109,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state,
-            presort=presort)
+            presort=presort,
+            categorical=categorical)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -962,7 +1147,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
-                 class_weight=None):
+                 class_weight=None,
+                 categorical='none'):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -973,7 +1159,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
-            random_state=random_state)
+            random_state=random_state,
+            categorical=categorical)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1009,7 +1196,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 categorical='none'):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1019,4 +1207,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
-            random_state=random_state)
+            random_state=random_state,
+            categorical=categorical)

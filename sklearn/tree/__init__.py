@@ -7,6 +7,7 @@ from .tree import DecisionTreeClassifier
 from .tree import DecisionTreeRegressor
 from .tree import ExtraTreeClassifier
 from .tree import ExtraTreeRegressor
+from .tree import preproc_categorical, validate_categorical
 from .export import export_graphviz
 
 __all__ = ["DecisionTreeClassifier", "DecisionTreeRegressor",

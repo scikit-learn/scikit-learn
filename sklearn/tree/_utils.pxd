@@ -10,9 +10,12 @@
 import numpy as np
 cimport numpy as np
 
+from ._splitter cimport SplitValue
+
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
+ctypedef np.npy_uint8 UINT8_t            # Unsigned 8 bit integer
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
@@ -33,11 +36,15 @@ ctypedef fused realloc_ptr:
     (DTYPE_t*)
     (SIZE_t*)
     (unsigned char*)
+    (INT32_t*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
+
+
+cdef UINT32_t our_rand_r(UINT32_t* seed) nogil
 
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
@@ -49,6 +56,14 @@ cdef double rand_uniform(double low, double high,
 
 
 cdef double log(double x) nogil
+
+
+# Functions for traversing a tree
+cdef void make_bit_cache(SplitValue split, INT32_t n_categories,
+                         UINT8_t* bit_cache) nogil
+
+cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
+                    INT32_t n_categories, UINT8_t* bit_cache) nogil
 
 # =============================================================================
 # Stack data structure

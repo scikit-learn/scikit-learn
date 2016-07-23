@@ -47,6 +47,8 @@ from scipy.sparse import issparse
 
 from time import time
 from ..tree.tree import DecisionTreeRegressor
+from ..tree.tree import preproc_categorical
+from ..tree.tree import validate_categorical
 from ..tree._tree import DTYPE
 from ..tree._tree import TREE_LEAF
 
@@ -724,7 +726,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                  min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', categorical='none'):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -742,6 +744,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
         self.presort = presort
+        self.categorical = categorical
+        self.category_map_ = None
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -771,28 +775,21 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                presort=self.presort,
+                categorical=self.categorical)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            if X_csc is not None:
-                tree.fit(X_csc, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
-            else:
-                tree.fit(X, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
+            tree.fit(X_csc if X_csc is not None else X, residual,
+                     sample_weight=sample_weight, check_input=False,
+                     X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
-            else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+            loss.update_terminal_regions(
+                tree.tree_, X_csr if X_csr is not None else X, y, residual,
+                y_pred, sample_weight, sample_mask, self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -979,6 +976,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         y = self._validate_y(y)
 
+        # Preprocess categorical variables
+        X, _, self.category_map_ = preproc_categorical(
+            X, self.categorical, check_input=True)
+
         random_state = check_random_state(self.random_state)
         self._check_params()
 
@@ -1077,8 +1078,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_weight,
-                                     sample_mask, random_state, X_idx_sorted,
-                                     X_csc, X_csr)
+                                     sample_mask, random_state,
+                                     X_idx_sorted, X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
@@ -1140,9 +1141,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+        X = validate_categorical(X, self.category_map_)
+
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -1168,6 +1170,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             ``k == 1``, otherwise ``k==n_classes``.
         """
         X = check_array(X, dtype=DTYPE, order="C")
+        X = validate_categorical(X, self.category_map_)
+
         score = self._init_decision_function(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
@@ -1379,6 +1383,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. The maximum number of categories per feature is
+        64, though the real-world limit will be much lower because
+        evaluating splits has :math:`O(2^N)` time complexity, for
+        :math:`N` categories.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1431,7 +1444,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto'):
+                 presort='auto', categorical='none'):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1442,7 +1455,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_features=max_features,
             random_state=random_state, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort)
+            presort=presort, categorical=categorical)
 
     def _validate_y(self, y):
         check_classification_targets(y)
@@ -1467,6 +1480,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             [n_samples].
         """
         X = check_array(X, dtype=DTYPE, order="C")
+        X = validate_categorical(X, self.category_map_)
+
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -1728,6 +1743,15 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         .. versionadded:: 0.17
            optional parameter *presort*.
 
+    categorical : array-like or str
+        Array of feature indices, boolean array of length
+        n_features, ``'all'``, or ``'none'``.  Indicates which
+        features should be considered as categorical rather than
+        ordinal. The maximum number of categories per feature is
+        64, though the real-world limit will be much lower because
+        evaluating splits has :math:`O(2^N)` time complexity, for
+        :math:`N` categories.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1776,7 +1800,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', categorical='none'):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1787,7 +1811,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             max_features=max_features,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort)
+            presort=presort, categorical=categorical)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1803,6 +1827,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             The predicted values.
         """
         X = check_array(X, dtype=DTYPE, order="C")
+        X = validate_categorical(X, self.category_map_)
+
         return self._decision_function(X).ravel()
 
     def staged_predict(self, X):

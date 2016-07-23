@@ -15,11 +15,14 @@ cimport numpy as np
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
+ctypedef np.npy_uint8 UINT8_t            # Unsigned 8 bit integer
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
+from ._splitter cimport SplitValue
 
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
@@ -27,10 +30,12 @@ cdef struct Node:
     SIZE_t left_child                    # id of the left child of the node
     SIZE_t right_child                   # id of the right child of the node
     SIZE_t feature                       # Feature used for splitting the node
-    DOUBLE_t threshold                   # Threshold value at the node
+    SplitValue split_value               # Generalized threshold for categorical and
+                                         # non-categorical features.
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
+    UINT8_t* _bit_cache
 
 
 cdef class Tree:
@@ -52,17 +57,22 @@ cdef class Tree:
     cdef Node* nodes                     # Array of nodes
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
+    cdef INT32_t* n_categories           # (n_features) array giving number of
+                                         # categories (<0 for non-categorical)
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples,
+                          SIZE_t feature, SplitValue split_value,
+                          double impurity, SIZE_t n_node_samples,
                           double weighted_n_samples) nogil
     cdef void _resize(self, SIZE_t capacity) except *
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
+    cdef np.ndarray _get_ncat_ndarray(self)
+    cdef void populate_bit_caches(self)
+    cdef void delete_bit_caches(self)
 
     cpdef np.ndarray predict(self, object X)
 
@@ -98,5 +108,6 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*,
+                np.ndarray n_categories=*,
                 np.ndarray X_idx_sorted=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
