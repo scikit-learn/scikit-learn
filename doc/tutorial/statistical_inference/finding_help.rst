@@ -13,17 +13,6 @@ ask on the `Mailing List <http://scikit-learn.org/stable/support.html>`_
 Q&A communities with Machine Learning practitioners
 ----------------------------------------------------
 
-  :Metaoptimize/QA:
-    A (now-defuct) forum for Machine Learning, Natural Language Processing and
-    other Data Analytics discussions: http://metaoptimize.com/qa
-
-    A useful resource that can still be accessed via archives is a topic on `good freely available
-    textbooks on machine learning`_.
-	
-  :Stack Exchange:
-
-    The Stack Exchange family of sites hosts `multiple subdomains for Machine Learning questions`_. 
-
   :Quora.com:
 
     Quora has a topic for Machine Learning related questions that
@@ -32,7 +21,10 @@ Q&A communities with Machine Learning practitioners
 
     Have a look at the best questions section, eg: `What are some
     good resources for learning about machine learning`_.
+	
+  :Stack Exchange:
 
+    The Stack Exchange family of sites hosts `multiple subdomains for Machine Learning questions`_.
 
 
 .. _`good freely available textbooks on machine learning`: http://web.archive.org/web/20121028182048/http://metaoptimize.com/qa/questions/186/good-freely-available-textbooks-on-machine-learning?
