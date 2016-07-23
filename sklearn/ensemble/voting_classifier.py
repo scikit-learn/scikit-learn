@@ -19,7 +19,6 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..externals import six
-from ..exceptions import NotFittedError
 from ..utils.validation import check_is_fitted
 
 
