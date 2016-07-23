@@ -36,7 +36,7 @@ from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
 
-warnings.warn("This module has been deprecated in favor of the "
+warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the refactored classes "
               "and functions are moved. Also note that the interface of the "
               "new CV iterators are different from that of this module. "

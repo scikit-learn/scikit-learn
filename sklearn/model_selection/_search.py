@@ -614,8 +614,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @property
     def grid_scores_(self):
         warnings.warn(
-            "The grid_scores_ attribute is deprecated in favor of the"
-            " more elaborate results_ attribute."
+            "The grid_scores_ attribute was deprecated in version 0.18"
+            " in favor of the more elaborate results_ attribute."
             " The grid_scores_ attribute will not be available from 0.20",
             DeprecationWarning)
 

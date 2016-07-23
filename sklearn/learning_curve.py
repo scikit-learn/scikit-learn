@@ -17,7 +17,7 @@ from .utils import indexable
 from .utils.fixes import astype
 
 
-warnings.warn("This module has been deprecated in favor of the "
+warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the functions are moved."
               " This module will be removed in 0.20",
               DeprecationWarning)
