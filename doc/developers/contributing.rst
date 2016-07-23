@@ -615,7 +615,7 @@ E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
         return self.classes_
 
 If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
-In following example, k is deprecated and renamed to n_clusters::
+In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
@@ -625,14 +625,13 @@ In following example, k is deprecated and renamed to n_clusters::
                           "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
 
-
 As in these examples, the warning message should always give both the
 version in which the deprecation happened and the version in which the
-behavior will be removed. If the change happened in version 0.x-dev, 
-the message should say the change happened in version 0.x and the removal 
-will be in 0.(x+2). For example, if the change was made in version
-0.18-dev, the message should say the change happened in version 0.18 and
-removal will be in version 0.20.
+old behavior will be removed. If the deprecation happened in version
+0.x-dev, the message should say deprecation occurred in version 0.x and
+the removal will be in 0.(x+2). For example, if the deprecation happened
+in version 0.18-dev, the message should say it happened in version 0.18
+and the old behavior will be removed in version 0.20.
 
 
 .. currentmodule:: sklearn
