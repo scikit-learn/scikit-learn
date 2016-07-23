@@ -160,7 +160,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
-        The default learning method will be changed to 'batch' in the 0.19 release.
+        The default learning method is going to be changed to 'batch' in the 0.20 release.
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -502,8 +502,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
         if learning_method == None:
-            warnings.warn("The default value for 'learning_method' will be"
-                          "changed from 'online' to 'batch' in 0.19.",
+            warnings.warn("The default value for 'learning_method' will be "
+                          "changed from 'online' to 'batch' in the release 0.20. "
+                          "This warning was introduced in 0.18.",
                           DeprecationWarning)          
             learning_method = 'online'
 
