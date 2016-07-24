@@ -15,11 +15,11 @@ Even though SGD has been around in the machine learning community for
 a long time, it has received a considerable amount of attention just
 recently in the context of large-scale learning.
 
-SGD has been successfully applied to large-scale and sparse machine
-learning problems often encountered in text classification and natural
-language processing.  Given that the data is sparse, the classifiers
-in this module easily scale to problems with more than 10^5 training
-examples and more than 10^5 features.
+SGD has been successfully applied to large-scale and sparse machine learning
+problems often encountered in text classification and natural language
+processing.  Given that the data is sparse, the classifiers in this module
+easily scale to problems with more than :math:`10^5` training examples and more
+than :math:`10^5` features.
 
 The advantages of Stochastic Gradient Descent are:
 
@@ -51,10 +51,10 @@ penalties for classification.
    :align: center
    :scale: 75
 
-As other classifiers, SGD has to be fitted with two arrays: an array X
-of size [n_samples, n_features] holding the training samples, and an
-array Y of size [n_samples] holding the target values (class labels)
-for the training samples::
+As other classifiers, SGD has to be fitted with two arrays: an array ``X`` of
+shape ``(n_samples, n_features)`` holding the training samples, and an array
+``Y`` of shape ``(n_samples,)`` holding the target values (class labels) for
+the training samples::
 
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
@@ -116,23 +116,23 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:
 
-  * ``penalty="l2"``: L2 norm penalty on ``coef_``.
-  * ``penalty="l1"``: L1 norm penalty on ``coef_``.
-  * ``penalty="elasticnet"``: Convex combination of L2 and L1;
-    ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
+  * ``penalty="l2"``: :math:`\ell_2` norm penalty on ``coef_``.
+  * ``penalty="l1"``: :math:`\ell_1` norm penalty on ``coef_``.
+  * ``penalty="elasticnet"``: Convex combination of :math:`\ell_1` and
+    :math:`\ell_2`: ``(1 - l1_ratio) * L2 + l1_ratio * L1``.
 
-The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
-solutions, driving most coefficients to zero. The Elastic Net solves
-some deficiencies of the L1 penalty in the presence of highly correlated
-attributes. The parameter ``l1_ratio`` controls the convex combination
-of L1 and L2 penalty.
+The default setting is ``penalty="l2"``. The :math:`\ell_1` penalty leads to
+sparse solutions, driving most coefficients to zero. The Elastic Net solves
+some deficiencies of the :math:`\ell_1` penalty in the presence of highly
+correlated attributes. The parameter ``l1_ratio`` controls the convex
+combination of :math:`\ell_1` and :math:`\ell_2` penalty.
 
 :class:`SGDClassifier` supports multi-class classification by combining
 multiple binary classifiers in a "one versus all" (OVA) scheme. For each
 of the :math:`K` classes, a binary classifier is learned that discriminates
 between that and all other :math:`K-1` classes. At testing time, we compute the
 confidence score (i.e. the signed distances to the hyperplane) for each
-classifier and choose the class with the highest confidence. The Figure
+classifier and choose the class with the highest confidence. The figure
 below illustrates the OVA approach on the iris dataset.  The dashed
 lines represent the three OVA classifiers; the background colors show
 the decision surface induced by the three classifiers.
@@ -260,12 +260,12 @@ Tips on Practical Use
     for the number of iterations is ``n_iter = np.ceil(10**6 / n)``,
     where ``n`` is the size of the training set.
 
-  * If you apply SGD to features extracted using PCA we found that
-    it is often wise to scale the feature values by some constant `c`
-    such that the average L2 norm of the training data equals one.
+  * If you apply SGD to features extracted using PCA we found that it is often
+    wise to scale the feature values by some constant `c` such that the average
+    :math:`\ell_2` norm of the training data equals one.
 
   * We found that Averaged SGD works best with a larger number of features
-    and a higher eta0
+    and a higher ``eta0``.
 
 .. topic:: References:
 
@@ -279,9 +279,9 @@ Mathematical formulation
 ========================
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to
+:math:`x_i \in \mathbb R^n` and :math:`y_i \in \{-1,1\}`, our goal is to
 learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
-:math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
+:math:`w \in \mathbb R^m` and intercept :math:`b \in \mathbb R`. In order
 to make predictions, we simply look at the sign of :math:`f(x)`.
 A common choice to find the model parameters is by minimizing the regularized
 training error given by
@@ -338,8 +338,8 @@ example updates the model parameters according to the update rule given by
 
 .. math::
 
-    w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w}
-    + \frac{\partial L(w^T x_i + b, y_i)}{\partial w})
+    w \leftarrow w - \eta \left(\alpha \frac{\partial R(w)}{\partial w}
+    + \frac{\partial L(w^T x_i + b, y_i)}{\partial w}\right)
 
 where :math:`\eta` is the learning rate which controls the step-size in
 the parameter space.  The intercept :math:`b` is updated similarly but
@@ -353,11 +353,12 @@ is given by
 
     \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
 
-where :math:`t` is the time step (there are a total of `n_samples * n_iter`
-time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
-such that the expected initial updates are comparable with the expected
+where :math:`t` is the time step (there are a total of ``n_samples * n_iter``
+time steps), :math:`t_0` is determined based on a heuristic proposed by Léon
+Bottou such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
-approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
+approx. 1). The exact definition can be found in ``_init_t`` in
+:class:`BaseSGD`.
 
 
 For regression the default learning rate schedule is inverse scaling
@@ -365,10 +366,10 @@ For regression the default learning rate schedule is inverse scaling
 
 .. math::
 
-    \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
+    \eta^{(t)} = \frac{\eta_0}{t^p}
 
-where :math:`eta_0` and :math:`power\_t` are hyperparameters chosen by the
-user via ``eta0`` and ``power_t``, resp.
+where :math:`\eta_0` and :math:`p` are hyperparameters chosen by the user via
+``eta0`` and ``power_t``, respectively.
 
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
@@ -402,18 +403,17 @@ Implementation details
 ======================
 
 The implementation of SGD is influenced by the `Stochastic Gradient SVM
-<http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD,
-the weight vector is represented as the product of a scalar and a vector
-which allows an efficient weight update in the case of L2 regularization.
-In the case of sparse feature vectors, the intercept is updated with a
-smaller learning rate (multiplied by 0.01) to account for the fact that
-it is updated more frequently. Training examples are picked up sequentially
-and the learning rate is lowered after each observed example. We adopted the
-learning rate schedule from Shalev-Shwartz et al. 2007.
-For multi-class classification, a "one versus all" approach is used.
-We use the truncated gradient algorithm proposed by Tsuruoka et al. 2009
-for L1 regularization (and the Elastic Net).
-The code is written in Cython.
+<http://leon.bottou.org/projects/sgd>`_  of Léon Bottou. Similar to SvmSGD, the
+weight vector is represented as the product of a scalar and a vector which
+allows an efficient weight update in the case of :math:`\ell_2` regularization.
+In the case of sparse feature vectors, the intercept is updated with a smaller
+learning rate (multiplied by 0.01) to account for the fact that it is updated
+more frequently. Training examples are picked up sequentially and the learning
+rate is lowered after each observed example. We adopted the learning rate
+schedule from Shalev-Shwartz et al. 2007. For multi-class classification, a
+"one versus all" approach is used. We use the truncated gradient algorithm
+proposed by Tsuruoka et al. 2009 for :math:`\ell_1` regularization (and the
+Elastic Net). The code is written in Cython.
 
 .. topic:: References:
 

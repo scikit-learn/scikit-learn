@@ -147,7 +147,7 @@ Feature selection using SelectFromModel
 
 :class:`SelectFromModel` is a meta-transformer that can be used along with any
 estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitting.
-The features are considered unimportant and removed, if the corresponding
+The features are considered unimportant and removed if the corresponding
 ``coef_`` or ``feature_importances_`` values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.

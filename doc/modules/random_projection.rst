@@ -93,7 +93,7 @@ Gaussian random projection
 The :class:`sklearn.random_projection.GaussianRandomProjection` reduces the
 dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
-:math:`N(0, \frac{1}{n_{components}})`.
+:math:`N(0, \frac{1}{n_\textrm{components}})`.
 
 Here a small excerpt which illustrates how to use the Gaussian random
 projection transformer::

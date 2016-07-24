@@ -1140,7 +1140,7 @@ score associated with each label
 the coverage is defined as
 
 .. math::
-  coverage(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
+  \operatorname{coverage}(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
     \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij}
 
 with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
@@ -1279,13 +1279,14 @@ The :func:`explained_variance_score` computes the `explained variance
 regression score <https://en.wikipedia.org/wiki/Explained_variation>`_.
 
 If :math:`\hat{y}` is the estimated target output, :math:`y` the corresponding
-(correct) target output, and :math:`Var` is `Variance
+(correct) target output, and :math:`\operatorname{Var}` is `Variance
 <https://en.wikipedia.org/wiki/Variance>`_, the square of the standard deviation,
 then the explained variance is estimated as follow:
 
 .. math::
 
-  \texttt{explained\_{}variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+  \textrm{explained\_variance}(y, \hat{y}) = 1 - \frac{\operatorname{Var}[ y -
+  \hat{y}]}{\operatorname{Var}[y]}
 
 The best possible score is 1.0, lower values are worse.
 

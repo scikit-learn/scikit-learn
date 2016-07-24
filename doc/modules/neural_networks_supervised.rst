@@ -20,14 +20,14 @@ Multi-layer Perceptron
 ======================
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
-a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
-where :math:`m` is the number of dimensions for input and :math:`o` is the
-number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
-and a target :math:`y`, it can learn a non-linear function approximator for either
-classification or regression. It is different from logistic regression, in that
-between the input and the output layer, there can be one or more non-linear
-layers, called hidden layers. Figure 1 shows a one hidden layer MLP with scalar
-output.
+a function :math:`f: \mathbb R^m \rightarrow \mathbb R^o` by training on a
+dataset, where :math:`m` is the number of dimensions for input and :math:`o` is
+the number of dimensions for output. Given a set of features :math:`X = {x_1,
+x_2, \ldots, x_m}` and a target :math:`y`, it can learn a non-linear function
+approximator for either classification or regression. It is different from
+logistic regression, in that between the input and the output layer, there can
+be one or more non-linear layers, called hidden layers. Figure 1 shows a one
+hidden layer MLP with scalar output.
 
 .. figure:: ../images/multilayerperceptron_network.png
    :align: center
@@ -37,11 +37,11 @@ output.
 
 The leftmost layer, known as the input layer, consists of a set of neurons
 :math:`\{x_i | x_1, x_2, ..., x_m\}` representing the input features. Each
-neuron in the hidden layer transforms the values from the previous layer with
-a weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed
-by a non-linear activation function :math:`g(\cdot):R \rightarrow R` - like
-the hyperbolic tan function. The output layer receives the values from the
-last hidden layer and transforms them into output values.
+neuron in the hidden layer transforms the values from the previous layer with a
+weighted linear summation :math:`w_1x_1 + w_2x_2 + ... + w_mx_m`, followed by a
+non-linear activation function :math:`g:\mathbb R \rightarrow \mathbb R` - like
+the hyperbolic tan function. The output layer receives the values from the last
+hidden layer and transforms them into output values.
 
 The module contains the public attributes ``coefs_`` and ``intercepts_``.
 ``coefs_`` is a list of weight matrices, where weight matrix at index
@@ -78,10 +78,10 @@ Classification
 Class :class:`MLPClassifier` implements a multi-layer perceptron (MLP) algorithm
 that trains using `Backpropagation <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_.
 
-MLP trains on two arrays: array X of size (n_samples, n_features), which holds
-the training samples represented as floating point feature vectors; and array
-y of size (n_samples,), which holds the target values (class labels) for the
-training samples::
+MLP trains on two arrays: array X of shape ``(n_samples, n_features)``, which
+holds the training samples represented as floating point feature vectors; and
+array y of shape ``(n_samples,)``, which holds the target values (class labels)
+for the training samples::
 
     >>> from sklearn.neural_network import MLPClassifier
     >>> X = [[0., 0.], [1., 1.]]
@@ -201,12 +201,12 @@ loss function with respect to a parameter that needs adaptation, i.e.
 
 .. math::
 
-    w \leftarrow w - \eta (\alpha \frac{\partial R(w)}{\partial w}
-    + \frac{\partial Loss}{\partial w})
+    w \leftarrow w - \eta \left(\alpha \frac{\partial R(w)}{\partial w}
+    + \frac{\partial \textrm{Loss}}{\partial w}\right)
 
-where :math:`\eta` is the learning rate which controls the step-size in
-the parameter space search.  :math:`Loss` is the loss function used
-for the network.
+where :math:`\eta` is the learning rate which controls the step-size in the
+parameter space search. :math:`\textrm{Loss}` is the loss function used for
+the network.
 
 More details can be found in the documentation of
 `SGD <http://scikit-learn.org/stable/modules/sgd.html>`_
@@ -233,7 +233,7 @@ Complexity
 Suppose there are :math:`n` training samples, :math:`m` features, :math:`k`
 hidden layers, each containing :math:`h` neurons - for simplicity, and :math:`o`
 output neurons.  The time complexity of backpropagation is
-:math:`O(n\cdot m \cdot h^k \cdot o \cdot i)`, where :math:`i` is the number
+:math:`O(nmh^koi)`, where :math:`i` is the number
 of iterations. Since backpropagation has a high time complexity, it is advisable
 to start with smaller number of hidden neurons and few hidden layers for
 training.
@@ -242,18 +242,18 @@ training.
 Mathematical formulation
 ========================
 
-Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n, y_n)`
-where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
-layer one hidden neuron MLP learns the function :math:`f(x) = W_2 g(W_1^T x + b_1) + b_2`
-where :math:`W_1 \in \mathbf{R}^m` and :math:`W_2, b_1, b_2 \in \mathbf{R}` are
-model parameters. :math:`W_1, W_2` represent the weights of the input layer and
-hidden layer, resepctively; and :math:`b_1, b_2` represent the bias added to
-the hidden layer and the output layer, respectively.
-:math:`g(\cdot) : R \rightarrow R` is the activation function, set by default as
-the hyperbolic tan. It is given as,
+Given a set of training examples :math:`(x_1, y_1), (x_2, y_2), \ldots, (x_n,
+y_n)` where :math:`x_i \in \mathbb R^n` and :math:`y_i \in \{0, 1\}`, a one
+hidden layer one hidden neuron MLP learns the function :math:`f(x) = W_2
+g(W_1^T x + b_1) + b_2` where :math:`W_1 \in \mathbb R^m` and :math:`W_2, b_1,
+b_2 \in \mathbb R` are model parameters. :math:`W_1, W_2` represent the weights
+of the input layer and hidden layer, resepctively; and :math:`b_1, b_2`
+represent the bias added to the hidden layer and the output layer,
+respectively. :math:`g: \mathbb R \rightarrow \mathbb R` is the activation
+function, set by default as the hyperbolic tan. It is given as
 
 .. math::
-      g(z)= \frac{e^z-e^{-z}}{e^z+e^{-z}}
+      g(z)= \frac{e^z-e^{-z}}{e^z+e^{-z}} .
 
 For binary classification, :math:`f(x)` passes through the logistic function
 :math:`g(z)=1/(1+e^{-z})` to obtain output values between zero and one. A
@@ -280,7 +280,8 @@ function for classification is Cross-Entropy, which in binary case is given as,
 
 .. math::
 
-    Loss(\hat{y},y,W) = -y \ln {\hat{y}} - (1-y) \ln{(1-\hat{y})} + \alpha ||W||_2^2
+    \textrm{Loss}(\hat{y},y,W) = -y \ln {\hat{y}} - (1-y) \ln{(1-\hat{y})} +
+    \alpha \|W\|_2^2
 
 where :math:`\alpha ||W||_2^2` is an L2-regularization term (aka penalty)
 that penalizes complex models; and :math:`\alpha > 0` is a non-negative
@@ -290,7 +291,8 @@ For regression, MLP uses the Square Error loss function; written as,
 
 .. math::
 
-    Loss(\hat{y},y,W) = \frac{1}{2}||\hat{y} - y ||_2^2 + \alpha ||W||_2^2
+    \textrm{Loss}(\hat{y},y,W) = \frac{1}{2}\|\hat{y} - y \|_2^2 + \alpha
+    \|W\|_2^2
 
 
 Starting from initial random weights, multi-layer perceptron (MLP) minimizes
@@ -299,12 +301,12 @@ loss, a backward pass propagates it from the output layer to the previous
 layers, providing each weight parameter with an update value meant to decrease
 the loss.
 
-In gradient descent, the gradient :math:`\nabla Loss_{W}` of the loss with respect
-to the weights is computed and deducted from :math:`W`.
-More formally, this is expressed as,
+In gradient descent, the gradient :math:`\nabla \textrm{Loss}_{W}` of the loss
+with respect to the weights is computed and deducted from :math:`W`. More
+formally, this is expressed as,
 
 .. math::
-    W^{i+1} = W^i - \epsilon \nabla {Loss}_{W}^{i}
+    W^{i+1} = W^i - \epsilon \nabla \textrm{Loss}_{W}^{i}
 
 
 where :math:`i` is the iteration step, and :math:`\epsilon` is the learning rate

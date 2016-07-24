@@ -113,7 +113,7 @@ The form of these kernels is as follows:
 
 * Gaussian kernel (``kernel = 'gaussian'``)
 
-  :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
+  :math:`K(x; h) \propto \exp\left(- \frac{x^2}{2h^2} \right)`
 
 * Tophat kernel (``kernel = 'tophat'``)
 
@@ -125,7 +125,7 @@ The form of these kernels is as follows:
 
 * Exponential kernel (``kernel = 'exponential'``)
 
-  :math:`K(x; h) \propto \exp(-x/h)`
+  :math:`K(x; h) \propto \exp\left(-\frac x h \right)`
 
 * Linear kernel (``kernel = 'linear'``)
 
@@ -133,7 +133,7 @@ The form of these kernels is as follows:
 
 * Cosine kernel (``kernel = 'cosine'``)
 
-  :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
+  :math:`K(x; h) \propto \cos\left(\frac{\pi x}{2h}\right)` if :math:`x < h`
 
 The kernel density estimator can be used with any of the valid distance
 metrics (see :class:`sklearn.neighbors.DistanceMetric` for a list of available metrics), though

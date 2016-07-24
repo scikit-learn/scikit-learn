@@ -243,10 +243,10 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by function :math:`phi`,
+in a feature space defined by function :math:`\phi`,
 a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
-defined by :math:`phi` followed by removal of the mean in that space.
+defined by :math:`\phi` followed by removal of the mean in that space.
 
 .. _preprocessing_normalization:
 

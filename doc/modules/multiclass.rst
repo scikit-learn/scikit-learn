@@ -172,12 +172,12 @@ selects the class with the highest aggregate classification confidence by
 summing over the pair-wise classification confidence levels computed by the
 underlying binary classifiers.
 
-Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
-this method is usually slower than one-vs-the-rest, due to its
-O(n_classes^2) complexity. However, this method may be advantageous for
-algorithms such as kernel algorithms which don't scale well with
-``n_samples``. This is because each individual learning problem only involves
-a small subset of the data whereas, with one-vs-the-rest, the complete
+Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers, this
+method is usually slower than one-vs-the-rest, due to its
+:math:`O(n_\textrm{classes}^2)` complexity. However, this method may be
+advantageous for algorithms such as kernel algorithms which don't scale well
+with ``n_samples``. This is because each individual learning problem only
+involves a small subset of the data whereas, with one-vs-the-rest, the complete
 dataset is used ``n_classes`` times.
 
 Multiclass learning
@@ -314,11 +314,11 @@ Multioutput classification
 
 Multioutput classification support can be added to any classifier with
 :class:`MultiOutputClassifier`. This strategy consists of fitting one
-classifier per target.  This allows multiple target variable
-classifications. The purpose of this class is to extend estimators
-to be able to estimate a series of target functions (f1,f2,f3...,fn)
-that are trained on a single X predictor matrix to predict a series
-of reponses (y1,y2,y3...,yn).
+classifier per target.  This allows multiple target variable classifications.
+The purpose of this class is to extend estimators to be able to estimate a
+series of target functions :math:`(f_1,f_2,f_3,\ldots,f_n)` that are trained on
+a single X predictor matrix to predict a series oy reponses
+:math:`(y_1,y_2,y_3,\ldots,y_n)`.
 
 Below is an example of multioutput classification:
     
