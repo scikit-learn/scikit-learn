@@ -1861,3 +1861,156 @@ class PairwiseKernel(Kernel):
     def __repr__(self):
         return "{0}(gamma={1}, metric={2})".format(
             self.__class__.__name__, self.gamma, self.metric)
+
+
+class SelectDimensionKernel(Kernel):
+    """Wrapper for applying kernels on selected active dimensions of input data.
+
+    A thin wrapper to apply given kernel on only selected dimensions of input data.
+
+
+    Parameters
+    ----------
+    kernel: a kernel object.
+        an instantiation of kernel oobject.
+
+    active_dim: a numpy mask array to apply on input data.
+        can be boolean mask or integer indices.
+
+    """
+
+    def __init__(self, kernel, active_dim):
+        self.kernel = kernel
+        if type(active_dim) is not np.ndarray:
+            raise ValueError("active_dim should be numpy array \
+                              not %s." % type(active_dim))
+        if active_dim.dtype == 'bool':
+            active_dim = np.nonzero(np.arange(active_dim.shape[0]))[0]
+        self.active_dim = active_dim
+
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """Return the kernel k(X, Y) and optionally its gradient on selected dimensions.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            evaluated instead.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameter is determined. Only supported when Y is None.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X[:,active_dim], Y[:,active_dim])
+
+        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+            The gradient of the kernel k(X, X) with respect to the
+            hyperparameter of the kernel. Only returned when eval_gradient
+            is True.
+        """
+        return self.kernel(X[:,self.active_dim],None if Y is None else Y[:,self.active_dim],eval_gradient)
+
+    def get_params(self, deep=True):
+        """Get parameters of this kernel.
+
+        Parameters
+        ----------
+        deep: boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        params = dict(kernel=self.kernel, active_dim=self.active_dim)
+        if deep:
+            deep_items = self.kernel.get_params().items()
+            params.update(('kernel__' + k, val) for k, val in deep_items)
+        return params
+
+    @property
+    def hyperparameters(self):
+        """Returns a list of all hyperparameter."""
+        r = []
+        for hyperparameter in self.kernel.hyperparameters:
+            r.append(Hyperparameter("kernel__" + hyperparameter.name,
+                                    hyperparameter.value_type,
+                                    hyperparameter.bounds,
+                                    hyperparameter.n_elements))
+        return r
+
+    @property
+    def theta(self):
+        """Returns the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Note that theta are typically the log-transformed values of the
+        kernel's hyperparameters as this representation of the search space
+        is more amenable for hyperparameter search, as hyperparameters like
+        length-scales naturally live on a log-scale.
+
+        Returns
+        -------
+        theta : array, shape (n_dims,)
+            The non-fixed, log-transformed hyperparameters of the kernel
+        """
+        return self.kernel.theta
+
+    @theta.setter
+    def theta(self, theta):
+        """Sets the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The non-fixed, log-transformed hyperparameters of the kernel
+        """
+        self.kernel.theta = theta
+
+    @property
+    def bounds(self):
+        """Returns the log-transformed bounds on the theta.
+
+        Returns
+        -------
+        bounds : array, shape (n_dims, 2)
+            The log-transformed bounds on the kernel's hyperparameters theta
+        """
+        return self.kernel.bounds
+
+    def __eq__(self, b):
+        if type(self) != type(b):
+            return False
+        return (self.kernel == b.kernel and self.active_dim == b.active_dim)
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluated more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        # We have to fall back to slow way of computing diagonal
+        return self.kernel.diag(X[:,self.active_dim])
+
+    def is_stationary(self):
+        """Returns whether the kernel is stationary. """
+        return self.kernel.is_stationary()

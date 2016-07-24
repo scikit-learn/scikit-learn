@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation)
+            Exponentiation, SelectDimensionKernel)
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
@@ -46,6 +46,9 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
+kernels += [ SelectDimensionKernel(RBF(length_scale=2.0),active_dim=np.array([0])),
+            SelectDimensionKernel(RBF(length_scale=2.0),active_dim=np.array([False, True]))]
+
 
 
 def test_kernel_gradient():
@@ -72,7 +75,8 @@ def test_kernel_theta():
     # Check that parameter vector theta of kernel is set correctly.
     for kernel in kernels:
         if isinstance(kernel, KernelOperator) \
-           or isinstance(kernel, Exponentiation):  # skip non-basic kernels
+           or isinstance(kernel, Exponentiation) \
+               or isinstance(kernel, SelectDimensionKernel):  # skip non-basic kernels
             continue
         theta = kernel.theta
         _, K_gradient = kernel(X, eval_gradient=True)
