@@ -279,6 +279,11 @@ Bug fixes
     - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
       with them as parameters, could not be passed to :func:`base.clone`.
       By `Loic Esteve`_.
+      
+    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error 
+      occurred when there were outliers being labelled and a weight function 
+      (`#6902 <https://github.com/scikit-learn/scikit-learn/issues/6902>`_). 
+      By `LeonieBorne <https://github.com/LeonieBorne>`_.
 
     - :func:`pairwise_distances` now converts arrays to boolean arrays when
       required in scipy.spatial.distance.
