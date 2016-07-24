@@ -26,12 +26,9 @@ Q&A communities with Machine Learning practitioners
 
     The Stack Exchange family of sites hosts `multiple subdomains for Machine Learning questions`_.
 
-
-.. _`good freely available textbooks on machine learning`: http://web.archive.org/web/20121028182048/http://metaoptimize.com/qa/questions/186/good-freely-available-textbooks-on-machine-learning?
+.. _`How do I learn machine learning?`: https://www.quora.com/How-do-I-learn-machine-learning-1
 
 .. _`multiple subdomains for Machine Learning questions`: http://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms
-
-.. _`How do I learn machine learning?`: https://www.quora.com/How-do-I-learn-machine-learning-1
 
 -- _'An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford': https://www.coursera.org/learn/machine-learning
 
