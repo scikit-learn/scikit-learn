@@ -1057,13 +1057,12 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
 
         weightedtfs = X.copy()
 
-        X_sign = X.copy()
-        X_sign.data = np.sign(X.data)
+        binary = X>0
 
         weightedtfs.data = (self.k + 1) / \
-                           (self.k * dot(self._beta_diag,X_sign.data) / X.data + 1)
+                           (self.k * self._beta_diag.dot(binary).data / X.data + 1)
 
-        bm25 = dot(weightedtfs, self._idf_diag)
+        bm25 = weightedtfs.dot(self._idf_diag)
         return bm25
 
     @property
