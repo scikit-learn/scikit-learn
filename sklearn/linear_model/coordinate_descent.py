@@ -28,7 +28,12 @@ from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 import struct
-IS_64_BIT = True if struct.calcsize("P") * 8 == 64 else False
+
+if (struct.calcsize("P") * 8 == 64
+    and int(np.__version__.split('.')[1]) >= 10):
+    VALID_FOR_32_INPUT = True
+else:
+    VALID_FOR_32_INPUT = False
 
 
 ###############################################################################
@@ -377,7 +382,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        if IS_64_BIT:
+        if VALID_FOR_32_INPUT:
             dtype = [np.float64, np.float32]
         else:
             dtype = np.float64
@@ -679,7 +684,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # when bypassing checks
         if check_input:
             y = np.asarray(y)
-            if IS_64_BIT:
+            if VALID_FOR_32_INPUT:
                 dtype = [np.float64, np.float32]
             else:
                 dtype = np.float64
