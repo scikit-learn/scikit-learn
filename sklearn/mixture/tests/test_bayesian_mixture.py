@@ -2,6 +2,8 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln, digamma
 
+from sklearn import cluster
+from sklearn.datasets import make_blobs
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
@@ -15,6 +17,7 @@ from sklearn.mixture.bayesian_mixture import _gamma_entropy_diag
 
 from sklearn.mixture import BayesianGaussianMixture
 
+from sklearn.mixture.gaussian_mixture import _estimate_gaussian_parameters
 
 def test_log_dirichlet_norm():
     rng = np.random.RandomState(0)
@@ -262,6 +265,57 @@ def test_bayesian_mixture_weights():
 
     # Check the weights sum = 1
     assert_almost_equal(np.sum(bgmm.weights_), 1.0)
+
+
+def test_check_formula_full():
+    # The purpose of that test is to check that the equation are compute
+    # correctly by decompositing the fit function step by step.
+    # Another function will check that the all process is correctly applied
+
+    # Each blob are well separated
+    n_components, n_samples, n_features = 3, 1000, 2
+    X, y = make_blobs(centers=n_components, n_samples=n_samples,
+                      n_features=n_features, random_state=10)
+    resp = np.zeros((n_samples, n_components))
+    label = cluster.KMeans(n_clusters=n_components, n_init=1,
+                           random_state=0).fit(X).labels_
+    resp[np.arange(n_samples), label] = 1
+
+    alpha_init, beta_init, nu_init = 1e0, 5e3, 6e1
+    m_init = np.zeros(n_features)
+    w_init = np.array([[30, 10.5], [10.5, 9]])
+    bgmm = BayesianGaussianMixture(n_components=n_components, max_iter=1,
+                                   alpha_init=alpha_init,
+                                   beta_init=beta_init,
+                                   mean_init=m_init,
+                                   covariance_init=w_init,
+                                   nu_init=nu_init)
+    bgmm._check_initial_parameters(X)
+    bgmm._initialize_parameters(X)
+
+    # Check the correctness computation of alpha, beta and nu
+    nk, xk, sk = _estimate_gaussian_parameters(
+        X, resp, bgmm.reg_covar, 'full')
+    alpha_k, beta_k, nu_k = alpha_init + nk, beta_init + nk, nu_init + nk
+    assert_almost_equal(alpha_k, bgmm.alpha_)
+    assert_almost_equal(beta_k, bgmm.beta_)
+    assert_almost_equal(nu_k, bgmm.nu_)
+
+    # Check the correctness means and precision_k
+    m_k = ((beta_init * m_init + nk[:, np.newaxis] * xk) /
+           beta_k[:, np.newaxis])
+    w_k = (w_init + sk * nk[:, np.newaxis, np.newaxis] +
+           (beta_init * nk / beta_k)[:, np.newaxis, np.newaxis] *
+           np.array([np.outer(x - m_init, x - m_init) for x in xk]))
+    assert_almost_equal(m_k, bgmm.means_)
+    assert_almost_equal(w_k, bgmm.covariances_)
+
+    # Check the correctness of the resp
+    from scipy.special import digamma
+    log_pi_k = digamma(alpha_k) - digamma(np.sum(alpha_k))
+    log_lambda_k = np.sum((nu_k - np.arange(n_features)))
+    assert_almost_equal(log_pi_k, bgmm._estimate_log_weights())
+
 
 
 # def test_bayesian_mixture_means():

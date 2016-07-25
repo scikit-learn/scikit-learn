@@ -313,14 +313,15 @@ def _compute_precision_cholesky(covariances, covariance_type):
     if covariance_type in 'full':
         n_components, n_features, _ = covariances.shape
         precisions_chol = np.empty((n_components, n_features, n_features))
+        covariances_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):
             try:
-                cov_chol = linalg.cholesky(covariance, lower=True)
+                covariances_chol[k] = linalg.cholesky(covariance, lower=False)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
-            precisions_chol[k] = linalg.solve_triangular(cov_chol,
+            precisions_chol[k] = linalg.solve_triangular(covariances_chol[k],
                                                          np.eye(n_features),
-                                                         lower=True).T
+                                                         lower=False).T
     elif covariance_type is 'tied':
         _, n_features = covariances.shape
         try:
@@ -333,7 +334,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         if np.any(np.less_equal(covariances, 0.0)):
             raise ValueError(estimate_precision_error_message)
         precisions_chol = 1. / np.sqrt(covariances)
-    return precisions_chol
+    return precisions_chol, covariances_chol
 
 
 ###############################################################################
@@ -648,6 +649,9 @@ class GaussianMixture(BaseMixture):
         self.weights_ /= n_samples
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type)
+
+    def _compute_lower_bound(self, resp):
+        """Estimate the lower bound of the model to check the convergence."""
 
     def _estimate_log_prob(self, X):
         return _estimate_log_gaussian_prob(

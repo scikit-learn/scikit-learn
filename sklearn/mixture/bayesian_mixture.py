@@ -9,6 +9,7 @@
 # - not do an EM but an ME
 # - remove trace smw
 # - check if this is precision or covariance
+# - Modifier pour ne pas avoir deux fois le meme code.
 
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
@@ -61,12 +62,16 @@ def _log_wishart_norm(nu, precision_chol, n_features):
     log_wishart_norm : float
         The log normalization of the Wishart distribution.
     """
-    return (-nu * np.sum(np.log(np.diag(precision_chol))) -
-            nu * n_features * .5 * np.log(2.) -
-            n_features * (n_features - 1.) * .25 * np.log(np.pi) -
-            np.sum(gammaln(.5 * (nu + 1. - np.arange(1, n_features + 1.)))))
+    # XXX see if we remove the np.log(np.pi)
+    # The determinant of the cholesky decomposition of the precision
+    # is half of the determinant of the precision
+    return -(nu * np.sum(np.log(np.diag(precision_chol))) +
+             nu * n_features * .5 * np.log(2.) +
+             n_features * (n_features - 1.) * .25 * np.log(np.pi) +
+             np.sum(gammaln(.5 * (nu - np.arange(0, n_features)))))
 
 
+# FIXME To remove
 def _estimate_wishart_entropy(nu, precision_chol, log_lambda, n_features):
     """Estimate the entropy of the Wishart distribution.
 
@@ -274,7 +279,7 @@ class BayesianGaussianMixture(BaseMixture):
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  alpha_init=None, beta_init=None, mean_init=None,
                  nu_init=None, covariance_init=None, random_state=None,
-                 warm_start=False, verbose=0, verbose_interval=10):
+                 warm_start=False, verbose=0, verbose_interval=20):
         super(BayesianGaussianMixture, self).__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
@@ -418,6 +423,7 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
 
+        # XXX Remove constant term
         self._estimate_distribution_norms()
 
     def _estimate_weights(self, nk):
@@ -464,28 +470,19 @@ class BayesianGaussianMixture(BaseMixture):
          "spherical": self._estimate_gamma_spherical
          }[self.covariance_type](nk, xk, sk)
 
-        self.precisions_cholesky_ = _compute_precision_cholesky(
+        self.precisions_cholesky_, self.cov_chol_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type)
 
         if self.covariance_type is 'full':
             self.precisions_ = np.array([
                 np.dot(prec_chol, prec_chol.T)
                 for prec_chol in self.precisions_cholesky_])
-            # FIXME find a way to remove it
-            self._trace_sW = np.sum(nk * self.nu_ * np.array(
-                [np.sum(sk[k] * w) for k, w in enumerate(self.precisions_)]))
 
         elif self.covariance_type is 'tied':
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
-            # FIXME find a way to remove it
-            self._trace_sW = np.sum(nk * self.nu_ * np.sum(
-                sk * self.precisions_))
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
-            # FIXME find a way to remove it
-            self._trace_sW = np.sum(nk * self.nu_ * np.sum(
-                sk * self.precisions_))
 
     def _estimate_wishart_full(self, nk, xk, sk):
         """Estimate the Wishart distribution parameters.
@@ -503,7 +500,7 @@ class BayesianGaussianMixture(BaseMixture):
         _, n_features = xk.shape
 
         # FIXME Typo error in certain version of Bishop for nu
-        self.nu_ = self._nu_prior + nk + 1
+        self.nu_ = self._nu_prior + nk
 
         self.covariances_ = np.empty((self.n_components, n_features,
                                       n_features))
@@ -531,7 +528,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Typo error in certain version of Bishop for nu
         # FIXME We add n_features because we do a sum_n_features of 1 ???
-        self.nu_ = self._nu_prior + nk.sum() / self.n_components + 1
+        self.nu_ = self._nu_prior + nk.sum() / self.n_components
 
         diff = xk - self._mean_prior
         self.covariances_ = (self._covariance_prior +
@@ -555,7 +552,7 @@ class BayesianGaussianMixture(BaseMixture):
         _, n_features = xk.shape
 
         # FIXME Typo error in certain version of Bishop for nu
-        self.nu_ = self._nu_prior + .5 * nk + 1
+        self.nu_ = self._nu_prior + nk
 
         diff = xk - self._mean_prior
         self.covariances_ = (
@@ -580,7 +577,7 @@ class BayesianGaussianMixture(BaseMixture):
         _, n_features = xk.shape
 
         # FIXME Typo error in certain version of Bishop for nu
-        self.nu_ = self._nu_prior + .5 * nk + 1
+        self.nu_ = self._nu_prior + nk
 
         diff = xk - self._mean_prior
         self.covariances_ = (self._covariance_prior + .5 / n_features *
@@ -631,7 +628,7 @@ class BayesianGaussianMixture(BaseMixture):
                                'covariances_', 'precisions_',
                                'precisions_cholesky_'])
 
-    def _m_step(self, X, resp):
+    def _m_step(self, X, log_resp, resp):
         """M step.
 
         Parameters
@@ -640,11 +637,15 @@ class BayesianGaussianMixture(BaseMixture):
 
         resp : array-like, shape (n_samples, n_components)
         """
+        n_samples, _ = X.shape
+
         nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
                                                    self.covariance_type)
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
+
+        return self._compute_lower_bound(log_resp, resp) / n_samples
 
     def _e_step(self, X):
         """E step.
@@ -655,15 +656,13 @@ class BayesianGaussianMixture(BaseMixture):
 
         Returns
         -------
-        log-likelihood : scalar
+        log-responsibility : scalar
 
         responsibility : array, shape (n_samples, n_components)
         """
-        _, log_prob, log_resp = self._estimate_log_prob_resp(X)
-        resp = np.exp(log_resp)
-        self._lower_bound = self._estimate_lower_bound(log_prob, resp,
-                                                       log_resp)
-        return self._lower_bound, resp
+        n_features, _ = X.shape
+        _, _, log_resp = self._estimate_log_prob_resp(X)
+        return log_resp, np.exp(log_resp)
 
     def _estimate_log_weights(self):
         return digamma(self.alpha_) - digamma(np.sum(self.alpha_))
@@ -682,17 +681,19 @@ class BayesianGaussianMixture(BaseMixture):
         log_prob = np.empty((n_samples, self.n_components))
         self._log_lambda = np.empty((self.n_components, ))
 
+        # SOME ERROR HERE !!!!
         for k in range(self.n_components):
-            log_det_precisions = -2. * np.sum(np.log(np.diag(
+            log_det_precisions = 2. * np.sum(np.log(np.diag(
                 self.precisions_cholesky_[k])))
-            # Equation 3.43
+            # Equation 3.43 Corrected here XXX
             self._log_lambda[k] = (
-                np.sum(digamma(.5 * (self.nu_[k] + 1 -
+                np.sum(digamma(.5 * (self.nu_[k] -
                                      np.arange(0, n_features)))) +
-                n_features * np.log(2.) - log_det_precisions)
+                n_features * np.log(2.) + log_det_precisions)
 
             # Equation 3.48
-            y = np.dot(X - self.means_[k], self.precisions_cholesky_[k])
+            # XXXX ERROR WITH THE TRANSPOSE !!!!!!!
+            y = np.dot(X - self.means_[k], self.precisions_cholesky_[k].T)
             mahala_dist = (n_features / self.beta_[k] +
                            self.nu_[k] * np.sum(np.square(y), axis=1))
 
@@ -758,27 +759,54 @@ class BayesianGaussianMixture(BaseMixture):
         return -.5 * (n_features * np.log(2. * np.pi) - self._log_lambda +
                       n_features / self.beta_ + log_gauss)
 
-    def _estimate_lower_bound(self, log_prob, resp, log_resp):
+    def _compute_lower_bound(self, log_resp, resp):
         """Estimate the lower bound of the model to check the convergence."""
-        # Equation 7.5
-        log_pi = self._estimate_log_weights()
-        log_p_XZ = np.sum(resp * (log_prob - log_pi)) - self._trace_sW
-        # Equation 7.6
-        log_p_Zw = np.sum(resp * log_pi)
-        # Equation 7.7
-        log_p_weight = ((self._alpha_prior - 1.) * np.sum(log_pi) +
-                        self._log_dirichlet_norm_prior)
-        log_p_lambda = self._estimate_p_lambda()
+        # XXX REMOVE CONSTANT TERMS
+        n_features, = self._mean_prior.shape
 
-        # Equation 7.10
-        log_q_z = np.sum(resp * log_resp)
-        # Equation 7.11
-        log_q_weight = (np.sum((self.alpha_ - 1.) * log_pi) +
-                        _log_dirichlet_norm(self.alpha_))
-        log_q_lambda = self._estimate_q_lambda()
+        # Prob with that
+        log_wishart = np.empty(self.n_components)
+        for k, (nu, prec_chol) in enumerate(zip(self.nu_,
+                                                self.precisions_cholesky_)):
+            log_wishart[k] = _log_wishart_norm(nu, prec_chol, n_features)
 
-        return (.5 * log_p_XZ + log_p_Zw + 2*log_p_weight + log_p_lambda -
-                log_q_z - log_q_weight - log_q_lambda)
+        # We have removed the constant term
+        lowe = (-np.sum(resp * log_resp) + self._log_dirichlet_norm_prior -
+                _log_dirichlet_norm(self.alpha_) +
+                self.n_components * self._log_wishart_norm_prior -
+                np.sum(log_wishart) +
+                0.5 * n_features *
+                (self.n_components * np.log(self._beta_prior) -
+                 np.sum(np.log(self.beta_))))
+
+
+# 0.5 * n_features * self._log_wishart_norm_prior
+# -0.5 * np.sum(log_wishart)
+# 0.5 * n_features * self.n_components * np.log(self._beta_prior)
+# -0.5 * n_features * np.sum(np.log(self.beta_))
+
+        return lowe
+        # log_q_z = np.sum(resp * log_resp)
+        # log_p_Zw = np.sum(resp * log_prob)
+
+        # # Equation 7.5
+        # log_pi = self._estimate_log_weights()
+        # log_p_XZ = np.sum(resp * (log_prob - log_pi)) - .5 * self._trace_sW
+        # # Equation 7.6
+        # # XXX (vérifier si log_pi ou log_prob)
+        # # Equation 7.7
+        # log_p_weight = ((self._alpha_prior - 1.) * np.sum(log_pi) +
+        #                 self._log_dirichlet_norm_prior)
+        # log_p_lambda = self._estimate_p_lambda()
+
+        # # Equation 7.10
+        # # Equation 7.11
+        # log_q_weight = (np.sum((self.alpha_ - 1.) * log_pi) +
+        #                 _log_dirichlet_norm(self.alpha_))
+        # log_q_lambda = self._estimate_q_lambda()
+
+        # return (log_p_XZ + log_p_Zw + log_p_weight + log_p_lambda -
+        #         log_q_z - log_q_weight - log_q_lambda)
 
     def _estimate_p_lambda(self):
         return {'full': self._estimate_p_lambda_full,

@@ -152,6 +152,11 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         elif self.init_params == 'test':
             resp = np.array([random_state.dirichlet(np.ones(self.n_components))
                             for _ in range(n_samples)])
+        elif self.init_params == 'matlab':
+            resp = np.zeros((n_samples, self.n_components))
+            label = np.tile(np.arange(self.n_components)[:, np.newaxis], (
+                1, n_samples / self.n_components)).ravel()
+            resp[np.arange(n_samples), label] = 1
         else:
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
@@ -189,6 +194,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         -------
         self
         """
+        # TODO Modifier de sorte que la première étape soit l'init
         X = _check_X(X, self.n_components)
         self._check_initial_parameters(X)
 
@@ -252,23 +258,39 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
+<<<<<<< HEAD
         log_prob_norm : array, shape (n_samples,)
             log p(X)
 
         log_responsibility : array, shape (n_samples, n_components)
             logarithm of the responsibilities
+=======
+        responsibility : array, shape (n_samples, n_components)
+>>>>>>> Fix full version.
         """
         pass
 
     @abstractmethod
+<<<<<<< HEAD
     def _m_step(self, X, log_resp):
+=======
+    def _m_step(self, X, log_resp, resp):
+>>>>>>> Fix full version.
         """M step.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
+<<<<<<< HEAD
         log_resp : array-like, shape (n_samples, n_components)
+=======
+        resp : array-like, shape (n_samples, n_components)
+
+        Returns
+        -------
+        lower_bound : scalar
+>>>>>>> Fix full version.
         """
         pass
 
