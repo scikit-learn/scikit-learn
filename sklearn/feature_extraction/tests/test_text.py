@@ -315,7 +315,7 @@ def test_bm25_no_smoothing():
     tr = Bm25Transformer(smooth_idf=False, k=2, b=0.75)
     bm25_act = tr.fit_transform(X).toarray()
     assert(tr._beta_diag.shape[0]==3)
-    assert(tr._beta_diag_shape[1]==3)
+    assert(tr._beta_diag.shape[1]==3)
     bm25_exp = np.array([[2.62326536, 1.25, 0., 0.],
                          [0., 1.39534884, 1.9611141, 0.],
                          [0., 0.90909091, 1.27769555, 2.92829622]])
