@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 from scipy import linalg
+from scipy import stats
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
@@ -58,6 +59,50 @@ def test_graph_lasso(random_state=0):
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
+def test_graph_lasso_callable(random_state=0):
+    # Sample data from a sparse multivariate normal
+    dim = 20
+    n_samples = 100
+    random_state = check_random_state(random_state)
+    prec = make_sparse_spd_matrix(dim, alpha=.95,
+                                  random_state=random_state)
+    cov = linalg.inv(prec)
+    X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+    emp_cov,_ = stats.spearmanr(X)
+    def callable_cor(X, centered):
+        covariance,_ = stats.spearmanr(X)
+        return covariance
+
+    for alpha in (0., .1, .25):
+        covs = dict()
+        icovs = dict()
+        for method in ('cd', 'lars'):
+            cov_, icov_, costs = graph_lasso(emp_cov, alpha=alpha, mode=method,
+                                             return_costs=True)
+            covs[method] = cov_
+            icovs[method] = icov_
+            costs, dual_gap = np.array(costs).T
+            # Check that the costs always decrease (doesn't hold if alpha == 0)
+            if not alpha == 0:
+                assert_array_less(np.diff(costs), 0)
+        # Check that the 2 approaches give similar results
+        assert_array_almost_equal(covs['cd'], covs['lars'], decimal=4)
+        assert_array_almost_equal(icovs['cd'], icovs['lars'], decimal=4)
+
+    # Smoke test the estimator
+    model = GraphLasso(alpha=.25, cov=callable_cor).fit(X)
+    model.score(X)
+    assert_array_almost_equal(model.covariance_, covs['cd'], decimal=4)
+    assert_array_almost_equal(model.covariance_, covs['lars'], decimal=4)
+
+    # For a centered matrix, assume_centered could be chosen True or False
+    # Check that this returns indeed the same result for centered data
+    Z = X - X.mean(0)
+    precs = list()
+    for assume_centered in (False, True):
+        prec_ = GraphLasso(assume_centered=assume_centered).fit(Z).precision_
+        precs.append(prec_)
+    assert_array_almost_equal(precs[0], precs[1])
 
 def test_graph_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0

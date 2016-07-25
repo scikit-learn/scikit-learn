@@ -300,6 +300,12 @@ class GraphLasso(EmpiricalCovariance):
         If verbose is True, the objective function and dual gap are
         plotted at each iteration.
 
+    cov : can be 'empirical' or a callable. If 'empirical' is given,
+        empirical covariance is computed. If a callable is given it is used
+        to compute covariance matrix; it should take two input values,
+        matrix X of input data and a boolean indicating if data is already
+        centered.
+
     assume_centered : boolean, default False
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
@@ -323,7 +329,8 @@ class GraphLasso(EmpiricalCovariance):
     """
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
-                 max_iter=100, verbose=False, assume_centered=False):
+                 max_iter=100, verbose=False, assume_centered=False,
+                 cov='empirical'):
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
@@ -333,6 +340,7 @@ class GraphLasso(EmpiricalCovariance):
         self.assume_centered = assume_centered
         # The base class needs this for the score method
         self.store_precision = True
+        self.cov = cov
 
     def fit(self, X, y=None):
 
@@ -344,8 +352,11 @@ class GraphLasso(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        emp_cov = empirical_covariance(
-            X, assume_centered=self.assume_centered)
+        if self.cov == 'empirical':
+            emp_cov = empirical_covariance(
+                X, assume_centered=self.assume_centered)
+        elif callable(self.cov):
+            emp_cov = self.cov(X,self.assume_centered)
         self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
             enet_tol=self.enet_tol, max_iter=self.max_iter,
