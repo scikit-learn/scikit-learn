@@ -1058,6 +1058,9 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
 
         binary = X>0
 
+        print binary.shape
+        print self._beta_diag.shape
+        print X.data.shape
 
         weightedtfs.data = (self.k + 1) / \
                            (self.k * self._beta_diag.dot(binary).data / X.data + 1)
