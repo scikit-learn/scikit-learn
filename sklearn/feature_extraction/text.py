@@ -960,7 +960,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.`
     """
