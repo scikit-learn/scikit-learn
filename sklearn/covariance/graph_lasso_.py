@@ -303,7 +303,7 @@ class GraphLasso(EmpiricalCovariance):
     cov : can be 'empirical' or a callable. If 'empirical' is given,
         empirical covariance is computed. If a callable is given it is used
         to compute covariance matrix; it should take two input values,
-        matrix X of input data and a boolean indicating if data is already
+        the matrix X of input data and a boolean indicating if data is already
         centered.
 
     assume_centered : boolean, default False
@@ -356,7 +356,7 @@ class GraphLasso(EmpiricalCovariance):
             emp_cov = empirical_covariance(
                 X, assume_centered=self.assume_centered)
         elif callable(self.cov):
-            emp_cov = self.cov(X,self.assume_centered)
+            emp_cov = self.cov(X, self.assume_centered)
         self.covariance_, self.precision_, self.n_iter_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
             enet_tol=self.enet_tol, max_iter=self.max_iter,

@@ -59,6 +59,7 @@ def test_graph_lasso(random_state=0):
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
+
 def test_graph_lasso_callable(random_state=0):
     # Sample data from a sparse multivariate normal
     dim = 20
@@ -68,9 +69,10 @@ def test_graph_lasso_callable(random_state=0):
                                   random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
-    emp_cov,_ = stats.spearmanr(X)
+    emp_cov, _ = stats.spearmanr(X)
+
     def callable_cor(X, centered):
-        covariance,_ = stats.spearmanr(X)
+        covariance, _ = stats.spearmanr(X)
         return covariance
 
     for alpha in (0., .1, .25):
@@ -103,6 +105,7 @@ def test_graph_lasso_callable(random_state=0):
         prec_ = GraphLasso(assume_centered=assume_centered).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
+
 
 def test_graph_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
