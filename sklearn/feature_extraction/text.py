@@ -12,6 +12,7 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 from __future__ import unicode_literals
+from __future__ import division
 
 import array
 from collections import Mapping, defaultdict
@@ -971,8 +972,8 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
 
     def __init__(self, smooth_idf=True, k=2, b=0.75):
         self.smooth_idf = smooth_idf
-        self.k = k
-        self.b = b
+        self.k = float(k)
+        self.b = float(b)
 
     def fit(self, X, y=None):
         """Learn the idf (n_samples) and beta vectors (n_features)
