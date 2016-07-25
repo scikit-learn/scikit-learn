@@ -320,6 +320,22 @@ def test_bm25_no_smoothing():
 
     assert_array_almost_equal(bm25_exp, bm25_act)
 
+def test_bm25_smoothing():
+    X = [[1, 1, 1],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = Bm25Transformer(smooth_idf=True)
+    bm25 = tr.fit_transform(X).toarray()
+    assert_true((bm25 >= 0).all())
+
+    # this is robust to features with only zeros
+    X = [[1, 1, 0],
+         [1, 1, 0],
+         [1, 0, 0]]
+    tr = Bm25Transformer(smooth_idf=True)
+    bm25 = tr.fit_transform(X).toarray()
+    assert_true((bm25 >= 0).all())
+
 
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
