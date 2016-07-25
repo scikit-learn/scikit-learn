@@ -48,7 +48,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", )
+REG_CRITERIONS = ("mse", "mae")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -1443,3 +1443,16 @@ def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:
         yield (check_no_sparse_y_support, name)
+
+def test_mae():
+    # check MAE criterion produces correct results
+    # on small toy dataset
+    dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
+                                   max_leaf_nodes=2)
+    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3])
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
+    assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
+
+    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3], [0.6,0.3,0.1,1.0,0.3])
+    assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
+    assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
