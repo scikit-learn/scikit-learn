@@ -1866,7 +1866,8 @@ class PairwiseKernel(Kernel):
 class SelectDimensionKernel(Kernel):
     """Wrapper for applying kernels on selected active dimensions of input data.
 
-    A thin wrapper to apply given kernel on only selected dimensions of input data.
+    A thin wrapper to apply given kernel on only selected dimensions of
+    input data.
 
 
     Parameters
@@ -1888,9 +1889,9 @@ class SelectDimensionKernel(Kernel):
             active_dim = np.nonzero(np.arange(active_dim.shape[0]))[0]
         self.active_dim = active_dim
 
-
     def __call__(self, X, Y=None, eval_gradient=False):
-        """Return the kernel k(X, Y) and optionally its gradient on selected dimensions.
+        """Return the kernel k(X, Y) and optionally its gradient on selected
+           dimensions.
 
         Parameters
         ----------
@@ -1915,7 +1916,9 @@ class SelectDimensionKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        return self.kernel(X[:,self.active_dim],None if Y is None else Y[:,self.active_dim],eval_gradient)
+        return self.kernel(X[:, self.active_dim],
+                           None if Y is None else Y[:, self.active_dim],
+                           eval_gradient)
 
     def get_params(self, deep=True):
         """Get parameters of this kernel.
@@ -2009,7 +2012,7 @@ class SelectDimensionKernel(Kernel):
             Diagonal of kernel k(X, X)
         """
         # We have to fall back to slow way of computing diagonal
-        return self.kernel.diag(X[:,self.active_dim])
+        return self.kernel.diag(X[:, self.active_dim])
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """

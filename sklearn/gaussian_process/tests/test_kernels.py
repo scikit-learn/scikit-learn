@@ -46,9 +46,10 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
-kernels += [ SelectDimensionKernel(RBF(length_scale=2.0),active_dim=np.array([0])),
-            SelectDimensionKernel(RBF(length_scale=2.0),active_dim=np.array([False, True]))]
-
+kernels += [SelectDimensionKernel(RBF(length_scale=2.0),
+                                  active_dim=np.array([0])),
+            SelectDimensionKernel(RBF(length_scale=2.0),
+                                  active_dim=np.array([False, True]))]
 
 
 def test_kernel_gradient():
@@ -74,10 +75,11 @@ def test_kernel_gradient():
 def test_kernel_theta():
     # Check that parameter vector theta of kernel is set correctly.
     for kernel in kernels:
+        # skip non-basic kernels
         if isinstance(kernel, KernelOperator) \
-           or isinstance(kernel, Exponentiation) \
-               or isinstance(kernel, SelectDimensionKernel):  # skip non-basic kernels
-            continue
+            or isinstance(kernel, Exponentiation) \
+                or isinstance(kernel, SelectDimensionKernel):
+                    continue
         theta = kernel.theta
         _, K_gradient = kernel(X, eval_gradient=True)
 
