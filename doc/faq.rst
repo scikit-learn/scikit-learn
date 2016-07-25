@@ -231,8 +231,7 @@ consider the lack of fork-safety in Accelerate / vecLib as a bug.
 In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
 'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
 the process pools. This makes it possible to not be subject to this issue
-anymore. The version of joblib shipped with scikit-learn automatically uses
-that setting by default (under Python 3.4 and later).
+anymore.
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
 it via joblib you can enable the 'forkserver' mode globally for your
