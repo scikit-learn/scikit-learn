@@ -137,6 +137,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         ----------
         X : array-like, shape  (n_samples, n_features)
         """
+        # TODO Remove test and matlab
         n_samples, _ = X.shape
         random_state = check_random_state(self.random_state)
 
@@ -162,6 +163,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                              % self.init_params)
 
         self._initialize(X, resp)
+
+        return resp
 
     @abstractmethod
     def _initialize(self, X, resp):
@@ -198,6 +201,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         X = _check_X(X, self.n_components)
         self._check_initial_parameters(X)
 
+        # TODO prevenir que n_init est incompatible avec warm_start !!!!
         # if we enable warm_start, we will have a unique initialisation
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
@@ -258,39 +262,23 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-<<<<<<< HEAD
         log_prob_norm : array, shape (n_samples,)
             log p(X)
 
         log_responsibility : array, shape (n_samples, n_components)
             logarithm of the responsibilities
-=======
-        responsibility : array, shape (n_samples, n_components)
->>>>>>> Fix full version.
         """
         pass
 
     @abstractmethod
-<<<<<<< HEAD
     def _m_step(self, X, log_resp):
-=======
-    def _m_step(self, X, log_resp, resp):
->>>>>>> Fix full version.
         """M step.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
-<<<<<<< HEAD
         log_resp : array-like, shape (n_samples, n_components)
-=======
-        resp : array-like, shape (n_samples, n_components)
-
-        Returns
-        -------
-        lower_bound : scalar
->>>>>>> Fix full version.
         """
         pass
 

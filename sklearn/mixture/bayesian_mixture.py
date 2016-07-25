@@ -294,7 +294,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.covariance_init = covariance_init
 
     def _check_parameters(self, X):
-        """Check the VBGMM parameters are well defined.
+        """Check the parameters are well defined.
 
         Parameters
         ----------
@@ -470,19 +470,8 @@ class BayesianGaussianMixture(BaseMixture):
          "spherical": self._estimate_gamma_spherical
          }[self.covariance_type](nk, xk, sk)
 
-        self.precisions_cholesky_, self.cov_chol_ = _compute_precision_cholesky(
+        self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type)
-
-        if self.covariance_type is 'full':
-            self.precisions_ = np.array([
-                np.dot(prec_chol, prec_chol.T)
-                for prec_chol in self.precisions_cholesky_])
-
-        elif self.covariance_type is 'tied':
-            self.precisions_ = np.dot(self.precisions_cholesky_,
-                                      self.precisions_cholesky_.T)
-        else:
-            self.precisions_ = self.precisions_cholesky_ ** 2
 
     def _estimate_wishart_full(self, nk, xk, sk):
         """Estimate the Wishart distribution parameters.
@@ -511,6 +500,9 @@ class BayesianGaussianMixture(BaseMixture):
                                     nk[k] * self._beta_prior / self.beta_[k] *
                                     np.outer(diff, diff))
 
+        # Contrary to the original bishop book we normalize the covariances
+        self.covariances_ /= self.nu_[:, np.newaxis, np.newaxis]
+
     def _estimate_wishart_tied(self, nk, xk, sk):
         """Estimate the Wishart distribution parameters.
 
@@ -527,7 +519,6 @@ class BayesianGaussianMixture(BaseMixture):
         _, n_features = xk.shape
 
         # Typo error in certain version of Bishop for nu
-        # FIXME We add n_features because we do a sum_n_features of 1 ???
         self.nu_ = self._nu_prior + nk.sum() / self.n_components
 
         diff = xk - self._mean_prior
@@ -535,6 +526,8 @@ class BayesianGaussianMixture(BaseMixture):
                              sk * nk.sum() / self.n_components +
                              self._beta_prior / self.n_components *
                              (np.dot((nk / self.beta_) * diff.T, diff)))
+
+        self.covariances_ /= self.nu_
 
     def _estimate_gamma_diag(self, nk, xk, sk):
         """Estimate the Gamma distribution parameters.
@@ -561,6 +554,8 @@ class BayesianGaussianMixture(BaseMixture):
                   (nk * self._beta_prior / self.beta_)[:, np.newaxis] *
                   np.square(diff)))
 
+        self.covariances_ /= self.nu_[:, np.newaxis]
+
     def _estimate_gamma_spherical(self, nk, xk, sk):
         """Estimate the Gamma distribution parameters.
 
@@ -584,8 +579,11 @@ class BayesianGaussianMixture(BaseMixture):
                              (nk * sk + (nk * self._beta_prior / self.beta_) *
                               np.mean(np.square(diff), 1)))
 
+        self.covariances_ /= self.nu_
+
     def _estimate_distribution_norms(self):
         """Estimate the distributions norm used to define the lowerbounds."""
+        # XXX Remove that
         n_features, = self._mean_prior.shape
 
         # Distribution norm for the weights
@@ -628,16 +626,17 @@ class BayesianGaussianMixture(BaseMixture):
                                'covariances_', 'precisions_',
                                'precisions_cholesky_'])
 
-    def _m_step(self, X, log_resp, resp):
+    def _m_step(self, X, log_resp):
         """M step.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        resp : array-like, shape (n_samples, n_components)
+        log_resp : array-like, shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
+        resp = np.exp(log_resp)
 
         nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
                                                    self.covariance_type)
@@ -662,7 +661,7 @@ class BayesianGaussianMixture(BaseMixture):
         """
         n_features, _ = X.shape
         _, _, log_resp = self._estimate_log_prob_resp(X)
-        return log_resp, np.exp(log_resp)
+        return log_resp
 
     def _estimate_log_weights(self):
         return digamma(self.alpha_) - digamma(np.sum(self.alpha_))
@@ -679,25 +678,25 @@ class BayesianGaussianMixture(BaseMixture):
         n_samples, n_features = X.shape
 
         log_prob = np.empty((n_samples, self.n_components))
-        self._log_lambda = np.empty((self.n_components, ))
+        log_lambda = np.empty((self.n_components, ))
 
-        # SOME ERROR HERE !!!!
-        for k in range(self.n_components):
-            log_det_precisions = 2. * np.sum(np.log(np.diag(
-                self.precisions_cholesky_[k])))
-            # Equation 3.43 Corrected here XXX
-            self._log_lambda[k] = (
-                np.sum(digamma(.5 * (self.nu_[k] -
-                                     np.arange(0, n_features)))) +
+        # XXX SOME ERROR HERE !!!!
+        for k, (nu, prec_chol) in enumerate(zip(self.nu_,
+                                                self.precisions_cholesky_)):
+            log_det_precisions = 2. * np.sum(
+                np.log(np.diag(prec_chol))) - 2 * np.log(n_features * nu)
+            # XXX Equation 3.43 Corrected here XXX
+            log_lambda[k] = (
+                np.sum(digamma(.5 * (nu - np.arange(0, n_features)))) +
                 n_features * np.log(2.) + log_det_precisions)
 
             # Equation 3.48
-            # XXXX ERROR WITH THE TRANSPOSE !!!!!!!
-            y = np.dot(X - self.means_[k], self.precisions_cholesky_[k].T)
+            # XXX ERROR WITH THE TRANSPOSE !!!!!!!
+            y = np.dot(X - self.means_[k], prec_chol.T)
             mahala_dist = (n_features / self.beta_[k] +
-                           self.nu_[k] * np.sum(np.square(y), axis=1))
+                           np.sum(np.square(y), axis=1))
 
-            log_prob[:, k] = .5 * (self._log_lambda[k] - mahala_dist)
+            log_prob[:, k] = .5 * (log_lambda[k] - mahala_dist)
         log_prob -= .5 * n_features * np.log(2. * np.pi)
 
         return log_prob
@@ -708,20 +707,20 @@ class BayesianGaussianMixture(BaseMixture):
 
         log_prob = np.empty((n_samples, self.n_components))
 
-        log_det_precisions = -2. * np.sum(np.log(np.diag(
+        log_det_precisions = 2. * np.sum(np.log(np.diag(
             self.precisions_cholesky_)))
 
         # Equation 3.43
-        self._log_lambda = (
-            np.sum(digamma(.5 * (self.nu_ + 1 - np.arange(0, n_features)))) +
-            n_features * np.log(2) - log_det_precisions)
+        log_lambda = (
+            np.sum(digamma(.5 * (self.nu_ - np.arange(0, n_features)))) +
+            n_features * np.log(2) + log_det_precisions)
 
         # Equation 3.48
         for k in range(self.n_components):
-            y = np.dot(X - self.means_[k], self.precisions_cholesky_)
+            y = np.dot(X - self.means_[k], self.precisions_cholesky_.T)
             mahala_dist = np.sum(np.square(y), axis=1)
 
-            log_prob[:, k] = -.5 * (- self._log_lambda +
+            log_prob[:, k] = -.5 * (- log_lambda +
                                     n_features / self.beta_[k] +
                                     self.nu_ * mahala_dist)
         log_prob -= .5 * n_features * np.log(2. * np.pi)
@@ -732,8 +731,8 @@ class BayesianGaussianMixture(BaseMixture):
         _, n_features = X.shape
 
         # second item in Equation 4.10
-        self._log_lambda = (n_features * digamma(self.nu_) +
-                            np.sum(np.log(self.precisions_), axis=1))
+        log_lambda = (n_features * digamma(self.nu_) +
+                      np.sum(np.log(self.precisions_), axis=1))
 
         # Equation 4.35
         log_gauss = self.nu_ * (
@@ -741,37 +740,42 @@ class BayesianGaussianMixture(BaseMixture):
             2. * np.dot(X, (self.means_ * self.precisions_).T) +
             np.dot(X ** 2, self.precisions_.T))
 
-        return -.5 * (n_features * np.log(2. * np.pi) - self._log_lambda +
+        return -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
                       n_features / self.beta_ + log_gauss)
 
     def _estimate_log_prob_spherical(self, X):
         _, n_features = X.shape
 
         # second item in Equation 5.3
-        self._log_lambda = n_features * (digamma(self.nu_) +
-                                         np.log(self.precisions_))
+        log_lambda = n_features * (digamma(self.nu_) +
+                                   np.log(self.precisions_))
 
         # Equation 4.35
         log_gauss = self.nu_ * self.precisions_ * (
             np.sum((self.means_ ** 2), 1) - 2. * np.dot(X, self.means_.T) +
             np.sum(X ** 2, 1)[:, np.newaxis])
 
-        return -.5 * (n_features * np.log(2. * np.pi) - self._log_lambda +
+        return -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
                       n_features / self.beta_ + log_gauss)
 
     def _compute_lower_bound(self, log_resp, resp):
         """Estimate the lower bound of the model to check the convergence."""
-        # XXX REMOVE CONSTANT TERMS
+        # XXX REMOVE CONSTANT TERMS and put it outside the class
         n_features, = self._mean_prior.shape
 
         # Prob with that
-        log_wishart = np.empty(self.n_components)
-        for k, (nu, prec_chol) in enumerate(zip(self.nu_,
-                                                self.precisions_cholesky_)):
-            log_wishart[k] = _log_wishart_norm(nu, prec_chol, n_features)
+        if self.covariance_type is 'full':
+            log_wishart = np.empty(self.n_components)
+            for k, (nu, prec_chol) in enumerate(zip(
+                    self.nu_, self.precisions_cholesky_)):
+                log_wishart[k] = _log_wishart_norm(nu, prec_chol / np.sqrt(nu),
+                                                   n_features)
+        elif self.covariance_type is 'tied':
+            log_wishart = _log_wishart_norm(
+                self.nu_, self.precisions_cholesky_ / np.sqrt(nu), n_features)
 
         # We have removed the constant term
-        lowe = (-np.sum(resp * log_resp) + self._log_dirichlet_norm_prior -
+        return (-np.sum(resp * log_resp) + self._log_dirichlet_norm_prior -
                 _log_dirichlet_norm(self.alpha_) +
                 self.n_components * self._log_wishart_norm_prior -
                 np.sum(log_wishart) +
@@ -779,198 +783,24 @@ class BayesianGaussianMixture(BaseMixture):
                 (self.n_components * np.log(self._beta_prior) -
                  np.sum(np.log(self.beta_))))
 
-
-# 0.5 * n_features * self._log_wishart_norm_prior
-# -0.5 * np.sum(log_wishart)
-# 0.5 * n_features * self.n_components * np.log(self._beta_prior)
-# -0.5 * n_features * np.sum(np.log(self.beta_))
-
-        return lowe
-        # log_q_z = np.sum(resp * log_resp)
-        # log_p_Zw = np.sum(resp * log_prob)
-
-        # # Equation 7.5
-        # log_pi = self._estimate_log_weights()
-        # log_p_XZ = np.sum(resp * (log_prob - log_pi)) - .5 * self._trace_sW
-        # # Equation 7.6
-        # # XXX (vérifier si log_pi ou log_prob)
-        # # Equation 7.7
-        # log_p_weight = ((self._alpha_prior - 1.) * np.sum(log_pi) +
-        #                 self._log_dirichlet_norm_prior)
-        # log_p_lambda = self._estimate_p_lambda()
-
-        # # Equation 7.10
-        # # Equation 7.11
-        # log_q_weight = (np.sum((self.alpha_ - 1.) * log_pi) +
-        #                 _log_dirichlet_norm(self.alpha_))
-        # log_q_lambda = self._estimate_q_lambda()
-
-        # return (log_p_XZ + log_p_Zw + log_p_weight + log_p_lambda -
-        #         log_q_z - log_q_weight - log_q_lambda)
-
-    def _estimate_p_lambda(self):
-        return {'full': self._estimate_p_lambda_full,
-                'tied': self._estimate_p_lambda_tied,
-                'diag': self._estimate_p_lambda_diag,
-                'spherical': self._estimate_p_lambda_spherical
-                }[self.covariance_type]()
-
-    def _estimate_p_lambda_full(self):
-        n_features, = self._mean_prior.shape
-        # Equation 7.9 :
-        # m^t W m term
-        sum_y = np.empty(self.n_components)
-        for k in range(self.n_components):
-            y = np.dot(self.means_[k] - self._mean_prior,
-                       self.precisions_cholesky_[k])
-            sum_y[k] = np.sum(np.square(y))
-
-        # First sum of 7.9
-        temp1 = (self.n_components * self._log_gaussian_norm_prior +
-                 .5 * np.sum(self._log_lambda -
-                             self._beta_prior * self.nu_ * sum_y -
-                             n_features * self._beta_prior / self.beta_))
-
-        # Wishart + sum(log_lambda)
-        temp2 = (self.n_components * self._log_wishart_norm_prior +
-                 .5 * (self._nu_prior - n_features - 1.) *
-                 np.sum(self._log_lambda))
-
-        # Final sum of 7.9
-        trace_W0invW = np.empty(self.n_components)
-        for k, precision in enumerate(self.precisions_):
-            trace_W0invW[k] = np.sum((self._covariance_prior * precision))
-        temp3 = -.5 * np.sum(self.nu_ * trace_W0invW)
-
-        return temp1 + temp2 + temp3
-
-    def _estimate_p_lambda_tied(self):
-        n_features, = self._mean_prior.shape
-        # Equation 7.9 :
-        # (m^t W m) term
-        sum_y = np.empty(self.n_components)
-        for k in range(self.n_components):
-            y = np.dot(self.means_[k] - self._mean_prior,
-                       self.precisions_cholesky_)
-            sum_y[k] = np.sum(np.square(y))
-
-        # First sum of 7.9
-        temp1 = (self.n_components * self._log_gaussian_norm_prior +
-                 .5 * (self.n_components * self._log_lambda -
-                       np.sum(self._beta_prior * self.nu_ * sum_y +
-                              n_features * self._beta_prior / self.beta_)))
-
-        # Wishart + sum(log_lambda)
-        temp2 = (self.n_components * self._log_wishart_norm_prior +
-                 .5 * (self._nu_prior - n_features - 1.) *
-                 self.n_components * self._log_lambda)
-
-        # Final sum of 7.9
-        trace_W0inv_W = np.sum(self._covariance_prior * self.precisions_)
-        temp3 = -.5 * self.n_components * self.nu_ * trace_W0inv_W
-
-        return temp1 + temp2 + temp3
-
-    def _estimate_p_lambda_diag(self):
-        n_features, = self._mean_prior.shape
-        # Equation 7.16 :
-        # (m^t b m) term
-        sum_y = np.sum(np.square(self.means_ - self._mean_prior) *
-                       self.precisions_, axis=1)
-
-        # First sum of 7.16
-        temp1 = (self.n_components * self._log_gaussian_norm_prior +
-                 .5 * np.sum(self._log_lambda - self._beta_prior *
-                             (n_features / self.beta_ + self.nu_ * sum_y)))
-
-        # Gaussian + sum(log_lambda) of 7.16
-        temp2 = (self.n_components * self._log_gamma_norm_prior +
-                 (self._nu_prior - 1.) * np.sum(self._log_lambda))
-
-        # Final sum of 7.16
-        temp3 = -np.sum(self.nu_ * np.sum(self._covariance_prior *
-                                          self.precisions_, axis=1))
-        return temp1 + temp2 + temp3
-
-    def _estimate_p_lambda_spherical(self):
-        n_features, = self._mean_prior.shape
-        # Equation 7.16 :
-        # (m^t W m) term
-        sum_y = self.precisions_ * np.sum(np.square(self.means_ -
-                                                    self._mean_prior), axis=1)
-
-        # First sum of 7.16
-        temp1 = (self.n_components * self._log_gaussian_norm_prior +
-                 .5 * np.sum(self._log_lambda - self._beta_prior *
-                             (n_features / self.beta_ + self.nu_ * sum_y)))
-
-        # Wishart + sum(log_lambda) of 7.16
-        temp2 = (self.n_components * self._log_gamma_norm_prior +
-                 (self._nu_prior - 1.) * np.sum(self._log_lambda))
-
-        # Final sum of 7.16
-        temp3 = np.sum(- self.nu_ * self._covariance_prior * self.precisions_)
-
-        return temp1 + temp2 + temp3
-
-    def _estimate_q_lambda(self):
-        return {'full': self._estimate_q_lambda_full,
-                'tied': self._estimate_q_lambda_tied,
-                'diag': self._estimate_q_lambda_diag,
-                'spherical': self._estimate_q_lambda_spherical
-                }[self.covariance_type]()
-
-    def _estimate_q_lambda_full(self):
-        # Equation 7.14
-        n_features, = self._mean_prior.shape
-        wishart_entropy = np.empty(self.n_components)
-        for k in range(self.n_components):
-            wishart_entropy[k] = _estimate_wishart_entropy(
-                self.nu_[k], self.precisions_cholesky_[k],
-                self._log_lambda[k], n_features)
-        return np.sum(.5 * self._log_lambda +
-                      .5 * n_features * np.log(self.beta_ / (2. * np.pi)) -
-                      .5 * n_features - wishart_entropy)
-
-    def _estimate_q_lambda_tied(self):
-        # Equation 7.14
-        n_features, = self._mean_prior.shape
-        wishart_entropy = _estimate_wishart_entropy(
-            self.nu_, self.precisions_cholesky_, self._log_lambda, n_features)
-        return (.5 * self.n_components * self._log_lambda +
-                .5 * n_features * np.sum(np.log(self.beta_ / (2. * np.pi))) -
-                .5 * n_features * self.n_components -
-                self.n_components * wishart_entropy)
-
-    def _estimate_q_lambda_diag(self):
-        # Equation 7.16
-        n_features, = self._mean_prior.shape
-        return np.sum(
-            .5 * self._log_lambda +
-            .5 * n_features * (np.log(self.beta_ / (2. * np.pi)) - 1.) -
-            _gamma_entropy_diag(self.nu_, self.precisions_))
-
-    def _estimate_q_lambda_spherical(self):
-        # Equation 7.16
-        n_features = self._mean_prior.shape[0]
-        return np.sum(
-            .5 * self._log_lambda +
-            .5 * n_features * (np.log(self.beta_ / (2. * np.pi)) - 1.) -
-            n_features * _gamma_entropy_spherical(self.nu_, self.precisions_))
-
     def _get_parameters(self):
         return (self.alpha_, self.beta_, self.means_, self.nu_,
-                self.covariances_, self.precisions_, self.precisions_cholesky_)
+                self.covariances_, self.precisions_cholesky_)
 
     def _set_parameters(self, params):
         (self.alpha_, self.beta_, self.means_, self.nu_, self.covariances_,
-         self.precisions_, self.precisions_cholesky_) = params
+         self.precisions_cholesky_) = params
 
         # Attributes computation
         self. weights_ = self.alpha_ / np.sum(self.alpha_)
+
         if self.covariance_type is 'full':
-            self.covariances_ /= self.nu_[:, np.newaxis, np.newaxis]
-        elif self.covariance_type is 'diag':
-            self.covariances_ /= self.nu_[:, np.newaxis]
+            self.precisions_ = np.array([
+                np.dot(prec_chol, prec_chol.T)
+                for prec_chol in self.precisions_cholesky_])
+
+        elif self.covariance_type is 'tied':
+            self.precisions_ = np.dot(self.precisions_cholesky_,
+                                      self.precisions_cholesky_.T)
         else:
-            self.covariances_ /= self.nu_
+            self.precisions_ = self.precisions_cholesky_ ** 2
