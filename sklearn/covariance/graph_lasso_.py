@@ -302,7 +302,7 @@ class GraphLasso(EmpiricalCovariance):
 
     cov : can be 'empirical' or a callable. If 'empirical' is given,
         empirical covariance is computed. If a callable is given it is used
-        to compute covariance matrix; it should take two input values,
+        to compute the covariance matrix; it should take two input values,
         the matrix X of input data and a boolean indicating if data is already
         centered.
 
