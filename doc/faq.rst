@@ -254,9 +254,9 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
 --------------------------------------------------------------------------------------------------------------------------------------
 Deep learning and reinforcement learning both require a rich vocabulary to
-define an architecture, and deep learning also requires
+define an architecture, with deep learning additionally requiring
 GPUs for efficient computing. However, neither of these fit within
-the design constraints of scikit-learn. As a result, deep learning
+the design constraints of scikit-learn; as a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
 
