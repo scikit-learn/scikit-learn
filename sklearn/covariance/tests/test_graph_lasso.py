@@ -72,7 +72,11 @@ def test_graph_lasso_callable(random_state=0):
     emp_cov, _ = stats.spearmanr(X)
 
     def callable_cor(X, centered):
-        covariance, _ = stats.spearmanr(X)
+        if centered is False:
+            X_ = X - X.mean(0)
+        else:
+            X_ = X
+        covariance, _ = stats.spearmanr(X_)
         return covariance
 
     for alpha in (0., .1, .25):
@@ -101,8 +105,8 @@ def test_graph_lasso_callable(random_state=0):
     # Check that this returns indeed the same result for centered data
     Z = X - X.mean(0)
     precs = list()
-    for assume_centered in (False, True):
-        prec_ = GraphLasso(assume_centered=assume_centered).fit(Z).precision_
+    for this_X, assume_centered in zip((Z, X), (True, False)):
+        prec_ = GraphLasso(cov=callable_cor,assume_centered=assume_centered).fit(this_X).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
