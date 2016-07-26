@@ -13,6 +13,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
+from .som_ import SelfOrganizingMap
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
@@ -22,6 +23,7 @@ __all__ = ['AffinityPropagation',
            'FeatureAgglomeration',
            'MeanShift',
            'MiniBatchKMeans',
+           'SelfOrganizingMap',
            'SpectralClustering',
            'affinity_propagation',
            'dbscan',

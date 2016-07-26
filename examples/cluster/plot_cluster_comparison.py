@@ -48,7 +48,7 @@ colors = np.hstack([colors] * 20)
 clustering_names = [
     'MiniBatchKMeans', 'AffinityPropagation', 'MeanShift',
     'SpectralClustering', 'Ward', 'AgglomerativeClustering',
-    'DBSCAN', 'Birch']
+    'DBSCAN', 'Birch', 'SOM']
 
 plt.figure(figsize=(len(clustering_names) * 2 + 3, 9.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
@@ -89,7 +89,9 @@ for i_dataset, dataset in enumerate(datasets):
     birch = cluster.Birch(n_clusters=2)
     clustering_algorithms = [
         two_means, affinity_propagation, ms, spectral, ward, average_linkage,
-        dbscan, birch]
+        dbscan, birch, som]
+
+    som = cluster.SelfOrganizingMap(adjacency=(2, 2), n_iterations=1000)
 
     for name, algorithm in zip(clustering_names, clustering_algorithms):
         # predict cluster memberships
