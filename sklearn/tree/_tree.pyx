@@ -64,7 +64,6 @@ TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
-cdef DTYPE_t LEAF_MIN_IMPURITY = 1e-7
 
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
@@ -227,8 +226,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     first = 0
 
                 is_leaf = (is_leaf or
-                           (impurity <= LEAF_MIN_IMPURITY) or
-                           (impurity < min_impurity_split))
+                           (impurity <= min_impurity_split))
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
@@ -444,8 +442,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    (n_node_samples < self.min_samples_split) or
                    (n_node_samples < 2 * self.min_samples_leaf) or
                    (weighted_n_node_samples < self.min_weight_leaf) or
-                   (impurity <= LEAF_MIN_IMPURITY) or
-                   (impurity < min_impurity_split))
+                   (impurity <= min_impurity_split))
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)

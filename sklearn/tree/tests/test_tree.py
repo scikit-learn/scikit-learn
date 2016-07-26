@@ -695,11 +695,12 @@ def test_min_impurity_split():
         TreeEstimator = ALL_TREES[name]
         min_impurity_split = .5
 
-        # verify leaf nodes without min_impurity_split have impurity 0
+        # verify leaf nodes without min_impurity_split less than
+        # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_equal(est.min_impurity_split, 0.,
-                     "Failed, min_impurity_split = {0} != 0".format(
+        assert_less_equal(est.min_impurity_split, 1e-7,
+                     "Failed, min_impurity_split = {0} > 1e-7".format(
                          est.min_impurity_split))
         est.fit(X, y)
         for node in range(est.tree_.node_count):
@@ -711,7 +712,7 @@ def test_min_impurity_split():
                                  est.tree_.impurity[node],
                                  est.min_impurity_split))
 
-        # verify leaf nodes have impurity [0,min_impurity_split) when using min_impurity_split
+        # verify leaf nodes have impurity [0,min_impurity_split] when using min_impurity_split
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             min_impurity_split=min_impurity_split,
                             random_state=0)
@@ -720,15 +721,15 @@ def test_min_impurity_split():
             if (est.tree_.children_left[node] == TREE_LEAF or
                 est.tree_.children_right[node] == TREE_LEAF):
                 assert_greater_equal(est.tree_.impurity[node], 0,
-                                     "Failed with {0} "
+                                     "Failed with {0}, "
                                      "min_impurity_split={1}".format(
                                          est.tree_.impurity[node],
                                          est.min_impurity_split))
-                assert_less(est.tree_.impurity[node], min_impurity_split,
-                            "Failed with {0} "
-                            "min_impurity_split={1}".format(
-                                est.tree_.impurity[node],
-                                est.min_impurity_split))
+                assert_less_equal(est.tree_.impurity[node], min_impurity_split,
+                                  "Failed with {0}, "
+                                  "min_impurity_split={1}".format(
+                                      est.tree_.impurity[node],
+                                      est.min_impurity_split))
 
 
 def test_pickle():

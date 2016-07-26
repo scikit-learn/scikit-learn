@@ -307,7 +307,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             min_weight_leaf = 0.
 
-        if not 0. <= self.min_impurity_split:
+        if self.min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than or equal "
                              "to 0")
 
@@ -696,7 +696,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 min_impurity_split=0.,
+                 min_impurity_split=1e-7,
                  class_weight=None,
                  presort=False):
         super(DecisionTreeClassifier, self).__init__(
@@ -861,7 +861,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    min_impurity_split : float, optional (default=0.)
+    min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. If the impurity
         of a node is below the threshold, the node is a leaf.
 
@@ -934,7 +934,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
-                 min_impurity_split=0.,
+                 min_impurity_split=1e-7,
                  presort=False):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
@@ -984,7 +984,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
-                 min_impurity_split=0.,
+                 min_impurity_split=1e-7,
                  class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
@@ -1033,7 +1033,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
-                 min_impurity_split=0.,
+                 min_impurity_split=1e-7,
                  max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
