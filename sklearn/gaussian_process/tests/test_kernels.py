@@ -76,10 +76,9 @@ def test_kernel_theta():
     # Check that parameter vector theta of kernel is set correctly.
     for kernel in kernels:
         # skip non-basic kernels
-        if isinstance(kernel, KernelOperator) \
-            or isinstance(kernel, Exponentiation) \
-                or isinstance(kernel, SelectDimensionKernel):
-                    continue
+        if isinstance(kernel, (KernelOperator,  Exponentiation,
+                               SelectDimensionKernel)):
+            continue
         theta = kernel.theta
         _, K_gradient = kernel(X, eval_gradient=True)
 
