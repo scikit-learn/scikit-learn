@@ -647,7 +647,7 @@ def _pkl_filepath(*args, **kwargs):
     """Ensure different filenames for Python 2 and Python 3 pickles
 
     An object pickled under Python 3 cannot be loaded under Python 2.
-    An object pickled under Python 2 can sometimes not be loaded loaded
+    An object pickled under Python 2 can sometimes not be loaded
     correctly under Python 3 because some Python 2 strings are decoded as
     Python 3 strings which can be problematic for objects that use Python 2
     strings as byte buffers for numerical data instead of "real" strings.

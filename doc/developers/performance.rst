@@ -143,7 +143,7 @@ overhead and save it somewhere for later reference::
   In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
   1 loops, best of 3: 1.7 s per loop
 
-To have have a look at the overall performance profile using the ``%prun``
+To have a look at the overall performance profile using the ``%prun``
 magic command::
 
   In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)

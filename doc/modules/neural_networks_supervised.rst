@@ -21,7 +21,7 @@ Multi-layer Perceptron
 
 **Multi-layer Perceptron (MLP)** is a supervised learning algorithm that learns
 a function :math:`f(\cdot): R^m \rightarrow R^o` by training on a dataset,
-where :math:`m` is the number of dimensions for input and :math:`o` is the the
+where :math:`m` is the number of dimensions for input and :math:`o` is the
 number of dimensions for output. Given a set of features :math:`X = {x_1, x_2, ..., x_m}`
 and a target :math:`y`, it can learn a non-linear function approximator for either
 classification or regression. It is different from logistic regression, in that
