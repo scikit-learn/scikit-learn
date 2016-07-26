@@ -507,7 +507,7 @@ The disadvantages to using t-SNE are roughly:
   datasets where PCA will finish in seconds or minutes
 * The Barnes-Hut t-SNE method is limited to two or three dimensional embeddings.
 * The algorithm is stochastic and multiple restarts with different seeds can
-  yield different embeddings. However, it is perfectly legitimate to pick the the
+  yield different embeddings. However, it is perfectly legitimate to pick the
   embedding with the least error.
 * Global structure is not explicitly preserved. This is problem is mitigated by
   initializing points with PCA (using `init='pca'`).

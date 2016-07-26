@@ -335,7 +335,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # for this data. We can highlight this fact be computing k-fold cross-
     # validation with and without shuffling: we observe that the shuffling case
     # wrongly makes the IID assumption and is therefore too optimistic: it
-    # estimates a much higher accuracy (around 0.96) than than the non
+    # estimates a much higher accuracy (around 0.96) than the non
     # shuffling variant (around 0.86).
 
     digits = load_digits()

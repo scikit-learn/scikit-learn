@@ -265,7 +265,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
     slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
@@ -436,7 +436,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
     slice_ : optional
         Provide a custom 2D slice (height, width) to extract the

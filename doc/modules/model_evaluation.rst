@@ -292,7 +292,7 @@ Where available, you should select among these using the ``average`` parameter.
   true data sample.
 * ``"micro"`` gives each sample-class pair an equal contribution to the overall
   metric (except as a result of sample-weight). Rather than summing the
-  metric per class, this sums the dividends and divisors that make up the the
+  metric per class, this sums the dividends and divisors that make up the
   per-class metrics to calculate an overall quotient.
   Micro-averaging may be preferred in multilabel settings, including
   multiclass classification where a majority class is to be ignored.
@@ -1188,7 +1188,7 @@ Ranking loss
 
 The :func:`label_ranking_loss` function computes the ranking loss which
 averages over the samples the number of label pairs that are incorrectly
-ordered, i.e. true labels have a lower score than false labels, weighted by the
+ordered, i.e. true labels have a lower score than false labels, weighted by
 the inverse number of false and true labels. The lowest achievable
 ranking loss is zero.
 
