@@ -1872,10 +1872,10 @@ class SelectDimensionKernel(Kernel):
 
     Parameters
     ----------
-    kernel: a kernel object.
-        an instantiation of kernel oobject.
+    kernel : a kernel object.
+        an instantiation of kernel object.
 
-    active_dim: a numpy mask array to apply on input data.
+    active_dim : a numpy mask array to apply on input data.
         can be boolean mask or integer indices.
 
     """
