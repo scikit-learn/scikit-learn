@@ -95,11 +95,9 @@ def test_graph_lasso_callable(random_state=0):
         assert_array_almost_equal(covs['cd'], covs['lars'], decimal=4)
         assert_array_almost_equal(icovs['cd'], icovs['lars'], decimal=4)
 
-    # Smoke test the estimator
     model = GraphLasso(alpha=.25, cov=callable_cor).fit(X)
     model.score(X)
     assert_array_almost_equal(model.covariance_, covs['cd'], decimal=4)
-    assert_array_almost_equal(model.covariance_, covs['lars'], decimal=4)
 
     # For a centered matrix, assume_centered could be chosen True or False
     # Check that this returns indeed the same result for centered data
