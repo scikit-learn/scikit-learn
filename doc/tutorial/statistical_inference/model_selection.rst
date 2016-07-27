@@ -183,7 +183,7 @@ scoring method.
 .. topic:: **Exercise**
    :class: green
 
-   .. image:: ../../auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
+   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
         :target: ../../auto_examples/exercises/plot_cv_digits.html
         :align: right
         :scale: 90
@@ -290,5 +290,3 @@ appended to their name.
        :lines: 17-24
 
    **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_diabetes.py`
-
-

@@ -38,7 +38,7 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
 
-    .. image:: ../../auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
         :target: ../../auto_examples/datasets/plot_iris_dataset.html
         :align: right
 	:scale: 65
@@ -75,7 +75,7 @@ Scikit-learn documentation for more information about this type of classifier.)
 
 **KNN (k nearest neighbors) classification example**:
 
-.. image:: ../../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
+.. image:: /auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../../auto_examples/neighbors/plot_classification.html
    :align: center
    :scale: 70
@@ -159,7 +159,7 @@ in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
-.. image:: ../../auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../../auto_examples/linear_model/plot_ols.html
    :scale: 40
    :align: right
@@ -200,7 +200,7 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. image:: ../../auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :scale: 70
    :align: right
@@ -229,7 +229,7 @@ regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called :class:`Ridge`
 regression:
 
-.. image:: ../../auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :scale: 70
    :align: right
@@ -275,15 +275,15 @@ Sparsity
 ----------
 
 
-.. |diabetes_ols_1| image:: ../../auto_examples/linear_model/images/sphx_glr_plot_ols_3d_001.png
+.. |diabetes_ols_1| image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_3d_001.png
    :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_3| image:: ../../auto_examples/linear_model/images/sphx_glr_plot_ols_3d_003.png
+.. |diabetes_ols_3| image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_3d_003.png
    :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_2| image:: ../../auto_examples/linear_model/images/sphx_glr_plot_ols_3d_002.png
+.. |diabetes_ols_2| image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_3d_002.png
    :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
@@ -350,7 +350,7 @@ application of Occam's razor: *prefer simpler models*.
 Classification
 ---------------
 
-.. image:: ../../auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_logistic.html
    :scale: 65
    :align: right
@@ -377,7 +377,7 @@ function or **logistic** function:
 
 This is known as :class:`LogisticRegression`.
 
-.. image:: ../../auto_examples/linear_model/images/sphx_glr_plot_iris_logistic_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_iris_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_iris_logistic.html
    :scale: 83
 
@@ -425,11 +425,11 @@ the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
-.. |svm_margin_unreg| image:: ../../auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
+.. |svm_margin_unreg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
    :scale: 70
 
-.. |svm_margin_reg| image:: ../../auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
+.. |svm_margin_reg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
    :scale: 70
 
@@ -476,11 +476,11 @@ build a decision function that is not linear but may be polynomial instead.
 This is done using the *kernel trick* that can be seen as
 creating a decision energy by positioning *kernels* on observations:
 
-.. |svm_kernel_linear| image:: ../../auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
+.. |svm_kernel_linear| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
-.. |svm_kernel_poly| image:: ../../auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
+.. |svm_kernel_poly| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
@@ -518,7 +518,7 @@ creating a decision energy by positioning *kernels* on observations:
 
 
 
-.. |svm_kernel_rbf| image:: ../../auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
+.. |svm_kernel_rbf| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
@@ -551,7 +551,7 @@ creating a decision energy by positioning *kernels* on observations:
    ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 
-.. image:: ../../auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
     :target: ../../auto_examples/datasets/plot_iris_dataset.html
     :align: right
     :scale: 70

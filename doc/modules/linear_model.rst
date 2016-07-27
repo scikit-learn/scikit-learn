@@ -1081,7 +1081,7 @@ and :class:`RANSACRegressor` because it does not ignore the effect of the outlie
 but gives a lesser weight to them.
 
 .. figure:: /auto_examples/linear_model/images/sphx_glr_plot_huber_vs_ridge_001.png
-   :target: /auto_examples/linear_model/plot_huber_vs_ridge.html
+   :target: ../auto_examples/linear_model/plot_huber_vs_ridge.html
    :align: center
    :scale: 50%
 

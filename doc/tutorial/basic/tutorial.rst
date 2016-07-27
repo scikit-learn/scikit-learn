@@ -190,7 +190,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
     :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
