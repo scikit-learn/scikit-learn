@@ -189,11 +189,11 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
     covariance : array, shape (n_features, n_features)
         The tied covariance matrix of the components.
     """
-    n_samples, _ = X.shape
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(nk * means.T, means)
     covariance = avg_X2 - avg_means2
-    covariance /= n_samples
+    # XXX change n_samples -> np.sum(nk)
+    covariance /= nk.sum()
     covariance.flat[::len(covariance) + 1] += reg_covar
     return covariance
 
@@ -315,12 +315,12 @@ def _compute_precision_cholesky(covariances, covariance_type):
         precisions_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):
             try:
-                cov_chol = linalg.cholesky(covariance, lower=False)
+                cov_chol = linalg.cholesky(covariance, lower=True)
             except linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k] = linalg.solve_triangular(cov_chol,
                                                          np.eye(n_features),
-                                                         lower=False).T
+                                                         lower=True).T
     elif covariance_type is 'tied':
         _, n_features = covariances.shape
         try:

@@ -7,9 +7,10 @@
 # - change _alpha_prior -> alpha_prior_
 # X Function in private
 # - not do an EM but an ME
-# - remove trace smw
-# - check if this is precision or covariance
-# - Modifier pour ne pas avoir deux fois le meme code.
+# X remove trace smw
+# X check if this is precision or covariance
+# X Modifier pour ne pas avoir deux fois le meme code.
+# - Ajouter test calcul covariance tied, diag, spherical par rapport à full ?
 
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
@@ -51,7 +52,7 @@ def _log_wishart_norm(nu, precision_chol, n_features):
     nu : float
         The parameters values of the Whishart distribution.
 
-    precision_chol : array-like, shape (n_features, n_features)
+    precision_chol : array-like, shape (n_features)
         The Cholesky decomposition of the precision matrix.
 
     n_features : int
@@ -65,70 +66,10 @@ def _log_wishart_norm(nu, precision_chol, n_features):
     # XXX see if we remove the np.log(np.pi)
     # The determinant of the cholesky decomposition of the precision
     # is half of the determinant of the precision
-    return -(nu * np.sum(np.log(np.diag(precision_chol))) +
+    return -(nu * np.sum(np.log(precision_chol)) +
              nu * n_features * .5 * np.log(2.) +
              n_features * (n_features - 1.) * .25 * np.log(np.pi) +
              np.sum(gammaln(.5 * (nu - np.arange(0, n_features)))))
-
-
-# FIXME To remove
-def _estimate_wishart_entropy(nu, precision_chol, log_lambda, n_features):
-    """Estimate the entropy of the Wishart distribution.
-
-    Parameters
-    ----------
-    nu : float
-        The parameters values of the Whishart distribution.
-
-    precision_chol : float
-        The Cholesky decomposition of the precision matrix.
-
-    log_lambda : array-like, shape (n_components,)
-        The log values of the Wishart lambda.
-
-    n_features : int
-        The number of features.
-
-    Return
-    ------
-    wishart_entropy : float
-        The entropy of the Wishart distribution.
-    """
-    return (- _log_wishart_norm(nu, precision_chol, n_features) -
-            .5 * (nu - n_features - 1.) * log_lambda + .5 * nu * n_features)
-
-
-def _gamma_entropy_spherical(a, b):
-    """Estimate the Gamma distribution entropy for 'spherical' precision.
-
-    Parameters
-    ----------
-    a : array-like, shape (n_components,)
-
-    b : array-like, shape (n_components,)
-
-    Returns
-    -------
-    spherical_gamma_entropy : array-like, shape (n_components,)
-    """
-    return gammaln(a) - (a - 1.) * digamma(a) + np.log(b) + a
-
-
-def _gamma_entropy_diag(a, b):
-    """Estimate the Gamma distribution entropy for 'spherical' precision.
-
-    Parameters
-    ----------
-    a : array-like, shape (n_components,)
-
-    b : array-like, shape (n_components, n_features)
-
-    Returns
-    -------
-    diag_gamma_entropy : array-like, shape (n_components,)
-    """
-    return ((gammaln(a) - (a - 1.) * digamma(a) + a) * len(b) +
-            np.sum(np.log(b)))
 
 
 class BayesianGaussianMixture(BaseMixture):
@@ -466,8 +407,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         {"full": self._estimate_wishart_full,
          "tied": self._estimate_wishart_tied,
-         "diag": self._estimate_gamma_diag,
-         "spherical": self._estimate_gamma_spherical
+         "diag": self._estimate_wishart_diag,
+         "spherical": self._estimate_wishart_spherical
          }[self.covariance_type](nk, xk, sk)
 
         self.precisions_cholesky_ = _compute_precision_cholesky(
@@ -488,7 +429,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # FIXME Typo error in certain version of Bishop for nu
+        # Warning : in certain version of Bishop the formula of nu is false :
+        # There is no `+ 1` for nu.
         self.nu_ = self._nu_prior + nk
 
         self.covariances_ = np.empty((self.n_components, n_features,
@@ -500,7 +442,7 @@ class BayesianGaussianMixture(BaseMixture):
                                     nk[k] * self._beta_prior / self.beta_[k] *
                                     np.outer(diff, diff))
 
-        # Contrary to the original bishop book we normalize the covariances
+        # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.nu_[:, np.newaxis, np.newaxis]
 
     def _estimate_wishart_tied(self, nk, xk, sk):
@@ -516,9 +458,11 @@ class BayesianGaussianMixture(BaseMixture):
 
         sk : array-like, shape (n_features, n_features)
         """
+        # TODO Add a test to check that covariance tied is mean of full covar
         _, n_features = xk.shape
 
-        # Typo error in certain version of Bishop for nu
+        # Warning : in certain version of Bishop the formula of nu is false :
+        # There is no `+ 1` for nu.
         self.nu_ = self._nu_prior + nk.sum() / self.n_components
 
         diff = xk - self._mean_prior
@@ -527,10 +471,11 @@ class BayesianGaussianMixture(BaseMixture):
                              self._beta_prior / self.n_components *
                              (np.dot((nk / self.beta_) * diff.T, diff)))
 
+        # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.nu_
 
-    def _estimate_gamma_diag(self, nk, xk, sk):
-        """Estimate the Gamma distribution parameters.
+    def _estimate_wishart_diag(self, nk, xk, sk):
+        """Estimate the Wishart distribution parameters.
 
         Parameters
         ----------
@@ -544,20 +489,21 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # FIXME Typo error in certain version of Bishop for nu
+        # Warning : in certain version of Bishop the formula of nu is false :
+        # There is no `+ 1` for nu.
         self.nu_ = self._nu_prior + nk
 
         diff = xk - self._mean_prior
         self.covariances_ = (
-            self._covariance_prior +
-            .5 * (nk[:, np.newaxis] * sk +
-                  (nk * self._beta_prior / self.beta_)[:, np.newaxis] *
-                  np.square(diff)))
+            self._covariance_prior + nk[:, np.newaxis] * (
+                sk + (self._beta_prior / self.beta_)[:, np.newaxis] *
+                np.square(diff)))
 
+        # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.nu_[:, np.newaxis]
 
-    def _estimate_gamma_spherical(self, nk, xk, sk):
-        """Estimate the Gamma distribution parameters.
+    def _estimate_wishart_spherical(self, nk, xk, sk):
+        """Estimate the Wishart distribution parameters.
 
         Parameters
         ----------
@@ -571,14 +517,16 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # FIXME Typo error in certain version of Bishop for nu
+        # Warning : in certain version of Bishop the formula of nu is false :
+        # There is no `+ 1` for nu.
         self.nu_ = self._nu_prior + nk
 
         diff = xk - self._mean_prior
-        self.covariances_ = (self._covariance_prior + .5 / n_features *
-                             (nk * sk + (nk * self._beta_prior / self.beta_) *
-                              np.mean(np.square(diff), 1)))
+        self.covariances_ = (self._covariance_prior + nk * (
+                             sk + self._beta_prior / self.beta_ *
+                             np.mean(np.square(diff), 1)))
 
+        # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.nu_
 
     def _estimate_distribution_norms(self):
@@ -607,19 +555,19 @@ class BayesianGaussianMixture(BaseMixture):
             precision_prior_chol = linalg.solve_triangular(
                 covariance_chol, np.eye(n_features), lower=True).T
             self._log_wishart_norm_prior = (
-                _log_wishart_norm(self._nu_prior, precision_prior_chol,
+                _log_wishart_norm(self._nu_prior, np.diag(precision_prior_chol),
                                   n_features))
 
         elif self.covariance_type == 'diag':
-            # lambda_inv_W_prior has n_feature Gamma distribution
-            self._log_gamma_norm_prior = (
-                self._nu_prior * np.sum(np.log(self._covariance_prior)) -
-                len(self._covariance_prior) * gammaln(self._nu_prior))
+            self._log_wishart_norm_prior = (
+                _log_wishart_norm(self._nu_prior,
+                                  1. / np.sqrt(self._covariance_prior),
+                                  n_features))
         elif self.covariance_type == 'spherical':
-            # lambda_inv_W_prior has only 1 Gamma distribution
-            self._log_gamma_norm_prior = (
-                self._nu_prior * np.log(self._covariance_prior) -
-                gammaln(self._nu_prior))
+            self._log_wishart_norm_prior = (
+                _log_wishart_norm(self._nu_prior,
+                                  1. / np.sqrt(self._covariance_prior) * np.ones(n_features),
+                                  n_features))
 
     def _check_is_fitted(self):
         check_is_fitted(self, ['alpha_', 'beta_', 'means_', 'nu_',
@@ -680,7 +628,6 @@ class BayesianGaussianMixture(BaseMixture):
         log_prob = np.empty((n_samples, self.n_components))
         log_lambda = np.empty((self.n_components, ))
 
-        # XXX SOME ERROR HERE !!!!
         for k, (nu, prec_chol) in enumerate(zip(self.nu_,
                                                 self.precisions_cholesky_)):
             log_det_precisions = 2. * np.sum(
@@ -692,7 +639,7 @@ class BayesianGaussianMixture(BaseMixture):
 
             # Equation 3.48
             # XXX ERROR WITH THE TRANSPOSE !!!!!!!
-            y = np.dot(X - self.means_[k], prec_chol.T)
+            y = np.dot(X - self.means_[k], prec_chol)
             mahala_dist = (n_features / self.beta_[k] +
                            np.sum(np.square(y), axis=1))
 
@@ -708,7 +655,7 @@ class BayesianGaussianMixture(BaseMixture):
         log_prob = np.empty((n_samples, self.n_components))
 
         log_det_precisions = 2. * np.sum(np.log(np.diag(
-            self.precisions_cholesky_)))
+            self.precisions_cholesky_))) - 2 * np.log(n_features * self.nu_)
 
         # Equation 3.43
         log_lambda = (
@@ -717,12 +664,11 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Equation 3.48
         for k in range(self.n_components):
-            y = np.dot(X - self.means_[k], self.precisions_cholesky_.T)
-            mahala_dist = np.sum(np.square(y), axis=1)
+            y = np.dot(X - self.means_[k], self.precisions_cholesky_)
+            mahala_dist = (n_features / self.beta_[k] +
+                           np.sum(np.square(y), axis=1))
 
-            log_prob[:, k] = -.5 * (- log_lambda +
-                                    n_features / self.beta_[k] +
-                                    self.nu_ * mahala_dist)
+            log_prob[:, k] = .5 * (log_lambda - mahala_dist)
         log_prob -= .5 * n_features * np.log(2. * np.pi)
 
         return log_prob
@@ -730,33 +676,52 @@ class BayesianGaussianMixture(BaseMixture):
     def _estimate_log_prob_diag(self, X):
         _, n_features = X.shape
 
+        self.precisions_ = 1. / self.covariances_
+
         # second item in Equation 4.10
-        log_lambda = (n_features * digamma(self.nu_) +
-                      np.sum(np.log(self.precisions_), axis=1))
+        log_det_precisions = (np.sum(np.log(self.precisions_), axis=1) -
+                              2 * np.log(n_features * self.nu_))
+        log_lambda = (np.sum(digamma(.5 * (self.nu_ -
+                             np.arange(n_features)[:, np.newaxis])), 0) +
+                      n_features * np.log(2.) + log_det_precisions)
 
         # Equation 4.35
-        log_gauss = self.nu_ * (
+        log_gauss = (
             np.sum((self.means_ * self.precisions_cholesky_) ** 2, axis=1) -
             2. * np.dot(X, (self.means_ * self.precisions_).T) +
-            np.dot(X ** 2, self.precisions_.T))
+            np.dot(X ** 2, self.precisions_.T))  # XXX on peut améliorer
 
-        return -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
-                      n_features / self.beta_ + log_gauss)
+        log_prob = -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
+                          n_features / self.beta_ + log_gauss)
+
+        return log_prob
 
     def _estimate_log_prob_spherical(self, X):
-        _, n_features = X.shape
+        n_samples, n_features = X.shape
 
-        # second item in Equation 5.3
-        log_lambda = n_features * (digamma(self.nu_) +
-                                   np.log(self.precisions_))
+        self.precisions_ = 1. / self.covariances_
+
+        # second item in Equation 4.10
+        log_det_precisions = (n_features * np.log(self.precisions_) -
+                              2 * np.log(n_features * self.nu_))
+
+        log_lambda = (np.sum(digamma(.5 * (self.nu_ -
+                             np.arange(n_features)[:, np.newaxis])), 0) +
+                      n_features * np.log(2.) + log_det_precisions)
 
         # Equation 4.35
-        log_gauss = self.nu_ * self.precisions_ * (
-            np.sum((self.means_ ** 2), 1) - 2. * np.dot(X, self.means_.T) +
-            np.sum(X ** 2, 1)[:, np.newaxis])
+        # XXX on peut améliorer
+        log_gauss = (
+            np.sum((self.means_ * self.precisions_cholesky_[:, np.newaxis]) ** 2, axis=1) -
+            2. * np.dot(X, (self.means_ * self.precisions_[:, np.newaxis]).T) +
+            n_features * np.mean(np.square(X)[:, :, np.newaxis] *
+                                 np.tile(self.precisions_,
+                                 (n_samples, n_features, 1)), 1))
 
-        return -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
-                      n_features / self.beta_ + log_gauss)
+        log_prob = -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
+                          n_features / self.beta_ + log_gauss)
+
+        return log_prob
 
     def _compute_lower_bound(self, log_resp, resp):
         """Estimate the lower bound of the model to check the convergence."""
@@ -768,18 +733,38 @@ class BayesianGaussianMixture(BaseMixture):
             log_wishart = np.empty(self.n_components)
             for k, (nu, prec_chol) in enumerate(zip(
                     self.nu_, self.precisions_cholesky_)):
-                log_wishart[k] = _log_wishart_norm(nu, prec_chol / np.sqrt(nu),
-                                                   n_features)
-        elif self.covariance_type is 'tied':
-            log_wishart = _log_wishart_norm(
-                self.nu_, self.precisions_cholesky_ / np.sqrt(nu), n_features)
+                log_wishart[k] = _log_wishart_norm(nu, np.diag(prec_chol) /
+                                                   np.sqrt(nu), n_features)
+            log_wishart = (np.sum(log_wishart) -
+                           self.n_components * self._log_wishart_norm_prior)
 
-        # We have removed the constant term
+        elif self.covariance_type is 'tied':
+            log_wishart = self.n_components * (_log_wishart_norm(
+                self.nu_,
+                np.diag(self.precisions_cholesky_) / np.sqrt(self.nu_),
+                n_features) - self._log_wishart_norm_prior)
+
+        elif self.covariance_type is 'diag':
+            log_wishart = np.empty(self.n_components)
+            for k, (nu, prec_chol) in enumerate(zip(
+                    self.nu_, self.precisions_cholesky_)):
+                log_wishart[k] = _log_wishart_norm(nu, prec_chol /
+                                                   np.sqrt(nu), n_features)
+            log_wishart = (np.sum(log_wishart) -
+                           self.n_components * self._log_wishart_norm_prior)
+
+        else:
+            log_wishart = np.empty(self.n_components)
+            for k, (nu, prec_chol) in enumerate(zip(
+                    self.nu_, self.precisions_cholesky_)):
+                log_wishart[k] = _log_wishart_norm(nu, np.ones(n_features) * prec_chol /
+                                                   np.sqrt(nu), n_features)
+            log_wishart = (np.sum(log_wishart) -
+                           self.n_components * self._log_wishart_norm_prior)
+
+        # Contrary to the Bishop formula, we have simplify the formula.
         return (-np.sum(resp * log_resp) + self._log_dirichlet_norm_prior -
-                _log_dirichlet_norm(self.alpha_) +
-                self.n_components * self._log_wishart_norm_prior -
-                np.sum(log_wishart) +
-                0.5 * n_features *
+                _log_dirichlet_norm(self.alpha_) - log_wishart + 0.5 * n_features *
                 (self.n_components * np.log(self._beta_prior) -
                  np.sum(np.log(self.beta_))))
 
@@ -800,6 +785,7 @@ class BayesianGaussianMixture(BaseMixture):
                 for prec_chol in self.precisions_cholesky_])
 
         elif self.covariance_type is 'tied':
+            # self.covariances_ /= self.nu_
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
         else:
