@@ -46,26 +46,33 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', _NonBLASDotWarning)
 
 
-def _assert_all_finite(X):
+def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method.
-    if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
-            and not np.isfinite(X).all()):
-        raise ValueError("Input contains NaN, infinity"
-                         " or a value too large for %r." % X.dtype)
+    if allow_nan:
+        def any_not_isfinite(X): return np.isinf(X).any()
+        np_sum = np.nansum
+    else:
+        def any_not_isfinite(X): return not np.isfinite(X).all()
+        np_sum = np.sum
+
+    if (X.dtype.char in np.typecodes['AllFloat'] and
+            not np.isfinite(np_sum(X)) and any_not_isfinite(X)):
+        raise ValueError("Input contains %sinfinity or a value too large for "
+                         "%r." % ("" if allow_nan else "NaN, ", X.dtype))
 
 
-def assert_all_finite(X):
-    """Throw a ValueError if X contains NaN or infinity.
+def assert_all_finite(X, allow_nan=False):
+    """Throw a ValueError if X contains infinity or NaN (if allow_nan is False)
 
     Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
-    _assert_all_finite(X.data if sp.issparse(X) else X)
+    _assert_all_finite(X.data if sp.issparse(X) else X, allow_nan)
 
 
-def as_float_array(X, copy=True, force_all_finite=True):
+def as_float_array(X, copy=True, force_all_finite=True, allow_nan=False):
     """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -83,6 +90,9 @@ def as_float_array(X, copy=True, force_all_finite=True):
     force_all_finite : boolean (default=True)
         Whether to raise an error on np.inf and np.nan in X.
 
+    allow_nan : boolean (default=False)
+        Whether to allow nan values in X.
+
     Returns
     -------
     XT : {array, sparse matrix}
@@ -92,7 +102,7 @@ def as_float_array(X, copy=True, force_all_finite=True):
                                     and not sp.issparse(X)):
         return check_array(X, ['csr', 'csc', 'coo'], dtype=np.float64,
                            copy=copy, force_all_finite=force_all_finite,
-                           ensure_2d=False)
+                           allow_nan=allow_nan, ensure_2d=False)
     elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
@@ -208,7 +218,7 @@ def indexable(*iterables):
 
 
 def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
-                          force_all_finite):
+                          force_all_finite, allow_nan):
     """Convert a sparse matrix to a given format.
 
     Checks the sparse format of spmatrix and converts if necessary.
@@ -232,7 +242,11 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         be triggered by a conversion.
 
     force_all_finite : boolean (default=True)
-        Whether to raise an error on np.inf and np.nan in X.
+        Whether to raise an error on np.inf and np.nan (if allow_nan is False)
+        in X.
+
+    allow_nan : boolean (default=True)
+        Whether to allow nan.
 
     Returns
     -------
@@ -265,14 +279,14 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
             warnings.warn("Can't check %s sparse matrix for nan or inf."
                           % spmatrix.format)
         else:
-            _assert_all_finite(spmatrix.data)
+            _assert_all_finite(spmatrix.data, allow_nan)
     return spmatrix
 
 
 def check_array(array, accept_sparse=None, dtype="numeric", order=None,
-                copy=False, force_all_finite=True, ensure_2d=True,
-                allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None):
+                copy=False, force_all_finite=True, allow_nan=False,
+                ensure_2d=True, allow_nd=False, ensure_min_samples=1,
+                ensure_min_features=1, warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -308,7 +322,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
         be triggered by a conversion.
 
     force_all_finite : boolean (default=True)
-        Whether to raise an error on np.inf and np.nan in X.
+        Whether to raise an error on np.inf in X.
+
+    allow_nan : boolean (default=False)
+        Whether to allow nan values in X.
 
     ensure_2d : boolean (default=True)
         Whether to make X at least 2d.
@@ -377,7 +394,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
     if sp.issparse(array):
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
-                                      force_all_finite)
+                                      force_all_finite, allow_nan)
     else:
         array = np.array(array, dtype=dtype, order=order, copy=copy)
 
@@ -404,7 +421,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
         if force_all_finite:
-            _assert_all_finite(array)
+            _assert_all_finite(array, allow_nan)
 
     shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:
@@ -431,9 +448,9 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
 
 def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
-              copy=False, force_all_finite=True, ensure_2d=True,
-              allow_nd=False, multi_output=False, ensure_min_samples=1,
-              ensure_min_features=1, y_numeric=False,
+              copy=False, force_all_finite=True, allow_nan=False,
+              ensure_2d=True, allow_nd=False, multi_output=False,
+              ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
               warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
 
@@ -473,6 +490,9 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
     force_all_finite : boolean (default=True)
         Whether to raise an error on np.inf and np.nan in X. This parameter
         does not influence whether y can have np.inf or np.nan values.
+
+    allow_nan : boolean (default=False)
+        Whether to allow nan values in X.
 
     ensure_2d : boolean (default=True)
         Whether to make X at least 2d.
@@ -517,14 +537,14 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
         The converted and validated y.
     """
     X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
-                    ensure_2d, allow_nd, ensure_min_samples,
+                    allow_nan, ensure_2d, allow_nd, ensure_min_samples,
                     ensure_min_features, warn_on_dtype, estimator)
     if multi_output:
-        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
-                        dtype=None)
+        y = check_array(y, 'csr', force_all_finite=True, allow_nan=allow_nan,
+                        ensure_2d=False, dtype=None)
     else:
         y = column_or_1d(y, warn=True)
-        _assert_all_finite(y)
+        _assert_all_finite(y, allow_nan)
     if y_numeric and y.dtype.kind == 'O':
         y = y.astype(np.float64)
 
