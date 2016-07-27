@@ -409,8 +409,8 @@ class::
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
   >>> transformer   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  TfidfTransformer(norm=...'l2', smooth_idf=True, sublinear_tf=False,
-                   use_idf=True)
+  TfidfTransformer(additional_idf=1, norm=...'l2', smooth_idf=True,
+           sublinear_tf=False, use_idf=True)
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.

@@ -954,6 +954,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    additional_idf : int, default=1
+        If you want to use the canonical formula tf-idf = tf * idf, set this
+        flag to 0. Otherwise, the real value of tf-idf is tf * (idf + 1)
+
     References
     ----------
 
@@ -966,11 +970,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, additional_idf=1):
         self.norm = norm
         self.use_idf = use_idf
         self.smooth_idf = smooth_idf
         self.sublinear_tf = sublinear_tf
+        self.additional_idf = additional_idf
 
     def fit(self, X, y=None):
         """Learn the idf vector (global term weights)
@@ -992,7 +997,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
-            idf = np.log(float(n_samples) / df) + 1.0
+            idf = np.log(float(n_samples) / df) + self.additional_idf
             self._idf_diag = sp.spdiags(idf,
                                         diags=0, m=n_features, n=n_features)
 
@@ -1179,6 +1184,10 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    additional_idf : int, default=1
+        If you want to use the canonical formula tf-idf = tf * idf, set this
+        flag to 0. Otherwise, the real value of tf-idf is tf * (idf + 1)
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -1221,7 +1230,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, additional_idf=1):
 
         super(TfidfVectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
@@ -1234,7 +1243,8 @@ class TfidfVectorizer(CountVectorizer):
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
-                                       sublinear_tf=sublinear_tf)
+                                       sublinear_tf=sublinear_tf,
+                                       additional_idf=additional_idf)
 
     # Broadcast the TF-IDF parameters to the underlying transformer instance
     # for easy grid search and repr
@@ -1270,6 +1280,14 @@ class TfidfVectorizer(CountVectorizer):
     @sublinear_tf.setter
     def sublinear_tf(self, value):
         self._tfidf.sublinear_tf = value
+
+    @property
+    def additional_idf(self):
+        return self._tfidf.additional_idf
+
+    @sublinear_tf.setter
+    def additional_idf(self, value):
+        self._tfidf.additional_idf = value
 
     @property
     def idf_(self):
