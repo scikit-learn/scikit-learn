@@ -52,6 +52,7 @@ from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
 from .rcv1 import fetch_rcv1
+from .value_dropper import ValueDropper
 
 
 __all__ = ['clear_data_home',
@@ -102,4 +103,5 @@ __all__ = ['clear_data_home',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
            'make_swiss_roll',
-           'mldata_filename']
+           'mldata_filename',
+           'ValueDropper']

@@ -303,6 +303,18 @@ Samples generator
    datasets.make_checkerboard
 
 
+Missing Value Generator
+-----------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   datasets.ValueDropper
+
+
 .. _decomposition_ref:
 
 :mod:`sklearn.decomposition`: Matrix Decomposition

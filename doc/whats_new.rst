@@ -35,6 +35,10 @@ New features
      detection based on nearest neighbors.
      :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
+   - Introduced the :class:`datasets.ValueDropper` transformer to artificially
+     introduce missing values conforming to a given distribution (NMAR) or
+     completely at random (MCAR). :issue:`7084` by `Raghav RV`_.
+
 Enhancements
 ............
 
