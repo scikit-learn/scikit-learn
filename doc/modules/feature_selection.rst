@@ -283,11 +283,11 @@ of features non zero.
 .. topic:: References:
 
   .. [B2009] F. Bach, "Model-Consistent Sparse Estimation through the
-        Bootstrap." http://hal.inria.fr/hal-00354771/
+        Bootstrap." https://hal.inria.fr/hal-00354771/
 
   .. [M2010] N. Meinshausen, P. Buhlmann, "Stability selection",
        Journal of the Royal Statistical Society, 72 (2010)
-       http://arxiv.org/pdf/0809.2932
+       http://arxiv.org/pdf/0809.2932.pdf
 
 Tree-based feature selection
 ----------------------------

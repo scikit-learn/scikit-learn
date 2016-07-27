@@ -619,7 +619,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_,
+   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
