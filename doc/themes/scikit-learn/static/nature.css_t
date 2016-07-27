@@ -94,6 +94,102 @@ div.navbar ul li a:hover {
     color: #EEE;
 }
 
+div.navbar div.nav-icon a,
+div.navbar div.nav-icon a:link,
+div.navbar div.nav-icon a:visited,
+div.navbar div.nav-icon a:hover {
+    color: white;
+    text-decoration: none;
+}
+div.navbar div.nav-icon {
+    display: none;
+}
+/* Nav bar collapses for mobile phones and shows the hamburger */
+@media screen and (max-width: 680px) {
+    div.navbar div.nav-icon {
+        position: absolute;
+        display: inline-block;
+        right: 0;
+        top: 10px;
+        margin-right: 10px;
+        background: #ff9c34;
+        padding: 3px 7px;
+        border-radius: 5px;
+    }
+    div.navbar ul li {
+        display: none;
+    }
+    div.navbar ul {
+        visibilty: hidden;
+        background: #FFFFFF;
+    }
+    div.navbar.responsive > ul li.btn-li {
+        margin-left: 6px;
+    }
+    div.navbar.responsive > ul li.btn-li + li {
+        margin-top: -5px;   
+    }
+    div.navbar.responsive > ul {
+        visiblity: visible;
+        position: absolute;
+        right: 0;
+        top: 10px;
+        margin-right: 10px;
+        background: #ff9c34;
+    }
+    div.navbar.responsive > ul li {
+        display: flex;
+        justify-content: flex-start;
+        visibility: visible;
+        width: 130px;
+    }
+    div.navbar div.nav-icon .hamburger-line {
+        background: white;
+        width: 20px;
+        height: 2px;
+        margin-bottom: 5px;
+        -webkit-transition: .1s ease-in-out;
+        -moz-transition: .1s ease-in-out;
+        -o-transition: .1s ease-in-out;
+        transition: .1s ease-in-out;
+    }
+    div.navbar div.nav-icon .hamburger-line:nth-child(1) {
+        margin-top: 5px;
+        -webkit-transform-origin: left center;
+        -moz-transform-origin: left center;
+        -o-transform-origin: left center;
+        transform-origin: left center;
+    }
+    div.navbar div.nav-icon .hamburger-line:nth-child(2) {
+        -webkit-transform-origin: left center;
+        -moz-transform-origin: left center;
+        -o-transform-origin: left center;
+        transform-origin: left center;
+    }
+    div.navbar div.nav-icon .hamburger-line:nth-child(3) {
+        -webkit-transform-origin: left center;
+        -moz-transform-origin: left center;
+        -o-transform-origin: left center;
+        transform-origin: left center;
+    }
+    div.navbar.responsive div.nav-icon .hamburger-line:nth-child(1) {
+        -webkit-transform: rotate(45deg);
+        -moz-transform: rotate(45deg);
+        -o-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+    div.navbar.responsive div.nav-icon .hamburger-line:nth-child(2) {
+        width: 0;
+        opacity: 0%;
+    }
+    div.navbar.responsive div.nav-icon .hamburger-line:nth-child(3) {
+        -webkit-transform: rotate(-45deg);
+        -moz-transform: rotate(-45deg);
+        -o-transform: rotate(-45deg);
+        transform: rotate(-45deg);
+    }
+}
+
 /*-------------------------------------------------------------*/
 /* The next few elements have to do with the gsc (referring to */
 /* Google's custom search bar */

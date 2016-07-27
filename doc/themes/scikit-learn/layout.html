@@ -38,7 +38,16 @@
            $(this).css('background-color', '#A7D6E2');
        }
     );
+    function showMenu() {
+      var x = document.getElementById("scikit-navbar");
+      if (x.className === "navbar") {
+          x.className += " responsive";
+      } else {
+          x.className = "navbar";
+      }
+    };
   </script>
+
 {% endblock %}
 
 {%- if pagename == 'index' %}
@@ -61,7 +70,7 @@
         {%- endif %}
 
         {%- block navbar -%}
-        <div class="navbar">
+        <div class="navbar" id="scikit-navbar">
             <ul>
                 <li><a href="{{pathto('index')}}">Home</a></li>
                 <li><a href="{{pathto('install')}}">Installation</a></li>
@@ -87,7 +96,13 @@
         </li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             </ul>
-
+            <div class="nav-icon">
+                <a href="javascript:void(0);" onclick="showMenu()">
+                    <div class="hamburger-line"></div>
+                    <div class="hamburger-line"></div>
+                    <div class="hamburger-line"></div>
+                </a>
+            </div>
             <div class="search_form">
                 <div id="cse" style="width: 100%;"></div>
             </div>
