@@ -138,6 +138,11 @@ def test_check_array():
     X_nan[0, 0] = np.nan
     assert_raises(ValueError, check_array, X_nan)
     check_array(X_inf, force_all_finite=False)  # no raise
+    # allow_nan check
+    check_array(X_nan, force_all_finite=True, allow_nan=True)  # no raise
+    # allow_nan check should not hinder check for inf
+    assert_raises(ValueError, check_array, X_inf, force_all_finite=True,
+                  allow_nan=False)
 
     # dtype and order enforcement.
     X_C = np.arange(4).reshape(2, 2).copy("C")
