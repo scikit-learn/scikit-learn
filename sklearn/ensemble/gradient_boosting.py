@@ -1359,6 +1359,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
@@ -1718,6 +1719,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.

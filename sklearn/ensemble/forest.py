@@ -805,6 +805,7 @@ class RandomForestClassifier(ForestClassifier):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
@@ -1007,6 +1008,7 @@ class RandomForestRegressor(ForestRegressor):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
@@ -1172,6 +1174,7 @@ class ExtraTreesClassifier(ForestClassifier):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
@@ -1373,6 +1376,7 @@ class ExtraTreesRegressor(ForestRegressor):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
@@ -1524,6 +1528,7 @@ class RandomTreesEmbedding(BaseForest):
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
 
+    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
