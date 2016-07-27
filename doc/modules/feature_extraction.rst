@@ -303,7 +303,7 @@ corpus of text documents::
 
   >>> corpus = [
   ...     'This is the first document.',
-  ...     'This is the second document.',
+  ...     'This is the second second document.',
   ...     'And the third one.',
   ...     'Is this the first document?',
   ... ]
