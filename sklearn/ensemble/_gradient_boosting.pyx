@@ -5,6 +5,7 @@
 # Author: Peter Prettenhofer
 #
 # License: BSD 3 clause
+# force recythonization
 
 cimport cython
 

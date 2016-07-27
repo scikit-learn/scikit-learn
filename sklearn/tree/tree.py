@@ -615,10 +615,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. versionadded:: 0.18
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -862,10 +863,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    .. versionadded:: 0.18
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. If the impurity
         of a node is below the threshold, the node is a leaf.
+
+        .. versionadded:: 0.18
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
