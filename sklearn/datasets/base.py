@@ -52,7 +52,7 @@ class Bunch(dict):
         self[key] = value
 
     def __dir__(self):
-                return self.keys()
+        return self.keys()
 
     def __getattr__(self, key):
         try:
