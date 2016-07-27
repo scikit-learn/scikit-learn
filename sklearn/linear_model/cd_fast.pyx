@@ -253,7 +253,7 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                     w[ii] = 0.0
                 else:
                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
-                            / (norm_cols_X[ii] + beta))
+                             / (norm_cols_X[ii] + beta))
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
@@ -268,9 +268,9 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
-            if (w_max == 0.0
-                or d_w_max / w_max < d_w_tol
-                or n_iter == max_iter - 1):
+            if (w_max == 0.0 or
+                d_w_max / w_max < d_w_tol or
+                n_iter == max_iter - 1):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
