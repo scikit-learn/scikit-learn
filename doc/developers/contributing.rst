@@ -488,8 +488,6 @@ In addition, we add the following guidelines:
       in all your docstrings.
 
 
-A good example of code that we like can be found `here
-<https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
 
 Input validation
 ----------------
