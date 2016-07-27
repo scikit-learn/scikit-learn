@@ -137,7 +137,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         ----------
         X : array-like, shape  (n_samples, n_features)
         """
-        # TODO Remove test
+        # TODO Remove test and matlab
         n_samples, _ = X.shape
         random_state = check_random_state(self.random_state)
 
@@ -146,12 +146,18 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
                                    random_state=0).fit(X).labels_
             resp[np.arange(n_samples), label] = 1
+            print('NK', list(resp.sum(0)))
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == 'test':
             resp = np.array([random_state.dirichlet(np.ones(self.n_components))
                             for _ in range(n_samples)])
+        elif self.init_params == 'matlab':
+            resp = np.zeros((n_samples, self.n_components))
+            label = np.tile(np.arange(self.n_components)[:, np.newaxis], (
+                1, n_samples / self.n_components)).ravel()
+            resp[np.arange(n_samples), label] = 1
         else:
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
