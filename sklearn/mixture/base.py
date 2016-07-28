@@ -197,7 +197,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         -------
         self
         """
-        # TODO Modifier de sorte que la première étape soit l'init
         X = _check_X(X, self.n_components)
         self._check_initial_parameters(X)
 

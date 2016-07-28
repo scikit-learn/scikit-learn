@@ -8,7 +8,7 @@
 # X remove trace smw
 # X check if this is precision or covariance
 # X Modifier pour ne pas avoir deux fois le meme code.
-# - Ajouter test calcul covariance tied, diag, spherical par rapport à full ?
+# - Ajouter test calcul covariance tied, diag, spherical par rapport a full ?
 
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
