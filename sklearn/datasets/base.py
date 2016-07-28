@@ -271,7 +271,7 @@ def load_iris(return_X_y=False):
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
-        full description of the dataset. This is test text.
+        full description of the dataset.
 
     (data,target) : tuple if return_X_y == True
 
