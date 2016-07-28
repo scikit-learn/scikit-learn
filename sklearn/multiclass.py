@@ -48,7 +48,8 @@ from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
-                               check_classification_targets)
+                               check_classification_targets,
+                               type_of_target)
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 from .externals.six.moves import zip as izip
@@ -251,16 +252,25 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
         # overall.
+        if not set(self.classes_).issuperset(y):
+            raise ValueError("Mini-batch contains {0} while classes "
+                             "must be subset of {1}".format(np.unique(y),
+                                                    self.classes_))
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
         Y = self.label_binarizer_.fit_transform(y)
         Y = Y.tocsc()
-        columns = (col.toarray().ravel() for col in Y.T)
-
+        Y = Y.T.toarray()
+        if len(self.label_binarizer_.classes_) == 2:
+            # The sparse output gives a single array, but we require
+            # two as we have to train two estimator
+            Y = np.array(((Y[0]-1)*-1, Y[0]))
+        columns = (col.ravel() for col in Y)
+        
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(
             _partial_fit_binary)(self.estimators_[i],
             X, next(columns) if self.classes_[i] in
             self.label_binarizer_.classes_ else
-            np.zeros((1, len(y))))
+            np.zeros(len(y), dtype=np.int))
             for i in range(self.n_classes_))
 
         return self
@@ -286,7 +296,12 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             thresh = .5
 
         n_samples = _num_samples(X)
-        if self.label_binarizer_.y_type_ == "multiclass":
+        # In case mini-batches from partial_fit contains binary classes, 
+        # but `type_of_target(y) == 'multiclass'`, it won't go to the
+        # else part.
+        if ((self.label_binarizer_.y_type_ == 'multiclass' or 
+        self.label_binarizer_.y_type_ == 'binary') and
+        type_of_target(self.classes_) != 'binary'):
             maxima = np.empty(n_samples, dtype=float)
             maxima.fill(-np.inf)
             argmaxima = np.zeros(n_samples, dtype=int)
