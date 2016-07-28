@@ -93,7 +93,7 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
-    else:               # assume it's a collection
+    else:  # assume it's a collection
         return frozenset(stop)
 
 
@@ -123,6 +123,54 @@ class VectorizerMixin(object):
 
         return doc
 
+    def _word_ngrams_count(self, n, tokens, stop_words=None):
+        """Turn tokens into a sequence of n-grams after stop words filtering"""
+        # handle stop words
+        if stop_words is not None:
+            tokens = [w for w in tokens if w not in stop_words]
+
+        # handle token n-grams
+        min_n, max_n = self.ngram_range
+        if max_n != 1:
+            original_tokens = tokens
+            tokens = []
+            n_original_tokens = len(original_tokens)
+
+            for i in xrange(n_original_tokens - n + 1):
+                if len(self.top) > 0:
+                    append = False
+                    t = [" ".join(original_tokens[i: i + n - 1]), " ".join(original_tokens[i + 1: i + n])]
+                    for gram in t:
+                        if gram in self.top:
+                            append = True
+                    if append:
+                        t = " ".join(original_tokens[i: i + n])
+                        if t in self.count:
+                            self.count[t] += 1
+                        else:
+                            self.count[t] = 1
+
+                else:
+
+                    t = " ".join(original_tokens[i: i + n])
+                    if t in self.count:
+                        self.count[t] += 1
+                    else:
+                        self.count[t] = 1
+
+        return tokens
+
+    def build_analyzer_count(self, n):
+
+        preprocess = self.build_preprocessor()
+
+        if self.analyzer == 'word':
+            stop_words = self.get_stop_words()
+            tokenize = self.build_tokenizer()
+
+            return lambda doc: self._word_ngrams_count(n,
+                                                       tokenize(preprocess(self.decode(doc))), stop_words)
+
     def _word_ngrams(self, tokens, stop_words=None):
         """Turn tokens into a sequence of n-grams after stop words filtering"""
         # handle stop words
@@ -138,7 +186,9 @@ class VectorizerMixin(object):
             for n in xrange(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tk = " ".join(original_tokens[i: i + n])
+                    if tk in self.top:
+                        tokens.append(" ".join(original_tokens[i: i + n]))
 
         return tokens
 
@@ -174,7 +224,7 @@ class VectorizerMixin(object):
                 while offset + n < w_len:
                     offset += 1
                     ngrams.append(w[offset:offset + n])
-                if offset == 0:   # count a short word (w_len < n) only once
+                if offset == 0:  # count a short word (w_len < n) only once
                     break
         return ngrams
 
@@ -422,6 +472,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -674,7 +725,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
+                        max_features <= 0):
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
@@ -745,6 +796,33 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             # Add a new value when a new vocabulary item is seen
             vocabulary = defaultdict()
             vocabulary.default_factory = vocabulary.__len__
+        print 'counting vocab'
+        min_n, max_n = self.ngram_range
+        self.count = {}
+        self.top = []
+        for n in xrange(min_n, max_n + 1):
+
+            analyze_count = self.build_analyzer_count(n)
+            tick = time.time()
+            print n
+            j = 0
+            for doc in raw_documents:
+                analyze_count(doc)
+                j += 1
+                if j % 100000 == 0:
+                    print ('Instance Processed', j)
+            tock = time.time()
+            print (tock - tick) / 60
+
+            self.top = [pair[0] for pair in sorted(self.count.items(), key=lambda item: item[1])]
+            self.top = self.top[-self.max_features:]
+            count_new = {}
+            for key in self.top:
+                count_new[key] = self.count[key]
+            self.count = count_new
+            self.top = set(self.top)
+            print len(self.top)
+        print 'finish count '
 
         analyze = self.build_analyzer()
         j_indices = _make_int_array()
@@ -1222,7 +1300,6 @@ class TfidfVectorizer(CountVectorizer):
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
-
         super(TfidfVectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
