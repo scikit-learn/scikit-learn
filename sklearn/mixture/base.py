@@ -423,7 +423,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             log p(X)
 
         log_responsibilities : array, shape (n_samples, n_components)
-            logarithm of the responsibilities
+            log of the responsibilities
         """
         weighted_log_prob = self._estimate_weighted_log_prob(X)
         log_prob_norm = logsumexp(weighted_log_prob, axis=1)

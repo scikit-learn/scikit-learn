@@ -769,10 +769,10 @@ def test_warm_start():
 
     # Assert that by using warm_start we can converge to a good solution
     g = GaussianMixture(n_components=n_components, n_init=1,
-                        max_iter=5, reg_covar=0, random_state=random_state,
+                        max_iter=3, reg_covar=0, random_state=random_state,
                         warm_start=False, tol=1e-6)
     h = GaussianMixture(n_components=n_components, n_init=1,
-                        max_iter=5, reg_covar=0, random_state=random_state,
+                        max_iter=3, reg_covar=0, random_state=random_state,
                         warm_start=True, tol=1e-6)
 
     with warnings.catch_warnings():

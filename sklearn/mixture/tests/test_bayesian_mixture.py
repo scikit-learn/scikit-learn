@@ -318,15 +318,15 @@ def test_check_formula_full():
 
 
 
-# def test_bayesian_mixture_means():
-#     rng = np.random.RandomState(0)
-#     n_samples, n_features = 10, 2
+def test_bayesian_mixture_means():
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 2
 
-#     X = rng.rand(n_samples, n_features)
-#     bgmm = BayesianGaussianMixture().fit(X)
+    X = rng.rand(n_samples, n_features)
+    bgmm = BayesianGaussianMixture().fit(X)
 
-#     # Check the means values
-#     assert_almost_equal(bgmm.means_, bgmm.m_)
+    # Check the means values
+    assert_almost_equal(bgmm.means_, bgmm.m_)
 
 
 # def test_bayessian_mixture_covariances():

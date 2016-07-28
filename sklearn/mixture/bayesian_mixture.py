@@ -422,8 +422,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # Warning : in certain version of Bishop the formula of nu is false :
-        # There is no `+ 1` for nu.
+        # Warning : in some Bishop book, there is a typo on the formula 10.63
+        # `nu_k = nu_0 + Nk` is the correct formula
         self.nu_ = self._nu_prior + nk
 
         self.covariances_ = np.empty((self.n_components, n_features,
@@ -453,8 +453,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # Warning : in certain version of Bishop the formula of nu is false :
-        # There is no `+ 1` for nu.
+        # Warning : in some Bishop book, there is a typo on the formula 10.63
+        # `nu_k = nu_0 + Nk` is the correct formula
         self.nu_ = self._nu_prior + nk.sum() / self.n_components
 
         diff = xk - self._mean_prior
@@ -481,8 +481,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # Warning : in certain version of Bishop the formula of nu is false :
-        # There is no `+ 1` for nu.
+        # Warning : in some Bishop book, there is a typo on the formula 10.63
+        # `nu_k = nu_0 + Nk` is the correct formula
         self.nu_ = self._nu_prior + nk
 
         diff = xk - self._mean_prior
@@ -509,8 +509,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = xk.shape
 
-        # Warning : in certain version of Bishop the formula of nu is false :
-        # There is no `+ 1` for nu.
+        # Warning : in some Bishop book, there is a typo on the formula 10.63
+        # `nu_k = nu_0 + Nk` is the correct formula
         self.nu_ = self._nu_prior + nk
 
         diff = xk - self._mean_prior
@@ -536,15 +536,12 @@ class BayesianGaussianMixture(BaseMixture):
         log_resp : array-like, shape (n_samples, n_components)
         """
         n_samples, _ = X.shape
-        resp = np.exp(log_resp)
 
-        nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
-                                                   self.covariance_type)
+        nk, xk, sk = _estimate_gaussian_parameters(
+            X, np.exp(log_resp), self.reg_covar, self.covariance_type)
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
-
-        return self._compute_lower_bound(log_resp, resp) / n_samples
 
     def _e_step(self, X):
         """E step.
@@ -557,9 +554,8 @@ class BayesianGaussianMixture(BaseMixture):
         -------
         log-responsibility : array, shape (n_samples, n_components)
         """
-        n_features, _ = X.shape
-        _, _, log_resp = self._estimate_log_prob_resp(X)
-        return log_resp
+        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
+        return log_prob_norm, log_resp
 
     def _estimate_log_weights(self):
         return digamma(self.alpha_) - digamma(np.sum(self.alpha_))
@@ -577,7 +573,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         return log_gauss + .5 * (log_lambda - n_features / self.beta_)
 
-    def _compute_lower_bound(self, log_resp, resp):
+    def _compute_lower_bound(self, log_resp, log_prob_norm):
         """Estimate the lower bound of the model.
 
         The lower bound is used to detect the convergence and has to decrease
@@ -589,12 +585,11 @@ class BayesianGaussianMixture(BaseMixture):
 
         log-resp : array, shape (n_samples, n_components)
 
-        resp : array, shape (n_samples, n_components)
+        log_prob_norm : float
 
         Returns
         -------
         lower_bound : float
-
         """
         # Contrary to the original formula, we have done some simplification
         # and removed all the constant terms (see the corresponding doc).
@@ -613,8 +608,9 @@ class BayesianGaussianMixture(BaseMixture):
             log_wishart = np.sum(_log_wishart_norm(
                 self.nu_, log_det_precisions_chol, n_features))
 
-        return (-np.sum(resp * log_resp) - _log_dirichlet_norm(self.alpha_) -
-                log_wishart - 0.5 * n_features * np.sum(np.log(self.beta_)))
+        return (-np.sum(np.exp(log_resp) * log_resp) -
+                _log_dirichlet_norm(self.alpha_) - log_wishart -
+                0.5 * n_features * np.sum(np.log(self.beta_)))
 
     def _get_parameters(self):
         return (self.alpha_, self.beta_, self.means_, self.nu_,
