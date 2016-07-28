@@ -184,7 +184,7 @@ def test_load_iris():
     #test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
     bunch = load_iris()
-    assert_true(isinstance(X_y_tuple,tuple))
+    assert_true(isinstance(X_y_tuple, tuple))
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
 
