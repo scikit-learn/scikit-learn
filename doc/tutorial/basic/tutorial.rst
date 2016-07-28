@@ -308,7 +308,7 @@ maintained::
     ['setosa', 'setosa', 'setosa']
 
 Here, the first ``predict()`` returns an integer array, since ``iris.target``
-(an integer array) was used in ``fit``. The second ``predict`` returns a string
+(an integer array) was used in ``fit``. The second ``predict()`` returns a string
 array, since ``iris.target_names`` was for fitting.
 
 

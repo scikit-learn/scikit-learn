@@ -1,78 +1,86 @@
 
-Contributing code
-=================
+Contributing to scikit-learn
+============================
 
-**Note: This document is just to get started, visit [**Contributing
+**Note: This document is a 'getting started' summary for contributing code,
+documentation, testing, and filing issues.** Visit the [**Contributing
 page**](http://scikit-learn.org/stable/developers/index.html)
-for the full contributor's guide. Please be sure to read it carefully to make
+for the full contributor's guide. Please read it carefully to help make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.**
 
 How to contribute
 -----------------
 
-The preferred way to contribute to scikit-learn is to fork the 
+The preferred workflow for contributing to scikit-learn is to fork the 
 [main repository](https://github.com/scikit-learn/scikit-learn) on
-GitHub:
+GitHub, clone, and develop on a branch. Steps:
 
-1. Fork the [project repository](https://github.com/scikit-learn/scikit-learn):
-   click on the 'Fork' button near the top of the page. This creates
-   a copy of the code under your account on the GitHub server.
+1. Fork the [project repository](https://github.com/scikit-learn/scikit-learn)
+   by clicking on the 'Fork' button near the top right of the page. This creates
+   a copy of the code under your GitHub user account.
 
-2. Clone this copy to your local disk:
+2. Clone your fork of the scikit-learn repo from your GitHub account to your local disk:
 
-        $ git clone git@github.com:YourLogin/scikit-learn.git
-        $ cd scikit-learn
+   ```bash
+   $ git clone git@github.com:YourLogin/scikit-learn.git
+   $ cd scikit-learn
+   ```
+   
+3. Create a ``feature`` branch to hold your development changes:
 
-3. Create a branch to hold your changes:
+   ```bash
+   $ git checkout -b my-feature
+   ```
+   
+   Always use a ``feature`` branch. It's good practice to never work on the ``master`` branch!
 
-        $ git checkout -b my-feature
+4. Develop the feature on your feature branch. Add changed files using ``git add`` and then ``git commit`` files:
 
-   and start making changes. Never work in the ``master`` branch!
+   ```bash
+   $ git add modified_files
+   $ git commit
+   ```
 
-4. Work on this copy on your computer using Git to do the version
-   control. When you're done editing, do:
+   to record your changes in Git, then push the changes to your GitHub account with:
 
-        $ git add modified_files
-        $ git commit
+   ```bash
+   $ git push -u origin my-feature
+   ```
 
-   to record your changes in Git, then push them to GitHub with:
-
-        $ git push -u origin my-feature
-
-Finally, go to the web page of your fork of the scikit-learn repo,
-and click 'Pull request' to send your changes to the maintainers for
+5. Go to the GitHub web page of your fork of the scikit-learn repo.
+Click the 'Pull request' button to send your changes to the project's maintainers for
 review. This will send an email to the committers.
 
-(If any of the above seems like magic to you, then look up the 
-[Git documentation](http://git-scm.com/documentation) on the web.)
+(If any of the above seems like magic to you, please look up the 
+[Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
-Contributing Pull Requests
---------------------------
+Pull Request Checklist
+----------------------
 
-It is recommended to check that your contribution complies with the
-following rules before submitting a pull request:
+We recommended that your contribution complies with the
+following rules before you submit a pull request:
 
 -  Follow the
    [coding-guidelines](http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines).
 
--  When applicable, use the validation tools and other code in the
+-  Use, when applicable, the validation tools and scripts in the
    `sklearn.utils` submodule.  A list of utility routines available
    for developers can be found in the
    [Utilities for Developers](http://scikit-learn.org/dev/developers/utilities.html#developers-utils)
    page.
 
--  If your pull request addresses an issue, please use the title to describe
-   the issue and mention the issue number in the pull request description to
-   ensure a link is created to the original issue.
+-  If your pull request addresses an issue, please use the pull request title
+   to describe the issue and mention the issue number in the pull request description. This will make sure a link back to the original issue is
+   created.
 
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
 
--  Please prefix the title of your pull request with `[MRG]` if the
-   contribution is complete and should be subjected to a detailed review.
-   Incomplete contributions should be prefixed `[WIP]` to indicate a work
-   in progress (and changed to `[MRG]` when it matures). WIPs may be useful
+-  Please prefix the title of your pull request with `[MRG]` (Ready for
+   Merge), if the contribution is complete and ready for a detailed review.
+   Incomplete contributions should be prefixed `[WIP]` (to indicate a work
+   in progress) and changed to `[MRG]` when it matures. WIPs may be useful
    to: indicate you are working on something to avoid duplicated work,
    request broad review of functionality or API, or seek collaborators.
    WIPs often benefit from the inclusion of a
@@ -82,7 +90,9 @@ following rules before submitting a pull request:
 -  All other tests pass when everything is rebuilt from scratch. On
    Unix-like systems, check with (from the toplevel source folder):
 
-        $ make
+      ```bash
+      $ make
+      ```
 
 -  When adding additional functionality, provide at least one
    example script in the ``examples/`` folder. Have a look at other
@@ -97,34 +107,42 @@ following rules before submitting a pull request:
    references in the literature (with PDF links when possible) and
    the example.
 
-The documentation should also include expected time and space
-complexity of the algorithm and scalability, e.g. "this algorithm
-can scale to a large number of samples > 100000, but does not
-scale in dimensionality: n_features is expected to be lower than
-100".
+-  The documentation should also include expected time and space
+   complexity of the algorithm and scalability, e.g. "this algorithm
+   can scale to a large number of samples > 100000, but does not
+   scale in dimensionality: n_features is expected to be lower than
+   100".
 
 You can also check for common programming errors with the following
 tools:
 
--  Code with good unittest coverage (at least 80%), check with:
+-  Code with good unittest **coverage** (at least 80%), check with:
 
-        $ pip install nose coverage
-        $ nosetests --with-coverage path/to/tests_for_package
+  ```bash
+  $ pip install nose coverage
+  $ nosetests --with-coverage path/to/tests_for_package
+  ```
 
 -  No pyflakes warnings, check with:
 
-        $ pip install pyflakes
-        $ pyflakes path/to/module.py
+  ```bash
+  $ pip install pyflakes
+  $ pyflakes path/to/module.py
+  ```
 
 -  No PEP8 warnings, check with:
 
-        $ pip install pep8
-        $ pep8 path/to/module.py
+  ```bash
+  $ pip install pep8
+  $ pep8 path/to/module.py
+  ```
 
 -  AutoPEP8 can help you fix some of the easy redundant errors:
 
-        $ pip install autopep8
-        $ autopep8 path/to/pep8.py
+  ```bash
+  $ pip install autopep8
+  $ autopep8 path/to/pep8.py
+  ```
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -154,13 +172,13 @@ following rules before submitting:
    as your Python, scikit-learn, numpy, and scipy versions. This information
    can be found by runnning the following code snippet:
 
-   ```python
-   import platform; print(platform.platform())
-   import sys; print("Python", sys.version)
-   import numpy; print("NumPy", numpy.__version__)
-   import scipy; print("SciPy", scipy.__version__)
-   import sklearn; print("Scikit-Learn", sklearn.__version__)
-   ```
+  ```python
+  import platform; print(platform.platform())
+  import sys; print("Python", sys.version)
+  import numpy; print("NumPy", numpy.__version__)
+  import scipy; print("SciPy", scipy.__version__)
+  import sklearn; print("Scikit-Learn", sklearn.__version__)
+  ```
    
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
@@ -168,8 +186,8 @@ following rules before submitting:
    or link to a [gist](https://gist.github.com). If an exception is raised,
    please provide the traceback.
 
-Easy Issues
------------
+New contributor tips
+--------------------
 
 A great way to start contributing to scikit-learn is to pick an item
 from the list of [Easy issues](https://github.com/scikit-learn/scikit-learn/issues?labels=Easy)
@@ -191,13 +209,13 @@ You can edit the documentation using any text editor and then generate
 the HTML output by typing ``make html`` from the doc/ directory.
 Alternatively, ``make`` can be used to quickly generate the
 documentation without the example gallery. The resulting HTML files will
-be placed in _build/html/ and are viewable in a web browser. See the
-README file in the doc/ directory for more information.
+be placed in ``_build/html/`` and are viewable in a web browser. See the
+``README`` file in the ``doc/`` directory for more information.
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
 [matplotlib](http://matplotlib.sourceforge.net/), and
-[pillow](http://pillow.readthedocs.org/en/latest/).
+[pillow](http://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give

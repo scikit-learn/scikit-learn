@@ -83,7 +83,7 @@ matrices, or by a regularized estimator: see the section on shrinkage below).
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
-linear decision surfaces between, as can be seen by comparing the the
+linear decision surfaces between, as can be seen by comparing the
 log-probability ratios :math:`\log[P(y=k | X) / P(y=l | X)]`:
 
 .. math::

@@ -117,6 +117,19 @@ New features
      and Harabaz score to evaluate the resulting clustering of a set of points.
      By `Arnaud Fouchet`_ and `Thierry Guillemot`_.
 
+   - Added a new splitting criterion for :class:`tree.DecisionTreeRegressor`,
+     the mean absolute error. This criterion can also be used in
+     :class:`ensemble.ExtraTreesRegressor`,
+     :class:`ensemble.RandomForestRegressor`, and the gradient boosting
+     estimators. (`#6667
+     <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
+     Liu`_.
+
+     - Added weighted impurity-based early stopping criterion for decision tree
+       growth. (`#6954
+       <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
+       Liu`_
+
 Enhancements
 ............
 
@@ -142,6 +155,11 @@ Enhancements
      provided as a percentage of the training samples. By
      `yelite`_ and `Arnaud Joly`_.
 
+   - Gradient boosting estimators accept the parameter ``criterion`` to specify
+     to splitting criterion used in built decision trees. (`#6667
+     <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
+     Liu`_.
+
    - Codebase does not contain C/C++ cython generated files: they are
      generated during build. Distribution packages will still contain generated
      C/C++ files. By `Arthur Mensch`_.
@@ -164,7 +182,8 @@ Enhancements
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
      By `Jatin Shah`_ and `Raghav R V`_.
 
-   - :class:`linear_model.RANSACRegressor` now supports ``sample_weights``.
+   - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
+     :class:`svm.LinearSVR` now support ``sample_weights``.
      By `Imaculate`_.
 
    - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
@@ -278,6 +297,12 @@ Bug fixes
     - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
       with them as parameters, could not be passed to :func:`base.clone`.
       By `Loic Esteve`_.
+      
+    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
+      occurred when there were outliers being labelled and a weight function
+      specified (`#6902
+      <https://github.com/scikit-learn/scikit-learn/issues/6902>`_).  By
+      `LeonieBorne <https://github.com/LeonieBorne>`_.
 
     - :func:`pairwise_distances` now converts arrays to boolean arrays when
       required in scipy.spatial.distance.
@@ -4280,3 +4305,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sebastian Säger: https://github.com/ssaeger
 
 .. _YenChen Lin: https://github.com/yenchenlin
+
+.. _Nelson Liu: https://github.com/nelson-liu

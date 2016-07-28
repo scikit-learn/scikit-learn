@@ -424,7 +424,7 @@ works well for a small number of clusters but is not advised when using
 many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
-cuts <http://www.cs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
+cuts <http://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
 edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
@@ -725,11 +725,9 @@ set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Further, any cluster has
-at least ``min_samples`` points in it, following the definition of a core
-sample. For any sample that is not a core sample, and does have a
-distance higher than ``eps`` to any core sample, it is considered an outlier by
-the algorithm.
+Any core sample is part of a cluster, by definition. Any sample that is not a 
+core sample, and is at least ``eps`` in distance from any core sample, is 
+considered an outlier by the algorithm.
 
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
@@ -878,7 +876,7 @@ the user is advised
 
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
-   https://code.google.com/p/jbirch/
+   https://code.google.com/archive/p/jbirch
 
 
 .. _clustering_evaluation:

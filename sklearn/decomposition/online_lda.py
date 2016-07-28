@@ -5,7 +5,7 @@ Online Latent Dirichlet Allocation with variational inference
 =============================================================
 
 This implementation is modified from Matthew D. Hoffman's onlineldavb code
-Link: http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
+Link: http://matthewdhoffman.com/code/onlineldavb.tar
 """
 
 # Author: Chyi-Kwei Yau
@@ -224,7 +224,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, [n_topics, n_features]
         Topic word distribution. ``components_[i, j]`` represents word j in
-        topic `i`. In the literature, this is called lambda.
+        topic `i`.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
@@ -241,7 +241,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Chong Wang, John Paisley, 2013
 
     [3] Matthew D. Hoffman's onlineldavb code. Link:
-        http://www.cs.princeton.edu/~mdhoffma/code/onlineldavb.tar
+        http://matthewdhoffman.com//code/onlineldavb.tar
 
     """
 

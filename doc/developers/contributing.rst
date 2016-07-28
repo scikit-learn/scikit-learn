@@ -28,7 +28,7 @@ also welcome to post feature requests or pull requests.
 Retrieving the latest code
 ==========================
 
-We use `Git <http://git-scm.com/>`_ for version control and
+We use `Git <https://git-scm.com/>`_ for version control and
 `GitHub <https://github.com/>`_ for hosting our main repository.
 
 You can check out the latest sources with the command::
@@ -50,7 +50,7 @@ extension in place::
 Another option is to use the ``develop`` option if you change your code a lot
 and do not want to have to reinstall every time. This basically builds the
 extension in place and creates a link to the development directory (see
-`the setuptool docs <https://pythonhosted.org/setuptools/setuptools.html#development-mode>`_)::
+`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
 
     python setup.py develop
 
@@ -129,7 +129,7 @@ visibility.
         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 (If any of the above seems like magic to you, then look up the
-`Git documentation <http://git-scm.com/documentation>`_ on the web.)
+`Git documentation <https://git-scm.com/documentation>`_ on the web.)
 
 Contributing pull requests
 --------------------------
@@ -146,7 +146,7 @@ rules before submitting a pull request:
     * If your pull request addresses an issue, please use the title to describe
       the issue and mention the issue number in the pull request description to
       ensure a link is created to the original issue.
-      
+
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
@@ -225,7 +225,7 @@ and Cython optimizations.
    workflow, please pay a visit to the `Scipy Development Workflow
    <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
+   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. _filing_bugs:
@@ -262,7 +262,7 @@ following rules before submitting:
      import numpy; print("NumPy", numpy.__version__)
      import scipy; print("SciPy", scipy.__version__)
      import sklearn; print("Scikit-Learn", sklearn.__version__)
-   
+
 -  Please be specific about what estimators and/or functions are involved
    and the shape of the data, as appropriate; please include a
    `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
@@ -299,9 +299,9 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx-doc.org/>`_,
+<http://www.sphinx-doc.org/en/stable/>`_,
 `matplotlib <http://matplotlib.org>`_ and
-`pillow <http://pillow.readthedocs.org/en/latest/>`_.
+`pillow <http://pillow.readthedocs.io/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -361,7 +361,7 @@ Testing and improving test coverage
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
+purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
@@ -480,7 +480,7 @@ In addition, we add the following guidelines:
       It makes the code harder to read as the origin of symbols is no
       longer explicitly referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
-      <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
+      <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
       find bugs in scikit-learn.
 
     * Use the `numpy docstring standard
@@ -489,7 +489,7 @@ In addition, we add the following guidelines:
 
 
 A good example of code that we like can be found `here
-<https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
+<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
 Input validation
 ----------------
@@ -597,8 +597,8 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         # actual implementation
         pass
 
-    @deprecated("Function 'zero_one' has been renamed to "
-                "'zero_one_loss' and will be removed in release 0.15."
+    @deprecated("Function 'zero_one' was renamed to 'zero_one_loss' "
+                "in version 0.13 and will be removed in release 0.15. "
                 "Default behavior is changed from 'normalize=False' to "
                 "'normalize=True'")
     def zero_one(y_true, y_pred, normalize=False):
@@ -609,22 +609,29 @@ use the decorator ``deprecated`` on a property.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
     @property
-    @deprecated("Attribute labels_ is deprecated and "
+    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
 
 If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
-In following example, k is deprecated and renamed to n_clusters::
+In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
     def example_function(n_clusters=8, k=None):
         if k is not None:
-            warnings.warn("'k' was renamed to n_clusters and will "
-                          "be removed in 0.15.",
-                          DeprecationWarning)
+            warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                          "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+As in these examples, the warning message should always give both the
+version in which the deprecation happened and the version in which the
+old behavior will be removed. If the deprecation happened in version
+0.x-dev, the message should say deprecation occurred in version 0.x and
+the removal will be in 0.(x+2). For example, if the deprecation happened
+in version 0.18-dev, the message should say it happened in version 0.18
+and the old behavior will be removed in version 0.20.
 
 
 .. currentmodule:: sklearn
@@ -863,23 +870,41 @@ If a dependency on scikit-learn is okay for your code,
 you can prevent a lot of boilerplate code
 by deriving a class from ``BaseEstimator``
 and optionally the mixin classes in ``sklearn.base``.
-E.g., here's a custom classifier::
+E.g., below is a custom classifier. For more information on this example, see
+`scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
 
   >>> import numpy as np
   >>> from sklearn.base import BaseEstimator, ClassifierMixin
-  >>> class MajorityClassifier(BaseEstimator, ClassifierMixin):
-  ...     """Predicts the majority class of its training data."""
-  ...     def __init__(self):
-  ...         pass
+  >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+  >>> from sklearn.utils.multiclass import unique_labels
+  >>> from sklearn.metrics import euclidean_distances
+  >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+  ...
+  ...     def __init__(self, demo_param='demo'):
+  ...         self.demo_param = demo_param
   ...
   ...     def fit(self, X, y):
-  ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
-  ...                                            return_inverse=True)
-  ...         self.majority_ = np.argmax(np.bincount(indices))
+  ...
+  ...         # Check that X and y have correct shape
+  ...         X, y = check_X_y(X, y)
+  ...         # Store the classes seen during fit
+  ...         self.classes_ = unique_labels(y)
+  ...
+  ...         self.X_ = X
+  ...         self.y_ = y
+  ...         # Return the classifier
   ...         return self
   ...
   ...     def predict(self, X):
-  ...         return np.repeat(self.classes_[self.majority_], len(X))
+  ...
+  ...         # Check is fit had been called
+  ...         check_is_fitted(self, ['X_', 'y_'])
+  ...
+  ...         # Input validation
+  ...         X = check_array(X)
+  ...
+  ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
+  ...         return self.y_[closest]
 
 
 get_params and set_params

@@ -512,7 +512,7 @@ class PCA(_BasePCA):
         return np.mean(self.score_samples(X))
 
 
-@deprecated("RandomizedPCA will be removed in 0.20. "
+@deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in 0.20. "
             "Use PCA(svd_solver='randomized') instead. The new implementation "
             "DOES NOT store whiten components_. Apply transform to get them.")
 class RandomizedPCA(BaseEstimator, TransformerMixin):

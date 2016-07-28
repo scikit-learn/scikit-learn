@@ -236,7 +236,7 @@ one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
 good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
 
-A number greater than than 1 will require more classifiers than
+A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
 the mistakes made by other classifiers, hence the name "error-correcting".
 In practice, however, this may not happen as classifier mistakes will

@@ -458,6 +458,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     This is an implementation that uses the result of the previous model
     to speed up computations along the set of solutions, making it faster
     than sequentially calling LogisticRegression for the different parameters.
+    Note that there will be no speedup with liblinear solver, since it does
+    not handle warm-starting.
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 

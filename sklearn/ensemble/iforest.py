@@ -66,7 +66,9 @@ class IsolationForest(BaseBagging):
             - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
-        Whether samples are drawn with replacement.
+        If True, individual trees are fit on random subsets of the training 
+        data sampled with replacement. If False, sampling without replacement 
+        is performed.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
