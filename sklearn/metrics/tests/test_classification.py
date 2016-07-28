@@ -551,6 +551,16 @@ def test_confusion_matrix_multiclass_subset_labels():
     assert_array_equal(cm, [[18, 2],
                             [24, 3]])
 
+    # a label not in y_true should result in zeros for that row/column
+    extra_label = np.max(y_true) + 1
+    cm = confusion_matrix(y_true, y_pred, labels=[2, extra_label])
+    assert_array_equal(cm, [[18, 0],
+                            [0, 0]])
+
+    # check for exception when none of the specified labels are in y_true
+    assert_raises(ValueError, confusion_matrix, y_true, y_pred,
+                  labels=[extra_label, extra_label + 1])
+
 
 def test_classification_report_multiclass():
     # Test performance report
