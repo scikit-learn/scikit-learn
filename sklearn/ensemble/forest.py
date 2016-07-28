@@ -959,6 +959,9 @@ class RandomForestRegressor(ForestRegressor):
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
 
+    .. versionadded:: 0.18
+           Mean Absolute Error (MAE) criterion.
+
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
@@ -1324,6 +1327,9 @@ class ExtraTreesRegressor(ForestRegressor):
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
+
+        .. versionadded:: 0.18
+           Mean Absolute Error (MAE) criterion.
 
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:

@@ -1306,6 +1306,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         generally the best as it can provide a better approximation in
         some cases.
 
+        .. versionadded:: 0.18
+
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
@@ -1666,6 +1668,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         the mean absolute error. The default value of "friedman_mse" is
         generally the best as it can provide a better approximation in
         some cases.
+
+        .. versionadded:: 0.18
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:

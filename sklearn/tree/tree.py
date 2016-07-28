@@ -802,6 +802,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         reduction as feature selection criterion, and "mae" for the mean
         absolute error.
 
+        .. versionadded:: 0.18
+           Mean Absolute Error (MAE) criterion.
+
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
