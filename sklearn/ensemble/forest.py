@@ -809,6 +809,8 @@ class RandomForestClassifier(ForestClassifier):
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
+        .. versionadded:: 0.18
+
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
@@ -1014,6 +1016,8 @@ class RandomForestRegressor(ForestRegressor):
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
+        .. versionadded:: 0.18
+
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
@@ -1178,6 +1182,8 @@ class ExtraTreesClassifier(ForestClassifier):
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. versionadded:: 0.18
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
@@ -1383,6 +1389,8 @@ class ExtraTreesRegressor(ForestRegressor):
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
+        .. versionadded:: 0.18
+
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
@@ -1533,6 +1541,8 @@ class RandomTreesEmbedding(BaseForest):
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. versionadded:: 0.18
 
     sparse_output : bool, optional (default=True)
         Whether or not to return a sparse CSR matrix, as default behavior,
