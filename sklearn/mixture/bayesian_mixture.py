@@ -1,9 +1,7 @@
 """Bayesian Gaussian Mixture Model."""
 
 # TODO
-# - Check if we can pass the covariance directly/precision
 # - Remove the gaussian with small weights
-# - check parameters XXX
 # - change _alpha_prior -> alpha_prior_
 # X Function in private
 # - not do an EM but an ME
@@ -21,14 +19,16 @@ from scipy.special import digamma, gammaln
 from .base import BaseMixture, _check_shape
 from .gaussian_mixture import _check_precision_matrix
 from .gaussian_mixture import _check_precision_positivity
+from .gaussian_mixture import _compute_log_det_cholesky
 from .gaussian_mixture import _compute_precision_cholesky
 from .gaussian_mixture import _estimate_gaussian_parameters
+from .gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 
 
 def _log_dirichlet_norm(alpha):
-    """Estimate the log of the Dirichlet distribution normalization term.
+    """Compute the log of the Dirichlet distribution normalization term.
 
     Parameters
     ----------
@@ -43,32 +43,30 @@ def _log_dirichlet_norm(alpha):
     return gammaln(np.sum(alpha)) - np.sum(gammaln(alpha))
 
 
-def _log_wishart_norm(nu, precision_chol, n_features):
-    """Estimate the log of the Wishart distribution normalization term.
+def _log_wishart_norm(nu, log_det_precisions_chol, n_features):
+    """Compute the log of the Wishart distribution normalization term.
 
     Parameters
     ----------
-    nu : float
+    nu : array-like, shape (n_components,)
         The parameters values of the Whishart distribution.
 
-    precision_chol : array-like, shape (n_features)
-        The Cholesky decomposition of the precision matrix.
+    log_det_precision_chol : array-like, shape (n_components,)
+        The determinant of the cholesky decomposition of the precision matrix.
 
     n_features : int
         The number of features.
 
     Return
     ------
-    log_wishart_norm : float
+    log_wishart_norm : array-like, shape (n_components,)
         The log normalization of the Wishart distribution.
     """
-    # XXX see if we remove the np.log(np.pi)
-    # The determinant of the cholesky decomposition of the precision
-    # is half of the determinant of the precision
-    return -(nu * np.sum(np.log(precision_chol)) +
-             nu * n_features * .5 * np.log(2.) +
-             # n_features * (n_features - 1.) * .25 * np.log(np.pi) +
-             np.sum(gammaln(.5 * (nu - np.arange(0, n_features)))))
+    # To simplify the computation we have removed the np.log(np.pi) term
+    return -(
+        nu * log_det_precisions_chol + nu * n_features * .5 * np.log(2.) +
+        np.sum(gammaln(.5 * (nu -
+                             np.arange(0, n_features)[:, np.newaxis])), 0))
 
 
 class BayesianGaussianMixture(BaseMixture):
@@ -567,109 +565,17 @@ class BayesianGaussianMixture(BaseMixture):
         return digamma(self.alpha_) - digamma(np.sum(self.alpha_))
 
     def _estimate_log_prob(self, X):
-        return {"full": self._estimate_log_prob_full,
-                "tied": self._estimate_log_prob_tied,
-                "diag": self._estimate_log_prob_diag,
-                "spherical": self._estimate_log_prob_spherical
-                }[self.covariance_type](X)
-
-    def _estimate_log_prob_full(self, X):
-        # second item in Equation 3.10
-        n_samples, n_features = X.shape
-
-        log_prob = np.empty((n_samples, self.n_components))
-        log_lambda = np.empty((self.n_components, ))
-
-        for k, (nu, prec_chol) in enumerate(zip(self.nu_,
-                                                self.precisions_cholesky_)):
-            log_det_precisions = 2. * np.sum(
-                np.log(np.diag(prec_chol))) - 2 * np.log(n_features * nu)
-            # Equation 3.43
-            log_lambda[k] = (
-                np.sum(digamma(.5 * (nu - np.arange(0, n_features)))) +
-                n_features * np.log(2.) + log_det_precisions)
-
-            # Equation 3.48
-            y = np.dot(X - self.means_[k], prec_chol)
-            mahala_dist = (n_features / self.beta_[k] +
-                           np.sum(np.square(y), axis=1))
-
-            log_prob[:, k] = .5 * (log_lambda[k] - mahala_dist)
-        log_prob -= .5 * n_features * np.log(2. * np.pi)
-
-        return log_prob
-
-    def _estimate_log_prob_tied(self, X):
-        # second item in Equation 3.10
-        n_samples, n_features = X.shape
-
-        log_prob = np.empty((n_samples, self.n_components))
-
-        log_det_precisions = 2. * np.sum(np.log(np.diag(
-            self.precisions_cholesky_))) - 2 * np.log(n_features * self.nu_)
-
-        # Equation 3.43
-        log_lambda = (
-            np.sum(digamma(.5 * (self.nu_ - np.arange(0, n_features)))) +
-            n_features * np.log(2) + log_det_precisions)
-
-        # Equation 3.48
-        for k in range(self.n_components):
-            y = np.dot(X - self.means_[k], self.precisions_cholesky_)
-            mahala_dist = (n_features / self.beta_[k] +
-                           np.sum(np.square(y), axis=1))
-
-            log_prob[:, k] = .5 * (log_lambda - mahala_dist)
-        log_prob -= .5 * n_features * np.log(2. * np.pi)
-
-        return log_prob
-
-    def _estimate_log_prob_diag(self, X):
         _, n_features = X.shape
+        # We remove `n_features * np.log(self.nu_)` because the precision
+        # matrix is normalized
+        log_gauss = (_estimate_log_gaussian_prob(
+            X, self.means_, self.precisions_cholesky_, self.covariance_type) -
+            .5 * n_features * np.log(self.nu_))
 
-        self.precisions_ = 1. / self.covariances_
+        log_lambda = n_features * np.log(2.) + np.sum(digamma(
+            .5 * (self.nu_ - np.arange(0, n_features)[:, np.newaxis])), 0)
 
-        # second item in Equation 4.10
-        log_det_precisions = (np.sum(np.log(self.precisions_), axis=1) -
-                              2 * np.log(n_features * self.nu_))
-        log_lambda = (np.sum(digamma(.5 * (self.nu_ -
-                             np.arange(n_features)[:, np.newaxis])), 0) +
-                      n_features * np.log(2.) + log_det_precisions)
-
-        # Equation 4.35
-        log_gauss = (
-            np.sum((self.means_ * self.precisions_cholesky_) ** 2, axis=1) -
-            2. * np.dot(X, (self.means_ * self.precisions_).T) +
-            np.dot(X ** 2, self.precisions_.T))
-
-        log_prob = -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
-                          n_features / self.beta_ + log_gauss)
-
-        return log_prob
-
-    def _estimate_log_prob_spherical(self, X):
-        n_samples, n_features = X.shape
-
-        self.precisions_ = 1. / self.covariances_
-
-        # second item in Equation 4.10
-        log_det_precisions = (n_features * np.log(self.precisions_) -
-                              2 * np.log(n_features * self.nu_))
-
-        log_lambda = (np.sum(digamma(.5 * (self.nu_ -
-                             np.arange(n_features)[:, np.newaxis])), 0) +
-                      n_features * np.log(2.) + log_det_precisions)
-
-        # Equation 4.35
-        log_gauss = (
-            np.sum(self.means_ ** 2, axis=1) * self.precisions_ -
-            2. * np.dot(X, (self.means_ * self.precisions_[:, np.newaxis]).T) +
-            np.dot(X ** 2, np.tile(self.precisions_.T, (n_features, 1))))
-
-        log_prob = -.5 * (n_features * np.log(2. * np.pi) - log_lambda +
-                          n_features / self.beta_ + log_gauss)
-
-        return log_prob
+        return log_gauss + .5 * (log_lambda - n_features / self.beta_)
 
     def _compute_lower_bound(self, log_resp, resp):
         """Estimate the lower bound of the model.
@@ -690,39 +596,22 @@ class BayesianGaussianMixture(BaseMixture):
         lower_bound : float
 
         """
-        # Contrary to the Bishop formula, we have simplify the formula.
-        # All constant term have been removed.
+        # Contrary to the original formula, we have done some simplification
+        # and removed all the constant terms (see the corresponding doc).
         n_features, = self._mean_prior.shape
 
-        if self.covariance_type is 'full':
-            log_wishart = np.empty(self.n_components)
-            for k, (nu, prec_chol) in enumerate(zip(
-                    self.nu_, self.precisions_cholesky_)):
-                log_wishart[k] = _log_wishart_norm(nu, np.diag(prec_chol) /
-                                                   np.sqrt(nu), n_features)
-            log_wishart = np.sum(log_wishart)
+        # We removed `.5 * n_features * np.log(self.nu_)` because the
+        # precision matrix is normalized.
+        log_det_precisions_chol = (_compute_log_det_cholesky(
+            self.precisions_cholesky_, self.covariance_type, n_features) -
+            .5 * n_features * np.log(self.nu_))
 
-        elif self.covariance_type is 'tied':
-            log_wishart = self.n_components * (_log_wishart_norm(
-                self.nu_,
-                np.diag(self.precisions_cholesky_) / np.sqrt(self.nu_),
-                n_features))
-
-        elif self.covariance_type is 'diag':
-            log_wishart = np.empty(self.n_components)
-            for k, (nu, prec_chol) in enumerate(zip(
-                    self.nu_, self.precisions_cholesky_)):
-                log_wishart[k] = _log_wishart_norm(nu, prec_chol /
-                                                   np.sqrt(nu), n_features)
-            log_wishart = np.sum(log_wishart)
-
+        if self.covariance_type is 'tied':
+            log_wishart = self.n_components * np.float64(_log_wishart_norm(
+                self.nu_, log_det_precisions_chol, n_features))
         else:
-            log_wishart = np.empty(self.n_components)
-            for k, (nu, prec_chol) in enumerate(zip(
-                    self.nu_, self.precisions_cholesky_)):
-                log_wishart[k] = _log_wishart_norm(nu, np.ones(n_features) * prec_chol /
-                                                   np.sqrt(nu), n_features)
-            log_wishart = np.sum(log_wishart)
+            log_wishart = np.sum(_log_wishart_norm(
+                self.nu_, log_det_precisions_chol, n_features))
 
         return (-np.sum(resp * log_resp) - _log_dirichlet_norm(self.alpha_) -
                 log_wishart - 0.5 * n_features * np.sum(np.log(self.beta_)))
@@ -744,7 +633,6 @@ class BayesianGaussianMixture(BaseMixture):
                 for prec_chol in self.precisions_cholesky_])
 
         elif self.covariance_type is 'tied':
-            # self.covariances_ /= self.nu_
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
         else:
