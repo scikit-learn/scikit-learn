@@ -273,7 +273,7 @@ def load_iris(return_X_y=False):
         meaning of the features, and 'DESCR', the
         full description of the dataset.
 
-    (data,target) : tuple if ``return_X_y`` is True
+    (data, target) : tuple if ``return_X_y`` is True
 
     Examples
     --------

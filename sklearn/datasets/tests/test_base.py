@@ -181,7 +181,7 @@ def test_load_iris():
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
 
-    #test return_X_y option
+    # test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
     bunch = load_iris()
     assert_true(isinstance(X_y_tuple, tuple))
