@@ -144,6 +144,9 @@ div.navbar div.nav-icon {
         visibility: visible;
         width: 130px;
     }
+    div.navbar .dropdown-menu li {
+        white-space: normal;
+    }
     div.navbar div.nav-icon .hamburger-line {
         background: white;
         width: 20px;
