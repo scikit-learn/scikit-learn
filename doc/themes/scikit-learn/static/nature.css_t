@@ -42,6 +42,7 @@ ul.horizontal, ul.horizontal li {
 div.header {
     /* for the logo to correctly expand when showing results
        but remain cut when not */
+       height: 60px;
 }
 
 
