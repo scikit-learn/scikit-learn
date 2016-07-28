@@ -803,16 +803,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         for n in xrange(min_n, max_n + 1):
 
             analyze_count = self.build_analyzer_count(n)
-            tick = time.time()
             print n
-            j = 0
             for doc in raw_documents:
                 analyze_count(doc)
-                j += 1
-                if j % 100000 == 0:
-                    print ('Instance Processed', j)
-            tock = time.time()
-            print (tock - tick) / 60
 
             self.top = [pair[0] for pair in sorted(self.count.items(), key=lambda item: item[1])]
             self.top = self.top[-self.max_features:]
@@ -822,7 +815,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             self.count = count_new
             self.top = set(self.top)
             print len(self.top)
-        print 'finish count '
 
         analyze = self.build_analyzer()
         j_indices = _make_int_array()
