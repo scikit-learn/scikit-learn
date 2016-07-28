@@ -159,6 +159,6 @@ The project is currently maintained by a team of volunteers.
 Communication
 -------------
 
-- Mailing list: https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+- Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
 
