@@ -111,10 +111,10 @@ div.navbar div.nav-icon {
         position: absolute;
         display: inline-block;
         right: 0;
-        top: 10px;
+        top: 12px;
         margin-right: 10px;
         background: #ff9c34;
-        padding: 3px 7px;
+        padding: 5px 10px;
         border-radius: 5px;
     }
     div.navbar ul li {
