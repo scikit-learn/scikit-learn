@@ -1,15 +1,4 @@
 """Bayesian Gaussian Mixture Model."""
-
-# TODO
-# - Remove the gaussian with small weights
-# - change _alpha_prior -> alpha_prior_
-# X Function in private
-# - not do an EM but an ME
-# X remove trace smw
-# X check if this is precision or covariance
-# X Modifier pour ne pas avoir deux fois le meme code.
-# - Ajouter test calcul covariance tied, diag, spherical par rapport a full ?
-
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 
@@ -314,10 +303,10 @@ class BayesianGaussianMixture(BaseMixture):
 
         if self.covariance_init is None:
             self._covariance_prior = {
-                'full': np.eye(n_features),
-                'tied': np.eye(n_features),
-                'diag': np.diag(np.atleast_2d(np.cov(X.T))),
-                'spherical': np.var(X, axis=0).mean()
+                'full': np.atleast_2d(np.cov(X.T)),
+                'tied': np.atleast_2d(np.cov(X.T)),
+                'diag': np.var(X, axis=0, ddof=1),
+                'spherical': np.var(X, axis=0, ddof=1).mean()
             }[self.covariance_type]
 
         elif self.covariance_type in ['full', 'tied']:
@@ -623,12 +612,12 @@ class BayesianGaussianMixture(BaseMixture):
         # Attributes computation
         self. weights_ = self.alpha_ / np.sum(self.alpha_)
 
-        if self.covariance_type is 'full':
+        if self.covariance_type == 'full':
             self.precisions_ = np.array([
                 np.dot(prec_chol, prec_chol.T)
                 for prec_chol in self.precisions_cholesky_])
 
-        elif self.covariance_type is 'tied':
+        elif self.covariance_type == 'tied':
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
         else:

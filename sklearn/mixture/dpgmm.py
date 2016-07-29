@@ -631,8 +631,8 @@ class DPGMM(_DPGMMBase):
 
 
 @deprecated("The VBGMM class is not working correctly and it's better "
-            "to not use it. VBGMM is deprecated in 0.18 and "
-            "will be removed in 0.20.")
+            "to use sklearn.mixture.BayesianGaussianMixture class instead. "
+            "VBGMM is deprecated in 0.18 and will be removed in 0.20.")
 class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 

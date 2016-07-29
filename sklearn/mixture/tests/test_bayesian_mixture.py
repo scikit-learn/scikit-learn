@@ -1,10 +1,7 @@
+import warnings
 import numpy as np
-from scipy import linalg
-from scipy.special import gammaln, digamma
+from scipy.special import gammaln
 
-from sklearn import cluster
-from sklearn.datasets import make_blobs
-from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
@@ -15,6 +12,11 @@ from sklearn.mixture.bayesian_mixture import _log_wishart_norm
 from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture.gaussian_mixture import _estimate_gaussian_parameters
+from sklearn.mixture.tests.test_gaussian_mixture import RandomData
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils.testing import assert_greater_equal
+
+COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
 
 
 def test_log_dirichlet_norm():
@@ -151,9 +153,9 @@ def test_bayesian_mixture_precisions_prior_initialisation():
 
     # Check correct init for a given value of covariance_init
     covariance_init = {
-        'full': np.cov(X.T, bias=1),
-        'tied': np.cov(X.T, bias=1),
-        'diag': np.diag(np.atleast_2d(np.cov(X.T, bias=1))),
+        'full': np.cov(X.T, bias=1) + 10,
+        'tied': np.cov(X.T, bias=1) + 5,
+        'diag': np.diag(np.atleast_2d(np.cov(X.T, bias=1))) + 3,
         'spherical': rng.rand()}
 
     bgmm = BayesianGaussianMixture()
@@ -177,10 +179,10 @@ def test_bayesian_mixture_precisions_prior_initialisation():
 
     # Check correct init for the default value of covariance_init
     covariance_init_default = {
-        'full': np.eye(X.shape[1]),
-        'tied': np.eye(X.shape[1]),
-        'diag': np.diag(np.atleast_2d(np.cov(X.T))),
-        'spherical': np.var(X, axis=0).mean()}
+        'full': np.atleast_2d(np.cov(X.T)),
+        'tied': np.atleast_2d(np.cov(X.T)),
+        'diag': np.var(X, axis=0, ddof=1),
+        'spherical': np.var(X, axis=0, ddof=1).mean()}
 
     bgmm = BayesianGaussianMixture()
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
@@ -218,4 +220,107 @@ def test_bayesian_mixture_weights():
     # Check the weights sum = 1
     assert_almost_equal(np.sum(bgmm.weights_), 1.0)
 
-# ADD TEST FOR CHECK THE VALUES OF THE COVARIANCES + CHECK LOWER_BOUND IS ALWAYS POSITIVE
+
+def test_monotonic_likelihood():
+    # We check that each step of the EM without regularization improve
+    # monotonically the training set of the bound
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=7)
+    n_components = rand_data.n_components
+
+    for covar_type in COVARIANCE_TYPE:
+        X = rand_data.X[covar_type]
+        bgmm = BayesianGaussianMixture(n_components=2 * n_components,
+                                       covariance_type=covar_type, reg_covar=0,
+                                       warm_start=True, max_iter=1,
+                                       random_state=rng, tol=1e-7)
+        current_lower_bound = -np.infty
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            # Do one training iteration at a time so we can make sure that the
+            # training log likelihood increases after each iteration.
+            for _ in range(500):
+                prev_lower_bound = current_lower_bound
+                try:
+                    current_lower_bound = bgmm.fit(X).lower_bound_
+                except ConvergenceWarning:
+                    pass
+                assert_greater_equal(current_lower_bound,
+                                     prev_lower_bound)
+
+                if bgmm.converged_:
+                    break
+            assert(bgmm.converged_)
+
+
+def test_compare_covar_type():
+    # We can compare the 'full' precision with the other cov_type if we apply
+    # 1 iter of the M-step (done during _initialize_parameters).
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=7)
+    X = rand_data.X['full']
+    n_components = rand_data.n_components
+
+    # Computation of the full_covariance
+    bgmm = BayesianGaussianMixture(n_components=2 * n_components,
+                                   covariance_type='full', reg_covar=0,
+                                   max_iter=1, random_state=rng, tol=1e-7)
+    bgmm._check_initial_parameters(X)
+    bgmm._initialize_parameters(X)
+    full_covariances = bgmm.covariances_ * bgmm.nu_[:, np.newaxis, np.newaxis]
+
+    # Check tied_covariance = mean(full_covariances, 0)
+    bgmm.covariance_type = 'tied'
+    bgmm._check_initial_parameters(X)
+    bgmm._initialize_parameters(X)
+
+    tied_covariance = bgmm.covariances_ * bgmm.nu_
+    assert_almost_equal(tied_covariance, np.mean(full_covariances, 0))
+
+    # Check diag_covariance = diag(full_covariances)
+    bgmm.covariance_type = 'diag'
+    bgmm._check_initial_parameters(X)
+    bgmm._initialize_parameters(X)
+
+    diag_covariances = bgmm.covariances_ * bgmm.nu_[:, np.newaxis]
+    assert_almost_equal(diag_covariances,
+                        np.array([np.diag(cov) for cov in full_covariances]))
+
+    # Check spherical_covariance = np.mean(diag_covariances, 0)
+    bgmm.covariance_type = 'spherical'
+    bgmm._check_initial_parameters(X)
+    bgmm._initialize_parameters(X)
+
+    spherical_covariances = bgmm.covariances_ * bgmm.nu_
+    assert_almost_equal(spherical_covariances, np.mean(diag_covariances, 1))
+
+
+def test_check_covariance_precision():
+    # We check that the dot product of the covariance and the precision
+    # matrices is identity.
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=7)
+    n_components, n_features = 2 * rand_data.n_components, 2
+
+    # Computation of the full_covariance
+    bgmm = BayesianGaussianMixture(n_components=n_components, reg_covar=0,
+                                   max_iter=100, random_state=rng, tol=1e-3)
+    for covar_type in COVARIANCE_TYPE:
+        bgmm.covariance_type = covar_type
+        bgmm.fit(rand_data.X[covar_type])
+
+        if covar_type == 'full':
+            for covar, precision in zip(bgmm.covariances_, bgmm.precisions_):
+                assert_almost_equal(np.dot(covar, precision),
+                                    np.eye(n_features))
+        elif covar_type == 'tied':
+            assert_almost_equal(np.dot(bgmm.covariances_, bgmm.precisions_),
+                                np.eye(n_features))
+
+        elif covar_type == 'diag':
+            assert_almost_equal(bgmm.covariances_ * bgmm.precisions_,
+                                np.ones((n_components, n_features)))
+
+        else:
+            assert_almost_equal(bgmm.covariances_ * bgmm.precisions_,
+                                np.ones(n_components))

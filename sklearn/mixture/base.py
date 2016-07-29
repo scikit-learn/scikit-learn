@@ -137,7 +137,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         ----------
         X : array-like, shape  (n_samples, n_features)
         """
-        # TODO Remove test and matlab
         n_samples, _ = X.shape
         random_state = check_random_state(self.random_state)
 
@@ -146,25 +145,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
                                    random_state=0).fit(X).labels_
             resp[np.arange(n_samples), label] = 1
-            print('NK', list(resp.sum(0)))
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
             resp /= resp.sum(axis=1)[:, np.newaxis]
-        elif self.init_params == 'test':
-            resp = np.array([random_state.dirichlet(np.ones(self.n_components))
-                            for _ in range(n_samples)])
-        elif self.init_params == 'matlab':
-            resp = np.zeros((n_samples, self.n_components))
-            label = np.tile(np.arange(self.n_components)[:, np.newaxis], (
-                1, n_samples / self.n_components)).ravel()
-            resp[np.arange(n_samples), label] = 1
         else:
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
 
         self._initialize(X, resp)
-
-        return resp
 
     @abstractmethod
     def _initialize(self, X, resp):
@@ -200,8 +188,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         X = _check_X(X, self.n_components)
         self._check_initial_parameters(X)
 
-        # TODO prevenir que n_init est incompatible avec warm_start !!!!
-        # if we enable warm_start, we will have a unique initialisation
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 

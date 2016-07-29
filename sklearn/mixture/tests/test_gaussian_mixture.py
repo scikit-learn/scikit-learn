@@ -911,6 +911,3 @@ def test_property():
                                       gmm.covariances_)
         else:
             assert_array_almost_equal(gmm.precisions_, 1. / gmm.covariances_)
-
-
-

@@ -192,7 +192,6 @@ def _estimate_gaussian_covariances_tied(resp, X, nk, means, reg_covar):
     avg_X2 = np.dot(X.T, X)
     avg_means2 = np.dot(nk * means.T, means)
     covariance = avg_X2 - avg_means2
-    # XXX change n_samples -> np.sum(nk)
     covariance /= nk.sum()
     covariance.flat[::len(covariance) + 1] += reg_covar
     return covariance

@@ -183,10 +183,12 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
 
 
 def test_VBGMM_deprecation():
-    assert_warns_message(
-        DeprecationWarning,
-        "The VBGMM class is not working correctly and it's better to not use "
-        "it. VBGMM is deprecated in 0.18 and will be removed in 0.20.", VBGMM)
+    assert_warns_message(DeprecationWarning, "Class VBGMM is deprecated; The "
+                         "VBGMM class is not working "
+                         "correctly and it's better to use "
+                         "sklearn.mixture.BayesianGaussianMixture class "
+                         "instead. VBGMM is deprecated in 0.18 and will be "
+                         "removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):
