@@ -713,7 +713,14 @@ def test_warm_start():
         est_ws.set_params(n_estimators=200)
         est_ws.fit(X, y)
 
-        assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        if Cls is GradientBoostingRegressor:
+            assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        else:
+            # Random state is preserved and hence predict_proba must also be
+            # same
+            assert_array_equal(est_ws.predict(X), est.predict(X))
+            assert_array_almost_equal(est_ws.predict_proba(X),
+                                      est.predict_proba(X))
 
 
 def test_warm_start_n_estimators():
