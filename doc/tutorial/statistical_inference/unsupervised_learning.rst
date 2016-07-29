@@ -105,7 +105,7 @@ algorithms. The simplest clustering algorithm is
 
     Clustering in general and KMeans, in particular, can be seen as a way
     of choosing a small number of exemplars to compress the information.
-    The problem is sometimes known as 
+    The problem is sometimes known as
     `vector quantization <https://en.wikipedia.org/wiki/Vector_quantization>`_.
     For instance, this can be used to posterize an image::
 
@@ -275,7 +275,7 @@ data by projecting on a principal subspace.
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
+    PCA(copy=True, iterated_power=None, n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
