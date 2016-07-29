@@ -45,6 +45,8 @@ class GradientBoostingClassifierCV(BaseEstimator):
         places does not change for `n_stop_rounds` iterations, the gradient
         boosting is halted.
 
+        Set this value to -1 to disable early stopping.`
+
     score_precision : int, optional, default=2
         The number of decimal places to round the score off by before
         comparing it with the scores of previous iterations.
@@ -290,7 +292,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         out = parallel(delayed(_fit_single_param)
                        (self._estimator_class, X, y, train, validation, params,
                         self.n_stop_rounds, self.max_iterations, self.scoring,
-                        self.score_precision)
+                        self.score_precision, self.random_state)
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
@@ -402,7 +404,6 @@ class GradientBoostingClassifierCV(BaseEstimator):
             'max_features': self.max_features,
             'max_leaf_nodes': self.max_leaf_nodes,
             'presort': self.presort,
-            'random_state': self.random_state,
         }
 
         # Pre processing to ensure every parameter is a list
@@ -432,6 +433,8 @@ class GradientBoostingRegressorCV(BaseEstimator):
         If the score on the test set rounded off to `score_precision` decimal
         places does not change for `n_stop_rounds` iterations, the gradient
         boosting is halted.
+
+        Set this value to -1 to disable early stopping.
 
     score_precision : int, optional, default=2
         The number of decimal places to round the score off by before
@@ -678,7 +681,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
         out = parallel(delayed(_fit_single_param)
                        (self._estimator_class, X, y, train, validation, params,
                         self.n_stop_rounds, self.max_iterations, self.scoring,
-                        self.score_precision)
+                        self.score_precision, self.random_state)
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
@@ -748,7 +751,6 @@ class GradientBoostingRegressorCV(BaseEstimator):
             'max_features': self.max_features,
             'max_leaf_nodes': self.max_leaf_nodes,
             'presort': self.presort,
-            'random_state': self.random_state,
         }
 
         # Pre processing to ensure every parameter is a list
@@ -760,7 +762,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
 
 
 def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
-                      max_iter, scoring, score_precision):
+                      max_iter, scoring, score_precision, random_state):
     """ Fit a single estimator till stopping criteria is reached.
 
     Parameters
@@ -790,6 +792,8 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         The number of iterations for which the score should remain constant
         over to stop training.
 
+        Set to -1 to disable early stopping.
+
     max_iter : int
         The maximum number of estimators to fit during gradient boosting.
 
@@ -803,6 +807,13 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         The number of decimal places the score during each iterations is
         rounded off to before comparing with the previous ones.
 
+    random_state : int, RandomState instance or None,
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+
     Returns
     -------
     score: float
@@ -813,29 +824,38 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         parameter `n_estimators` for the gradient boosting model
     """
 
+    params['random_state'] = random_state
     params['warm_start'] = True
     gb = estimator(**params)
+
+    print gb.warm_start
     scorer = check_scoring(estimator, scoring=scoring)
-    scores = np.empty((stop_rounds,))
-    scores.fill(-np.inf)
+    scores = []
+    rounded_scores = []
 
     X_train = X[train]
     y_train = y[train]
     X_validation = X[validation]
     y_validation = y[validation]
 
-    for i in range(1, max_iter):
+    for i in range(1, max_iter + 1):
         gb.n_estimators = i
         gb.fit(X_train, y_train)
 
-        scores = np.roll(scores, shift=-1)
-        scores[-1] = scorer(gb, X_validation, y_validation)
-        rounded_scores = np.round(scores, score_precision)
+        this_score = scorer(gb, X_validation, y_validation)
+        this_score_rounded = np.round(this_score, score_precision)
 
-        if np.all(rounded_scores[-1] <= rounded_scores):
+        scores.append(this_score)
+        rounded_scores.append(this_score_rounded)
+
+        # Check if we need to stop early
+        if (stop_rounds > 0 and i >= stop_rounds and
+                np.all(this_score_rounded <= rounded_scores[-stop_rounds:])):
             break
 
     if i == max_iter:
         warnings.warn(str(gb) + ' failed to converge')
 
-    return scores[-1], i
+    max_score = np.max(scores)
+    i = scores.index(max_score)
+    return max_score, i
