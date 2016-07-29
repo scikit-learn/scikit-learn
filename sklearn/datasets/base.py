@@ -242,7 +242,7 @@ def load_files(container_path, description=None, categories=None,
                  DESCR=description)
 
 
-def load_iris():
+def load_iris(return_X_y=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -258,6 +258,15 @@ def load_iris():
 
     Read more in the :ref:`User Guide <datasets>`.
 
+    Parameters
+    ----------
+    
+        .. versionadded:: 0.18
+     
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
     Returns
     -------
     data : Bunch
@@ -266,6 +275,8 @@ def load_iris():
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
         full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
 
     Examples
     --------
@@ -295,6 +306,9 @@ def load_iris():
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
+
+    if return_X_y:
+        return data, target
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
