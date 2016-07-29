@@ -422,12 +422,12 @@ Tips on Practical Use
     thus not uncommon, to have slightly different results for the same
     input data. If that happens, try with a smaller tol parameter.
 
-  * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
-    dual=False)`` yields a sparse solution, i.e. only a subset of feature
-    weights is different from zero and contribute to the decision function.
-    Increasing ``C`` yields a more complex model (more feature are selected).
-    The ``C`` value that yields a "null" model (all weights equal to zero) can
-    be calculated using :func:`l1_min_c`.
+  * Using :math:`\ell_1` penalization as provided by ``LinearSVC(loss='l2',
+    penalty='l1', dual=False)`` yields a sparse solution, i.e. only a subset of
+    feature weights is different from zero and contribute to the decision
+    function. Increasing ``C`` yields a more complex model (more feature are
+    selected). The ``C`` value that yields a "null" model (all weights equal to
+    zero) can be calculated using :func:`l1_min_c`.
 
 
 .. _svm_kernels:

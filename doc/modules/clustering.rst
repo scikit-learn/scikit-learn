@@ -808,7 +808,7 @@ the need to hold the entire input data in memory. This information includes:
 
 - Number of samples in a subcluster.
 - Linear Sum - A n-dimensional vector holding the sum of all samples
-- Squared Sum - Sum of the squared L2 norm of all samples.
+- Squared Sum - Sum of the squared :math:`\ell_2` norm of all samples.
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
 

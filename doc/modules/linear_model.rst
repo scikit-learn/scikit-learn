@@ -173,10 +173,9 @@ as regularizer. The objective function to minimize is:
 .. math::
   \min_w { \frac{1}{2n_\textrm{samples}} \|X w - y\|_2 ^ 2 + \alpha \|w\|_1}
 
-The lasso estimate thus solves the minimization of the
-least-squares penalty with :math:`\alpha \|w\|_1` added, where
-:math:`\alpha` is a constant and :math:`\|w\|_1` is the :math:`\ell_1`-norm of
-the parameter vector.
+The lasso estimate thus solves the minimization of the least-squares penalty
+with :math:`\alpha \|w\|_1` added, where :math:`\alpha` is a constant and
+:math:`\|w\|_1` is the :math:`\ell_1`-norm of the parameter vector.
 
 The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
@@ -301,8 +300,8 @@ columns.
 
 
 Mathematically, it consists of a linear model trained with a mixed
-:math:`\ell_1` :math:`\ell_2` prior as regularizer.
-The objective function to minimize is:
+:math:`\ell_1\ell_2` prior as regularizer. The objective function to
+minimize is:
 
 .. math::
 
@@ -313,7 +312,7 @@ where :math:`\textrm{Fro}` indicates the Frobenius norm:
 
 .. math:: \|A\|_\textrm{Fro} = \sqrt{\sum_{ij} a_{ij}^2}
 
-and :math:`\ell_1` :math:`\ell_2` reads:
+and :math:`\ell_1\ell_2` reads:
 
 .. math:: \|A\|_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}
 
@@ -701,18 +700,18 @@ or the log-linear classifier. In this model, the probabilities describing the po
 
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
-Rest, or multinomial logistic regression with optional L2 or L1
-regularization.
+Rest, or multinomial logistic regression with optional :math:`\ell_2` or
+:math:`\ell_1` regularization.
 
-As an optimization problem, binary class L2 penalized logistic regression
-minimizes the following cost function:
+As an optimization problem, binary class :math:`\ell_2` penalized logistic
+regression minimizes the following cost function:
 
 .. math::
 
   \min_{w,c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) +
   1) .
 
-Similarly, L1 regularized logistic regression solves the following
+Similarly, :math:`\ell_1` regularized logistic regression solves the following
 optimization problem
 
 .. math::
@@ -722,25 +721,26 @@ optimization problem
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs" and "sag":
 
-The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
-on the excellent C++ `LIBLINEAR library
+The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies on
+the excellent C++ `LIBLINEAR library
 <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_, which is shipped with
-scikit-learn. However, the CD algorithm implemented in liblinear cannot learn
-a true multinomial (multiclass) model; instead, the optimization problem is
+scikit-learn. However, the CD algorithm implemented in liblinear cannot learn a
+true multinomial (multiclass) model; instead, the optimization problem is
 decomposed in a "one-vs-rest" fashion so separate binary classifiers are
 trained for all classes. This happens under the hood, so
 :class:`LogisticRegression` instances using this solver behave as multiclass
-classifiers. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
-calculate the lower bound for C in order to get a non "null" (all feature
-weights to zero) model.
+classifiers. For :math:`\ell_1` penalization :func:`sklearn.svm.l1_min_c`
+allows to calculate the lower bound for C in order to get a non "null" (all
+feature weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
-are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
-logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting. The
-"lbfgs", "sag" and "newton-cg"" solvers cannot optimize L1-penalized models,
-therefore the "multinomial" setting does not learn sparse models.
+The "lbfgs", "sag" and "newton-cg" solvers only support :math:`\ell_2`
+penalization and are found to converge faster for some high dimensional data.
+Setting `multi_class` to "multinomial" with these solvers learns a true
+multinomial logistic regression model [5]_, which means that its probability
+estimates should be better calibrated than the default "one-vs-rest" setting.
+The "lbfgs", "sag" and "newton-cg"" solvers cannot optimize
+:math:`\ell_1`-penalized models, therefore the "multinomial" setting does not
+learn sparse models.
 
 The solver "sag" uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
@@ -748,15 +748,15 @@ number of features are large.
 
 In a nutshell, one may choose the solver with the following rules:
 
-=================================  =============================
-Case                               Solver
-=================================  =============================
-Small dataset or L1 penalty        "liblinear"
-Multinomial loss or large dataset  "lbfgs", "sag" or "newton-cg"
-Very Large dataset                 "sag"
-=================================  =============================
-
-For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
+=================================         =============================
+Case                                      Solver
+=================================         =============================
+Small dataset or :math:`\ell_1` penalty   "liblinear"
+Multinomial loss or large dataset         "lbfgs", "sag" or "newton-cg"
+Very Large dataset                        "sag"
+=================================         =============================
+For a large dataset, you may also consider using :class:`SGDClassifier` with
+'log' loss.
 
 .. topic:: Examples:
 
@@ -783,8 +783,8 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
 
 .. note:: **Feature selection with sparse logistic regression**
 
-   A logistic regression with L1 penalty yields sparse models, and can
-   thus be used to perform feature selection, as detailed in
+   A logistic regression with :math:`\ell_1` penalty yields sparse models, and
+   can thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
 :class:`LogisticRegressionCV` implements Logistic Regression with builtin

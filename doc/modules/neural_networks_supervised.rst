@@ -174,9 +174,9 @@ Regularization
 ==============
 
 Both :class:`MLPRegressor` and class:`MLPClassifier` use parameter ``alpha``
-for regularization (L2 regularization) term which helps in avoiding overfitting
-by penalizing weights with large magnitudes. Following plot displays varying
-decision function with value of alpha.
+for regularization (:math:`\ell_2` regularization) term which helps in avoiding
+overfitting by penalizing weights with large magnitudes. Following plot
+displays varying decision function with value of alpha.
 
 .. figure:: ../auto_examples/neural_networks/images/sphx_glr_plot_mlp_alpha_001.png
    :target: ../auto_examples/neural_networks/plot_mlp_alpha.html
@@ -283,9 +283,9 @@ function for classification is Cross-Entropy, which in binary case is given as,
     \textrm{Loss}(\hat{y},y,W) = -y \ln {\hat{y}} - (1-y) \ln{(1-\hat{y})} +
     \alpha \|W\|_2^2
 
-where :math:`\alpha ||W||_2^2` is an L2-regularization term (aka penalty)
-that penalizes complex models; and :math:`\alpha > 0` is a non-negative
-hyperparameter that controls the magnitude of the penalty.
+where :math:`\alpha \|W\|_2^2` is an :math:`\ell_2`-regularization term (aka
+penalty) that penalizes complex models; and :math:`\alpha > 0` is a
+non-negative hyperparameter that controls the magnitude of the penalty.
 
 For regression, MLP uses the Square Error loss function; written as,
 

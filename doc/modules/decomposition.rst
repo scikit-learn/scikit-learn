@@ -703,11 +703,12 @@ matrices by setting :attr:`init="random"`. An integer seed or a
 ``RandomState`` can also be passed to :attr:`random_state` to control
 reproducibility.
 
-In :class:`NMF`, L1 and L2 priors can be added to the loss function in order
-to regularize the model. The L2 prior uses the Frobenius norm, while the L1
-prior uses an elementwise L1 norm. As in :class:`ElasticNet`, we control the
-combination of L1 and L2 with the :attr:`l1_ratio` (:math:`\rho`) parameter,
-and the intensity of the regularization with the :attr:`alpha`
+In :class:`NMF`, :math:`\ell_1` and :math:`\ell_2` priors can be added to the
+loss function in order to regularize the model. The :math:`\ell_2` prior uses
+the Frobenius norm, while the :math:`\ell_1` prior uses an elementwise
+:math:`\ell_1` norm. As in :class:`ElasticNet`, we control the combination of
+:math:`\ell_1` and :math:`\ell_2` with the :attr:`l1_ratio` (:math:`\rho`)
+parameter, and the intensity of the regularization with the :attr:`alpha`
 (:math:`\alpha`) parameter. Then the priors terms are
 
 .. math::
