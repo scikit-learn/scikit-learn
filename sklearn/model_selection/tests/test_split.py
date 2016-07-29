@@ -538,7 +538,7 @@ def test_stratified_shuffle_split_init():
 def test_stratified_shuffle_split_iter():
     ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
           np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2] * 2),
           np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
           np.array([-1] * 800 + [1] * 50)
           ]
@@ -594,8 +594,8 @@ def test_stratified_shuffle_split_even():
         assert_equal(n_splits_actual, n_splits)
 
         n_train, n_test = _validate_shuffle_split(n_samples,
-                                                  test_size=1./n_folds,
-                                                  train_size=1.-(1./n_folds))
+                                                  test_size=1. / n_folds,
+                                                  train_size=1. - (1. / n_folds))
 
         assert_equal(len(train), n_train)
         assert_equal(len(test), n_test)
@@ -656,7 +656,7 @@ def test_label_shuffle_split():
     for l in labels:
         X = y = np.ones(len(l))
         n_splits = 6
-        test_size = 1./3
+        test_size = 1. / 3
         slo = LabelShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
         # Make sure the repr works
