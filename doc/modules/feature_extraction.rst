@@ -401,20 +401,35 @@ Tf means **term-frequency** while tf–idf means term-frequency times
 **inverse document-frequency**:
 :math:`\text{tf-idf(t,d)}=\text{tf(t,d)} \times \text{idf(t)}`.
 
+Using the ``TfidfTransformer``'s default settings,
+``TfidfTransformer(norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False)``
+the term frequency, the number of times a term occurs in a given document,
+is multiplied with idf component, which is computed as
+
+:math:`\text{idf}(t) = log{\frac{1 + n_d}{1+\text{df}(d,t)}} + 1`,
+
+where :math:`n_d` is the total number of documents, and :math:`\text{df}(d,t)`
+is the number of documents that contain term :math:`t`. The resulting tf-idf
+vectors are then normalized by the Euclidean norm:
+
+:math:`v_{norm} = \frac{v}{||v||_2} = \frac{v}{\sqrt{v{_1}^2 +
+v{_2}^2 + \dots + v{_n}^2}}`.
+
 This was originally a term weighting scheme developed for information retrieval
 (as a ranking function for search engines results) that has also found good
 use in document classification and clustering.
 
-Please note that the tf-idfs computed in scikit-learn's
-:class:`TfidfTransformer` and :class:`TfidfVectorizer` differ slightly from the
-standard textbook notation that defines the idf as
+The following sections contain further explanations and examples that
+illustrate how the tf-idfs are computed exactly and how the tf-idfs
+computed in scikit-learn's :class:`TfidfTransformer`
+and :class:`TfidfVectorizer` differ slightly from the standard textbook
+notation that defines the idf as
 
-:math:`\text{idf}(t) = log{\frac{n_d}{1+\text{df}(d,t)}},`
+:math:`\text{idf}(t) = log{\frac{n_d}{1+\text{df}(d,t)}}.`
 
-where :math:`n_d` is the total number of documents, and :math:`\text{df}(d,t)`
-is the number of documents that contain term :math:`t`.
 
-In the :class:`TfidfTransformer` and :class:`TfidfVectorizer`, the
+In the :class:`TfidfTransformer` and :class:`TfidfVectorizer`
+with ``smooth_idf=False``, the
 "1" count is added to the idf instead of the idf's denominator:
 
 :math:`\text{idf}(t) = log{\frac{n_d}{\text{df}(d,t)}} + 1`
@@ -491,7 +506,7 @@ for document 1:
 :math:`\frac{[3, 0, 2.0986]}{\sqrt{\big(3^2 + 0^2 + 2.0986^2\big)}}
 = [ 0.819,  0,  0.573].`
 
-Furthermore, the default parameter `smooth_idf=True` adds "1" to the numerator
+Furthermore, the default parameter ``smooth_idf=True`` adds "1" to the numerator
 and  denominator as if an extra document was seen containing every term in the
 collection exactly once, which prevents zero divisions:
 
