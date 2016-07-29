@@ -22,21 +22,21 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 import scipy.sparse as sp
 
-from .base import is_classifier, clone
-from .utils import indexable, check_random_state, safe_indexing
-from .utils.validation import (_is_arraylike, _num_samples,
+from sklearn.base import is_classifier, clone
+from sklearn.utils import indexable, check_random_state, safe_indexing
+from sklearn.utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
-from .utils.multiclass import type_of_target
-from .externals.joblib import Parallel, delayed, logger
-from .externals.six import with_metaclass
-from .externals.six.moves import zip
-from .metrics.scorer import check_scoring
-from .utils.fixes import bincount
-from .gaussian_process.kernels import Kernel as GPKernel
-from .exceptions import FitFailedWarning
+from sklearn.utils.multiclass import type_of_target
+from sklearn.externals.joblib import Parallel, delayed, logger
+from sklearn.externals.six import with_metaclass
+from sklearn.externals.six.moves import zip
+from sklearn.metrics.scorer import check_scoring
+from sklearn.utils.fixes import bincount
+from sklearn.gaussian_process.kernels import Kernel as GPKernel
+from sklearn.exceptions import FitFailedWarning
 
 
-warnings.warn("This module was deprecated in version 0.18 in favor of the "
+warnings.warn("This module has been deprecated in favor of the "
               "model_selection module into which all the refactored classes "
               "and functions are moved. Also note that the interface of the "
               "new CV iterators are different from that of this module. "
@@ -1199,7 +1199,7 @@ def _index_param_value(X, v, indices):
 
 
 def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
-                      verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                      verbose=0, fit_params=None, sample_weights=None, pre_dispatch='2*n_jobs'):
     """Generate cross-validated estimates for each input data point
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1242,6 +1242,9 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
 
+    sample_weights : array-like, optional, default: None
+        Sample weights for weighted scoring.
+
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -1275,6 +1278,8 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     >>> y_pred = cross_val_predict(lasso, X, y)
     """
     X, y = indexable(X, y)
+    if sample_weights is None:
+        sample_weights = np.ones(y.shape[0], 1)
 
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     # We clone the estimator to make sure that all the folds are
@@ -1301,7 +1306,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     return preds[inv_locs]
 
 
-def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
+def _fit_and_predict(estimator, X, y, sample_weights, train, test, verbose, fit_params):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1317,6 +1322,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    sample_weights : array-like
+        Sample weights for weighted scoring.
 
     train : array-like, shape (n_train_samples,)
         Indices of training samples.
@@ -1338,13 +1346,15 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params):
     test : array-like
         This is the value of the test parameter
     """
-    # Adjust length of sample weights
+    # Select subset of sample weights for training, based on 'train' indices
     fit_params = fit_params if fit_params is not None else {}
+    if sample_weights is not None:
+        fit_params['sample_weight'] = sample_weights
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
-    X_train, y_train = _safe_split(estimator, X, y, train)
-    X_test, _ = _safe_split(estimator, X, y, test, train)
+    X_train, y_train, w_train = _safe_split(estimator, X, y, sample_weights, train)
+    X_test, w_test, _ = _safe_split(estimator, X, y, sample_weights, test, train)
 
     if y_train is None:
         estimator.fit(X_train, **fit_params)
@@ -1379,7 +1389,8 @@ def _check_is_partition(locs, n):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, sample_weights=None,
+                    pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1427,6 +1438,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
 
+    sample_weights : array-like, optional, default: None
+        Sample weights for weighted scoring.
+
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -1467,6 +1481,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
     """
     X, y = indexable(X, y)
+    if sample_weights is None:
+        sample_weights = np.ones(y.shape[0], 1)
 
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -1474,14 +1490,14 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, sample_weights, scorer,
                                               train, test, verbose, None,
                                               fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
+def _fit_and_score(estimator, X, y, sample_weights, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
@@ -1497,6 +1513,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    sample_weights : array-like
+        Sample weights for weighted scoring.
 
     scorer : callable
         A scorer callable object / function with signature
@@ -1554,8 +1573,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
-    # Adjust length of sample weights
+    # select sample weights' subset for training, based on 'train' indices
     fit_params = fit_params if fit_params is not None else {}
+    if sample_weights is not None:
+        fit_params['sample_weight'] = sample_weights
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
@@ -1564,8 +1585,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     start_time = time.time()
 
-    X_train, y_train = _safe_split(estimator, X, y, train)
-    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    X_train, y_train, w_train = _safe_split(estimator, X, y, sample_weights, train)
+    X_test, y_test, w_test = _safe_split(estimator, X, y, sample_weights, test, train)
 
     try:
         if y_train is None:
@@ -1590,9 +1611,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                              )
 
     else:
-        test_score = _score(estimator, X_test, y_test, scorer)
+        test_score = _score(estimator, X_test, y_test, scorer, w_test)
         if return_train_score:
-            train_score = _score(estimator, X_train, y_train, scorer)
+            train_score = _score(estimator, X_train, y_train, scorer, w_train)
 
     scoring_time = time.time() - start_time
 
@@ -1609,7 +1630,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _safe_split(estimator, X, y, indices, train_indices=None):
+def _safe_split(estimator, X, y, weights, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel) \
        and not isinstance(estimator.kernel, GPKernel):
@@ -1622,6 +1643,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
         X_subset = [X[idx] for idx in indices]
+        w_subset = [weights[idx] for idx in indices]
     else:
         if getattr(estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix
@@ -1629,25 +1651,28 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
                 raise ValueError("X should be a square kernel matrix")
             if train_indices is None:
                 X_subset = X[np.ix_(indices, indices)]
+                w_subset = weights[np.ix_(indices, indices)]
             else:
                 X_subset = X[np.ix_(indices, train_indices)]
+                w_subset = weights[np.ix_(indices, train_indices)]
         else:
             X_subset = safe_indexing(X, indices)
+            w_subset = safe_indexing(weights, indices)
 
     if y is not None:
         y_subset = safe_indexing(y, indices)
     else:
         y_subset = None
 
-    return X_subset, y_subset
+    return X_subset, y_subset, w_subset
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, sample_weights):
     """Compute the score of an estimator on a given test set."""
     if y_test is None:
-        score = scorer(estimator, X_test)
+        score = scorer(estimator, X_test, sample_weight=sample_weights)
     else:
-        score = scorer(estimator, X_test, y_test)
+        score = scorer(estimator, X_test, y_test, sample_weight=sample_weights)
     if hasattr(score, 'item'):
         try:
             # e.g. unwrap memmapped scalars
