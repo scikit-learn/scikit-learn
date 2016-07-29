@@ -1365,6 +1365,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
+        .. versionadded:: 0.18
+
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
@@ -1725,6 +1727,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. versionadded:: 0.18
 
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile

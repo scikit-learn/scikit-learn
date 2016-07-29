@@ -125,10 +125,10 @@ New features
      <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
      Liu`_.
 
-     - Added weighted impurity-based early stopping criterion for decision tree
-       growth. (`#6954
-       <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
-       Liu`_
+   - Added weighted impurity-based early stopping criterion for decision tree
+     growth. (`#6954
+     <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
+     Liu`_
 
 Enhancements
 ............
