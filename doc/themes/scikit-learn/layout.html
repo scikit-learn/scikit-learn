@@ -39,11 +39,11 @@
        }
     );
     function showMenu() {
-      var x = document.getElementById("scikit-navbar");
-      if (x.className === "navbar") {
-          x.className += " responsive";
+      var topNav = document.getElementById("scikit-navbar");
+      if (topNav.className === "navbar") {
+          topNav.className += " responsive";
       } else {
-          x.className = "navbar";
+          topNav.className = "navbar";
       }
     };
   </script>
@@ -95,13 +95,13 @@
         </li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             </ul>
-            <div class="nav-icon">
-                <a href="javascript:void(0);" onclick="showMenu()">
+            <a href="javascript:void(0);" onclick="showMenu()">
+                <div class="nav-icon">
                     <div class="hamburger-line"></div>
                     <div class="hamburger-line"></div>
                     <div class="hamburger-line"></div>
-                </a>
-            </div>
+                </div>
+            </a>
             <div class="search_form">
                 <div id="cse" style="width: 100%;"></div>
             </div>
