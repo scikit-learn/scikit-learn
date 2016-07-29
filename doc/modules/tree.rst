@@ -448,7 +448,7 @@ Select the parameters that minimises the impurity
 
     \theta^* = \arg\min_\theta G(Q, \theta)
 
-Recur for subsets :math:`Q_\textrm{left}(\theta^*)` and
+Recurse for subsets :math:`Q_\textrm{left}(\theta^*)` and
 :math:`Q_\textrm{right}(\theta^*)` until either the maximum allowable depth is
 reached, :math:`N_m < \min_\textrm{samples}`, or :math:`N_m = 1`.
 
