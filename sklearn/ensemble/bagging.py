@@ -104,7 +104,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
         features, indices = _draw_bagging_indices(random_state, bootstrap_features, 
                                                   bootstrap, n_features, 
                                                   n_samples, max_features, max_samples)
-        print indices
+
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
             if sample_weight is None:
