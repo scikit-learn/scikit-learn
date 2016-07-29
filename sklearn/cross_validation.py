@@ -1279,7 +1279,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
     if sample_weights is None:
-        sample_weights = np.ones(y.shape[0], 1)
+        sample_weights = np.ones(X.shape[0], 1)
 
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     # We clone the estimator to make sure that all the folds are
@@ -1482,7 +1482,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = indexable(X, y)
     if sample_weights is None:
-        sample_weights = np.ones(y.shape[0], 1)
+        sample_weights = np.ones(X.shape[0], 1)
 
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
