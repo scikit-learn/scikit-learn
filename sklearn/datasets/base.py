@@ -259,7 +259,7 @@ def load_iris(return_X_y=False):
     Read more in the :ref:`User Guide <datasets>`.
 
     Parameters
-     ----------
+    ----------
     
         .. versionadded:: 0.18
      
