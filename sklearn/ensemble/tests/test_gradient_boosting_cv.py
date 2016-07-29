@@ -7,15 +7,12 @@ from sklearn.ensemble import GradientBoostingRegressorCV
 from sklearn.ensemble import GradientBoostingRegressor
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics.cluster import homogeneity_score
 from sklearn.model_selection import train_test_split
 
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 
 
 rng = np.random.RandomState(0)
@@ -77,18 +74,18 @@ def test_param_grid():
     X_train, X_test, y_train, y_test = train_test_split(X_clf, y_clf,
                                                         random_state=42)
     gbccv = GradientBoostingClassifierCV(max_iterations=1000,
-                                        learning_rate=[0.1, 0.3],
-                                        max_depth=[3, 4])
+                                         learning_rate=[0.1, 0.3],
+                                         max_depth=[3, 4])
     gbccv.fit(X_train, y_train)
     assert_equal(gbccv.best_params_['n_estimators'], 10)
     assert_greater(gbccv.best_estimator_.score(X_test, y_test), 0.9)
 
     # If n_iter_combo is given, RandomSampler must be used
     gbccv = GradientBoostingClassifierCV(max_iterations=1000,
-                                        learning_rate=[0.1, 0.3],
-                                        max_depth=[3, 4],
-                                        n_iter_combo=1,
-                                        random_state=42)
+                                         learning_rate=[0.1, 0.3],
+                                         max_depth=[3, 4],
+                                         n_iter_combo=1,
+                                         random_state=42)
     gbccv.fit(X_train, y_train)
     # Only 1 cv iteration (n_iter_combo=1)
     assert_equal(len(gbccv.grid_scores_), 1)

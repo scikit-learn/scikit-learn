@@ -902,6 +902,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             del self.oob_improvement_
         if hasattr(self, 'init_'):
             del self.init_
+        if hasattr(self, '_rng'):
+            del self._rng
 
     def _resize_state(self):
         """Add additional ``n_estimators`` entries to all attributes. """
@@ -981,7 +983,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         y = self._validate_y(y)
 
-        random_state = check_random_state(self.random_state)
         self._check_params()
 
         if not self._is_initialized():
@@ -994,6 +995,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             # init predictions
             y_pred = self.init_.predict(X)
             begin_at_stage = 0
+
+            # The rng state must be preserved if warm_start is True
+            self._rng = check_random_state(self.random_state)
+
         else:
             # add more estimators to fitted model
             # invariant: warm_start = True
@@ -1024,7 +1029,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                                                  dtype=np.int32)
 
         # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
+        n_stages = self._fit_stages(X, y, y_pred, sample_weight, self._rng,
                                     begin_at_stage, monitor, X_idx_sorted)
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
