@@ -17,7 +17,7 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+from ..utils import check_random_state, check_X_y, check_array, column_or_1d, deprecated
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.fixes import bincount
@@ -104,7 +104,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
         features, indices = _draw_bagging_indices(random_state, bootstrap_features, 
                                                   bootstrap, n_features, 
                                                   n_samples, max_features, max_samples)
-
+        print indices
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
             if sample_weight is None:
@@ -299,6 +299,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Remap output
         n_samples, self.n_features_ = X.shape
+        self._n_samples = n_samples
         y = self._validate_y(y)
 
         # Check parameters
@@ -395,39 +396,38 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Default implementation
         return column_or_1d(y, warn=True)
 
-    def _get_estimators_samples(self, X):
-        # Get ensemble parameters
-        n_samples, n_features = X.shape
-        max_features = self.max_features
-        max_samples = self.max_samples
-        bootstrap = self.bootstrap
-        bootstrap_features = self.bootstrap_features
-        seeds = self._seeds
-
+    def _get_estimators_samples(self):
         # If max_samples is float
-        if not isinstance(max_samples, (numbers.Integral, np.integer)):
-            max_samples = int(max_samples * X.shape[0])
+        if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
+            max_samples = int(self.max_samples * self._n_samples)
 
-        if not (0 < max_samples <= X.shape[0]):
+        if not (0 < max_samples <= self._n_samples):
             raise ValueError("max_samples must be in (0, n_samples]")
 
         # If max_features is float
         if not isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = int(self.max_features * self.n_features_)
 
-        if not (0 < max_features <= X.shape[1]):
+        if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_samples]")
 
         # Get sampled indices
-        for seed in seeds:
+        for seed in self._seeds:
             # Operations accessing random_state must be performed identically
-            # order to those in `_parallel_build_estimators`
+            # to those in `_parallel_build_estimators()`
             random_state = check_random_state(seed)
             seed = random_state.randint(MAX_INT) 
-            _, samples = _draw_bagging_indices(random_state, bootstrap_features, 
-                                               bootstrap, n_features, 
-                                               n_samples, max_features, max_samples)
+            _, samples = _draw_bagging_indices(random_state, self.bootstrap_features, 
+                                               self.bootstrap, self.n_features_, 
+                                               self._n_samples, max_features, 
+                                               max_samples)
             yield samples
+
+    @property
+    @deprecated("Attribute 'estimator_samples_' is deprecated and will be removed "
+                "in release 0.20. Use method '_get_estimator_samples()' instead.")
+    def estimators_samples_(self):
+        return self._get_estimators_samples()
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -583,12 +583,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         n_samples = y.shape[0]
         n_classes_ = self.n_classes_
         classes_ = self.classes_
-        estimators_samples = self._get_estimators_samples(X)
 
         predictions = np.zeros((n_samples, n_classes_))
 
         for estimator, samples, features in zip(self.estimators_,
-                                                estimators_samples,
+                                                self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
             mask = np.ones(n_samples, dtype=np.bool)
@@ -977,14 +976,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
-        estimators_samples = self._get_estimators_samples(X)
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
         for estimator, samples, features in zip(self.estimators_,
-                                             estimators_samples,
-                                             self.estimators_features_):
+                                                self.estimators_samples_,
+                                                self.estimators_features_):
             # Create mask for OOB samples
             mask = np.ones(n_samples, dtype=np.bool)
             mask[samples] = False
