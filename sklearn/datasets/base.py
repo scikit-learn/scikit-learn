@@ -260,6 +260,9 @@ def load_iris(return_X_y=False):
 
     Parameters
      ----------
+    
+        .. versionadded:: 0.18
+     
     return_X_y : boolean, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
