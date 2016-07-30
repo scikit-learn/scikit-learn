@@ -35,7 +35,7 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _replace_step(self, steps_attr, name, new_val):
         new_steps = getattr(self, steps_attr)[:]
-        for i, (step_name, clf) in enumerate(new_steps):
+        for i, (step_name, _) in enumerate(new_steps):
             if step_name == name:
                 new_steps[i] = (name, new_val)
                 break
@@ -83,9 +83,6 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError('Step names must not contain __: got '
                              '{!r}'.format(invalid_names))
 
-
-# One round of beers on me if someone finds out why the backslash
-# is needed in the Attributes section so as not to upset sphinx.
 
 class Pipeline(_BasePipeline):
     """Pipeline of transforms with a final estimator.
@@ -204,7 +201,7 @@ class Pipeline(_BasePipeline):
                                 " '%s' (type %s) doesn't)" % (t, type(t)))
 
         if not hasattr(estimator, "fit"):
-            raise TypeError("Last step of pipleine should implement fit "
+            raise TypeError("Last step of Pipeline should implement fit "
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
@@ -255,10 +252,15 @@ class Pipeline(_BasePipeline):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        fit_params : dict of string -> object
-            Parameters passed to the `fit` method of each step, where
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of each step, where
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
+
+        Returns
+        -------
+        self : Pipeline
+            This estimator
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
@@ -281,10 +283,15 @@ class Pipeline(_BasePipeline):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        fit_params : dict of string -> object
-            Parameters passed to the `fit` method of each step, where
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of each step, where
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
+
+        Returns
+        -------
+        Xt : array-like, shape = [n_samples, n_transformed_features]
+            Transformed samples
         """
         last_step = self.steps[-1][-1]
         Xt, fit_params = self._fit(X, y, **fit_params)
@@ -331,10 +338,14 @@ class Pipeline(_BasePipeline):
             Training targets. Must fulfill label requirements for all steps
             of the pipeline.
 
-        fit_params : dict of string -> object
-            Parameters passed to the `fit` method of each step, where
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of each step, where
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
+
+        Returns
+        -------
+        y_pred : array-like
         """
         Xt = X
         for name, transform in self.steps[:-1]:
@@ -453,8 +464,12 @@ class Pipeline(_BasePipeline):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Evaluation data, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+            Data to score. Must fulfill input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Targets used for scoring. Must fulfill label requirements for all
+            steps of the pipeline.
 
         Returns
         -------
@@ -597,7 +612,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params``.
+        Valid parameter keys can be listed with ``get_params()``.
 
         Returns
         -------
@@ -654,8 +669,16 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : iterable or array-like, depending on transformers
             Input data, used to fit transformers.
+
+        y : array-like, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : FeatureUnion
+            This estimator
         """
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)
@@ -664,13 +687,15 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit all transformers using X, transform the data and concatenate
-        results.
+        """Fit all transformers, transform the data and concatenate results.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : iterable or array-like, depending on transformers
             Input data to be transformed.
+
+        y : array-like, shape (n_samples, ...), optional
+            Targets for supervised learning.
 
         Returns
         -------
@@ -698,7 +723,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : iterable or array-like, depending on transformers
             Input data to be transformed.
 
         Returns

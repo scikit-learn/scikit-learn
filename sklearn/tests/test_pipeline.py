@@ -431,7 +431,8 @@ def test_set_pipeline_step_none():
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline = make()
-    assert_raises(TypeError, pipeline.set_params, est=None)
+    assert_raises_regex(TypeError, r'Last step of Pipeline .*\bfit\b.*',
+                        pipeline.set_params, est=None)
 
 
 def test_make_pipeline():
