@@ -16,10 +16,10 @@ extends single output estimators to multioutput estimators.
 
 import numpy as np
 
-from abc import ABCMeta, abstractmethod
-from .base import BaseEstimator, clone, MetaEstimatorMixin
+from abc import ABCMeta
+from .base import BaseEstimator, clone
 from .base import RegressorMixin, ClassifierMixin
-from .utils import check_array, check_random_state, check_X_y
+from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .externals.joblib import Parallel, delayed
