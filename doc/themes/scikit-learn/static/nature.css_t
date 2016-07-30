@@ -116,7 +116,6 @@ div.navbar div.nav-icon {
         background: #ff9c34;
         padding: 5px 10px;
         border-radius: 5px;
-        z-index: 10;
     }
     div.navbar ul li {
         display: none;
@@ -138,7 +137,6 @@ div.navbar div.nav-icon {
         top: 10px;
         margin-right: 10px;
         background: #ff9c34;
-        z-index: 9;
     }
     div.navbar.responsive > ul li {
         display: flex;
