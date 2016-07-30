@@ -306,9 +306,9 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Data samples, where ``n_sampless`` is the number of samples and
-            ``n_features`` is the number of features.
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
 
         Returns
         -------
@@ -359,9 +359,9 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
 
         Returns
         -------
@@ -399,9 +399,9 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
 
         Returns
         -------
@@ -419,9 +419,9 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+        X : iterable
+            Data to transform. Must fulfill input requirements of first step
+            of the pipeline.
 
         Returns
         -------
@@ -441,7 +441,9 @@ class Pipeline(_BasePipeline):
         ----------
         Xt : array-like, shape = [n_samples, n_transformed_features]
             Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+            ``n_features`` is the number of features. Must fulfill
+            input requirements of last step of pipeline's
+            ``inverse_transform`` method.
 
         Returns
         -------
