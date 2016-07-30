@@ -1186,6 +1186,7 @@ div.navbar ul.dropdown-menu li a.btn {
   vertical-align: middle;
   padding: 0;
   padding-left: 4px;
+  font-size: 8px;
 }
 
 .navbar .btn-group .btn {
@@ -1195,10 +1196,6 @@ div.navbar ul.dropdown-menu li a.btn {
 .navbar .btn-group.open .btn.dropdown-toggle {
   background-color: transparent;
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
-}
-
-a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
-  vertical-align: baseline;
 }
 
 li#other-versions {
@@ -1268,7 +1265,7 @@ li#other-versions {
   color: #fff;
   vertical-align: middle;
   border-top-color: rgb(255, 255, 255);
-  padding-bottom: 8px;
+  padding-bottom: 5px;
 }
 
 .navbar .dropdown-menu .divider {
