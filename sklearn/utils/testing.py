@@ -276,8 +276,9 @@ def assert_no_warnings(func, *args, **kw):
                  if e.category is not np.VisibleDeprecationWarning]
 
         if len(w) > 0:
-            raise AssertionError("Got warnings when calling %s: %s"
-                                 % (func.__name__, w))
+            raise AssertionError("Got warnings when calling %s: [%s]"
+                                 % (func.__name__,
+                                    ', '.join(str(warning) for warning in w)))
     return result
 
 
