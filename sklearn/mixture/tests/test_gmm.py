@@ -3,7 +3,6 @@
 import unittest
 import copy
 import sys
-import warnings
 
 from nose.tools import assert_true
 import numpy as np

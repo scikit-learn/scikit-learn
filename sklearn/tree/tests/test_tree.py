@@ -41,7 +41,6 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree.tree import SPARSE_SPLITTERS
 from sklearn.tree._tree import TREE_LEAF
 from sklearn import datasets
 
