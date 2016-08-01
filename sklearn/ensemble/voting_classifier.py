@@ -33,16 +33,6 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight):
     return estimator
 
 
-def _parallel_predict(estimator, X):
-    """Private function used to compute predictions within a job."""
-    return estimator.predict(X)
-
-
-def _parallel_predict_proba(estimator, X):
-    """Private function used to compute (proba-)predictions within a job."""
-    return estimator.predict_proba(X)
-
-
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
@@ -208,12 +198,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def _collect_probas(self, X):
         """Collect results from clf.predict calls. """
-        probas = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_predict_proba)(
-                estimator, X
-            ) for estimator in self.estimators_
-        )
-        return np.asarray(probas)
+        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
@@ -279,9 +264,4 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        predictions = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_predict)(
-                    estimator, X
-                ) for estimator in self.estimators_
-            )
-        return np.asarray(predictions).T
+        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
