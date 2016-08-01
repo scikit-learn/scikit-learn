@@ -14,8 +14,9 @@ from sklearn.mixture.gaussian_mixture import (
     _estimate_gaussian_covariances_full,
     _estimate_gaussian_covariances_tied,
     _estimate_gaussian_covariances_diag,
-    _estimate_gaussian_covariances_spherical,
-    _compute_precision_cholesky)
+    _estimate_gaussian_covariances_spherical)
+from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
+from sklearn.mixture.gaussian_mixture import _compute_log_det_cholesky
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils.testing import assert_allclose
@@ -385,6 +386,7 @@ def test_suffstat_sk_tied():
     precs_est = linalg.inv(covars_pred_tied)
     assert_array_almost_equal(precs_est, precs_pred)
 
+
 def test_suffstat_sk_diag():
     # test against 'full' case
     rng = np.random.RandomState(0)
@@ -432,6 +434,30 @@ def test_gaussian_suffstat_sk_spherical():
                                                   'spherical')
     assert_almost_equal(covars_pred_spherical, 1. / precs_chol_pred ** 2)
 
+
+def test_compute_log_det_cholesky():
+    n_features = 2
+    rand_data = RandomData(np.random.RandomState(0))
+
+    for covar_type in COVARIANCE_TYPE:
+        covariance = rand_data.covariances[covar_type]
+
+        if covar_type == 'full':
+            predected_det = np.array([linalg.det(cov) for cov in covariance])
+        elif covar_type == 'tied':
+            predected_det = linalg.det(covariance)
+        elif covar_type == 'diag':
+            predected_det = np.array([linalg.det(np.diag(cov))
+                                      for cov in covariance])
+        elif covar_type == 'spherical':
+            predected_det = covariance ** n_features
+
+        # We compute the cholesky decomposition of the covariance matrix
+        expected_det = _compute_log_det_cholesky(_compute_precision_cholesky(
+            covariance, covar_type), covar_type, n_features=n_features)
+        assert_array_almost_equal(expected_det, - .5 * np.log(predected_det))
+
+
 def _naive_lmvnpdf_diag(X, means, covars):
     resp = np.empty((len(X), len(means)))
     stds = np.sqrt(covars)
@@ -441,11 +467,7 @@ def _naive_lmvnpdf_diag(X, means, covars):
 
 
 def test_gaussian_mixture_log_probabilities():
-    from sklearn.mixture.gaussian_mixture import (
-        _estimate_log_gaussian_prob_full,
-        _estimate_log_gaussian_prob_tied,
-        _estimate_log_gaussian_prob_diag,
-        _estimate_log_gaussian_prob_spherical)
+    from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
 
     # test aginst with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)
@@ -462,12 +484,12 @@ def test_gaussian_mixture_log_probabilities():
     # full covariances
     precs_full = np.array([np.diag(1. / np.sqrt(x)) for x in covars_diag])
 
-    log_prob = _estimate_log_gaussian_prob_full(X, means, precs_full)
+    log_prob = _estimate_log_gaussian_prob(X, means, precs_full, 'full')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
     # diag covariances
     precs_chol_diag = 1. / np.sqrt(covars_diag)
-    log_prob = _estimate_log_gaussian_prob_diag(X, means, precs_chol_diag)
+    log_prob = _estimate_log_gaussian_prob(X, means, precs_chol_diag, 'diag')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
     # tied
@@ -476,7 +498,7 @@ def test_gaussian_mixture_log_probabilities():
 
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [covars_tied] * n_components)
-    log_prob = _estimate_log_gaussian_prob_tied(X, means, precs_tied)
+    log_prob = _estimate_log_gaussian_prob(X, means, precs_tied, 'tied')
 
     assert_array_almost_equal(log_prob, log_prob_naive)
 
@@ -486,7 +508,8 @@ def test_gaussian_mixture_log_probabilities():
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [[k] * n_features for k in
                                           covars_spherical])
-    log_prob = _estimate_log_gaussian_prob_spherical(X, means, precs_spherical)
+    log_prob = _estimate_log_gaussian_prob(X, means,
+                                           precs_spherical, 'spherical')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
 # skip tests on weighted_log_probabilities, log_weights
@@ -723,11 +746,11 @@ def test_warm_start():
     X = rng.rand(n_samples, n_features)
 
     # Assert the warm_start give the same result for the same number of iter
-    g = GaussianMixture(n_components=n_components, n_init=1,
-                        max_iter=2, reg_covar=0, random_state=random_state,
+    g = GaussianMixture(n_components=n_components, n_init=1, max_iter=2,
+                        reg_covar=0, random_state=random_state,
                         warm_start=False)
-    h = GaussianMixture(n_components=n_components, n_init=1,
-                        max_iter=1, reg_covar=0, random_state=random_state,
+    h = GaussianMixture(n_components=n_components, n_init=1, max_iter=1,
+                        reg_covar=0, random_state=random_state,
                         warm_start=True)
 
     with warnings.catch_warnings():
@@ -826,7 +849,7 @@ def test_monotonic_likelihood():
             warnings.simplefilter("ignore", ConvergenceWarning)
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
-            for _ in range(300):
+            for _ in range(600):
                 prev_log_likelihood = current_log_likelihood
                 try:
                     current_log_likelihood = gmm.fit(X).score(X)
@@ -837,6 +860,8 @@ def test_monotonic_likelihood():
 
                 if gmm.converged_:
                     break
+
+            assert(gmm.converged_)
 
 
 def test_regularisation():
@@ -874,11 +899,11 @@ def test_property():
                               covariance_type=covar_type, random_state=rng)
         gmm.fit(X)
         print(covar_type)
-        if covar_type is 'full':
+        if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
                 assert_array_almost_equal(linalg.inv(prec), covar)
-        elif covar_type is 'tied':
+        elif covar_type == 'tied':
             assert_array_almost_equal(linalg.inv(gmm.precisions_),
                                       gmm.covariances_)
         else:

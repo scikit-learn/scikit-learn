@@ -336,8 +336,49 @@ def _compute_precision_cholesky(covariances, covariance_type):
 
 ###############################################################################
 # Gaussian mixture probability estimators
-def _estimate_log_gaussian_prob_full(X, means, precisions_chol):
-    """Estimate the log Gaussian probability for 'full' precision.
+def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
+    """Compute the log-det of the cholesky decomposition of the precisions.
+
+    Parameters
+    ----------
+    matrix_chol : array-like,
+        Cholesky decompositions of the matrices.
+        'full' : shape of (n_components, n_features, n_features)
+        'tied' : shape of (n_features, n_features)
+        'diag' : shape of (n_components, n_features)
+        'spherical' : shape of (n_components,)
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+
+    n_features : int
+        Number of features.
+
+    Returns
+    -------
+    log_det_precision_chol : array-like, shape (n_components,)
+        The determinant of the cholesky decomposition.
+        matrix.
+    """
+    if covariance_type == 'full':
+        n_components, _, _ = matrix_chol.shape
+        log_det_precisions_chol = (np.sum(np.log(
+            matrix_chol.reshape(
+                n_components, -1)[:, ::n_features + 1]), 1))
+
+    elif covariance_type == 'tied':
+        log_det_precisions_chol = (np.sum(np.log(np.diag(matrix_chol))))
+
+    elif covariance_type == 'diag':
+        log_det_precisions_chol = (np.sum(np.log(matrix_chol), axis=1))
+
+    else:
+        log_det_precisions_chol = n_features * (np.log(matrix_chol))
+
+    return log_det_precisions_chol
+
+
+def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
+    """Estimate the log Gaussian probability.
 
     Parameters
     ----------
@@ -345,8 +386,14 @@ def _estimate_log_gaussian_prob_full(X, means, precisions_chol):
 
     means : array-like, shape (n_components, n_features)
 
-    precisions_chol : array-like, shape (n_components, n_features, n_features)
+    precisions_chol : array-like,
         Cholesky decompositions of the precision matrices.
+        'full' : shape of (n_components, n_features, n_features)
+        'tied' : shape of (n_features, n_features)
+        'diag' : shape of (n_components, n_features)
+        'spherical' : shape of (n_components,)
+
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}
 
     Returns
     -------
@@ -354,92 +401,34 @@ def _estimate_log_gaussian_prob_full(X, means, precisions_chol):
     """
     n_samples, n_features = X.shape
     n_components, _ = means.shape
-    log_prob = np.empty((n_samples, n_components))
-    for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
-        log_det = -2. * np.sum(np.log(np.diagonal(prec_chol)))
-        y = np.dot(X - mu, prec_chol)
-        log_prob[:, k] = -.5 * (n_features * np.log(2. * np.pi) + log_det +
-                                np.sum(np.square(y), axis=1))
-    return log_prob
+    # det(precision_chol) is half of det(precision)
+    log_det = _compute_log_det_cholesky(
+        precisions_chol, covariance_type, n_features)
 
+    if covariance_type == 'full':
+        log_prob = np.empty((n_samples, n_components))
+        for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
+            y = np.dot(X - mu, prec_chol)
+            log_prob[:, k] = np.sum(np.square(y), axis=1)
 
-def _estimate_log_gaussian_prob_tied(X, means, precision_chol):
-    """Estimate the log Gaussian probability for 'tied' precision.
+    elif covariance_type == 'tied':
+        log_prob = np.empty((n_samples, n_components))
+        for k, mu in enumerate(means):
+            y = np.dot(X - mu, precisions_chol)
+            log_prob[:, k] = np.sum(np.square(y), axis=1)
 
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
+    elif covariance_type == 'diag':
+        precisions = precisions_chol ** 2
+        log_prob = (np.sum((means ** 2 * precisions), 1) -
+                    2. * np.dot(X, (means * precisions).T) +
+                    np.dot(X ** 2, precisions.T))
 
-    means : array-like, shape (n_components, n_features)
-
-    precision_chol : array-like, shape (n_features, n_features)
-        Cholesky decomposition of the precision matrix.
-
-    Returns
-    -------
-    log_prob : array-like, shape (n_samples, n_components)
-    """
-    n_samples, n_features = X.shape
-    n_components, _ = means.shape
-    log_prob = np.empty((n_samples, n_components))
-    log_det = -2. * np.sum(np.log(np.diagonal(precision_chol)))
-    for k, mu in enumerate(means):
-        y = np.dot(X - mu, precision_chol)
-        log_prob[:, k] = np.sum(np.square(y), axis=1)
-    log_prob = -.5 * (n_features * np.log(2. * np.pi) + log_det + log_prob)
-    return log_prob
-
-
-def _estimate_log_gaussian_prob_diag(X, means, precisions_chol):
-    """Estimate the log Gaussian probability for 'diag' precision.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-
-    means : array-like, shape (n_components, n_features)
-
-    precisions_chol : array-like, shape (n_components, n_features)
-        Cholesky decompositions of the precision matrices.
-
-    Returns
-    -------
-    log_prob : array-like, shape (n_samples, n_components)
-    """
-    n_samples, n_features = X.shape
-    precisions = precisions_chol ** 2
-    log_prob = -.5 * (n_features * np.log(2. * np.pi) -
-                      np.sum(np.log(precisions), 1) +
-                      np.sum((means ** 2 * precisions), 1) -
-                      2. * np.dot(X, (means * precisions).T) +
-                      np.dot(X ** 2, precisions.T))
-    return log_prob
-
-
-def _estimate_log_gaussian_prob_spherical(X, means, precisions_chol):
-    """Estimate the log Gaussian probability for 'spherical' precision.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-
-    means : array-like, shape (n_components, n_features)
-
-    precisions_chol : array-like, shape (n_components, )
-        Cholesky decompositions of the precision matrices.
-
-    Returns
-    -------
-    log_prob : array-like, shape (n_samples, n_components)
-    """
-    n_samples, n_features = X.shape
-    precisions = precisions_chol ** 2
-    log_prob = -.5 * (n_features * np.log(2 * np.pi) -
-                      n_features * np.log(precisions) +
-                      np.sum(means ** 2, 1) * precisions -
-                      2 * np.dot(X, means.T * precisions) +
-                      np.outer(np.sum(X ** 2, axis=1), precisions))
-    return log_prob
+    elif covariance_type == 'spherical':
+        precisions = precisions_chol ** 2
+        log_prob = (np.sum(means ** 2, 1) * precisions -
+                    2 * np.dot(X, means.T * precisions) +
+                    np.outer(np.sum(X ** 2, axis=1), precisions))
+    return -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
 
 
 class GaussianMixture(BaseMixture):
@@ -638,7 +627,7 @@ class GaussianMixture(BaseMixture):
             self.precisions_cholesky_ = self.precisions_init
 
     def _e_step(self, X):
-        log_prob_norm, _, log_resp = self._estimate_log_prob_resp(X)
+        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
         return np.mean(log_prob_norm), np.exp(log_resp)
 
     def _m_step(self, X, resp):
@@ -651,15 +640,14 @@ class GaussianMixture(BaseMixture):
             self.covariances_, self.covariance_type)
 
     def _estimate_log_prob(self, X):
-        return {"full": _estimate_log_gaussian_prob_full,
-                "tied": _estimate_log_gaussian_prob_tied,
-                "diag": _estimate_log_gaussian_prob_diag,
-                "spherical": _estimate_log_gaussian_prob_spherical
-                }[self.covariance_type](X, self.means_,
-                                        self.precisions_cholesky_)
+        return _estimate_log_gaussian_prob(
+            X, self.means_, self.precisions_cholesky_, self.covariance_type)
 
     def _estimate_log_weights(self):
         return np.log(self.weights_)
+
+    def _compute_lower_bound(self, _, log_prob_norm):
+        return log_prob_norm
 
     def _check_is_fitted(self):
         check_is_fitted(self, ['weights_', 'means_', 'precisions_cholesky_'])
