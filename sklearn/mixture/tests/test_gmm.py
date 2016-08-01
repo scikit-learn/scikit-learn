@@ -309,7 +309,7 @@ class GMMTester():
         with ignore_warnings(category=DeprecationWarning):
             g.fit(X)
             trainll = g.score(X)
-            if isinstance(g, mixture.DPGMM):
+            if isinstance(g, mixture.dpgmm._DPGMMBase):
                 self.assertTrue(np.sum(np.abs(trainll / 100)) < 5)
             else:
                 self.assertTrue(np.sum(np.abs(trainll / 100)) < 2)
