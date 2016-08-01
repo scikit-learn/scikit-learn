@@ -264,6 +264,9 @@ Enhancements
      By `David Staub`_.
 
 
+   - Added ``n_jobs`` parameter for :class:`VotingClassifier` to fit underlying estimators in parallel
+     By `Ibraim Ganiev`_.
+
 Bug fixes
 .........
 
