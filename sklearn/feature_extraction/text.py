@@ -994,7 +994,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
             self._idf_diag = sp.spdiags(idf,
-                                        diags=0, m=n_features, n=n_features)
+                                        diags=0, m=n_features, n=n_features, format='csr')
 
         return self
 
