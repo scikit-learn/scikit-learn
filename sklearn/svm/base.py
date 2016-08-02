@@ -237,7 +237,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             if isinstance(kernel, six.types.UnicodeType):
                 kernel = str(kernel)
         if six.PY3:
-            # In python2 ensure kernel is utf8 unicode to prevent a TypeError
+            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
             if isinstance(kernel, bytes):
                 kernel = str(kernel, 'utf8')
 
