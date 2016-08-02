@@ -379,9 +379,9 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Data samples, where ``n_samples`` is the number of samples and
-            ``n_features`` is the number of features.
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
 
         Returns
         -------
@@ -465,9 +465,9 @@ class Pipeline(_BasePipeline):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Data to score. Must fulfill input requirements of first step of the
-            pipeline.
+        X : iterable
+            Data to predict on. Must fulfill input requirements of first step
+            of the pipeline.
 
         y : iterable, default=None
             Targets used for scoring. Must fulfill label requirements for all
