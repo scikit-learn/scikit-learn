@@ -60,17 +60,19 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         # see #6304
         pass
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X=None, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+            Can be None if y is specified.
 
-        y : array-like, of length n_samples
+        y : array-like, of length n_samples, optional
             The target variable for supervised learning problems.
+            Must be specified if X is None.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -84,6 +86,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         test : ndarray
             The testing set indices for that split.
         """
+        X = _default_split_X(X, y)
         X, y, labels = indexable(X, y, labels)
         indices = np.arange(_num_samples(X))
         for test_index in self._iter_test_masks(X, y, labels):
@@ -285,17 +288,19 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         self.shuffle = shuffle
         self.random_state = random_state
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X=None, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+            Can be None if y is specified.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples, optional
             The target variable for supervised learning problems.
+            Must be specified if X is None.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -309,6 +314,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         test : ndarray
             The testing set indices for that split.
         """
+        X = _default_split_X(X, y)
         X, y, labels = indexable(X, y, labels)
         n_samples = _num_samples(X)
         if self.n_folds > n_samples:
@@ -608,17 +614,19 @@ class StratifiedKFold(_BaseKFold):
         for i in range(self.n_folds):
             yield test_folds == i
 
-    def split(self, X, y, labels=None):
+    def split(self, X=None, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+            Can be None if y is specified.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples, optional
             The target variable for supervised learning problems.
+            Must be specified if X is None.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -633,6 +641,7 @@ class StratifiedKFold(_BaseKFold):
             The testing set indices for that split.
         """
         return super(StratifiedKFold, self).split(X, y, labels)
+
 
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
@@ -811,17 +820,19 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.train_size = train_size
         self.random_state = random_state
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X=None, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+            Can be None if y is specified.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples, optional
             The target variable for supervised learning problems.
+            Must be specified if X is None.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -835,6 +846,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         test : ndarray
             The testing set indices for that split.
         """
+        X = _default_split_X(X, y)
         X, y, labels = indexable(X, y, labels)
         for train, test in self._iter_indices(X, y, labels):
             yield train, test
@@ -1125,17 +1137,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
             yield train, test
 
-    def split(self, X, y, labels=None):
+    def split(self, X=None, y=None, labels=None):
         """Generate indices to split data into training and test set.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+            Can be None if y is specified.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, of length n_samples, optional
             The target variable for supervised learning problems.
+            Must be specified if X is None.
 
         labels : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -1565,6 +1579,14 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         y_subset = None
 
     return X_subset, y_subset
+
+
+def _default_split_X(X, y):
+    if X is None:
+        if y is None:
+            raise ValueError("At least X or y should be specified.")
+        X = np.empty((len(y), 1))
+    return X
 
 
 def _build_repr(self):

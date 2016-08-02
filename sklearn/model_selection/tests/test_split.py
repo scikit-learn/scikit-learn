@@ -242,6 +242,9 @@ def test_kfold_valueerrors():
 
     assert_raises(ValueError, next, skf_3.split(X2, y))
 
+    # Make sure at least X or y is specified
+    assert_raises(ValueError, next, skf_3.split(X=None, y=None))
+
     # Error when number of folds is <= 1
     assert_raises(ValueError, KFold, 0)
     assert_raises(ValueError, KFold, 1)
@@ -317,6 +320,16 @@ def test_stratified_kfold_no_shuffle():
 
     X, y = np.ones(7), [1, 1, 1, 0, 0, 0, 0]
     splits = StratifiedKFold(2).split(X, y)
+    train, test = next(splits)
+    assert_array_equal(test, [0, 1, 3, 4])
+    assert_array_equal(train, [2, 5, 6])
+
+    train, test = next(splits)
+    assert_array_equal(test, [2, 5, 6])
+    assert_array_equal(train, [0, 1, 3, 4])
+
+    # Ensure that X is not requited
+    splits = StratifiedKFold(2).split(y=y)
     train, test = next(splits)
     assert_array_equal(test, [0, 1, 3, 4])
     assert_array_equal(train, [2, 5, 6])
@@ -532,6 +545,10 @@ def test_stratified_shuffle_split_init():
     assert_raises(ValueError, next,
                   StratifiedShuffleSplit(test_size=2).split(X, y))
 
+    # Test at least X or Y is specified
+    assert_raises(ValueError, next,
+                  StratifiedShuffleSplit(test_size=2).split(X=None, y=None))
+
 
 def test_stratified_shuffle_split_iter():
     ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
@@ -542,20 +559,23 @@ def test_stratified_shuffle_split_iter():
           ]
 
     for y in ys:
-        sss = StratifiedShuffleSplit(6, test_size=0.33,
-                                     random_state=0).split(np.ones(len(y)), y)
-        for train, test in sss:
-            assert_array_equal(np.unique(y[train]), np.unique(y[test]))
-            # Checks if folds keep classes proportions
-            p_train = (np.bincount(np.unique(y[train],
-                                   return_inverse=True)[1]) /
-                       float(len(y[train])))
-            p_test = (np.bincount(np.unique(y[test],
-                                  return_inverse=True)[1]) /
-                      float(len(y[test])))
-            assert_array_almost_equal(p_train, p_test, 1)
-            assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
+        # Split should work if X is specified or not specified
+        X_ = np.ones(len(y))
+        for X in [X_, None]:
+            sss = StratifiedShuffleSplit(6, test_size=0.33,
+                                         random_state=0).split(X, y)
+            for train, test in sss:
+                assert_array_equal(np.unique(y[train]), np.unique(y[test]))
+                # Checks if folds keep classes proportions
+                p_train = (np.bincount(np.unique(y[train],
+                                       return_inverse=True)[1]) /
+                           float(len(y[train])))
+                p_test = (np.bincount(np.unique(y[test],
+                                      return_inverse=True)[1]) /
+                          float(len(y[test])))
+                assert_array_almost_equal(p_train, p_test, 1)
+                assert_equal(y[train].size + y[test].size, y.size)
+                assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -805,6 +825,9 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, next, ShuffleSplit(test_size=10).split(X))
     assert_raises(ValueError, next, ShuffleSplit(test_size=8,
                                                  train_size=3).split(X))
+
+    # Test at least X or Y is specified
+    assert_raises(ValueError, next, ShuffleSplit(test_size=5).split(X=None, y=None))
 
 
 def test_shufflesplit_reproducible():
