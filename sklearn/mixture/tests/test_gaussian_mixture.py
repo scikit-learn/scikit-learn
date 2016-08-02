@@ -447,8 +447,7 @@ def test_compute_log_det_cholesky():
         elif covar_type == 'tied':
             predected_det = linalg.det(covariance)
         elif covar_type == 'diag':
-            predected_det = np.array([linalg.det(np.diag(cov))
-                                      for cov in covariance])
+            predected_det = np.array([np.prod(cov) for cov in covariance])
         elif covar_type == 'spherical':
             predected_det = covariance ** n_features
 
@@ -861,7 +860,7 @@ def test_monotonic_likelihood():
                 if gmm.converged_:
                     break
 
-            assert(gmm.converged_)
+            assert_true(gmm.converged_)
 
 
 def test_regularisation():

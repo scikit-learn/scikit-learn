@@ -11,6 +11,7 @@ from .base import BaseMixture, _check_shape
 from ..externals.six.moves import zip
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.extmath import row_norms
 
 
 ###############################################################################
@@ -408,13 +409,13 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     if covariance_type == 'full':
         log_prob = np.empty((n_samples, n_components))
         for k, (mu, prec_chol) in enumerate(zip(means, precisions_chol)):
-            y = np.dot(X - mu, prec_chol)
+            y = np.dot(X, prec_chol) - np.dot(mu, prec_chol)
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == 'tied':
         log_prob = np.empty((n_samples, n_components))
         for k, mu in enumerate(means):
-            y = np.dot(X - mu, precisions_chol)
+            y = np.dot(X, precisions_chol) - np.dot(mu, precisions_chol)
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == 'diag':
@@ -427,7 +428,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
         precisions = precisions_chol ** 2
         log_prob = (np.sum(means ** 2, 1) * precisions -
                     2 * np.dot(X, means.T * precisions) +
-                    np.outer(np.sum(X ** 2, axis=1), precisions))
+                    np.outer(row_norms(X, squared=True), precisions))
     return -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
 
 
@@ -552,6 +553,9 @@ class GaussianMixture(BaseMixture):
 
     n_iter_ : int
         Number of step used by the best fit of EM to reach the convergence.
+
+    lower_bound_ : float
+        Lower bound value of the best fit of EM.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
