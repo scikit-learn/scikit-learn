@@ -1015,12 +1015,8 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
         avglen = sum(lengths) / n_samples
 
         beta = (1 - self.b + self.b * lengths / avglen)
-        self._beta_diag = sp.spdiags(beta, diags=0, m=n_samples, n=n_samples)
+        self._beta_diag = sp.spdiags(beta, diags=0, m=n_samples, n=n_samples, format='csr')
         
-        print (self._beta_diag)
-        print (self._beta_diag.shape)
-        print(type(self._beta_diag))
-
         return self
 
     def transform(self, X, copy=True):
@@ -1061,16 +1057,11 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
 
         weightedtfs = X.copy()
 
-        binary = X>0
-        
-        print(type(binary))
-        print(binary)
+        binary = X.copy()
+        binary.data = np.sign(X.data)
         
         temp = self._beta_diag.dot(binary)
-        print(temp)
-        print(type(temp))
-        print(temp.shape)
-
+        
         weightedtfs.data = (self.k + 1) / \
                            (self.k * self._beta_diag.dot(binary).data / X.data + 1)
 
