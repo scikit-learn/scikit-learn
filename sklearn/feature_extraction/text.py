@@ -993,8 +993,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf,
-                                        diags=0, m=n_features, n=n_features, format='csr')
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+                                        n=n_features, format='csr')
 
         return self
 
