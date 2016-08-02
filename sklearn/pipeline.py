@@ -655,6 +655,8 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         feature_names : list of strings
             Names of the features produced by transform.
         """
+        # Implemented as a proprerty so hasattr(feat_union, get_feature_names)
+        # returns False if any transformer lacks get_feature_names
         getters = [(name, trans.get_feature_names)
                    for name, trans, weight in self._iter()]
 
