@@ -1063,7 +1063,6 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
 
         binary = X>0
         
-        print(binary.shape)
         print(type(binary))
         print(binary)
         
