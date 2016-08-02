@@ -171,7 +171,7 @@ class Pipeline(_BasePipeline):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params``.
+        Valid parameter keys can be listed with ``get_params()``.
 
         Returns
         -------
