@@ -312,6 +312,10 @@ Bug fixes
       (`#5460 https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
       By `Tom Dupre la Tour`_.
 
+    - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
+      (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
+      By `Ibraim Ganiev`_.
+
 API changes summary
 -------------------
 
@@ -4312,3 +4316,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nelson Liu: https://github.com/nelson-liu
 
 .. _Manvendra Singh: https://github.com/manu-chroma
+
+.. _Ibraim Ganiev: https://github.com/olologin
