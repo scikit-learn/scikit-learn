@@ -189,33 +189,35 @@ ALL_METRICS.update(REGRESSION_METRICS)
 
 # Those metrics don't support binary inputs
 METRIC_UNDEFINED_BINARY = [
-    "samples_f0.5_score",
-    "samples_f1_score",
-    "samples_f2_score",
-    "samples_precision_score",
-    "samples_recall_score",
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score", "weighted_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
+
+    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
+    "macro_precision_score", "macro_recall_score",
+
+    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
+    "samples_precision_score", "samples_recall_score",
+
     "coverage_error",
 
-    "roc_auc_score",
-    "micro_roc_auc",
-    "weighted_roc_auc",
-    "macro_roc_auc",
+    "roc_auc_score", "micro_roc_auc", "weighted_roc_auc", "macro_roc_auc",
     "samples_roc_auc",
 
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "macro_average_precision_score",
+    "average_precision_score", "weighted_average_precision_score",
+    "micro_average_precision_score", "macro_average_precision_score",
     "samples_average_precision_score",
 
-    "label_ranking_loss",
-    "label_ranking_average_precision_score",
+    "label_ranking_loss", "label_ranking_average_precision_score",
 ]
 
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
     "matthews_corrcoef_score",
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 ]
 
 # Metric undefined with "binary" or "multiclass" input
@@ -224,7 +226,7 @@ METRIC_UNDEFINED_BINARY_MULTICLASS = set(METRIC_UNDEFINED_BINARY).union(
 
 # Metrics with an "average" argument
 METRICS_WITH_AVERAGING = [
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 ]
 
 # Threshold-based metrics with an "average" argument
@@ -239,16 +241,6 @@ METRICS_WITH_POS_LABEL = [
     "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
-
-    # pos_label support deprecated; to be removed in 0.18:
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score", "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
 ]
 
 # Metrics with a "labels" argument
@@ -300,8 +292,6 @@ MULTILABELS_METRICS = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
-
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
 
@@ -329,7 +319,10 @@ SYMMETRIC_METRICS = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
+    "f1_score", "micro_f1_score", "macro_f1_score",
+
+    "weighted_recall_score", "micro_f0.5_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error",
@@ -346,14 +339,11 @@ NOT_SYMMETRIC_METRICS = [
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
-    "weighted_f0.5_score", "weighted_f2_score", "weighted_precision_score",
-    "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f2_score", "micro_precision_score",
-    "micro_recall_score",
-
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score",
+    
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss"
+    "macro_recall_score", "log_loss", "hinge_loss",
 ]
 
 
@@ -369,12 +359,14 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
 ]
 
 
-@ignore_warnings
 def test_symmetry():
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20, ))
-    y_pred = random_state.randint(0, 2, size=(20, ))
+    y_true_binary = random_state.randint(0, 2, size=(20, ))
+    y_pred_binary = random_state.randint(0, 2, size=(20, ))
+
+    y_true_multiclass = random_state.randint(0, 4, size=(40, ))
+    y_pred_multiclass = random_state.randint(0, 4, size=(40, ))
 
     # We shouldn't forget any metrics
     assert_equal(set(SYMMETRIC_METRICS).union(
@@ -388,6 +380,12 @@ def test_symmetry():
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
+
+        if name in METRIC_UNDEFINED_BINARY:
+            y_true, y_pred = y_true_multiclass, y_pred_multiclass
+        else:
+            y_true, y_pred = y_true_binary, y_pred_binary
+
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_pred, y_true),
                             err_msg="%s is not symmetric" % name)
@@ -395,6 +393,12 @@ def test_symmetry():
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
+
+        if name in METRIC_UNDEFINED_BINARY:
+            y_true, y_pred = y_true_multiclass, y_pred_multiclass
+        else:
+            y_true, y_pred = y_true_binary, y_pred_binary
+
         assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
                     msg="%s seems to be symmetric" % name)
 
@@ -1049,7 +1053,7 @@ def test_no_averaging_labels():
     for name in METRICS_WITH_AVERAGING:
         for y_true, y_pred in [[y_true_multiclass, y_pred_multiclass],
                                [y_true_multilabel, y_pred_multilabel]]:
-            if name not in MULTILABELS_METRICS and y_pred.shape[1] > 0:
+            if name not in MULTILABELS_METRICS and len(y_pred.shape) > 1:
                 continue
 
             metric = ALL_METRICS[name]
