@@ -443,8 +443,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             yield feature_draw, sample_draw
 
     @property
-    @deprecated("Attribute 'estimator_samples_' is deprecated and will be removed "
-                "in release 0.20. Use method '_get_estimators_data_draw()' instead.")
     def estimators_samples_(self):
         return [sample_mask for _, sample_mask in 
                 self._get_estimators_data_draws(sample_mask=True)]
