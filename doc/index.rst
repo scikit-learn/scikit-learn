@@ -234,7 +234,7 @@
                 <div class="span4">
                     <h4>Community</h4>
                     <ul>
-                    <li><em>About us</em> See <a href="about.html#people">authors</a></li>
+                    <li><em>About us</em> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
                     <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
                     <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
                     <li><em>Mailing list:</em> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>

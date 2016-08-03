@@ -5,6 +5,10 @@ About us
 
 .. include:: ../AUTHORS.rst
 
+.. seealso::
+
+   :ref:`How you can contribute to the project <contributing>`
+
 .. _citing-scikit-learn:
 
 Citing scikit-learn
@@ -96,7 +100,7 @@ program.
 - 2007 - David Cournapeau
 - 2011 - `Vlad Niculae`_
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
-- 2013 - `Kemal Eren`_, Nicolas Trésegnie
+- 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 
 It also provided funding for sprints and events around scikit-learn. If
