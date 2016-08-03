@@ -33,28 +33,28 @@ __all__ = ["BaggingClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _draw_indices(random_state, bootstrap, n_pop, n_samp):
+def _generate_indices(random_state, bootstrap, n_population, n_samples):
     """Private function used to draw randomly sampled indices."""
     # Draw sample indices
     if bootstrap:
-        indices = random_state.randint(0, n_pop, n_samp)
+        indices = random_state.randint(0, n_population, n_samples)
     else:
-        indices = sample_without_replacement(n_pop, n_samp, 
+        indices = sample_without_replacement(n_population, n_samples, 
                                              random_state=random_state)
 
     return indices
 
 
-def _draw_bagging_indices(random_state, bootstrap_features, bootstrap_samples, 
-                          n_features, n_samples, max_features, max_samples):
+def _generate_bagging_indices(random_state, bootstrap_features, bootstrap_samples, 
+                              n_features, n_samples, max_features, max_samples):
     """Private function used to randomly draw feature and sample indices."""
     # Get valid random state
     random_state = check_random_state(random_state)
 
-    # Draw ndices
-    feature_indices = _draw_indices(random_state, bootstrap_features, 
+    # Draw indices
+    feature_indices = _generate_indices(random_state, bootstrap_features, 
                                     n_features, max_features)
-    sample_indices = _draw_indices(random_state, bootstrap_samples, 
+    sample_indices = _generate_indices(random_state, bootstrap_samples, 
                                    n_samples, max_samples)
 
     return feature_indices, sample_indices
@@ -101,9 +101,10 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             pass
 
         # Draw random feature, sample indices
-        features, indices = _draw_bagging_indices(random_state, bootstrap_features, 
-                                                  bootstrap, n_features, 
-                                                  n_samples, max_features, max_samples)
+        features, indices = _generate_bagging_indices(random_state, bootstrap_features, 
+                                                      bootstrap, n_features, 
+                                                      n_samples, max_features, 
+                                                      max_samples)
 
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
@@ -417,13 +418,13 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             # to those in `_parallel_build_estimators()`
             random_state = check_random_state(seed)
             seed = random_state.randint(MAX_INT) 
-            feature_indices, sample_indices = _draw_bagging_indices(random_state, 
-                                                                    self.bootstrap_features,
-                                                                    self.bootstrap, 
-                                                                    self.n_features_, 
-                                                                    self._n_samples, 
-                                                                    max_features, 
-                                                                    max_samples)
+            feature_indices, sample_indices = _generate_bagging_indices(random_state, 
+                                                                  self.bootstrap_features,
+                                                                  self.bootstrap, 
+                                                                  self.n_features_, 
+                                                                  self._n_samples, 
+                                                                  max_features, 
+                                                                  max_samples)
             yield feature_indices, sample_indices
 
     @property
@@ -433,40 +434,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         estimators_indices = self._get_estimators_indices()
         for feature_indices, sample_indices in estimators_indices:
             yield sample_indices
-
-
-    # def _get_estimators_samples(self):
-    #     # If max_samples is float
-    #     if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
-    #         max_samples = int(self.max_samples * self._n_samples)
-
-    #     if not (0 < max_samples <= self._n_samples):
-    #         raise ValueError("max_samples must be in (0, n_samples]")
-
-    #     # If max_features is float
-    #     if not isinstance(self.max_features, (numbers.Integral, np.integer)):
-    #         max_features = int(self.max_features * self.n_features_)
-
-    #     if not (0 < max_features <= self.n_features_):
-    #         raise ValueError("max_features must be in (0, n_samples]")
-
-    #     # Get sampled indices
-    #     for seed in self._seeds:
-    #         # Operations accessing random_state must be performed identically
-    #         # to those in `_parallel_build_estimators()`
-    #         random_state = check_random_state(seed)
-    #         seed = random_state.randint(MAX_INT) 
-    #         _, samples = _draw_bagging_indices(random_state, self.bootstrap_features, 
-    #                                            self.bootstrap, self.n_features_, 
-    #                                            self._n_samples, max_features, 
-    #                                            max_samples)
-    #         yield samples
-
-    # @property
-    # @deprecated("Attribute 'estimator_samples_' is deprecated and will be removed "
-    #             "in release 0.20. Use method '_get_estimator_samples()' instead.")
-    # def estimators_samples_(self):
-    #     return self._get_estimators_samples()
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
