@@ -5,6 +5,10 @@ About us
 
 .. include:: ../AUTHORS.rst
 
+.. seealso::
+
+   :ref:`How you can contribute to the project <contributing>`
+
 .. _citing-scikit-learn:
 
 Citing scikit-learn
