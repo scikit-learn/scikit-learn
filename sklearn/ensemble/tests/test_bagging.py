@@ -663,3 +663,21 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     assert_raises(AttributeError, getattr, clf, "oob_score_")
+
+
+def test_consistent_index_sampling():
+    # Make sure randomly drawn indices generated at fit time are identically 
+    # reproduced at a later time (for use in, e.g., OOB scoring)
+    X, y = make_hastie_10_2(n_samples=20, random_state=1)
+    
+    bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5, max_features=0.5)
+    bagging.fit(X, y)
+
+    feat_inds_list = bagging.estimators_features_
+    feat_samp_inds_gen = bagging._get_estimators_indices()
+
+    for feat_inds1, (feat_inds2, samp_inds) in zip(feat_inds_list, feat_samp_inds_gen):
+        assert_array_equal(feat_inds1, feat_inds2) 
+
+
+

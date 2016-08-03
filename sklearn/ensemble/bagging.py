@@ -396,7 +396,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Default implementation
         return column_or_1d(y, warn=True)
 
-    def _get_estimators_samples(self):
+    def _get_estimators_indices(self):
         # If max_samples is float
         if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
             max_samples = int(self.max_samples * self._n_samples)
@@ -417,17 +417,56 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             # to those in `_parallel_build_estimators()`
             random_state = check_random_state(seed)
             seed = random_state.randint(MAX_INT) 
-            _, samples = _draw_bagging_indices(random_state, self.bootstrap_features, 
-                                               self.bootstrap, self.n_features_, 
-                                               self._n_samples, max_features, 
-                                               max_samples)
-            yield samples
+            feature_indices, sample_indices = _draw_bagging_indices(random_state, 
+                                                                    self.bootstrap_features,
+                                                                    self.bootstrap, 
+                                                                    self.n_features_, 
+                                                                    self._n_samples, 
+                                                                    max_features, 
+                                                                    max_samples)
+            yield feature_indices, sample_indices
 
     @property
     @deprecated("Attribute 'estimator_samples_' is deprecated and will be removed "
-                "in release 0.20. Use method '_get_estimator_samples()' instead.")
+                "in release 0.20. Use method '_get_estimator_indices()' instead.")
     def estimators_samples_(self):
-        return self._get_estimators_samples()
+        estimators_indices = self._get_estimators_indices()
+        for feature_indices, sample_indices in estimators_indices:
+            yield sample_indices
+
+
+    # def _get_estimators_samples(self):
+    #     # If max_samples is float
+    #     if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
+    #         max_samples = int(self.max_samples * self._n_samples)
+
+    #     if not (0 < max_samples <= self._n_samples):
+    #         raise ValueError("max_samples must be in (0, n_samples]")
+
+    #     # If max_features is float
+    #     if not isinstance(self.max_features, (numbers.Integral, np.integer)):
+    #         max_features = int(self.max_features * self.n_features_)
+
+    #     if not (0 < max_features <= self.n_features_):
+    #         raise ValueError("max_features must be in (0, n_samples]")
+
+    #     # Get sampled indices
+    #     for seed in self._seeds:
+    #         # Operations accessing random_state must be performed identically
+    #         # to those in `_parallel_build_estimators()`
+    #         random_state = check_random_state(seed)
+    #         seed = random_state.randint(MAX_INT) 
+    #         _, samples = _draw_bagging_indices(random_state, self.bootstrap_features, 
+    #                                            self.bootstrap, self.n_features_, 
+    #                                            self._n_samples, max_features, 
+    #                                            max_samples)
+    #         yield samples
+
+    # @property
+    # @deprecated("Attribute 'estimator_samples_' is deprecated and will be removed "
+    #             "in release 0.20. Use method '_get_estimator_samples()' instead.")
+    # def estimators_samples_(self):
+    #     return self._get_estimators_samples()
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
