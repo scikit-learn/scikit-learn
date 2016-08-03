@@ -29,7 +29,7 @@ data can be found in the ``labels_`` attribute.
 Overview of clustering methods
 ===============================
 
-.. figure:: ../auto_examples/cluster/images/plot_cluster_comparison_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_cluster_comparison_001.png
    :target: ../auto_examples/cluster/plot_cluster_comparison.html
    :align: center
    :scale: 50
@@ -152,7 +152,7 @@ It suffers from various drawbacks:
   prior to k-means clustering can alleviate this problem
   and speed up the computations.
 
-.. image:: ../auto_examples/cluster/images/plot_kmeans_assumptions_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
    :align: center
    :scale: 50
@@ -168,7 +168,7 @@ and the new centroids are computed and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
-.. image:: ../auto_examples/cluster/images/plot_kmeans_digits_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_digits_001.png
    :target: ../auto_examples/cluster/plot_kmeans_digits.html
    :align: right
    :scale: 35
@@ -214,9 +214,9 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
    k-means performs intuitively and when it does not
- * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 .. topic:: References:
 
@@ -254,7 +254,7 @@ convergence or a predetermined number of iterations is reached.
 of the results is reduced. In practice this difference in quality can be quite
 small, as shown in the example and cited reference.
 
-.. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_mini_batch_kmeans_001.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
    :align: center
    :scale: 100
@@ -262,13 +262,13 @@ small, as shown in the example and cited reference.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`example_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
- * :ref:`example_cluster_plot_dict_face_patches.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 
 .. topic:: References:
@@ -292,7 +292,7 @@ values from other pairs. This updating happens iteratively until convergence,
 at which point the final exemplars are chosen, and hence the final clustering
 is given.
 
-.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_affinity_propagation_001.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
@@ -313,10 +313,10 @@ appropriate for small to medium sized datasets.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
+ * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
    Propagation on a synthetic 2D datasets with 3 classes.
 
- * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
+ * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
 
@@ -392,7 +392,7 @@ Labelling a new sample is performed by finding the nearest centroid for a
 given sample.
 
 
-.. figure:: ../auto_examples/cluster/images/plot_mean_shift_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_mean_shift_001.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
    :align: center
    :scale: 50
@@ -400,7 +400,7 @@ given sample.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
 
 .. topic:: References:
@@ -432,11 +432,11 @@ graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
 
-.. |noisy_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_001.png
+.. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
 
-.. |segmented_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_002.png
+.. |segmented_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_002.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
 
@@ -457,17 +457,17 @@ function of the gradient of the image.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
+ * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`example_cluster_plot_face_segmentation.py`: Spectral clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_face_segmentation.py`: Spectral clustering
    to split the image of the raccoon face in regions.
 
-.. |face_kmeans| image:: ../auto_examples/cluster/images/plot_face_segmentation_001.png
+.. |face_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_001.png
     :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
-.. |face_discretize| image:: ../auto_examples/cluster/images/plot_face_segmentation_002.png
+.. |face_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_002.png
     :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
@@ -553,15 +553,15 @@ Different linkage type: Ward, complete and average linkage
 :class:`AgglomerativeClustering` supports Ward, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/plot_digits_linkage_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
     :target: ../auto_examples/cluster/plot_digits_linkage.html
     :scale: 43
 
-.. image:: ../auto_examples/cluster/images/plot_digits_linkage_002.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
     :target: ../auto_examples/cluster/plot_digits_linkage.html
     :scale: 43
 
-.. image:: ../auto_examples/cluster/images/plot_digits_linkage_003.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
     :target: ../auto_examples/cluster/plot_digits_linkage.html
     :scale: 43
 
@@ -574,7 +574,7 @@ Euclidean metrics, average linkage is a good alternative.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_digits_linkage.py`: exploration of the
+ * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
 
 
@@ -590,11 +590,11 @@ constraints forbid the merging of points that are not adjacent on the swiss
 roll, and thus avoid forming clusters that extend across overlapping folds of
 the roll.
 
-.. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_001.png
+.. |unstructured| image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_001.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
         :scale: 49
 
-.. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_002.png
+.. |structured| image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_002.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
         :scale: 49
 
@@ -612,25 +612,25 @@ may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in :ref:`this example
-<example_cluster_plot_agglomerative_clustering.py>`, or
+<sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`raccoon face <example_cluster_plot_face_ward_segmentation.py>` example.
+:ref:`raccoon face <sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_face_ward_segmentation.py`: Ward clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`: Ward clustering
    to split the image of a raccoon face in regions.
 
- * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
    versus unstructured approaches.
 
- * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+ * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
    Example of dimensionality reduction with feature agglomeration based on
    Ward hierarchical clustering.
 
- * :ref:`example_cluster_plot_agglomerative_clustering.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 .. warning:: **Connectivity constraints with average and complete linkage**
 
@@ -640,21 +640,21 @@ enable only merging of neighboring pixels on an image, as in the
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
-    :ref:`example_cluster_plot_agglomerative_clustering.py`).
+    :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_002.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_002.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_003.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_003.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_004.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_004.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
@@ -678,21 +678,21 @@ The guidelines for choosing a metric is to use one that maximizes the
 distance between samples in different classes, and minimizes that within
 each class.
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_005.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_005.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_006.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_006.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_007.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_007.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_agglomerative_clustering_metrics.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 .. _dbscan:
@@ -734,7 +734,7 @@ indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/plot_dbscan_001.png
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
 
@@ -742,7 +742,7 @@ by black points below.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_dbscan.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 .. topic:: Implementation
 
@@ -865,7 +865,7 @@ the user is advised
  4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
     which performs the global clustering.
 
-.. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
 
 .. topic:: References:
@@ -972,7 +972,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments.
 
@@ -1106,7 +1106,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments. This example also includes the Adjusted Rand
    Index.
@@ -1278,7 +1278,7 @@ Drawbacks
   smaller sample sizes or larger number of clusters it is safer to use
   an adjusted index such as the Adjusted Rand Index (ARI)**.
 
-.. figure:: ../auto_examples/cluster/images/plot_adjusted_for_chance_measures_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_adjusted_for_chance_measures_001.png
    :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
    :align: center
    :scale: 100
@@ -1290,7 +1290,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments.
 
@@ -1496,7 +1496,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
 .. _calinski_harabaz_index:

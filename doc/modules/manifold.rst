@@ -20,7 +20,7 @@ Manifold learning
 
 
 
-.. figure:: ../auto_examples/manifold/images/plot_compare_methods_001.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
    :scale: 60
@@ -46,11 +46,11 @@ to be desired.  In a random projection, it is likely that the more
 interesting structure within the data will be lost.
 
 
-.. |digits_img| image:: ../auto_examples/manifold/images/plot_lle_digits_001.png
+.. |digits_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_001.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |projected_img| image::  ../auto_examples/manifold/images/plot_lle_digits_002.png
+.. |projected_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_002.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
@@ -66,11 +66,11 @@ These methods can be powerful, but often miss important non-linear
 structure in the data.
 
 
-.. |PCA_img| image:: ../auto_examples/manifold/images/plot_lle_digits_003.png
+.. |PCA_img| image:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_003.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
-.. |LDA_img| image::  ../auto_examples/manifold/images/plot_lle_digits_004.png
+.. |LDA_img| image::  ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_004.png
     :target: ../auto_examples/manifold/plot_lle_digits.html
     :scale: 50
 
@@ -85,10 +85,10 @@ from the data itself, without the use of predetermined classifications.
 
 .. topic:: Examples:
 
-    * See :ref:`example_manifold_plot_lle_digits.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` for an example of
       dimensionality reduction on handwritten digits.
 
-    * See :ref:`example_manifold_plot_compare_methods.py` for an example of
+    * See :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py` for an example of
       dimensionality reduction on a toy "S-curve" dataset.
 
 The manifold learning implementations available in sklearn are
@@ -106,7 +106,7 @@ Isomap seeks a lower-dimensional embedding which maintains geodesic
 distances between all points.  Isomap can be performed with the object
 :class:`Isomap`.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_005.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_005.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -163,7 +163,7 @@ Locally linear embedding can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_006.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_006.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -217,7 +217,7 @@ linear embedding* (MLLE).  MLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'modified'``.
 It requires ``n_neighbors > n_components``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_007.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_007.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -267,7 +267,7 @@ for small output dimension.  HLLE can be  performed with function
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'hessian'``.
 It requires ``n_neighbors > n_components * (n_components + 3) / 2``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_008.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_008.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -359,7 +359,7 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
 :class:`LocallyLinearEmbedding`, with the keyword ``method = 'ltsa'``.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_009.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_009.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -417,7 +417,7 @@ version, the algorithms will try to preserve the order of the distances, and
 hence seek for a monotonic relationship between the distances in the embedded
 space and the similarities/dissimilarities.
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_010.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_010.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
@@ -452,7 +452,7 @@ A trivial solution to this problem is to set all the points on the origin. In
 order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 
 
-.. figure:: ../auto_examples/manifold/images/plot_mds_001.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
    :target: ../auto_examples/manifold/plot_mds.html
    :align: center
    :scale: 60
@@ -513,7 +513,7 @@ The disadvantages to using t-SNE are roughly:
   initializing points with PCA (using `init='pca'`).
 
 
-.. figure:: ../auto_examples/manifold/images/plot_lle_digits_013.png
+.. figure:: ../auto_examples/manifold/images/sphx_glr_plot_lle_digits_013.png
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50

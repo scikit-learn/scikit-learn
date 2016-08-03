@@ -1111,7 +1111,7 @@ Documentation improvements
 
    - Added silhouette plots for analysis of KMeans clustering using
      :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
-     See :ref:`example_cluster_plot_kmeans_silhouette_analysis.py`
+     See :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`
 
 Bug fixes
 .........
@@ -1459,7 +1459,7 @@ New features
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
-     :ref:`example_model_selection_plot_learning_curve.py`. By Alexander Fabisch.
+     :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`. By Alexander Fabisch.
 
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
@@ -2058,7 +2058,7 @@ Changelog
      By `Lars Buitinck`_.
 
    - Added self-contained example of out-of-core learning on text data
-     :ref:`example_applications_plot_out_of_core_classification.py`.
+     :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
      By `Eustache Diemert`_.
 
    - The default number of components for
@@ -2434,7 +2434,7 @@ Changelog
 
    - Partial dependence plots for :ref:`gradient_boosting` in
      :func:`ensemble.partial_dependence.partial_dependence` by `Peter
-     Prettenhofer`_. See :ref:`example_ensemble_plot_partial_dependence.py` for an
+     Prettenhofer`_. See :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py` for an
      example.
 
    - The table of contents on the website has now been made expandable by
@@ -3368,13 +3368,13 @@ This release also includes the dictionary-learning work developed by
 
 
 
-.. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
+.. |banner1| image:: ./auto_examples/manifold/images/thumb/sphx_glr_plot_compare_methods_thumb.png
    :target: auto_examples/manifold/plot_compare_methods.html
 
-.. |banner2| image:: ./auto_examples/linear_model/images/thumb/plot_omp.png
+.. |banner2| image:: ./auto_examples/linear_model/images/thumb/sphx_glr_plot_omp_thumb.png
    :target: auto_examples/linear_model/plot_omp.html
 
-.. |banner3| image:: ./auto_examples/decomposition/images/thumb/plot_kernel_pca.png
+.. |banner3| image:: ./auto_examples/decomposition/images/thumb/sphx_glr_plot_kernel_pca_thumb.png
    :target: auto_examples/decomposition/plot_kernel_pca.html
 
 .. |center-div| raw:: html
@@ -3803,7 +3803,7 @@ Changelog
   - Improved svm module: memory consumption has been reduced by 50%,
     heuristic to automatically set class weights, possibility to
     assign weights to samples (see
-    :ref:`example_svm_plot_weighted_samples.py` for an example).
+    :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py` for an example).
 
   - New :ref:`gaussian_process` module by Vincent Dubourg. This module
     also has great documentation and some very neat examples. See
@@ -3823,10 +3823,10 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`example_applications_face_recognition.py`,
-    :ref:`example_applications_plot_species_distribution_modeling.py`,
-    :ref:`example_applications_svm_gui.py`,
-    :ref:`example_applications_wikipedia_principal_eigenvector.py` and
+    :ref:`sphx_glr_auto_examples_applications_face_recognition.py`,
+    :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
+    :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
     others.
 
   - Faster :ref:`least_angle_regression` algorithm. It is now 2x
@@ -3947,8 +3947,8 @@ Examples
 --------
 
     - new examples using some of the mlcomp datasets:
-      ``example_mlcomp_sparse_document_classification.py`` (since removed) and
-      :ref:`example_text_document_classification_20newsgroups.py`
+      ``sphx_glr_auto_examples_mlcomp_sparse_document_classification.py`` (since removed) and
+      :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
     - Many more examples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_

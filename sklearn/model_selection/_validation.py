@@ -744,7 +744,7 @@ def learning_curve(estimator, X, y, labels=None,
     Notes
     -----
     See :ref:`examples/model_selection/plot_learning_curve.py
-    <example_model_selection_plot_learning_curve.py>`
+    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
@@ -947,9 +947,8 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
 
     Notes
     -----
-    See
-    :ref:`examples/model_selection/plot_validation_curve.py
-    <example_model_selection_plot_validation_curve.py>`
+    See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+
     """
     X, y, labels = indexable(X, y, labels)
 

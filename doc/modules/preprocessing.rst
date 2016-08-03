@@ -499,7 +499,7 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`example_missing_values.py`
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_missing_values.py`
 
 .. _polynomial_features:
 
@@ -540,7 +540,7 @@ The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(
 
 Note that polynomial features are used implicitily in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 
 Custom transformers
 ===================
@@ -560,4 +560,4 @@ a transformer that applies a log transformation in a pipeline, do::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to do custom feature selection,
-see :ref:`example_preprocessing_plot_function_transformer.py`
+see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`

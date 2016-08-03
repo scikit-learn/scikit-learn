@@ -11,7 +11,7 @@ If available, the example uses
 to plot the coast lines and national boundaries of South America.
 
 This example does not perform any learning over the data
-(see :ref:`example_applications_plot_species_distribution_modeling.py` for
+(see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py` for
 an example of classification based on the attributes in this dataset).  It
 simply shows the kernel density estimate of observed data points in
 geospatial coordinates.
