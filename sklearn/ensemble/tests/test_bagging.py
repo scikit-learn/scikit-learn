@@ -674,7 +674,7 @@ def test_consistent_index_sampling():
     bagging.fit(X, y)
 
     feat_inds_list = bagging.estimators_features_
-    feat_samp_inds_gen = bagging._get_estimators_indices()
+    feat_samp_inds_gen = bagging._get_estimators_data_draws()
 
     for feat_inds1, (feat_inds2, samp_inds) in zip(feat_inds_list, feat_samp_inds_gen):
         assert_array_equal(feat_inds1, feat_inds2) 

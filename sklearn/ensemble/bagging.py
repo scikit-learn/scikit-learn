@@ -397,7 +397,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Default implementation
         return column_or_1d(y, warn=True)
 
-    def _get_estimators_indices(self):
+    def _get_estimators_data_draws(self, sample_mask=False, feature_mask=False):
         # If max_samples is float
         if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
             max_samples = int(self.max_samples * self._n_samples)
@@ -412,7 +412,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_samples]")
 
-        # Get sampled indices
+        # Get sampled indices or mask
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
@@ -425,15 +425,29 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                                                                   self._n_samples, 
                                                                   max_features, 
                                                                   max_samples)
-            yield feature_indices, sample_indices
+
+            # Convert feature indices to mask if desired
+            if feature_mask:
+                feature_draw = np.zeros(self._n_samples, dtype=bool)
+                feature_draw[feature_indices] = True
+            else:
+                feature_draw = feature_indices
+
+            # Convert sample indices to mask if desired
+            if sample_mask:
+                sample_draw = np.zeros(self._n_samples, dtype=bool)
+                sample_draw[sample_indices] = True
+            else:
+                sample_draw = sample_indices
+
+            yield feature_draw, sample_draw
 
     @property
     @deprecated("Attribute 'estimator_samples_' is deprecated and will be removed "
-                "in release 0.20. Use method '_get_estimator_indices()' instead.")
+                "in release 0.20. Use method '_get_estimators_data_draw()' instead.")
     def estimators_samples_(self):
-        estimators_indices = self._get_estimators_indices()
-        for feature_indices, sample_indices in estimators_indices:
-            yield sample_indices
+        return [sample_mask for _, sample_mask in 
+                self._get_estimators_data_draws(sample_mask=True)]
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -591,10 +605,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         classes_ = self.classes_
 
         predictions = np.zeros((n_samples, n_classes_))
+        estimators_draws = self._get_estimators_data_draws(sample_mask=True)
 
-        for estimator, samples, features in zip(self.estimators_,
-                                                self.estimators_samples_,
-                                                self.estimators_features_):
+        for estimator, (_, samples), features in zip(self.estimators_,
+                                                     estimators_draws,
+                                                     self.estimators_features_):
             # Create mask for OOB samples
             mask = np.ones(n_samples, dtype=np.bool)
             mask[samples] = False
@@ -985,10 +1000,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
+        estimators_draws = self._get_estimators_data_draws(sample_mask=True)
 
-        for estimator, samples, features in zip(self.estimators_,
-                                                self.estimators_samples_,
-                                                self.estimators_features_):
+        for estimator, (_, samples), features in zip(self.estimators_,
+                                                     estimators_draws,
+                                                     self.estimators_features_):
             # Create mask for OOB samples
             mask = np.ones(n_samples, dtype=np.bool)
             mask[samples] = False
