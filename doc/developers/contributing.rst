@@ -26,7 +26,7 @@ See :ref:`easy_issues` to get started.
     Code is not the only way to help the project. Reviewing pull
     requests, answering questions to help others on mailing lists or
     issues, organizing and teaching tutorials, working on the website,
-    are all priceless contributions.
+    improving the documentation, are all priceless contributions.
 
     We abide by the principles of openness, respect, and consideration of
     others of the Python Software Foundation:
