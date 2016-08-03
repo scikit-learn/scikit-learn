@@ -22,13 +22,13 @@ class Isomap(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_neighbors : integer
-        number of neighbors to consider for each point (if mode='k').
+        Number of neighbors to consider for each point (if mode='k').
 
     radius : float
-        radius to consider for each point (if mode='radius').
+        Radius to consider for each point (if mode='radius').
 
     mode : string ['k'|'radius']
-        neighborhood function.
+        Neighborhood function.
 
         'k' : k nearest neighbors.
 

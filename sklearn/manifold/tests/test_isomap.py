@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_less
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
 
-
 def test_isomap_simple_grid():
     # Isomap should preserve distances when all neighbors are used
     N_per_side = 5
@@ -122,3 +121,30 @@ def test_isomap_clone_bug():
         model.fit(np.random.rand(50, 2))
         assert_equal(model.nbrs_.n_neighbors,
                      n_neighbors)
+
+def test_isomap_simple_grid_radius():
+    # Similar to test_isomap_simple_grid, tests the radius mode
+    # Isomap should preserve distances when all neighbors are used
+    N_per_side = 5
+    Npts = N_per_side ** 2
+    radius = N_per_side**2 + 0.1 # radius containing all neighbors
+
+    # grid of equidistant points in 2D, n_components = n_dim
+    X = np.array(list(product(range(N_per_side), repeat=2)))
+
+    # distances from each point to all others
+    G = neighbors.radius_neighbors_graph(X, radius,
+                                         mode='distance').toarray()
+
+    for eigen_solver in eigen_solvers:
+        for path_method in path_methods:
+            clf = manifold.Isomap(radius=radius, mode='radius',
+                                  n_components=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)
+
+            G_iso = neighbors.radius_neighbors_graph(clf.embedding_,
+                                                     radius,
+                                                     mode='distance').toarray()
+            assert_array_almost_equal(G, G_iso)
