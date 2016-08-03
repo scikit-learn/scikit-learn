@@ -605,10 +605,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         classes_ = self.classes_
 
         predictions = np.zeros((n_samples, n_classes_))
-        estimators_draws = self._get_estimators_data_draws(sample_mask=True)
+        estimators_samples = (samples for _, samples in 
+                              self._get_estimators_data_draws(sample_mask=True))
 
-        for estimator, (_, samples), features in zip(self.estimators_,
-                                                     estimators_draws,
+        for estimator, samples, features in zip(self.estimators_,
+                                                     estimators_samples,
                                                      self.estimators_features_):
             # Create mask for OOB samples
             mask = np.ones(n_samples, dtype=np.bool)
@@ -1000,10 +1001,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
-        estimators_draws = self._get_estimators_data_draws(sample_mask=True)
+        estimators_samples = (samples for _, samples in 
+                              self._get_estimators_data_draws(sample_mask=True))
 
-        for estimator, (_, samples), features in zip(self.estimators_,
-                                                     estimators_draws,
+        for estimator, samples, features in zip(self.estimators_,
+                                                     estimators_samples,
                                                      self.estimators_features_):
             # Create mask for OOB samples
             mask = np.ones(n_samples, dtype=np.bool)
