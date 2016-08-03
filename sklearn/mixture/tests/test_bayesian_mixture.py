@@ -66,23 +66,23 @@ def test_bayesian_mixture_weights_prior_initialisation():
     n_samples, n_components, n_features = 10, 5, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of alpha_init
-    bad_alpha_init = 0.
-    bgmm = BayesianGaussianMixture(alpha_init=bad_alpha_init)
+    # Check raise message for a bad value of alpha_prior
+    badalpha_prior_ = 0.
+    bgmm = BayesianGaussianMixture(alpha_prior=badalpha_prior_)
     assert_raise_message(ValueError,
-                         "The parameter 'alpha_init' should be "
+                         "The parameter 'alpha_prior' should be "
                          "greater than 0., but got %.3f."
-                         % bad_alpha_init,
+                         % badalpha_prior_,
                          bgmm.fit, X)
 
-    # Check correct init for a given value of alpha_init
-    alpha_init = rng.rand()
-    bgmm = BayesianGaussianMixture(alpha_init=alpha_init).fit(X)
-    assert_almost_equal(alpha_init, bgmm._alpha_prior)
+    # Check correct init for a given value of alpha_prior
+    alpha_prior = rng.rand()
+    bgmm = BayesianGaussianMixture(alpha_prior=alpha_prior).fit(X)
+    assert_almost_equal(alpha_prior, bgmm.alpha_prior_)
 
-    # Check correct init for the default value of alpha_init
+    # Check correct init for the default value of alpha_prior
     bgmm = BayesianGaussianMixture(n_components=n_components).fit(X)
-    assert_almost_equal(1. / n_components, bgmm._alpha_prior)
+    assert_almost_equal(1. / n_components, bgmm.alpha_prior_)
 
 
 def test_bayesian_mixture_means_prior_initialisation():
@@ -90,41 +90,41 @@ def test_bayesian_mixture_means_prior_initialisation():
     n_samples, n_components, n_features = 10, 3, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of beta_init
-    bad_beta_init = 0.
-    bgmm = BayesianGaussianMixture(beta_init=bad_beta_init)
+    # Check raise message for a bad value of beta_prior
+    badbeta_prior_ = 0.
+    bgmm = BayesianGaussianMixture(beta_prior=badbeta_prior_)
     assert_raise_message(ValueError,
-                         "The parameter 'beta_init' should be "
+                         "The parameter 'beta_prior' should be "
                          "greater than 0., but got %.3f."
-                         % bad_beta_init,
+                         % badbeta_prior_,
                          bgmm.fit, X)
 
-    # Check correct init for a given value of beta_init
-    beta_init = rng.rand()
-    bgmm = BayesianGaussianMixture(beta_init=beta_init).fit(X)
-    assert_almost_equal(beta_init, bgmm._beta_prior)
+    # Check correct init for a given value of beta_prior
+    beta_prior = rng.rand()
+    bgmm = BayesianGaussianMixture(beta_prior=beta_prior).fit(X)
+    assert_almost_equal(beta_prior, bgmm.beta_prior_)
 
-    # Check correct init for the default value of beta_init
+    # Check correct init for the default value of beta_prior
     bgmm = BayesianGaussianMixture().fit(X)
-    assert_almost_equal(1., bgmm._beta_prior)
+    assert_almost_equal(1., bgmm.beta_prior_)
 
-    # Check raise message for a bad shape of mean_init
-    mean_init = rng.rand(n_features + 1)
+    # Check raise message for a bad shape of mean_prior
+    mean_prior = rng.rand(n_features + 1)
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   mean_init=mean_init)
+                                   mean_prior=mean_prior)
     assert_raise_message(ValueError,
                          "The parameter 'means' should have the shape of ",
                          bgmm.fit, X)
 
-    # Check correct init for a given value of mean_init
-    mean_init = rng.rand(n_features)
+    # Check correct init for a given value of mean_prior
+    mean_prior = rng.rand(n_features)
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   mean_init=mean_init).fit(X)
-    assert_almost_equal(mean_init, bgmm._mean_prior)
+                                   mean_prior=mean_prior).fit(X)
+    assert_almost_equal(mean_prior, bgmm.mean_prior_)
 
-    # Check correct init for the default value of bemean_initta
+    # Check correct init for the default value of bemean_priorta
     bgmm = BayesianGaussianMixture(n_components=n_components).fit(X)
-    assert_almost_equal(X.mean(axis=0), bgmm._mean_prior)
+    assert_almost_equal(X.mean(axis=0), bgmm.mean_prior_)
 
 
 def test_bayesian_mixture_precisions_prior_initialisation():
@@ -132,27 +132,27 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     n_samples, n_features = 10, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of nu_init
-    bad_nu_init = n_features - 1.
-    bgmm = BayesianGaussianMixture(nu_init=bad_nu_init)
+    # Check raise message for a bad value of nu_prior
+    badnu_prior_ = n_features - 1.
+    bgmm = BayesianGaussianMixture(nu_prior=badnu_prior_)
     assert_raise_message(ValueError,
-                         "The parameter 'nu_init' should be "
+                         "The parameter 'nu_prior' should be "
                          "greater than %d, but got %.3f."
-                         % (n_features - 1, bad_nu_init),
+                         % (n_features - 1, badnu_prior_),
                          bgmm.fit, X)
 
-    # Check correct init for a given value of nu_init
-    nu_init = rng.rand() + n_features - 1.
-    bgmm = BayesianGaussianMixture(nu_init=nu_init).fit(X)
-    assert_almost_equal(nu_init, bgmm._nu_prior)
+    # Check correct init for a given value of nu_prior
+    nu_prior = rng.rand() + n_features - 1.
+    bgmm = BayesianGaussianMixture(nu_prior=nu_prior).fit(X)
+    assert_almost_equal(nu_prior, bgmm.nu_prior_)
 
-    # Check correct init for the default value of nu_init
-    nu_init_default = n_features
-    bgmm = BayesianGaussianMixture(nu_init=nu_init_default).fit(X)
-    assert_almost_equal(nu_init_default, bgmm._nu_prior)
+    # Check correct init for the default value of nu_prior
+    nu_prior_default = n_features
+    bgmm = BayesianGaussianMixture(nu_prior=nu_prior_default).fit(X)
+    assert_almost_equal(nu_prior_default, bgmm.nu_prior_)
 
-    # Check correct init for a given value of covariance_init
-    covariance_init = {
+    # Check correct init for a given value of covariance_prior
+    covariance_prior = {
         'full': np.cov(X.T, bias=1) + 10,
         'tied': np.cov(X.T, bias=1) + 5,
         'diag': np.diag(np.atleast_2d(np.cov(X.T, bias=1))) + 3,
@@ -162,23 +162,23 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
         print(cov_type)
         bgmm.covariance_type = cov_type
-        bgmm.covariance_init = covariance_init[cov_type]
+        bgmm.covariance_prior = covariance_prior[cov_type]
         bgmm.fit(X)
-        assert_almost_equal(covariance_init[cov_type],
-                            bgmm._covariance_prior)
+        assert_almost_equal(covariance_prior[cov_type],
+                            bgmm.covariance_prior_)
 
-    # Check raise message for a bad spherical value of covariance_init
-    bad_covariance_init = -1.
+    # Check raise message for a bad spherical value of covariance_prior
+    badcovariance_prior_ = -1.
     bgmm = BayesianGaussianMixture(covariance_type='spherical',
-                                   covariance_init=bad_covariance_init)
+                                   covariance_prior=badcovariance_prior_)
     assert_raise_message(ValueError,
-                         "The parameter 'spherical covariance_init' "
+                         "The parameter 'spherical covariance_prior' "
                          "should be greater than 0., but got %.3f."
-                         % bad_covariance_init,
+                         % badcovariance_prior_,
                          bgmm.fit, X)
 
-    # Check correct init for the default value of covariance_init
-    covariance_init_default = {
+    # Check correct init for the default value of covariance_prior
+    covariance_prior_default = {
         'full': np.atleast_2d(np.cov(X.T)),
         'tied': np.atleast_2d(np.cov(X.T)),
         'diag': np.var(X, axis=0, ddof=1),
@@ -188,8 +188,8 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
         bgmm.covariance_type = cov_type
         bgmm.fit(X)
-        assert_almost_equal(covariance_init_default[cov_type],
-                            bgmm._covariance_prior)
+        assert_almost_equal(covariance_prior_default[cov_type],
+                            bgmm.covariance_prior_)
 
 
 def test_bayesian_mixture_check_is_fitted():

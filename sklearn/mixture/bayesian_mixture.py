@@ -104,24 +104,24 @@ class BayesianGaussianMixture(BaseMixture):
         'kmeans' : responsibilities are initialized using kmeans.
         'random' : responsibilities are initialized randomly.
 
-    alpha_init : float, optional.
+    alpha_prior : float, optional.
         The user-provided alpha prior parameter of the Dirichlet distribution.
         If is None, the alpha prior is set to `1. / n_components`.
 
-    beta_init : float, optional.
+    beta_prior : float, optional.
         The user-provided beta prior parameter of the Gaussian
         distribution. If it is None, beta prior is set to 1.
 
-    mean_init : array-like, shape (`n_features`,), optional
+    mean_prior : array-like, shape (`n_features`,), optional
         The user-provided mean prior of the Gaussian distribution.
         If it is None, the mean prior is set to the mean of X.
 
-    nu_init : float, optional.
-        The user-provided nu prior parameter of the precision distribution.
+    nu_prior : float, optional.
+        The user-provided nu prior parameter of the covariance distribution.
         If it is None, the nu prior is set to `n_features`.
 
-    covariance_init : float or array-like, optional
-        The user-provided covariance prior of the precision distribution.
+    covariance_prior : float or array-like, optional
+        The user-provided covariance prior of the covariance distribution.
         If it is None, the covariance prior is initialized using the covariance
         of X. The shape depends on `covariance_type`::
             (`n_features`, `n_features`) if 'full',
@@ -148,14 +148,8 @@ class BayesianGaussianMixture(BaseMixture):
     weights_ : array-like, shape (`n_components`,)
         The weights of each mixture components.
 
-    beta_ : array-like, shape (`n_components`, )
-        The beta parameters of the Gaussian distributions of the means.
-
     means_ : array-like, shape (`n_components`, `n_features`)
         The mean of each mixture component.
-
-    nu_ : array-like, shape (`n_components`,)
-        The nu parameters of the precision distribution.
 
     covariances_ : array-like
         The covariance of each mixture component.
@@ -194,8 +188,40 @@ class BayesianGaussianMixture(BaseMixture):
     converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
-    n_iter : int
+    n_iter_ : int
         Number of step used by the best fit of EM to reach the convergence.
+
+    lower_bound_ : float
+        Lower bound value of the best fit of EM.
+
+    alpha_prior_ : float
+        The alpha prior parameter of the Dirichlet distribution.
+
+    alpha_ : array-like, shape (`n_components`, )
+        The alpha parameters of the Dirichlet distribution.
+
+    beta_prior : float
+        The beta prior parameters of the Gaussian distributions of the means.
+
+    beta_ : array-like, shape (`n_components`, )
+        The beta parameters of the Gaussian distributions of the means.
+
+    means_prior_ : array-like, shape (`n_features`,)
+        The mean prior of each mixture component.
+
+    nu_prior_ : float
+        The nu prior parameters of the covariance distribution.
+
+    nu_ : array-like, shape (`n_components`,)
+        The nu parameters of the covariance distribution.
+
+    covariance_prior_ : float or array-like
+        The covariance prior of the covariance distribution.
+        The shape depends on `covariance_type`::
+            (`n_features`, `n_features`) if 'full',
+            (`n_features`, `n_features`) if 'tied',
+            (`n_features`)               if 'diag',
+            float                        if 'spherical'
 
     See Also
     --------
@@ -204,8 +230,8 @@ class BayesianGaussianMixture(BaseMixture):
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
-                 alpha_init=None, beta_init=None, mean_init=None,
-                 nu_init=None, covariance_init=None, random_state=None,
+                 alpha_prior=None, beta_prior=None, mean_prior=None,
+                 nu_prior=None, covariance_prior=None, random_state=None,
                  warm_start=False, verbose=0, verbose_interval=20):
         super(BayesianGaussianMixture, self).__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
@@ -214,11 +240,11 @@ class BayesianGaussianMixture(BaseMixture):
             verbose=verbose, verbose_interval=verbose_interval)
 
         self.covariance_type = covariance_type
-        self.alpha_init = alpha_init
-        self.beta_init = beta_init
-        self.mean_init = mean_init
-        self.nu_init = nu_init
-        self.covariance_init = covariance_init
+        self.alpha_prior = alpha_prior
+        self.beta_prior = beta_prior
+        self.mean_prior = mean_prior
+        self.nu_prior = nu_prior
+        self.covariance_prior = covariance_prior
 
     def _check_parameters(self, X):
         """Check the parameters are well defined.
@@ -235,18 +261,18 @@ class BayesianGaussianMixture(BaseMixture):
         self._check_weights_parameters()
         self._check_means_parameters(X)
         self._check_precision_parameters(X)
-        self._check_covariance_prior_parameter(X)
+        self._checkcovariance_prior__parameter(X)
 
     def _check_weights_parameters(self):
         """Check the parameter of the Dirichlet distribution."""
-        if self.alpha_init is None:
-            self._alpha_prior = 1. / self.n_components
-        elif self.alpha_init > 0.:
-            self._alpha_prior = self.alpha_init
+        if self.alpha_prior is None:
+            self.alpha_prior_ = 1. / self.n_components
+        elif self.alpha_prior > 0.:
+            self.alpha_prior_ = self.alpha_prior
         else:
-            raise ValueError("The parameter 'alpha_init' should be "
+            raise ValueError("The parameter 'alpha_prior' should be "
                              "greater than 0., but got %.3f."
-                             % self.alpha_init)
+                             % self.alpha_prior)
 
     def _check_means_parameters(self, X):
         """Check the parameters of the Gaussian distribution.
@@ -257,22 +283,22 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = X.shape
 
-        if self.beta_init is None:
-            self._beta_prior = 1.
-        elif self.beta_init > 0.:
-            self._beta_prior = self.beta_init
+        if self.beta_prior is None:
+            self.beta_prior_ = 1.
+        elif self.beta_prior > 0.:
+            self.beta_prior_ = self.beta_prior
         else:
-            raise ValueError("The parameter 'beta_init' should be "
+            raise ValueError("The parameter 'beta_prior' should be "
                              "greater than 0., but got %.3f."
-                             % self.beta_init)
+                             % self.beta_prior)
 
-        if self.mean_init is None:
-            self._mean_prior = X.mean(axis=0)
+        if self.mean_prior is None:
+            self.mean_prior_ = X.mean(axis=0)
         else:
-            self._mean_prior = check_array(self.mean_init,
+            self.mean_prior_ = check_array(self.mean_prior,
                                            dtype=[np.float64, np.float32],
                                            ensure_2d=False)
-            _check_shape(self._mean_prior, (n_features, ), 'means')
+            _check_shape(self.mean_prior_, (n_features, ), 'means')
 
     def _check_precision_parameters(self, X):
         """Check the prior parameters of the precision distribution.
@@ -283,17 +309,17 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = X.shape
 
-        if self.nu_init is None:
-            self._nu_prior = n_features
-        elif self.nu_init > n_features - 1.:
-            self._nu_prior = self.nu_init
+        if self.nu_prior is None:
+            self.nu_prior_ = n_features
+        elif self.nu_prior > n_features - 1.:
+            self.nu_prior_ = self.nu_prior
         else:
-            raise ValueError("The parameter 'nu_init' "
+            raise ValueError("The parameter 'nu_prior' "
                              "should be greater than %d, but got %.3f."
-                             % (n_features - 1, self.nu_init))
+                             % (n_features - 1, self.nu_prior))
 
-    def _check_covariance_prior_parameter(self, X):
-        """Check the `_covariance_prior`.
+    def _checkcovariance_prior__parameter(self, X):
+        """Check the `covariance_prior_`.
 
         Parameters
         ----------
@@ -301,8 +327,8 @@ class BayesianGaussianMixture(BaseMixture):
         """
         _, n_features = X.shape
 
-        if self.covariance_init is None:
-            self._covariance_prior = {
+        if self.covariance_prior is None:
+            self.covariance_prior_ = {
                 'full': np.atleast_2d(np.cov(X.T)),
                 'tied': np.atleast_2d(np.cov(X.T)),
                 'diag': np.var(X, axis=0, ddof=1),
@@ -310,28 +336,28 @@ class BayesianGaussianMixture(BaseMixture):
             }[self.covariance_type]
 
         elif self.covariance_type in ['full', 'tied']:
-            self._covariance_prior = check_array(
-                self.covariance_init, dtype=[np.float64, np.float32],
+            self.covariance_prior_ = check_array(
+                self.covariance_prior, dtype=[np.float64, np.float32],
                 ensure_2d=False)
-            _check_shape(self._covariance_prior, (n_features, n_features),
-                         '%s covariance_init' % self.covariance_type)
-            _check_precision_matrix(self._covariance_prior,
+            _check_shape(self.covariance_prior_, (n_features, n_features),
+                         '%s covariance_prior' % self.covariance_type)
+            _check_precision_matrix(self.covariance_prior_,
                                     self.covariance_type)
         elif self.covariance_type is 'diag':
-            self._covariance_prior = check_array(
-                self.covariance_init, dtype=[np.float64, np.float32],
+            self.covariance_prior_ = check_array(
+                self.covariance_prior, dtype=[np.float64, np.float32],
                 ensure_2d=False)
-            _check_shape(self._covariance_prior, (n_features,),
-                         '%s covariance_init' % self.covariance_type)
-            _check_precision_positivity(self._covariance_prior,
+            _check_shape(self.covariance_prior_, (n_features,),
+                         '%s covariance_prior' % self.covariance_type)
+            _check_precision_positivity(self.covariance_prior_,
                                         self.covariance_type)
         # spherical case
-        elif self.covariance_init > 0.:
-            self._covariance_prior = self.covariance_init
+        elif self.covariance_prior > 0.:
+            self.covariance_prior_ = self.covariance_prior
         else:
-            raise ValueError("The parameter 'spherical covariance_init' "
+            raise ValueError("The parameter 'spherical covariance_prior' "
                              "should be greater than 0., but got %.3f."
-                             % self.covariance_init)
+                             % self.covariance_prior)
 
     def _initialize(self, X, resp):
         """Initialization of the mixture parameters.
@@ -356,7 +382,7 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         nk : array-like, shape (n_components,)
         """
-        self.alpha_ = self._alpha_prior + nk
+        self.alpha_ = self.alpha_prior_ + nk
 
     def _estimate_means(self, nk, xk):
         """Estimate the parameters of the Gaussian distribution.
@@ -367,8 +393,8 @@ class BayesianGaussianMixture(BaseMixture):
 
         xk : array-like, shape (n_components, n_features)
         """
-        self.beta_ = self._beta_prior + nk
-        self.means_ = (self._beta_prior * self._mean_prior +
+        self.beta_ = self.beta_prior_ + nk
+        self.means_ = (self.beta_prior_ * self.mean_prior_ +
                        nk[:, np.newaxis] * xk) / self.beta_[:, np.newaxis]
 
     def _estimate_precisions(self, nk, xk, sk):
@@ -413,15 +439,15 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Warning : in some Bishop book, there is a typo on the formula 10.63
         # `nu_k = nu_0 + Nk` is the correct formula
-        self.nu_ = self._nu_prior + nk
+        self.nu_ = self.nu_prior_ + nk
 
         self.covariances_ = np.empty((self.n_components, n_features,
                                       n_features))
 
         for k in range(self.n_components):
-            diff = xk[k] - self._mean_prior
-            self.covariances_[k] = (self._covariance_prior + nk[k] * sk[k] +
-                                    nk[k] * self._beta_prior / self.beta_[k] *
+            diff = xk[k] - self.mean_prior_
+            self.covariances_[k] = (self.covariance_prior_ + nk[k] * sk[k] +
+                                    nk[k] * self.beta_prior_ / self.beta_[k] *
                                     np.outer(diff, diff))
 
         # Contrary to the original bishop book, we normalize the covariances
@@ -444,12 +470,12 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Warning : in some Bishop book, there is a typo on the formula 10.63
         # `nu_k = nu_0 + Nk` is the correct formula
-        self.nu_ = self._nu_prior + nk.sum() / self.n_components
+        self.nu_ = self.nu_prior_ + nk.sum() / self.n_components
 
-        diff = xk - self._mean_prior
-        self.covariances_ = (self._covariance_prior +
+        diff = xk - self.mean_prior_
+        self.covariances_ = (self.covariance_prior_ +
                              sk * nk.sum() / self.n_components +
-                             self._beta_prior / self.n_components *
+                             self.beta_prior_ / self.n_components *
                              (np.dot((nk / self.beta_) * diff.T, diff)))
 
         # Contrary to the original bishop book, we normalize the covariances
@@ -472,12 +498,12 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Warning : in some Bishop book, there is a typo on the formula 10.63
         # `nu_k = nu_0 + Nk` is the correct formula
-        self.nu_ = self._nu_prior + nk
+        self.nu_ = self.nu_prior_ + nk
 
-        diff = xk - self._mean_prior
+        diff = xk - self.mean_prior_
         self.covariances_ = (
-            self._covariance_prior + nk[:, np.newaxis] * (
-                sk + (self._beta_prior / self.beta_)[:, np.newaxis] *
+            self.covariance_prior_ + nk[:, np.newaxis] * (
+                sk + (self.beta_prior_ / self.beta_)[:, np.newaxis] *
                 np.square(diff)))
 
         # Contrary to the original bishop book, we normalize the covariances
@@ -500,11 +526,11 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Warning : in some Bishop book, there is a typo on the formula 10.63
         # `nu_k = nu_0 + Nk` is the correct formula
-        self.nu_ = self._nu_prior + nk
+        self.nu_ = self.nu_prior_ + nk
 
-        diff = xk - self._mean_prior
-        self.covariances_ = (self._covariance_prior + nk * (
-                             sk + self._beta_prior / self.beta_ *
+        diff = xk - self.mean_prior_
+        self.covariances_ = (self.covariance_prior_ + nk * (
+                             sk + self.beta_prior_ / self.beta_ *
                              np.mean(np.square(diff), 1)))
 
         # Contrary to the original bishop book, we normalize the covariances
@@ -581,8 +607,8 @@ class BayesianGaussianMixture(BaseMixture):
         lower_bound : float
         """
         # Contrary to the original formula, we have done some simplification
-        # and removed all the constant terms (see the corresponding doc).
-        n_features, = self._mean_prior.shape
+        # and removed all the constant terms.
+        n_features, = self.mean_prior_.shape
 
         # We removed `.5 * n_features * np.log(self.nu_)` because the
         # precision matrix is normalized.

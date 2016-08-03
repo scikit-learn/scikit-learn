@@ -133,40 +133,14 @@ parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
 to a local optimum.
 
-.. _vbgmm:
+.. _bgmm:
 
-VBGMM: variational Gaussian mixtures
-====================================
+Bayesian Gaussian Mixture
+=========================
 
-The :class:`VBGMM` object implements a variant of the Gaussian mixture
-model with :ref:`variational inference <variational_inference>` algorithms.
-
-Pros and cons of class :class:`VBGMM`: variational inference
-------------------------------------------------------------
-
-Pros
-.....
-
-:Regularization: due to the incorporation of prior information,
-   variational solutions have less pathological special cases than
-   expectation-maximization solutions. One can then use full
-   covariance matrices in high dimensions or in cases where some
-   components might be centered around a single point without
-   risking divergence.
-
-Cons
-.....
-
-:Bias: to regularize a model one has to add biases. The
-   variational algorithm will bias all the means towards the origin
-   (part of the prior information adds a "ghost point" in the origin
-   to every mixture component) and it will bias the covariances to
-   be more spherical. It will also, depending on the concentration
-   parameter, bias the cluster structure either towards uniformity
-   or towards a rich-get-richer scenario.
-
-:Hyperparameters: this algorithm needs an extra hyperparameter
-   that might need experimental tuning via cross-validation.
+The :class:`BayesianGaussianMixture` object implements a variant of the Gaussian
+mixture model with :ref:`variational inference <variational_inference>`
+algorithms.
 
 .. _variational_inference:
 
@@ -194,6 +168,44 @@ components, while specifying small (between 0 and 1) values will lead
 to some mixture components getting almost all the points while most
 mixture components will be centered on just a few of the remaining
 points.
+
+.. figure:: ../auto_examples/mixture/images/plot_bayesian_gaussian_mixture_001.png
+   :target: ../auto_examples/mixture/plot_bayesian_gaussian_mixture.html
+   :align: center
+   :scale: 50%
+
+.. topic:: Examples:
+
+    * See :ref:`plot_bayesian_gaussian_mixture.py` for a comparaison of
+      the results of the ``BayesianGaussianMixture`` for different values
+      of the parameter ``alpha``.
+
+Pros and cons of class :class:`BayesianGaussianMixture`: variational inference
+------------------------------------------------------------------------------
+
+Pros
+.....
+
+:Regularization: due to the incorporation of prior information,
+   variational solutions have less pathological special cases than
+   expectation-maximization solutions. One can then use full
+   covariance matrices in high dimensions or in cases where some
+   components might be centered around a single point without
+   risking divergence.
+
+Cons
+.....
+
+:Bias: to regularize a model one has to add biases. The
+   variational algorithm will bias all the means towards the origin
+   (part of the prior information adds a "ghost point" in the origin
+   to every mixture component) and it will bias the covariances to
+   be more spherical. It will also, depending on the concentration
+   parameter, bias the cluster structure either towards uniformity
+   or towards a rich-get-richer scenario.
+
+:Hyperparameters: this algorithm needs an extra hyperparameter
+   that might need experimental tuning via cross-validation.
 
 .. _dpgmm:
 
