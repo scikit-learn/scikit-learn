@@ -188,16 +188,13 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
-        loss_l = self.loss.lower()
-
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
 
-        # FIXME change loss_l --> self.loss after 0.18
-        if loss_l in ('l1', 'l2'):
+        if self.loss in ('l1', 'l2'):
             old_loss = self.loss
-            self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(loss_l)
+            self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
@@ -357,18 +354,15 @@ class LinearSVR(LinearModel, RegressorMixin):
             Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
-        loss_l = self.loss.lower()
-
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
 
-        # FIXME change loss_l --> self.loss after 0.18
-        if loss_l in ('l1', 'l2'):
+        if self.loss in ('l1', 'l2'):
             old_loss = self.loss
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
-                         }.get(loss_l)
+                         }.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
@@ -467,7 +461,7 @@ class SVC(BaseSVC):
         (n_samples, n_classes * (n_classes - 1) / 2).
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.18.
+        in 0.19.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -620,7 +614,7 @@ class NuSVC(BaseSVC):
         (n_samples, n_classes * (n_classes - 1) / 2).
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.18.
+        in 0.19.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -1038,8 +1032,8 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight,
-                                     **params)
+        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
+                                     sample_weight=sample_weight, **params)
         return self
 
     def decision_function(self, X):

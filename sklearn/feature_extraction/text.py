@@ -280,12 +280,6 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
-    @property
-    @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
-                "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
-    def fixed_vocabulary(self):
-        return self.fixed_vocabulary_
-
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
