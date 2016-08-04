@@ -15,6 +15,10 @@ values will lead to some mixture components getting almost all the points
 while most mixture components will be centered on just a few of the remaining
 points.
 """
+# Author: Wei Xue <xuewei4d@gmail.com>
+#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clause
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt

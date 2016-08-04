@@ -1,6 +1,7 @@
 """Bayesian Gaussian Mixture Model."""
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clause
 
 import numpy as np
 from scipy.special import digamma, gammaln
@@ -71,7 +72,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     Parameters
     ----------
-    n_components: int, default to 1.
+    n_components: int, defaults to 1.
         The number of mixture components.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'},
