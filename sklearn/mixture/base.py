@@ -143,7 +143,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
             label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
-                                   random_state=0).fit(X).labels_
+                                   random_state=random_state).fit(X).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)

@@ -343,7 +343,7 @@ class BayesianGaussianMixture(BaseMixture):
                          '%s covariance_prior' % self.covariance_type)
             _check_precision_matrix(self.covariance_prior_,
                                     self.covariance_type)
-        elif self.covariance_type is 'diag':
+        elif self.covariance_type == 'diag':
             self.covariance_prior_ = check_array(
                 self.covariance_prior, dtype=[np.float64, np.float32],
                 ensure_2d=False)
@@ -616,7 +616,7 @@ class BayesianGaussianMixture(BaseMixture):
             self.precisions_cholesky_, self.covariance_type, n_features) -
             .5 * n_features * np.log(self.nu_))
 
-        if self.covariance_type is 'tied':
+        if self.covariance_type == 'tied':
             log_wishart = self.n_components * np.float64(_log_wishart_norm(
                 self.nu_, log_det_precisions_chol, n_features))
         else:
