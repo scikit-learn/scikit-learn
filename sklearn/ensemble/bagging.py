@@ -33,6 +33,21 @@ __all__ = ["BaggingClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
+def _generate_mask_from_indices(indices, mask_length, inverse=False):
+    """Private function used to convert list of indices to boolean mask"""
+    if mask_length <= np.max(indices):
+        raise ValueError("mask_length must greater than max(indices)")
+
+    if inverse:
+        mask = np.ones(mask_length, dtype=np.bool)
+        mask[indices] = False
+    else:
+        mask = np.zeros(mask_length, dtype=np.bool)
+        mask[indices] = True
+
+    return mask
+
+
 def _generate_indices(random_state, bootstrap, n_population, n_samples):
     """Private function used to draw randomly sampled indices."""
     # Draw sample indices
@@ -118,8 +133,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight *= sample_counts
 
             else:
-                not_indices_mask = np.ones(n_samples, dtype=np.bool)
-                not_indices_mask[indices] = False
+                not_indices_mask = _generate_mask_from_indices(indices, n_samples, inverse=True)
                 curr_sample_weight[not_indices_mask] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
@@ -316,6 +330,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if not (0 < max_samples <= X.shape[0]):
             raise ValueError("max_samples must be in (0, n_samples]")
 
+        self._max_samples = max_samples
+
+        # If max_features is float
         if isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
@@ -324,6 +341,9 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
 
+        self._max_features = max_features
+
+        # Other checks
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
@@ -398,20 +418,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         return column_or_1d(y, warn=True)
 
     def _get_estimators_data_draws(self, sample_mask=False, feature_mask=False):
-        # If max_samples is float
-        if not isinstance(self.max_samples, (numbers.Integral, np.integer)):
-            max_samples = int(self.max_samples * self._n_samples)
-
-        if not (0 < max_samples <= self._n_samples):
-            raise ValueError("max_samples must be in (0, n_samples]")
-
-        # If max_features is float
-        if not isinstance(self.max_features, (numbers.Integral, np.integer)):
-            max_features = int(self.max_features * self.n_features_)
-
-        if not (0 < max_features <= self.n_features_):
-            raise ValueError("max_features must be in (0, n_samples]")
-
         # Get sampled indices or mask
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
@@ -423,22 +429,14 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                                                                   self.bootstrap, 
                                                                   self.n_features_, 
                                                                   self._n_samples, 
-                                                                  max_features, 
-                                                                  max_samples)
+                                                                  self._max_features, 
+                                                                  self._max_samples)
 
-            # Convert feature indices to mask if desired
-            if feature_mask:
-                feature_draw = np.zeros(self._n_samples, dtype=bool)
-                feature_draw[feature_indices] = True
-            else:
-                feature_draw = feature_indices
-
-            # Convert sample indices to mask if desired
-            if sample_mask:
-                sample_draw = np.zeros(self._n_samples, dtype=bool)
-                sample_draw[sample_indices] = True
-            else:
-                sample_draw = sample_indices
+            # Convert indices to mask if desired
+            feature_draw = (_generate_mask_from_indices(feature_indices, self._n_samples)
+                            if feature_mask else feature_indices)
+            sample_draw = (_generate_mask_from_indices(sample_indices, self._n_samples)
+                           if sample_mask else sample_indices)
 
             yield feature_draw, sample_draw
 
@@ -607,11 +605,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                               self._get_estimators_data_draws(sample_mask=True))
 
         for estimator, samples, features in zip(self.estimators_,
-                                                     estimators_samples,
-                                                     self.estimators_features_):
+                                                estimators_samples,
+                                                self.estimators_features_):
             # Create mask for OOB samples
-            mask = np.ones(n_samples, dtype=np.bool)
-            mask[samples] = False
+            mask = ~samples
 
             if hasattr(estimator, "predict_proba"):
                 predictions[mask, :] += estimator.predict_proba(
@@ -1003,11 +1000,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                               self._get_estimators_data_draws(sample_mask=True))
 
         for estimator, samples, features in zip(self.estimators_,
-                                                     estimators_samples,
-                                                     self.estimators_features_):
+                                                estimators_samples,
+                                                self.estimators_features_):
             # Create mask for OOB samples
-            mask = np.ones(n_samples, dtype=np.bool)
-            mask[samples] = False
+            mask = ~samples
 
             predictions[mask] += estimator.predict((X[mask, :])[:, features])
             n_predictions[mask] += 1

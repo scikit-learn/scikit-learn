@@ -680,4 +680,11 @@ def test_consistent_index_sampling():
         assert_array_equal(feat_inds1, feat_inds2) 
 
 
-
+def test_oob_score_consistency():
+    # Make sure OOB scores are identical when random_state, estimator, and 
+    # training data are fixed and fitting is done twice
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5, max_features=0.5, 
+                                oob_score=True, random_state=1)
+    assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
+    
