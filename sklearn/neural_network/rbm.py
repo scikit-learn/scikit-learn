@@ -234,6 +234,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The fitted model.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        n_samples = X.shape[0]
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
@@ -251,7 +252,24 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         if not hasattr(self, 'h_samples_'):
             self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
-        self._fit(X, self.random_state_)
+        n_batches = int(np.ceil(float(n_samples) / self.batch_size))
+        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
+                                            n_batches, n_samples))
+        verbose = self.verbose
+        begin = time.time()
+        for iteration in xrange(1, self.n_iter + 1):
+            for batch_slice in batch_slices:
+                self._fit(X[batch_slice], self.random_state_)
+
+            if verbose:
+                end = time.time()
+                print("[%s] Iteration %d, pseudo-likelihood = %.2f,"
+                      " time = %.2fs"
+                      % (type(self).__name__, iteration,
+                         self.score_samples(X).mean(), end - begin))
+                begin = end
+
+        return self
 
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
@@ -336,30 +354,13 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         n_samples = X.shape[0]
-        rng = check_random_state(self.random_state)
+        self.random_state_ = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
-            rng.normal(0, 0.01, (self.n_components, X.shape[1])),
+            self.random_state_.normal(0, 0.01, (self.n_components, X.shape[1])),
             order='fortran')
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(X.shape[1], )
         self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
-        n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches, n_samples))
-        verbose = self.verbose
-        begin = time.time()
-        for iteration in xrange(1, self.n_iter + 1):
-            for batch_slice in batch_slices:
-                self._fit(X[batch_slice], rng)
-
-            if verbose:
-                end = time.time()
-                print("[%s] Iteration %d, pseudo-likelihood = %.2f,"
-                      " time = %.2fs"
-                      % (type(self).__name__, iteration,
-                         self.score_samples(X).mean(), end - begin))
-                begin = end
-
-        return self
+        return self.partial_fit(X)
