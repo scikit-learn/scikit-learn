@@ -197,10 +197,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    *
-    :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`:
-    Comparison of different algorithms for document classification including
-    :math:`\ell_1`-based feature selection.
+    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison of different algorithms for document classification including :math:`\ell_1`-based feature selection.
 
 .. _compressive_sensing:
 
