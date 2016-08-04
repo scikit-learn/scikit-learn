@@ -2,10 +2,10 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clauseimport warnings
 
+import warnings
 import numpy as np
 from scipy.special import gammaln
 
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 
@@ -14,7 +14,6 @@ from sklearn.mixture.bayesian_mixture import _log_wishart_norm
 
 from sklearn.mixture import BayesianGaussianMixture
 
-from sklearn.mixture.gaussian_mixture import _estimate_gaussian_parameters
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_greater_equal
@@ -263,17 +262,19 @@ def test_compare_covar_type():
     rand_data = RandomData(rng, scale=7)
     X = rand_data.X['full']
     n_components = rand_data.n_components
-
+    print(n_components)
     # Computation of the full_covariance
     bgmm = BayesianGaussianMixture(n_components=2 * n_components,
                                    covariance_type='full', reg_covar=0,
-                                   max_iter=1, random_state=rng, tol=1e-7)
+                                   max_iter=1, random_state=0, tol=1e-7)
     bgmm._check_initial_parameters(X)
     bgmm._initialize_parameters(X)
     full_covariances = bgmm.covariances_ * bgmm.nu_[:, np.newaxis, np.newaxis]
 
     # Check tied_covariance = mean(full_covariances, 0)
-    bgmm.covariance_type = 'tied'
+    bgmm = BayesianGaussianMixture(n_components=2 * n_components,
+                                   covariance_type='tied', reg_covar=0,
+                                   max_iter=1, random_state=0, tol=1e-7)
     bgmm._check_initial_parameters(X)
     bgmm._initialize_parameters(X)
 
@@ -281,7 +282,9 @@ def test_compare_covar_type():
     assert_almost_equal(tied_covariance, np.mean(full_covariances, 0))
 
     # Check diag_covariance = diag(full_covariances)
-    bgmm.covariance_type = 'diag'
+    bgmm = BayesianGaussianMixture(n_components=2 * n_components,
+                                   covariance_type='diag', reg_covar=0,
+                                   max_iter=1, random_state=0, tol=1e-7)
     bgmm._check_initial_parameters(X)
     bgmm._initialize_parameters(X)
 
@@ -290,7 +293,9 @@ def test_compare_covar_type():
                         np.array([np.diag(cov) for cov in full_covariances]))
 
     # Check spherical_covariance = np.mean(diag_covariances, 0)
-    bgmm.covariance_type = 'spherical'
+    bgmm = BayesianGaussianMixture(n_components=2 * n_components,
+                                   covariance_type='spherical', reg_covar=0,
+                                   max_iter=1, random_state=0, tol=1e-7)
     bgmm._check_initial_parameters(X)
     bgmm._initialize_parameters(X)
 
