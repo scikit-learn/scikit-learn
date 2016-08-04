@@ -378,6 +378,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
 
     return log_det_chol
 
+
 def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     """Estimate the log Gaussian probability.
 
