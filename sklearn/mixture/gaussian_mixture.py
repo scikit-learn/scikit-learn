@@ -2,6 +2,7 @@
 
 # Author: Wei Xue <xuewei4d@gmail.com>
 # Modified by Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -338,7 +339,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
 ###############################################################################
 # Gaussian mixture probability estimators
 def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
-    """Compute the log-det of the cholesky decomposition of the precisions.
+    """Compute the log-det of the cholesky decomposition of matrices.
 
     Parameters
     ----------
@@ -362,20 +363,20 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     """
     if covariance_type == 'full':
         n_components, _, _ = matrix_chol.shape
-        log_det_precisions_chol = (np.sum(np.log(
+        log_det_chol = (np.sum(np.log(
             matrix_chol.reshape(
                 n_components, -1)[:, ::n_features + 1]), 1))
 
     elif covariance_type == 'tied':
-        log_det_precisions_chol = (np.sum(np.log(np.diag(matrix_chol))))
+        log_det_chol = (np.sum(np.log(np.diag(matrix_chol))))
 
     elif covariance_type == 'diag':
-        log_det_precisions_chol = (np.sum(np.log(matrix_chol), axis=1))
+        log_det_chol = (np.sum(np.log(matrix_chol), axis=1))
 
     else:
-        log_det_precisions_chol = n_features * (np.log(matrix_chol))
+        log_det_chol = n_features * (np.log(matrix_chol))
 
-    return log_det_precisions_chol
+    return log_det_chol
 
 
 def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):

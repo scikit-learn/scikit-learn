@@ -1,3 +1,7 @@
+# Author: Wei Xue <xuewei4d@gmail.com>
+#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# License: BSD 3 clauseimport warnings
+
 import sys
 import warnings
 
