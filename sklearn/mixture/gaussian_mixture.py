@@ -555,7 +555,7 @@ class GaussianMixture(BaseMixture):
         Number of step used by the best fit of EM to reach the convergence.
 
     lower_bound_ : float
-        Lower bound value of the best fit of EM.
+        Log-likelihood of the best fit of EM.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
