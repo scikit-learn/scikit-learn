@@ -30,7 +30,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
     This class keeps adding estimators to the underlying GB estimator till
     adding a new estimators does not improve the score by much. The goal of
-    this class is to determine the best choice of `n_estimators` for each set
+    this class is to determine the best choice of ``n_estimators`` for each set
     of parameters. In most cases, this will be much faster than using
     :class:`sklearn.model_selection.GridSearchCV` due to early stopping.
     All parameters which are not parsed by this class are passed directly to
@@ -41,11 +41,11 @@ class GradientBoostingClassifierCV(BaseEstimator):
     Parameters
     ----------
     n_stop_rounds : int, optional, default=10
-        If the score on the test set rounded off to `score_precision` decimal
-        places does not change for `n_stop_rounds` iterations, the gradient
+        If the score on the test set rounded off to ``score_precision`` decimal
+        places does not change for ``n_stop_rounds`` iterations, the gradient
         boosting is halted.
 
-        Set this value to -1 to disable early stopping.`
+        Set this value to -1 to disable early stopping.
 
     score_precision : int, optional, default=2
         The number of decimal places to round the score off by before
@@ -60,7 +60,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
           - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
+          - integer, to specify the number of folds in a ``(Stratified)KFold``,
           - An object to be used as a cross-validation generator.
           - An iterable yielding train, validation splits.
 
@@ -114,9 +114,10 @@ class GradientBoostingClassifierCV(BaseEstimator):
         loss functions are evaluated to choose the best one.
 
     learning_rate : float, list of floats, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learning_rate`.
-        There is a trade-off between learning_rate and n_estimators. If a list
-        is given, all learning rates will be evaluated.
+        learning rate shrinks the contribution of each tree by
+        ``learning_rate``.
+        There is a trade-off between ``learning_rate`` and ``n_estimators``.
+        If a list is given, all learning rates will be evaluated.
 
     max_depth : integer, list of integers, optional (default=3)
         maximum depth of the individual regression estimators. The maximum
@@ -128,17 +129,17 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
     min_samples_split : int, float, list of int or float, optional (default=2)
         The minimum number of samples required to split an internal node:
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
-          `ceil(min_samples_split * n_samples)` are the minimum
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a percentage and
+          ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
         If a list is given, each item in the list will be evaluated.
 
     min_samples_leaf : int, float, list of int or floats, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a percentage and
+          ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
         If a list is given, each item in the list will be evaluated.
 
@@ -149,22 +150,22 @@ class GradientBoostingClassifierCV(BaseEstimator):
     subsample : float, list of floats, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
+        Boosting. ``subsample`` interacts with the parameter ``n_estimators``.
+        Choosing ``subsample < 1.0`` leads to a reduction of variance
         and an increase in bias. If a list is given, each item in the list
         will be evaluated.
 
     max_features : int, float, string or None, list, optional (default=None)
         The number of features to consider when looking for the best split:
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
-          `int(max_features * n_features)` features are considered at each
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a percentage and
+          ``int(max_features * n_features)`` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
-        Choosing `max_features < n_features` leads to a reduction of variance
+        - If ``"auto"``, then ``max_features=sqrt(n_features)``.
+        - If ``"sqrt"``, then ``max_features=sqrt(n_features)``.
+        - If ``"log2"``, then ``max_features=log2(n_features)``.
+        - If ``None``, then ``max_features=n_features``.
+        Choosing ``max_features < n_features`` leads to a reduction of variance
         and an increase in bias.
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -189,7 +190,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     presort : bool or 'auto', list of string or bool optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
@@ -205,27 +206,27 @@ class GradientBoostingClassifierCV(BaseEstimator):
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
-              cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
+        - ``parameters``, a dict of parameter settings
+        - ``mean_validation_score``, the mean score over the
+          cross-validation folds
+        - ``cv_validation_scores``, the list of scores for each fold
 
     best_score_tuple_ : named tuple
         The attributes of the model which gave the best score.
 
-        * ``parameters``, a dict of parameter settings, which includes the
-          `n_estimators` parameter
-        * ``mean_validation_score``, the mean score over the
+        - ``parameters``, a dict of parameter settings, which includes the
+          ``n_estimators`` parameter
+        - ``mean_validation_score``, the mean score over the
           cross-validation folds
-        * ``cv_validation_scores``, the list of scores for each fold
+        - ``cv_validation_scores``, the list of scores for each fold
 
     best_params_ : dict
-        The parameters which gave the best score, along with the `n_estimators`
-        parameter.
+        The parameters which gave the best score, along with the
+        ``n_estimators`` parameter.
 
     best_estimator_ : GradientBoostingClassifier
-        If `refit` was `True`, the model with the best score fit to the entire
-        dataset.
+        If ``refit`` was ``True``, the model with the best score fit to the
+        entire dataset.
 
     """
 
@@ -334,7 +335,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         return self
 
     def predict(self, X):
-        """Call `predict` on the best estimator.
+        """Call ``predict`` on the best estimator.
 
         Parameters
         ----------
@@ -348,7 +349,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         return self.best_estimator_.predict(X)
 
     def predict_proba(self, X):
-        """Call `predict_proba` on the best estimator.
+        """Call ``predict_proba`` on the best estimator.
 
         Parameters
         ----------
@@ -364,12 +365,12 @@ class GradientBoostingClassifierCV(BaseEstimator):
         -------
         p : array of shape = [n_samples]
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute ``classes_``.
         """
         return self.best_estimator_.predict_proba(X)
 
     def predict_log_proba(self, X):
-        """Call `predict_log_proba` on the best estimator.
+        """Call ``predict_log_proba`` on the best estimator.
 
         Parameters
         ----------
@@ -385,7 +386,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         -------
         p : array of shape = [n_samples]
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute ``classes_``.
         """
         return self.best_estimator_.predict_log_proba(X)
 
@@ -407,7 +408,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         }
 
         # Pre processing to ensure every parameter is a list
-        # which `ParameterGrid` can iterate over
+        # which ``ParameterGrid`` can iterate over
         for key, value in params.items():
             params[key] = np.atleast_1d(value)
 
@@ -419,7 +420,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
 
     This class keeps adding estimators to the underlying GB estimator till
     adding a new estimators does not improve the score by much. The goal of
-    this class is to determine the best choice of `n_estimators` for each set
+    this class is to determine the best choice of ``n_estimators`` for each set
     of parameters. In most cases, this will be much faster than using
     :class:`sklearn.model_selection.GridSearchCV` due to early stopping.
     All parameters which are not parsed by this class are passed directly to
@@ -430,8 +431,8 @@ class GradientBoostingRegressorCV(BaseEstimator):
     Parameters
     ----------
     n_stop_rounds : int, optional, default=10
-        If the score on the test set rounded off to `score_precision` decimal
-        places does not change for `n_stop_rounds` iterations, the gradient
+        If the score on the test set rounded off to ``score_precision`` decimal
+        places does not change for ``n_stop_rounds`` iterations, the gradient
         boosting is halted.
 
         Set this value to -1 to disable early stopping.
@@ -448,13 +449,13 @@ class GradientBoostingRegressorCV(BaseEstimator):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
+          - ``None``, to use the default 3-fold cross validation,
+          - integer, to specify the number of folds in a ``(Stratified)KFold``,
           - An object to be used as a cross-validation generator.
           - An iterable yielding train, validation splits.
 
-        For integer/None inputs, ``StratifiedKFold`` is used for classification
-        tasks, when ``y`` is binary or multiclass.
+        For integer/``None`` inputs, ``StratifiedKFold`` is used for
+        classification tasks, when ``y`` is binary or multiclass.
 
         See the :mod:`sklearn.model_selection` module for the list of
         cross-validation strategies that can be used here.
@@ -496,38 +497,39 @@ class GradientBoostingRegressorCV(BaseEstimator):
         Controls the verbosity: the higher, the more messages.
 
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
-        loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
+        loss function to be optimized. ``'ls'`` refers to least squares
+        regression. ``'lad'`` (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
-        variables. 'huber' is a combination of the two. 'quantile'
-        allows quantile regression (use `alpha` to specify the quantile).
+        variables. ``'huber'`` is a combination of the two. ``'quantile'``
+        allows quantile regression (use ``alpha`` to specify the quantile).
 
     learning_rate : float, list of floats, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learning_rate`.
-        There is a trade-off between learning_rate and n_estimators. If a list
-        is given, all learning rates will be evaluated.
+        learning rate shrinks the contribution of each tree by
+        ``learning_rate``. There is a trade-off between ``learning_rate`` and
+        ``n_estimators``. If a list is given, all learning rates will be
+        evaluated.
 
     max_depth : integer, list of integers, optional (default=3)
         maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
-        Ignored if ``max_leaf_nodes`` is not None.
+        Ignored if ``max_leaf_nodes`` is not ``None``.
         If a list is given, each item in the list will be evaluated.
 
     min_samples_split : int, float, list of int or float, optional (default=2)
         The minimum number of samples required to split an internal node:
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
-          `ceil(min_samples_split * n_samples)` are the minimum
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a percentage and
+          ``ceil(min_samples_split * n_samples)`` are the minimum
           number of samples for each split.
         If a list is given, each item in the list will be evaluated.
 
     min_samples_leaf : int, float, list of int or floats, optional (default=1)
         The minimum number of samples required to be at a leaf node:
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a percentage and
+          ``ceil(min_samples_leaf * n_samples)`` are the minimum
           number of samples for each node.
         If a list is given, each item in the list will be evaluated.
 
@@ -538,22 +540,22 @@ class GradientBoostingRegressorCV(BaseEstimator):
     subsample : float, list of floats, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
+        Boosting. ``subsample`` interacts with the parameter ``n_estimators``.
+        Choosing ``subsample < 1.0`` leads to a reduction of variance
         and an increase in bias. If a list is given, each item in the list
         will be evaluated.
 
     max_features : int, float, string or None, list, optional (default=None)
         The number of features to consider when looking for the best split:
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a percentage and
-          `int(max_features * n_features)` features are considered at each
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a percentage and
+          ``int(max_features * n_features)`` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
-        Choosing `max_features < n_features` leads to a reduction of variance
+        - If "auto", then ``max_features=sqrt(n_features)``.
+        - If "sqrt", then ``max_features=sqrt(n_features)``.
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
+        Choosing ``max_features < n_features`` leads to a reduction of variance
         and an increase in bias.
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -578,7 +580,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     presort : bool or 'auto', list of string or bool optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
@@ -603,18 +605,18 @@ class GradientBoostingRegressorCV(BaseEstimator):
         The attributes of the model which gave the best score.
 
         * ``parameters``, a dict of parameter settings, which includes the
-          `n_estimators` parameter
+          ``n_estimators`` parameter
         * ``mean_validation_score``, the mean score over the
           cross-validation folds
         * ``cv_validation_scores``, the list of scores for each fold
 
     best_params_ : dict
-        The parameters which gave the best score, along with the `n_estimators`
-        parameter.
+        The parameters which gave the best score, along with the
+        ``n_estimators`` parameter.
 
     best_estimator_ : GradientBoostingClassifier
-        If `refit` was `True`, the model with the best score fit to the entire
-        dataset.
+        If ``refit`` was ``True``, the model with the best score fit to the
+        entire dataset.
 
     """
 
@@ -723,7 +725,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
         return self
 
     def predict(self, X):
-        """Call `predict` on the best estimator.
+        """Call ``predict`` on the best estimator.
 
         Parameters
         ----------
@@ -754,7 +756,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
         }
 
         # Pre processing to ensure every parameter is a list
-        # which `ParameterGrid` can iterate over
+        # which ``ParameterGrid`` can iterate over
         for key, value in params.items():
             params[key] = np.atleast_1d(value)
 
@@ -811,7 +813,7 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
 
     Returns
@@ -821,7 +823,7 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
 
     n_iterations:
         The number of iterations it took to converge. This is the same as
-        parameter `n_estimators` for the gradient boosting model
+        parameter ``n_estimators`` for the gradient boosting model
     """
 
     params['random_state'] = random_state

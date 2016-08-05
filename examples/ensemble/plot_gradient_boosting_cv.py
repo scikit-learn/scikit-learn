@@ -6,14 +6,15 @@ Early stopping of Gradient Boosting
 Gradient boosting works by fitting a regression tree at each iteration to
 improve its prediction over the training data. The improvement in prediction
 succesively reduces as more regression trees are added. The
-:class:`~sklearn.ensemble.GradientBoostingClassifierCV` class halts the
+:class:`sklearn.ensemble.GradientBoostingClassifierCV` class halts the
 training when there is no significant improvement in accuracy on the validation
-data during the last few iterations. This example illustrates how the 
-GradientBoostingClassifierCV class can acheive almost the same accuracy as
-compared to the GradientBoostingClassifier class with significantly lesser
-number of estimators. This can save memory and prediction time. Moreover, the
-class can be used as a drop-in replacement for the GradientBoostingClassifier
-class.
+data during the last few iterations. This example illustrates how the
+:class:`sklearn.ensemble.GradientBoostingClassifierCV` class can acheive almost
+the same accuracy as compared to the
+:class:`sklearn.ensemble.GradientBoostingClassifier` class with significantly
+lesser number of estimators. This can save memory and prediction time.
+Moreover, the class can be used as a drop-in replacement for the
+:class:`sklearn.ensemble.GradientBoostingClassifier` class.
 
 """
 
