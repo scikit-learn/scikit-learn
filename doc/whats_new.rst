@@ -284,7 +284,7 @@ Bug fixes
       more details. By `Loic Esteve`_.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
-      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
       correct results. By `JPFrancoia`_
 
     - Fixed incorrect gradient computation for ``loss='squared_epsilon_insensitive'`` in
@@ -311,7 +311,7 @@ Bug fixes
 
     - :func:`pairwise_distances` now converts arrays to boolean arrays when
       required in scipy.spatial.distance.
-      (`#5460 https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
+      (`#5460 <https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
       By `Tom Dupre la Tour`_.
 
     - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
@@ -711,7 +711,7 @@ Bug fixes
     - Fixed inconsistent memory layout in the coordinate descent solver
       that affected :class:`linear_model.DictionaryLearning` and
       :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`_)
-      By `Oliver Grisel`_.
+      By `Olivier Grisel`_.
 
     - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
       parameter.
