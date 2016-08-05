@@ -36,21 +36,53 @@ cdef class KDTree(BinaryTree):
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
-    tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
+    cdef double d = 0
+    cdef float f = 0
+
+    if tree.is_float:
+        return _allocate_data(tree, n_nodes, n_features, f)
+    else:
+        return _allocate_data(tree, n_nodes, n_features, d)
+
+
+cdef int _allocate_data(BinaryTree tree, ITYPE_t n_nodes,
+                        ITYPE_t n_features, floating sample) except -1:
+    """Allocate arrays needed for the KD Tree"""
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+
+    tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=dtype)
     tree.node_bounds = get_memview_DTYPE_3D(tree.node_bounds_arr)
+
     return 0
 
 
 cdef int init_node(BinaryTree tree, ITYPE_t i_node,
                    ITYPE_t idx_start, ITYPE_t idx_end) except -1:
     """Initialize the node for the dataset stored in tree.data"""
+    cdef double d = 0
+    cdef float f = 0
+
+    if tree.is_float:
+        return _init_node(tree, i_node, idx_start, idx_end, f)
+    else:
+        return _init_node(tree, i_node, idx_start, idx_end, d)
+
+
+cdef int _init_node(BinaryTree tree, ITYPE_t i_node,
+                    ITYPE_t idx_start, ITYPE_t idx_end,
+                    floating sample) except -1:
+    """Initialize the node for the dataset stored in tree.data"""
     cdef ITYPE_t n_features = tree.data.shape[1]
     cdef ITYPE_t i, j
-    cdef DTYPE_t rad = 0
+    cdef floating rad = 0
 
     cdef DTYPE_t* lower_bounds = &tree.node_bounds[0, i_node, 0]
     cdef DTYPE_t* upper_bounds = &tree.node_bounds[1, i_node, 0]
     cdef DTYPE_t* data = &tree.data[0, 0]
+    cdef floating* new_data = <floating*> tree.new_data
     cdef ITYPE_t* idx_array = &tree.idx_array[0]
 
     cdef DTYPE_t* data_row

@@ -152,6 +152,7 @@ from ..utils import check_array
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from typedefs import DTYPE, ITYPE
+from cython cimport floating
 
 from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
@@ -217,6 +218,11 @@ cdef DTYPE_t[::1] get_memview_DTYPE_1D(
 cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
                                np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
     return <DTYPE_t[:X.shape[0], :X.shape[1]:1]> (<DTYPE_t*> X.data)
+
+
+cdef (double*) get_pointer_DTYPE_2D(
+                                np.ndarray[double, ndim=2, mode='c'] X):
+    return (<double*> X.data)
 
 
 cdef DTYPE_t[:, :, ::1] get_memview_DTYPE_3D(
@@ -1001,11 +1007,16 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 cdef class BinaryTree:
 
     cdef np.ndarray data_arr
+    cdef np.ndarray new_data_arr
+    cdef bint is_float
+
     cdef np.ndarray idx_array_arr
     cdef np.ndarray node_data_arr
     cdef np.ndarray node_bounds_arr
 
     cdef readonly DTYPE_t[:, ::1] data
+    cdef void *new_data
+
     cdef public ITYPE_t[::1] idx_array
     cdef public NodeData_t[::1] node_data
     cdef public DTYPE_t[:, :, ::1] node_bounds
@@ -1029,11 +1040,15 @@ cdef class BinaryTree:
     # errors and seg-faults in rare cases where __init__ is not called
     def __cinit__(self):
         self.data_arr = np.empty((1, 1), dtype=DTYPE, order='C')
+        self.new_data_arr = np.empty((1, 1), dtype=DTYPE, order='C')
+
         self.idx_array_arr = np.empty(1, dtype=ITYPE, order='C')
         self.node_data_arr = np.empty(1, dtype=NodeData, order='C')
         self.node_bounds_arr = np.empty((1, 1, 1), dtype=DTYPE)
 
         self.data = get_memview_DTYPE_2D(self.data_arr)
+        self.new_data = get_pointer_DTYPE_2D(self.data_arr)
+
         self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
         self.node_data = get_memview_NodeData_1D(self.node_data_arr)
         self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
@@ -1053,6 +1068,14 @@ cdef class BinaryTree:
                  leaf_size=40, metric='minkowski', **kwargs):
         self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
         self.data = get_memview_DTYPE_2D(self.data_arr)
+
+        self.new_data_arr = check_array(data, order='C', dtype=[np.float64])#, np.float32])
+        self.new_data = get_pointer_DTYPE_2D(self.new_data_arr)
+
+        if self.new_data_arr.dtype == np.float32:
+            self.is_float = True
+        else:
+            self.is_float = False
 
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
