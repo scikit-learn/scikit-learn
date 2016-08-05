@@ -231,8 +231,10 @@ Enhancements
      By `Sebastian Säger`_ and `YenChen Lin`_.
 
    - Added new return type ``(data, target)`` : tuple option to
-     :func:`load_iris` dataset, :func:`load_breast_cancer` dataset
-     (`#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_) by
+     :func:`load_iris` dataset, 
+     (`#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_)
+     :func:`load_breast_cancer` dataset
+     (`#7152 <https://github.com/scikit-learn/scikit-learn/pull/7152>`_) by
      `Manvendra Singh`_.
 
 Bug fixes
