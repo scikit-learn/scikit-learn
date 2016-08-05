@@ -18,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import (check_array, check_random_state, gen_even_slices,
-                     gen_batches, _get_n_jobs)
+                     gen_batches, _get_n_jobs, check_copy_and_writeable)
 from ..utils.extmath import randomized_svd, row_norms
 from ..utils.validation import check_is_fitted
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -91,6 +91,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     sklearn.linear_model.Lasso
     SparseCoder
     """
+    if cov is not None:
+        cov = check_copy_and_writeable(cov, copy_cov)
+
     if X.ndim == 1:
         X = X[:, np.newaxis]
     n_samples, n_features = X.shape

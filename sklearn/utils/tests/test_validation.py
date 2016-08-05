@@ -29,6 +29,7 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
+    check_copy_and_writeable
 )
 
 from sklearn.exceptions import NotFittedError
@@ -459,3 +460,11 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def test_check_copy_and_writeable():
+    X = np.zeros((10, 10))
+    assert check_copy_and_writeable(X).flags.writeable
+
+    X.flags.writeable = False
+    assert check_copy_and_writeable(X).flags.writeable

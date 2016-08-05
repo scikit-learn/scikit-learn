@@ -21,7 +21,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils import (arrayfuncs, as_float_array, check_X_y,
+                     check_copy_and_writeable)
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
@@ -847,11 +848,6 @@ class LassoLars(Lars):
 ###############################################################################
 # Cross-validated estimator classes
 
-def _check_copy_and_writeable(array, copy=False):
-    if copy or not array.flags.writeable:
-        return array.copy()
-    return array
-
 
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                         copy=True, method='lars', verbose=False,
@@ -938,10 +934,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     residues : array, shape (n_alphas, n_samples)
         Residues of the prediction on the test data
     """
-    X_train = _check_copy_and_writeable(X_train, copy)
-    y_train = _check_copy_and_writeable(y_train, copy)
-    X_test = _check_copy_and_writeable(X_test, copy)
-    y_test = _check_copy_and_writeable(y_test, copy)
+    X_train = check_copy_and_writeable(X_train, copy)
+    y_train = check_copy_and_writeable(y_train, copy)
+    X_test = check_copy_and_writeable(X_test, copy)
+    y_test = check_copy_and_writeable(y_test, copy)
 
     if fit_intercept:
         X_mean = X_train.mean(axis=0)
