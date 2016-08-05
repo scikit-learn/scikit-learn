@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
@@ -189,6 +190,16 @@ def test_make_scorer():
     f = lambda *args: 0
     assert_raises(ValueError, make_scorer, f, needs_threshold=True,
                   needs_proba=True)
+
+
+def test_get_scorer_inputs():
+
+    msg = "Input must be either callable or string."
+    bad1 = list()
+
+    bad_callables = [bad1]
+    for bad_call in bad_callables:
+        assert_raise_message(ValueError, msg, get_scorer, bad_call)
 
 
 def test_classification_scores():
