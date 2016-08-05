@@ -9,9 +9,9 @@ of alpha.
 
 For all models, the Variationnal Bayesian Gaussian Mixture adapts it number of
 mixture automatically. The parameter alpha prior has a direct link with the
-resulting number of components. Specifying a high value of alpha leads more
-often to uniformly-sized mixture components, while specifying small (under 0.1)
-values will lead to some mixture components getting almost all the points
+resulting number of components. Specifying a high value of alpha_prior leads
+more often to uniformly-sized mixture components, while specifying small (under
+0.1) values will lead to some mixture components getting almost all the points
 while most mixture components will be centered on just a few of the remaining
 points.
 """
@@ -87,7 +87,7 @@ means = np.array([[.0, -.70],
                   [.0, .70]])
 
 
-# Here we put beta_init to 0.8 to minimize the influence of the prior for this
+# Here we put beta_prior to 0.8 to minimize the influence of the prior for this
 # dataset
 estimator = BayesianGaussianMixture(n_components=2 * n_components, reg_covar=0,
                                     init_params='random', max_iter=1500,

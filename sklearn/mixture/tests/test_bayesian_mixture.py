@@ -1,8 +1,9 @@
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
-# License: BSD 3 clauseimport warnings
+# License: BSD 3 clause
 
 import warnings
+
 import numpy as np
 from scipy.special import gammaln
 
