@@ -10,6 +10,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
 
@@ -89,6 +90,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_features,
                  max_leaf_nodes,
                  random_state,
+                 min_impurity_split,
                  class_weight=None,
                  presort=False):
         self.criterion = criterion
@@ -100,6 +102,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
 
@@ -304,6 +307,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             min_weight_leaf = 0.
 
+        if self.min_impurity_split < 0.:
+            raise ValueError("min_impurity_split must be greater than or equal "
+                             "to 0")
+
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
         # otherwise it will be False.
@@ -359,13 +366,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
                                             min_samples_leaf,
                                             min_weight_leaf,
-                                            max_depth)
+                                            max_depth, self.min_impurity_split)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
                                            min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
-                                           max_leaf_nodes)
+                                           max_leaf_nodes, self.min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
@@ -608,6 +615,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    min_impurity_split : float, optional (default=1e-7)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
         fitting. For the default settings of a decision tree on large
@@ -685,6 +696,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
+                 min_impurity_split=1e-7,
                  class_weight=None,
                  presort=False):
         super(DecisionTreeClassifier, self).__init__(
@@ -698,6 +710,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
             random_state=random_state,
+            min_impurity_split=min_impurity_split,
             presort=presort)
 
     def predict_proba(self, X, check_input=True):
@@ -848,6 +861,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    min_impurity_split : float, optional (default=1e-7)
+        Threshold for early stopping in tree growth. If the impurity
+        of a node is below the threshold, the node is a leaf.
+
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
         fitting. For the default settings of a decision tree on large
@@ -917,6 +934,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
+                 min_impurity_split=1e-7,
                  presort=False):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
@@ -928,6 +946,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state,
+            min_impurity_split=min_impurity_split,
             presort=presort)
 
 
@@ -965,6 +984,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
+                 min_impurity_split=1e-7,
                  class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
@@ -976,6 +996,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
+            min_impurity_split=min_impurity_split,
             random_state=random_state)
 
 
@@ -1012,6 +1033,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
+                 min_impurity_split=1e-7,
                  max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
@@ -1022,4 +1044,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
+            min_impurity_split=min_impurity_split,
             random_state=random_state)

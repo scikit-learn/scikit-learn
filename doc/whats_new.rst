@@ -125,6 +125,11 @@ New features
      <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
      Liu`_.
 
+     - Added weighted impurity-based early stopping criterion for decision tree
+       growth. (`#6954
+       <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
+       Liu`_
+
 Enhancements
 ............
 
@@ -293,10 +298,11 @@ Bug fixes
       with them as parameters, could not be passed to :func:`base.clone`.
       By `Loic Esteve`_.
       
-    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error 
-      occurred when there were outliers being labelled and a weight function 
-      (`#6902 <https://github.com/scikit-learn/scikit-learn/issues/6902>`_). 
-      By `LeonieBorne <https://github.com/LeonieBorne>`_.
+    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
+      occurred when there were outliers being labelled and a weight function
+      specified (`#6902
+      <https://github.com/scikit-learn/scikit-learn/issues/6902>`_).  By
+      `LeonieBorne <https://github.com/LeonieBorne>`_.
 
     - :func:`pairwise_distances` now converts arrays to boolean arrays when
       required in scipy.spatial.distance.

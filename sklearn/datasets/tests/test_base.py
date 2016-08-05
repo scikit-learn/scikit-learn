@@ -223,3 +223,9 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     bunch_from_pkl.key = 'changed'
     assert_equal(bunch_from_pkl.key, 'changed')
     assert_equal(bunch_from_pkl['key'], 'changed')
+
+
+def test_bunch_dir():
+    # check that dir (important for autocomplete) shows attributes
+    data = load_iris()
+    assert_true("data" in dir(data))

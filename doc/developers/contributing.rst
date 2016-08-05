@@ -28,7 +28,7 @@ also welcome to post feature requests or pull requests.
 Retrieving the latest code
 ==========================
 
-We use `Git <http://git-scm.com/>`_ for version control and
+We use `Git <https://git-scm.com/>`_ for version control and
 `GitHub <https://github.com/>`_ for hosting our main repository.
 
 You can check out the latest sources with the command::
@@ -50,7 +50,7 @@ extension in place::
 Another option is to use the ``develop`` option if you change your code a lot
 and do not want to have to reinstall every time. This basically builds the
 extension in place and creates a link to the development directory (see
-`the setuptool docs <https://pythonhosted.org/setuptools/setuptools.html#development-mode>`_)::
+`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
 
     python setup.py develop
 
@@ -129,7 +129,7 @@ visibility.
         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 (If any of the above seems like magic to you, then look up the
-`Git documentation <http://git-scm.com/documentation>`_ on the web.)
+`Git documentation <https://git-scm.com/documentation>`_ on the web.)
 
 Contributing pull requests
 --------------------------
@@ -225,7 +225,7 @@ and Cython optimizations.
    workflow, please pay a visit to the `Scipy Development Workflow
    <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
+   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
 .. _filing_bugs:
@@ -299,9 +299,9 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx-doc.org/>`_,
+<http://www.sphinx-doc.org/en/stable/>`_,
 `matplotlib <http://matplotlib.org>`_ and
-`pillow <http://pillow.readthedocs.org/en/latest/>`_.
+`pillow <http://pillow.readthedocs.io/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -361,7 +361,7 @@ Testing and improving test coverage
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
+purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
@@ -480,7 +480,7 @@ In addition, we add the following guidelines:
       It makes the code harder to read as the origin of symbols is no
       longer explicitly referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
-      <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
+      <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
       find bugs in scikit-learn.
 
     * Use the `numpy docstring standard
@@ -489,7 +489,7 @@ In addition, we add the following guidelines:
 
 
 A good example of code that we like can be found `here
-<https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
+<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
 Input validation
 ----------------

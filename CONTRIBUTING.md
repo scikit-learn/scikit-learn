@@ -53,7 +53,7 @@ Click the 'Pull request' button to send your changes to the project's maintainer
 review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, please look up the 
-[Git documentation](http://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
+[Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
 Pull Request Checklist
 ----------------------
@@ -215,7 +215,7 @@ be placed in ``_build/html/`` and are viewable in a web browser. See the
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
 [matplotlib](http://matplotlib.sourceforge.net/), and
-[pillow](http://pillow.readthedocs.org/en/latest/).
+[pillow](http://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give

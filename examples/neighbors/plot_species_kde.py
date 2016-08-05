@@ -23,7 +23,7 @@ The two species are:
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 

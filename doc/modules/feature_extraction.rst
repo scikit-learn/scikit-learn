@@ -210,7 +210,7 @@ otherwise the features will not be mapped evenly to the columns.
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
 
- * `MurmurHash3 <http://code.google.com/p/smhasher/wiki/MurmurHash3>`_.
+ * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
 
 .. _text_feature_extraction:
@@ -303,7 +303,7 @@ corpus of text documents::
 
   >>> corpus = [
   ...     'This is the first document.',
-  ...     'This is the second document.',
+  ...     'This is the second second document.',
   ...     'And the third one.',
   ...     'Is this the first document?',
   ... ]
