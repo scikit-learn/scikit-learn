@@ -42,8 +42,8 @@ def test_no_param():
     gbrcv = GradientBoostingRegressorCV(max_iterations=1000,
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
-    assert_equal(gbrcv.best_params_['n_estimators'], 39)
-    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.85)
+    assert_equal(gbrcv.best_params_['n_estimators'], 37)
+    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
 
 
 def test_single_param():
@@ -66,8 +66,8 @@ def test_single_param():
                                         max_depth=3,
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
-    assert_equal(gbrcv.best_params_['n_estimators'], 39)
-    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.85)
+    assert_equal(gbrcv.best_params_['n_estimators'], 37)
+    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
 
 
 def test_param_grid():
@@ -99,7 +99,7 @@ def test_param_grid():
                                         max_depth=[3, 4],
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
-    assert_equal(gbrcv.best_params_['n_estimators'], 29)
+    assert_equal(gbrcv.best_params_['n_estimators'], 31)
     assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.8)
 
     # If n_iter_combo is given, RandomSampler must be used
@@ -110,8 +110,8 @@ def test_param_grid():
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
     assert_equal(len(gbrcv.grid_scores_), 1)
-    assert_equal(gbrcv.best_params_['n_estimators'], 21)
-    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.85)
+    assert_equal(gbrcv.best_params_['n_estimators'], 20)
+    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
 
 
 def test_predict():
@@ -136,7 +136,7 @@ def test_predict():
     gs_gbr.fit(X_train, y_train)
 
     assert_equal(gs_gbr.best_estimator_.n_estimators, 100)
-    assert_equal(gbrcv.best_estimator_.n_estimators, 29)
+    assert_equal(gbrcv.best_estimator_.n_estimators, 31)
 
     pred_1 = gs_gbr.best_estimator_.predict(X_val)
     pred_2 = gbrcv.best_estimator_.predict(X_val)

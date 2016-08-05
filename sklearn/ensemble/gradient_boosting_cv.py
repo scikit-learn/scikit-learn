@@ -856,6 +856,4 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
     if i == max_iter:
         warnings.warn(str(gb) + ' failed to converge')
 
-    max_score = np.max(scores)
-    i = scores.index(max_score)
-    return max_score, i
+    return scores[-1], i
