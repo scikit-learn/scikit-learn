@@ -468,7 +468,7 @@ def load_digits(n_class=10, return_X_y=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1]
+    target = data[:, -1].astype(np.int)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -479,10 +479,10 @@ def load_digits(n_class=10, return_X_y=False):
         images = images[idx]
 
     if return_X_y:
-        return flat_data, target.astype(np.int)
+        return flat_data, target
 
     return Bunch(data=flat_data,
-                 target=target.astype(np.int),
+                 target=target,
                  target_names=np.arange(10),
                  images=images,
                  DESCR=descr)
