@@ -60,9 +60,11 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
+
         Returns
         -------
-        self
+        self : object
+            Returns self.
         """
 
         if not hasattr(self.estimator, "fit"):
