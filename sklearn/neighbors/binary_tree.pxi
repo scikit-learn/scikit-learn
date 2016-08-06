@@ -1016,6 +1016,8 @@ cdef class BinaryTree:
 
     cdef readonly DTYPE_t[:, ::1] data
     cdef void *new_data
+    cdef int n_samples
+    cdef int n_features
 
     cdef public ITYPE_t[::1] idx_array
     cdef public NodeData_t[::1] node_data
@@ -1077,6 +1079,9 @@ cdef class BinaryTree:
         else:
             self.is_float = False
 
+        self.n_samples = self.data_arr.shape[0]
+        self.n_features = self.data_arr.shape[1]
+
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
@@ -1095,8 +1100,8 @@ cdef class BinaryTree:
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
 
-        n_samples = self.data.shape[0]
-        n_features = self.data.shape[1]
+        n_samples = self.n_samples
+        n_features = self.n_features
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
@@ -1151,6 +1156,9 @@ cdef class BinaryTree:
         self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
         self.node_data = get_memview_NodeData_1D(self.node_data_arr)
         self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
+
+        self.n_samples = self.data_arr.shape[0]
+        self.n_features = self.data_arr.shape[1]
 
         self.leaf_size = state[4]
         self.n_levels = state[5]
@@ -1213,7 +1221,7 @@ cdef class BinaryTree:
             belong to this node.
         """
         cdef ITYPE_t imax
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
         cdef ITYPE_t n_points = idx_end - idx_start
         cdef ITYPE_t n_mid = n_points / 2
         cdef ITYPE_t* idx_array = &self.idx_array[idx_start]
@@ -1313,16 +1321,16 @@ cdef class BinaryTree:
         # XXX: we should allow X to be a pre-built tree.
         X = check_array(X, dtype=DTYPE, order='C')
 
-        if X.shape[X.ndim - 1] != self.data.shape[1]:
+        if X.shape[X.ndim - 1] != self.n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        if self.data.shape[0] < k:
+        if self.n_samples < k:
             raise ValueError("k must be less than or equal "
                              "to the number of training points")
 
         # flatten X, and save original shape information
-        np_Xarr = X.reshape((-1, self.data.shape[1]))
+        np_Xarr = X.reshape((-1, self.n_features))
         cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
@@ -1334,7 +1342,7 @@ cdef class BinaryTree:
         # node heap for breadth-first queries
         cdef NodeHeap nodeheap
         if breadth_first:
-            nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
+            nodeheap = NodeHeap(self.n_samples // self.leaf_size)
 
         # bounds is needed for the dual tree algorithm
         cdef DTYPE_t[::1] bounds
@@ -1453,7 +1461,7 @@ cdef class BinaryTree:
                              "if sort_results is True")
 
         cdef ITYPE_t i, count_i = 0
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
         cdef DTYPE_t[::1] dist_arr_i
         cdef ITYPE_t[::1] idx_arr_i, counts
         cdef DTYPE_t* pt
@@ -1461,12 +1469,12 @@ cdef class BinaryTree:
         # validate X and prepare for query
         X = check_array(X, dtype=DTYPE, order='C')
 
-        if X.shape[X.ndim - 1] != self.data.shape[1]:
+        if X.shape[X.ndim - 1] != self.n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
         cdef DTYPE_t[:, ::1] Xarr =\
-                get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
+                get_memview_DTYPE_2D(X.reshape((-1, self.n_features)))
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
@@ -1486,10 +1494,10 @@ cdef class BinaryTree:
             if return_distance:
                 distances = np.zeros(Xarr.shape[0], dtype='object')
 
-        np_idx_arr = np.zeros(self.data.shape[0], dtype=ITYPE)
+        np_idx_arr = np.zeros(self.n_samples, dtype=ITYPE)
         idx_arr_i = get_memview_ITYPE_1D(np_idx_arr)
 
-        np_dist_arr = np.zeros(self.data.shape[0], dtype=DTYPE)
+        np_dist_arr = np.zeros(self.n_samples, dtype=DTYPE)
         dist_arr_i = get_memview_DTYPE_1D(np_dist_arr)
 
         counts_arr = np.zeros(Xarr.shape[0], dtype=ITYPE)
@@ -1585,8 +1593,8 @@ cdef class BinaryTree:
         cdef DTYPE_t log_min_bound, log_max_bound, log_bound_spread
         cdef DTYPE_t dist_LB = 0, dist_UB = 0
 
-        cdef ITYPE_t n_samples = self.data.shape[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_samples = self.n_samples
+        cdef ITYPE_t n_features = self.n_features
         cdef ITYPE_t i
         cdef KernelType kernel_c
 
@@ -1624,7 +1632,7 @@ cdef class BinaryTree:
 
         cdef NodeHeap nodeheap
         if breadth_first:
-            nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
+            nodeheap = NodeHeap(self.n_samples // self.leaf_size)
         cdef DTYPE_t[::1] node_log_min_bounds
         cdef DTYPE_t[::1] node_bound_widths
         # TODO: implement dual tree approach.
@@ -1708,17 +1716,17 @@ cdef class BinaryTree:
         >>> tree.two_point_correlation(X, r)
         array([ 30,  62, 278, 580, 820])
         """
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
         cdef ITYPE_t i
 
         # validate X and prepare for query
         X = check_array(X, dtype=DTYPE, order='C')
 
-        if X.shape[X.ndim - 1] != self.data.shape[1]:
+        if X.shape[X.ndim - 1] != self.n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        np_Xarr = X.reshape((-1, self.data.shape[1]))
+        np_Xarr = X.reshape((-1, self.n_features))
         cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
 
         # prepare r for query
@@ -1774,7 +1782,7 @@ cdef class BinaryTree:
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
-                                     self.data.shape[1])
+                                     self.n_features)
                 if dist_pt < heap.largest(i_pt):
                     heap._push(i_pt, dist_pt, self.idx_array[i])
 
@@ -1837,7 +1845,7 @@ cdef class BinaryTree:
                                node_data[i_node].idx_end):
                     dist_pt = self.rdist(pt,
                                          &self.data[self.idx_array[i], 0],
-                                         self.data.shape[1])
+                                         self.n_features)
                     if dist_pt < heap.largest(i_pt):
                         heap._push(i_pt, dist_pt, self.idx_array[i])
 
@@ -1865,7 +1873,7 @@ cdef class BinaryTree:
 
         cdef DTYPE_t* data1 = &self.data[0, 0]
         cdef DTYPE_t* data2 = &other.data[0, 0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
 
         cdef DTYPE_t bound_max, dist_pt, reduced_dist_LB1, reduced_dist_LB2
         cdef ITYPE_t i1, i2, i_pt, i_parent
@@ -1965,7 +1973,7 @@ cdef class BinaryTree:
         cdef NodeData_t node_info1, node_info2
         cdef DTYPE_t* data1 = &self.data[0, 0]
         cdef DTYPE_t* data2 = &other.data[0, 0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
 
         # Set up the node heap and push the head nodes onto it
         cdef NodeHeapData_t nodeheap_item
@@ -2049,7 +2057,7 @@ cdef class BinaryTree:
         """recursive single-tree radius query, depth-first"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
         cdef NodeData_t node_info = self.node_data[i_node]
 
         cdef ITYPE_t i
@@ -2072,7 +2080,7 @@ cdef class BinaryTree:
                 count += (node_info.idx_end - node_info.idx_start)
             else:
                 for i in range(node_info.idx_start, node_info.idx_end):
-                    if (count < 0) or (count >= self.data.shape[0]):
+                    if (count < 0) or (count >= self.n_samples):
                         raise ValueError("Fatal: count too big: "
                                          "this should never happen")
                     indices[count] = idx_array[i]
@@ -2092,7 +2100,7 @@ cdef class BinaryTree:
                 dist_pt = self.rdist(pt, (data + n_features * idx_array[i]),
                                      n_features)
                 if dist_pt <= reduced_r:
-                    if (count < 0) or (count >= self.data.shape[0]):
+                    if (count < 0) or (count >= self.n_samples):
                         raise ValueError("Fatal: count out of range. "
                                          "This should never happen.")
                     if count_only:
@@ -2138,8 +2146,8 @@ cdef class BinaryTree:
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef NodeData_t* node_data = &self.node_data[0]
-        cdef ITYPE_t N = self.data.shape[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t N = self.n_samples
+        cdef ITYPE_t n_features = self.n_features
 
         cdef NodeData_t node_info
         cdef DTYPE_t dist_pt, log_density
@@ -2275,7 +2283,7 @@ cdef class BinaryTree:
 
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
 
         cdef NodeData_t node_info = self.node_data[i_node]
         cdef DTYPE_t dist_pt, log_dens_contribution
@@ -2285,7 +2293,7 @@ cdef class BinaryTree:
         cdef DTYPE_t dist_UB = 0, dist_LB = 0
 
         N1 = node_info.idx_end - node_info.idx_start
-        N2 = self.data.shape[0]
+        N2 = self.n_samples
 
         #------------------------------------------------------------
         # Case 1: local bounds are equal to within errors.  Return
@@ -2374,7 +2382,7 @@ cdef class BinaryTree:
         """recursive single-tree two-point correlation function query"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
         cdef NodeData_t node_info = self.node_data[i_node]
 
         cdef ITYPE_t i, j, Npts
@@ -2429,7 +2437,7 @@ cdef class BinaryTree:
         cdef NodeData_t node_info1 = self.node_data[i_node1]
         cdef NodeData_t node_info2 = other.node_data[i_node2]
 
-        cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t n_features = self.n_features
 
         cdef ITYPE_t i1, i2, j, Npts
         cdef DTYPE_t reduced_r
