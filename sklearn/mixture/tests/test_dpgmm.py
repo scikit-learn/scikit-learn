@@ -182,12 +182,11 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
     setUp = GMMTester._setUp
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_VBGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The VBGMM class is"
-                         " not working correctly and it's better"
-                         " to not use it. VBGMM is deprecated in 0.18"
-                         " and will be removed in 0.20.", VBGMM)
+    assert_warns_message(
+        DeprecationWarning,
+        "The VBGMM class is not working correctly and it's better to not use "
+        "it. VBGMM is deprecated in 0.18 and will be removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):

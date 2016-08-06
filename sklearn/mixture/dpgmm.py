@@ -116,10 +116,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     return bound
 
 
-@deprecated("The DPGMM class is not working correctly and it's better "
-            "to not use it. DPGMM is deprecated in 0.18 and "
-            "will be removed in 0.20.")
-class DPGMM(_GMMBase):
+class _DPGMMBase(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
     DPGMM stands for Dirichlet Process Gaussian Mixture Model, and it
@@ -211,16 +208,16 @@ class DPGMM(_GMMBase):
         algorithm, better for situations where there might be too little
         data to get a good estimate of the covariance matrix.
     """
-
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, tol=1e-3, verbose=0, min_covar=None,
                  n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
-        super(DPGMM, self).__init__(n_components, covariance_type,
-                                    random_state=random_state,
-                                    tol=tol, min_covar=min_covar,
-                                    n_iter=n_iter, params=params,
-                                    init_params=init_params, verbose=verbose)
+        super(_DPGMMBase, self).__init__(n_components, covariance_type,
+                                         random_state=random_state,
+                                         tol=tol, min_covar=min_covar,
+                                         n_iter=n_iter, params=params,
+                                         init_params=init_params,
+                                         verbose=verbose)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -619,10 +616,24 @@ class DPGMM(_GMMBase):
         return z
 
 
-@deprecated("The VBGMM class is not working correctly and it's better"
-            " to not use it. VBGMM is deprecated in 0.18 and "
+@deprecated("The DPGMM class is not working correctly and it's better "
+            "to not use it. DPGMM is deprecated in 0.18 and "
             "will be removed in 0.20.")
-class VBGMM(DPGMM):
+class DPGMM(_DPGMMBase):
+    def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
+                 random_state=None, tol=1e-3, verbose=0, min_covar=None,
+                 n_iter=10, params='wmc', init_params='wmc'):
+        super(DPGMM, self).__init__(
+            n_components=n_components, covariance_type=covariance_type,
+            alpha=alpha, random_state=random_state, tol=tol, verbose=verbose,
+            min_covar=min_covar, n_iter=n_iter, params=params,
+            init_params=init_params)
+
+
+@deprecated("The VBGMM class is not working correctly and it's better "
+            "to not use it. VBGMM is deprecated in 0.18 and "
+            "will be removed in 0.20.")
+class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 
     Variational inference for a Gaussian mixture model probability
