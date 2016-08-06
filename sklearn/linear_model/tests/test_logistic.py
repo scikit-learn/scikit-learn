@@ -630,10 +630,10 @@ def test_logistic_regression_sample_weights():
     # since the patched liblinear code is different.
     clf_cw = LogisticRegression(
         solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
-        penalty="l1")
+        penalty="l1", tol=1e-5)
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, penalty="l1")
+        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5)
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
