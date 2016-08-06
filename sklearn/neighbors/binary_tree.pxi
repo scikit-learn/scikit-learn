@@ -150,7 +150,7 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, floating_ITYPE_t
 from typedefs import DTYPE, ITYPE
 from cython cimport floating
 
@@ -543,17 +543,17 @@ def kernel_norm(h, d, kernel, return_log=False):
 
 ######################################################################
 # Tree Utility Routines
-cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
+cdef inline void swap(floating_ITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
     """swap the values at index i1 and i2 of arr"""
-    cdef DITYPE_t tmp = arr[i1]
+    cdef floating_ITYPE_t tmp = arr[i1]
     arr[i1] = arr[i2]
     arr[i2] = tmp
 
 
-cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
+cdef inline void dual_swap(floating* darr, ITYPE_t* iarr,
                            ITYPE_t i1, ITYPE_t i2):
     """swap the values at inex i1 and i2 of both darr and iarr"""
-    cdef DTYPE_t dtmp = darr[i1]
+    cdef floating dtmp = darr[i1]
     darr[i1] = darr[i2]
     darr[i2] = dtmp
 
@@ -740,7 +740,7 @@ cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
 # find_node_split_dim:
 #  this computes the equivalent of
 #  j_max = np.argmax(np.max(data, 0) - np.min(data, 0))
-cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
+cdef ITYPE_t find_node_split_dim(floating* data,
                                  ITYPE_t* node_indices,
                                  ITYPE_t n_features,
                                  ITYPE_t n_points) except -1:
@@ -790,7 +790,7 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
     return j_max
 
 
-cdef int partition_node_indices(DTYPE_t* data,
+cdef int partition_node_indices(floating* data,
                                 ITYPE_t* node_indices,
                                 ITYPE_t split_dim,
                                 ITYPE_t split_index,
@@ -1073,7 +1073,6 @@ cdef class BinaryTree:
 
         self.new_data_arr = check_array(data, order='C', dtype=[np.float64])#, np.float32])
         self.new_data = get_pointer_DTYPE_2D(self.new_data_arr)
-
         if self.new_data_arr.dtype == np.float32:
             self.is_float = True
         else:
@@ -1254,7 +1253,19 @@ cdef class BinaryTree:
             i_max = find_node_split_dim(data, idx_array,
                                         n_features, n_points)
             partition_node_indices(data, idx_array, i_max, n_mid,
-                                   n_features, n_points)
+                                n_features, n_points)
+
+            if self.is_float:
+                find_node_split_dim(<float*>self.new_data, idx_array,
+                                            n_features, n_points)
+                #partition_node_indices(<float*>self.new_data, idx_array, i_max, n_mid,
+                #                    n_features, n_points)
+            else:
+                find_node_split_dim(<double*>self.new_data, idx_array,
+                                            n_features, n_points)
+                #partition_node_indices(<double*>self.new_data, idx_array, i_max, n_mid,
+                #                    n_features, n_points)
+
             self._recursive_build(2 * i_node + 1,
                                   idx_start, idx_start + n_mid)
             self._recursive_build(2 * i_node + 2,

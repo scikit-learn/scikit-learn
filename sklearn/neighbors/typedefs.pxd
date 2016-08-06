@@ -16,3 +16,8 @@ ctypedef np.intp_t ITYPE_t  # WARNING: should match ITYPE in typedefs.pyx
 ctypedef fused DITYPE_t:
     ITYPE_t
     DTYPE_t
+
+ctypedef fused floating_ITYPE_t:
+    ITYPE_t
+    DTYPE_t
+    np.float32_t
