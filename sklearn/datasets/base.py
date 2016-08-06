@@ -264,7 +264,7 @@ def load_iris(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -277,7 +277,7 @@ def load_iris(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -338,7 +338,7 @@ def load_breast_cancer(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -351,7 +351,7 @@ def load_breast_cancer(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
@@ -435,7 +435,7 @@ def load_digits(n_class=10, return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -448,7 +448,7 @@ def load_digits(n_class=10, return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -506,7 +506,7 @@ def load_diabetes(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -517,7 +517,7 @@ def load_diabetes(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    .. versionadded:: 0.18    
+        .. versionadded:: 0.18    
     """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
@@ -543,7 +543,7 @@ def load_linnerud(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -555,7 +555,7 @@ def load_linnerud(return_X_y=False):
     
     (data, target) : tuple if ``return_X_y`` is True
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
@@ -595,7 +595,7 @@ def load_boston(return_X_y=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
-    .. versionadded:: 0.18
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -606,7 +606,7 @@ def load_boston(return_X_y=False):
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    .. versionadded:: 0.18    
+        .. versionadded:: 0.18    
 
     Examples
     --------
