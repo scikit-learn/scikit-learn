@@ -318,7 +318,7 @@ def load_iris(return_X_y=False):
                                 'petal length (cm)', 'petal width (cm)'])
 
 
-def load_breast_cancer():
+def load_breast_cancer(return_X_y=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -332,6 +332,14 @@ def load_breast_cancer():
     Features            real, positive
     =================   ==============
 
+    Parameters
+    ----------
+    return_X_y : boolean, default=False
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+    .. versionadded:: 0.18
+
     Returns
     -------
     data : Bunch
@@ -340,6 +348,10 @@ def load_breast_cancer():
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
         full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+    .. versionadded:: 0.18
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
@@ -389,6 +401,9 @@ def load_breast_cancer():
                               'worst smoothness', 'worst compactness',
                               'worst concavity', 'worst concave points',
                               'worst symmetry', 'worst fractal dimension'])
+
+    if return_X_y:
+        return data, target
 
     return Bunch(data=data, target=target,
                  target_names=target_names,
