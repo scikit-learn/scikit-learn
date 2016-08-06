@@ -128,6 +128,13 @@ def test_load_digits():
     assert_equal(digits.data.shape, (1797, 64))
     assert_equal(numpy.unique(digits.target).size, 10)
 
+    # test return_X_y option
+    X_y_tuple = load_digits(return_X_y=True)
+    bunch = load_digits()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
+
 
 def test_load_digits_n_class_lt_10():
     digits = load_digits(9)
@@ -165,6 +172,13 @@ def test_load_diabetes():
     assert_equal(res.data.shape, (442, 10))
     assert_true(res.target.size, 442)
 
+    # test return_X_y option
+    X_y_tuple = load_diabetes(return_X_y=True)
+    bunch = load_diabetes
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
+
 
 def test_load_linnerud():
     res = load_linnerud()
@@ -173,6 +187,12 @@ def test_load_linnerud():
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
 
+    # test return_X_y option
+    X_y_tuple = load_linnerud(return_X_y=True)
+    bunch = load_linnerud
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 def test_load_iris():
     res = load_iris()
@@ -211,6 +231,12 @@ def test_load_boston():
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
 
+    # test return_X_y option
+    X_y_tuple = load_boston(return_X_y=True)
+    bunch = load_boston()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
 
 def test_loads_dumps_bunch():
     bunch = Bunch(x="x")
