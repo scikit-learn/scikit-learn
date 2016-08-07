@@ -230,7 +230,7 @@ Enhancements
      (`#6846 <https://github.com/scikit-learn/scikit-learn/pull/6846>`_)
      By `Sebastian Säger`_ and `YenChen Lin`_.
 
-   - Added new return type ``(data, target)`` : tuple option to
+   - Added parameter ``return_X_y`` and return type ``(data, target) : tuple`` option to
      :func:`load_iris` dataset 
      `#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_, 
      :func:`load_breast_cancer` dataset
