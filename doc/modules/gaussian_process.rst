@@ -608,9 +608,25 @@ References
       Link to an official complete PDF version of the book
       `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
+Select Dimension Kernel
+------------------
+
+The :class:`SelectDimensionKernel` is thin wrapper around a given kernel. It
+applies the underlying kernel on a set of specific features of data.
+
+We can use :class:`SelectDimensionKernel` to recreate anisotropic :class:`RBF`
+kernel using product of several RBF kernels each applied only on one feature.
+This is demonstrated in following figures:
+
+.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection_001.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_dim_selection.html
+   :align: center
+
+.. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection_002.png
+   :target: ../auto_examples/gaussian_process/plot_gpr_dim_selection.html
+   :align: center
+
 .. currentmodule:: sklearn.gaussian_process
-
-
 
 
 Legacy Gaussian Processes
