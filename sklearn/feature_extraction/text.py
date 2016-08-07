@@ -1054,8 +1054,6 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
         binary = X.copy()
         binary.data = np.sign(X.data)
         
-        temp = self._beta_diag.dot(binary)
-        
         weightedtfs.data = (self.k + 1) / \
                            (self.k * self._beta_diag.dot(binary).data / X.data + 1)
 
