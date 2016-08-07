@@ -37,8 +37,9 @@ The quickest way to get replies to your questions is posting on
  Please don't ask general machine learning questions on the mailing list.
 
 For bug reports or feature requests, please make use of the
-`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_
-or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_,
+the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_, or
+the 'Scikit-learn community on Gitter <https://gitter.im/scikit-learn/scikit-learn>'_.
 Please do not email the authors directly with bug reports or feature requests.
 
 How can I create a bunch object?
