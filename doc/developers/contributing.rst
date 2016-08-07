@@ -952,6 +952,18 @@ The easiest and recommended way to accomplish this is to
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
 
+Parameters can be passed to the ``fit`` method. Generally, these parameters
+should be restricted to variables that have the shape ``n_samples``.
+This allows for all relevant parameters to be sliced cleanly during
+cross-validation. All other parameters should be passed to
+``__init__`` or ``set_params``.
+
+As a general rule, ``transform`` and ``predict`` should not take additional
+parameters. In cases where additional parameters would be useful, e.g.
+when setting a threshold value for feature selection, the custom parameters
+should be passed to ``__init__`` or ``set_params`` in order to maintain a
+consistent interface.
+
 Also it is expected that parameters with trailing ``_`` are **not to be set
 inside the** ``__init__`` **method**. All and only the public attributes set by
 fit have a trailing ``_``. As a result the existence of parameters with
