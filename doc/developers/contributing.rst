@@ -953,10 +953,14 @@ All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
 
 Parameters can be passed to the ``fit`` method. Generally, these parameters
-should be restricted to variables that have the shape ``n_samples``.
-This allows for all relevant parameters to be sliced cleanly during
-cross-validation. All other parameters should be passed to
-``__init__`` or ``set_params``.
+should be restricted to variables that need to be sliced during
+cross-validation. Consequently, these variables would be either arrays with shape=[N] or
+array-like with shape=[N,D] where N is the number of samples. An example of
+this type of variable would be
+``sample_weight``. This interface allows all data-dependent
+parameters to be sliced cleanly during cross-validation.
+All other parameters should be passed to
+``__init__`` or set after construction using ``set_params``.
 
 As a general rule, ``transform`` and ``predict`` should not take additional
 parameters. In cases where additional parameters would be useful, e.g.
