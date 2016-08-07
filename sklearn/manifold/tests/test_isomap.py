@@ -89,17 +89,18 @@ def test_transform():
     # Create S-curve dataset
     X, y = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
 
-    # Compute isomap embedding
-    iso = manifold.Isomap(n_components, 2)
-    X_iso = iso.fit_transform(X)
+    for isomap_mode in ['k', 'radius']:
+        # Compute isomap embedding
+        iso = manifold.Isomap(mode=isomap_mode, n_components=n_components)
+        X_iso = iso.fit_transform(X)
 
-    # Re-embed a noisy version of the points
-    rng = np.random.RandomState(0)
-    noise = noise_scale * rng.randn(*X.shape)
-    X_iso2 = iso.transform(X + noise)
+        # Re-embed a noisy version of the points
+        rng = np.random.RandomState(0)
+        noise = noise_scale * rng.randn(*X.shape)
+        X_iso2 = iso.transform(X + noise)
 
-    # Make sure the rms error on re-embedding is comparable to noise_scale
-    assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
+        # Make sure the rms error on re-embedding is comparable to noise_scale
+        assert_less(np.sqrt(np.mean((X_iso - X_iso2) ** 2)), 2 * noise_scale)
 
 
 def test_pipeline():
