@@ -32,6 +32,7 @@ def test_no_param():
     X_train, X_test, y_train, y_test = train_test_split(X_clf, y_clf,
                                                         random_state=42)
     gbccv = GradientBoostingClassifierCV(max_iterations=1000,
+                                         score_precision=4,
                                          random_state=42)
     gbccv.fit(X_train, y_train)
     assert_equal(gbccv.best_params_['n_estimators'], 13)
@@ -40,10 +41,11 @@ def test_no_param():
     X_train, X_test, y_train, y_test = train_test_split(X_reg, y_reg,
                                                         random_state=42)
     gbrcv = GradientBoostingRegressorCV(max_iterations=1000,
+                                        score_precision=4,
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
-    assert_equal(gbrcv.best_params_['n_estimators'], 37)
-    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
+    assert_equal(gbrcv.best_params_['n_estimators'], 87)
+    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.85)
 
 
 def test_single_param():
@@ -53,6 +55,7 @@ def test_single_param():
                                          n_stop_rounds=10,
                                          learning_rate=0.1,
                                          max_depth=3,
+                                         score_precision=4,
                                          random_state=42)
     gbccv.fit(X_train, y_train)
     assert_equal(gbccv.best_params_['n_estimators'], 13)
@@ -64,9 +67,10 @@ def test_single_param():
                                         n_stop_rounds=10,
                                         learning_rate=0.1,
                                         max_depth=3,
+                                        score_precision=4,
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
-    assert_equal(gbrcv.best_params_['n_estimators'], 37)
+    assert_equal(gbrcv.best_params_['n_estimators'], 87)
     assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
 
 
@@ -75,7 +79,9 @@ def test_param_grid():
                                                         random_state=42)
     gbccv = GradientBoostingClassifierCV(max_iterations=1000,
                                          learning_rate=[0.1, 0.3],
-                                         max_depth=[3, 4])
+                                         max_depth=[3, 4],
+                                         score_precision=4,
+                                         random_state=42)
     gbccv.fit(X_train, y_train)
     assert_equal(gbccv.best_params_['n_estimators'], 10)
     assert_greater(gbccv.best_estimator_.score(X_test, y_test), 0.9)
@@ -85,6 +91,7 @@ def test_param_grid():
                                          learning_rate=[0.1, 0.3],
                                          max_depth=[3, 4],
                                          n_iter_combo=1,
+                                         score_precision=4,
                                          random_state=42)
     gbccv.fit(X_train, y_train)
     # Only 1 cv iteration (n_iter_combo=1)
@@ -97,9 +104,10 @@ def test_param_grid():
     gbrcv = GradientBoostingRegressorCV(max_iterations=1000,
                                         learning_rate=[0.1, 0.3],
                                         max_depth=[3, 4],
+                                        score_precision=4,
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
-    assert_equal(gbrcv.best_params_['n_estimators'], 31)
+    assert_equal(gbrcv.best_params_['n_estimators'], 56)
     assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.8)
 
     # If n_iter_combo is given, RandomSampler must be used
@@ -107,10 +115,11 @@ def test_param_grid():
                                         learning_rate=[0.1, 0.3],
                                         max_depth=[3, 4],
                                         n_iter_combo=1,
+                                        score_precision=4,
                                         random_state=42)
     gbrcv.fit(X_train, y_train)
     assert_equal(len(gbrcv.grid_scores_), 1)
-    assert_equal(gbrcv.best_params_['n_estimators'], 20)
+    assert_equal(gbrcv.best_params_['n_estimators'], 27)
     assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
 
 
@@ -118,10 +127,11 @@ def test_predict():
     X_train, X_val, y_train, y_val = train_test_split(X_clf, y_clf,
                                                       random_state=42)
     params = {'learning_rate': [0.1, 0.3], 'max_depth': [3, 4]}
-    gbccv = GradientBoostingClassifierCV(**params)
+    gbccv = GradientBoostingClassifierCV(score_precision=4, random_state=42,
+                                         **params)
     gbccv.fit(X_train, y_train)
 
-    gs_gbc = GridSearchCV(GradientBoostingClassifier(), params)
+    gs_gbc = GridSearchCV(GradientBoostingClassifier(random_state=42), params)
     gs_gbc.fit(X_train, y_train)
 
     assert_array_equal(gbccv.predict(X_val), gs_gbc.predict(X_val))
@@ -129,14 +139,16 @@ def test_predict():
     X_train, X_val, y_train, y_val = train_test_split(X_reg, y_reg,
                                                       random_state=42)
     params = {'learning_rate': [0.1, 0.3], 'max_depth': [3, 4]}
-    gbrcv = GradientBoostingRegressorCV(random_state=42, **params)
+    gbrcv = GradientBoostingRegressorCV(score_precision=4, random_state=42,
+                                        **params)
     gbrcv.fit(X_train, y_train)
 
-    gs_gbr = GridSearchCV(GradientBoostingRegressor(random_state=42), params)
+    gs_gbr = GridSearchCV(GradientBoostingRegressor(random_state=42),
+                          param_grid=params)
     gs_gbr.fit(X_train, y_train)
 
     assert_equal(gs_gbr.best_estimator_.n_estimators, 100)
-    assert_equal(gbrcv.best_estimator_.n_estimators, 31)
+    assert_equal(gbrcv.best_estimator_.n_estimators, 56)
 
     pred_1 = gs_gbr.best_estimator_.predict(X_val)
     pred_2 = gbrcv.best_estimator_.predict(X_val)
