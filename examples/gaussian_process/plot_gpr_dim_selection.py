@@ -4,7 +4,7 @@ Illustration of SelectDimensionKernel
 =========================================================
 A simple two-dimensional regression example computed in two different ways:
 1. With a product of two RBF kernels on each feature.
-2. With one unisotropic RBF kernels applied on both feature.
+2. With one anisotropic RBF kernels applied on both feature.
 
 The figures illustrate the property of SelectDimensionKernel when applied on
 different features of input data.
@@ -30,7 +30,7 @@ np.random.seed(1)
 
 # Define a kernel with sum of two RBF kernels applied on individual dimentsion.
 kernel = SelectDimensionKernel(RBF(length_scale=0.1), np.array([0])) * \
-         SelectDimensionKernel(RBF(length_scale=0.1), np.array([1]))
+         SelectDimensionKernel(RBF(length_scale=0.4), np.array([1]))
 
 # create GaussianProcessRegressor object.
 gp = GaussianProcessRegressor(kernel=kernel)
@@ -66,12 +66,16 @@ ax.scatter(x_pred[:, 0], x_pred[:, 1], y_out, c='r', marker='o')
 ax.scatter(x[:, 0], x[:, 1], y, c='b', marker='o')
 ax.view_init(20, 60)
 
+ax.set_xlabel('$X_0$')
+ax.set_ylabel('$X_1$')
+ax.set_zlabel('$Y$')
+
 mae = np.abs(y_out-y_pred).mean()
 ax.set_title('SelectDimensionKernel on two RBF, MAE: %.3f' % mae)
 print("Absolute mean error %.4f" % mae)
 
 # Create new RBF kernel applied on both features.
-kernel = RBF(length_scale=0.1)
+kernel = RBF(length_scale=[0.1, 0.4])
 gp = GaussianProcessRegressor(kernel=kernel)
 
 gp.fit(x, y)
@@ -93,6 +97,11 @@ ax.scatter(x_pred[:, 0], x_pred[:, 1], y_out, c='r', marker='o')
 ax.scatter(x[:, 0], x[:, 1], y, c='b', marker='o')
 
 ax.view_init(20, 60)
+
+ax.set_xlabel('$X_0$')
+ax.set_ylabel('$X_1$')
+ax.set_zlabel('$Y$')
+
 ax.set_title('Anisotropic RBF, MAE: %.3f' % np.abs(y_out-y_pred).mean())
 
 mae = np.abs(y_out-y_pred).mean()

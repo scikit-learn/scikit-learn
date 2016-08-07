@@ -49,7 +49,7 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
 kernels += [SelectDimensionKernel(RBF(length_scale=2.0),
                                   active_dim=np.array([0])),
             SelectDimensionKernel(RBF(length_scale=2.0),
-                                  active_dim=np.array([False, True]))]
+                                  active_dim=np.array([0, 1]))]
 
 
 def test_kernel_gradient():

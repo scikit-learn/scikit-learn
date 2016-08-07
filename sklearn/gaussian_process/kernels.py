@@ -1875,8 +1875,7 @@ class SelectDimensionKernel(Kernel):
     kernel : a kernel object.
         an instantiation of kernel object.
 
-    active_dim : a numpy mask array to apply on input data.
-        can be boolean mask or integer indices.
+    active_dim : a numpy integer indices to apply on input data.
 
     """
 
@@ -1885,8 +1884,11 @@ class SelectDimensionKernel(Kernel):
         if type(active_dim) is not np.ndarray:
             raise ValueError("active_dim should be numpy array \
                               not %s." % type(active_dim))
-        if active_dim.dtype == 'bool':
-            active_dim = np.nonzero(np.arange(active_dim.shape[0]))[0]
+
+        if active_dim.size == 0:
+            raise ValueError("active_dim should be have at least one \
+                              element, current size: %d " % active_dim.size)
+
         self.active_dim = active_dim
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -1992,7 +1994,8 @@ class SelectDimensionKernel(Kernel):
     def __eq__(self, b):
         if type(self) != type(b):
             return False
-        return (self.kernel == b.kernel and self.active_dim == b.active_dim)
+        return (self.kernel == b.kernel and
+                np.all([self.active_dim == b.active_dim]))
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -2017,3 +2020,7 @@ class SelectDimensionKernel(Kernel):
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
+
+    def __repr__(self):
+        return "{0}(kernel: {1}, active dimensions:{2})".format(
+            self.__class__.__name__, self.kernel.__repr__(), self.active_dim)
