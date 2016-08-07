@@ -230,11 +230,16 @@ Enhancements
      (`#6846 <https://github.com/scikit-learn/scikit-learn/pull/6846>`_)
      By `Sebastian Säger`_ and `YenChen Lin`_.
 
-   - Added new return type ``(data, target)`` : tuple option to
-     :func:`load_iris` dataset, 
-     (`#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_)
+   - Added parameter ``return_X_y`` and return type ``(data, target) : tuple`` option to
+     :func:`load_iris` dataset 
+     `#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_, 
      :func:`load_breast_cancer` dataset
-     (`#7152 <https://github.com/scikit-learn/scikit-learn/pull/7152>`_) by
+     `#7152 <https://github.com/scikit-learn/scikit-learn/pull/7152>`_,
+     :func:`load_digits` dataset,
+     :func:`load_diabetes` dataset,
+     :func:`load_linnerud` dataset,
+     :func:`load_boston` dataset
+     `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
      `Manvendra Singh`_.
 
 Bug fixes
