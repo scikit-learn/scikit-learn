@@ -714,7 +714,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             average=average)
 
     def _check_proba(self):
-        check_is_fitted(self, "t_")
+        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
 
         if self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
@@ -753,10 +753,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        self._check_proba()
         return self._predict_proba
 
     def _predict_proba(self, X):
+        self._check_proba()
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -819,7 +819,6 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        self._check_proba()
         return self._predict_log_proba
 
     def _predict_log_proba(self, X):
