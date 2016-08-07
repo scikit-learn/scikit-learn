@@ -32,7 +32,7 @@ from .sgd_fast import SquaredLoss
 from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 from .sgd_fast import SquaredEpsilonInsensitive
-
+from ..exceptions import NotFittedError as _NotFittedError
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "pa1": 4, "pa2": 5}
@@ -714,9 +714,14 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             average=average)
 
     def _check_proba(self):
-        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
-
-        if self.loss not in ("log", "modified_huber"):
+        try:
+            check_is_fitted(self, ["t_", "coef_", "intercept_"],
+                            all_or_any=all)
+            is_fitted = True
+        except _NotFittedError:
+            is_fitted = False            
+        
+        if is_fitted and self.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % self.loss)
 
@@ -753,10 +758,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
+        self._check_proba()
         return self._predict_proba
 
     def _predict_proba(self, X):
-        self._check_proba()
+        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -819,6 +825,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
+        self._check_proba()
         return self._predict_log_proba
 
     def _predict_log_proba(self, X):
