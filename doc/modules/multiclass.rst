@@ -151,7 +151,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 [i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/plot_multilabel_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multilabel_001.png
     :target: ../auto_examples/plot_multilabel.html
     :align: center
     :scale: 75%
@@ -159,7 +159,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_multilabel.py`
+    * :ref:`sphx_glr_auto_examples_plot_multilabel.py`
 
 .. _ovo_classification:
 
@@ -236,7 +236,7 @@ one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
 good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
 
-A number greater than than 1 will require more classifiers than
+A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
 the mistakes made by other classifiers, hence the name "error-correcting".
 In practice, however, this may not happen as classifier mistakes will

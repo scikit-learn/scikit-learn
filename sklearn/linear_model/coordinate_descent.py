@@ -462,7 +462,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 positive)
         else:
             raise ValueError("Precompute should be one of True, False, "
-                             "'auto' or array-like")
+                             "'auto' or array-like. Got %r" % precompute)
         coef_, dual_gap_, eps_, n_iter_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
@@ -548,9 +548,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument. For sparse input
-        this option is always ``True`` to preserve sparsity.
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``True`` to preserve sparsity.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -661,12 +660,10 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if (isinstance(self.precompute, six.string_types) and
-           self.precompute == 'auto'):
-            warnings.warn("Setting precompute to 'auto', was found to be "
-                          "slower even when n_samples > n_features. Hence "
-                          "it will be removed in 0.18.",
-                          DeprecationWarning, stacklevel=2)
+        if isinstance(self.precompute, six.string_types):
+            raise ValueError('precompute should be one of True, False or'
+                             ' array-like. Got %r' % self.precompute)
+
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:

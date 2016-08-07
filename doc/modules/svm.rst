@@ -51,7 +51,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -254,7 +254,7 @@ classes or certain individual samples keywords ``class_weight`` and
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
    :align: center
    :scale: 75
@@ -266,7 +266,7 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
-.. figure:: ../auto_examples/svm/images/plot_weighted_samples_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
@@ -274,12 +274,12 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_iris.py`,
- * :ref:`example_svm_plot_separating_hyperplane.py`,
- * :ref:`example_svm_plot_separating_hyperplane_unbalanced.py`
- * :ref:`example_svm_plot_svm_anova.py`,
- * :ref:`example_svm_plot_svm_nonlinear.py`
- * :ref:`example_svm_plot_weighted_samples.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`,
 
 
 .. _svm_regression:
@@ -322,7 +322,7 @@ floating point values instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_svm_regression.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
 
 
@@ -341,7 +341,7 @@ will only take as input an array X, as there are no class labels.
 
 See, section :ref:`outlier_detection` for more details on this usage.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -349,8 +349,8 @@ See, section :ref:`outlier_detection` for more details on this usage.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_oneclass.py`
- * :ref:`example_applications_plot_species_distribution_modeling.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
+ * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 
 Complexity
@@ -498,7 +498,7 @@ instance that will use that kernel::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`.
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
@@ -540,7 +540,7 @@ is advised to use :class:`sklearn.model_selection.GridSearchCV` with
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_rbf_parameters.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
 
 .. _svm_mathematical_formulation:
 
@@ -556,7 +556,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
 
@@ -619,7 +619,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_,
+   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 

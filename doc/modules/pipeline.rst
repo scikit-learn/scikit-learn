@@ -96,11 +96,11 @@ This is particularly important for doing grid searches::
 
 .. topic:: Examples:
 
- * :ref:`example_feature_selection_feature_selection_pipeline.py`
- * :ref:`example_model_selection_grid_search_text_feature_extraction.py`
- * :ref:`example_plot_digits_pipe.py`
- * :ref:`example_plot_kernel_approximation.py`
- * :ref:`example_svm_plot_svm_anova.py`
+ * :ref:`sphx_glr_auto_examples_feature_selection_feature_selection_pipeline.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_plot_digits_pipe.py`
+ * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
 
 .. topic:: See also:
 
@@ -174,5 +174,5 @@ Like pipelines, feature unions have a shorthand constructor called
 
 .. topic:: Examples:
 
- * :ref:`example_feature_stacker.py`
- * :ref:`example_hetero_feature_union.py`
+ * :ref:`sphx_glr_auto_examples_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`

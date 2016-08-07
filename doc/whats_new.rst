@@ -125,6 +125,11 @@ New features
      <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
      Liu`_.
 
+   - Added weighted impurity-based early stopping criterion for decision tree
+     growth. (`#6954
+     <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
+     Liu`_
+
 Enhancements
 ............
 
@@ -225,6 +230,18 @@ Enhancements
      (`#6846 <https://github.com/scikit-learn/scikit-learn/pull/6846>`_)
      By `Sebastian Säger`_ and `YenChen Lin`_.
 
+   - Added parameter ``return_X_y`` and return type ``(data, target) : tuple`` option to
+     :func:`load_iris` dataset 
+     `#7049 <https://github.com/scikit-learn/scikit-learn/pull/7049>`_, 
+     :func:`load_breast_cancer` dataset
+     `#7152 <https://github.com/scikit-learn/scikit-learn/pull/7152>`_,
+     :func:`load_digits` dataset,
+     :func:`load_diabetes` dataset,
+     :func:`load_linnerud` dataset,
+     :func:`load_boston` dataset
+     `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
+     `Manvendra Singh`_.
+
 Bug fixes
 .........
 
@@ -274,7 +291,7 @@ Bug fixes
       more details. By `Loic Esteve`_.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
-      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
       correct results. By `JPFrancoia`_
 
     - Fixed incorrect gradient computation for ``loss='squared_epsilon_insensitive'`` in
@@ -293,15 +310,20 @@ Bug fixes
       with them as parameters, could not be passed to :func:`base.clone`.
       By `Loic Esteve`_.
       
-    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error 
-      occurred when there were outliers being labelled and a weight function 
-      (`#6902 <https://github.com/scikit-learn/scikit-learn/issues/6902>`_). 
-      By `LeonieBorne <https://github.com/LeonieBorne>`_.
+    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
+      occurred when there were outliers being labelled and a weight function
+      specified (`#6902
+      <https://github.com/scikit-learn/scikit-learn/issues/6902>`_).  By
+      `LeonieBorne <https://github.com/LeonieBorne>`_.
 
     - :func:`pairwise_distances` now converts arrays to boolean arrays when
       required in scipy.spatial.distance.
-      (`#5460 https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
+      (`#5460 <https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
       By `Tom Dupre la Tour`_.
+
+    - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
+      (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
+      By `Ibraim Ganiev`_.
 
 API changes summary
 -------------------
@@ -696,7 +718,7 @@ Bug fixes
     - Fixed inconsistent memory layout in the coordinate descent solver
       that affected :class:`linear_model.DictionaryLearning` and
       :class:`covariance.GraphLasso`. (`#5337 <https://github.com/scikit-learn/scikit-learn/pull/5337>`_)
-      By `Oliver Grisel`_.
+      By `Olivier Grisel`_.
 
     - :class:`manifold.LocallyLinearEmbedding` no longer ignores the ``reg``
       parameter.
@@ -1098,7 +1120,7 @@ Documentation improvements
 
    - Added silhouette plots for analysis of KMeans clustering using
      :func:`metrics.silhouette_samples` and :func:`metrics.silhouette_score`.
-     See :ref:`example_cluster_plot_kmeans_silhouette_analysis.py`
+     See :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`
 
 Bug fixes
 .........
@@ -1446,7 +1468,7 @@ New features
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
-     :ref:`example_model_selection_plot_learning_curve.py`. By Alexander Fabisch.
+     :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`. By Alexander Fabisch.
 
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
@@ -2045,7 +2067,7 @@ Changelog
      By `Lars Buitinck`_.
 
    - Added self-contained example of out-of-core learning on text data
-     :ref:`example_applications_plot_out_of_core_classification.py`.
+     :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
      By `Eustache Diemert`_.
 
    - The default number of components for
@@ -2421,7 +2443,7 @@ Changelog
 
    - Partial dependence plots for :ref:`gradient_boosting` in
      :func:`ensemble.partial_dependence.partial_dependence` by `Peter
-     Prettenhofer`_. See :ref:`example_ensemble_plot_partial_dependence.py` for an
+     Prettenhofer`_. See :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py` for an
      example.
 
    - The table of contents on the website has now been made expandable by
@@ -3355,13 +3377,13 @@ This release also includes the dictionary-learning work developed by
 
 
 
-.. |banner1| image:: ./auto_examples/manifold/images/thumb/plot_compare_methods.png
+.. |banner1| image:: ./auto_examples/manifold/images/thumb/sphx_glr_plot_compare_methods_thumb.png
    :target: auto_examples/manifold/plot_compare_methods.html
 
-.. |banner2| image:: ./auto_examples/linear_model/images/thumb/plot_omp.png
+.. |banner2| image:: ./auto_examples/linear_model/images/thumb/sphx_glr_plot_omp_thumb.png
    :target: auto_examples/linear_model/plot_omp.html
 
-.. |banner3| image:: ./auto_examples/decomposition/images/thumb/plot_kernel_pca.png
+.. |banner3| image:: ./auto_examples/decomposition/images/thumb/sphx_glr_plot_kernel_pca_thumb.png
    :target: auto_examples/decomposition/plot_kernel_pca.html
 
 .. |center-div| raw:: html
@@ -3790,7 +3812,7 @@ Changelog
   - Improved svm module: memory consumption has been reduced by 50%,
     heuristic to automatically set class weights, possibility to
     assign weights to samples (see
-    :ref:`example_svm_plot_weighted_samples.py` for an example).
+    :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py` for an example).
 
   - New :ref:`gaussian_process` module by Vincent Dubourg. This module
     also has great documentation and some very neat examples. See
@@ -3810,10 +3832,10 @@ Changelog
 
   - Lots of cool new examples and a new section that uses real-world
     datasets was created. These include:
-    :ref:`example_applications_face_recognition.py`,
-    :ref:`example_applications_plot_species_distribution_modeling.py`,
-    :ref:`example_applications_svm_gui.py`,
-    :ref:`example_applications_wikipedia_principal_eigenvector.py` and
+    :ref:`sphx_glr_auto_examples_applications_face_recognition.py`,
+    :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
+    :ref:`sphx_glr_auto_examples_applications_svm_gui.py`,
+    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
     others.
 
   - Faster :ref:`least_angle_regression` algorithm. It is now 2x
@@ -3934,8 +3956,8 @@ Examples
 --------
 
     - new examples using some of the mlcomp datasets:
-      ``example_mlcomp_sparse_document_classification.py`` (since removed) and
-      :ref:`example_text_document_classification_20newsgroups.py`
+      ``sphx_glr_auto_examples_mlcomp_sparse_document_classification.py`` (since removed) and
+      :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
 
     - Many more examples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_
@@ -4301,3 +4323,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _YenChen Lin: https://github.com/yenchenlin
 
 .. _Nelson Liu: https://github.com/nelson-liu
+
+.. _Manvendra Singh: https://github.com/manu-chroma
+
+.. _Ibraim Ganiev: https://github.com/olologin

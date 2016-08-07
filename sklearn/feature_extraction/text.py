@@ -282,12 +282,6 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
-    @property
-    @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
-                "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
-    def fixed_vocabulary(self):
-        return self.fixed_vocabulary_
-
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -1130,7 +1124,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.`
     """
@@ -1163,8 +1157,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf,
-                                        diags=0, m=n_features, n=n_features)
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+                                        n=n_features, format='csr')
 
         return self
 

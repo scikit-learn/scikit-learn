@@ -12,7 +12,6 @@ covariance estimator (the Minimum Covariance Determinant).
 #
 # License: BSD 3 clause
 
-import warnings
 import numpy as np
 import scipy as sp
 from . import MinCovDet

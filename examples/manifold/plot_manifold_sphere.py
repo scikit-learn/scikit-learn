@@ -15,7 +15,7 @@ side. This enables the manifold learning techniques to
 'spread it open' whilst projecting it onto two dimensions.
 
 For a similar example, where the methods are applied to the
-S-curve dataset, see :ref:`example_manifold_plot_compare_methods.py`
+S-curve dataset, see :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`
 
 Note that the purpose of the :ref:`MDS <multidimensional_scaling>` is
 to find a low-dimensional representation of the data (here 2D) in

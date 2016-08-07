@@ -9,7 +9,6 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
-import warnings
 import numpy as np
 from scipy import linalg
 from time import time

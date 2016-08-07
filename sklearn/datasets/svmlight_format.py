@@ -166,7 +166,7 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     data = frombuffer_empty(data, actual_dtype)
     indices = frombuffer_empty(ind, np.intc)
     indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
-    query = frombuffer_empty(query, np.intc)
+    query = frombuffer_empty(query, np.int64)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
     return data, indices, indptr, labels, query

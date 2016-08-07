@@ -401,7 +401,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm
-      https://code.google.com/p/jbirch/
+      https://code.google.com/archive/p/jbirch
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,

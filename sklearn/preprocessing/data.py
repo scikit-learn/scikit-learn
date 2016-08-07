@@ -1173,7 +1173,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     exponentially in the degree. High degrees can cause overfitting.
 
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <example_linear_model_plot_polynomial_interpolation.py>`
+    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree

@@ -547,7 +547,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`
 
 * If you don't have labels, try using
-  :ref:`Clustering <example_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look
@@ -558,7 +558,7 @@ upon the completion of this tutorial:
 
 * Have a look at using
   :ref:`Out-of-core Classification
-  <example_applications_plot_out_of_core_classification.py>` to
+  <sphx_glr_auto_examples_applications_plot_out_of_core_classification.py>` to
   learn from data that would not fit into the computer main memory.
 
 * Have a look at the :ref:`Hashing Vectorizer <hashing_vectorizer>`

@@ -12,6 +12,7 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
 
@@ -63,7 +64,6 @@ TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
-cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
@@ -131,12 +131,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  SIZE_t max_depth):
+                  SIZE_t max_depth, double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
+        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
@@ -166,6 +167,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
+        cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
@@ -223,7 +225,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     impurity = splitter.node_impurity()
                     first = 0
 
-                is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
+                is_leaf = (is_leaf or
+                           (impurity <= min_impurity_split))
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
@@ -289,13 +292,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
-                  SIZE_t max_depth, SIZE_t max_leaf_nodes):
+                  SIZE_t max_depth, SIZE_t max_leaf_nodes,
+                  double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
@@ -421,6 +426,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
         cdef double weighted_n_samples = splitter.weighted_n_samples
+        cdef double min_impurity_split = self.min_impurity_split
         cdef double weighted_n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
@@ -436,7 +442,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    (n_node_samples < self.min_samples_split) or
                    (n_node_samples < 2 * self.min_samples_leaf) or
                    (weighted_n_node_samples < self.min_weight_leaf) or
-                   (impurity <= MIN_IMPURITY_SPLIT))
+                   (impurity <= min_impurity_split))
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)

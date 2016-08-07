@@ -162,7 +162,8 @@ def _chisquare(f_obs, f_exp):
     chisq = f_obs
     chisq -= f_exp
     chisq **= 2
-    chisq /= f_exp
+    with np.errstate(invalid="ignore"):
+        chisq /= f_exp
     chisq = chisq.sum(axis=0)
     return chisq, special.chdtrc(k - 1, chisq)
 
