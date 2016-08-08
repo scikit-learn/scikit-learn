@@ -236,7 +236,7 @@ def test_monotonic_likelihood():
         bgmm = BayesianGaussianMixture(n_components=2 * n_components,
                                        covariance_type=covar_type, reg_covar=0,
                                        warm_start=True, max_iter=1,
-                                       random_state=rng, tol=1e-7)
+                                       random_state=rng, tol=1e-4)
         current_lower_bound = -np.infty
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", ConvergenceWarning)
