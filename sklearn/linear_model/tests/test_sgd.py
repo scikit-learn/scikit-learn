@@ -840,7 +840,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Make sure raise not fitted error and not the loss='hinge' error
         clf = self.factory()
         assert_raises_regexp(_NotFittedError,
-                             "This {} instance is not fitted yet. "
+                             "This {0} instance is not fitted yet. "
                              "Call 'fit' with appropriate arguments before "
                              "using this method.".format(type(clf).__name__),
                              clf.predict_proba, X)
