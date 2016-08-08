@@ -91,20 +91,6 @@ def test_param_grid():
     # assert_equal(gbccv.best_params_['n_estimators'], 10)
     assert_greater(gbccv.best_estimator_.score(X_test, y_test), 0.9)
 
-    # If n_iter_combo is given, RandomSampler must be used
-    gbccv = GradientBoostingClassifierCV(max_iterations=1000,
-                                         learning_rate=[0.1, 0.3],
-                                         max_depth=[3, 4],
-                                         n_iter_combo=1,
-                                         score_precision=4,
-                                         random_state=42)
-    gbccv.fit(X_train, y_train)
-    # Only 1 cv iteration (n_iter_combo=1)
-    assert_equal(len(gbccv.grid_scores_), 1)
-    # FIXME: The below test depends on numpy/scipy versions
-    # assert_equal(gbccv.best_params_['n_estimators'], 11)
-    assert_greater(gbccv.best_estimator_.score(X_test, y_test), 0.9)
-
     X_train, X_test, y_train, y_test = train_test_split(X_reg, y_reg,
                                                         random_state=42)
     gbrcv = GradientBoostingRegressorCV(max_iterations=1000,
@@ -116,19 +102,6 @@ def test_param_grid():
     # FIXME: The below test depends on numpy/scipy versions
     # assert_equal(gbrcv.best_params_['n_estimators'], 56)
     assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.8)
-
-    # If n_iter_combo is given, RandomSampler must be used
-    gbrcv = GradientBoostingRegressorCV(max_iterations=1000,
-                                        learning_rate=[0.1, 0.3],
-                                        max_depth=[3, 4],
-                                        n_iter_combo=1,
-                                        score_precision=4,
-                                        random_state=42)
-    gbrcv.fit(X_train, y_train)
-    assert_equal(len(gbrcv.grid_scores_), 1)
-    # FIXME: The below test depends on numpy/scipy versions
-    # assert_equal(gbrcv.best_params_['n_estimators'], 27)
-    assert_greater(gbrcv.best_estimator_.score(X_test, y_test), 0.80)
 
 
 def test_predict():

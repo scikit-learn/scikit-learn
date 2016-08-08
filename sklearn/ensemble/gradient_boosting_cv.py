@@ -216,19 +216,17 @@ class GradientBoostingClassifierCV(BaseEstimator):
     _estimator_class = GradientBoostingClassifier
 
     def __init__(self, n_stop_rounds=10, score_precision=2,
-                 max_iterations=10000, cv=3, n_iter_combo=None, scoring=None,
-                 refit=True, n_jobs=1, pre_dispatch='2*n_jobs', verbose=0,
-                 loss='deviance', learning_rate=0.1, subsample=1.0,
-                 min_samples_split=2, min_samples_leaf=1,
-                 min_weight_fraction_leaf=0., max_depth=3, init=None,
-                 random_state=None, max_features=None, max_leaf_nodes=None,
-                 presort='auto'):
+                 max_iterations=10000, cv=3, scoring=None, refit=True,
+                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='deviance',
+                 learning_rate=0.1, subsample=1.0, min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
+                 init=None, random_state=None, max_features=None,
+                 max_leaf_nodes=None, presort='auto'):
 
         self.n_stop_rounds = n_stop_rounds
         self.score_precision = score_precision
         self.max_iterations = max_iterations
         self.cv = cv
-        self.n_iter_combo = n_iter_combo
         self.scoring = scoring
         self.refit = refit
         self.n_jobs = n_jobs
@@ -264,11 +262,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
         X, y = check_X_y(X, y, dtype=DTYPE)
 
         cv = check_cv(self.cv, y)
-        if self.n_iter_combo is None:
-            param_iter = ParameterGrid(params)
-        else:
-            param_iter = ParameterSampler(params, self.n_iter_combo,
-                                          random_state=self.random_state)
+        param_iter = ParameterGrid(params)
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             backend='threading')
@@ -280,7 +274,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
-        n_splits = int(len(out)/len(param_iter))
+        n_splits = int(len(out) / len(param_iter))
 
         grid_scores = []
         i = 0
@@ -589,19 +583,17 @@ class GradientBoostingRegressorCV(BaseEstimator):
     _estimator_class = GradientBoostingRegressor
 
     def __init__(self, n_stop_rounds=10, score_precision=2,
-                 max_iterations=10000, cv=3, n_iter_combo=None, scoring=None,
-                 refit=True, n_jobs=1, pre_dispatch='2*n_jobs', verbose=0,
-                 loss='ls', learning_rate=0.1, subsample=1.0,
-                 min_samples_split=2, min_samples_leaf=1,
-                 min_weight_fraction_leaf=0., max_depth=3, init=None,
-                 random_state=None, max_features=None, max_leaf_nodes=None,
-                 presort='auto'):
+                 max_iterations=10000, cv=3, scoring=None, refit=True,
+                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='ls',
+                 learning_rate=0.1, subsample=1.0, min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
+                 init=None, random_state=None, max_features=None,
+                 max_leaf_nodes=None, presort='auto'):
 
         self.n_stop_rounds = n_stop_rounds
         self.score_precision = score_precision
         self.max_iterations = max_iterations
         self.cv = cv
-        self.n_iter_combo = n_iter_combo
         self.scoring = scoring
         self.refit = refit
         self.n_jobs = n_jobs
@@ -637,11 +629,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
         X, y = check_X_y(X, y, dtype=DTYPE)
 
         cv = check_cv(self.cv, y)
-        if self.n_iter_combo is None:
-            param_iter = ParameterGrid(params)
-        else:
-            param_iter = ParameterSampler(params, self.n_iter_combo,
-                                          random_state=self.random_state)
+        param_iter = ParameterGrid(params)
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             backend='threading')
@@ -653,7 +641,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
-        n_splits = int(len(out)/len(param_iter))
+        n_splits = int(len(out) / len(param_iter))
 
         grid_scores = []
         i = 0
