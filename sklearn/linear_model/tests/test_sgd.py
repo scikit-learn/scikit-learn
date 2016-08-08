@@ -21,7 +21,9 @@ from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.grid_search import GridSearchCV
+
 from sklearn.linear_model import sgd_fast
+
 from sklearn.exceptions import NotFittedError as _NotFittedError
 
 
@@ -845,6 +847,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                              "using this method.".format(type(clf).__name__),
                              clf.predict_proba, X)
     
+
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
