@@ -1,3 +1,5 @@
+# License: BSD 3 clause
+
 import numpy as np
 
 from sklearn import datasets
@@ -13,7 +15,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_equal
-
 
 rng = np.random.RandomState(0)
 

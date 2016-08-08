@@ -3,6 +3,11 @@ This module contains Gradient Boosting Classifier and Regressor with
 Cross Validation.
 """
 
+# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
+#          Raghav RV <rvraghav93@gmail.com>
+# License: BSD 3 clause
+
 import warnings
 import numpy as np
 
@@ -20,7 +25,6 @@ from ..model_selection import ParameterSampler
 from ..model_selection._search import _CVScoreTuple
 
 from ..externals.joblib import Parallel, delayed
-
 
 __all__ = ["GradientBoostingClassifierCV", "GradientBoostingRegressorCV"]
 
