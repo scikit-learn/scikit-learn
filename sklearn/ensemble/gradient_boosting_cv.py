@@ -86,23 +86,6 @@ class GradientBoostingClassifierCV(BaseEstimator):
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
@@ -288,7 +271,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
                                           random_state=self.random_state)
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                            pre_dispatch=self.pre_dispatch)
+                            backend='threading')
 
         out = parallel(delayed(_fit_single_param)
                        (self._estimator_class, X, y, train, validation, params,
@@ -476,23 +459,6 @@ class GradientBoostingRegressorCV(BaseEstimator):
     n_jobs : int, default=1
         Number of jobs to run in parallel.
 
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
@@ -678,7 +644,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
                                           random_state=self.random_state)
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                            pre_dispatch=self.pre_dispatch)
+                            backend='threading')
 
         out = parallel(delayed(_fit_single_param)
                        (self._estimator_class, X, y, train, validation, params,
