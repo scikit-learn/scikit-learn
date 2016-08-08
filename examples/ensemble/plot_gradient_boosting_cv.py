@@ -3,22 +3,39 @@
 Early stopping of Gradient Boosting
 ===================================
 
-Gradient boosting works by fitting a regression tree at each iteration to
-improve its prediction over the training data. The improvement in prediction
-succesively reduces as more regression trees are added. The
-:class:`sklearn.ensemble.GradientBoostingClassifierCV` class halts the
-training when there is no significant improvement in accuracy on the validation
-data during the last few iterations. This example illustrates how the
-:class:`sklearn.ensemble.GradientBoostingClassifierCV` class can acheive almost
-the same accuracy as compared to the
-:class:`sklearn.ensemble.GradientBoostingClassifier` class with significantly
-lesser number of estimators. This can save memory and prediction time.
-Moreover, the class can be used as a drop-in replacement for the
-:class:`sklearn.ensemble.GradientBoostingClassifier` class.
+Gradient boosting is an ensembling technique where several weak learners
+(regression trees) are combined to yield a powerful single model, in an
+iterative fashion.
 
+Early stopping support in Gradient Boosting enables us to find the least number
+of iterations which is sufficient enough to build a model that generalizes well
+on unseen data.
+
+The concept of early stopping is simple. We split the dataset into multiple
+cross-validation splits. Each cross-validation iteration (or split) consists of
+two sets - The training set and the validation set.
+
+For each such split, the gradient boosting model is trained using the training
+set and evaluated using the validation set. When each additional stage (of
+regression tree) is added, the validation set is used to score the model.
+This is continued until the scores of the model in the last `n_iter_unchaged`
+stages do not show any improvement. After that the model is considered
+to have converged and further addition of stages is "stopped early".
+
+The number of stages, `n_estimator`, of the final model is the rounded mean of
+the number of stages (until convergence) of all the models trained on the
+individual cross-validation splits.
+
+This example illustrates how the
+:class:`sklearn.ensemble.GradientBoostingClassifierCV` class can be used to
+train a model which can acheive almost the same accuracy as compared to the
+:class:`sklearn.ensemble.GradientBoostingClassifier` but with significantly
+lesser number of estimators. This can save memory and prediction time.
 """
 
-print(__doc__)
+# Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
+#          Raghav RV <rvraghav93@gmail.com>
+# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,6 +43,8 @@ import matplotlib.pyplot as plt
 from sklearn import ensemble
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+
+print(__doc__)
 
 data_list = [datasets.load_iris(), datasets.load_digits()]
 data_list = [(d.data, d.target) for d in data_list]
