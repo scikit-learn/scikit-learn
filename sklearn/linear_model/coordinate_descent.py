@@ -762,9 +762,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
         check_is_fitted(self, 'n_iter_')
         if sparse.isspmatrix(X):
-            return np.ravel(safe_sparse_dot(self.coef_, X.T,
-                                            dense_output=True) +
-                            self.intercept_)
+            return safe_sparse_dot(self.coef_, X.T, dense_output=True).T + self.intercept_
         else:
             return super(ElasticNet, self)._decision_function(X)
 
