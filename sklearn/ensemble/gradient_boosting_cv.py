@@ -30,17 +30,21 @@ __all__ = ["GradientBoostingClassifierCV", "GradientBoostingRegressorCV"]
 
 
 class GradientBoostingClassifierCV(BaseEstimator):
-    """ Gradient Boosting Classification with Cross Validation
+    """Gradient Boosting Classifier with Cross Validation
 
-    This class keeps adding estimators to the underlying GB estimator till
-    adding a new estimators does not improve the score by much. The goal of
-    this class is to determine the best choice of ``n_estimators`` for each set
-    of parameters. In most cases, this will be much faster than using
+    This class implements GradientBoostingClassifier with an additional support
+    to select the best hyper-parameter values from the list of given values.
+
+    For each parameter setting, the best number of stages (``n_estimators``) is
+    found by iterating until the last ``n_iter_no_change`` stages show no
+    improvement on the previous scores when evaluated on the validation set.
+
+    This approach will be significantly faster compared to
     :class:`sklearn.model_selection.GridSearchCV` due to early stopping.
     All parameters which are not parsed by this class are passed directly to
-    the underlying Gradient Boosting estimator. If one or more parameters is a
-    list, the Gradient Boosting model is evaluated for all elements of the
-    list.
+    the underlying Gradient Boosting estimator.
+
+    Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------
@@ -94,20 +98,20 @@ class GradientBoostingClassifierCV(BaseEstimator):
         Controls the verbosity: the higher, the more messages.
 
     loss : string, list of strings, optional (default='deviance')
-        loss function to be optimized. 'deviance' refers to
+        Loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
         boosting recovers the AdaBoost algorithm. If a list is given, all
         loss functions are evaluated to choose the best one.
 
     learning_rate : float, list of floats, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by
+        Learning rate shrinks the contribution of each tree by
         ``learning_rate``.
         There is a trade-off between ``learning_rate`` and ``n_estimators``.
         If a list is given, all learning rates will be evaluated.
 
     max_depth : integer, list of integers, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
+        Maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -397,17 +401,21 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
 
 class GradientBoostingRegressorCV(BaseEstimator):
-    """ Gradient Boosting Regression with Cross Validation
+    """Gradient Boosting Regressor with Cross Validation
 
-    This class keeps adding estimators to the underlying GB estimator till
-    adding a new estimators does not improve the score by much. The goal of
-    this class is to determine the best choice of ``n_estimators`` for each set
-    of parameters. In most cases, this will be much faster than using
+    This class implements GradientBoostingRegressor with an additional support
+    to select the best hyper-parameter values from the list of given values.
+
+    For each parameter setting, the best number of stages (``n_estimators``) is
+    found by iterating until the last ``n_iter_no_change`` stages show no
+    improvement on the previous scores when evaluated on the validation set.
+
+    This approach will be significantly faster compared to
     :class:`sklearn.model_selection.GridSearchCV` due to early stopping.
     All parameters which are not parsed by this class are passed directly to
-    the underlying Gradient Boosting estimator. If one or more parameters is a
-    list, the Gradient Boosting model is evaluated for all elements of the
-    list.
+    the underlying Gradient Boosting estimator.
+
+    Read more in the :ref:`User Guide <gradient_boosting>`.
 
     Parameters
     ----------
