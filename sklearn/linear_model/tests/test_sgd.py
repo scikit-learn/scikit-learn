@@ -20,8 +20,9 @@ from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-
+from sklearn.grid_search import GridSearchCV
 from sklearn.linear_model import sgd_fast
+from sklearn.exceptions import NotFittedError as _NotFittedError
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -823,7 +824,27 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
         clf.fit(X[:, :-1], y)
 
-
+    def test_loss_param_grid_search(self):
+        # Make sure the predict_proba works when loss is specified
+        # as one of the parameters in the param_grid
+        param_grid = {
+            'loss': ['log'],
+        }
+        clf_grid = GridSearchCV(estimator=self.factory(random_state=42),
+                                param_grid=param_grid)
+        clf_grid.fit(X, Y)
+        clf_grid.predict_proba(X)
+        clf_grid.predict_log_proba(X)
+        
+    def test_not_fitted_error(self):
+        # Make sure raise not fitted error and not the loss='hinge' error
+        clf = self.factory()
+        assert_raises_regexp(_NotFittedError,
+                             "This {} instance is not fitted yet. "
+                             "Call 'fit' with appropriate arguments before "
+                             "using this method.".format(type(clf).__name__),
+                             clf.predict_proba, X)
+    
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
