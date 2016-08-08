@@ -192,7 +192,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 
-        max_log_likelihood = -np.infty
+        max_lower_bound = -np.infty
         self.converged_ = False
 
         n_samples, _ = X.shape
@@ -204,14 +204,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 self.lower_bound_ = np.infty
 
             for n_iter in range(self.max_iter):
-                prev_log_likelihood = self.lower_bound_
+                prev_lower_bound = self.lower_bound_
 
                 log_prob_norm, log_resp = self._e_step(X)
                 self._m_step(X, log_resp)
                 self.lower_bound_ = self._compute_lower_bound(
                     log_resp, log_prob_norm)
 
-                change = self.lower_bound_ - prev_log_likelihood
+                change = self.lower_bound_ - prev_lower_bound
                 self._print_verbose_msg_iter_end(n_iter, change)
 
                 if abs(change) < self.tol:
@@ -220,8 +220,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
             self._print_verbose_msg_init_end(self.lower_bound_)
 
-            if self.lower_bound_ > max_log_likelihood:
-                max_log_likelihood = self.lower_bound_
+            if self.lower_bound_ > max_lower_bound:
+                max_lower_bound = self.lower_bound_
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 

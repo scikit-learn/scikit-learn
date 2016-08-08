@@ -899,7 +899,8 @@ def test_property():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         gmm = GaussianMixture(n_components=n_components,
-                              covariance_type=covar_type, random_state=rng)
+                              covariance_type=covar_type, random_state=rng,
+                              n_init=5)
         gmm.fit(X)
         print(covar_type)
         if covar_type == 'full':

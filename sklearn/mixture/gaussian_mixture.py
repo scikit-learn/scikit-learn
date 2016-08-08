@@ -466,7 +466,7 @@ class GaussianMixture(BaseMixture):
         The number of EM iterations to perform.
 
     n_init : int, defaults to 1.
-        The number of initializations to perform. The best results is kept.
+        The number of initializations to perform. The best results are kept.
 
     init_params : {'kmeans', 'random'}, defaults to 'kmeans'.
         The method used to initialize the weights, the means and the
@@ -658,10 +658,12 @@ class GaussianMixture(BaseMixture):
         check_is_fitted(self, ['weights_', 'means_', 'precisions_cholesky_'])
 
     def _get_parameters(self):
-        return self.weights_, self.means_, self.precisions_cholesky_
+        return (self.weights_, self.means_, self.covariances_,
+                self.precisions_cholesky_)
 
     def _set_parameters(self, params):
-        self.weights_, self.means_, self.precisions_cholesky_ = params
+        (self.weights_, self.means_, self.covariances_,
+         self.precisions_cholesky_) = params
 
         # Attributes computation
         _, n_features = self.means_.shape
