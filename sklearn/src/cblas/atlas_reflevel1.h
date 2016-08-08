@@ -251,6 +251,15 @@ void       ATL_crefrotg
    float *
 );
 
+void ATL_srefcopy
+(
+   const int                  N,
+   const float                * X,
+   const int                  INCX,
+   float                      * Y,
+   const int                  INCY
+);
+
 float      ATL_screfnrm2
 (
    const int,
@@ -328,6 +337,15 @@ void       ATL_crefdotu_sub
    const float *,          const int,
    const float *,          const int,
    float *
+);
+
+void ATL_drefcopy
+(
+   const int                  N,
+   const double               * X,
+   const int                  INCX,
+   double                     * Y,
+   const int                  INCY
 );
 
 void       ATL_zrefrotg

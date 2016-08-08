@@ -34,6 +34,7 @@
    #include "atlas_ptalias1.h"
 #endif
 #include "atlas_level1.h"
+#include "atlas_reflevel1.h"
 #include "cblas.h"
 
 void cblas_dcopy(const int N, const double *X, const int incX,

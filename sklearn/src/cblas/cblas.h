@@ -591,6 +591,7 @@ void cblas_zher2k(const enum CBLAS_ORDER Order, const enum CBLAS_UPLO Uplo,
                   void *C, const int ldc);
 
 int cblas_errprn(int ierr, int info, char *form, ...);
+void cblas_xerbla(int p, char *rout, char *form, ...);
 
 #endif  /* end #ifdef CBLAS_ENUM_ONLY */
 #endif

@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 void cblas_xerbla(int p, char *rout, char *form, ...)
 {
    va_list argptr;
