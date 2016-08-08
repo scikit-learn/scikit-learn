@@ -270,7 +270,6 @@ def test_same_output_sparse_dense_lasso_and_enet_cv():
 
 
 def test_same_multiple_output_sparse_dense():
-    X, y = make_sparse_data(n_samples=40, n_features=10)
     for normalize in [True, False]:
         l = ElasticNet(normalize=normalize)
         X = [[0, 1, 2, 3, 4],
