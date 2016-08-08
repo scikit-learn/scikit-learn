@@ -830,7 +830,6 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
     params['warm_start'] = True
     gb = estimator(**params)
 
-    print gb.warm_start
     scorer = check_scoring(estimator, scoring=scoring)
     scores = []
     rounded_scores = []
