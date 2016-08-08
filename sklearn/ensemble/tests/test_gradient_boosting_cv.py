@@ -55,7 +55,7 @@ def test_single_param():
     X_train, X_test, y_train, y_test = train_test_split(X_clf, y_clf,
                                                         random_state=42)
     gbccv = GradientBoostingClassifierCV(max_iterations=1000,
-                                         n_stop_rounds=10,
+                                         n_iter_no_change=10,
                                          learning_rate=0.1,
                                          max_depth=3,
                                          score_precision=4,
@@ -68,7 +68,7 @@ def test_single_param():
     X_train, X_test, y_train, y_test = train_test_split(X_reg, y_reg,
                                                         random_state=42)
     gbrcv = GradientBoostingRegressorCV(max_iterations=1000,
-                                        n_stop_rounds=10,
+                                        n_iter_no_change=10,
                                         learning_rate=0.1,
                                         max_depth=3,
                                         score_precision=4,

@@ -21,7 +21,6 @@ from ..tree._tree import DTYPE
 
 from ..model_selection import check_cv
 from ..model_selection import ParameterGrid
-from ..model_selection import ParameterSampler
 from ..model_selection._search import _CVScoreTuple
 
 from ..externals.joblib import Parallel, delayed
@@ -48,10 +47,10 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
     Parameters
     ----------
-    n_stop_rounds : int, optional, default=10
+    n_iter_no_change : int, optional, default=10
         If the score on the test set rounded off to ``score_precision`` decimal
-        places does not change for ``n_stop_rounds`` iterations, the gradient
-        boosting is halted.
+        places does not change for ``n_iter_no_change`` iterations,
+        the gradient boosting is halted.
 
         Set this value to -1 to disable early stopping.
 
@@ -223,7 +222,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
     _estimator_class = GradientBoostingClassifier
 
-    def __init__(self, n_stop_rounds=10, score_precision=2,
+    def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
                  n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='deviance',
                  learning_rate=0.1, subsample=1.0, min_samples_split=2,
@@ -231,7 +230,7 @@ class GradientBoostingClassifierCV(BaseEstimator):
                  init=None, random_state=None, max_features=None,
                  max_leaf_nodes=None, presort='auto'):
 
-        self.n_stop_rounds = n_stop_rounds
+        self.n_iter_no_change = n_iter_no_change
         self.score_precision = score_precision
         self.max_iterations = max_iterations
         self.cv = cv
@@ -277,8 +276,8 @@ class GradientBoostingClassifierCV(BaseEstimator):
 
         out = parallel(delayed(_fit_single_param)
                        (self._estimator_class, X, y, train, validation, params,
-                        self.n_stop_rounds, self.max_iterations, self.scoring,
-                        self.score_precision, self.random_state)
+                        self.n_iter_no_change, self.max_iterations,
+                        self.scoring, self.score_precision, self.random_state)
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
@@ -419,10 +418,10 @@ class GradientBoostingRegressorCV(BaseEstimator):
 
     Parameters
     ----------
-    n_stop_rounds : int, optional, default=10
+    n_iter_no_change : int, optional, default=10
         If the score on the test set rounded off to ``score_precision`` decimal
-        places does not change for ``n_stop_rounds`` iterations, the gradient
-        boosting is halted.
+        places does not change for ``n_iter_no_change`` iterations,
+        the gradient boosting is halted.
 
         Set this value to -1 to disable early stopping.
 
@@ -594,7 +593,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
 
     _estimator_class = GradientBoostingRegressor
 
-    def __init__(self, n_stop_rounds=10, score_precision=2,
+    def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
                  n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='ls',
                  learning_rate=0.1, subsample=1.0, min_samples_split=2,
@@ -602,7 +601,7 @@ class GradientBoostingRegressorCV(BaseEstimator):
                  init=None, random_state=None, max_features=None,
                  max_leaf_nodes=None, presort='auto'):
 
-        self.n_stop_rounds = n_stop_rounds
+        self.n_iter_no_change = n_iter_no_change
         self.score_precision = score_precision
         self.max_iterations = max_iterations
         self.cv = cv
@@ -648,8 +647,8 @@ class GradientBoostingRegressorCV(BaseEstimator):
 
         out = parallel(delayed(_fit_single_param)
                        (self._estimator_class, X, y, train, validation, params,
-                        self.n_stop_rounds, self.max_iterations, self.scoring,
-                        self.score_precision, self.random_state)
+                        self.n_iter_no_change, self.max_iterations,
+                        self.scoring, self.score_precision, self.random_state)
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
