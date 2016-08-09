@@ -72,14 +72,9 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         self._validate_params()
 
-        self.coef_ = None
-
         if self.average > 0:
             self.standard_coef_ = None
             self.average_coef_ = None
-        # iteration count for learning rate schedule
-        # must not be int (e.g. if ``learning_rate=='optimal'``)
-        self.t_ = None
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
@@ -499,6 +494,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
+            
         if self.class_weight in ['balanced', 'auto']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -541,11 +541,55 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None        
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
 
+
+class _CheckProba(object):
+    """Perform predict_proba validation for SGDClassifier.
+
+    The following is checked when calling predict_proba or predict_log_proba:
+    
+    - If already fitted and loss is not "log" or "modified_huber" raise
+      AttributeError
+    - If not fitted raise _NotFittedError regardless of loss
+    
+    The following is checked when getting predict_proba or predict_log_proba
+    as attribute:
+    
+    - If already fitted and loss is not "log" or "modified_huber" raise
+      AttributeError
+    - If not fitted do not raise any error    
+      
+    """
+    def __init__(self, fn, not_fitted_error=None):
+        self.fn = fn
+        self.not_fitted_error = not_fitted_error
+    
+    def __call__(self, *args, **kw):
+        if self.not_fitted_error:
+            raise self.not_fitted_error
+        return self.fn(*args, **kw)
+        
+    def __get__(self, obj, type=None):
+        try:
+            check_is_fitted(obj, ["t_", "coef_", "intercept_"],
+                            all_or_any=all)
+            expt = None
+        except _NotFittedError as e:
+            expt = e
+        
+        if not expt and obj.loss not in ("log", "modified_huber"):
+            raise AttributeError("probability estimates are not available for"
+                                 " loss=%r" % obj.loss)
+        return self.__class__(self.fn.__get__(obj, type), expt)
+        
 
 class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """Linear classifiers (SVM, logistic regression, a.o.) with SGD training.
@@ -715,20 +759,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
             average=average)
 
-    def _check_proba(self):
-        try:
-            check_is_fitted(self, ["t_", "coef_", "intercept_"],
-                            all_or_any=all)
-            is_fitted = True
-        except _NotFittedError:
-            is_fitted = False            
-        
-        if is_fitted and self.loss not in ("log", "modified_huber"):
-            raise AttributeError("probability estimates are not available for"
-                                 " loss=%r" % self.loss)
-
-    @property
-    def predict_proba(self):
+    @_CheckProba
+    def predict_proba(self, X):
         """Probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -760,11 +792,6 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        self._check_proba()
-        return self._predict_proba
-
-    def _predict_proba(self, X):
-        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -805,8 +832,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                                       " loss='log' or loss='modified_huber' "
                                       "(%r given)" % self.loss)
 
-    @property
-    def predict_log_proba(self):
+    @_CheckProba
+    def predict_log_proba(self, X):
         """Log of probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -827,10 +854,6 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        self._check_proba()
-        return self._predict_log_proba
-
-    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
 
@@ -913,6 +936,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
@@ -968,6 +995,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
