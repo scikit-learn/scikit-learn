@@ -66,12 +66,6 @@ The following people have been core contributors to scikit-learn's development a
   * Ron Weiss
 
 Please do not email the authors directly with bug reports or feature requests.
-To address those concerns, please make use of the
-`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_
-or the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
-If you are not sure whether you have a found a bug,
-or if you have a more general question about
-machine learning, please consult `Stack Overflow <http://stackoverflow.com>`_
-or `Cross Validated <http://stats.stackexchange.com>`_ before contacting the mailing
-list. Those sites may already have an answer to your question. They provide
-convenient search, and access to a community of users that may not be on the mailing list.
+Instead, please see `What's the best way to ask questions about scikit-learn
+<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-ask-questions-about-scikit-learn>`_
+in the FAQ.
