@@ -501,7 +501,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         Returns
         -------
         self : returns an instance of self.
-        """            
+        """
         if self.class_weight in ['balanced', 'auto']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -554,28 +554,28 @@ class _CheckProba(object):
     """Perform predict_proba validation for SGDClassifier.
 
     The following is checked when calling predict_proba or predict_log_proba:
-    
+
     - If already fitted and loss is not "log" or "modified_huber" raise
       AttributeError
     - If not fitted raise _NotFittedError regardless of loss
-    
+
     The following is checked when getting predict_proba or predict_log_proba
     as attribute:
-    
+
     - If already fitted and loss is not "log" or "modified_huber" raise
       AttributeError
-    - If not fitted do not raise any error    
-      
+    - If not fitted do not raise any error
+
     """
     def __init__(self, fn, not_fitted_error=None):
         self.fn = fn
         self.not_fitted_error = not_fitted_error
-    
+
     def __call__(self, *args, **kw):
         if self.not_fitted_error:
             raise self.not_fitted_error
         return self.fn(*args, **kw)
-        
+
     def __get__(self, obj, type=None):
         try:
             check_is_fitted(obj, ["t_", "coef_", "intercept_"],
@@ -583,12 +583,12 @@ class _CheckProba(object):
             expt = None
         except _NotFittedError as e:
             expt = e
-        
+
         if not expt and obj.loss not in ("log", "modified_huber"):
             raise AttributeError("probability estimates are not available for"
                                  " loss=%r" % obj.loss)
         return self.__class__(self.fn.__get__(obj, type), expt)
-        
+
 
 class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """Linear classifiers (SVM, logistic regression, a.o.) with SGD training.
@@ -791,6 +791,33 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
+        return self._predict_proba(X)
+
+    @_CheckProba
+    def predict_log_proba(self, X):
+        """Log of probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
+
+        When loss="modified_huber", probability estimates may be hard zeros
+        and ones, so taking the logarithm is not possible.
+
+        See ``predict_proba`` for details.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        T : array-like, shape (n_samples, n_classes)
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in
+            `self.classes_`.
+        """
+        return np.log(self._predict_proba(X))
+
+    def _predict_proba(self, X):
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -830,30 +857,6 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
                                       "(%r given)" % self.loss)
-
-    @_CheckProba
-    def predict_log_proba(self, X):
-        """Log of probability estimates.
-
-        This method is only available for log loss and modified Huber loss.
-
-        When loss="modified_huber", probability estimates may be hard zeros
-        and ones, so taking the logarithm is not possible.
-
-        See ``predict_proba`` for details.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-
-        Returns
-        -------
-        T : array-like, shape (n_samples, n_classes)
-            Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in
-            `self.classes_`.
-        """
-        return np.log(self.predict_proba(X))
 
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
