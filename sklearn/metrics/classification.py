@@ -1633,7 +1633,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     Y = check_array(Y)
     if T.shape[1] != Y.shape[1]:
         raise ValueError("y_true and y_pred have different number of classes "
-                         "%d, %d" % (T.shape[1], Y.shape[1]))
+                         "%d, %d.\nPlease provide the true labels explicitly "
+                         "through the labels argument" %
+                         (T.shape[1], Y.shape[1]))
 
     # Renormalize
     Y /= Y.sum(axis=1)[:, np.newaxis]
