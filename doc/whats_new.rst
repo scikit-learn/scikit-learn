@@ -241,11 +241,11 @@ Enhancements
      :func:`load_boston` dataset
      `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
      `Manvendra Singh`_.
-=======
-   - Added `labels` flag to :class:`metrics.log_loss` to correct metrics when only one class is present
-     By `Hong Guangguo`_ with support of `Mads Jensen`_.
 
->>>>>>> fixes as per existing pull request #6714
+   - Added `labels` flag to :class:`metrics.log_loss` to correct metric`s when
+     only one class is present in test data set
+     `#7166 <https://github.com/scikit-learn/scikit-learn/pull/7166/>`_ 
+     by `Hong Guangguo`_ with support of `Mads Jensen`_.
 
 Bug fixes
 .........
