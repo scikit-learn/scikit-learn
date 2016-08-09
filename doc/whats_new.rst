@@ -217,7 +217,6 @@ Enhancements
    - The :func: `ignore_warnings` now accept a category argument to ignore only
      the warnings of a specified type. By `Thierry Guillemot`_.
 
-<<<<<<< 36d17657a0c77a3ecaab711422099ac3a360954f
    - The new ``results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
      into pandas as a ``DataFrame``. Ref :ref:`model_selection_changes` for
@@ -243,8 +242,8 @@ Enhancements
      `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
      `Manvendra Singh`_.
 =======
-   - Added Labels flag to `metrics.log_loss` to correct metrics when only one class is present
-     By `Hong Guangguo with support of Mads Jensen`_.
+   - Added `labels` flag to :class:`metrics.log_loss` to correct metrics when only one class is present
+     By `Hong Guangguo`_ with support of `Mads Jensen`_.
 
 >>>>>>> fixes as per existing pull request #6714
 
@@ -4333,3 +4332,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Manvendra Singh: https://github.com/manu-chroma
 
 .. _Ibraim Ganiev: https://github.com/olologin
+
+.. _Hong Guangguo: https://github.com/hongguangguo
+
+.. _Mads Jensen: https://github.com/indianajensen
