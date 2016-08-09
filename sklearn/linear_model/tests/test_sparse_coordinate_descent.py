@@ -289,11 +289,7 @@ def test_same_multiple_output_sparse_dense():
                               [0, 2, 5, 8, 11],
                               [9, 10, 11, 12, 13],
                               [10, 11, 12, 13, 14]])
-        y_sp = [[1, 2, 3, 4, 5],
-                [1, 3, 6, 9, 12],
-                [10, 11, 12, 13, 14],
-                [11, 12, 13, 14, 15]]
-        ignore_warnings(l_sp.fit)(X_sp, y_sp)
+        ignore_warnings(l_sp.fit)(X_sp, y)
         sample_sparse = sp.coo_matrix(sample)
         predict_sparse = l_sp.predict(sample_sparse)
 
