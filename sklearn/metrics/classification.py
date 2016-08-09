@@ -240,6 +240,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
+        if np.all([l not in y_true for l in labels]):
+            raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int)
@@ -271,7 +273,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 def cohen_kappa_score(y1, y2, labels=None, weights=None):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
-    This function computes Cohen's kappa [1], a score that expresses the level
+    This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
     defined as
 
@@ -282,7 +284,9 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     assigned to any sample (the observed agreement ratio), and :math:`p_e` is
     the expected agreement when both annotators assign labels randomly.
     :math:`p_e` is estimated using a per-annotator empirical prior over the
-    class labels [2].
+    class labels [2]_.
+
+    Read more in the :ref:`User Guide <cohen_kappa>`.
 
     Parameters
     ----------
@@ -313,8 +317,11 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None):
     .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
            Educational and Psychological Measurement 20(1):37-46.
            doi:10.1177/001316446002000104.
-    .. [2] R. Artstein and M. Poesio (2008). "Inter-coder agreement for
-           computational linguistics". Computational Linguistic 34(4):555-596.
+    .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
+           computational linguistics". Computational Linguistics 34(4):555-596.
+           <http://www.mitpressjournals.org/doi/abs/10.1162/coli.07-034-R2#.V0J1MJMrIWo>`_
+    .. [3] `Wikipedia entry for the Cohen's kappa.
+            <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
     confusion = confusion_matrix(y1, y2, labels=labels)
     n_classes = confusion.shape[0]
@@ -1536,8 +1543,8 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
-             sample_weight=None):
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
+             labels=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1559,10 +1566,6 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
-
-    labels : array-like, optional (default=None)
-        If not provided, labels will be inferred from y_true
-
     eps : float
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
@@ -1573,6 +1576,11 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    .. versionadded:: 0.18
+    labels : array-like, optional (default=None) 
+        If not provided, labels will be inferred from y_true
+        
 
     Returns
     -------
@@ -1596,8 +1604,8 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
     lb = LabelBinarizer()
     lb.fit(labels) if labels is not None else lb.fit(y_true)
     if labels is None and len(lb.classes_) == 1:
-        raise ValueError('y_true has only one label,'
-        'maybe get error log loss, should use labels option')
+        raise ValueError('y_true has only one label. Please provide '
+        'the true labels explicitly through the labels argument.')
 
     T = lb.transform(y_true)
 
@@ -1766,7 +1774,7 @@ def _check_binary_probabilistic_predictions(y_true, y_prob):
 
     labels = np.unique(y_true)
 
-    if len(labels) != 2:
+    if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
                          "Provided labels %s." % labels)
 
@@ -1842,7 +1850,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     References
     ----------
-    https://en.wikipedia.org/wiki/Brier_score
+    .. [1] `Wikipedia entry for the Brier score.
+            <https://en.wikipedia.org/wiki/Brier_score>`_
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

@@ -137,6 +137,10 @@ Enhancements
    - The :func: `ignore_warnings` now accept a category argument to ignore only
      the warnings of a specified type. By `Thierry Guillemot`_.
 
+   - Added Labels flag to `metrics.log_loss` to correct metrics when only one class is present
+     By `Hong Guangguo with support of Mads Jensen`_.
+
+
 Bug fixes
 .........
 

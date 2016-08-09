@@ -468,7 +468,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
     # compute scores with default labels introspection
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  pos_label=None,
-                                                 average='weighted')
+                                                 average='macro')
 
 
 def test_zero_precision_recall():
@@ -481,10 +481,10 @@ def test_zero_precision_recall():
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
         assert_almost_equal(precision_score(y_true, y_pred,
-                                            average='weighted'), 0.0, 2)
-        assert_almost_equal(recall_score(y_true, y_pred, average='weighted'),
+                                            average='macro'), 0.0, 2)
+        assert_almost_equal(recall_score(y_true, y_pred, average='macro'),
                             0.0, 2)
-        assert_almost_equal(f1_score(y_true, y_pred, average='weighted'),
+        assert_almost_equal(f1_score(y_true, y_pred, average='macro'),
                             0.0, 2)
 
     finally:
@@ -549,6 +549,16 @@ def test_confusion_matrix_multiclass_subset_labels():
     cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
     assert_array_equal(cm, [[18, 2],
                             [24, 3]])
+
+    # a label not in y_true should result in zeros for that row/column
+    extra_label = np.max(y_true) + 1
+    cm = confusion_matrix(y_true, y_pred, labels=[2, extra_label])
+    assert_array_equal(cm, [[18, 0],
+                            [0, 0]])
+
+    # check for exception when none of the specified labels are in y_true
+    assert_raises(ValueError, confusion_matrix, y_true, y_pred,
+                  labels=[extra_label, extra_label + 1])
 
 
 def test_classification_report_multiclass():
@@ -1373,32 +1383,28 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
 
-    #test labels option
+    # test labels option
 
-    X = [[1,1], [1,1], [2,2], [2,2]]
-    y_label = [1,1,2,2]
+    y_true = [2, 2]
+    y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
 
-    X_test = [[2,2], [2,2]]
-    y_true = [2,2]
-    y_score = np.array([[0.1,0.9], [0.1, 0.9]])
-    
-    # because y_true label are the same, if not use labels option, will get error
-    #error_logloss = log_loss(y_true, y_score)
-    #label_not_of_2_loss = -np.mean(np.log(y_score[:,0]))
-    #assert_almost_equal(error_logloss, label_not_of_2_loss)
-    #assert_raises(log_loss(y_true, y_score))
+    # because y_true label are the same, there should be an error if the
+    # labels option has not been used
 
-    error_str  = ('y_true has only one label,'
-        'maybe get error log loss, should use labels option')
+    # error_logloss = log_loss(y_true, y_score)
+    # label_not_of_2_loss = -np.mean(np.log(y_score[:,0]))
+    # assert_almost_equal(error_logloss, label_not_of_2_loss)
+    # assert_raises(log_loss(y_true, y_score))
+
+    error_str = ('y_true has only one label. Please provide '
+                 'the true labels explicitly through the labels argument.')
 
     assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
 
-    # use labels, it works
-    ture_log_loss = -np.mean(np.log(y_score[:, 1]))
+    # when the labels argument is used, it works
+    true_log_loss = -np.mean(np.log(y_score[:, 1]))
     calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
-    assert_almost_equal(calculated_log_loss, ture_log_loss)
-
-    
+    assert_almost_equal(calculated_log_loss, true_log_loss)
 
 
 def test_log_loss_pandas_input():
@@ -1433,3 +1439,6 @@ def test_brier_score_loss():
     assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
     assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
+    # calculate even if only single class in y_true (#6980)
+    assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
+    assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
