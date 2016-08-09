@@ -338,6 +338,10 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
@@ -380,6 +384,10 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -493,12 +501,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         Returns
         -------
         self : returns an instance of self.
-        """
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
-            
+        """            
         if self.class_weight in ['balanced', 'auto']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -541,10 +544,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None        
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
@@ -888,6 +887,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
                      coef_init, intercept_init):
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         y = astype(y, np.float64, copy=False)
 
@@ -936,10 +939,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
@@ -948,6 +947,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
+        if not hasattr(self, 'coef_'):
+            self.coef_ = None
+        if not hasattr(self, 't_'):
+            self.t_ = None
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -995,10 +998,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
