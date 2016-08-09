@@ -1543,8 +1543,8 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
-             sample_weight=None):
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
+             labels=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1566,10 +1566,6 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
-
-    labels : array-like, optional (default=None)
-        If not provided, labels will be inferred from y_true
-
     eps : float
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
@@ -1580,6 +1576,11 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    .. versionadded:: 0.18
+    labels : array-like, optional (default=None) 
+        If not provided, labels will be inferred from y_true
+        
 
     Returns
     -------
@@ -1603,8 +1604,8 @@ def log_loss(y_true, y_pred, labels=None, eps=1e-15, normalize=True,
     lb = LabelBinarizer()
     lb.fit(labels) if labels is not None else lb.fit(y_true)
     if labels is None and len(lb.classes_) == 1:
-        raise ValueError('y_true has only one label,'
-        'maybe get error log loss, should use labels option')
+        raise ValueError('y_true has only one label. Please provide '
+        'the true labels explicitly through the labels argument.')
 
     T = lb.transform(y_true)
 
