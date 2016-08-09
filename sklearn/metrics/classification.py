@@ -1581,7 +1581,6 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         If not provided, labels will be inferred from y_true
         .. versionadded:: 0.18
         
-
     Returns
     -------
     loss : float
