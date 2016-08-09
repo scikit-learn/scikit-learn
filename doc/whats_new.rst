@@ -270,6 +270,11 @@ Enhancements
      (`#6913 <https://github.com/scikit-learn/scikit-learn/pull/6913>`_)
      By `YenChen Lin`_.
 
+   - Added `labels` flag to :class:`metrics.log_loss` to correct metric`s when
+     only one class is present in test data set
+     `#7166 <https://github.com/scikit-learn/scikit-learn/pull/7166/>`_ 
+     by `Hong Guangguo`_ with support of `Mads Jensen`_.
+
 Bug fixes
 .........
 
@@ -4376,3 +4381,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Konstantin Podshumok: https://github.com/podshumok
 
 .. _David Staub: https://github.com/staubda
+
+.. _Hong Guangguo: https://github.com/hongguangguo
+
+.. _Mads Jensen: https://github.com/indianajensen
