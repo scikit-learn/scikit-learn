@@ -107,13 +107,9 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef np.ndarray[ndim=1, dtype=DTYPE_t] X_data_ndarray = X.data
-    cdef np.ndarray[ndim=1, dtype=INT32_t] X_indices_ndarray  = X.indices
-    cdef np.ndarray[ndim=1, dtype=INT32_t] X_indptr_ndarray  = X.indptr
-
-    cdef DTYPE_t* X_data = <DTYPE_t*>X_data_ndarray.data
-    cdef INT32_t* X_indices = <INT32_t*>X_indices_ndarray.data
-    cdef INT32_t* X_indptr = <INT32_t*>X_indptr_ndarray.data
+    cdef DTYPE_t* X_data = <DTYPE_t*>(<np.ndarray> X.data).data
+    cdef INT32_t* X_indices = <INT32_t*>(<np.ndarray> X.indices).data
+    cdef INT32_t* X_indptr = <INT32_t*>(<np.ndarray> X.indptr).data
 
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
@@ -124,10 +120,10 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     cdef float64* out_ptr = <float64*> out.data
 
     # Indices and temporary variables
-    cdef SIZE_t sample_idx = 0
-    cdef SIZE_t feature_idx = 0
-    cdef SIZE_t stage_idx = 0
-    cdef SIZE_t output_idx = 0
+    cdef SIZE_t sample_i = 0
+    cdef SIZE_t feature_i = 0
+    cdef SIZE_t stage_i = 0
+    cdef SIZE_t output_i = 0
     cdef Node *root_node = NULL
     cdef Node *node = NULL
     cdef double *value = NULL
@@ -147,23 +143,23 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
 
     # Cycle through all samples
-    for sample_idx in range(n_samples):
-        for feature_idx in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-            feature_to_sample[X_indices[feature_idx]] = sample_idx
-            X_sample[X_indices[feature_idx]] = X_data[feature_idx]
+    for sample_i in range(n_samples):
+        for feature_i in range(X_indptr[sample_i], X_indptr[sample_i + 1]):
+            feature_to_sample[X_indices[feature_i]] = sample_i
+            X_sample[X_indices[feature_i]] = X_data[feature_i]
 
         # Cycle through all stages
-        for stage_idx in range(n_stages):
+        for stage_i in range(n_stages):
             # Cycle through all trees
-            for output_idx in range(n_outputs):
-                root_node = (<Tree> estimators[stage_idx, output_idx].tree_).nodes
-                value = (<Tree> estimators[stage_idx, output_idx].tree_).value
+            for output_i in range(n_outputs):
+                root_node = (<Tree> estimators[stage_i, output_i].tree_).nodes
+                value = (<Tree> estimators[stage_i, output_i].tree_).value
                 node = root_node
 
                 # While node not a leaf
                 while node.left_child != TREE_LEAF:
                     # ... and node.right_child != TREE_LEAF:
-                    if feature_to_sample[node.feature] == sample_idx:
+                    if feature_to_sample[node.feature] == sample_i:
                         feature_value = X_sample[node.feature]
                     else:
                         feature_value = 0.
@@ -172,7 +168,8 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
                         node = root_node + node.left_child
                     else:
                         node = root_node + node.right_child
-                out_ptr[sample_idx * n_outputs + output_idx] += scale * value[node - root_node]
+                out_ptr[sample_i * n_outputs + output_i] += (scale
+                    * value[node - root_node])
 
     # Free auxiliary arrays
     free(X_sample)
@@ -194,9 +191,6 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Tree tree
 
     if issparse(X):
-        if not isinstance(X, csr_matrix):
-            raise ValueError("X should be in csr_matrix format, got %s"
-                             % type(X))
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
         if not isinstance(X, np.ndarray):
