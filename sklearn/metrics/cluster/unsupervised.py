@@ -88,7 +88,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    X, labels = check_X_y(X, labels)
+    X, labels = check_X_y(X, labels, accept_sparse=True)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_labels = len(le.classes_)
