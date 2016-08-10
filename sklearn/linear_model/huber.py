@@ -258,7 +258,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             parameters, f, dict_ = optimize.fmin_l_bfgs_b(
                 _huber_loss_and_gradient, parameters,
                 args=(X, y, self.epsilon, self.alpha, sample_weight),
-                maxiter=self.max_iter, tol=self.tol, bounds=bounds,
+                maxiter=self.max_iter, pgtol=self.tol, bounds=bounds,
                 iprint=0)
         except TypeError:
             parameters, f, dict_ = optimize.fmin_l_bfgs_b(
