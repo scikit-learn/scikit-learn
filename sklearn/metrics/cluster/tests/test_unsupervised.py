@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
@@ -16,10 +17,13 @@ def test_silhouette():
     # Tests the Silhouette Coefficient.
     dataset = datasets.load_iris()
     X_dense = dataset.data
-    X_sparse = csr_matrix(X_dense)
+    X_csr = csr_matrix(X_dense)
+    X_dok = sp.dok_matrix(X_dense)
+    X_lil = sp.lil_matrix(X_dense)
     y = dataset.target
 
-    for X in [X_dense, X_sparse]:
+    X_dense_score = {}
+    for X in [X_dense, X_csr, X_dok, X_lil]:
         D = pairwise_distances(X, metric='euclidean')
         # Given that the actual labels are used, we can assume that S would be
         # positive.
@@ -29,15 +33,23 @@ def test_silhouette():
         silhouette_metric = silhouette_score(X, y, metric='euclidean')
         assert_almost_equal(silhouette, silhouette_metric)
         # Test with sampling
-        silhouette = silhouette_score(D, y, metric='precomputed',
-                                    sample_size=int(X.shape[0] / 2),
-                                    random_state=0)
-        silhouette_metric = silhouette_score(X, y, metric='euclidean',
-                                            sample_size=int(X.shape[0] / 2),
-                                            random_state=0)
+        score_precomputed = silhouette_score(D, y, metric='precomputed',
+                                             sample_size=int(X.shape[0] / 2),
+                                             random_state=0)
+        score_euclidean = silhouette_score(X, y, metric='euclidean',
+                                           sample_size=int(X.shape[0] / 2),
+                                           random_state=0)
         assert(silhouette > 0)
         assert(silhouette_metric > 0)
-        assert_almost_equal(silhouette_metric, silhouette)
+        assert_almost_equal(score_euclidean, score_precomputed)
+        if X is X_dense:
+            X_dense_score['precomputed'] = score_precomputed
+            X_dense_score['euclidean'] = score_euclidean
+        else:
+            assert_almost_equal(X_dense_score['precomputed'],
+                                score_precomputed)
+            assert_almost_equal(X_dense_score['euclidean'],
+                                score_euclidean)
 
 
 def test_no_nan():
