@@ -242,6 +242,10 @@ Enhancements
      `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
      `Manvendra Singh`_.
 
+   - :class:`RobustScaler` now accepts ``quantile_range`` parameter.
+     (`#5929 <https://github.com/scikit-learn/scikit-learn/pull/5929>`_)
+     By `Konstantin Podshumok`_.
+
 Bug fixes
 .........
 
@@ -4327,3 +4331,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Manvendra Singh: https://github.com/manu-chroma
 
 .. _Ibraim Ganiev: https://github.com/olologin
+
+.. _Konstantin Podshumok: https://github.com/podshumok
