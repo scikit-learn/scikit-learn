@@ -38,23 +38,23 @@ citations to the following paper:
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-`API design for machine learning software: experiences from the scikit-learn
-project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+ `API design for machine learning software: experiences from the scikit-learn
+ project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
 
-Bibtex entry::
+ Bibtex entry::
 
-    @inproceedings{sklearn_api,
-      author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
-                   Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
-                   Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
-                   and Jaques Grobler and Robert Layton and Jake VanderPlas and
-                   Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
-      title     = {{API} design for machine learning software: experiences from the scikit-learn
-                   project},
-      booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
-      year      = {2013},
-      pages = {108--122},
-    }
+   @inproceedings{sklearn_api,
+     author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
+                  Fabian Pedregosa and Andreas Mueller and Olivier Grisel and
+                  Vlad Niculae and Peter Prettenhofer and Alexandre Gramfort
+                  and Jaques Grobler and Robert Layton and Jake VanderPlas and
+                  Arnaud Joly and Brian Holt and Ga{\"{e}}l Varoquaux},
+     title     = {{API} design for machine learning software: experiences from the scikit-learn
+                  project},
+     booktitle = {ECML PKDD Workshop: Languages for Data Mining and Machine Learning},
+     year      = {2013},
+     pages = {108--122},
+   }
 
 Artwork
 -------
@@ -102,11 +102,13 @@ program.
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
+- 2015 - `Raghav R V <https://github.com/raghavrv>`_, Wei Xue
+- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <http://yclin.me>`_
 
 It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
-<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
+<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_.
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <http://www.debian.org>`_ packaging and contributions is supported by
