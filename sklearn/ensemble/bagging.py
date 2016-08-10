@@ -98,8 +98,6 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("Building estimator %d of %d for this parallel run (total %d)..." %
                   (i + 1, n_estimators, total_n_estimators))
 
-        # random_state = check_random_state(seeds[i])
-        # seed = random_state.randint(MAX_INT)
         random_state = np.random.RandomState(seeds[i])
         estimator = ensemble._make_estimator(append=False)
 
@@ -129,13 +127,11 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight[not_indices_mask] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
-            # samples = curr_sample_weight > 0.
 
         # Draw samples, using a mask, and then fit
         else:
             sample_counts = bincount(indices, minlength=n_samples)
             estimator.fit((X[indices])[:, features], y[indices])
-            # samples = sample_counts > 0.
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -413,8 +409,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
-            # random_state = check_random_state(seed)
-            # seed = random_state.randint(MAX_INT) 
             random_state = np.random.RandomState(seed)
             feature_indices, sample_indices = _generate_bagging_indices(random_state, 
                                                                   self.bootstrap_features,
