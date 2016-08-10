@@ -36,7 +36,7 @@ MAX_INT = np.iinfo(np.int32).max
 def _generate_mask_from_indices(indices, mask_length, inverse=False):
     """Private function used to convert list of indices to boolean mask"""
     if mask_length <= np.max(indices):
-        raise ValueError("mask_length must greater than max(indices)")
+        raise ValueError("mask_length must be greater than max(indices)")
 
     if inverse:
         mask = np.ones(mask_length, dtype=np.bool)
@@ -76,20 +76,12 @@ def _generate_bagging_indices(random_state, bootstrap_features, bootstrap_sample
 
 
 def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
-                               max_samples, seeds, total_n_estimators, verbose):
+                               seeds, total_n_estimators, verbose):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
     n_samples, n_features = X.shape
-    max_features = ensemble.max_features
-
-    if (not isinstance(max_samples, (numbers.Integral, np.integer)) and
-            (0.0 < max_samples <= 1.0)):
-        max_samples = int(max_samples * n_samples)
-
-    if (not isinstance(max_features, (numbers.Integral, np.integer)) and
-            (0.0 < max_features <= 1.0)):
-        max_features = int(max_features * n_features)
-
+    max_features = ensemble._max_features
+    max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
@@ -106,12 +98,13 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             print("Building estimator %d of %d for this parallel run (total %d)..." %
                   (i + 1, n_estimators, total_n_estimators))
 
-        random_state = check_random_state(seeds[i])
-        seed = random_state.randint(MAX_INT)
+        # random_state = check_random_state(seeds[i])
+        # seed = random_state.randint(MAX_INT)
+        random_state = np.random.RandomState(seeds[i])
         estimator = ensemble._make_estimator(append=False)
 
         try:  # Not all estimators accept a random_state
-            estimator.set_params(random_state=seed)
+            estimator.set_params(random_state=seeds[i])
         except ValueError:
             pass
 
@@ -131,19 +124,18 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             if bootstrap:
                 sample_counts = bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
-
             else:
                 not_indices_mask = _generate_mask_from_indices(indices, n_samples, inverse=True)
                 curr_sample_weight[not_indices_mask] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
-            samples = curr_sample_weight > 0.
+            # samples = curr_sample_weight > 0.
 
         # Draw samples, using a mask, and then fit
         else:
             sample_counts = bincount(indices, minlength=n_samples)
             estimator.fit((X[indices])[:, features], y[indices])
-            samples = sample_counts > 0.
+            # samples = sample_counts > 0.
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -392,7 +384,6 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
                 X,
                 y,
                 sample_weight,
-                max_samples,
                 seeds[starts[i]:starts[i + 1]],
                 total_n_estimators,
                 verbose=self.verbose)
@@ -418,12 +409,13 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         return column_or_1d(y, warn=True)
 
     def _get_estimators_data_draws(self, sample_mask=False, feature_mask=False):
-        # Get sampled indices or mask
+        # Get drawn indices or mask along both sample and feature axes
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
-            random_state = check_random_state(seed)
-            seed = random_state.randint(MAX_INT) 
+            # random_state = check_random_state(seed)
+            # seed = random_state.randint(MAX_INT) 
+            random_state = np.random.RandomState(seed)
             feature_indices, sample_indices = _generate_bagging_indices(random_state, 
                                                                   self.bootstrap_features,
                                                                   self.bootstrap, 
@@ -442,6 +434,11 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
 
     @property
     def estimators_samples_(self):
+        """Return a dynamically generated list of boolean masks identifying 
+        the samples used for for fitting each member of the ensemble. 
+        Note: the list is re-created at each call to the property in order to reduce 
+        the object memory footprint by not having it store the sampling data. Thus 
+        fetching the property may be slower than expected."""
         return [sample_mask for _, sample_mask in 
                 self._get_estimators_data_draws(sample_mask=True)]
 
@@ -601,11 +598,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         classes_ = self.classes_
 
         predictions = np.zeros((n_samples, n_classes_))
-        estimators_samples = (samples for _, samples in 
-                              self._get_estimators_data_draws(sample_mask=True))
 
         for estimator, samples, features in zip(self.estimators_,
-                                                estimators_samples,
+                                                self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
             mask = ~samples
@@ -996,11 +991,9 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
-        estimators_samples = (samples for _, samples in 
-                              self._get_estimators_data_draws(sample_mask=True))
 
         for estimator, samples, features in zip(self.estimators_,
-                                                estimators_samples,
+                                                self.estimators_samples_,
                                                 self.estimators_features_):
             # Create mask for OOB samples
             mask = ~samples
