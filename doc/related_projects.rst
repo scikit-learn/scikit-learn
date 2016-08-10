@@ -114,6 +114,7 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic regression on multidimensional features.
 
+- `spherecluster <https://github.com/clara-labs/spherecluster>` _ Spherical K-means and mixture of von Mises Fisher clustering routines for the unit hypersphere.
 
 Statistical learning with Python
 --------------------------------
