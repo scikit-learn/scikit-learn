@@ -357,6 +357,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             all_missing = np.where(mask_matrix.sum(axis=0) == X.shape[0])[0]
             mask_matrix = mask_matrix[:, self.imputed_features_]
             if not np.array_equal(all_missing, self.all_missing_):
+                print self.all_missing_.shape, all_missing.shape
+                print type(self.all_missing_), type(all_missing)
                 features = np.setdiff1d(self.all_missing_, all_missing)
                 warnings.warn("The features %s have all missing "
                               "values in fit but have non-missing values"
