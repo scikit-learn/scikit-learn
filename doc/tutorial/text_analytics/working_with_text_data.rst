@@ -212,7 +212,7 @@ dictionary of features and transform documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consequective characters.
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive characters.
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
