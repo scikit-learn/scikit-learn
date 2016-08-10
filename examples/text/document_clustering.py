@@ -63,6 +63,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 from sklearn import metrics
+from sklearn.metrics.pairwise import pairwise_distances
 
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
@@ -199,7 +200,9 @@ print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
 print("Adjusted Rand-Index: %.3f"
       % metrics.adjusted_rand_score(labels, km.labels_))
 print("Silhouette Coefficient: %0.3f"
-      % metrics.silhouette_score(X, km.labels_, sample_size=1000))
+      % metrics.silhouette_score(pairwise_distances(X), km.labels_,
+                                 sample_size=1000, metric="precomputed"))
+
 
 print()
 
