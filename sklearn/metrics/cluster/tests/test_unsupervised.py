@@ -22,7 +22,6 @@ def test_silhouette():
     X_lil = sp.lil_matrix(X_dense)
     y = dataset.target
 
-    X_dense_score = {}
     for X in [X_dense, X_csr, X_dok, X_lil]:
         D = pairwise_distances(X, metric='euclidean')
         # Given that the actual labels are used, we can assume that S would be
@@ -34,10 +33,10 @@ def test_silhouette():
         assert_almost_equal(score_precomputed, score_euclidean)
 
         if X is X_dense:
-            X_dense_score['without_sampling'] = score_precomputed
+            score_dense_without_sampling = score_precomputed
         else:
             assert_almost_equal(score_euclidean,
-                                X_dense_score['without_sampling'])
+                                score_dense_without_sampling)
 
         # Test with sampling
         score_precomputed = silhouette_score(D, y, metric='precomputed',
@@ -51,9 +50,9 @@ def test_silhouette():
         assert_almost_equal(score_euclidean, score_precomputed)
 
         if X is X_dense:
-            X_dense_score['with_sampling'] = score_precomputed
+            score_dense_with_sampling = score_precomputed
         else:
-            assert_almost_equal(score_euclidean, X_dense_score['with_sampling'])
+            assert_almost_equal(score_euclidean, score_dense_with_sampling)
 
 
 def test_no_nan():
