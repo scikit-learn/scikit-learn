@@ -15,31 +15,29 @@ from sklearn.metrics import pairwise_distances
 def test_silhouette():
     # Tests the Silhouette Coefficient.
     dataset = datasets.load_iris()
-    X = dataset.data
+    X_dense = dataset.data
+    X_sparse = csr_matrix(X_dense)
     y = dataset.target
-    D = pairwise_distances(X, metric='euclidean')
-    # Given that the actual labels are used, we can assume that S would be
-    # positive.
-    silhouette = silhouette_score(D, y, metric='precomputed')
-    assert(silhouette > 0)
-    # Test without calculating D
-    silhouette_metric = silhouette_score(X, y, metric='euclidean')
-    assert_almost_equal(silhouette, silhouette_metric)
-    # Test with sampling
-    silhouette = silhouette_score(D, y, metric='precomputed',
-                                  sample_size=int(X.shape[0] / 2),
-                                  random_state=0)
-    silhouette_metric = silhouette_score(X, y, metric='euclidean',
-                                         sample_size=int(X.shape[0] / 2),
-                                         random_state=0)
-    assert(silhouette > 0)
-    assert(silhouette_metric > 0)
-    assert_almost_equal(silhouette_metric, silhouette)
-    # Test with sparse X
-    X_sparse = csr_matrix(X)
-    D = pairwise_distances(X_sparse, metric='euclidean')
-    silhouette = silhouette_score(D, y, metric='precomputed')
-    assert(silhouette > 0)
+
+    for X in [X_dense, X_sparse]:
+        D = pairwise_distances(X, metric='euclidean')
+        # Given that the actual labels are used, we can assume that S would be
+        # positive.
+        silhouette = silhouette_score(D, y, metric='precomputed')
+        assert(silhouette > 0)
+        # Test without calculating D
+        silhouette_metric = silhouette_score(X, y, metric='euclidean')
+        assert_almost_equal(silhouette, silhouette_metric)
+        # Test with sampling
+        silhouette = silhouette_score(D, y, metric='precomputed',
+                                    sample_size=int(X.shape[0] / 2),
+                                    random_state=0)
+        silhouette_metric = silhouette_score(X, y, metric='euclidean',
+                                            sample_size=int(X.shape[0] / 2),
+                                            random_state=0)
+        assert(silhouette > 0)
+        assert(silhouette_metric > 0)
+        assert_almost_equal(silhouette_metric, silhouette)
 
 
 def test_no_nan():
