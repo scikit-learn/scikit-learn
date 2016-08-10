@@ -455,7 +455,7 @@ class GaussianMixture(BaseMixture):
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
-        log_likelihood average gain is below this threshold.
+        lower bound average gain is below this threshold.
 
     reg_covar : float, defaults to 0.
         Non-negative regularization added to the diagonal of covariance.
