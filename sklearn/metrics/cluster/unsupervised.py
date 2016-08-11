@@ -194,10 +194,11 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
 
     for start in range(0, n_samples, block_size):
         stop = min(start + block_size, n_samples)
-        # TODO: perhaps ensure pairwise_distances args are identical if
-        # block_size is None
-        block_dists = pairwise_distances(X[start:stop], X,
-                                         metric=metric, **kwds)
+        if stop - start == n_samples:
+            block_dists = pairwise_distances(X, metric=metric, **kwds)
+        else:
+            block_dists = pairwise_distances(X[start:stop], X,
+                                             metric=metric, **kwds)
         clust_dists = np.bincount(add_at[:block_dists.size],
                                   block_dists.ravel())
         clust_dists = clust_dists.reshape((stop - start, n_clusters))
