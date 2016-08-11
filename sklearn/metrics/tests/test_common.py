@@ -493,10 +493,10 @@ def test_format_invariance_with_1d_vectors():
                                 err_msg=MSG % (name, 'list'))
 
             assert_almost_equal(metric(y1_1d, y2_1d), measure,
-                                err_msg=MSG % (name, np-array 1d))
+                                err_msg=MSG % (name, 'np-array-1d'))
 
             assert_almost_equal(metric(y1_column, y2_column), measure,
-                                err_msg=MSG % (name, "np-array-column")
+                                err_msg=MSG % (name, "np-array-column"))
 
             assert_almost_equal(metric(y1_column_list, y2_column_list),
                                 measure,
