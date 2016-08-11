@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics import pairwise_distances
@@ -27,7 +28,7 @@ def test_silhouette():
         # Given that the actual labels are used, we can assume that S would be
         # positive.
         score_precomputed = silhouette_score(D, y, metric='precomputed')
-        assert(score_precomputed > 0)
+        assert_greater(score_precomputed, 0)
         # Test without calculating D
         score_euclidean = silhouette_score(X, y, metric='euclidean')
         assert_almost_equal(score_precomputed, score_euclidean)
@@ -45,8 +46,8 @@ def test_silhouette():
         score_euclidean = silhouette_score(X, y, metric='euclidean',
                                            sample_size=int(X.shape[0] / 2),
                                            random_state=0)
-        assert(score_precomputed > 0)
-        assert(score_euclidean > 0)
+        assert_greater(score_precomputed, 0)
+        assert_greater(score_euclidean, 0)
         assert_almost_equal(score_euclidean, score_precomputed)
 
         if X is X_dense:
