@@ -201,7 +201,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
             if do_init:
                 self._initialize_parameters(X)
-                self.lower_bound_ = np.infty
+                self.lower_bound_ = -np.infty
 
             for n_iter in range(self.max_iter):
                 prev_lower_bound = self.lower_bound_
