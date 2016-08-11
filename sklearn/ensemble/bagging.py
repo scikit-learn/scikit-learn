@@ -17,11 +17,11 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d, deprecated
+from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.fixes import bincount
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import if_delegate_has_method, indices_to_mask
 from ..utils.multiclass import check_classification_targets
 
 from .base import BaseEnsemble, _partition_estimators
@@ -33,23 +33,8 @@ __all__ = ["BaggingClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _generate_mask_from_indices(indices, mask_length, inverse=False):
-    """Private function used to convert list of indices to boolean mask"""
-    if mask_length <= np.max(indices):
-        raise ValueError("mask_length must be greater than max(indices)")
-
-    if inverse:
-        mask = np.ones(mask_length, dtype=np.bool)
-        mask[indices] = False
-    else:
-        mask = np.zeros(mask_length, dtype=np.bool)
-        mask[indices] = True
-
-    return mask
-
-
 def _generate_indices(random_state, bootstrap, n_population, n_samples):
-    """Private function used to draw randomly sampled indices."""
+    """Draw randomly sampled indices."""
     # Draw sample indices
     if bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
@@ -60,9 +45,10 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     return indices
 
 
-def _generate_bagging_indices(random_state, bootstrap_features, bootstrap_samples, 
-                              n_features, n_samples, max_features, max_samples):
-    """Private function used to randomly draw feature and sample indices."""
+def _generate_bagging_indices(random_state, bootstrap_features,
+                              bootstrap_samples, n_features, n_samples,
+                              max_features, max_samples):
+    """Randomly draw feature and sample indices."""
     # Get valid random state
     random_state = check_random_state(random_state)
 
@@ -107,7 +93,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             pass
 
         # Draw random feature, sample indices
-        features, indices = _generate_bagging_indices(random_state, bootstrap_features, 
+        features, indices = _generate_bagging_indices(random_state,
+                                                      bootstrap_features,
                                                       bootstrap, n_features, 
                                                       n_samples, max_features, 
                                                       max_samples)
@@ -123,14 +110,13 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 sample_counts = bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
             else:
-                not_indices_mask = _generate_mask_from_indices(indices, n_samples, inverse=True)
+                not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
 
         # Draw samples, using a mask, and then fit
         else:
-            sample_counts = bincount(indices, minlength=n_samples)
             estimator.fit((X[indices])[:, features], y[indices])
 
         estimators.append(estimator)
@@ -404,37 +390,37 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Default implementation
         return column_or_1d(y, warn=True)
 
-    def _get_estimators_data_draws(self, sample_mask=False, feature_mask=False):
+    def _get_estimators_indices(self):
         # Get drawn indices or mask along both sample and feature axes
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
             random_state = np.random.RandomState(seed)
-            feature_indices, sample_indices = _generate_bagging_indices(random_state, 
-                                                                  self.bootstrap_features,
-                                                                  self.bootstrap, 
-                                                                  self.n_features_, 
-                                                                  self._n_samples, 
-                                                                  self._max_features, 
-                                                                  self._max_samples)
+            feature_indices, sample_indices = _generate_bagging_indices(
+                random_state, self.bootstrap_features, self.bootstrap,
+                self.n_features_, self._n_samples, self._max_features,
+                self._max_samples)
 
-            # Convert indices to mask if desired
-            feature_draw = (_generate_mask_from_indices(feature_indices, self._n_samples)
-                            if feature_mask else feature_indices)
-            sample_draw = (_generate_mask_from_indices(sample_indices, self._n_samples)
-                           if sample_mask else sample_indices)
-
-            yield feature_draw, sample_draw
+            yield feature_indices, sample_indices
 
     @property
     def estimators_samples_(self):
-        """Return a dynamically generated list of boolean masks identifying 
-        the samples used for for fitting each member of the ensemble. 
-        Note: the list is re-created at each call to the property in order to reduce 
-        the object memory footprint by not having it store the sampling data. Thus 
-        fetching the property may be slower than expected."""
-        return [sample_mask for _, sample_mask in 
-                self._get_estimators_data_draws(sample_mask=True)]
+        """The subset of drawn samples for each base estimator.
+
+        Returns a dynamically generated list of boolean masks identifying
+        the samples used for for fitting each member of the ensemble, i.e.,
+        the in-bag samples.
+
+        Note: the list is re-created at each call to the property in order
+        to reduce the object memory footprint by not storing the sampling
+        data. Thus fetching the property may be slower than expected.
+        """
+        sample_masks = []
+        for _, sample_indices in self._get_estimators_indices():
+            mask = indices_to_mask(sample_indices, self._n_samples)
+            sample_masks.append(mask)
+
+        return sample_masks
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
