@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
+from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics import pairwise_distances
 
@@ -65,14 +66,16 @@ def test_silhouette():
 
 def test_no_nan():
     # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-    # This tests for the condition that caused issue 960.
+    # This tests for the condition that caused issue #960.
     # Note that there is only one sample in cluster 0. This used to cause the
-    # silhouette_score to return nan (see bug #960).
+    # silhouette_score to return nan.
     labels = np.array([1, 0, 1, 1, 1])
     # The distance matrix doesn't actually matter.
     D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
+    ss = silhouette_samples(D, labels, metric='precomputed')
+    assert_false(np.isnan(ss).any())
 
 
 def test_correct_labelsize():

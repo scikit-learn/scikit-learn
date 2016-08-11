@@ -203,7 +203,6 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
         denom = class_freqs_minus_1.take(labels[start:stop], mode='clip')
         with np.errstate(divide="ignore", invalid="ignore"):
             intra_clust_dists.append(clust_dists[intra_index] / denom)
-        # FIXME: deal with 0 denominator
         clust_dists[intra_index] = np.inf
         clust_dists /= class_freqs
         inter_clust_dists.append(clust_dists.min(axis=1))
@@ -218,6 +217,7 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
     sil_samples = inter_clust_dists - intra_clust_dists
     with np.errstate(divide="ignore", invalid="ignore"):
         sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
+    # nan values are for clusters of size 1, and should be 0
     return np.nan_to_num(sil_samples)
 
 
