@@ -181,13 +181,15 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
 
     if block_size is None:
         block_size = n_samples
+    elif block_size > n_samples:
+        block_size = min(block_size, n_samples)
 
     intra_clust_dists = []
     inter_clust_dists = []
 
-    # TODO: replace tile by np.broadcast_to
-    add_at_0 = np.repeat(np.arange(block_size), n_samples)
-    add_at_1 = np.tile(labels, block_size)
+    add_at = np.ravel_multi_index((np.repeat(np.arange(block_size), n_samples),
+                                   np.tile(labels, block_size)),
+                                  dims=(block_size, n_clusters))
     block_range = np.arange(block_size)
 
     for start in range(0, n_samples, block_size):
@@ -196,10 +198,9 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
         # block_size is None
         block_dists = pairwise_distances(X[start:stop], X,
                                          metric=metric, **kwds)
-        clust_dists = np.zeros((stop - start, n_clusters))
-        np.add.at(clust_dists,
-                  (add_at_0[:block_dists.size], add_at_1[:block_dists.size]),
-                  block_dists.ravel())
+        clust_dists = np.bincount(add_at[:block_dists.size],
+                                  block_dists.ravel())
+        clust_dists = clust_dists.reshape((stop - start, n_clusters))
         intra_index = (block_range[:len(clust_dists)], labels[start:stop])
 
         denom = class_freqs_minus_1.take(labels[start:stop], mode='clip')
