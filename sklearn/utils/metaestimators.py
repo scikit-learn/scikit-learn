@@ -8,7 +8,7 @@ from functools import update_wrapper
 import numpy as np
 
 
-__all__ = ['if_delegate_has_method']
+__all__ = ['if_delegate_has_method', 'indices_to_mask']
 
 
 class _IffHasAttrDescriptor(object):
