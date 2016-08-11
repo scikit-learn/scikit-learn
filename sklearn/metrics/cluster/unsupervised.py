@@ -20,7 +20,7 @@ def check_number_of_labels(n_labels, n_samples):
 
 
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     random_state=None, **kwds):
+                     block_size=None, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -55,6 +55,12 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         allowed by :func:`metrics.pairwise.pairwise_distances
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
         array itself, use ``metric="precomputed"``.
+
+    block_size : int, optional
+        The number of rows to process at a time to limit memory usage to
+        O(block_size * n_samples). Default is n_samples.
+
+        .. versionadded:: 0.18
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette Coefficient
@@ -103,7 +109,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+    return np.mean(silhouette_samples(X, labels, metric=metric,
+                                      block_size=block_size, **kwds))
 
 
 def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
