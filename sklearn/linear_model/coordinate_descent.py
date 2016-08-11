@@ -27,6 +27,13 @@ from ..utils.validation import column_or_1d
 from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
+import struct
+
+if (struct.calcsize("P") * 8 == 64
+    and int(np.__version__.split('.')[1]) >= 10):
+    VALID_FOR_32_INPUT = True
+else:
+    VALID_FOR_32_INPUT = False
 
 
 ###############################################################################
@@ -372,16 +379,21 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
-    # We expect X and y to be already float64 Fortran ordered when bypassing
+    # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        X = check_array(X, 'csc', dtype=np.float64, order='F', copy=copy_X)
-        y = check_array(y, 'csc', dtype=np.float64, order='F', copy=False,
+        if VALID_FOR_32_INPUT:
+            dtype = [np.float64, np.float32]
+        else:
+            dtype = np.float64
+        X = check_array(X, 'csc', dtype=dtype, order='F', copy=copy_X)
+        y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
                         ensure_2d=False)
         if Xy is not None:
             # Xy should be a 1d contiguous array or a 2D C ordered array
-            Xy = check_array(Xy, dtype=np.float64, order='C', copy=False,
+            Xy = check_array(Xy, dtype=X.dtype.type, order='C', copy=False,
                              ensure_2d=False)
+
     n_samples, n_features = X.shape
 
     multi_output = False
@@ -395,8 +407,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
             X_sparse_scaling = params['X_offset'] / params['X_scale']
+            X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
-            X_sparse_scaling = np.zeros(n_features)
+            X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
     # X should be normalized and fit already if function is called
     # from ElasticNet.fit
@@ -426,15 +439,15 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     random = (selection == 'random')
 
     if not multi_output:
-        coefs = np.empty((n_features, n_alphas), dtype=np.float64)
+        coefs = np.empty((n_features, n_alphas), dtype=X.dtype)
     else:
         coefs = np.empty((n_outputs, n_features, n_alphas),
-                         dtype=np.float64)
+                         dtype=X.dtype)
 
     if coef_init is None:
-        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
+        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1], dtype=X.dtype))
     else:
-        coef_ = np.asfortranarray(coef_init)
+        coef_ = np.asfortranarray(coef_init, dtype=X.dtype)
 
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
@@ -472,6 +485,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                           ' You might want' +
                           ' to increase the number of iterations',
                           ConvergenceWarning)
+            if X.dtype == np.float32:
+                warnings.warn('It may cause by precision issues' +
+                              ' when fitting float32 data with small alpha.'
+                              ' Try to increase alpha of your model.')
 
         if verbose:
             if verbose > 2:
@@ -667,13 +684,18 @@ class ElasticNet(LinearModel, RegressorMixin):
         # We expect X and y to be already float64 Fortran ordered arrays
         # when bypassing checks
         if check_input:
-            y = np.asarray(y, dtype=np.float64)
-            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
-                             order='F',
-                             copy=self.copy_X and self.fit_intercept,
-                             multi_output=True, y_numeric=True)
-            y = check_array(y, dtype=np.float64, order='F', copy=False,
+            y = np.asarray(y)
+            if VALID_FOR_32_INPUT:
+                dtype = [np.float64, np.float32]
+            else:
+                dtype = np.float64
+            X, y = check_X_y(X, y, accept_sparse='csc',
+                                order='F', dtype=dtype,
+                                copy=self.copy_X and self.fit_intercept,
+                                multi_output=True, y_numeric=True)
+            y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
+
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=False)
@@ -689,14 +711,14 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError("selection should be either random or cyclic.")
 
         if not self.warm_start or self.coef_ is None:
-            coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
+            coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
                              order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
                 coef_ = coef_[np.newaxis, :]
 
-        dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
+        dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
         for k in xrange(n_targets):
