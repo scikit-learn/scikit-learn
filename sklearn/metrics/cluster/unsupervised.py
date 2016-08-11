@@ -148,6 +148,8 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
         The number of rows to process at a time to limit memory usage to
         O(block_size * n_samples). Default is n_samples.
 
+        .. versionadded:: 0.18
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
