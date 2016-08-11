@@ -106,7 +106,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -144,6 +144,10 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
+    block_size : int, optional
+        The number of rows to process at a time to limit memory usage to
+        O(block_size * n_samples). Default is n_samples.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
@@ -168,44 +172,53 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     """
     le = LabelEncoder()
     labels = le.fit_transform(labels)
+    n_samples = len(labels)
+    n_clusters = len(le.classes_)
+    class_freqs = np.bincount(labels)
+    class_freqs_minus_1 = class_freqs - 1
 
-    distances = pairwise_distances(X, metric=metric, **kwds)
-    unique_labels = le.classes_
+    if block_size is None:
+        block_size = n_samples
 
-    # For sample i, store the mean distance of the cluster to which
-    # it belongs in intra_clust_dists[i]
-    intra_clust_dists = np.ones(distances.shape[0], dtype=distances.dtype)
+    intra_clust_dists = []
+    inter_clust_dists = []
 
-    # For sample i, store the mean distance of the second closest
-    # cluster in inter_clust_dists[i]
-    inter_clust_dists = np.inf * intra_clust_dists
+    # TODO: replace tile by np.broadcast_to
+    add_at_0 = np.repeat(np.arange(block_size), n_samples)
+    add_at_1 = np.tile(labels, block_size)
+    block_range = np.arange(block_size)
 
-    for curr_label in unique_labels:
+    for start in range(0, n_samples, block_size):
+        stop = min(start + block_size, n_samples)
+        # TODO: perhaps ensure pairwise_distances args are identical if
+        # block_size is None
+        block_dists = pairwise_distances(X[start:stop], X,
+                                         metric=metric, **kwds)
+        clust_dists = np.zeros((stop - start, n_clusters))
+        np.add.at(clust_dists,
+                  (add_at_0[:block_dists.size], add_at_1[:block_dists.size]),
+                  block_dists.ravel())
+        intra_index = (block_range[:len(clust_dists)], labels[start:stop])
 
-        # Find inter_clust_dist for all samples belonging to the same
-        # label.
-        mask = labels == curr_label
-        current_distances = distances[mask]
+        denom = class_freqs_minus_1.take(labels[start:stop], mode='clip')
+        with np.errstate(divide="ignore", invalid="ignore"):
+            intra_clust_dists.append(clust_dists[intra_index] / denom)
+        # FIXME: deal with 0 denominator
+        clust_dists[intra_index] = np.inf
+        clust_dists /= class_freqs
+        inter_clust_dists.append(clust_dists.min(axis=1))
 
-        # Leave out current sample.
-        n_samples_curr_lab = np.sum(mask) - 1
-        if n_samples_curr_lab != 0:
-            intra_clust_dists[mask] = np.sum(
-                current_distances[:, mask], axis=1) / n_samples_curr_lab
-
-        # Now iterate over all other labels, finding the mean
-        # cluster distance that is closest to every sample.
-        for other_label in unique_labels:
-            if other_label != curr_label:
-                other_mask = labels == other_label
-                other_distances = np.mean(
-                    current_distances[:, other_mask], axis=1)
-                inter_clust_dists[mask] = np.minimum(
-                    inter_clust_dists[mask], other_distances)
+    if len(intra_clust_dists) == 1:
+        intra_clust_dists = intra_clust_dists[0]
+        inter_clust_dists = inter_clust_dists[0]
+    else:
+        intra_clust_dists = np.hstack(intra_clust_dists)
+        inter_clust_dists = np.hstack(inter_clust_dists)
 
     sil_samples = inter_clust_dists - intra_clust_dists
-    sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
-    return sil_samples
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
+    return np.nan_to_num(sil_samples)
 
 
 def calinski_harabaz_score(X, labels):

@@ -33,6 +33,13 @@ def test_silhouette():
         score_euclidean = silhouette_score(X, y, metric='euclidean')
         assert_almost_equal(score_precomputed, score_euclidean)
 
+        score_batched = silhouette_score(X, y, block_size=17,
+                                         metric='euclidean')
+        assert_almost_equal(score_batched, score_euclidean)
+        score_batched = silhouette_score(D, y, block_size=17,
+                                         metric='precomputed')
+        assert_almost_equal(score_batched, score_euclidean)
+
         if X is X_dense:
             score_dense_without_sampling = score_precomputed
         else:
