@@ -458,81 +458,96 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 
 @ignore_warnings
 def test_format_invariance_with_1d_vectors():
+    MSG = "%s is not representation invariant with %s"
     random_state = check_random_state(0)
-    y1 = random_state.randint(0, 2, size=(20, ))
-    y2 = random_state.randint(0, 2, size=(20, ))
+    for n_classes in [2, 3]:
+        # due to input validation / type sniffing, we explicitly test both
+        # binary and multiclass
+        y1 = random_state.randint(0, n_classes, size=(20, ))
+        y2 = random_state.randint(0, n_classes, size=(20, ))
 
-    y1_list = list(y1)
-    y2_list = list(y2)
+        y1_list = list(y1)
+        y2_list = list(y2)
 
-    y1_1d, y2_1d = np.array(y1), np.array(y2)
-    assert_equal(y1_1d.ndim, 1)
-    assert_equal(y2_1d.ndim, 1)
-    y1_column = np.reshape(y1_1d, (-1, 1))
-    y2_column = np.reshape(y2_1d, (-1, 1))
-    y1_row = np.reshape(y1_1d, (1, -1))
-    y2_row = np.reshape(y2_1d, (1, -1))
+        y1_1d, y2_1d = np.array(y1), np.array(y2)
+        assert_equal(y1_1d.ndim, 1)
+        assert_equal(y2_1d.ndim, 1)
+        y1_column = np.reshape(y1_1d, (-1, 1))
+        y2_column = np.reshape(y2_1d, (-1, 1))
+        y1_column_list = y1_column.tolist()
+        y2_column_list = y2_column.tolist()
+        y1_row = np.reshape(y1_1d, (1, -1))
+        y2_row = np.reshape(y2_1d, (1, -1))
 
-    for name, metric in ALL_METRICS.items():
-        if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
-            continue
+        for name, metric in ALL_METRICS.items():
+            if name in METRIC_UNDEFINED_BINARY_MULTICLASS:
+                continue
 
-        measure = metric(y1, y2)
+            if n_classes > 2 and name in THRESHOLDED_METRICS:
+                # TODO: perhaps binarize y2
+                continue
 
-        assert_almost_equal(metric(y1_list, y2_list), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with list" % name)
+            measure = metric(y1, y2)
 
-        assert_almost_equal(metric(y1_1d, y2_1d), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with np-array-1d" % name)
+            assert_almost_equal(metric(y1_list, y2_list), measure,
+                                err_msg=MSG % (name, 'list'))
 
-        assert_almost_equal(metric(y1_column, y2_column), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with np-array-column" % name)
+            assert_almost_equal(metric(y1_1d, y2_1d), measure,
+                                err_msg=MSG % (name, np-array 1d))
 
-        # Mix format support
-        assert_almost_equal(metric(y1_1d, y2_list), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and list" % name)
+            assert_almost_equal(metric(y1_column, y2_column), measure,
+                                err_msg=MSG % (name, "np-array-column")
 
-        assert_almost_equal(metric(y1_list, y2_1d), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and list" % name)
+            assert_almost_equal(metric(y1_column_list, y2_column_list),
+                                measure,
+                                err_msg=MSG % (name, "column vector as list"))
 
-        assert_almost_equal(metric(y1_1d, y2_column), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and np-array-column"
-                                    % name)
+            # Mix format support
+            assert_almost_equal(metric(y1_1d, y2_list), measure,
+                                err_msg=(MSG % (name, "mix np-array-1d "
+                                                "and list")))
 
-        assert_almost_equal(metric(y1_column, y2_1d), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and np-array-column"
-                                    % name)
+            assert_almost_equal(metric(y1_list, y2_1d), measure,
+                                err_msg=(MSG % (name, "mix np-array-1d "
+                                                "and list")))
 
-        assert_almost_equal(metric(y1_list, y2_column), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix list and np-array-column"
-                                    % name)
+            assert_almost_equal(metric(y1_1d, y2_column), measure,
+                                err_msg=(MSG % (name, "mix np-array-1d "
+                                                "and np-array-column")))
 
-        assert_almost_equal(metric(y1_column, y2_list), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with mix list and np-array-column"
-                                    % name)
+            assert_almost_equal(metric(y1_column, y2_1d), measure,
+                                err_msg=(MSG % (name, "mix np-array-1d "
+                                                "and np-array-column")))
 
-        # These mix representations aren't allowed
-        assert_raises(ValueError, metric, y1_1d, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_1d)
-        assert_raises(ValueError, metric, y1_list, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_list)
-        assert_raises(ValueError, metric, y1_column, y2_row)
-        assert_raises(ValueError, metric, y1_row, y2_column)
+            assert_almost_equal(metric(y1_list, y2_column), measure,
+                                err_msg=(MSG % (name, "mix list "
+                                                "and np-array-column")))
 
-        # NB: We do not test for y1_row, y2_row as these may be
-        # interpreted as multilabel or multioutput data.
-        if (name not in (MULTIOUTPUT_METRICS + THRESHOLDED_MULTILABEL_METRICS +
-                         MULTILABELS_METRICS)):
-            assert_raises(ValueError, metric, y1_row, y2_row)
+            assert_almost_equal(metric(y1_column, y2_list), measure,
+                                err_msg=(MSG % (name, "mix list "
+                                                "and np-array-column")))
+
+            assert_almost_equal(metric(y1, y2_column_list), measure,
+                                err_msg=(MSG % (name, "mix array "
+                                                "and column-list")))
+
+            assert_almost_equal(metric(y1_column_list, y2), measure,
+                                err_msg=(MSG % (name, "mix array "
+                                                "and column-list")))
+
+            # These mix representations aren't allowed
+            assert_raises(ValueError, metric, y1_1d, y2_row)
+            assert_raises(ValueError, metric, y1_row, y2_1d)
+            assert_raises(ValueError, metric, y1_list, y2_row)
+            assert_raises(ValueError, metric, y1_row, y2_list)
+            assert_raises(ValueError, metric, y1_column, y2_row)
+            assert_raises(ValueError, metric, y1_row, y2_column)
+
+            # NB: We do not test for y1_row, y2_row as these may be
+            # interpreted as multilabel or multioutput data.
+            if (name not in (MULTIOUTPUT_METRICS + THRESHOLDED_MULTILABEL_METRICS +
+                             MULTILABELS_METRICS)):
+                assert_raises(ValueError, metric, y1_row, y2_row)
 
 
 @ignore_warnings
