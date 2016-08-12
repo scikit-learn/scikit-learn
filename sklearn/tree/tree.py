@@ -566,7 +566,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -592,7 +591,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -832,7 +830,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -858,7 +855,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

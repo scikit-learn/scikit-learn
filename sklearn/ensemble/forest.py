@@ -777,7 +777,6 @@ class RandomForestClassifier(ForestClassifier):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -803,7 +802,6 @@ class RandomForestClassifier(ForestClassifier):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
@@ -984,7 +982,6 @@ class RandomForestRegressor(ForestRegressor):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -1010,7 +1007,6 @@ class RandomForestRegressor(ForestRegressor):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
@@ -1151,7 +1147,6 @@ class ExtraTreesClassifier(ForestClassifier):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -1177,7 +1172,6 @@ class ExtraTreesClassifier(ForestClassifier):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
@@ -1357,7 +1351,6 @@ class ExtraTreesRegressor(ForestRegressor):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -1383,7 +1376,6 @@ class ExtraTreesRegressor(ForestRegressor):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
@@ -1510,7 +1502,6 @@ class RandomTreesEmbedding(BaseForest):
         The maximum depth of each tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
@@ -1536,7 +1527,6 @@ class RandomTreesEmbedding(BaseForest):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
