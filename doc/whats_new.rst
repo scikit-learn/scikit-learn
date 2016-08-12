@@ -325,6 +325,10 @@ Bug fixes
       (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
       By `Ibraim Ganiev`_.
 
+    - :func:`silhouette_score` now supports sparse input, and this also fixes
+      `example_gaussian_process_plot_gp_regression.py`. 
+      By `YenChen Lin`_.
+
 API changes summary
 -------------------
 
