@@ -155,9 +155,8 @@ def test_huber_warm_start():
     assert_array_almost_equal(huber_warm.coef_, huber_warm_coef, 1)
 
     # No n_iter_ in old SciPy (<=0.9)
-    # And as said above, the first iteration seems to be run anyway.
     if huber_warm.n_iter_ is not None:
-        assert_equal(1, huber_warm.n_iter_)
+        assert_equal(0, huber_warm.n_iter_)
 
 
 def test_huber_better_r2_score():

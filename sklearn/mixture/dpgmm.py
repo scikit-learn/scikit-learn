@@ -725,7 +725,36 @@ class VBGMM(_DPGMMBase):
             n_components, covariance_type, random_state=random_state,
             tol=tol, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
-        self.alpha = float(alpha) / n_components
+        self.alpha = alpha
+
+    def _fit(self, X, y=None):
+        """Estimate model parameters with the variational algorithm.
+
+        For a full derivation and description of the algorithm see
+        doc/modules/dp-derivation.rst
+        or
+        http://scikit-learn.org/stable/modules/dp-derivation.html
+
+        A initialization step is performed before entering the EM
+        algorithm. If you want to avoid this step, set the keyword
+        argument init_params to the empty string '' when creating
+        the object. Likewise, if you just would like to do an
+        initialization, set n_iter=0.
+
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
+        """
+        self.alpha_ = float(self.alpha) / self.n_components
+        return super(VBGMM, self)._fit(X, y)
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
@@ -772,10 +801,10 @@ class VBGMM(_DPGMMBase):
 
     def _update_concentration(self, z):
         for i in range(self.n_components):
-            self.gamma_[i] = self.alpha + np.sum(z.T[i])
+            self.gamma_[i] = self.alpha_ + np.sum(z.T[i])
 
     def _initialize_gamma(self):
-        self.gamma_ = self.alpha * np.ones(self.n_components)
+        self.gamma_ = self.alpha_ * np.ones(self.n_components)
 
     def _bound_proportions(self, z):
         logprior = 0.
@@ -789,10 +818,10 @@ class VBGMM(_DPGMMBase):
     def _bound_concentration(self):
         logprior = 0.
         logprior = gammaln(np.sum(self.gamma_)) - gammaln(self.n_components
-                                                          * self.alpha)
-        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha))
+                                                          * self.alpha_)
+        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha_))
         sg = digamma(np.sum(self.gamma_))
-        logprior += np.sum((self.gamma_ - self.alpha)
+        logprior += np.sum((self.gamma_ - self.alpha_)
                            * (digamma(self.gamma_) - sg))
         return logprior
 
