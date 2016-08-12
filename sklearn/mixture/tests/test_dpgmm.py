@@ -182,12 +182,11 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
     setUp = GMMTester._setUp
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_VBGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The VBGMM class is"
-                         " not working correctly and it's better"
-                         " to not use it. VBGMM is deprecated in 0.18"
-                         " and will be removed in 0.20.", VBGMM)
+    assert_warns_message(
+        DeprecationWarning,
+        "The VBGMM class is not working correctly and it's better to not use "
+        "it. VBGMM is deprecated in 0.18 and will be removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):
@@ -217,3 +216,12 @@ class TestVBGMMWithTiedCovars(unittest.TestCase, VBGMMTester):
 class TestVBGMMWithFullCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'full'
     setUp = GMMTester._setUp
+
+
+def test_vbgmm_no_modify_alpha():
+    alpha = 2.
+    n_components = 3
+    X, y = make_blobs(random_state=1)
+    vbgmm = VBGMM(n_components=n_components, alpha=alpha, n_iter=1)
+    assert_equal(vbgmm.alpha, alpha)
+    assert_equal(vbgmm.fit(X).alpha_, float(alpha) / n_components)

@@ -44,7 +44,6 @@ from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.validation import _num_samples
-from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
@@ -246,7 +245,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  "method".format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
-        
+
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -517,7 +516,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_ovo_binary)(
                 estimator, X, y, self.classes_[i], self.classes_[j])
-            for estimator, (i, j) in izip(self.estimators_, ((i, j) for i 
+            for estimator, (i, j) in izip(self.estimators_, ((i, j) for i
                                 in range(self.n_classes_) for j in range
                                             (i + 1, self.n_classes_))))
         return self

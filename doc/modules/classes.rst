@@ -240,6 +240,7 @@ Loaders
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
+   datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
    datasets.load_files

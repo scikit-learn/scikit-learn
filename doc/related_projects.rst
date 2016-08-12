@@ -22,11 +22,11 @@ enhance the functionality of scikit-learn's estimators.
   scikit-learn pipelines and pandas data frame with dedicated transformers.
 
 - `Scikit-Learn Laboratory
-  <https://skll.readthedocs.org/en/latest/index.html>`_  A command-line
+  <https://skll.readthedocs.io/en/latest/index.html>`_  A command-line
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
-- `auto-sklearn <https://github.com/automl/auto-sklearn/blob/master/source/index.rst>`_
+- `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
 
@@ -58,7 +58,7 @@ and tasks.
 - `sklearn_theano <http://sklearn-theano.github.io/>`_ scikit-learn compatible
   estimators, transformers, and datasets which use Theano internally
 
-- `lightning <http://www.mblondel.org/lightning/>`_ Fast state-of-the-art
+- `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast state-of-the-art
   linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
 - `Seqlearn <https://github.com/larsmans/seqlearn>`_  Sequence classification
@@ -73,7 +73,7 @@ and tasks.
 - `pomegranate <https://github.com/jmschrei/pomegranate>`_ Probabilistic modelling
   for Python, with an emphasis on hidden Markov models.
 
-- `py-earth <https://github.com/jcrudy/py-earth>`_ Multivariate adaptive
+- `py-earth <https://github.com/scikit-learn-contrib/py-earth>`_ Multivariate adaptive
   regression splines
 
 - `sklearn-compiledtrees <https://github.com/ajtulloch/sklearn-compiledtrees/>`_
@@ -114,6 +114,7 @@ and tasks.
 
 - `multiisotonic <https://github.com/alexfields/multiisotonic>`_ Isotonic regression on multidimensional features.
 
+- `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical K-means and mixture of von Mises Fisher clustering routines for data on the unit hypersphere.
 
 Statistical learning with Python
 --------------------------------

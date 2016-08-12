@@ -14,7 +14,6 @@ from __future__ import print_function
 from __future__ import division
 
 import warnings
-import inspect
 from itertools import chain, combinations
 from collections import Iterable
 from math import ceil, floor
@@ -262,7 +261,7 @@ class LeavePOut(BaseCrossValidator):
 
 
 class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
-    """Base class for KFold and StratifiedKFold"""
+    """Base class for KFold, LabelKFold, and StratifiedKFold"""
 
     @abstractmethod
     def __init__(self, n_folds, shuffle, random_state):

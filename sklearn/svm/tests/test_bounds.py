@@ -1,6 +1,7 @@
 import nose
 from nose.tools import assert_equal, assert_true
 from sklearn.utils.testing import clean_warning_registry
+from sklearn.utils.testing import assert_raise_message
 import warnings
 
 import numpy as np
@@ -37,13 +38,9 @@ def test_l1_min_c():
                                           intercept_label))
                     yield check
 
-
-def test_l2_deprecation():
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True) as w:
-        assert_equal(l1_min_c(dense_X, Y1, "l2"),
-                     l1_min_c(dense_X, Y1, "squared_hinge"))
-        assert_equal(w[0].category, DeprecationWarning)
+    # loss='l2' should raise ValueError
+    assert_raise_message(ValueError, "loss type not in",
+                         l1_min_c, dense_X, Y1, "l2")
 
 
 def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):

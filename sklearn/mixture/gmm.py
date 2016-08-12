@@ -9,7 +9,6 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
-import warnings
 import numpy as np
 from scipy import linalg
 from time import time
@@ -683,7 +682,7 @@ def _log_multivariate_normal_density_spherical(X, means, covars):
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    if covars.shape[1] == 1:
+    if cv.shape[1] == 1:
         cv = np.tile(cv, (1, X.shape[-1]))
     return _log_multivariate_normal_density_diag(X, means, cv)
 

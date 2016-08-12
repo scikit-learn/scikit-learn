@@ -256,8 +256,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         if self.residual_metric is not None:
             warnings.warn(
-                "'residual_metric' will be removed in version 0.20. Use "
-                "'loss' instead.", DeprecationWarning)
+                "'residual_metric' was deprecated in version 0.18 and "
+                "will be removed in version 0.20. Use 'loss' instead.",
+                DeprecationWarning)
 
         if self.loss == "absolute_loss":
             if y.ndim == 1:

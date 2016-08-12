@@ -30,6 +30,7 @@ from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
+from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import column_or_1d
@@ -240,6 +241,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
+        if np.all([l not in y_true for l in labels]):
+            raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int)
@@ -1841,6 +1844,9 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
+    assert_all_finite(y_true)
+    assert_all_finite(y_prob)
+
     if pos_label is None:
         pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)

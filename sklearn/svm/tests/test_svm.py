@@ -3,7 +3,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 
 TODO: remove hard coded numerical results when possible
 """
-
 import numpy as np
 import itertools
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -25,6 +24,7 @@ from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.externals import six
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -519,6 +519,30 @@ def test_bad_input():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
+
+
+def test_unicode_kernel():
+    # Test that a unicode kernel name does not cause a TypeError on clf.fit
+    if six.PY2:
+        # Test unicode (same as str on python3)
+        clf = svm.SVC(kernel=unicode('linear'))
+        clf.fit(X, Y)
+
+        # Test ascii bytes (str is bytes in python2)
+        clf = svm.SVC(kernel=str('linear'))
+        clf.fit(X, Y)
+    else:
+        # Test unicode (str is unicode in python3)
+        clf = svm.SVC(kernel=str('linear'))
+        clf.fit(X, Y)
+
+        # Test ascii bytes (same as str on python2)
+        clf = svm.SVC(kernel=bytes('linear', 'ascii'))
+        clf.fit(X, Y)
+
+    # Test default behavior on both versions
+    clf = svm.SVC(kernel='linear')
+    clf.fit(X, Y)
 
 
 def test_sparse_precomputed():

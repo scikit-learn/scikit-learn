@@ -722,7 +722,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                 max_depth, init, subsample, max_features,
+                 max_depth, min_impurity_split, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
@@ -736,6 +736,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.subsample = subsample
         self.max_features = max_features
         self.max_depth = max_depth
+        self.min_impurity_split = min_impurity_split
         self.init = init
         self.random_state = random_state
         self.alpha = alpha
@@ -1305,6 +1306,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         generally the best as it can provide a better approximation in
         some cases.
 
+        .. versionadded:: 0.18
+
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
@@ -1357,6 +1360,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
         If not None then ``max_depth`` will be ignored.
+
+    min_impurity_split : float, optional (default=1e-7)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. versionadded:: 0.18
 
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
@@ -1437,8 +1446,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0,
+                 max_depth=3, min_impurity_split=1e-7, init=None,
+                 random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto'):
 
@@ -1450,7 +1459,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_depth=max_depth, init=init, subsample=subsample,
             max_features=max_features,
             random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_split=min_impurity_split,
+            warm_start=warm_start,
             presort=presort)
 
     def _validate_y(self, y):
@@ -1660,6 +1671,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         generally the best as it can provide a better approximation in
         some cases.
 
+        .. versionadded:: 0.18
+
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
@@ -1710,6 +1723,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+
+    min_impurity_split : float, optional (default=1e-7)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. versionadded:: 0.18
 
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
@@ -1791,7 +1810,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, init=None, random_state=None,
+                 max_depth=3, min_impurity_split=1e-7, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto'):
 
@@ -1801,7 +1820,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features,
+            max_features=max_features, min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort)

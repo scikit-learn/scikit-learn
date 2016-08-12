@@ -281,12 +281,6 @@ class VectorizerMixin(object):
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
 
-    @property
-    @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
-                "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
-    def fixed_vocabulary(self):
-        return self.fixed_vocabulary_
-
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
@@ -1092,15 +1086,32 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    The actual formula used for tf-idf is tf * (idf + 1) = tf + tf * idf,
-    instead of tf * idf. The effect of this is that terms with zero idf, i.e.
-    that occur in all documents of a training set, will not be entirely
-    ignored. The formulas used to compute tf and idf depend on parameter
-    settings that correspond to the SMART notation used in IR, as follows:
+    The formula that is used to compute the tf-idf of term t is
+    tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
+    idf(d, t) = log [ n / df(d, t) ] + 1 (if ``smooth_idf=False``),
+    where n is the total number of documents and df(d, t) is the
+    document frequency; the document frequency is the number of documents d
+    that contain term t. The effect of adding "1" to the idf in the equation
+    above is that terms with zero idf, i.e., terms  that occur in all documents
+    in a training set, will not be entirely ignored.
+    (Note that the idf formula above differs from the standard
+    textbook notation that defines the idf as
+    idf(d, t) = log [ n / (df(d, t) + 1) ]).
 
-    Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
+    If ``smooth_idf=True`` (the default), the constant "1" is added to the
+    numerator and denominator of the idf as if an extra document was seen
+    containing every term in the collection exactly once, which prevents
+    zero divisions: idf(d, t) = log [ (1 + n) / 1 + df(d, t) ] + 1.
+
+    Furthermore, the formulas used to compute tf and idf depend
+    on parameter settings that correspond to the SMART notation used in IR
+    as follows:
+
+    Tf is "n" (natural) by default, "l" (logarithmic) when
+    ``sublinear_tf=True``.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
-    Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
+    Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
+    when ``norm=None``.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1126,7 +1137,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.`
     """
@@ -1159,8 +1170,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf,
-                                        diags=0, m=n_features, n=n_features)
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+                                        n=n_features, format='csr')
 
         return self
 

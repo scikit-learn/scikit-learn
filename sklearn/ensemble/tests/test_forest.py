@@ -147,7 +147,7 @@ def check_boston_criterion(name, criterion):
                           random_state=1)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
-    assert_greater(score, 0.95, "Failed with max_features=None, criterion %s "
+    assert_greater(score, 0.94, "Failed with max_features=None, criterion %s "
                                 "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
