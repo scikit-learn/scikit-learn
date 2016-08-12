@@ -1544,7 +1544,8 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
+             labels=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1577,6 +1578,10 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    labels : array-like, optional (default=None) 
+        If not provided, labels will be inferred from y_true
+        .. versionadded:: 0.18
+        
     Returns
     -------
     loss : float
@@ -1597,11 +1602,17 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     The logarithm used is the natural logarithm (base-e).
     """
     lb = LabelBinarizer()
-    T = lb.fit_transform(y_true)
+    lb.fit(labels) if labels is not None else lb.fit(y_true)
+    if labels is None and len(lb.classes_) == 1:
+        raise ValueError('y_true has only one label. Please provide '
+        'the true labels explicitly through the labels argument.')
+
+    T = lb.transform(y_true)
+
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
-
     y_pred = check_array(y_pred, ensure_2d=False)
+
     # Clipping
     Y = np.clip(y_pred, eps, 1 - eps)
 
@@ -1622,7 +1633,9 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None):
     Y = check_array(Y)
     if T.shape[1] != Y.shape[1]:
         raise ValueError("y_true and y_pred have different number of classes "
-                         "%d, %d" % (T.shape[1], Y.shape[1]))
+                         "%d, %d.\nPlease provide the true labels explicitly "
+                         "through the labels argument" %
+                         (T.shape[1], Y.shape[1]))
 
     # Renormalize
     Y /= Y.sum(axis=1)[:, np.newaxis]
