@@ -5,10 +5,14 @@
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
+
 import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
+from ...utils import _get_n_jobs
+from ...externals.joblib import Parallel, delayed
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -20,7 +24,7 @@ def check_number_of_labels(n_labels, n_samples):
 
 
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     block_size=None, random_state=None, **kwds):
+                     block_size=None, n_jobs=1, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -59,6 +63,12 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     block_size : int, optional
         The number of rows to process at a time to limit memory usage to
         O(block_size * n_samples). Default is n_samples.
+
+        .. versionadded:: 0.18
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
         .. versionadded:: 0.18
 
@@ -113,7 +123,35 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
                                       block_size=block_size, **kwds))
 
 
-def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
+def _process_block(X, labels, start, block_size, block_range, add_at,
+                   label_freqs, metric, kwds):
+    # get distances from block to every other sample
+    stop = min(start + block_size, X.shape[0])
+    if stop - start == X.shape[0]:
+        # allow pairwise_distances to use fast paths
+        block_dists = pairwise_distances(X, metric=metric, **kwds)
+    else:
+        block_dists = pairwise_distances(X[start:stop], X,
+                                         metric=metric, **kwds)
+
+    # accumulate distances from each sample to each cluster
+    clust_dists = np.bincount(add_at[:block_dists.size],
+                              block_dists.ravel())
+    clust_dists = clust_dists.reshape((stop - start, len(label_freqs)))
+
+    # intra_index selects intra-cluster distances within clust_dists
+    intra_index = (block_range[:len(clust_dists)], labels[start:stop])
+    # intra_clust_dists are averaged over cluster size outside this function
+    intra_clust_dists = clust_dists[intra_index]
+    # of the remaining distances we normalise and extract the minimum
+    clust_dists[intra_index] = np.inf
+    clust_dists /= label_freqs
+    inter_clust_dists = clust_dists.min(axis=1)
+    return intra_clust_dists, inter_clust_dists
+
+
+def silhouette_samples(X, labels, metric='euclidean', block_size=None,
+                       n_jobs=1, **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -153,7 +191,13 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
 
     block_size : int, optional
         The number of rows to process at a time to limit memory usage to
-        O(block_size * n_samples). Default is n_samples.
+        O(block_size * n_samples). Default is n_samples / n_jobs.
+
+        .. versionadded:: 0.18
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
         .. versionadded:: 0.18
 
@@ -179,51 +223,49 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None, **kwds):
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples = len(labels)
-    n_clusters = len(le.classes_)
-    class_freqs = np.bincount(labels)
-    class_freqs_minus_1 = class_freqs - 1
+    label_freqs = np.bincount(labels)
 
+    n_jobs = _get_n_jobs(n_jobs)
     if block_size is None:
-        block_size = n_samples
+        block_size = int(np.ceil(n_samples / n_jobs))
     elif block_size > n_samples:
         block_size = min(block_size, n_samples)
+    # note block_size > (n_samples / n_jobs) just means not all
+    # available CPUs are used
 
     intra_clust_dists = []
     inter_clust_dists = []
 
+    # We use these indices as bins to accumulate distances from each sample in
+    # a block to each cluster.
+    # NB: we currently use np.bincount but could use np.add.at when Numpy >=1.8
+    # is minimum dependency, which would avoid materialising this index.
     add_at = np.ravel_multi_index((np.repeat(np.arange(block_size), n_samples),
                                    np.tile(labels, block_size)),
-                                  dims=(block_size, n_clusters))
+                                  dims=(block_size, len(label_freqs)))
     block_range = np.arange(block_size)
+    parallel = Parallel(n_jobs=n_jobs)
 
-    for start in range(0, n_samples, block_size):
-        stop = min(start + block_size, n_samples)
-        if stop - start == n_samples:
-            block_dists = pairwise_distances(X, metric=metric, **kwds)
-        else:
-            block_dists = pairwise_distances(X[start:stop], X,
-                                             metric=metric, **kwds)
-        clust_dists = np.bincount(add_at[:block_dists.size],
-                                  block_dists.ravel())
-        clust_dists = clust_dists.reshape((stop - start, n_clusters))
-        intra_index = (block_range[:len(clust_dists)], labels[start:stop])
+    results = parallel(delayed(_process_block)(X, labels, start, block_size,
+                                               block_range, add_at,
+                                               label_freqs, metric, kwds)
+                       for start in range(0, n_samples, block_size))
 
-        denom = class_freqs_minus_1.take(labels[start:stop], mode='clip')
-        with np.errstate(divide="ignore", invalid="ignore"):
-            intra_clust_dists.append(clust_dists[intra_index] / denom)
-        clust_dists[intra_index] = np.inf
-        clust_dists /= class_freqs
-        inter_clust_dists.append(clust_dists.min(axis=1))
-
+    intra_clust_dists, inter_clust_dists = zip(*results)
     if len(intra_clust_dists) == 1:
         intra_clust_dists = intra_clust_dists[0]
         inter_clust_dists = inter_clust_dists[0]
     else:
         intra_clust_dists = np.hstack(intra_clust_dists)
         inter_clust_dists = np.hstack(inter_clust_dists)
+
+    denom = (label_freqs - 1).take(labels, mode='clip')
+    with np.errstate(divide="ignore", invalid="ignore"):
+        intra_clust_dists /= denom
 
     sil_samples = inter_clust_dists - intra_clust_dists
     with np.errstate(divide="ignore", invalid="ignore"):
