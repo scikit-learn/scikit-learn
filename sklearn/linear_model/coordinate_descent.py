@@ -27,13 +27,6 @@ from ..utils.validation import column_or_1d
 from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
-import struct
-
-if (struct.calcsize("P") * 8 == 64
-    and int(np.__version__.split('.')[1]) >= 10):
-    VALID_FOR_32_INPUT = True
-else:
-    VALID_FOR_32_INPUT = False
 
 
 ###############################################################################
@@ -382,11 +375,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
     if check_input:
-        if VALID_FOR_32_INPUT:
-            dtype = [np.float64, np.float32]
-        else:
-            dtype = np.float64
-        X = check_array(X, 'csc', dtype=dtype, order='F', copy=copy_X)
+        X = check_array(X, 'csc', dtype=[np.float64, np.float32],
+                        order='F', copy=copy_X)
         y = check_array(y, 'csc', dtype=X.dtype.type, order='F', copy=False,
                         ensure_2d=False)
         if Xy is not None:
@@ -684,12 +674,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         # when bypassing checks
         if check_input:
             y = np.asarray(y)
-            if VALID_FOR_32_INPUT:
-                dtype = [np.float64, np.float32]
-            else:
-                dtype = np.float64
             X, y = check_X_y(X, y, accept_sparse='csc',
-                                order='F', dtype=dtype,
+                                order='F', dtype=[np.float64, np.float32],
                                 copy=self.copy_X and self.fit_intercept,
                                 multi_output=True, y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
