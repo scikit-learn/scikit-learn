@@ -464,7 +464,7 @@ The number of weak learners (i.e. regression trees) is controlled by the paramet
 .. note::
 
    Classification with more than 2 classes requires the induction
-   of ``n_classes`` regression trees at each at each iteration,
+   of ``n_classes`` regression trees at each iteration,
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
