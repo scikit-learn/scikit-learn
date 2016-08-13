@@ -134,7 +134,7 @@ def test_cross_validator_with_default_params():
     n_unique_labels = 4
     n_folds = 2
     p = 2
-    n_splits= 10  # (the default value)
+    n_splits = 10  # (the default value)
 
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     X_1d = np.array([1, 2, 3, 4])
@@ -653,7 +653,7 @@ def test_label_shuffle_split():
 
     for l in labels:
         X = y = np.ones(len(l))
-        n_splits= 6
+        n_splits = 6
         test_size = 1./3
         slo = LabelShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
