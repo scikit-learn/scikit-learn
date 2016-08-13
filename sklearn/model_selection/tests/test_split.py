@@ -134,7 +134,7 @@ def test_cross_validator_with_default_params():
     n_unique_labels = 4
     n_folds = 2
     p = 2
-    n_iter = 10  # (the default value)
+    n_splits= 10  # (the default value)
 
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     X_1d = np.array([1, 2, 3, 4])
@@ -155,19 +155,19 @@ def test_cross_validator_with_default_params():
     skf_repr = "StratifiedKFold(n_folds=2, random_state=None, shuffle=False)"
     lolo_repr = "LeaveOneLabelOut()"
     lopo_repr = "LeavePLabelOut(n_labels=2)"
-    ss_repr = ("ShuffleSplit(n_iter=10, random_state=0, test_size=0.1, "
+    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
-    n_splits = [n_samples, comb(n_samples, p), n_folds, n_folds,
-                n_unique_labels, comb(n_unique_labels, p), n_iter, 2]
+    splits_cnts = [n_samples, comb(n_samples, p), n_folds, n_folds,
+                   n_unique_labels, comb(n_unique_labels, p), n_splits, 2]
 
     for i, (cv, cv_repr) in enumerate(zip(
             [loo, lpo, kf, skf, lolo, lopo, ss, ps],
             [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
              ss_repr, ps_repr])):
         # Test if get_n_splits works correctly
-        assert_equal(n_splits[i], cv.get_n_splits(X, y, labels))
+        assert_equal(splits_cnts[i], cv.get_n_splits(X, y, labels))
 
         # Test if the cross-validator works as expected even if
         # the data is 1d
@@ -194,13 +194,13 @@ def check_valid_split(train, test, n_samples=None):
         assert_equal(train.union(test), set(range(n_samples)))
 
 
-def check_cv_coverage(cv, X, y, labels, expected_n_iter=None):
+def check_cv_coverage(cv, X, y, labels, expected_n_splits=None):
     n_samples = _num_samples(X)
     # Check that a all the samples appear at least once in a test fold
-    if expected_n_iter is not None:
-        assert_equal(cv.get_n_splits(X, y, labels), expected_n_iter)
+    if expected_n_splits is not None:
+        assert_equal(cv.get_n_splits(X, y, labels), expected_n_splits)
     else:
-        expected_n_iter = cv.get_n_splits(X, y, labels)
+        expected_n_splits = cv.get_n_splits(X, y, labels)
 
     collected_test_samples = set()
     iterations = 0
@@ -210,7 +210,7 @@ def check_cv_coverage(cv, X, y, labels, expected_n_iter=None):
         collected_test_samples.update(test)
 
     # Check that the accumulated test samples cover the whole dataset
-    assert_equal(iterations, expected_n_iter)
+    assert_equal(iterations, expected_n_splits)
     if n_samples is not None:
         assert_equal(collected_test_samples, set(range(n_samples)))
 
@@ -234,7 +234,7 @@ def test_kfold_valueerrors():
     # side of the split at each split
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        check_cv_coverage(skf_3, X2, y, labels=None, expected_n_iter=3)
+        check_cv_coverage(skf_3, X2, y, labels=None, expected_n_splits=3)
 
     # Check that errors are raised if all n_labels for individual
     # classes are less than n_folds.
@@ -266,13 +266,13 @@ def test_kfold_indices():
     # Check all indices are returned in the test folds
     X1 = np.ones(18)
     kf = KFold(3)
-    check_cv_coverage(kf, X1, y=None, labels=None, expected_n_iter=3)
+    check_cv_coverage(kf, X1, y=None, labels=None, expected_n_splits=3)
 
     # Check all indices are returned in the test folds even when equal-sized
     # folds are not possible
     X2 = np.ones(17)
     kf = KFold(3)
-    check_cv_coverage(kf, X2, y=None, labels=None, expected_n_iter=3)
+    check_cv_coverage(kf, X2, y=None, labels=None, expected_n_splits=3)
 
     # Check if get_n_splits returns the number of folds
     assert_equal(5, KFold(5).get_n_splits(X2))
@@ -441,7 +441,7 @@ def test_shuffle_stratifiedkfold():
     for (_, test0), (_, test1) in zip(kf0.split(X_40, y),
                                       kf1.split(X_40, y)):
         assert_not_equal(set(test0), set(test1))
-    check_cv_coverage(kf0, X_40, y, labels=None, expected_n_iter=5)
+    check_cv_coverage(kf0, X_40, y, labels=None, expected_n_splits=5)
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -562,7 +562,7 @@ def test_stratified_shuffle_split_even():
     # Test the StratifiedShuffleSplit, indices are drawn with a
     # equal chance
     n_folds = 5
-    n_iter = 1000
+    n_splits = 1000
 
     def assert_counts_are_ok(idx_counts, p):
         # Here we test that the distribution of the counts
@@ -577,19 +577,19 @@ def test_stratified_shuffle_split_even():
 
     for n_samples in (6, 22):
         labels = np.array((n_samples // 2) * [0, 1])
-        splits = StratifiedShuffleSplit(n_iter=n_iter,
+        splits = StratifiedShuffleSplit(n_splits=n_splits,
                                         test_size=1. / n_folds,
                                         random_state=0)
 
         train_counts = [0] * n_samples
         test_counts = [0] * n_samples
-        n_splits = 0
+        splits_cnt = 0
         for train, test in splits.split(X=np.ones(n_samples), y=labels):
-            n_splits += 1
+            splits_cnt += 1
             for counter, ids in [(train_counts, train), (test_counts, test)]:
                 for id in ids:
                     counter[id] += 1
-        assert_equal(n_splits, n_iter)
+        assert_equal(splits_cnt, n_splits)
 
         n_train, n_test = _validate_shuffle_split(n_samples,
                                                   test_size=1./n_folds,
@@ -616,7 +616,7 @@ def test_stratified_shuffle_split_overlap_train_test_bug():
     y = [0, 1, 2, 3] * 3 + [4, 5] * 5
     X = np.ones_like(y)
 
-    splits = StratifiedShuffleSplit(n_iter=1,
+    splits = StratifiedShuffleSplit(n_splits=1,
                                     test_size=0.5, random_state=0)
 
     train, test = next(iter(splits.split(X=X, y=y)))
@@ -653,15 +653,15 @@ def test_label_shuffle_split():
 
     for l in labels:
         X = y = np.ones(len(l))
-        n_iter = 6
+        n_splits= 6
         test_size = 1./3
-        slo = LabelShuffleSplit(n_iter, test_size=test_size, random_state=0)
+        slo = LabelShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
         # Make sure the repr works
         repr(slo)
 
         # Test that the length is correct
-        assert_equal(slo.get_n_splits(X, y, labels=l), n_iter)
+        assert_equal(slo.get_n_splits(X, y, labels=l), n_splits)
 
         l_unique = np.unique(l)
 
@@ -992,7 +992,7 @@ def test_nested_cv():
     labels = rng.randint(0, 5, 15)
 
     cvs = [LeaveOneLabelOut(), LeaveOneOut(), LabelKFold(), StratifiedKFold(),
-           StratifiedShuffleSplit(n_iter=3, random_state=0)]
+           StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},

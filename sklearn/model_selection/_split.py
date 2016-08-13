@@ -803,10 +803,10 @@ class LeavePLabelOut(BaseCrossValidator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
                  random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
-        self.n_iter = n_iter
+        self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
@@ -862,7 +862,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return self.n_iter
+        return self.n_splits
 
     def __repr__(self):
         return _build_repr(self)
@@ -881,7 +881,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_iter : int (default 10)
+    n_splits : int (default 10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float, int, or None, default 0.1
@@ -904,18 +904,18 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> from sklearn.model_selection import ShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
-    >>> rs = ShuffleSplit(n_iter=3, test_size=.25, random_state=0)
+    >>> rs = ShuffleSplit(n_splits=3, test_size=.25, random_state=0)
     >>> rs.get_n_splits(X)
     3
     >>> print(rs)
-    ShuffleSplit(n_iter=3, random_state=0, test_size=0.25, train_size=None)
+    ShuffleSplit(n_splits=3, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
     TRAIN: [3 1 0] TEST: [2]
     TRAIN: [2 1 3] TEST: [0]
     TRAIN: [0 2 1] TEST: [3]
-    >>> rs = ShuffleSplit(n_iter=3, train_size=0.5, test_size=.25,
+    >>> rs = ShuffleSplit(n_splits=3, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -930,7 +930,7 @@ class ShuffleSplit(BaseShuffleSplit):
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         rng = check_random_state(self.random_state)
-        for i in range(self.n_iter):
+        for i in range(self.n_splits):
             # random partition
             permutation = rng.permutation(n_samples)
             ind_test = permutation[:n_test]
@@ -955,7 +955,7 @@ class LabelShuffleSplit(ShuffleSplit):
 
     For example, a less computationally intensive alternative to
     ``LeavePLabelOut(p=10)`` would be
-    ``LabelShuffleSplit(test_size=10, n_iter=100)``.
+    ``LabelShuffleSplit(test_size=10, n_splits=100)``.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
     not to samples, as in ShuffleSplit.
@@ -963,7 +963,7 @@ class LabelShuffleSplit(ShuffleSplit):
 
     Parameters
     ----------
-    n_iter : int (default 5)
+    n_splits : int (default 5)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.2), int, or None
@@ -982,10 +982,10 @@ class LabelShuffleSplit(ShuffleSplit):
         Pseudo-random number generator state used for random sampling.
     '''
 
-    def __init__(self, n_iter=5, test_size=0.2, train_size=None,
+    def __init__(self, n_splits=5, test_size=0.2, train_size=None,
                  random_state=None):
         super(LabelShuffleSplit, self).__init__(
-            n_iter=n_iter,
+            n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
             random_state=random_state)
@@ -1022,7 +1022,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_iter : int (default 10)
+    n_splits : int (default 10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.1), int, or None
@@ -1045,11 +1045,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> from sklearn.model_selection import StratifiedShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> sss = StratifiedShuffleSplit(n_iter=3, test_size=0.5, random_state=0)
+    >>> sss = StratifiedShuffleSplit(n_splits=3, test_size=0.5, random_state=0)
     >>> sss.get_n_splits(X, y)
     3
     >>> print(sss)       # doctest: +ELLIPSIS
-    StratifiedShuffleSplit(n_iter=3, random_state=0, ...)
+    StratifiedShuffleSplit(n_splits=3, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -1059,10 +1059,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
                  random_state=None):
         super(StratifiedShuffleSplit, self).__init__(
-            n_iter, test_size, train_size, random_state)
+            n_splits, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, labels=None):
         n_samples = _num_samples(X)
@@ -1093,7 +1093,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         t_i = np.minimum(class_counts - n_i,
                          np.round(n_test * p_i).astype(int))
 
-        for _ in range(self.n_iter):
+        for _ in range(self.n_splits):
             train = []
             test = []
 
