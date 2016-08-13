@@ -62,7 +62,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
 
     block_size : int, optional
         The number of rows to process at a time to limit memory usage to
-        O(block_size * n_jobs * n_samples). Default is n_samples / n_jobs.
+        ``O(block_size * n_jobs * n_samples)``.
+        Default is ``n_samples / n_jobs``.
 
         .. versionadded:: 0.18
 
@@ -191,7 +192,8 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None,
 
     block_size : int, optional
         The number of rows to process at a time to limit memory usage to
-        O(block_size * n_jobs * n_samples). Default is n_samples / n_jobs.
+        ``O(block_size * n_jobs * n_samples)``.
+        Default is ``n_samples / n_jobs``.
 
         .. versionadded:: 0.18
 
