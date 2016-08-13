@@ -35,21 +35,22 @@ def test_silhouette():
         assert_almost_equal(score_precomputed, score_euclidean)
 
         # test block_size
-        score_batched = silhouette_score(X, y, block_size=17,
+        score_batched = silhouette_score(X, y, block_size=10000,
                                          metric='euclidean')
         assert_almost_equal(score_batched, score_euclidean)
-        score_batched = silhouette_score(D, y, block_size=17,
+        score_batched = silhouette_score(D, y, block_size=10000,
                                          metric='precomputed')
         assert_almost_equal(score_batched, score_euclidean)
-        score_batched = silhouette_score(D, y, block_size=len(y) + 10,
+        # absurdly large block_size
+        score_batched = silhouette_score(D, y, block_size=1e100,
                                          metric='precomputed')
         assert_almost_equal(score_batched, score_euclidean)
 
-        # smoke test n_jobs with and without block_size
-        score_parallel = silhouette_score(X, y, block_size=None,
+        # smoke test n_jobs with and without explicit block_size
+        score_parallel = silhouette_score(X, y,
                                           n_jobs=2, metric='euclidean')
         assert_almost_equal(score_parallel, score_euclidean)
-        score_parallel = silhouette_score(X, y, block_size=50,
+        score_parallel = silhouette_score(X, y, block_size=5000,
                                           n_jobs=2, metric='euclidean')
         assert_almost_equal(score_parallel, score_euclidean)
 
@@ -74,6 +75,14 @@ def test_silhouette():
             score_dense_with_sampling = score_precomputed
         else:
             assert_almost_equal(score_euclidean, score_dense_with_sampling)
+
+
+def test_silhouette_invalid_block_size():
+    X = [[0], [0], [1]]
+    y = [1, 1, 2]
+    assert_raise_message(ValueError, 'block_size should be at least n_samples '
+                         '* 8 = 24 bytes, got 1',
+                         silhouette_score, X, y, block_size=1)
 
 
 def test_no_nan():

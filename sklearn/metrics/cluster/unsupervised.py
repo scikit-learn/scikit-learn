@@ -23,8 +23,13 @@ def check_number_of_labels(n_labels, n_samples):
                          "to n_samples - 1 (inclusive)" % n_labels)
 
 
+DEFAULT_BLOCK_SIZE = 2 ** 26
+BYTES_PER_FLOAT = 8
+
+
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     block_size=None, n_jobs=1, random_state=None, **kwds):
+                     block_size=DEFAULT_BLOCK_SIZE, n_jobs=1,
+                     random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -61,9 +66,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         array itself, use ``metric="precomputed"``.
 
     block_size : int, optional
-        The number of rows to process at a time to limit memory usage to
-        ``O(block_size * n_jobs * n_samples)``.
-        Default is ``n_samples / n_jobs``.
+        The maximum number of bytes of memory per job (see ``n_jobs``) to use
+        at a time for calculating pairwise distances. Default is 64MiB.
 
         .. versionadded:: 0.18
 
@@ -124,10 +128,10 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
                                       block_size=block_size, **kwds))
 
 
-def _process_block(X, labels, start, block_size, block_range, add_at,
+def _process_block(X, labels, start, block_n_rows, block_range, add_at,
                    label_freqs, metric, kwds):
     # get distances from block to every other sample
-    stop = min(start + block_size, X.shape[0])
+    stop = min(start + block_n_rows, X.shape[0])
     if stop - start == X.shape[0]:
         # allow pairwise_distances to use fast paths
         block_dists = pairwise_distances(X, metric=metric, **kwds)
@@ -151,8 +155,8 @@ def _process_block(X, labels, start, block_size, block_range, add_at,
     return intra_clust_dists, inter_clust_dists
 
 
-def silhouette_samples(X, labels, metric='euclidean', block_size=None,
-                       n_jobs=1, **kwds):
+def silhouette_samples(X, labels, metric='euclidean',
+                       block_size=DEFAULT_BLOCK_SIZE, n_jobs=1, **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -191,9 +195,8 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None,
         the distance array itself, use "precomputed" as the metric.
 
     block_size : int, optional
-        The number of rows to process at a time to limit memory usage to
-        ``O(block_size * n_jobs * n_samples)``.
-        Default is ``n_samples / n_jobs``.
+        The maximum number of bytes of memory per job (see ``n_jobs``) to use
+        at a time for calculating pairwise distances. Default is 64MiB.
 
         .. versionadded:: 0.18
 
@@ -232,12 +235,14 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None,
     label_freqs = np.bincount(labels)
 
     n_jobs = _get_n_jobs(n_jobs)
-    if block_size is None:
-        block_size = int(np.ceil(n_samples / n_jobs))
-    elif block_size > n_samples:
-        block_size = min(block_size, n_samples)
-    # note block_size > (n_samples / n_jobs) just means not all
-    # available CPUs are used
+    block_n_rows = block_size // (BYTES_PER_FLOAT * n_samples)
+    if block_n_rows > n_samples:
+        block_n_rows = min(block_n_rows, n_samples)
+    if block_n_rows < 1:
+        raise ValueError('block_size should be at least n_samples * %d = %d '
+                         'bytes, got %r' % (BYTES_PER_FLOAT,
+                                            n_samples * BYTES_PER_FLOAT,
+                                            block_size))
 
     intra_clust_dists = []
     inter_clust_dists = []
@@ -246,16 +251,16 @@ def silhouette_samples(X, labels, metric='euclidean', block_size=None,
     # a block to each cluster.
     # NB: we currently use np.bincount but could use np.add.at when Numpy >=1.8
     # is minimum dependency, which would avoid materialising this index.
-    add_at = np.ravel_multi_index((np.repeat(np.arange(block_size), n_samples),
-                                   np.tile(labels, block_size)),
-                                  dims=(block_size, len(label_freqs)))
-    block_range = np.arange(block_size)
+    block_range = np.arange(block_n_rows)
+    add_at = np.ravel_multi_index((np.repeat(block_range, n_samples),
+                                   np.tile(labels, block_n_rows)),
+                                  dims=(block_n_rows, len(label_freqs)))
     parallel = Parallel(n_jobs=n_jobs)
 
-    results = parallel(delayed(_process_block)(X, labels, start, block_size,
+    results = parallel(delayed(_process_block)(X, labels, start, block_n_rows,
                                                block_range, add_at,
                                                label_freqs, metric, kwds)
-                       for start in range(0, n_samples, block_size))
+                       for start in range(0, n_samples, block_n_rows))
 
     intra_clust_dists, inter_clust_dists = zip(*results)
     if len(intra_clust_dists) == 1:
