@@ -19,6 +19,8 @@ from .bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
+INTEGER_TYPES = (numbers.Integral, np.integer)
+
 
 class IsolationForest(BaseBagging):
     """Isolation Forest Algorithm
@@ -66,8 +68,8 @@ class IsolationForest(BaseBagging):
             - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
-        If True, individual trees are fit on random subsets of the training 
-        data sampled with replacement. If False, sampling without replacement 
+        If True, individual trees are fit on random subsets of the training
+        data sampled with replacement. If False, sampling without replacement
         is performed.
 
     n_jobs : integer, optional (default=1)
@@ -170,7 +172,7 @@ class IsolationForest(BaseBagging):
                                  'Valid choices are: "auto", int or'
                                  'float' % self.max_samples)
 
-        elif isinstance(self.max_samples, numbers.Integral):
+        elif isinstance(self.max_samples, INTEGER_TYPES):
             if self.max_samples > n_samples:
                 warn("max_samples (%s) is greater than the "
                      "total number of samples (%s). max_samples "
@@ -181,7 +183,8 @@ class IsolationForest(BaseBagging):
                 max_samples = self.max_samples
         else:  # float
             if not (0. < self.max_samples <= 1.):
-                raise ValueError("max_samples must be in (0, 1]")
+                raise ValueError("max_samples must be in (0, 1], got %r"
+                                 % self.max_samples)
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
@@ -280,7 +283,7 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, numbers.Integral):
+    if isinstance(n_samples_leaf, INTEGER_TYPES):
         if n_samples_leaf <= 1:
             return 1.
         else:
