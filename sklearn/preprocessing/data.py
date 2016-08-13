@@ -1,3 +1,4 @@
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -398,7 +399,8 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     .. versionadded:: 0.17
-       *minmax_scale* function interface to :class:`sklearn.preprocessing.MinMaxScaler`.
+       *minmax_scale* function interface
+       to :class:`sklearn.preprocessing.MinMaxScaler`.
 
     Parameters
     ----------
@@ -523,7 +525,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
+    @deprecated("Attribute ``std_`` will be removed in 0.19. "
+                "Use ``scale_`` instead")
     def std_(self):
         return self.scale_
 
@@ -897,8 +900,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
-    the Interquartile Range (IQR). The IQR is the range between the 1st
-    quartile (25th quantile) and the 3rd quartile (75th quantile).
+    the quantile range (defaults to IQR: Interquartile Range).
+    The IQR is the range between the 1st quartile (25th quantile)
+    and the 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
     sample, depending on the `axis` argument) by computing the relevant
@@ -927,6 +931,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     with_scaling : boolean, True by default
         If True, scale the data to interquartile range.
+
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
+        Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
+        Quantile range used to calculate scale_
+
+        .. versionadded:: 0.18
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -960,9 +970,11 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 
-    def __init__(self, with_centering=True, with_scaling=True, copy=True):
+    def __init__(self, with_centering=True, with_scaling=True,
+                 quantile_range=(25.0, 75.0), copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
+        self.quantile_range = quantile_range
         self.copy = copy
 
     def _check_array(self, X, copy):
@@ -998,7 +1010,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             self.center_ = np.median(X, axis=0)
 
         if self.with_scaling:
-            q = np.percentile(X, (25, 75), axis=0)
+
+            if not 0 <= self.quantile_range[0] <= self.quantile_range[1] <= 100:
+                raise ValueError("Invalid quantile range: %s" %
+                                 str(self.quantile_range))
+
+            q = np.percentile(X, self.quantile_range, axis=0)
             self.scale_ = (q[1] - q[0])
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
@@ -1056,7 +1073,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
+def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
+                 quantile_range=(25.0, 75.0), copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1080,6 +1098,12 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
     with_scaling : boolean, True by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
+
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
+        Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
+        Quantile range used to calculate scale_
+
+        .. versionadded:: 0.18
 
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
@@ -1105,7 +1129,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     copy=copy)
+                     quantile_range=quantile_range, copy=copy)
     if axis == 0:
         return s.fit_transform(X)
     else:
@@ -1724,7 +1748,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         - int : number of categorical values per feature.
                 Each feature value should be in ``range(n_values)``
         - array : ``n_values[i]`` is the number of categorical values in
-                  ``X[:, i]``. Each feature value should be in ``range(n_values[i])``
+                  ``X[:, i]``. Each feature value should be
+                  in ``range(n_values[i])``
 
     categorical_features: "all" or array of indices or mask
         Specify what features are treated as categorical.
