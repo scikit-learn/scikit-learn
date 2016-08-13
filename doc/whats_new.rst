@@ -326,7 +326,7 @@ Bug fixes
       By `Ibraim Ganiev`_.
 
     - :func:`silhouette_score` now supports sparse input, and this also fixes
-      `example_gaussian_process_plot_gp_regression.py`. 
+      examples/text/document_clustering.py. 
       By `YenChen Lin`_.
 
 API changes summary
