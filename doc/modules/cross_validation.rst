@@ -137,7 +137,7 @@ validation iterator instead, for instance::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> n_samples = iris.data.shape[0]
-  >>> cv = ShuffleSplit(n_iter=3, test_size=0.3, random_state=0)
+  >>> cv = ShuffleSplit(n_splits=3, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.97...,  0.97...,  1.        ])
@@ -454,7 +454,7 @@ Here is a usage example::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> X = np.arange(5)
-  >>> ss = ShuffleSplit(n_iter=3, test_size=0.25,
+  >>> ss = ShuffleSplit(n_splits=3, test_size=0.25,
   ...     random_state=0)
   >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
@@ -485,7 +485,7 @@ Here is a usage example::
   >>> X = [0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001]
   >>> y = ["a", "b", "b", "b", "c", "c", "c", "a"]
   >>> labels = [1, 1, 2, 2, 3, 3, 4, 4]
-  >>> lss = LabelShuffleSplit(n_iter=4, test_size=0.5, random_state=0)
+  >>> lss = LabelShuffleSplit(n_splits=4, test_size=0.5, random_state=0)
   >>> for train, test in lss.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   ...
