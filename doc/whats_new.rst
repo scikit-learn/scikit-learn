@@ -329,9 +329,8 @@ Bug fixes
       (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
       By `Ibraim Ganiev`_.
 
-    - :func:`silhouette_score` now again supports sparse input, and this also fixes
-      examples/text/document_clustering.py. 
-      By `YenChen Lin`_.
+    - Fix sparse input support in :func:`silhouette_score` as well as example
+      examples/text/document_clustering.py. By `YenChen Lin`_.
 
 API changes summary
 -------------------
