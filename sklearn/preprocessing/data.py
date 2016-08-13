@@ -1,4 +1,3 @@
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -124,7 +123,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-    """
+    """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
                     dtype=FLOAT_DTYPES)
@@ -419,7 +418,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-    """
+    """  # noqa
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
     # Although, we want to allow the users to keep calling this function
@@ -517,7 +516,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     :class:`sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
-    """
+    """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
@@ -868,7 +867,7 @@ def maxabs_scale(X, axis=0, copy=True):
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-    """
+    """  # noqa
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
     # Although, we want to allow the users to keep calling this function
@@ -960,7 +959,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     robust_scale: Equivalent function without the object oriented API.
 
     :class:`sklearn.decomposition.PCA`
-        Further removes the linear correlation across features with 'whiten=True'.
+        Further removes the linear correlation across features with
+        'whiten=True'.
 
     Notes
     -----
@@ -1010,8 +1010,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             self.center_ = np.median(X, axis=0)
 
         if self.with_scaling:
-
-            if not 0 <= self.quantile_range[0] <= self.quantile_range[1] <= 100:
+            q_min, q_max = self.quantile_range
+            if not 0 <= q_min <= q_max <= 100:
                 raise ValueError("Invalid quantile range: %s" %
                                  str(self.quantile_range))
 
@@ -1841,7 +1841,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
         if (isinstance(self.n_values, six.string_types) and
-            self.n_values == 'auto'):
+                self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
             if (np.max(X, axis=0) >= self.n_values).any():
@@ -1874,7 +1874,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
 
         if (isinstance(self.n_values, six.string_types) and
-            self.n_values == 'auto'):
+                self.n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -1926,7 +1926,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
         if (isinstance(self.n_values, six.string_types) and
-            self.n_values == 'auto'):
+                self.n_values == 'auto'):
             out = out[:, self.active_features_]
 
         return out if self.sparse else out.toarray()
