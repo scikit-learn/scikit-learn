@@ -132,7 +132,7 @@ class MockClassifier(object):
 def test_cross_validator_with_default_params():
     n_samples = 4
     n_unique_labels = 4
-    n_folds = 2
+    n_splits = 2
     p = 2
     n_splits = 10  # (the default value)
 
@@ -142,8 +142,8 @@ def test_cross_validator_with_default_params():
     labels = np.array([1, 2, 3, 4])
     loo = LeaveOneOut()
     lpo = LeavePOut(p)
-    kf = KFold(n_folds)
-    skf = StratifiedKFold(n_folds)
+    kf = KFold(n_splits)
+    skf = StratifiedKFold(n_splits)
     lolo = LeaveOneLabelOut()
     lopo = LeavePLabelOut(p)
     ss = ShuffleSplit(random_state=0)
@@ -151,15 +151,15 @@ def test_cross_validator_with_default_params():
 
     loo_repr = "LeaveOneOut()"
     lpo_repr = "LeavePOut(p=2)"
-    kf_repr = "KFold(n_folds=2, random_state=None, shuffle=False)"
-    skf_repr = "StratifiedKFold(n_folds=2, random_state=None, shuffle=False)"
+    kf_repr = "KFold(n_splits=2, random_state=None, shuffle=False)"
+    skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
     lolo_repr = "LeaveOneLabelOut()"
     lopo_repr = "LeavePLabelOut(n_labels=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
-    splits_cnts = [n_samples, comb(n_samples, p), n_folds, n_folds,
+    splits_cnts = [n_samples, comb(n_samples, p), n_splits, n_splits,
                    n_unique_labels, comb(n_unique_labels, p), n_splits, 2]
 
     for i, (cv, cv_repr) in enumerate(zip(
@@ -237,7 +237,7 @@ def test_kfold_valueerrors():
         check_cv_coverage(skf_3, X2, y, labels=None, expected_n_splits=3)
 
     # Check that errors are raised if all n_labels for individual
-    # classes are less than n_folds.
+    # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
 
     assert_raises(ValueError, next, skf_3.split(X2, y))
@@ -252,14 +252,14 @@ def test_kfold_valueerrors():
     assert_raise_message(ValueError, error_string,
                          StratifiedKFold, 1)
 
-    # When n_folds is not integer:
+    # When n_splits is not integer:
     assert_raises(ValueError, KFold, 1.5)
     assert_raises(ValueError, KFold, 2.0)
     assert_raises(ValueError, StratifiedKFold, 1.5)
     assert_raises(ValueError, StratifiedKFold, 2.0)
 
     # When shuffle is not  a bool:
-    assert_raises(TypeError, KFold, n_folds=4, shuffle=None)
+    assert_raises(TypeError, KFold, n_splits=4, shuffle=None)
 
 
 def test_kfold_indices():
@@ -456,9 +456,9 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     X, y = digits.data[:600], digits.target[:600]
     model = SVC(C=10, gamma=0.005)
 
-    n_folds = 3
+    n_splits = 3
 
-    cv = KFold(n_folds=n_folds, shuffle=False)
+    cv = KFold(n_splits=n_splits, shuffle=False)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(0.92, mean_score)
     assert_greater(mean_score, 0.80)
@@ -467,11 +467,11 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # overfitting of the model with regards to the writing style of the authors
     # by yielding a seriously overestimated score:
 
-    cv = KFold(n_folds, shuffle=True, random_state=0)
+    cv = KFold(n_splits, shuffle=True, random_state=0)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(mean_score, 0.92)
 
-    cv = KFold(n_folds, shuffle=True, random_state=1)
+    cv = KFold(n_splits, shuffle=True, random_state=1)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(mean_score, 0.92)
 
@@ -482,7 +482,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # the estimated mean score is close to the score measured with
     # non-shuffled KFold
 
-    cv = StratifiedKFold(n_folds)
+    cv = StratifiedKFold(n_splits)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
     assert_greater(0.93, mean_score)
     assert_greater(mean_score, 0.80)
@@ -561,7 +561,7 @@ def test_stratified_shuffle_split_iter():
 def test_stratified_shuffle_split_even():
     # Test the StratifiedShuffleSplit, indices are drawn with a
     # equal chance
-    n_folds = 5
+    n_splits = 5
     n_splits = 1000
 
     def assert_counts_are_ok(idx_counts, p):
@@ -578,7 +578,7 @@ def test_stratified_shuffle_split_even():
     for n_samples in (6, 22):
         labels = np.array((n_samples // 2) * [0, 1])
         splits = StratifiedShuffleSplit(n_splits=n_splits,
-                                        test_size=1. / n_folds,
+                                        test_size=1. / n_splits,
                                         random_state=0)
 
         train_counts = [0] * n_samples
@@ -592,15 +592,15 @@ def test_stratified_shuffle_split_even():
         assert_equal(splits_cnt, n_splits)
 
         n_train, n_test = _validate_shuffle_split(n_samples,
-                                                  test_size=1./n_folds,
-                                                  train_size=1.-(1./n_folds))
+                                                  test_size=1./n_splits,
+                                                  train_size=1.-(1./n_splits))
 
         assert_equal(len(train), n_train)
         assert_equal(len(test), n_test)
         assert_equal(len(set(train).intersection(test)), 0)
 
         label_counts = np.unique(labels)
-        assert_equal(splits.test_size, 1.0 / n_folds)
+        assert_equal(splits.test_size, 1.0 / n_splits)
         assert_equal(n_train + n_test, len(labels))
         assert_equal(len(label_counts), 2)
         ex_test_p = float(n_test) / n_samples
@@ -877,7 +877,7 @@ def test_check_cv():
     with warnings.catch_warnings(record=True):
         from sklearn.cross_validation import StratifiedKFold as OldSKF
 
-    cv2 = check_cv(OldSKF(y_multiclass, n_folds=3))
+    cv2 = check_cv(OldSKF(y_multiclass, n_splits=3))
     np.testing.assert_equal(list(cv1.split(X, y_multiclass)),
                             list(cv2.split()))
 
@@ -890,7 +890,7 @@ def test_cv_iterable_wrapper():
     with warnings.catch_warnings(record=True):
         from sklearn.cross_validation import StratifiedKFold as OldSKF
 
-    cv = OldSKF(y_multiclass, n_folds=3)
+    cv = OldSKF(y_multiclass, n_splits=3)
     wrapped_old_skf = _CVIterableWrapper(cv)
 
     # Check if split works correctly
@@ -906,7 +906,7 @@ def test_label_kfold():
     # Parameters of the test
     n_labels = 15
     n_samples = 1000
-    n_folds = 5
+    n_splits = 5
 
     X = y = np.ones(n_samples)
 
@@ -914,12 +914,12 @@ def test_label_kfold():
     tolerance = 0.05 * n_samples  # 5 percent error allowed
     labels = rng.randint(0, n_labels, n_samples)
 
-    ideal_n_labels_per_fold = n_samples // n_folds
+    ideal_n_labels_per_fold = n_samples // n_splits
 
     len(np.unique(labels))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = LabelKFold(n_folds=n_folds)
+    lkf = LabelKFold(n_splits=n_splits)
     for i, (_, test) in enumerate(lkf.split(X, y, labels)):
         folds[test] = i
 
@@ -949,9 +949,9 @@ def test_label_kfold():
 
     n_labels = len(np.unique(labels))
     n_samples = len(labels)
-    n_folds = 5
+    n_splits = 5
     tolerance = 0.05 * n_samples  # 5 percent error allowed
-    ideal_n_labels_per_fold = n_samples // n_folds
+    ideal_n_labels_per_fold = n_samples // n_splits
 
     X = y = np.ones(n_samples)
 
@@ -981,7 +981,7 @@ def test_label_kfold():
     labels = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(labels))
     assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
-                         next, LabelKFold(n_folds=3).split(X, y, labels))
+                         next, LabelKFold(n_splits=3).split(X, y, labels))
 
 
 def test_nested_cv():
