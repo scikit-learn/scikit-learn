@@ -648,19 +648,19 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
 
     Parameters
     ----------
-    n_folds : int, default=3
-        Number of folds. Must be at least 2.
+    n_splits : int, default=3
+        Number of splits. Must be at least 1.
 
     Examples
     --------
     >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> htscv = HomogeneousTimeSeriesCV(n_folds=4)
+    >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
     >>> htscv.get_n_splits(X)
     3
     >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
-    HomogeneousTimeSeriesCV(n_folds=4)
+    HomogeneousTimeSeriesCV(n_splits=3)
     >>> for train_index, test_index in htscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -673,11 +673,11 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
     -----
     Size of each fold here is same as size of each fold split by KFold.
 
-    Number of splitting iterations in this cross-validator, n_folds-1,
+    Number of splitting iterations in this cross-validator, n_splits,
     is not equal to other KFold based cross-validators'.
     """
-    def __init__(self, n_folds=3):
-        super(HomogeneousTimeSeriesCV, self).__init__(n_folds,
+    def __init__(self, n_splits=3):
+        super(HomogeneousTimeSeriesCV, self).__init__(n_splits,
                                                       shuffle=False,
                                                       random_state=None)
 
@@ -707,12 +707,13 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
         """
         X, y, labels = indexable(X, y, labels)
         n_samples = _num_samples(X)
-        if self.n_folds > n_samples:
+        n_splits = self.n_splits
+        n_folds = n_splits + 1
+        if n_folds > n_samples:
             raise ValueError(
-                ("Cannot have number of folds n_folds={0} greater"
-                 " than the number of samples: {1}.").format(self.n_folds,
+                ("Cannot have number of folds ={0} greater"
+                 " than the number of samples: {1}.").format(n_folds,
                                                              n_samples))
-        n_folds = self.n_folds
         indices = np.arange(n_samples)
         fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
         fold_sizes[:n_samples % n_folds] += 1
@@ -742,7 +743,7 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return self.n_folds-1
+        return self.n_splits
 
 
 class LeaveOneLabelOut(BaseCrossValidator):
