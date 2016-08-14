@@ -224,7 +224,7 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
   >>> from sklearn.model_selection import KFold
 
   >>> X = ["a", "b", "c", "d"]
-  >>> kf = KFold(n_folds=2)
+  >>> kf = KFold(n_splits=2)
   >>> for train, test in kf.split(X):
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -253,7 +253,7 @@ two slightly unbalanced classes::
 
   >>> X = np.ones(10)
   >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-  >>> skf = StratifiedKFold(n_folds=3)
+  >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):
   ...     print("%s %s" % (train, test))
   [2 3 6 7 8 9] [0 1 4 5]
@@ -278,7 +278,7 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
   >>> y = ["a", "b", "b", "b", "c", "c", "c", "d", "d", "d"]
   >>> labels = [1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
 
-  >>> lkf = LabelKFold(n_folds=3)
+  >>> lkf = LabelKFold(n_splits=3)
   >>> for train, test in lkf.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   [0 1 2 3 4 5] [6 7 8 9]
