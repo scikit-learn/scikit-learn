@@ -136,7 +136,7 @@ class MockEstimatorWithParameter(BaseEstimator):
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
 y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
-# The number of samples per class needs to be > n_folds, for StratifiedKFold(3)
+# The number of samples per class needs to be > n_splits, for StratifiedKFold(3)
 y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 
 
@@ -701,7 +701,7 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n_folds=3)
+    cv = KFold(n_splits=3)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))

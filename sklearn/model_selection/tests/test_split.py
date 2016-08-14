@@ -134,7 +134,7 @@ def test_cross_validator_with_default_params():
     n_unique_labels = 4
     n_splits = 2
     p = 2
-    n_splits = 10  # (the default value)
+    n_shuffle_splits = 10  # (the default value)
 
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     X_1d = np.array([1, 2, 3, 4])
@@ -160,7 +160,8 @@ def test_cross_validator_with_default_params():
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     splits_cnts = [n_samples, comb(n_samples, p), n_splits, n_splits,
-                   n_unique_labels, comb(n_unique_labels, p), n_splits, 2]
+                   n_unique_labels, comb(n_unique_labels, p),
+                   n_shuffle_splits, 2]
 
     for i, (cv, cv_repr) in enumerate(zip(
             [loo, lpo, kf, skf, lolo, lopo, ss, ps],
@@ -561,7 +562,7 @@ def test_stratified_shuffle_split_iter():
 def test_stratified_shuffle_split_even():
     # Test the StratifiedShuffleSplit, indices are drawn with a
     # equal chance
-    n_splits = 5
+    n_folds = 5
     n_splits = 1000
 
     def assert_counts_are_ok(idx_counts, p):
@@ -578,7 +579,7 @@ def test_stratified_shuffle_split_even():
     for n_samples in (6, 22):
         labels = np.array((n_samples // 2) * [0, 1])
         splits = StratifiedShuffleSplit(n_splits=n_splits,
-                                        test_size=1. / n_splits,
+                                        test_size=1. / n_folds,
                                         random_state=0)
 
         train_counts = [0] * n_samples
@@ -592,15 +593,15 @@ def test_stratified_shuffle_split_even():
         assert_equal(splits_cnt, n_splits)
 
         n_train, n_test = _validate_shuffle_split(n_samples,
-                                                  test_size=1./n_splits,
-                                                  train_size=1.-(1./n_splits))
+                                                  test_size=1./n_folds,
+                                                  train_size=1.-(1./n_folds))
 
         assert_equal(len(train), n_train)
         assert_equal(len(test), n_test)
         assert_equal(len(set(train).intersection(test)), 0)
 
         label_counts = np.unique(labels)
-        assert_equal(splits.test_size, 1.0 / n_splits)
+        assert_equal(splits.test_size, 1.0 / n_folds)
         assert_equal(n_train + n_test, len(labels))
         assert_equal(len(label_counts), 2)
         ex_test_p = float(n_test) / n_samples
@@ -877,7 +878,7 @@ def test_check_cv():
     with warnings.catch_warnings(record=True):
         from sklearn.cross_validation import StratifiedKFold as OldSKF
 
-    cv2 = check_cv(OldSKF(y_multiclass, n_splits=3))
+    cv2 = check_cv(OldSKF(y_multiclass, n_folds=3))
     np.testing.assert_equal(list(cv1.split(X, y_multiclass)),
                             list(cv2.split()))
 
@@ -890,7 +891,7 @@ def test_cv_iterable_wrapper():
     with warnings.catch_warnings(record=True):
         from sklearn.cross_validation import StratifiedKFold as OldSKF
 
-    cv = OldSKF(y_multiclass, n_splits=3)
+    cv = OldSKF(y_multiclass, n_folds=3)
     wrapped_old_skf = _CVIterableWrapper(cv)
 
     # Check if split works correctly

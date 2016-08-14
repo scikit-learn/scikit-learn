@@ -454,7 +454,7 @@ def test_X_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
-    cv = KFold(n_folds=3)
+    cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
     assert_true(hasattr(grid_search, "results_"))
@@ -466,7 +466,7 @@ def test_y_as_list():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
-    cv = KFold(n_folds=3)
+    cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X, y.tolist()).score(X, y)
     assert_true(hasattr(grid_search, "results_"))
@@ -597,14 +597,14 @@ def test_grid_search_results():
     X, y = make_classification(n_samples=50, n_features=4,
                                random_state=42)
 
-    n_folds = 3
+    n_splits = 3
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    grid_search = GridSearchCV(SVC(), cv=n_folds, iid=False,
+    grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
                                param_grid=params)
     grid_search.fit(X, y)
-    grid_search_iid = GridSearchCV(SVC(), cv=n_folds, iid=True,
+    grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
                                    param_grid=params)
     grid_search_iid.fit(X, y)
 
@@ -645,14 +645,14 @@ def test_random_search_results():
     # scipy.stats dists now supports `seed` but we still support scipy 0.12
     # which doesn't support the seed. Hence the assertions in the test for
     # random_search alone should not depend on randomization.
-    n_folds = 3
+    n_splits = 3
     n_search_iter = 30
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_folds,
+    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_splits,
                                        iid=False, param_distributions=params)
     random_search.fit(X, y)
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                           cv=n_folds, iid=True,
+                                           cv=n_splits, iid=True,
                                            param_distributions=params)
     random_search_iid.fit(X, y)
 
@@ -779,22 +779,22 @@ def test_search_results_none_param():
 
 def test_grid_search_correct_score_results():
     # test that correct scores are used
-    n_folds = 3
+    n_splits = 3
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
     for score in ['f1', 'roc_auc']:
-        grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score, cv=n_folds)
+        grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score, cv=n_splits)
         results = grid_search.fit(X, y).results_
 
         # Test scorer names
         result_keys = list(results.keys())
         expected_keys = (("test_mean_score", "test_rank_score") +
                          tuple("test_split%d_score" % cv_i
-                               for cv_i in range(n_folds)))
+                               for cv_i in range(n_splits)))
         assert_true(all(in1d(expected_keys, result_keys)))
 
-        cv = StratifiedKFold(n_folds=n_folds)
+        cv = StratifiedKFold(n_splits=n_splits)
         n_splits = grid_search.n_splits_
         for candidate_i, C in enumerate(Cs):
             clf.set_params(C=C)
