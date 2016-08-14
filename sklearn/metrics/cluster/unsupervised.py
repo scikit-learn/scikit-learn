@@ -23,7 +23,7 @@ def check_number_of_labels(n_labels, n_samples):
                          "to n_samples - 1 (inclusive)" % n_labels)
 
 
-DEFAULT_BLOCK_SIZE = 2 ** 26
+DEFAULT_BLOCK_SIZE = 64
 BYTES_PER_FLOAT = 8
 
 
@@ -65,9 +65,9 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
         array itself, use ``metric="precomputed"``.
 
-    block_size : int, optional
-        The maximum number of bytes of memory per job (see ``n_jobs``) to use
-        at a time for calculating pairwise distances. Default is 64MiB.
+    block_size : int, optional, default=64
+        The maximum number of mebibytes (MiB) of memory per job (see
+        ``n_jobs``) to use at a time for calculating pairwise distances.
 
         .. versionadded:: 0.18
 
@@ -194,9 +194,9 @@ def silhouette_samples(X, labels, metric='euclidean',
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
-    block_size : int, optional
-        The maximum number of bytes of memory per job (see ``n_jobs``) to use
-        at a time for calculating pairwise distances. Default is 64MiB.
+    block_size : int, optional, default=64
+        The maximum number of mebibytes (MiB) of memory per job (see
+        ``n_jobs``) to use at a time for calculating pairwise distances.
 
         .. versionadded:: 0.18
 
@@ -235,14 +235,14 @@ def silhouette_samples(X, labels, metric='euclidean',
     label_freqs = np.bincount(labels)
 
     n_jobs = _get_n_jobs(n_jobs)
-    block_n_rows = block_size // (BYTES_PER_FLOAT * n_samples)
+    block_n_rows = block_size * (2 ** 20) // (BYTES_PER_FLOAT * n_samples)
     if block_n_rows > n_samples:
         block_n_rows = min(block_n_rows, n_samples)
     if block_n_rows < 1:
-        raise ValueError('block_size should be at least n_samples * %d = %d '
-                         'bytes, got %r' % (BYTES_PER_FLOAT,
-                                            n_samples * BYTES_PER_FLOAT,
-                                            block_size))
+        min_block_mib = np.ceil(n_samples * BYTES_PER_FLOAT * 2 ** -20)
+        raise ValueError('block_size should be at least n_samples * %d bytes '
+                         '= %.0f MiB, got %r' % (BYTES_PER_FLOAT,
+                                                 min_block_mib, block_size))
 
     intra_clust_dists = []
     inter_clust_dists = []
