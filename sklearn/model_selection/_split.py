@@ -639,10 +639,15 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
     """Homogeneous Time Series cross-validator
 
     Provides train/test indices to split time series data in train/test sets.
+    In each split, test indices must be higher than before, and thus shuffliing
+    in cross validator is inappropriate.
 
-    This cross-validation object is a variation of KFold.
-    In iteration k, it returns first k folds as train set and k+1 fold as
-    test set.
+    This cross-validation object is a variation of :class:`KFold`.
+    In the kth split, it returns first k folds as train set and the
+    (k+1) fold as test set.
+
+    Note that unlike standard cross-validation methods, successive
+    training sets are supersets of those that come before them.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
