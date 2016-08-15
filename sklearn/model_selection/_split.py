@@ -313,7 +313,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         n_samples = _num_samples(X)
         if self.n_splits > n_samples:
             raise ValueError(
-                ("Cannot have number of folds n_splits={0} greater"
+                ("Cannot have number of splits n_splits={0} greater"
                  " than the number of samples: {1}.").format(self.n_splits,
                                                              n_samples))
 
@@ -476,7 +476,7 @@ class LabelKFold(_BaseKFold):
         n_labels = len(unique_labels)
 
         if self.n_splits > n_labels:
-            raise ValueError("Cannot have number of folds n_splits=%d greater"
+            raise ValueError("Cannot have number of splits n_splits=%d greater"
                              " than the number of labels: %d."
                              % (self.n_splits, n_labels))
 
@@ -568,7 +568,7 @@ class StratifiedKFold(_BaseKFold):
         min_labels = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("All the n_labels for individual classes"
-                             " are less than %d folds."
+                             " are less than n_splits=%d."
                              % (self.n_splits))
         if self.n_splits > min_labels:
             warnings.warn(("The least populated class in y has only %d"
