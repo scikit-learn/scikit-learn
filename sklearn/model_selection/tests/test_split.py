@@ -159,7 +159,7 @@ def test_cross_validator_with_default_params():
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
-    splits_cnts = [n_samples, comb(n_samples, p), n_splits, n_splits,
+    n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
                    n_unique_labels, comb(n_unique_labels, p),
                    n_shuffle_splits, 2]
 
@@ -168,7 +168,7 @@ def test_cross_validator_with_default_params():
             [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
              ss_repr, ps_repr])):
         # Test if get_n_splits works correctly
-        assert_equal(splits_cnts[i], cv.get_n_splits(X, y, labels))
+        assert_equal(n_splits_expected[i], cv.get_n_splits(X, y, labels))
 
         # Test if the cross-validator works as expected even if
         # the data is 1d
@@ -584,13 +584,13 @@ def test_stratified_shuffle_split_even():
 
         train_counts = [0] * n_samples
         test_counts = [0] * n_samples
-        splits_cnt = 0
+        n_splits_actual = 0
         for train, test in splits.split(X=np.ones(n_samples), y=labels):
-            splits_cnt += 1
+            n_splits_actual += 1
             for counter, ids in [(train_counts, train), (test_counts, test)]:
                 for id in ids:
                     counter[id] += 1
-        assert_equal(splits_cnt, n_splits)
+        assert_equal(n_splits_actual, n_splits)
 
         n_train, n_test = _validate_shuffle_split(n_samples,
                                                   test_size=1./n_folds,
