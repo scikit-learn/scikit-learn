@@ -677,15 +677,17 @@ def test_enet_float_precision():
     X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
-    clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False)
 
-    coef = {}
-    for dtype in [np.float64, np.float32]:
-        X = dtype(X)
-        y = dtype(y)
-        ignore_warnings(clf.fit)(X, y)
+    for fit_intercept in [True, False]:
+        coef = {}
+        clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                         fit_intercept=fit_intercept)
+        for dtype in [np.float64, np.float32]:
+            X = dtype(X)
+            y = dtype(y)
+            ignore_warnings(clf.fit)(X, y)
 
-        coef[dtype] = clf.coef_
+            coef[dtype] = clf.coef_
 
-    assert_array_almost_equal(coef[np.float32], coef[np.float64],
-                              decimal=4)
+        assert_array_almost_equal(coef[np.float32], coef[np.float64],
+                                  decimal=4)
