@@ -648,7 +648,8 @@ def test_random_search_results():
     n_splits = 3
     n_search_iter = 30
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_splits,
+    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                       cv=n_splits,
                                        iid=False, param_distributions=params)
     random_search.fit(X, y)
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,

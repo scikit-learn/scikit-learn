@@ -634,6 +634,7 @@ class StratifiedKFold(_BaseKFold):
         """
         return super(StratifiedKFold, self).split(X, y, labels)
 
+
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
 

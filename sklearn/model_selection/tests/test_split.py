@@ -160,8 +160,8 @@ def test_cross_validator_with_default_params():
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
-                   n_unique_labels, comb(n_unique_labels, p),
-                   n_shuffle_splits, 2]
+                         n_unique_labels, comb(n_unique_labels, p),
+                         n_shuffle_splits, 2]
 
     for i, (cv, cv_repr) in enumerate(zip(
             [loo, lpo, kf, skf, lolo, lopo, ss, ps],
