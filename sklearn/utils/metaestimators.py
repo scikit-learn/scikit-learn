@@ -8,7 +8,7 @@ from functools import update_wrapper
 import numpy as np
 
 
-__all__ = ['if_delegate_has_method', 'indices_to_mask']
+__all__ = ['if_delegate_has_method']
 
 
 class _IffHasAttrDescriptor(object):
@@ -72,13 +72,3 @@ def if_delegate_has_method(delegate):
     """
     return lambda fn: _IffHasAttrDescriptor(fn, '%s.%s' % (delegate, fn.__name__))
 
-
-def indices_to_mask(indices, mask_length):
-    """Convert list of indices to boolean mask"""
-    if mask_length <= np.max(indices):
-        raise ValueError("mask_length must be greater than max(indices)")
-
-    mask = np.zeros(mask_length, dtype=np.bool)
-    mask[indices] = True
-
-    return mask
