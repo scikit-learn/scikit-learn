@@ -981,7 +981,7 @@ def test_label_kfold():
     # Should fail if there are more folds than labels
     labels = np.array([1, 1, 1, 2, 2])
     X = y = np.ones(len(labels))
-    assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
+    assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          next, LabelKFold(n_splits=3).split(X, y, labels))
 
 
