@@ -71,7 +71,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -542,7 +542,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     precompute : True | False | array-like
@@ -808,7 +808,7 @@ class Lasso(ElasticNet):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -1294,7 +1294,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -1448,7 +1448,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -1580,7 +1580,7 @@ class MultiTaskElasticNet(Lasso):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -1766,7 +1766,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -1903,7 +1903,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
@@ -2068,7 +2068,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
     copy_X : boolean, optional, default True
