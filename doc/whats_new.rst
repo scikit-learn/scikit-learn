@@ -62,15 +62,15 @@ Model Selection Enhancements and API Changes
     the corresponding parameter is not applicable. Additionally a list of all
     the parameter dicts are stored at ``results_['params']``.
 
-  - **Renaming of `n_folds` and `n_iter` to `n_splits`**
+  - **Renaming of ``n_folds`` and ``n_iter`` to ``n_splits``**
 
-    The number of folds (i.e. the number of partitions of a dataset) is not 
-    always able to equal the number of train-test splits, and there are 
-    further inconsistency with the ShuffleSplit family's use of `n_iter` 
-    for the same notion as `n_folds`. For a consistent and unambiguous interface, 
-    all CV splitters that directly specify the number of splits now 
-    use the parameter name `n_splits` in the new module 
-    :mod:`sklearn.model_selection` to represent the number of train-test splits.
+    Some parameter names have changed: 
+    the ``n_folds`` parameter in :class:`model_selection.KFold`, 
+    :class:`model_selection.LabelKFold`, and 
+    :class:`model_selection.StratifiedKFold` is now ``n_splits``; 
+    the ``n_iter`` in :class:`model_selection.ShuffleSplit`, 
+    :class:`model_selection.LabelShuffleSplit`, 
+    and :class:`model_selection.StratifiedShuffleSplit` is now ``n_splits``, too.
 
 
 New features
@@ -363,8 +363,8 @@ API changes summary
      (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
      `Raghav R V`_.
 
-   - The parameters `n_iter` or `n_folds` in old CV splittersare are deprecated 
-     in favor of the new parameter `n_splits` since it can provide a consistent 
+   - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
+     by the new parameter ``n_splits`` since it can provide a consistent 
      and unambiguous interface to represent the number of train-test splits.
      By `YenChen Lin`_.
 
