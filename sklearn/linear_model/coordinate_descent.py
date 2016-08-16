@@ -477,8 +477,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                           ConvergenceWarning)
             if X.dtype == np.float32:
                 warnings.warn('It may cause by precision issues' +
-                              ' when fitting float32 data with small alpha.'
-                              ' Try to increase alpha of your model.')
+                              ' when fitting float32 data with small alpha,' +
+                              ' e.g., 1e-8.' +
+                              'Try to increase alpha of your model.')
 
         if verbose:
             if verbose > 2:
