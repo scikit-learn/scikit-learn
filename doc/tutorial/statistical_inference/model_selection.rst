@@ -61,7 +61,7 @@ This example shows an example usage of the ``split`` method.
 
     >>> from sklearn.model_selection import KFold, cross_val_score
     >>> X = ["a", "a", "b", "c", "c", "c"]
-    >>> k_fold = KFold(n_folds=3)
+    >>> k_fold = KFold(n_splits=3)
     >>> for train_indices, test_indices in k_fold.split(X):
     ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5] | test: [0 1]
@@ -70,7 +70,7 @@ This example shows an example usage of the ``split`` method.
 
 The cross-validation can then be performed easily::
 
-    >>> kfold = KFold(n_folds=3)
+    >>> kfold = KFold(n_splits=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in k_fold.split(X_digits)]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
@@ -106,11 +106,11 @@ scoring method.
 
    *
 
-    - :class:`KFold` **(n_folds, shuffle, random_state)**
+    - :class:`KFold` **(n_splits, shuffle, random_state)**
 
     - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
 
-    - :class:`LabelKFold` **(n_folds, shuffle, random_state)**
+    - :class:`LabelKFold` **(n_splits, shuffle, random_state)**
 
 
    *

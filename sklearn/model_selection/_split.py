@@ -122,7 +122,7 @@ class LeaveOneOut(BaseCrossValidator):
     sample is used once as a test set (singleton) while the remaining
     samples form the training set.
 
-    Note: ``LeaveOneOut()`` is equivalent to ``KFold(n_folds=n)`` and
+    Note: ``LeaveOneOut()`` is equivalent to ``KFold(n_splits=n)`` and
     ``LeavePOut(p=1)`` where ``n`` is the number of samples.
 
     Due to the high number of test sets (which is the same as the
@@ -197,7 +197,7 @@ class LeavePOut(BaseCrossValidator):
     samples form the training set in each iteration.
 
     Note: ``LeavePOut(p)`` is NOT equivalent to
-    ``KFold(n_folds=n_samples // p)`` which creates non-overlapping test sets.
+    ``KFold(n_splits=n_samples // p)`` which creates non-overlapping test sets.
 
     Due to the high number of iterations which grows combinatorically with the
     number of samples this cross-validation method can be very costly. For
@@ -264,24 +264,24 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
     """Base class for KFold, LabelKFold, and StratifiedKFold"""
 
     @abstractmethod
-    def __init__(self, n_folds, shuffle, random_state):
-        if not isinstance(n_folds, numbers.Integral):
+    def __init__(self, n_splits, shuffle, random_state):
+        if not isinstance(n_splits, numbers.Integral):
             raise ValueError('The number of folds must be of Integral type. '
                              '%s of type %s was passed.'
-                             % (n_folds, type(n_folds)))
-        n_folds = int(n_folds)
+                             % (n_splits, type(n_splits)))
+        n_splits = int(n_splits)
 
-        if n_folds <= 1:
+        if n_splits <= 1:
             raise ValueError(
                 "k-fold cross-validation requires at least one"
-                " train/test split by setting n_folds=2 or more,"
-                " got n_folds={0}.".format(n_folds))
+                " train/test split by setting n_splits=2 or more,"
+                " got n_splits={0}.".format(n_splits))
 
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
 
-        self.n_folds = n_folds
+        self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
 
@@ -311,10 +311,10 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         """
         X, y, labels = indexable(X, y, labels)
         n_samples = _num_samples(X)
-        if self.n_folds > n_samples:
+        if self.n_splits > n_samples:
             raise ValueError(
-                ("Cannot have number of folds n_folds={0} greater"
-                 " than the number of samples: {1}.").format(self.n_folds,
+                ("Cannot have number of splits n_splits={0} greater"
+                 " than the number of samples: {1}.").format(self.n_splits,
                                                              n_samples))
 
         for train, test in super(_BaseKFold, self).split(X, y, labels):
@@ -339,7 +339,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return self.n_folds
+        return self.n_splits
 
 
 class KFold(_BaseKFold):
@@ -355,7 +355,7 @@ class KFold(_BaseKFold):
 
     Parameters
     ----------
-    n_folds : int, default=3
+    n_splits : int, default=3
         Number of folds. Must be at least 2.
 
     shuffle : boolean, optional
@@ -370,11 +370,11 @@ class KFold(_BaseKFold):
     >>> from sklearn.model_selection import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> kf = KFold(n_folds=2)
+    >>> kf = KFold(n_splits=2)
     >>> kf.get_n_splits(X)
     2
     >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
-    KFold(n_folds=2, random_state=None, shuffle=False)
+    KFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in kf.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -384,9 +384,9 @@ class KFold(_BaseKFold):
 
     Notes
     -----
-    The first ``n_samples % n_folds`` folds have size
-    ``n_samples // n_folds + 1``, other folds have size
-    ``n_samples // n_folds``, where ``n_samples`` is the number of samples.
+    The first ``n_samples % n_splits`` folds have size
+    ``n_samples // n_splits + 1``, other folds have size
+    ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
 
     See also
     --------
@@ -398,9 +398,9 @@ class KFold(_BaseKFold):
     LabelKFold: K-fold iterator variant with non-overlapping labels.
     """
 
-    def __init__(self, n_folds=3, shuffle=False,
+    def __init__(self, n_splits=3, shuffle=False,
                  random_state=None):
-        super(KFold, self).__init__(n_folds, shuffle, random_state)
+        super(KFold, self).__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, labels=None):
         n_samples = _num_samples(X)
@@ -408,9 +408,9 @@ class KFold(_BaseKFold):
         if self.shuffle:
             check_random_state(self.random_state).shuffle(indices)
 
-        n_folds = self.n_folds
-        fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
-        fold_sizes[:n_samples % n_folds] += 1
+        n_splits = self.n_splits
+        fold_sizes = (n_samples // n_splits) * np.ones(n_splits, dtype=np.int)
+        fold_sizes[:n_samples % n_splits] += 1
         current = 0
         for fold_size in fold_sizes:
             start, stop = current, current + fold_size
@@ -429,7 +429,7 @@ class LabelKFold(_BaseKFold):
 
     Parameters
     ----------
-    n_folds : int, default=3
+    n_splits : int, default=3
         Number of folds. Must be at least 2.
 
     Examples
@@ -438,11 +438,11 @@ class LabelKFold(_BaseKFold):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
     >>> labels = np.array([0, 0, 2, 2])
-    >>> label_kfold = LabelKFold(n_folds=2)
+    >>> label_kfold = LabelKFold(n_splits=2)
     >>> label_kfold.get_n_splits(X, y, labels)
     2
     >>> print(label_kfold)
-    LabelKFold(n_folds=2)
+    LabelKFold(n_splits=2)
     >>> for train_index, test_index in label_kfold.split(X, y, labels):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
@@ -464,8 +464,8 @@ class LabelKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_folds=3):
-        super(LabelKFold, self).__init__(n_folds, shuffle=False,
+    def __init__(self, n_splits=3):
+        super(LabelKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
 
     def _iter_test_indices(self, X, y, labels):
@@ -475,10 +475,10 @@ class LabelKFold(_BaseKFold):
         unique_labels, labels = np.unique(labels, return_inverse=True)
         n_labels = len(unique_labels)
 
-        if self.n_folds > n_labels:
-            raise ValueError("Cannot have number of folds n_folds=%d greater"
+        if self.n_splits > n_labels:
+            raise ValueError("Cannot have number of splits n_splits=%d greater"
                              " than the number of labels: %d."
-                             % (self.n_folds, n_labels))
+                             % (self.n_splits, n_labels))
 
         # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
@@ -488,7 +488,7 @@ class LabelKFold(_BaseKFold):
         n_samples_per_label = n_samples_per_label[indices]
 
         # Total weight of each fold
-        n_samples_per_fold = np.zeros(self.n_folds)
+        n_samples_per_fold = np.zeros(self.n_splits)
 
         # Mapping from label index to fold index
         label_to_fold = np.zeros(len(unique_labels))
@@ -501,7 +501,7 @@ class LabelKFold(_BaseKFold):
 
         indices = label_to_fold[labels]
 
-        for f in range(self.n_folds):
+        for f in range(self.n_splits):
             yield np.where(indices == f)[0]
 
 
@@ -518,7 +518,7 @@ class StratifiedKFold(_BaseKFold):
 
     Parameters
     ----------
-    n_folds : int, default=3
+    n_splits : int, default=3
         Number of folds. Must be at least 2.
 
     shuffle : boolean, optional
@@ -534,11 +534,11 @@ class StratifiedKFold(_BaseKFold):
     >>> from sklearn.model_selection import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> skf = StratifiedKFold(n_folds=2)
+    >>> skf = StratifiedKFold(n_splits=2)
     >>> skf.get_n_splits(X, y)
     2
     >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
-    StratifiedKFold(n_folds=2, random_state=None, shuffle=False)
+    StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in skf.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -548,13 +548,13 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    All the folds have size ``trunc(n_samples / n_folds)``, the last one has
+    All the folds have size ``trunc(n_samples / n_splits)``, the last one has
     the complementary.
 
     """
 
-    def __init__(self, n_folds=3, shuffle=False, random_state=None):
-        super(StratifiedKFold, self).__init__(n_folds, shuffle, random_state)
+    def __init__(self, n_splits=3, shuffle=False, random_state=None):
+        super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None, labels=None):
         if self.shuffle:
@@ -566,26 +566,26 @@ class StratifiedKFold(_BaseKFold):
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = bincount(y_inversed)
         min_labels = np.min(y_counts)
-        if np.all(self.n_folds > y_counts):
+        if np.all(self.n_splits > y_counts):
             raise ValueError("All the n_labels for individual classes"
-                             " are less than %d folds."
-                             % (self.n_folds))
-        if self.n_folds > min_labels:
+                             " are less than n_splits=%d."
+                             % (self.n_splits))
+        if self.n_splits > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
                            " number of labels for any class cannot"
-                           " be less than n_folds=%d."
-                           % (min_labels, self.n_folds)), Warning)
+                           " be less than n_splits=%d."
+                           % (min_labels, self.n_splits)), Warning)
 
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each class so as to respect the balance of
         # classes
         # NOTE: Passing the data corresponding to ith class say X[y==class_i]
         # will break when the data is not 100% stratifiable for all classes.
-        # So we pass np.zeroes(max(c, n_folds)) as data to the KFold
+        # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
         per_cls_cvs = [
-            KFold(self.n_folds, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(count, self.n_folds)))
+            KFold(self.n_splits, shuffle=self.shuffle,
+                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
             for count in y_counts]
 
         test_folds = np.zeros(n_samples, dtype=np.int)
@@ -593,7 +593,7 @@ class StratifiedKFold(_BaseKFold):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
                 cls_test_folds = test_folds[y == cls]
                 # the test split can be too big because we used
-                # KFold(...).split(X[:max(c, n_folds)]) when data is not 100%
+                # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
                 # stratifiable for all the classes
                 # (we use a warning instead of raising an exception)
                 # If this is the case, let's trim it:
@@ -605,7 +605,7 @@ class StratifiedKFold(_BaseKFold):
 
     def _iter_test_masks(self, X, y=None, labels=None):
         test_folds = self._make_test_folds(X, y)
-        for i in range(self.n_folds):
+        for i in range(self.n_splits):
             yield test_folds == i
 
     def split(self, X, y, labels=None):
@@ -633,6 +633,7 @@ class StratifiedKFold(_BaseKFold):
             The testing set indices for that split.
         """
         return super(StratifiedKFold, self).split(X, y, labels)
+
 
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
@@ -803,10 +804,10 @@ class LeavePLabelOut(BaseCrossValidator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
                  random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
-        self.n_iter = n_iter
+        self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
@@ -862,7 +863,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return self.n_iter
+        return self.n_splits
 
     def __repr__(self):
         return _build_repr(self)
@@ -881,7 +882,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_iter : int (default 10)
+    n_splits : int (default 10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float, int, or None, default 0.1
@@ -904,18 +905,18 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> from sklearn.model_selection import ShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
-    >>> rs = ShuffleSplit(n_iter=3, test_size=.25, random_state=0)
+    >>> rs = ShuffleSplit(n_splits=3, test_size=.25, random_state=0)
     >>> rs.get_n_splits(X)
     3
     >>> print(rs)
-    ShuffleSplit(n_iter=3, random_state=0, test_size=0.25, train_size=None)
+    ShuffleSplit(n_splits=3, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...  # doctest: +ELLIPSIS
     TRAIN: [3 1 0] TEST: [2]
     TRAIN: [2 1 3] TEST: [0]
     TRAIN: [0 2 1] TEST: [3]
-    >>> rs = ShuffleSplit(n_iter=3, train_size=0.5, test_size=.25,
+    >>> rs = ShuffleSplit(n_splits=3, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -930,7 +931,7 @@ class ShuffleSplit(BaseShuffleSplit):
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         rng = check_random_state(self.random_state)
-        for i in range(self.n_iter):
+        for i in range(self.n_splits):
             # random partition
             permutation = rng.permutation(n_samples)
             ind_test = permutation[:n_test]
@@ -955,7 +956,7 @@ class LabelShuffleSplit(ShuffleSplit):
 
     For example, a less computationally intensive alternative to
     ``LeavePLabelOut(p=10)`` would be
-    ``LabelShuffleSplit(test_size=10, n_iter=100)``.
+    ``LabelShuffleSplit(test_size=10, n_splits=100)``.
 
     Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
     not to samples, as in ShuffleSplit.
@@ -963,7 +964,7 @@ class LabelShuffleSplit(ShuffleSplit):
 
     Parameters
     ----------
-    n_iter : int (default 5)
+    n_splits : int (default 5)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.2), int, or None
@@ -982,10 +983,10 @@ class LabelShuffleSplit(ShuffleSplit):
         Pseudo-random number generator state used for random sampling.
     '''
 
-    def __init__(self, n_iter=5, test_size=0.2, train_size=None,
+    def __init__(self, n_splits=5, test_size=0.2, train_size=None,
                  random_state=None):
         super(LabelShuffleSplit, self).__init__(
-            n_iter=n_iter,
+            n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
             random_state=random_state)
@@ -1022,7 +1023,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_iter : int (default 10)
+    n_splits : int (default 10)
         Number of re-shuffling & splitting iterations.
 
     test_size : float (default 0.1), int, or None
@@ -1045,11 +1046,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> from sklearn.model_selection import StratifiedShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> sss = StratifiedShuffleSplit(n_iter=3, test_size=0.5, random_state=0)
+    >>> sss = StratifiedShuffleSplit(n_splits=3, test_size=0.5, random_state=0)
     >>> sss.get_n_splits(X, y)
     3
     >>> print(sss)       # doctest: +ELLIPSIS
-    StratifiedShuffleSplit(n_iter=3, random_state=0, ...)
+    StratifiedShuffleSplit(n_splits=3, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -1059,10 +1060,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
                  random_state=None):
         super(StratifiedShuffleSplit, self).__init__(
-            n_iter, test_size, train_size, random_state)
+            n_splits, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, labels=None):
         n_samples = _num_samples(X)
@@ -1093,7 +1094,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         t_i = np.minimum(class_counts - n_i,
                          np.round(n_test * p_i).astype(int))
 
-        for _ in range(self.n_iter):
+        for _ in range(self.n_splits):
             train = []
             test = []
 

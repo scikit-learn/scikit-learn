@@ -62,6 +62,17 @@ Model Selection Enhancements and API Changes
     the corresponding parameter is not applicable. Additionally a list of all
     the parameter dicts are stored at ``results_['params']``.
 
+  - **Parameters ``n_folds`` and ``n_iter`` renamed to ``n_splits``**
+
+    Some parameter names have changed: 
+    The ``n_folds`` parameter in :class:`model_selection.KFold`, 
+    :class:`model_selection.LabelKFold`, and 
+    :class:`model_selection.StratifiedKFold` is now renamed to ``n_splits``.
+    The ``n_iter`` parameter in :class:`model_selection.ShuffleSplit`,
+    :class:`model_selection.LabelShuffleSplit`, 
+    and :class:`model_selection.StratifiedShuffleSplit` is now renamed 
+    to ``n_splits``.
+
 
 New features
 ............
@@ -359,6 +370,12 @@ API changes summary
      Ref :ref:`model_selection_changes` for more information.
      (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
      `Raghav R V`_.
+
+   - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
+     by the new parameter ``n_splits`` since it can provide a consistent 
+     and unambiguous interface to represent the number of train-test splits.
+     (`#7187 <https://github.com/scikit-learn/scikit-learn/pull/7187>`_)
+     by `YenChen Lin`_.
 
 
 .. currentmodule:: sklearn
