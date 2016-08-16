@@ -171,7 +171,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0)
             if not return_mean:
-                X_offset = np.zeros(X.shape[1])
+                X_offset = np.zeros(X.shape[1], dtype=X.dtype)
 
             if normalize:
 
@@ -186,7 +186,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                 X_scale[X_scale == 0] = 1
                 inplace_column_scale(X, 1. / X_scale)
             else:
-                X_scale = np.ones(X.shape[1])
+                X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
         else:
             X_offset = np.average(X, axis=0, weights=sample_weight)
@@ -195,12 +195,12 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                 X, X_scale = f_normalize(X, axis=0, copy=False,
                                          return_norm=True)
             else:
-                X_scale = np.ones(X.shape[1])
+                X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:
-        X_offset = np.zeros(X.shape[1])
-        X_scale = np.ones(X.shape[1])
+        X_offset = np.zeros(X.shape[1], dtype=X.dtype)
+        X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
 
     return X, y, X_offset, y_offset, X_scale
@@ -273,11 +273,6 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         """Set the intercept_
         """
         if self.fit_intercept:
-            if isinstance(self.coef_, np.ndarray):
-                dtype = self.coef_.dtype
-                X_offset = np.asarray(X_offset, dtype)
-                y_offset = np.asarray(y_offset, dtype)
-                X_scale = np.asarray(X_scale, dtype)
             self.coef_ = self.coef_ / X_scale
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
