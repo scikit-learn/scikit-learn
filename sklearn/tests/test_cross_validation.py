@@ -466,12 +466,9 @@ def test_stratified_shuffle_split_init():
 
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.5, 0.6)
-    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 8, 0.6)
-    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 0.6, 8)
+    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, 3, 8)
 
-    # Train size or test size too small
-    assert_raises(ValueError, cval.StratifiedShuffleSplit, y, train_size=2)
+    # Test size too small
     assert_raises(ValueError, cval.StratifiedShuffleSplit, y, test_size=2)
 
 
@@ -783,15 +780,9 @@ def test_cross_val_score_errors():
 
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
-    assert_raises(ValueError, cval.train_test_split, range(3), train_size=1.1)
-    assert_raises(ValueError, cval.train_test_split, range(3), test_size=0.6,
-                  train_size=0.6)
-    assert_raises(ValueError, cval.train_test_split, range(3),
-                  test_size=np.float32(0.6), train_size=np.float32(0.6))
     assert_raises(ValueError, cval.train_test_split, range(3),
                   test_size="wrong_type")
-    assert_raises(ValueError, cval.train_test_split, range(3), test_size=2,
-                  train_size=4)
+    assert_raises(ValueError, cval.train_test_split, range(3), test_size=4)
     assert_raises(TypeError, cval.train_test_split, range(3),
                   some_argument=1.1)
     assert_raises(ValueError, cval.train_test_split, range(3), range(42))
@@ -803,7 +794,7 @@ def test_train_test_split():
     y = np.arange(10)
 
     # simple test
-    split = cval.train_test_split(X, y, test_size=None, train_size=.5)
+    split = cval.train_test_split(X, y, test_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
     # test correspondence of X and y
@@ -1011,14 +1002,9 @@ def test_cross_val_generator_with_default_indices():
 def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=2.0)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=1.0)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=0.1,
-                  train_size=0.95)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=11)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8, train_size=3)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=None,
-                  train_size=None)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=1j)
 
 
 def test_shufflesplit_reproducible():

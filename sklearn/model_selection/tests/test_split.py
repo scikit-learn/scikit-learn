@@ -155,8 +155,7 @@ def test_cross_validator_with_default_params():
     skf_repr = "StratifiedKFold(n_folds=2, random_state=None, shuffle=False)"
     lolo_repr = "LeaveOneLabelOut()"
     lopo_repr = "LeavePLabelOut(n_labels=2)"
-    ss_repr = ("ShuffleSplit(n_iter=10, random_state=0, test_size=0.1, "
-               "train_size=None)")
+    ss_repr = ("ShuffleSplit(n_iter=10, random_state=0, test_size=0.1)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits = [n_samples, comb(n_samples, p), n_folds, n_folds,
@@ -520,15 +519,10 @@ def test_stratified_shuffle_split_init():
     X = np.arange(9)
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
     # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, StratifiedShuffleSplit, 3, 0.5, 0.6)
     assert_raises(ValueError, next,
                   StratifiedShuffleSplit(3, 8, 0.6).split(X, y))
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 0.6, 8).split(X, y))
 
     # Train size or test size too small
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(train_size=2).split(X, y))
     assert_raises(ValueError, next,
                   StratifiedShuffleSplit(test_size=2).split(X, y))
 
@@ -592,8 +586,7 @@ def test_stratified_shuffle_split_even():
         assert_equal(n_splits, n_iter)
 
         n_train, n_test = _validate_shuffle_split(n_samples,
-                                                  test_size=1./n_folds,
-                                                  train_size=1.-(1./n_folds))
+                                                  test_size=1./n_folds)
 
         assert_equal(len(train), n_train)
         assert_equal(len(test), n_test)
@@ -710,15 +703,9 @@ def test_leave_label_out_changing_labels():
 
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
-    assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
-    assert_raises(ValueError, train_test_split, range(3), test_size=0.6,
-                  train_size=0.6)
-    assert_raises(ValueError, train_test_split, range(3),
-                  test_size=np.float32(0.6), train_size=np.float32(0.6))
     assert_raises(ValueError, train_test_split, range(3),
                   test_size="wrong_type")
-    assert_raises(ValueError, train_test_split, range(3), test_size=2,
-                  train_size=4)
+    assert_raises(ValueError, train_test_split, range(3), test_size=4)
     assert_raises(TypeError, train_test_split, range(3),
                   some_argument=1.1)
     assert_raises(ValueError, train_test_split, range(3), range(42))
@@ -730,7 +717,7 @@ def test_train_test_split():
     y = np.arange(10)
 
     # simple test
-    split = train_test_split(X, y, test_size=None, train_size=.5)
+    split = train_test_split(X, y, test_size=.5)
     X_train, X_test, y_train, y_test = split
     assert_equal(len(y_test), len(y_train))
     # test correspondence of X and y
@@ -792,21 +779,18 @@ def train_test_split_mock_pandas():
 
 
 def test_shufflesplit_errors():
-    # When the {test|train}_size is a float/invalid, error is raised at init
-    assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
+    # When the test_size is a float/invalid, error is raised at init
+    assert_raises(ValueError, ShuffleSplit, test_size=None)
     assert_raises(ValueError, ShuffleSplit, test_size=2.0)
     assert_raises(ValueError, ShuffleSplit, test_size=1.0)
-    assert_raises(ValueError, ShuffleSplit, test_size=0.1, train_size=0.95)
-    assert_raises(ValueError, ShuffleSplit, train_size=1j)
+    assert_raises(ValueError, ShuffleSplit, test_size=1j)
 
-    # When the {test|train}_size is an int, validation is based on the input X
+    # When the test_size is an int, validation is based on the input X
     # and happens at split(...)
     assert_raises(ValueError, next, ShuffleSplit(test_size=11).split(X))
     assert_raises(ValueError, next, ShuffleSplit(test_size=10).split(X))
-    assert_raises(ValueError, next, ShuffleSplit(test_size=8,
-                                                 train_size=3).split(X))
 
-
+    
 def test_shufflesplit_reproducible():
     # Check that iterating twice on the ShuffleSplit gives the same
     # sequence of train-test when the random_state is given

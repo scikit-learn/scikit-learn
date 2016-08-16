@@ -738,15 +738,13 @@ class LeavePLabelOut(_PartitionIterator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
+    def __init__(self, n, n_iter=10, test_size=0.1,
                  random_state=None):
         self.n = n
         self.n_iter = n_iter
         self.test_size = test_size
-        self.train_size = train_size
         self.random_state = random_state
-        self.n_train, self.n_test = _validate_shuffle_split(n, test_size,
-                                                            train_size)
+        self.n_train, self.n_test = _validate_shuffle_split(n, test_size)
 
     def __iter__(self):
         for train, test in self._iter_indices():
@@ -780,14 +778,7 @@ class ShuffleSplit(BaseShuffleSplit):
     test_size : float (default 0.1), int, or None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
-
-    train_size : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        int, represents the absolute number of test samples.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -808,15 +799,6 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 1 0] TEST: [2]
     TRAIN: [2 1 3] TEST: [0]
     TRAIN: [0 2 1] TEST: [3]
-
-    >>> rs = cross_validation.ShuffleSplit(4, n_iter=3,
-    ...     train_size=0.5, test_size=.25, random_state=0)
-    >>> for train_index, test_index in rs:
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...
-    TRAIN: [3 1] TEST: [2]
-    TRAIN: [2 1] TEST: [0]
-    TRAIN: [0 2] TEST: [3]
 
     """
 
@@ -843,10 +825,10 @@ class ShuffleSplit(BaseShuffleSplit):
         return self.n_iter
 
 
-def _validate_shuffle_split(n, test_size, train_size):
-    if test_size is None and train_size is None:
+def _validate_shuffle_split(n, test_size):
+    if test_size is None:
         raise ValueError(
-            'test_size and train_size can not both be None')
+            'test_size cannot be None')
 
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
@@ -862,46 +844,12 @@ def _validate_shuffle_split(n, test_size, train_size):
         else:
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
-    if train_size is not None:
-        if np.asarray(train_size).dtype.kind == 'f':
-            if train_size >= 1.:
-                raise ValueError("train_size=%f should be smaller "
-                                 "than 1.0 or be an integer" % train_size)
-            elif np.asarray(test_size).dtype.kind == 'f' and \
-                    train_size + test_size > 1.:
-                raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be smaller than 1.0. Reduce '
-                                 'test_size and/or train_size.' %
-                                 (train_size + test_size))
-        elif np.asarray(train_size).dtype.kind == 'i':
-            if train_size >= n:
-                raise ValueError("train_size=%d should be smaller "
-                                 "than the number of samples %d" %
-                                 (train_size, n))
-        else:
-            raise ValueError("Invalid value for train_size: %r" % train_size)
-
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n)
     elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
 
-    if train_size is None:
-        n_train = n - n_test
-    else:
-        if np.asarray(train_size).dtype.kind == 'f':
-            n_train = floor(train_size * n)
-        else:
-            n_train = float(train_size)
-
-    if test_size is None:
-        n_test = n - n_train
-
-    if n_train + n_test > n:
-        raise ValueError('The sum of train_size and test_size = %d, '
-                         'should be smaller than the number of '
-                         'samples %d. Reduce test_size and/or '
-                         'train_size.' % (n_train + n_test, n))
+    n_train = n - n_test
 
     return int(n_train), int(n_test)
 
@@ -932,14 +880,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     test_size : float (default 0.1), int, or None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
-
-    train_size : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        int, represents the absolute number of test samples.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -963,11 +904,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 random_state=None):
+    def __init__(self, y, n_iter=10, test_size=0.1, random_state=None):
 
         super(StratifiedShuffleSplit, self).__init__(
-            len(y), n_iter, test_size, train_size, random_state)
+            len(y), n_iter, test_size, random_state)
 
         self.y = np.array(y)
         self.classes, self.y_indices = np.unique(y, return_inverse=True)
@@ -980,8 +920,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              " be less than 2.")
 
         if self.n_train < n_cls:
-            raise ValueError('The train_size = %d should be greater or '
-                             'equal to the number of classes = %d' %
+            raise ValueError('The complement of test_size = %d should be greater '
+                             'or equal to the number of classes = %d' %
                              (self.n_train, n_cls))
         if self.n_test < n_cls:
             raise ValueError('The test_size = %d should be greater or '
@@ -1117,7 +1057,7 @@ class LabelShuffleSplit(ShuffleSplit):
     ``LeavePLabelOut(labels, p=10)`` would be
     ``LabelShuffleSplit(labels, test_size=10, n_iter=100)``.
 
-    Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
+    Note: The parameter ``test_size`` refers to labels, and
     not to samples, as in ShuffleSplit.
 
     .. versionadded:: 0.17
@@ -1133,21 +1073,13 @@ class LabelShuffleSplit(ShuffleSplit):
     test_size : float (default 0.2), int, or None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the labels to include in the test split. If
-        int, represents the absolute number of test labels. If None,
-        the value is automatically set to the complement of the train size.
-
-    train_size : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the labels to include in the train split. If
-        int, represents the absolute number of train labels. If None,
-        the value is automatically set to the complement of the test size.
+        int, represents the absolute number of test labels.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
     """
-    def __init__(self, labels, n_iter=5, test_size=0.2, train_size=None,
-                 random_state=None):
+    def __init__(self, labels, n_iter=5, test_size=0.2, random_state=None):
 
         classes, label_indices = np.unique(labels, return_inverse=True)
 
@@ -1155,7 +1087,6 @@ class LabelShuffleSplit(ShuffleSplit):
             len(classes),
             n_iter=n_iter,
             test_size=test_size,
-            train_size=train_size,
             random_state=random_state)
 
         self.labels = labels
@@ -1861,18 +1792,10 @@ def train_test_split(*arrays, **options):
             preserves input type instead of always casting to numpy array.
 
 
-    test_size : float, int, or None (default is None)
+    test_size : float, int, or None (default is 0.25)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
-        If train size is also None, test size is set to 0.25.
-
-    train_size : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        int, represents the absolute number of test samples.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1927,24 +1850,21 @@ def train_test_split(*arrays, **options):
         raise ValueError("At least one array required as input")
 
     test_size = options.pop('test_size', None)
-    train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     stratify = options.pop('stratify', None)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
 
-    if test_size is None and train_size is None:
+    if test_size is None:
         test_size = 0.25
     arrays = indexable(*arrays)
     if stratify is not None:
         cv = StratifiedShuffleSplit(stratify, test_size=test_size,
-                                    train_size=train_size,
                                     random_state=random_state)
     else:
         n_samples = _num_samples(arrays[0])
         cv = ShuffleSplit(n_samples, test_size=test_size,
-                          train_size=train_size,
                           random_state=random_state)
 
     train, test = next(iter(cv))
