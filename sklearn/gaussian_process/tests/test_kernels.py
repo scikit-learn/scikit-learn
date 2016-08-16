@@ -183,6 +183,15 @@ def test_kernel_stationary():
         assert_almost_equal(K[0, 0], np.diag(K))
 
 
+def check_hyperparameters_equal(kernel1, kernel2):
+    """Check that hyperparameters of two kernels are equal"""
+    for attr in set(dir(kernel1) + dir(kernel2)):
+        if attr.startswith("hyperparameter_"):
+            attr_value1 = getattr(kernel1, attr)
+            attr_value2 = getattr(kernel2, attr)
+            assert_equal(attr_value1, attr_value2)
+
+
 def test_kernel_clone():
     """ Test that sklearn's clone works correctly on kernels. """
     bounds = (1e-5, 1e5)
@@ -197,12 +206,8 @@ def test_kernel_clone():
         # Check that all constructor parameters are equal.
         assert_equal(kernel.get_params(), kernel_cloned.get_params())
 
-        for attr in dir(kernel):
-
-            if attr.startswith("hyperparameter_"):
-                attr_value = getattr(kernel, attr)
-                attr_value_cloned = getattr(kernel_cloned, attr)
-                assert_equal(attr_value, attr_value_cloned)
+        # Check that all hyperparameters are equal.
+        yield check_hyperparameters_equal, kernel, kernel_cloned
 
         # This test is to verify that using set_params does not
         # break clone on kernels.
@@ -211,7 +216,9 @@ def test_kernel_clone():
         # See https://github.com/scikit-learn/scikit-learn/issues/6961
         # for more details.
         params = kernel.get_params()
-        if 'length_scale' in params:
+        # RationalQuadratic kernel is isotropic.
+        isotropic_kernels = (ExpSineSquared, RationalQuadratic)
+        if 'length_scale' in params and not isinstance(kernel, isotropic_kernels):
             length_scale = params['length_scale']
             if np.iterable(length_scale):
                 params['length_scale'] = length_scale[0]
@@ -219,11 +226,12 @@ def test_kernel_clone():
             else:
                 params['length_scale'] = [length_scale] * 2
                 params['length_scale_bounds'] = bounds * 2
-        kernel_cloned.set_params(**params)
-        kernel_cloned_clone = clone(kernel_cloned)
-        assert_equal(kernel_cloned_clone.get_params(),
-                     kernel_cloned.get_params())
-        assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
+            kernel_cloned.set_params(**params)
+            kernel_cloned_clone = clone(kernel_cloned)
+            assert_equal(kernel_cloned_clone.get_params(),
+                         kernel_cloned.get_params())
+            assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
+            yield check_hyperparameters_equal, kernel_cloned, kernel_cloned_clone
 
 
 def test_matern_kernel():

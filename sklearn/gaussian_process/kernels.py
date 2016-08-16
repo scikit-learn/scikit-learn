@@ -92,6 +92,8 @@ class Hyperparameter(namedtuple('Hyperparameter',
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
+    # This is mainly a testing utility to check that two hyperparameters
+    # are equal.
     def __eq__(self, other):
         return (self.name == other.name and
                 self.value_type == other.value_type and
