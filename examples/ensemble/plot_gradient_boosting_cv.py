@@ -30,7 +30,7 @@ This example illustrates how the
 :class:`sklearn.ensemble.GradientBoostingClassifierCV` class can be used to
 train a model which can acheive almost the same accuracy as compared to the
 :class:`sklearn.ensemble.GradientBoostingClassifier` but with significantly
-lesser number of estimators. This can save memory and prediction time.
+less estimators. This can save memory and prediction time.
 """
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
