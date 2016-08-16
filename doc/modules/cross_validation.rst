@@ -554,3 +554,20 @@ Cross validation and model selection
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
 model. This is the topic of the next section: :ref:`grid_search`.
+
+Cross validation of time series data
+====================================
+
+Time series data is known for the correlation between observations, so 
+it is very important to evaluate our models on the "future" observations that 
+are not seen by our model before. However, the "classical" k-times 
+cross-validation technique is based on the fact that each observation in 
+the available data set is used (k-1)-times to train a model and 1 time to 
+test it. Therefore, we need to adopt the special time series cross-validation 
+to avoid the problem, which is described as follows:
+
+1. In each iteration :math:`i`, use first :mata:`i` fold(s) as training set, 
+   and use :math:`i+1` fold as testing set.
+2. Compute the MSE in each iteration.
+3. Repeat step :math:`1` and :math:`2` for :math:`i=1`, ..., :math:`i=n-1` 
+   where :math:`n` is the total number of folds.
