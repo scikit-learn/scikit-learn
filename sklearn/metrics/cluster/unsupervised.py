@@ -128,16 +128,37 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
                                       block_size=block_size, **kwds))
 
 
-def _process_block(X, labels, start, block_n_rows, block_range, add_at,
-                   label_freqs, metric, kwds):
+def _silhouette_block(X, labels, label_freqs, start, block_n_rows,
+                      block_range, add_at, dist_kwds):
+    """Accumulate silhouette statistics for X[start:start+block_n_rows]
+
+    Parameters
+    ----------
+    X : shape (n_samples, n_features) or precomputed (n_samples, n_samples)
+        data
+    labels : array, shape (n_samples,)
+        corresponding cluster labels, encoded as {0, ..., n_clusters-1}
+    label_freqs : array
+        distribution of cluster labels in ``labels``
+    start : int
+        first index in block
+    block_n_rows : int
+        length of block
+    block_range : array
+        precomputed range ``0..(block_n_rows-1)``
+    add_at : array, shape (block_n_rows * n_clusters,)
+        indices into a flattened array of shape (block_n_rows, n_clusters)
+        where distances from block points to each cluster are accumulated
+    dist_kwds : dict
+        kwargs for ``pairwise_distances``
+    """
     # get distances from block to every other sample
     stop = min(start + block_n_rows, X.shape[0])
     if stop - start == X.shape[0]:
         # allow pairwise_distances to use fast paths
-        block_dists = pairwise_distances(X, metric=metric, **kwds)
+        block_dists = pairwise_distances(X, **dist_kwds)
     else:
-        block_dists = pairwise_distances(X[start:stop], X,
-                                         metric=metric, **kwds)
+        block_dists = pairwise_distances(X[start:stop], X, **dist_kwds)
 
     # accumulate distances from each sample to each cluster
     clust_dists = np.bincount(add_at[:block_dists.size],
@@ -257,9 +278,10 @@ def silhouette_samples(X, labels, metric='euclidean',
                                   dims=(block_n_rows, len(label_freqs)))
     parallel = Parallel(n_jobs=n_jobs)
 
-    results = parallel(delayed(_process_block)(X, labels, start, block_n_rows,
-                                               block_range, add_at,
-                                               label_freqs, metric, kwds)
+    kwds['metric'] = metric
+    results = parallel(delayed(_silhouette_block)(X, labels, label_freqs,
+                                                  start, block_n_rows,
+                                                  block_range, add_at, kwds)
                        for start in range(0, n_samples, block_n_rows))
 
     intra_clust_dists, inter_clust_dists = zip(*results)
