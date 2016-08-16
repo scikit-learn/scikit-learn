@@ -704,27 +704,3 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
-
-
-def indices_to_mask(indices, mask_length):
-    """Convert list of indices to boolean mask.
-
-    Parameters
-    ----------
-    indices : list-like
-        List of integers treated as indices.
-    mask_length : int
-        Length of boolean mask to be generated.
-
-    Returns
-    -------
-    mask : 1d boolean nd-array
-        Boolean array that is True where indices are present, else False.
-    """
-    if mask_length <= np.max(indices):
-        raise ValueError("mask_length must be greater than max(indices)")
-
-    mask = np.zeros(mask_length, dtype=np.bool)
-    mask[indices] = True
-
-    return mask

@@ -5,7 +5,6 @@
 
 from operator import attrgetter
 from functools import update_wrapper
-import numpy as np
 
 
 __all__ = ['if_delegate_has_method']
@@ -71,4 +70,3 @@ def if_delegate_has_method(delegate):
     False
     """
     return lambda fn: _IffHasAttrDescriptor(fn, '%s.%s' % (delegate, fn.__name__))
-
