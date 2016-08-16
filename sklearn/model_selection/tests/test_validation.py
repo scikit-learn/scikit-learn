@@ -137,7 +137,7 @@ X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
 y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
 # The number of samples per class needs to be > n_splits,
-# for StratifiedKFold(3)
+# for StratifiedKFold(n_splits=3)
 y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 
 
