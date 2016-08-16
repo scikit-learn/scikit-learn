@@ -602,21 +602,30 @@ def test_grid_search_results():
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
     grid_search = GridSearchCV(SVC(), cv=n_folds, iid=False,
-                               param_grid=params)
+                               param_grid=params, return_train_score=True)
     grid_search.fit(X, y)
     grid_search_iid = GridSearchCV(SVC(), cv=n_folds, iid=True,
-                                   param_grid=params)
+                                   param_grid=params, return_train_score=True)
     grid_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
-    score_keys = ('test_mean_score', 'test_rank_score',
-                  'test_split0_score', 'test_split1_score',
-                  'test_split2_score', 'test_std_score')
+    score_keys = ('test_mean_score', 'train_mean_score', 'test_mean_time',
+                  'test_rank_score', 'test_split0_score', 'test_split1_score',
+                  'test_split2_score', 'train_split0_score',
+                  'train_split1_score', 'train_split2_score',
+                  'test_std_score', 'train_std_score', 'test_std_time')
     n_candidates = n_grid_points
 
     for search, iid in zip((grid_search, grid_search_iid), (False, True)):
         assert_equal(iid, search.iid)
         results = search.results_
+        # Check if score and timing are reasonable
+        assert_true(all(results['test_rank_score'] >= 1))
+        assert_true(all(results[k] >= 0) for k in score_keys
+                    if k is not 'test_rank_score')
+        assert_true(all(results[k] <= 1) for k in score_keys
+                    if not k.endswith('time') and
+                    k is not 'test_rank_score')
         # Check results structure
         check_results_array_types(results, param_keys, score_keys)
         check_results_keys(results, param_keys, score_keys, n_candidates)
@@ -649,17 +658,21 @@ def test_random_search_results():
     n_search_iter = 30
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
     random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_folds,
-                                       iid=False, param_distributions=params)
+                                       iid=False, param_distributions=params,
+                                       return_train_score=True)
     random_search.fit(X, y)
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                            cv=n_folds, iid=True,
-                                           param_distributions=params)
+                                           param_distributions=params,
+                                           return_train_score=True)
     random_search_iid.fit(X, y)
 
     param_keys = ('param_C', 'param_gamma')
-    score_keys = ('test_mean_score', 'test_rank_score',
-                  'test_split0_score', 'test_split1_score',
-                  'test_split2_score', 'test_std_score')
+    score_keys = ('test_mean_score', 'train_mean_score', 'test_mean_time',
+                  'test_rank_score', 'test_split0_score', 'test_split1_score',
+                  'test_split2_score', 'train_split0_score',
+                  'train_split1_score', 'train_split2_score',
+                  'test_std_score', 'train_std_score', 'test_std_time')
     n_cand = n_search_iter
 
     for search, iid in zip((random_search, random_search_iid), (False, True)):
