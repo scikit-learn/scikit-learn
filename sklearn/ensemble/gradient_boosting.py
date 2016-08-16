@@ -1296,7 +1296,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     criterion : string, optional (default="friedman_mse")
         The function to measure the quality of a split. Supported criteria
@@ -1359,7 +1358,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
     min_impurity_split : float, optional (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
@@ -1661,7 +1659,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
-        Ignored if ``max_leaf_nodes`` is not None.
 
     criterion : string, optional (default="friedman_mse")
         The function to measure the quality of a split. Supported criteria
