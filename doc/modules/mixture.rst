@@ -139,8 +139,7 @@ Bayesian Gaussian Mixture
 =========================
 
 The :class:`BayesianGaussianMixture` object implements a variant of the Gaussian
-mixture model with :ref:`variational inference <variational_inference>`
-algorithms.
+mixture model with variational inference algorithms.
 
 .. _variational_inference:
 
