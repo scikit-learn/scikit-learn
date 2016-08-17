@@ -65,14 +65,14 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         Whether to fit an intercept or not
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -517,14 +517,13 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    alpha : float
-        Constant that multiplies the penalty terms. Defaults to 1.0
+    alpha : float, optional
+        Constant that multiplies the penalty terms. Defaults to 1.0.
         See the notes for the exact mathematical meaning of this
-        parameter.
-        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        parameter.``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` with the Lasso object is not advised
-        and you should prefer the LinearRegression object.
+        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
+        Given this, you should use the :class:`LinearRegression` object.
 
     l1_ratio : float
         The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``. For
@@ -537,14 +536,14 @@ class ElasticNet(LinearModel, RegressorMixin):
         data is assumed to be already centered.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     precompute : True | False | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -791,8 +790,8 @@ class Lasso(ElasticNet):
         Constant that multiplies the L1 term. Defaults to 1.0.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by the :class:`LinearRegression` object. For numerical
-        reasons, using ``alpha = 0`` is with the Lasso object is not advised
-        and you should prefer the LinearRegression object.
+        reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
+        Given this, you should use the :class:`LinearRegression` object.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -800,14 +799,14 @@ class Lasso(ElasticNet):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1286,14 +1285,14 @@ class LassoCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1440,14 +1439,14 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1572,14 +1571,14 @@ class MultiTaskElasticNet(Lasso):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1758,14 +1757,14 @@ class MultiTaskLasso(MultiTaskElasticNet):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1895,14 +1894,14 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -2060,14 +2059,14 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
+        If ``True``, the regressors X will be normalized before regression.
+        This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
         hyperparameters learnt more robust and almost independent of the number
         of samples. The same property is not valid for standardized data.
         However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
+        with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
