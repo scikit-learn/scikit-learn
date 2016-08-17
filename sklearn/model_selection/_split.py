@@ -1446,7 +1446,6 @@ def train_test_split(*arrays, **options):
             ``scipy.sparse.csr_matrix``. Else, the input type
             will not be changed instead of always casting to numpy array.
 
-
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
