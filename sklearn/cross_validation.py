@@ -1890,7 +1890,9 @@ def train_test_split(*arrays, **options):
         List containing train-test split of inputs.
 
         .. versionadded:: 0.16
-            Output type is the same as the input type.
+            If the input is sparse, the output will be a
+            ``scipy.sparse.csr_matrix``. Else, output type is the same as the
+            input type.
 
     Examples
     --------
