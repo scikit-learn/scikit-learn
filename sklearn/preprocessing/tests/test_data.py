@@ -1561,6 +1561,22 @@ def test_transform_selected():
     _check_transform_selected(X, X, [False, False, False])
 
 
+def test_transform_selected_copy_arg():
+    # transformer that alters X
+    def _mutating_transformer(X):
+        X[0, 0] = X[0, 0] + 1
+        return X
+
+    original_X = np.asarray([[1, 2], [3, 4]])
+    expected_Xtr = [[2, 2], [3, 4]]
+
+    X = original_X.copy()
+    Xtr = _transform_selected(X, _mutating_transformer, copy=True)
+
+    assert_array_equal(toarray(X), toarray(original_X))
+    assert_array_equal(toarray(Xtr), expected_Xtr)
+
+
 def _run_one_hot(X, X2, cat):
     enc = OneHotEncoder(categorical_features=cat)
     Xtr = enc.fit_transform(X)
