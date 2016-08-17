@@ -33,6 +33,17 @@ from ..base import clone
 from sklearn.externals.funcsigs import signature
 
 
+def _check_length_scale(X, length_scale):
+    length_scale = np.squeeze(length_scale).astype(float)
+    if np.ndim(length_scale) > 1:
+        raise ValueError("length_scale cannot be of dimension greater than 1")
+    if np.ndim(length_scale) == 1 and X.shape[1] != length_scale.shape[0]:
+        raise ValueError("Anisotropic kernel must have the same number of "
+                         "dimensions as data (%d!=%d)"
+                         % (length_scale.shape[0], X.shape[1]))
+    return length_scale
+
+
 class Hyperparameter(namedtuple('Hyperparameter',
                                 ('name', 'value_type', 'bounds',
                                  'n_elements', 'fixed'))):
@@ -1153,21 +1164,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        length_scale = self.length_scale
-        if np.iterable(length_scale):
-            if len(length_scale) > 1:
-                length_scale = np.asarray(length_scale, dtype=np.float)
-            else:
-                length_scale = float(length_scale[0])
-        else:
-            length_scale = float(length_scale)
-
         X = np.atleast_2d(X)
-        if self.anisotropic and X.shape[1] != length_scale.shape[0]:
-            raise Exception("Anisotropic kernel must have the same number of "
-                            "dimensions as data (%d!=%d)"
-                            % (length_scale.shape[0], X.shape[1]))
-
+        length_scale = _check_length_scale(X, self.length_scale)
         if Y is None:
             dists = pdist(X / length_scale, metric='sqeuclidean')
             K = np.exp(-.5 * dists)
@@ -1196,9 +1194,6 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                     / (length_scale ** 2)
                 K_gradient *= K[..., np.newaxis]
                 return K, K_gradient
-            else:
-                raise Exception("Anisotropic kernels require that the number "
-                                "of length scales and features match.")
         else:
             return K
 
@@ -1279,21 +1274,8 @@ class Matern(RBF):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        length_scale = self.length_scale
-        if np.iterable(length_scale):
-            if len(length_scale) > 1:
-                length_scale = np.asarray(length_scale, dtype=np.float)
-            else:
-                length_scale = float(length_scale[0])
-        else:
-            length_scale = float(length_scale)
-
         X = np.atleast_2d(X)
-        if self.anisotropic and X.shape[1] != length_scale.shape[0]:
-            raise Exception("Anisotropic kernel must have the same number of "
-                            "dimensions as data (%d!=%d)"
-                            % (length_scale.shape[0], X.shape[1]))
-
+        length_scale = _check_length_scale(X, self.length_scale)
         if Y is None:
             dists = pdist(X / length_scale, metric='euclidean')
         else:
@@ -1744,7 +1726,7 @@ class PairwiseKernel(Kernel):
     """
 
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
-                 **pairwise_kernels_kwargs):
+                 pairwise_kernels_kwargs=None):
         self.gamma = gamma
         self.gamma_bounds = gamma_bounds
         self.metric = metric
@@ -1780,10 +1762,14 @@ class PairwiseKernel(Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        pairwise_kernels_kwargs = self.pairwise_kernels_kwargs
+        if self.pairwise_kernels_kwargs is None:
+            pairwise_kernels_kwargs = {}
+
         X = np.atleast_2d(X)
         K = pairwise_kernels(X, Y, metric=self.metric, gamma=self.gamma,
                              filter_params=True,
-                             **self.pairwise_kernels_kwargs)
+                             **pairwise_kernels_kwargs)
         if eval_gradient:
             if self.hyperparameter_gamma.fixed:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
@@ -1792,7 +1778,7 @@ class PairwiseKernel(Kernel):
                 def f(gamma):  # helper function
                     return pairwise_kernels(
                         X, Y, metric=self.metric, gamma=np.exp(gamma),
-                        filter_params=True, **self.pairwise_kernels_kwargs)
+                        filter_params=True, **pairwise_kernels_kwargs)
                 return K, _approx_fprime(self.theta, f, 1e-10)
         else:
             return K
