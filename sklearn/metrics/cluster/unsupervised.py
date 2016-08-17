@@ -125,7 +125,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         else:
             X, labels = X[indices], labels[indices]
     return np.mean(silhouette_samples(X, labels, metric=metric,
-                                      block_size=block_size, **kwds))
+                                      block_size=block_size, n_jobs=n_jobs,
+                                      **kwds))
 
 
 def _silhouette_block(X, labels, label_freqs, start, block_n_rows,
@@ -276,7 +277,7 @@ def silhouette_samples(X, labels, metric='euclidean',
     add_at = np.ravel_multi_index((np.repeat(block_range, n_samples),
                                    np.tile(labels, block_n_rows)),
                                   dims=(block_n_rows, len(label_freqs)))
-    parallel = Parallel(n_jobs=n_jobs)
+    parallel = Parallel(n_jobs=n_jobs, backend='threading')
 
     kwds['metric'] = metric
     results = parallel(delayed(_silhouette_block)(X, labels, label_freqs,
