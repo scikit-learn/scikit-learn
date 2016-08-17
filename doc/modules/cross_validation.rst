@@ -559,14 +559,15 @@ Cross validation of time series data
 ====================================
 
 Time series data is characterised by the correlation between observations 
-that are near in time (*autocorrelation*). However, the "classical" k-times 
-cross-validation techniques assume the samples are independent and 
+that are near in time (*autocorrelation*). However, classical 
+cross-validation techniques such as :class:`KFold`, :class:`ShuffleSplit`,
+and :class:`LeaveOneLabelOut` assume the samples are independent and 
 identically distributed, and would result in unreasonable correlation 
 between training and testing instances (yielding poor estimates of 
-generalisation error) on time series data. Therefore, it is very important to 
-evaluate our model for time series data on the "future" observations least 
-like those that are seen by our model before. To achieve this, we need to 
-adopt the special time series cross-validation which first split the data 
-into :math:`n_splits + 1` folds, then in each iteration :math:`i`, use 
-first :mata:`i` fold(s) as training set, and use :math:`i+1` fold as 
-testing set.
+generalisation error) on time series data. Therefore, it is very important 
+to evaluate our model for time series data on the "future" observations 
+least like those that are seen by our model before. To achieve this, we 
+need to adopt the special time series cross-validation which first split 
+the data into :math:`n_splits + 1` folds, then in each iteration 
+:math:`i`, use first :math:`i` fold(s) as training set, and use 
+:math:`i+1` fold as testing set.
