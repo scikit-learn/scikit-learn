@@ -1571,7 +1571,8 @@ def test_transform_selected_copy_arg():
     expected_Xtr = [[2, 2], [3, 4]]
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True)
+    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
+                              selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
     assert_array_equal(toarray(Xtr), expected_Xtr)
