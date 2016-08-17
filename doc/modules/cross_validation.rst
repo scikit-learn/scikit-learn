@@ -290,6 +290,33 @@ both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
 
 
+HomogeneousTimeSeriesCV
+-----------------------
+
+:class:`HomogeneousTimeSeriesCV` is a variation of *k-fold* which 
+returns returns first :math:`k` folds as train set and the :math:`(k+1)` th 
+fold as test set. Note that unlike standard cross-validation methods, 
+successive training sets are supersets of those that come before them.
+
+Example of 3-split time series cross-validation on a dataset with 4 samples::
+ >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
+
+ >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+ >>> y = np.array([1, 2, 3, 4])
+ >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
+ >>> htscv.get_n_splits(X)
+     3
+ >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
+     HomogeneousTimeSeriesCV(n_splits=3)
+ >>> for train_index, test_index in htscv.split(X):
+     ...    print("TRAIN:", train_index, "TEST:", test_index)
+     ...    X_train, X_test = X[train_index], X[test_index]
+     ...    y_train, y_test = y[train_index], y[test_index]
+     TRAIN: [0] TEST: [1]
+     TRAIN: [0 1] TEST: [2]
+     TRAIN: [0 1 2] TEST: [3]
+
+
 Leave-One-Out - LOO
 -------------------
 
@@ -548,26 +575,28 @@ to shuffle the data indices before splitting them. Note that:
 * To ensure results are repeatable (*on the same platform*), use a fixed value
   for ``random_state``.
 
+Cross validation of time series data
+====================================
+
+Time series data is characterised by the correlation between observations 
+that are near in time (*autocorrelation*). However, classical 
+cross-validation techniques such as :class:`KFold` and 
+:class:`ShuffleSplit` assume the samples are independent and 
+identically distributed, and would result in unreasonable correlation 
+between training and testing instances (yielding poor estimates of 
+generalisation error) on time series data. Therefore, it is very important 
+to evaluate our model for time series data on the "future" observations 
+least like those that are used to train the model. To achieve this, we 
+need to adopt the special time series cross-validation which first split 
+the data into :math:`n\_splits + 1` folds, then in each iteration 
+:math:`i`, use first :math:`i` fold(s) as training set, and use 
+:math:`i+1` th fold as testing set.
+:class:`HomogeneousTimeSeriesCV` implements the cross-validation 
+technique described above.
+
 Cross validation and model selection
 ====================================
 
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
 model. This is the topic of the next section: :ref:`grid_search`.
-
-Cross validation of time series data
-====================================
-
-Time series data is characterised by the correlation between observations 
-that are near in time (*autocorrelation*). However, classical 
-cross-validation techniques such as :class:`KFold`, :class:`ShuffleSplit`,
-and :class:`LeaveOneLabelOut` assume the samples are independent and 
-identically distributed, and would result in unreasonable correlation 
-between training and testing instances (yielding poor estimates of 
-generalisation error) on time series data. Therefore, it is very important 
-to evaluate our model for time series data on the "future" observations 
-least like those that are seen by our model before. To achieve this, we 
-need to adopt the special time series cross-validation which first split 
-the data into :math:`n_splits + 1` folds, then in each iteration 
-:math:`i`, use first :math:`i` fold(s) as training set, and use 
-:math:`i+1` fold as testing set.
