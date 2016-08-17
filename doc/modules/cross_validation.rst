@@ -559,7 +559,7 @@ Cross validation of time series data
 ====================================
 
 Time series data is characterised by the correlation between observations 
-that are near in time (autocorrelation), so it is very important to 
+that are near in time (*autocorrelation*), so it is very important to 
 evaluate our models on the "future" observations least like those that 
 are seen by our model before. However, the "classical" k-times 
 cross-validation technique is based on the fact that each observation in 
