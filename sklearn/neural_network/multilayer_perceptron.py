@@ -728,20 +728,20 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
 
-        -'constant', is a constant learning rate given by
-         'learning_rate_init'.
+        - 'constant' is a constant learning rate given by
+          'learning_rate_init'.
 
-        -'invscaling' gradually decreases the learning rate ``learning_rate_`` at
-          each time step 't' using an inverse scaling exponent of 'power_t'.
+        - 'invscaling' gradually decreases the learning rate ``learning_rate_``
+          at each time step 't' using an inverse scaling exponent of 'power_t'.
           effective_learning_rate = learning_rate_init / pow(t, power_t)
 
-        -'adaptive', keeps the learning rate constant to
-         'learning_rate_init' as long as training loss keeps decreasing.
-         Each time two consecutive epochs fail to decrease training loss by at
-         least tol, or fail to increase validation score by at least tol if
-         'early_stopping' is on, the current learning rate is divided by 5.
+        - 'adaptive' keeps the learning rate constant to
+          'learning_rate_init' as long as training loss keeps decreasing.
+          Each time two consecutive epochs fail to decrease training loss by at
+          least tol, or fail to increase validation score by at least tol if
+          'early_stopping' is on, the current learning rate is divided by 5.
 
-         Only used when algorithm='sgd'.
+        Only used when ``algorithm='sgd'``.
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The algorithm iterates until convergence
@@ -1082,20 +1082,20 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
 
-        -'constant', is a constant learning rate given by
-         'learning_rate_init'.
+        - 'constant' is a constant learning rate given by
+          'learning_rate_init'.
 
-        -'invscaling' gradually decreases the learning rate ``learning_rate_`` at
-          each time step 't' using an inverse scaling exponent of 'power_t'.
+        - 'invscaling' gradually decreases the learning rate ``learning_rate_``
+          at each time step 't' using an inverse scaling exponent of 'power_t'.
           effective_learning_rate = learning_rate_init / pow(t, power_t)
 
-        -'adaptive', keeps the learning rate constant to
-         'learning_rate_init' as long as training loss keeps decreasing.
-         Each time two consecutive epochs fail to decrease training loss by at
-         least tol, or fail to increase validation score by at least tol if
-         'early_stopping' is on, the current learning rate is divided by 5.
+        - 'adaptive' keeps the learning rate constant to
+          'learning_rate_init' as long as training loss keeps decreasing.
+          Each time two consecutive epochs fail to decrease training loss by at
+          least tol, or fail to increase validation score by at least tol if
+          'early_stopping' is on, the current learning rate is divided by 5.
 
-         Only used when algorithm='sgd'.
+        Only used when algorithm='sgd'.
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The algorithm iterates until convergence
