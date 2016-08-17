@@ -59,7 +59,8 @@ def test_bayesian_mixture_covariance_type():
     X = rng.rand(n_samples, n_features)
 
     covariance_type = 'bad_covariance_type'
-    bgmm = BayesianGaussianMixture(covariance_type=covariance_type)
+    bgmm = BayesianGaussianMixture(covariance_type=covariance_type,
+                                   random_state=rng)
     assert_raise_message(ValueError,
                          "Invalid value for 'covariance_type': %s "
                          "'covariance_type' should be in "
@@ -76,7 +77,8 @@ def test_bayesian_mixture_weights_prior_initialisation():
     # Check raise message for a bad value of dirichlet_concentration_prior
     bad_dirichlet_concentration_prior_ = 0.
     bgmm = BayesianGaussianMixture(
-        dirichlet_concentration_prior=bad_dirichlet_concentration_prior_)
+        dirichlet_concentration_prior=bad_dirichlet_concentration_prior_,
+        random_state=0)
     assert_raise_message(ValueError,
                          "The parameter 'dirichlet_concentration_prior' "
                          "should be greater than 0., but got %.3f."
@@ -86,12 +88,14 @@ def test_bayesian_mixture_weights_prior_initialisation():
     # Check correct init for a given value of dirichlet_concentration_prior
     dirichlet_concentration_prior = rng.rand()
     bgmm = BayesianGaussianMixture(
-        dirichlet_concentration_prior=dirichlet_concentration_prior).fit(X)
+        dirichlet_concentration_prior=dirichlet_concentration_prior,
+        random_state=rng).fit(X)
     assert_almost_equal(dirichlet_concentration_prior,
                         bgmm.dirichlet_concentration_prior_)
 
     # Check correct init for the default value of dirichlet_concentration_prior
-    bgmm = BayesianGaussianMixture(n_components=n_components).fit(X)
+    bgmm = BayesianGaussianMixture(n_components=n_components,
+                                   random_state=rng).fit(X)
     assert_almost_equal(1. / n_components, bgmm.dirichlet_concentration_prior_)
 
 
@@ -103,7 +107,8 @@ def test_bayesian_mixture_means_prior_initialisation():
     # Check raise message for a bad value of mean_precision_prior
     bad_mean_precision_prior_ = 0.
     bgmm = BayesianGaussianMixture(
-        mean_precision_prior=bad_mean_precision_prior_)
+        mean_precision_prior=bad_mean_precision_prior_,
+        random_state=rng)
     assert_raise_message(ValueError,
                          "The parameter 'mean_precision_prior' should be "
                          "greater than 0., but got %.3f."
@@ -113,17 +118,19 @@ def test_bayesian_mixture_means_prior_initialisation():
     # Check correct init for a given value of mean_precision_prior
     mean_precision_prior = rng.rand()
     bgmm = BayesianGaussianMixture(
-        mean_precision_prior=mean_precision_prior).fit(X)
+        mean_precision_prior=mean_precision_prior,
+        random_state=rng).fit(X)
     assert_almost_equal(mean_precision_prior, bgmm.mean_precision_prior_)
 
     # Check correct init for the default value of mean_precision_prior
-    bgmm = BayesianGaussianMixture().fit(X)
+    bgmm = BayesianGaussianMixture(random_state=rng).fit(X)
     assert_almost_equal(1., bgmm.mean_precision_prior_)
 
     # Check raise message for a bad shape of mean_prior
     mean_prior = rng.rand(n_features + 1)
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   mean_prior=mean_prior)
+                                   mean_prior=mean_prior,
+                                   random_state=rng)
     assert_raise_message(ValueError,
                          "The parameter 'means' should have the shape of ",
                          bgmm.fit, X)
@@ -131,11 +138,13 @@ def test_bayesian_mixture_means_prior_initialisation():
     # Check correct init for a given value of mean_prior
     mean_prior = rng.rand(n_features)
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   mean_prior=mean_prior).fit(X)
+                                   mean_prior=mean_prior,
+                                   random_state=rng).fit(X)
     assert_almost_equal(mean_prior, bgmm.mean_prior_)
 
     # Check correct init for the default value of bemean_priorta
-    bgmm = BayesianGaussianMixture(n_components=n_components).fit(X)
+    bgmm = BayesianGaussianMixture(n_components=n_components,
+                                   random_state=rng).fit(X)
     assert_almost_equal(X.mean(axis=0), bgmm.mean_prior_)
 
 
@@ -145,25 +154,28 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     X = rng.rand(n_samples, n_features)
 
     # Check raise message for a bad value of freedom_degrees_prior
-    badfreedom_degrees_prior_ = n_features - 1.
+    bad_freedom_degrees_prior_ = n_features - 1.
     bgmm = BayesianGaussianMixture(
-        freedom_degrees_prior=badfreedom_degrees_prior_)
+        freedom_degrees_prior=bad_freedom_degrees_prior_,
+        random_state=rng)
     assert_raise_message(ValueError,
                          "The parameter 'freedom_degrees_prior' should be "
                          "greater than %d, but got %.3f."
-                         % (n_features - 1, badfreedom_degrees_prior_),
+                         % (n_features - 1, bad_freedom_degrees_prior_),
                          bgmm.fit, X)
 
     # Check correct init for a given value of freedom_degrees_prior
     freedom_degrees_prior = rng.rand() + n_features - 1.
     bgmm = BayesianGaussianMixture(
-        freedom_degrees_prior=freedom_degrees_prior).fit(X)
+        freedom_degrees_prior=freedom_degrees_prior,
+        random_state=rng).fit(X)
     assert_almost_equal(freedom_degrees_prior, bgmm.freedom_degrees_prior_)
 
     # Check correct init for the default value of freedom_degrees_prior
     freedom_degrees_prior_default = n_features
     bgmm = BayesianGaussianMixture(
-        freedom_degrees_prior=freedom_degrees_prior_default).fit(X)
+        freedom_degrees_prior=freedom_degrees_prior_default,
+        random_state=rng).fit(X)
     assert_almost_equal(freedom_degrees_prior_default,
                         bgmm.freedom_degrees_prior_)
 
@@ -174,7 +186,7 @@ def test_bayesian_mixture_precisions_prior_initialisation():
         'diag': np.diag(np.atleast_2d(np.cov(X.T, bias=1))) + 3,
         'spherical': rng.rand()}
 
-    bgmm = BayesianGaussianMixture()
+    bgmm = BayesianGaussianMixture(random_state=rng)
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
         print(cov_type)
         bgmm.covariance_type = cov_type
@@ -184,13 +196,14 @@ def test_bayesian_mixture_precisions_prior_initialisation():
                             bgmm.covariance_prior_)
 
     # Check raise message for a bad spherical value of covariance_prior
-    badcovariance_prior_ = -1.
+    bad_covariance_prior_ = -1.
     bgmm = BayesianGaussianMixture(covariance_type='spherical',
-                                   covariance_prior=badcovariance_prior_)
+                                   covariance_prior=bad_covariance_prior_,
+                                   random_state=rng)
     assert_raise_message(ValueError,
                          "The parameter 'spherical covariance_prior' "
                          "should be greater than 0., but got %.3f."
-                         % badcovariance_prior_,
+                         % bad_covariance_prior_,
                          bgmm.fit, X)
 
     # Check correct init for the default value of covariance_prior
@@ -200,7 +213,7 @@ def test_bayesian_mixture_precisions_prior_initialisation():
         'diag': np.var(X, axis=0, ddof=1),
         'spherical': np.var(X, axis=0, ddof=1).mean()}
 
-    bgmm = BayesianGaussianMixture()
+    bgmm = BayesianGaussianMixture(random_state=0)
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
         bgmm.covariance_type = cov_type
         bgmm.fit(X)
@@ -213,7 +226,7 @@ def test_bayesian_mixture_check_is_fitted():
     n_samples, n_features = 10, 2
 
     # Check raise message
-    bgmm = BayesianGaussianMixture()
+    bgmm = BayesianGaussianMixture(random_state=rng)
     X = rng.rand(n_samples, n_features)
     assert_raise_message(ValueError,
                          'This BayesianGaussianMixture instance is not '
@@ -225,7 +238,7 @@ def test_bayesian_mixture_weights():
     n_samples, n_features = 10, 2
 
     X = rng.rand(n_samples, n_features)
-    bgmm = BayesianGaussianMixture().fit(X)
+    bgmm = BayesianGaussianMixture(random_state=rng).fit(X)
 
     # Check the weights values
     expected_weights = (bgmm.dirichlet_concentration_ /
