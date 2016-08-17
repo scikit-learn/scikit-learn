@@ -188,6 +188,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         X = _check_X(X, self.n_components)
         self._check_initial_parameters(X)
 
+        # if we enable warm_start, we will have a unique initialisation
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 
@@ -202,7 +203,6 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 self._initialize_parameters(X)
                 self.lower_bound_ = -np.infty
 
-            current_log_likelihood, resp = self._e_step(X)
             for n_iter in range(self.max_iter):
                 prev_lower_bound = self.lower_bound_
 
@@ -408,7 +408,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             log p(X)
 
         log_responsibilities : array, shape (n_samples, n_components)
-            log of the responsibilities
+            logarithm of the responsibilities
         """
         weighted_log_prob = self._estimate_weighted_log_prob(X)
         log_prob_norm = logsumexp(weighted_log_prob, axis=1)

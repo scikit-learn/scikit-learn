@@ -4,16 +4,16 @@ Bayesian Gaussian Mixture Alpha Prior Analysis
 ==============================================
 
 Plot the resulting ellipsoids of a mixture of three Gaussians with EM and
-variational Bayesian Gaussian Mixture for three different values of the  prior
-of alpha.
+variational Bayesian Gaussian Mixture for three different values of the prior
+of the dirichlet concentration.
 
 For all models, the Variationnal Bayesian Gaussian Mixture adapts it number of
-mixture automatically. The parameter alpha prior has a direct link with the
-resulting number of components. Specifying a high value of alpha_prior leads
-more often to uniformly-sized mixture components, while specifying small (under
-0.1) values will lead to some mixture components getting almost all the points
-while most mixture components will be centered on just a few of the remaining
-points.
+mixture automatically. The parameter `dirichlet_concentration_prior` has a
+direct link with the resulting number of components. Specifying a high value of
+`dirichlet_concentration_prior` leads more often to uniformly-sized mixture
+components, while specifying small (under 0.1) values will lead to some mixture
+components getting almost all the points while most mixture components will be
+centered on just a few of the remaining points.
 """
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
@@ -42,11 +42,11 @@ def plot_ellipses(ax, weights, means, covars):
         ax.add_artist(ell)
 
 
-def plot_results(ax1, ax2, estimator, alpha_prior, X, y, plot_title=False):
-    estimator.alpha_prior = alpha_prior
+def plot_results(ax1, ax2, estimator, dirichlet_concentration_prior, X, y, plot_title=False):
+    estimator.dirichlet_concentration_prior = dirichlet_concentration_prior
     estimator.fit(X)
     ax1.set_title("Bayesian Gaussian Mixture for "
-                  r"$\alpha_0=%.1e$" % alpha_prior)
+                  r"$dc_0=%.1e$" % dirichlet_concentration_prior)
     # ax1.axis('equal')
     ax1.scatter(X[:, 0], X[:, 1], s=5, marker='o', color=colors[y], alpha=0.8)
     ax1.set_xlim(-2., 2.)
@@ -77,7 +77,7 @@ random_state = 2
 n_components, n_features = 3, 2
 colors = np.array(['mediumseagreen', 'royalblue', 'r', 'gold',
                    'orchid', 'indigo', 'darkcyan', 'tomato'])
-alpha_prior = np.logspace(-3, 3, 3)
+dirichlet_concentration_prior = np.logspace(-3, 3, 3)
 covars = np.array([[[.7, .0], [.0, .1]],
                    [[.5, .0], [.0, .1]],
                    [[.5, .0], [.0, .1]]])
@@ -89,9 +89,9 @@ means = np.array([[.0, -.70],
 
 # Here we put beta_prior to 0.8 to minimize the influence of the prior for this
 # dataset
-estimator = BayesianGaussianMixture(n_components=2 * n_components, reg_covar=0,
+estimator = BayesianGaussianMixture(n_components=2 * n_components,
                                     init_params='random', max_iter=1500,
-                                    beta_prior=.8, tol=1e-9,
+                                    mean_precision_prior=.8, tol=1e-9,
                                     random_state=random_state)
 
 # Generate data
@@ -107,9 +107,9 @@ plt.figure(figsize=(4.7 * 3, 8))
 plt.subplots_adjust(bottom=.04, top=0.95, hspace=.05, wspace=.05,
                     left=.03, right=.97)
 
-gs = gridspec.GridSpec(3, len(alpha_prior))
-for k, alpha in enumerate(alpha_prior):
+gs = gridspec.GridSpec(3, len(dirichlet_concentration_prior))
+for k, dc in enumerate(dirichlet_concentration_prior):
     plot_results(plt.subplot(gs[0:2, k]), plt.subplot(gs[2, k]),
-                 estimator, alpha, X, y, plot_title=k == 0)
+                 estimator, dc, X, y, plot_title=k == 0)
 
 plt.show()
