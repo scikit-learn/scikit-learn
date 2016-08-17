@@ -1442,7 +1442,10 @@ def train_test_split(*arrays, **options):
         matrices or pandas dataframes.
 
         .. versionadded:: 0.16
-            preserves input type instead of always casting to numpy array.
+            If the input is sparse will be converted to a
+            ``scipy.sparse.csr_matrix``. Else, the input type
+            will not be changed instead of always casting to numpy array.
+
 
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
