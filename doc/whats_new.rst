@@ -292,6 +292,11 @@ Enhancements
      See :ref:`example_plot_compare_reduction.py`. By `Joel Nothman`_ and
      `Robert McGibbon`_.
 
+   - Simplification of the ``clone`` function, deprecate support for estimators
+     that modify parameters in ``__init__``.
+     (`#5540 <https://github.com/scikit-learn/scikit-learn/pull/5540>_`)
+     By `Andreas Müller`_.
+
 Bug fixes
 .........
 

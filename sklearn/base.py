@@ -76,8 +76,9 @@ def clone(estimator, safe=True):
         if param1 is param2:
             # this should always happen
             continue
-        # if we reach this, we should raise a deprecation warning
-        # once we fixed #5549 (GP kernels) and #5547 (VBGMM)
+        warnings.warn(DeprecationWarning, "Estimator %s modifies parameters in "
+                      "__init__. This behavior is deprecated as of 0.18 and "
+                      " support for this behavior will be removed in 0.20.")
         if isinstance(param1, np.ndarray):
             # For most ndarrays, we do not test for complete equality
             if not isinstance(param2, type(param1)):
