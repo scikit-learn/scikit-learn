@@ -1,23 +1,21 @@
 import numpy as np
-
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.cluster import homogeneity_score
-from sklearn.metrics.cluster import completeness_score
-from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster import homogeneity_completeness_v_measure
-from sklearn.metrics.cluster import adjusted_mutual_info_score
-from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.metrics.cluster import mutual_info_score
-from sklearn.metrics.cluster import expected_mutual_information
-from sklearn.metrics.cluster import contingency_matrix
-from sklearn.metrics.cluster import fowlkes_mallows_score
-from sklearn.metrics.cluster import entropy
-
-from sklearn.utils.testing import assert_raise_message
 from nose.tools import assert_almost_equal
 from nose.tools import assert_equal
 from numpy.testing import assert_array_almost_equal
 
+from sklearn.metrics.cluster import adjusted_mutual_info_score
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.cluster import completeness_score
+from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.cluster import entropy
+from sklearn.metrics.cluster import expected_mutual_information
+from sklearn.metrics.cluster import fowlkes_mallows_score
+from sklearn.metrics.cluster import homogeneity_completeness_v_measure
+from sklearn.metrics.cluster import homogeneity_score
+from sklearn.metrics.cluster import mutual_info_score
+from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.metrics.cluster import v_measure_score
+from sklearn.utils.testing import assert_raise_message
 
 score_funcs = [
     adjusted_rand_score,
@@ -55,12 +53,14 @@ def test_perfect_matches():
         assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
         assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
 
+
 def test_homogeneity_completeness_v_measure_sparse():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     h, c, v = homogeneity_completeness_v_measure(labels_a, labels_b)
-    h_s, c_s, v_s = homogeneity_completeness_v_measure(labels_a, labels_b, sparse = True)
-    assert_array_almost_equal([h, c, v],[h_s, c_s, v_s])
+    h_s, c_s, v_s = homogeneity_completeness_v_measure(labels_a, labels_b, sparse=True)
+    assert_array_almost_equal([h, c, v], [h_s, c_s, v_s])
+
 
 """ Takes too long...
 def test_homogeneity_completeness_v_measure_large():
@@ -71,6 +71,7 @@ def test_homogeneity_completeness_v_measure_large():
     h_s, c_s, v_s = homogeneity_completeness_v_measure(labels_a, labels_b, sparse = True)    
     assert_raises(MemoryError, homogeneity_completeness_v_measure, labels_a, labels_b)
 """
+
 
 def test_homogeneous_but_not_complete_labeling():
     # homogeneous but not complete clustering
@@ -203,37 +204,60 @@ def test_contingency_matrix_sparse():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     C = contingency_matrix(labels_a, labels_b)
-    C_sparse = contingency_matrix(labels_a, labels_b, sparse = True).toarray()
+    C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
     assert_array_almost_equal(C, C_sparse)
-    
+
 
 def test_adjusted_rand_score_sparse():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
-    C_sparse = contingency_matrix(labels_a, labels_b, sparse = True)
-    assert_almost_equal(adjusted_rand_score(labels_a,labels_b), adjusted_rand_score(None, None, C_sparse))
+    C_sparse = contingency_matrix(labels_a, labels_b, sparse=True)
+    assert_almost_equal(adjusted_rand_score(labels_a, labels_b), adjusted_rand_score(None, None, contingency=C_sparse))
 
 
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):
-        labels_a, labels_b = np.ones(i, dtype=np.int),\
-            np.arange(i, dtype=np.int)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        labels_a, labels_b = np.ones(i, dtype=np.int), \
+                             np.arange(i, dtype=np.int)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b, max_n_classes=1e4), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b, max_n_classes=1e4), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b, max_n_classes=1e4), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b, max_n_classes=1e4), 0.0)
 
 
 def test_v_measure_and_mutual_information(seed=36):
     # Check relation between v_measure, entropy and mutual information
     for i in np.logspace(1, 4, 4).astype(np.int):
         random_state = np.random.RandomState(seed)
-        labels_a, labels_b = random_state.randint(0, 10, i),\
-            random_state.randint(0, 10, i)
+        labels_a, labels_b = random_state.randint(0, 10, i), \
+                             random_state.randint(0, 10, i)
         assert_almost_equal(v_measure_score(labels_a, labels_b),
                             2.0 * mutual_info_score(labels_a, labels_b) /
                             (entropy(labels_a) + entropy(labels_b)), 0)
+
+
+def test_max_n_classes():
+    rng = np.random.RandomState(seed=0)
+    labels_true = rng.rand(53)
+    labels_pred = rng.rand(53)
+    labels_zero = np.zeros(53)
+    labels_true[:2] = 0
+    labels_zero[:3] = 1
+    labels_pred[:2] = 0
+    for score_func in score_funcs:
+        expected = ("Too many classes for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_true, labels_pred,
+                             max_n_classes=50)
+        expected = ("Too many clusters for a clustering metric. If you "
+                    "want to increase the limit, pass parameter "
+                    "max_n_classes to the scoring function")
+        assert_raise_message(ValueError, expected, score_func,
+                             labels_zero, labels_pred,
+                             max_n_classes=50)
 
 
 def test_fowlkes_mallows_score():
