@@ -676,20 +676,21 @@ def test_grid_search_with_multioutput_data():
 
 def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
-    # as one of the parameters in the param_grid
+    # as one of the parameters in the param_grid.
     param_grid = {
         'loss': ['log'],
     }
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf= GridSearchCV(estimator=SGDClassifier(),
-                            param_grid=param_grid)
+    clf = GridSearchCV(estimator=SGDClassifier(),
+                       param_grid=param_grid)
 
-    # when not fitted, predict_proba diabled because default loss='hinge'
+    # When the estimator is not fitted, `predict_proba` is not available as the default loss is 'hinge'.
     assert_false(hasattr(clf, "predict_proba"))
     clf.fit(X, y)
     clf.predict_proba(X)
     clf.predict_log_proba(X)
+
 
 def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.

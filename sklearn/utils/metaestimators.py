@@ -26,6 +26,10 @@ def hasattr_nested(obj, attr):
     ...         self.a = LayerB()
     ...
     >>> nested = LayerA()
+    >>> hasattr(nested, 'a')
+    True
+    >>> hasattr(nested, 'a.b')
+    False
     >>> hasattr_nested(nested, 'a')
     True
     >>> hasattr_nested(nested, 'a.b')
@@ -131,6 +135,7 @@ def if_delegate_has_method(delegate):
     """
     if not isinstance(delegate, tuple):
         delegate = tuple([delegate])
+
     def func(fn):
         attrs = []
         for item in delegate:
@@ -138,5 +143,3 @@ def if_delegate_has_method(delegate):
         return _IffHasAttrDescriptor(fn, tuple(attrs))
 
     return func
-
-
