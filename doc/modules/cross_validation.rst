@@ -296,7 +296,7 @@ HomogeneousTimeSeriesCV
 -----------------------
 
 :class:`HomogeneousTimeSeriesCV` is a variation of *k-fold* which 
-returns returns first :math:`k` folds as train set and the :math:`(k+1)` th 
+returns first :math:`k` folds as train set and the :math:`(k+1)` th 
 fold as test set. Note that unlike standard cross-validation methods, 
 successive training sets are supersets of those that come before them.
 
