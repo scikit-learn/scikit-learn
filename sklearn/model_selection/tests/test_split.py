@@ -1021,6 +1021,7 @@ def test_homogeneous_time_series_cv():
     splits = HomogeneousTimeSeriesCV(2).split(X)
     n_splits_actual = len(list(splits))
     assert_equal(n_splits_actual, homo_tscv.get_n_splits())
+    assert_equal(n_splits_actual, 2)
 
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
