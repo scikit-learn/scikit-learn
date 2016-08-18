@@ -10,11 +10,47 @@ from functools import update_wrapper
 __all__ = ['if_delegate_has_method']
 
 
+def hasattr_nested(obj, attr):
+    """Check if obj has a (possibly nested) attribute
+
+    >>> class LayerC(object):
+    ...     def __init__(self):
+    ...         self.c = '123'
+    ...
+    >>> class LayerB(object):
+    ...     def __init__(self):
+    ...         self.b = LayerC()
+    ...
+    >>> class LayerA(object):
+    ...     def __init__(self):
+    ...         self.a = LayerB()
+    ...
+    >>> nested = LayerA()
+    >>> hasattr_nested(nested, 'a')
+    True
+    >>> hasattr_nested(nested, 'a.b')
+    True
+    >>> hasattr_nested(nested, 'a.b.c')
+    True
+    """
+    parts = attr.split(".")
+    for part in parts:
+        if hasattr(obj, part):
+            obj = getattr(obj, part)
+        else:
+            return False
+    else:
+        return True
+
+
 class _IffHasAttrDescriptor(object):
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
-    if the ``attribute_name`` is not present on the base object.
+    if the all items in ``attribute_name`` is not present on the base object.
+    attribute_name can be a single string or a tuple of strings. The
+    ``AttributeError`` raised will indicate the last item is not present on
+    the base object
 
     This allows ducktyping of the decorated method based on ``attribute_name``.
 
@@ -23,7 +59,8 @@ class _IffHasAttrDescriptor(object):
     """
     def __init__(self, fn, attribute_name):
         self.fn = fn
-        self.get_attribute = attrgetter(attribute_name)
+        self.attribute_name = attribute_name
+
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
@@ -32,7 +69,9 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            self.get_attribute(obj)
+            obj_hasattr = [hasattr_nested(obj, item) for item in self.attribute_name]
+            if not any(obj_hasattr):
+                attrgetter(self.attribute_name[-1])(obj)
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
         # update the docstring of the returned function
@@ -43,6 +82,8 @@ class _IffHasAttrDescriptor(object):
 def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
+    Delegate can be string or a tuple of strings
+
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
 
@@ -50,16 +91,27 @@ def if_delegate_has_method(delegate):
     >>>
     >>>
     >>> class MetaEst(object):
-    ...     def __init__(self, sub_est):
+    ...     def __init__(self, sub_est, better_sub_est=None):
     ...         self.sub_est = sub_est
+    ...         self.better_sub_est = better_sub_est
     ...
     ...     @if_delegate_has_method(delegate='sub_est')
     ...     def predict(self, X):
     ...         return self.sub_est.predict(X)
     ...
+    ...     @if_delegate_has_method(delegate=('sub_est', 'better_sub_est'))
+    ...     def predict_cond(self, X):
+    ...         if self.better_sub_est is not None:
+    ...             return self.better_sub_est.predict_cond(X)
+    ...         else:
+    ...             return self.sub_est.predict_cond(X)
+    ...
     >>> class HasPredict(object):
     ...     def predict(self, X):
     ...         return X.sum(axis=1)
+    ...
+    ...     def predict_cond(self, X):
+    ...         return X.sum(axis=0)
     ...
     >>> class HasNoPredict(object):
     ...     pass
@@ -68,5 +120,23 @@ def if_delegate_has_method(delegate):
     True
     >>> hasattr(MetaEst(HasNoPredict()), 'predict')
     False
+    >>> hasattr(MetaEst(HasNoPredict(), HasNoPredict()), 'predict_cond')
+    False
+    >>> hasattr(MetaEst(HasPredict(), HasNoPredict()), 'predict_cond')
+    True
+    >>> hasattr(MetaEst(HasNoPredict(), HasPredict()), 'predict_cond')
+    True
+    >>> hasattr(MetaEst(HasPredict(), HasPredict()), 'predict_cond')
+    True
     """
-    return lambda fn: _IffHasAttrDescriptor(fn, '%s.%s' % (delegate, fn.__name__))
+    if not isinstance(delegate, tuple):
+        delegate = tuple([delegate])
+    def func(fn):
+        attrs = []
+        for item in delegate:
+            attrs.append('%s.%s' % (item, fn.__name__))
+        return _IffHasAttrDescriptor(fn, tuple(attrs))
+
+    return func
+
+

@@ -45,6 +45,7 @@ from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import SGDClassifier
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
@@ -306,6 +307,11 @@ def set_testing_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
+
+    if isinstance(estimator, SGDClassifier):
+        # Setting loss='log' to prevent exception raise when calling
+        # predict_proba
+        estimator.set_params(loss='log')
 
     if isinstance(estimator, NMF):
         if not isinstance(estimator, ProjectedGradientNMF):
@@ -1046,6 +1052,7 @@ def check_estimators_unfitted(name, Estimator):
     with warnings.catch_warnings(record=True):
         est = Estimator()
 
+    set_testing_parameters(est)
     msg = "fit"
     if hasattr(est, 'predict'):
         assert_raise_message((AttributeError, ValueError), msg,
