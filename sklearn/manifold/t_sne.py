@@ -13,6 +13,7 @@ from scipy import linalg
 import scipy.sparse as sp
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
+from six import string_types
 from ..neighbors import BallTree
 from ..base import BaseEstimator
 from ..utils import check_array
@@ -644,7 +645,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
-        if not ((isinstance(init, basestring) and
+        if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
             msg = "'init' must be 'pca', 'random', or a NumPy array"
