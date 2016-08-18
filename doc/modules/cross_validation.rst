@@ -290,6 +290,7 @@ both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
 
 
+.. _homogeneous_time_series_cv:
 HomogeneousTimeSeriesCV
 -----------------------
 
@@ -590,8 +591,8 @@ need to adopt the special time series cross-validation which first split
 the data into :math:`n\_splits + 1` folds, then in each iteration 
 :math:`i`, use first :math:`i` fold(s) as training set, and use 
 :math:`i+1` th fold as testing set.
-:class:`HomogeneousTimeSeriesCV` implements the cross-validation 
-technique described above.
+One solution is provided by :class:`HomogeneousTimeSeriesCV`, 
+as described :ref:`above <homogeneous_time_series_cv>`.
 
 Cross validation and model selection
 ====================================
