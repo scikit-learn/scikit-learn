@@ -20,11 +20,8 @@ from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-from sklearn.grid_search import GridSearchCV
 
 from sklearn.linear_model import sgd_fast
-
-from sklearn.exceptions import NotFittedError as _NotFittedError
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -386,18 +383,17 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
-        assert_raises_regexp(
-            ValueError,
-            "class_weight 'balanced' is not supported for "
-            "partial_fit. In order to use 'balanced' weights, "
-            "use compute_class_weight\('balanced', classes, y\). "
-            "In place of y you can us a large enough sample "
-            "of the full training set target to properly "
-            "estimate the class frequency distributions. "
-            "Pass the resulting weights as the class_weight "
-            "parameter.",
-            self.factory(class_weight='balanced').partial_fit,
-            X, Y, classes=np.unique(Y))
+        assert_raises_regexp(ValueError,
+                             "class_weight 'balanced' is not supported for "
+                             "partial_fit. In order to use 'balanced' weights, "
+                             "use compute_class_weight\('balanced', classes, y\). "
+                             "In place of y you can us a large enough sample "
+                             "of the full training set target to properly "
+                             "estimate the class frequency distributions. "
+                             "Pass the resulting weights as the class_weight "
+                             "parameter.",
+                             self.factory(class_weight='balanced').partial_fit,
+                             X, Y, classes=np.unique(Y))
 
     def test_sgd_multiclass(self):
         # Multi-class test case
@@ -641,17 +637,15 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = y[idx]
         clf = self.factory(alpha=0.0001, n_iter=1000,
                            class_weight=None, shuffle=False).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf.predict(X),
-                                             average='weighted'),
-                            0.96, decimal=1)
+        assert_almost_equal(metrics.f1_score(y, clf.predict(X), average='weighted'), 0.96,
+                            decimal=1)
 
         # make the same prediction using balanced class_weight
         clf_balanced = self.factory(alpha=0.0001, n_iter=1000,
                                     class_weight="balanced",
                                     shuffle=False).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf_balanced.predict(X),
-                                             average='weighted'),
-                            0.96, decimal=1)
+        assert_almost_equal(metrics.f1_score(y, clf_balanced.predict(X), average='weighted'), 0.96,
+                            decimal=1)
 
         # Make sure that in the balanced case it does not change anything
         # to use "balanced"
@@ -828,27 +822,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Non-regression test: try fitting with a different label set.
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
         clf.fit(X[:, :-1], y)
-
-    def test_loss_param_grid_search(self):
-        # Make sure the predict_proba works when loss is specified
-        # as one of the parameters in the param_grid
-        param_grid = {
-            'loss': ['log'],
-        }
-        clf_grid = GridSearchCV(estimator=self.factory(random_state=42),
-                                param_grid=param_grid)
-        clf_grid.fit(X, Y)
-        clf_grid.predict_proba(X)
-        clf_grid.predict_log_proba(X)
-
-    def test_not_fitted_error(self):
-        # Make sure raise not fitted error and not the loss='hinge' error
-        clf = self.factory()
-        assert_raises_regexp(_NotFittedError,
-                             "This {0} instance is not fitted yet. "
-                             "Call 'fit' with appropriate arguments before "
-                             "using this method.".format(type(clf).__name__),
-                             clf.predict_proba, X)
 
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
@@ -1123,15 +1096,13 @@ def test_l1_ratio():
     # test if elasticnet with l1_ratio near 1 gives same result as pure l1
     est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
                            l1_ratio=0.9999999999, random_state=42).fit(X, y)
-    est_l1 = SGDClassifier(alpha=0.001, penalty='l1',
-                           random_state=42).fit(X, y)
+    est_l1 = SGDClassifier(alpha=0.001, penalty='l1', random_state=42).fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l1.coef_)
 
     # test if elasticnet with l1_ratio near 0 gives same result as pure l2
     est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
                            l1_ratio=0.0000000001, random_state=42).fit(X, y)
-    est_l2 = SGDClassifier(alpha=0.001, penalty='l2',
-                           random_state=42).fit(X, y)
+    est_l2 = SGDClassifier(alpha=0.001, penalty='l2', random_state=42).fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
 
 

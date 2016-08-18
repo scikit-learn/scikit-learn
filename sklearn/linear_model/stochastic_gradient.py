@@ -33,8 +33,6 @@ from .sgd_fast import Huber
 from .sgd_fast import EpsilonInsensitive
 from .sgd_fast import SquaredEpsilonInsensitive
 
-from ..exceptions import NotFittedError as _NotFittedError
-
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "pa1": 4, "pa2": 5}
@@ -72,9 +70,14 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         self._validate_params()
 
+        self.coef_ = None
+
         if self.average > 0:
             self.standard_coef_ = None
             self.average_coef_ = None
+        # iteration count for learning rate schedule
+        # must not be int (e.g. if ``learning_rate=='optimal'``)
+        self.t_ = None
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
@@ -338,10 +341,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
@@ -384,10 +383,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -548,46 +543,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
                          sample_weight=sample_weight)
-
-
-class _CheckProba(object):
-    """Perform predict_proba validation for SGDClassifier.
-
-    The following is checked when calling predict_proba or predict_log_proba:
-
-    - If already fitted and loss is not "log" or "modified_huber" raise
-      AttributeError
-    - If not fitted raise _NotFittedError regardless of loss
-
-    The following is checked when getting predict_proba or predict_log_proba
-    as attribute:
-
-    - If already fitted and loss is not "log" or "modified_huber" raise
-      AttributeError
-    - If not fitted do not raise any error
-
-    """
-    def __init__(self, fn, not_fitted_error=None):
-        self.fn = fn
-        self.not_fitted_error = not_fitted_error
-
-    def __call__(self, *args, **kw):
-        if self.not_fitted_error:
-            raise self.not_fitted_error
-        return self.fn(*args, **kw)
-
-    def __get__(self, obj, type=None):
-        try:
-            check_is_fitted(obj, ["t_", "coef_", "intercept_"],
-                            all_or_any=all)
-            expt = None
-        except _NotFittedError as e:
-            expt = e
-
-        if not expt and obj.loss not in ("log", "modified_huber"):
-            raise AttributeError("probability estimates are not available for"
-                                 " loss=%r" % obj.loss)
-        return self.__class__(self.fn.__get__(obj, type), expt)
 
 
 class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
@@ -758,8 +713,15 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
             average=average)
 
-    @_CheckProba
-    def predict_proba(self, X):
+    def _check_proba(self):
+        check_is_fitted(self, "t_")
+
+        if self.loss not in ("log", "modified_huber"):
+            raise AttributeError("probability estimates are not available for"
+                                 " loss=%r" % self.loss)
+
+    @property
+    def predict_proba(self):
         """Probability estimates.
 
         This method is only available for log loss and modified Huber loss.
@@ -791,31 +753,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        return self._predict_proba(X)
-
-    @_CheckProba
-    def predict_log_proba(self, X):
-        """Log of probability estimates.
-
-        This method is only available for log loss and modified Huber loss.
-
-        When loss="modified_huber", probability estimates may be hard zeros
-        and ones, so taking the logarithm is not possible.
-
-        See ``predict_proba`` for details.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-
-        Returns
-        -------
-        T : array-like, shape (n_samples, n_classes)
-            Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in
-            `self.classes_`.
-        """
-        return np.log(self._predict_proba(X))
+        self._check_proba()
+        return self._predict_proba
 
     def _predict_proba(self, X):
         if self.loss == "log":
@@ -858,6 +797,34 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                                       " loss='log' or loss='modified_huber' "
                                       "(%r given)" % self.loss)
 
+    @property
+    def predict_log_proba(self):
+        """Log of probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
+
+        When loss="modified_huber", probability estimates may be hard zeros
+        and ones, so taking the logarithm is not possible.
+
+        See ``predict_proba`` for details.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        T : array-like, shape (n_samples, n_classes)
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in
+            `self.classes_`.
+        """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
+        return np.log(self.predict_proba(X))
+
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
@@ -890,10 +857,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
                      coef_init, intercept_init):
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
         X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64)
         y = astype(y, np.float64, copy=False)
 
@@ -950,10 +913,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if not hasattr(self, 'coef_'):
-            self.coef_ = None
-        if not hasattr(self, 't_'):
-            self.t_ = None
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
