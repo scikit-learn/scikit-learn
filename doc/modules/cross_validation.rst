@@ -291,6 +291,7 @@ size due to the imbalance in the data.
 
 
 .. _homogeneous_time_series_cv:
+
 HomogeneousTimeSeriesCV
 -----------------------
 
