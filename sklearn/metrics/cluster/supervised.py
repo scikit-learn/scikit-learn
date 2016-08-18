@@ -67,7 +67,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000, s
     max_n_classes : int, optional (default=5000)
         Maximal number of classeses handled for contingency_matrix.
         This help to avoid Memory error with regression target
-        for mutual_information.
+        for mutual_information. If `sparse`, `max_n_classes` is ignored.
 
     sparse: boolean, optional.
         If True, return a sparse continency matrix. If ``eps is not None``,
