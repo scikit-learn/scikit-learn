@@ -785,10 +785,11 @@ def train_test_split_pandas():
 
 def train_test_split_sparse():
     # check that train_test_split converts scipy sparse matrices to csr
+    X = np.arange(100).reshape((10, 10))
     sparse_types = [csr_matrix, csc_matrix, coo_matrix]
     for InputFeatureType in sparse_types:
-        X_sparse_matrix = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_sparse_matrix)
+        X_s = InputFeatureType(X)
+        X_train, X_test = train_test_split(X_s)
         assert_true(isinstance(X_train, csr_matrix))
         assert_true(isinstance(X_test, csr_matrix))
 
