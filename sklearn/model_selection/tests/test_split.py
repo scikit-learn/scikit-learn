@@ -3,7 +3,7 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
 from scipy.misc import comb
 from itertools import combinations
@@ -781,6 +781,16 @@ def train_test_split_pandas():
         X_train, X_test = train_test_split(X_df)
         assert_true(isinstance(X_train, InputFeatureType))
         assert_true(isinstance(X_test, InputFeatureType))
+
+
+def train_test_split_sparse():
+    # check that train_test_split converts scipy sparse matrices to csr
+    sparse_types = [csr_matrix, csc_matrix, coo_matrix]
+    for InputFeatureType in sparse_types:
+        X_sparse_matrix = InputFeatureType(X)
+        X_train, X_test = train_test_split(X_sparse_matrix)
+        assert_true(isinstance(X_train, csr_matrix))
+        assert_true(isinstance(X_test, csr_matrix))
 
 
 def train_test_split_mock_pandas():
