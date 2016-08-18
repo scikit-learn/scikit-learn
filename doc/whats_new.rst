@@ -335,7 +335,7 @@ Bug fixes
     - :func:`_transform_selected` now always passes a copy of `X` to transform
       function when `copy=True` (`#7194
       <https://github.com/scikit-learn/scikit-learn/issues/7194>`_). By `Caio
-      Oliveira <https://github.com/caioaao`_.
+      Oliveira <https://github.com/caioaao>`_.
 
 API changes summary
 -------------------
