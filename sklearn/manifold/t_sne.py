@@ -567,10 +567,11 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string, optional (default: "random")
-        Initialization of embedding. Possible options are 'random' and 'pca'.
-        PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization.
+    init : string or NumPy array, optional (default: "random")
+        Initialization of embedding. Possible options are 'random', 'pca',
+        and a NumPy array. PCA initialization cannot be used with precomputed
+        distances and is usually more globally stable than random
+        initialization.
 
     verbose : int, optional (default: 0)
         Verbosity level.
@@ -643,8 +644,10 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
-        if init not in ["pca", "random"] or isinstance(init, np.ndarray):
-            msg = "'init' must be 'pca', 'random' or a NumPy array"
+        if not ((isinstance(init, basestring) and
+                init in ["pca", "random"]) or
+                isinstance(init, np.ndarray)):
+            msg = "'init' must be 'pca', 'random', or a NumPy array"
             raise ValueError(msg)
         self.n_components = n_components
         self.perplexity = perplexity

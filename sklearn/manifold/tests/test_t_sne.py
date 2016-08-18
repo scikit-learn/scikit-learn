@@ -305,8 +305,7 @@ def test_non_square_precomputed_distances():
 
 
 def test_init_not_available():
-    # 'init' must be 'pca' or 'random'.
-    m = "'init' must be 'pca', 'random' or a NumPy array"
+    m = "'init' must be 'pca', 'random', or a NumPy array"
     assert_raises_regexp(ValueError, m, TSNE, init="not available")
 
 
