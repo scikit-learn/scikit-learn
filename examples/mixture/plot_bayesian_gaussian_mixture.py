@@ -5,9 +5,9 @@ Bayesian Gaussian Mixture Alpha Prior Analysis
 
 Plot the resulting ellipsoids of a mixture of three Gaussians with EM and
 variational Bayesian Gaussian Mixture for three different values of the prior
-of the dirichlet concentration.
+the dirichlet concentration.
 
-For all models, the Variationnal Bayesian Gaussian Mixture adapts it number of
+For all models, the Variationnal Bayesian Gaussian Mixture adapts its number of
 mixture automatically. The parameter `dirichlet_concentration_prior` has a
 direct link with the resulting number of components. Specifying a high value of
 `dirichlet_concentration_prior` leads more often to uniformly-sized mixture
@@ -69,7 +69,7 @@ def plot_results(ax1, ax2, estimator, dirichlet_concentration_prior, X, y, plot_
     ax2.tick_params(axis='x', which='both', top='off')
 
     if plot_title:
-        ax1.set_ylabel('Resulted Mixtures')
+        ax1.set_ylabel('Estimated Mixtures')
         ax2.set_ylabel('Weight of each component')
 
 # Parameters
