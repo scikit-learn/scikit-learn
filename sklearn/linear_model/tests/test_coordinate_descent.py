@@ -23,7 +23,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import TempMemmap
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
+from sklearn.linear_model.coordinate_descent import Lasso, AdaptiveLasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
@@ -670,3 +670,33 @@ def test_lasso_non_float_y():
         clf_float = model(fit_intercept=False)
         clf_float.fit(X, y_float)
         assert_array_equal(clf.coef_, clf_float.coef_)
+
+
+def test_adaptive_lasso_same_as_lasso():
+    X, y, _, _ = build_dataset()
+    max_iter = 150
+    clf1 = Lasso(max_iter=max_iter).fit(X, y)
+    clf2 = AdaptiveLasso(max_iter=max_iter, max_lasso_iterations=1).fit(X, y)
+    assert_array_almost_equal(clf1.coef_, clf2.coef_)
+
+
+def test_adaptive_lasso_sparser_estimates():
+    X, y, _, _ = build_dataset()
+    max_iter = 150
+    for alpha in [0.0001, 0.001, 0.01, 0.1, 1]:
+        clf1 = Lasso(max_iter=max_iter, alpha=alpha).fit(X, y)
+        for penalty in ('lq', 'log', 'scad'):
+            clf2 = AdaptiveLasso(max_iter=max_iter, alpha=alpha,
+                                 penalty=penalty).fit(X, y)
+            assert_greater(sum(clf2.coef_ == 0), sum(clf1.coef_ == 0))
+
+
+def test_adaptive_lasso_decreasing_loss():
+    X, y, _, _ = build_dataset()
+    max_iter = 150
+    for alpha in [0.0001, 0.001, 0.01, 0.1, 1]:
+        for penalty in ('lq', 'log', 'scad'):
+            clf = AdaptiveLasso(penalty=penalty, max_iter=max_iter,
+                                alpha=alpha)
+            clf.fit(X, y)
+            assert_true(np.all(np.diff(clf.train_score_) <= 0))

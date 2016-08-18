@@ -1,11 +1,11 @@
 """
-========================================
-Lasso and Elastic Net for Sparse Signals
-========================================
+========================================================
+Lasso, Adaptive Lasso and Elastic Net for Sparse Signals
+========================================================
 
-Estimates Lasso and Elastic-Net regression models on a manually generated
-sparse signal corrupted with an additive noise. Estimated coefficients are
-compared with the ground-truth.
+Estimates Lasso, Adaptive Lasso and Elastic-Net regression models on a
+manually generated sparse signal corrupted with an additive noise.
+Estimated coefficients are compared with the ground-truth.
 
 """
 print(__doc__)
@@ -48,6 +48,17 @@ print(lasso)
 print("r^2 on test data : %f" % r2_score_lasso)
 
 ###############################################################################
+# Adaptive Lasso
+from sklearn.linear_model import AdaptiveLasso
+
+ada_lasso = AdaptiveLasso(alpha=alpha)
+
+y_pred_ada_lasso = ada_lasso.fit(X_train, y_train).predict(X_test)
+r2_score_ada_lasso = r2_score(y_test, y_pred_ada_lasso)
+print(ada_lasso)
+print("r^2 on test data : %f" % r2_score_ada_lasso)
+
+###############################################################################
 # ElasticNet
 from sklearn.linear_model import ElasticNet
 
@@ -62,8 +73,10 @@ plt.plot(enet.coef_, color='lightgreen', linewidth=2,
          label='Elastic net coefficients')
 plt.plot(lasso.coef_, color='gold', linewidth=2,
          label='Lasso coefficients')
+plt.plot(ada_lasso.coef_, color='red', linewidth=2,
+         label='Adaptive Lasso coefficients')
 plt.plot(coef, '--', color='navy', label='original coefficients')
 plt.legend(loc='best')
-plt.title("Lasso R^2: %f, Elastic Net R^2: %f"
-          % (r2_score_lasso, r2_score_enet))
+plt.title("Lasso R^2: %f, Adaptive Lasso R^2: %f, Elastic Net R^2: %f"
+          % (r2_score_lasso, r2_score_ada_lasso, r2_score_enet))
 plt.show()

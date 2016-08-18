@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import sys
+import numbers
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -16,6 +17,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y, deprecated
+from ..utils.sparsefuncs import inplace_column_scale
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -633,7 +635,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         Parameters
         -----------
-        X : ndarray or scipy.sparse matrix, (n_samples, n_features)
+        X : ndarray or scipy.sparse matrix, shape (n_samples, n_features)
             Data
 
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
@@ -2159,3 +2161,315 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+
+class AdaptiveLasso(Lasso):
+    """Multi-step adaptive Lasso.
+
+    At each iteration, penalty weights applied are applied to the
+    regularization of the coefficients in order to produce sparser
+    coefficients.
+
+    The optimization objective for the AdaptiveLasso is::
+
+        (1 / (2 * n_samples)) * ||y - X Beta||^2_2
+        + alpha * \sum_j p(|Beta|_j)
+
+    Where p is defined by ::
+
+        p(x) = (|x| + eps)^q       for 'lq' penalty
+        p(x) = log(|x| + eps)      for 'log' penalty
+        p(x) = scad(x, q)             for 'scad' penalty
+
+    In each step in the AdaptiveLasso, the optimization objective is::
+
+        (1 / (2 * n_samples)) * ||y - X Beta||^2_2
+        + alpha * w * ||Beta||_1
+
+    Where w is a weight vector calculated in the previous stage by::
+
+        w_j = alpha * p'(|Beta_j|)
+
+    Parameters
+    ----------
+    max_lasso_iterations : integer, optional (default=30)
+        Maximum number of lasso iterations to fit. max_lasso_iterations = 1 is
+        equivalent to a Lasso, solved by the :class:`Lasso`, and
+        max_lasso_iterations = 2 is equivalent to an adaptive Lasso.
+
+    penalty : 'scad' | 'log' | 'lq' (default='lq')
+        Penalty function to use for regularization. For lq, you need to
+        specify the value of q.
+
+    q : float, optional (default=None)
+        Parameter for the penalty.
+           - For the lq penalty, corresponds to the exponent.
+             q must be between 0 and 1. Default value 0.5
+           - For the scad penalty, corresponds to the a parameter. a must be
+             larger than 2. Default value 4.
+
+    alpha : float, optional (default=1.0)
+        Regularization term that multiplies the penalty term at each iteration.
+        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        by the :class:`LinearRegression` object. For numerical
+        reasons, using ``alpha = 0`` with the AdaptiveLasso object is not
+        advised and you should prefer the LinearRegression object.
+
+    eps : float, optional (default=1e-3)
+        Stability parameter to ensure that a zero valued coefficient does not
+        prohibit a nonzero estimate in the next iteration.
+
+    ada_tol : float, optional (default=1e-4)
+        The tolerance for each Adaptive Lasso step: the optimization code
+        checks the optimization objective progress and continues until it is
+        smaller than ``ada_tol``.
+
+    fit_intercept : boolean, optional (default=False)
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional (default=False)
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional (default=True)
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    precompute : True | False | array-like, optional (default=False)
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument. For sparse input
+        this option is always ``True`` to preserve sparsity.
+
+    max_iter : int, optional (default=1000)
+        The maximum number of iterations for each Lasso fit.
+
+    tol : float, optional, (default=1e-4)
+        The tolerance for each Lasso optimization: if the updates are
+        smaller than ``tol``, the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than ``tol``.
+
+    positive : bool, optional (default=False)
+        When set to ``True``, forces the coefficients to be positive.
+
+    selection : str, optional (default='cyclic')
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    random_state : int, RandomState instance, or None, optional (default=None)
+        The seed of the pseudo random number generator that selects
+        a random feature to update. Useful only when selection is set to
+        'random'.
+
+    Attributes
+    ----------
+    coef_ : array, shape (n_features,) | (n_targets, n_features)
+        parameter vector (w in the cost function formula)
+
+    sparse_coef_ : scipy.sparse matrix, shape (n_features, 1) | \
+            (n_targets, n_features)
+        ``sparse_coef_`` is a readonly property derived from ``coef_``
+
+    intercept_ : float | array, shape (n_targets,)
+        independent term in decision function.
+
+    n_iter_ : int
+        number of lasso iterations run by the coordinate descent solver to
+        reach the specified tolerance.
+
+    loss_ : function
+        The model loss function.
+
+    train_score_ : array, shape = [max_lasso_iterations]
+        The i-th score ``train_score_[i]`` is the loss of the
+        model at iteration ``i``.
+
+    See also
+    --------
+    Lasso
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    Gasso, G., Rakotomamonjy, A., & Canu, S.
+    Recovering Sparse Signals With a Certain Family of Nonconvex
+    Penalties and DC Programming
+    IEEE Trans. Signal Process., 2009, 4686-4698.
+
+    Zou, Hui.
+    The Adaptive Lasso and Its Oracle Properties
+    Journal of the American Statistical Association, 2006.
+    """
+    def __init__(self, max_lasso_iterations=30, penalty='log', q=None,
+                 alpha=1.0, eps=1e-3, ada_tol=1e-4, fit_intercept=True,
+                 normalize=False, precompute=False, copy_X=True,
+                 max_iter=1000, tol=1e-4, positive=False,
+                 random_state=None, selection='cyclic'):
+        super(AdaptiveLasso, self).__init__(
+            alpha=alpha, fit_intercept=fit_intercept,
+            normalize=normalize, precompute=precompute, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, warm_start=True,
+            positive=positive, random_state=random_state,
+            selection=selection)
+        self.max_lasso_iterations = max_lasso_iterations
+        self.penalty = penalty
+        self.q = q
+        self.eps = eps
+        self.ada_tol = ada_tol
+
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError if not valid."""
+        if not isinstance(self.max_lasso_iterations, numbers.Number) \
+                or self.max_lasso_iterations <= 0:
+            raise ValueError("Maximum number of Lasso iterations must be"
+                             " positive; got (max_iter=%r)" % self.max_iter)
+
+        if not isinstance(self.ada_tol, numbers.Number) or self.tol < 0:
+            raise ValueError("Tolerance for stopping criteria must be "
+                             "positive; got (tol=%r)" % self.tol)
+
+        if self.penalty not in ('log', 'lq', 'scad'):
+            raise ValueError("penalty must be one of log, lq, or scad. "
+                             "got {}".format(self.penalty))
+
+        # Set default q value if undefined
+        if self.penalty == 'lq' and self.q is None:
+            self.q = 0.5
+        elif self.penalty == 'scad' and self.q is None:
+            self.q = 4.
+
+        # Check that q is appropriate for the given penalty
+        if not self.penalty == 'log' and \
+                not isinstance(self.q, numbers.Number):
+            raise ValueError("q must be a number;"
+                             " got (q=%r)" % self.q)
+        if self.penalty == 'lq' and not (0 < self.q < 1):
+            raise ValueError("With lq penalty, q must be between 0 and 1;"
+                             " got (q=%r)" % self.q)
+        elif self.penalty == 'scad' and self.q < 2:
+            raise ValueError("With scad penalty, q must be greater than 2;"
+                             " got (q=%r)" % self.q)
+
+    def _p(self, x):
+        """Calculate penalty term."""
+        if self.penalty == 'lq':
+            def p(x):
+                return np.power(x, self.q)
+        elif self.penalty == 'log':
+            def p(x):
+                return np.log(x + self.eps) - np.log(self.eps)
+        elif self.penalty == 'scad':
+            def p(x):
+                if x <= self.alpha:
+                    return x
+                elif x < self.q * self.alpha:
+                    return (- x ** 2 / self.alpha +
+                            2 * self.q * x - self.alpha) / \
+                            (2 * (self.q - 1))
+                else:
+                    return (self.q + 1) * self.alpha / 2
+            p = np.vectorize(p, ['float'])
+        return p(x)
+
+    def _p_prime(self, x):
+        """Calculate penalty term derivative."""
+        if self.penalty == 'lq':
+            def p_prime(x):
+                return self.q / (np.power(x, 1 - self.q) + self.eps)
+        elif self.penalty == 'log':
+            def p_prime(x):
+                return 1. / (x + self.eps)
+        elif self.penalty == 'scad':
+            def p_prime(x):
+                if x <= self.alpha:
+                    return 1.
+                elif x < self.q * self.alpha:
+                    return (- x / self.alpha + self.q) / \
+                            (self.q - 1)
+                else:
+                    return self.eps
+            p_prime = np.vectorize(p_prime, ['float'])
+        return p_prime(x)
+
+    def loss_(self, pred, y):
+        """Calculate model loss."""
+        return 1. / (2 * y.shape[0]) \
+            * np.sum(np.square(y - pred)) \
+            + self.alpha * np.sum(self._p(np.abs(self.coef_)))
+
+    def fit(self, X, y, check_input=True):
+        """
+        Fit Lasso models, each with coordinate descent.
+
+        Parameters
+        -----------
+        X : ndarray or scipy.sparse matrix, shape (n_samples, n_features)
+            Data
+
+        y : ndarray, shape (n_samples,)
+            Target
+        """
+        # We expect X and y to be already float64 Fortran ordered arrays
+        # when bypassing checks
+        if check_input:
+            y = np.asarray(y, dtype=np.float64)
+            X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
+                             order='F',
+                             copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
+            y = check_array(y, dtype=np.float64, order='F', copy=False,
+                            ensure_2d=False)
+        X, y, X_offset, y_offset, X_scale, precompute, Xy = \
+            _pre_fit(X, y, None, self.precompute, self.normalize,
+                     self.fit_intercept, copy=False)
+
+        y = column_or_1d(y, warn=True)
+
+        n_samples, n_features = X.shape
+        X_sparse = sparse.isspmatrix(X)
+
+        self._check_params()
+        self.coef_ = np.zeros(n_features, dtype=np.float64, order='F')
+        self.train_score_ = np.zeros(self.max_lasso_iterations)
+        weights = np.ones(n_features)
+
+        # Initial Lasso fit
+        super(AdaptiveLasso, self).fit(X, y)
+        self.train_score_[0] = self.loss_(y, self.predict(X))
+
+        for k in xrange(1, self.max_lasso_iterations):
+            self.n_iter_ = k
+            weights = self._p_prime(np.abs(self.coef_))
+
+            # Perform weighted Lasso fit
+            X_w = X.copy()
+            if X_sparse:
+                inplace_column_scale(X_w, weights[:, np.newaxis])
+            else:
+                np.divide(X_w, weights, X_w)
+            np.multiply(self.coef_, weights, self.coef_)
+            super(AdaptiveLasso, self).fit(X_w, y)
+            np.divide(self.coef_, weights, self.coef_)
+
+            # Check optimization objective progress
+            self.train_score_[k] = self.loss_(y, self.predict(X))
+            if np.abs(self.train_score_[k-1] - self.train_score_[k]) < \
+                    self.ada_tol:
+                break
+        else:
+            warnings.warn("Objective did not converge."
+                          " You might want to increase"
+                          " the number of Lasso iterations",
+                          ConvergenceWarning)
+
+        self._set_intercept(X_offset, y_offset, X_scale)
+        # change shape of array after fit
+        if self.n_iter_ != self.max_lasso_iterations:
+            self.train_score_ = self.train_score_[:self.n_iter_]
+
+        # return self for chaining fit and predict calls
+        return self
