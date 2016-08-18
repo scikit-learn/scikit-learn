@@ -301,7 +301,7 @@ fold as test set. Note that unlike standard cross-validation methods,
 successive training sets are supersets of those that come before them.
 
 This class can be used to cross-validate homogeneous time series data,
-i.e., each sample in dataset is observed every fixed time interval.
+i.e., samples are observed at fixed time intervals.
 
 Example of 3-split time series cross-validation on a dataset with 4 samples::
 

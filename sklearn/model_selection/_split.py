@@ -639,7 +639,7 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
     """Homogeneous Time Series cross-validator
 
     Provides train/test indices to split homogeneous time series data,
-    i.e., one sample every fixed interval, in train/test sets.
+    i.e., samples are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffliing
     in cross validator is inappropriate.
 
