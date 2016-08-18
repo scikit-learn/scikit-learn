@@ -299,22 +299,21 @@ fold as test set. Note that unlike standard cross-validation methods,
 successive training sets are supersets of those that come before them.
 
 Example of 3-split time series cross-validation on a dataset with 4 samples::
- >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
 
- >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
- >>> y = np.array([1, 2, 3, 4])
- >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
- >>> htscv.get_n_splits(X)
-     3
- >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
-     HomogeneousTimeSeriesCV(n_splits=3)
- >>> for train_index, test_index in htscv.split(X):
-     ...    print("TRAIN:", train_index, "TEST:", test_index)
-     ...    X_train, X_test = X[train_index], X[test_index]
-     ...    y_train, y_test = y[train_index], y[test_index]
-     TRAIN: [0] TEST: [1]
-     TRAIN: [0 1] TEST: [2]
-     TRAIN: [0 1 2] TEST: [3]
+  >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
+
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> y = np.array([1, 2, 3, 4])
+  >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
+  >>> htscv.get_n_splits(X)
+  3
+  >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
+  HomogeneousTimeSeriesCV(n_splits=3)
+  >>> for train, test in htscv.split(X):
+  ...     print("%s %s" % (train, test))
+  [0] [1]
+  [0 1] [2]
+  [0 1 2] [3]
 
 
 Leave-One-Out - LOO
