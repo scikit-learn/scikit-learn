@@ -309,6 +309,10 @@ def test_init_not_available():
     assert_raises_regexp(ValueError, m, TSNE, init="not available")
 
 
+def test_init_ndarray():
+    tsne = TSNE(init=np.zeros((100, 2)))
+
+
 def test_distance_not_available():
     # 'metric' must be valid.
     tsne = TSNE(metric="not available")
