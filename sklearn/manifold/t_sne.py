@@ -770,10 +770,10 @@ class TSNE(BaseEstimator):
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X)
-        elif isinstance(self.init, np.ndarray):
-            X_embedded = self.init
         elif self.init == 'random':
             X_embedded = None
+        elif isinstance(self.init, np.ndarray):
+            X_embedded = self.init
         else:
             raise ValueError("Unsupported initialization scheme: %s"
                              % self.init)
