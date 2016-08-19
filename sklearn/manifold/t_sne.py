@@ -710,7 +710,7 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 200")
 
         if self.metric == "precomputed":
-            if self.init == 'pca':
+            if not isinstance(self.init, np.ndarray) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be used "
                                  "with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -766,14 +766,14 @@ class TSNE(BaseEstimator):
         assert np.all(P <= 1), ("All probabilities should be less "
                                 "or then equal to one")
 
-        if self.init == 'pca':
+        if isinstance(self.init, np.ndarray):
+            X_embedded = self.init
+        elif self.init == 'pca':
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X)
         elif self.init == 'random':
             X_embedded = None
-        elif isinstance(self.init, np.ndarray):
-            X_embedded = self.init
         else:
             raise ValueError("Unsupported initialization scheme: %s"
                              % self.init)
