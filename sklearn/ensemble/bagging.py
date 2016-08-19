@@ -506,7 +506,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator.
+        estimator. Each subset is defined by a boolean mask.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
@@ -869,7 +869,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
-        estimator.
+        estimator. Each subset is defined by a boolean mask.
 
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
