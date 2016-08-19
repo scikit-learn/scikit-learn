@@ -644,7 +644,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
-        if not (((isinstance(init, str) or isinstance(init, unicode)) and
+        if not ((not isinstance(init, np.ndarray) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
             msg = "'init' must be 'pca', 'random', or a numpy array"
