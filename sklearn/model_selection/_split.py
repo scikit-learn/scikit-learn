@@ -1597,3 +1597,21 @@ def _build_repr(self):
         params[key] = value
 
     return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
+
+
+ALL_CVS = {'KFold': KFold,
+           'LabelKFold': LabelKFold,
+           'LeaveOneLabelOut': LeaveOneLabelOut,
+           'LeaveOneOut': LeaveOneOut,
+           'LeavePLabelOut': LeavePLabelOut,
+           'LeavePOut': LeavePOut,
+           'ShuffleSplit': ShuffleSplit,
+           'LabelShuffleSplit': LabelShuffleSplit,
+           'StratifiedKFold': StratifiedKFold,
+           'StratifiedShuffleSplit': StratifiedShuffleSplit,
+           'PredefinedSplit': PredefinedSplit}
+
+LABEL_CVS = {'LabelKFold': LabelKFold,
+             'LeaveOneLabelOut': LeaveOneLabelOut,
+             'LeavePLabelOut': LeavePLabelOut,
+             'LabelShuffleSplit': LabelShuffleSplit}

@@ -34,17 +34,13 @@ from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneLabelOut
-from sklearn.model_selection import LeavePLabelOut
-from sklearn.model_selection import LabelKFold
-from sklearn.model_selection import LabelShuffleSplit
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 
 from sklearn.model_selection._validation import FitFailedWarning
+from sklearn.model_selection._split import ALL_CVS, LABEL_CVS
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
@@ -56,6 +52,14 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
+
+
+def initialize_cross_validators(CVClass):
+    # set parameters to initialize the cross-validators
+    if CVClass is ALL_CVS['LeavePLabelOut']:
+        return CVClass(n_labels=2)
+    if CVClass is ALL_CVS['LeavePOut']:
+        return CVClass(p=2)
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -230,17 +234,16 @@ def test_grid_search_labels():
     clf = LinearSVC(random_state=0)
     grid = {'C': [1]}
 
-    label_cvs = [LeaveOneLabelOut(), LeavePLabelOut(2), LabelKFold(),
-                 LabelShuffleSplit()]
-    for cv in label_cvs:
+    for _, CVClass in LABEL_CVS.iteritems():
+        cv = initialize_cross_validators(CVClass)
         gs = GridSearchCV(clf, grid, cv=cv)
         assert_raise_message(ValueError,
                              "The labels parameter should not be None",
                              gs.fit, X, y)
         gs.fit(X, y, labels)
 
-    non_label_cvs = [StratifiedKFold(), StratifiedShuffleSplit()]
-    for cv in non_label_cvs:
+    for _, CVClass in (set(ALL_CVS.iteritems()) - set(LABEL_CVS.iteritems())):
+        cv = initialize_cross_validators(CVClass)
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
