@@ -65,7 +65,7 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
 class BayesianGaussianMixture(BaseMixture):
     """Variational estimation of a Gaussian mixture.
 
-    This class allows to infe of an approximate posterior distribution over the
+    This class allows to infer an approximate posterior distribution over the
     parameters of a Gaussian mixture distribution. The number of components can
     be inferred from the data.
 
