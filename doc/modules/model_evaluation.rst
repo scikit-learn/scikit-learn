@@ -359,7 +359,8 @@ In the multilabel case with binary label indicators: ::
 Cohen's kappa
 -------------
 
-The function :func:`cohen_kappa_score` computes Cohen's kappa statistic.
+The function :func:`cohen_kappa_score` computes `Cohen's kappa
+<https://en.wikipedia.org/wiki/Cohen%27s_kappa#Weighted_kappa>`_ statistic.
 This measure is intended to compare labelings by different human annotators,
 not a classifier versus a ground truth.
 
@@ -370,6 +371,12 @@ zero or lower means no agreement (practically random labels).
 Kappa scores can be computed for binary or multiclass problems,
 but not for multilabel problems (except by manually computing a per-label score)
 and not for more than two annotators.
+
+  >>> from sklearn.metrics import cohen_kappa_score
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> cohen_kappa_score(y_true, y_pred)
+  0.42857142857142855
 
 .. _confusion_matrix:
 
