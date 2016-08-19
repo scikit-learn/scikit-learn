@@ -361,7 +361,7 @@ Cohen's kappa
 -------------
 
 The function :func:`cohen_kappa_score` computes `Cohen's kappa
-<https://en.wikipedia.org/wiki/Cohen%27s_kappa#Weighted_kappa>`_ statistic.
+<https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_ statistic.
 This measure is intended to compare labelings by different human annotators,
 not a classifier versus a ground truth.
 
