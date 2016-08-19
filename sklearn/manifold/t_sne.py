@@ -569,7 +569,7 @@ class TSNE(BaseEstimator):
 
     init : string or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
-        and a numpy array of shape [n_samples, n_components].
+        and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
         usually more globally stable than random initialization.
 
