@@ -10,32 +10,11 @@ from functools import update_wrapper
 __all__ = ['if_delegate_has_method']
 
 
-def hasattr_nested(obj, attr):
-    """Check if obj has a (possibly nested) attribute
+def _hasattr_nested(obj, attr):
+    """Check if obj has an attribute
 
-    >>> class LayerC(object):
-    ...     def __init__(self):
-    ...         self.c = '123'
-    ...
-    >>> class LayerB(object):
-    ...     def __init__(self):
-    ...         self.b = LayerC()
-    ...
-    >>> class LayerA(object):
-    ...     def __init__(self):
-    ...         self.a = LayerB()
-    ...
-    >>> nested = LayerA()
-    >>> hasattr(nested, 'a')
-    True
-    >>> hasattr(nested, 'a.b')
-    False
-    >>> hasattr_nested(nested, 'a')
-    True
-    >>> hasattr_nested(nested, 'a.b')
-    True
-    >>> hasattr_nested(nested, 'a.b.c')
-    True
+    Unlike `getattr`, this function allows attribute name to contain
+    dots, e.g. `_hasattr_nested(obj, 'name.first')`
     """
     parts = attr.split(".")
     for part in parts:
@@ -73,7 +52,7 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            obj_hasattr = [hasattr_nested(obj, item) for item in self.attribute_name]
+            obj_hasattr = [_hasattr_nested(obj, item) for item in self.attribute_name]
             if not any(obj_hasattr):
                 attrgetter(self.attribute_name[-1])(obj)
         # lambda, but not partial, allows help() to work with update_wrapper
