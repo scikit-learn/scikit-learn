@@ -177,6 +177,7 @@ This strategy is illustrated below.
 
 
 Local Outlier Factor
+--------------------
 
 One other very efficient way of performing outlier detection in datasets whose
 dimension is moderately large is to use the Local Outlier Factor (LOF) algorithm.
@@ -223,7 +224,6 @@ This strategy is illustrated below.
 
 One-class SVM versus Elliptic Envelope versus Isolation Forest versus LOF
 -------------------------------------------------------------------------
->>>>>>> LOF algorithm
 
 Strictly-speaking, the One-class SVM is not an outlier-detection method,
 but a novelty-detection method: its training set should not be
