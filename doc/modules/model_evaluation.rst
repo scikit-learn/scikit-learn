@@ -231,6 +231,7 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   cohen_kappa_score
    confusion_matrix
    hinge_loss
 
