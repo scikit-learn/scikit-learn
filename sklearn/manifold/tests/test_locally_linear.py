@@ -14,7 +14,7 @@ from sklearn.utils.testing import assert_raise_message
 eigen_solvers = ['dense', 'arpack']
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Test utility routines
 def test_barycenter_kneighbors_graph():
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
@@ -33,7 +33,7 @@ def test_barycenter_kneighbors_graph():
     assert_less(linalg.norm(pred - X) / X.shape[0], 1)
 
 
-#----------------------------------------------------------------------
+# ----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
 
 def test_lle_simple_grid():
