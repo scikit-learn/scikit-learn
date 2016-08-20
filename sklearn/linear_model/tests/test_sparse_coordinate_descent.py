@@ -285,10 +285,7 @@ def test_same_multiple_output_sparse_dense():
         predict_dense = l.predict(sample)
 
         l_sp = ElasticNet(normalize=normalize)
-        X_sp = sp.coo_matrix([[0, 1, 2, 3, 4],
-                              [0, 2, 5, 8, 11],
-                              [9, 10, 11, 12, 13],
-                              [10, 11, 12, 13, 14]])
+        X_sp = sp.coo_matrix(X)
         ignore_warnings(l_sp.fit)(X_sp, y)
         sample_sparse = sp.coo_matrix(sample)
         predict_sparse = l_sp.predict(sample_sparse)

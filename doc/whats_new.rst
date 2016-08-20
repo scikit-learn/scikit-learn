@@ -348,6 +348,9 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/issues/7194>`_). By `Caio
       Oliveira <https://github.com/caioaao>`_.
 
+    - Fix :class:`linear_model.ElasticNet` sparse decision function to match
+    output with dense in the multioutput case.
+
 API changes summary
 -------------------
 
