@@ -23,6 +23,7 @@ from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
+from ..externals.six import string_types
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -644,7 +645,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
-        if not ((not isinstance(init, np.ndarray) and
+        if not ((isinstance(init, string_types) and
                 init in ["pca", "random"]) or
                 isinstance(init, np.ndarray)):
             msg = "'init' must be 'pca', 'random', or a numpy array"
@@ -710,7 +711,7 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 200")
 
         if self.metric == "precomputed":
-            if not isinstance(self.init, np.ndarray) and self.init == 'pca':
+            if isinstance(self.init, string_types) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be used "
                                  "with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
