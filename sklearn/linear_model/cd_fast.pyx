@@ -511,7 +511,6 @@ def sparse_enet_coordinate_descent(floating [:] w,
 
                 l1_norm = asum(n_features, &w[0], 1)
 
-                # The expression inside ddot is equivalent to np.dot(R.T, y)
                 gap += (alpha * l1_norm - const * dot(
                             n_samples,
                             &R[0], 1,
