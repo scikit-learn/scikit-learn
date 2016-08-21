@@ -150,21 +150,6 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
 
     """
 
-    # get the data information into easy vars
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    # get the number of tasks indirectly, using strides
-    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
-
-    # compute norms of the columns of X
-    cdef np.ndarray[floating, ndim=1] norm_cols_X = (X**2).sum(axis=0)
-
-    # initial value of the residuals
-    cdef np.ndarray[floating, ndim=1] R
-
-    cdef np.ndarray[floating, ndim=1] XtA
-
     # fused types version of BLAS functions
     cdef DOT dot
     cdef AXPY axpy
@@ -181,8 +166,19 @@ def enet_coordinate_descent(np.ndarray[floating, ndim=1] w,
         axpy = daxpy
         asum = dasum
 
-    R = np.empty(n_samples, dtype=dtype)
-    XtA = np.empty(n_features, dtype=dtype)
+    # get the data information into easy vars
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    # get the number of tasks indirectly, using strides
+    cdef unsigned int n_tasks = y.strides[0] / sizeof(floating)
+
+    # compute norms of the columns of X
+    cdef np.ndarray[floating, ndim=1] norm_cols_X = (X**2).sum(axis=0)
+
+    # initial value of the residuals
+    cdef np.ndarray[floating, ndim=1] R = np.empty(n_samples, dtype=dtype)
+    cdef np.ndarray[floating, ndim=1] XtA = np.empty(n_features, dtype=dtype)
 
     cdef floating tmp
     cdef floating w_ii
