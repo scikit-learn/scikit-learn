@@ -682,9 +682,11 @@ def test_enet_float_precision():
         for fit_intercept in [True, False]:
             coef = {}
             intercept = {}
-            clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
-                            fit_intercept=fit_intercept, normalize=normalize)
             for dtype in [np.float64, np.float32]:
+                clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                                 fit_intercept=fit_intercept,
+                                 normalize=normalize)
+
                 X = dtype(X)
                 y = dtype(y)
                 ignore_warnings(clf.fit)(X, y)
@@ -694,8 +696,19 @@ def test_enet_float_precision():
 
                 assert_equal(clf.coef_.dtype, dtype)
 
+                # test precompute Gram array
+                Gram = X.T.dot(X)
+                clf_precompute = ElasticNet(alpha=0.5, max_iter=100,
+                                            precompute=Gram,
+                                            fit_intercept=fit_intercept,
+                                            normalize=normalize)
+                ignore_warnings(clf_precompute.fit)(X, y)
+                assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
+                assert_array_almost_equal(clf.intercept_,
+                                          clf_precompute.intercept_)
+
             assert_array_almost_equal(coef[np.float32], coef[np.float64],
-                                    decimal=4)
+                                      decimal=4)
             assert_array_almost_equal(intercept[np.float32],
-                                    intercept[np.float64],
-                                    decimal=4)
+                                      intercept[np.float64],
+                                      decimal=4)
