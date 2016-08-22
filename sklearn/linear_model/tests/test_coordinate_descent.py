@@ -678,23 +678,24 @@ def test_enet_float_precision():
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
 
-    for fit_intercept in [True, False]:
-        coef = {}
-        intercept = {}
-        clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
-                         fit_intercept=fit_intercept)
-        for dtype in [np.float64, np.float32]:
-            X = dtype(X)
-            y = dtype(y)
-            ignore_warnings(clf.fit)(X, y)
+    for normalize in [True, False]:
+        for fit_intercept in [True, False]:
+            coef = {}
+            intercept = {}
+            clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                            fit_intercept=fit_intercept, normalize=normalize)
+            for dtype in [np.float64, np.float32]:
+                X = dtype(X)
+                y = dtype(y)
+                ignore_warnings(clf.fit)(X, y)
 
-            coef[dtype] = clf.coef_
-            intercept[dtype] = clf.intercept_
+                coef[dtype] = clf.coef_
+                intercept[dtype] = clf.intercept_
 
-            assert_equal(clf.coef_.dtype, dtype)
+                assert_equal(clf.coef_.dtype, dtype)
 
-        assert_array_almost_equal(coef[np.float32], coef[np.float64],
-                                  decimal=4)
-        assert_array_almost_equal(intercept[np.float32],
-                                  intercept[np.float64],
-                                  decimal=4)
+            assert_array_almost_equal(coef[np.float32], coef[np.float64],
+                                    decimal=4)
+            assert_array_almost_equal(intercept[np.float32],
+                                    intercept[np.float64],
+                                    decimal=4)
