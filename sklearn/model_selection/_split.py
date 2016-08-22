@@ -723,12 +723,9 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
         indices = np.arange(n_samples)
         fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
         fold_sizes[:n_samples % n_folds] += 1
-        current = 0
-        for fold_size in fold_sizes:
-            start, stop = current, current + fold_size
-            if current != 0:
-                yield indices[:start], indices[start:stop]
-            current = stop
+        cum_fold_sizes = np.cumsum(fold_sizes)
+        for start, stop in zip(cum_fold_sizes[:-1], cum_fold_sizes[1:]):
+            yield indices[:start], indices[start: stop]
 
     def get_n_splits(self, X=None, y=None, labels=None):
         """Returns the number of splitting iterations in the cross-validator
