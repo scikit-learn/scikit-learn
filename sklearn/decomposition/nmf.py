@@ -86,10 +86,20 @@ def _safe_compute_error(X, W, H):
 def beta_divergence(X, W, H, beta):
     """Compute the beta-divergence of X and dot(W, H).
 
-    If beta == 2, this is the Frobenius squared norm
-    If beta == 1, this is the generalized Kullback-Leibler divergence
-    If beta == 0, this is the Itakura-Saito divergence
-    Else, this is the general beta-divergence.
+    Parameters
+    ----------
+    X : float or array-like, shape (n_samples, n_features)
+
+    W : float or array-like, shape (n_samples, n_components)
+
+    H : float or array-like, shape (n_components, n_features)
+
+    beta : float, string in {'frobenius', 'kullback-leibler', 'itakura-saito'}
+        Parameter of the beta-divergence.
+        If beta == 2, this is the Frobenius squared norm.
+        If beta == 1, this is the generalized Kullback-Leibler divergence.
+        If beta == 0, this is the Itakura-Saito divergence.
+        Else, this is the general beta-divergence.
     """
     beta = _beta_loss_to_float(beta)
 
@@ -1159,8 +1169,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
     if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
-        raise ValueError("Maximum number of iterations must be a positive integer;"
-                         " got (max_iter=%r)" % max_iter)
+        raise ValueError("Maximum number of iterations must be a positive "
+                         "integer; got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
