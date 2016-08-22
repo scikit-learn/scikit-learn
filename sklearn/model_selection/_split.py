@@ -640,12 +640,12 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
 
     Provides train/test indices to split homogeneous time series data,
     i.e., samples are observed at fixed time intervals, in train/test sets.
-    In each split, test indices must be higher than before, and thus shuffliing
+    In each split, test indices must be higher than before, and thus shuffling
     in cross validator is inappropriate.
 
     This cross-validation object is a variation of :class:`KFold`.
     In the kth split, it returns first k folds as train set and the
-    (k+1) fold as test set.
+    (k+1)th fold as test set.
 
     Note that unlike standard cross-validation methods, successive
     training sets are supersets of those that come before them.
