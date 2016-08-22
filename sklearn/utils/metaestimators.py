@@ -115,7 +115,7 @@ def if_delegate_has_method(delegate):
     True
     """
     if not isinstance(delegate, tuple):
-        delegate = tuple([delegate])
+        delegate = (delegate,)
 
     def func(fn):
         attrs = []
