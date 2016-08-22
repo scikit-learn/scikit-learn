@@ -40,7 +40,7 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     if bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
     else:
-        indices = sample_without_replacement(n_population, n_samples, 
+        indices = sample_without_replacement(n_population, n_samples,
                                              random_state=random_state)
 
     return indices
@@ -54,10 +54,10 @@ def _generate_bagging_indices(random_state, bootstrap_features,
     random_state = check_random_state(random_state)
 
     # Draw indices
-    feature_indices = _generate_indices(random_state, bootstrap_features, 
-                                    n_features, max_features)
-    sample_indices = _generate_indices(random_state, bootstrap_samples, 
-                                   n_samples, max_samples)
+    feature_indices = _generate_indices(random_state, bootstrap_features,
+                                        n_features, max_features)
+    sample_indices = _generate_indices(random_state, bootstrap_samples,
+                                       n_samples, max_samples)
 
     return feature_indices, sample_indices
 
@@ -96,8 +96,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
         # Draw random feature, sample indices
         features, indices = _generate_bagging_indices(random_state,
                                                       bootstrap_features,
-                                                      bootstrap, n_features, 
-                                                      n_samples, max_features, 
+                                                      bootstrap, n_features,
+                                                      n_samples, max_features,
                                                       max_samples)
 
         # Draw samples, using sample weights, and then fit
@@ -251,7 +251,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
-    def _fit(self, X, y, max_samples, max_depth=None, sample_weight=None):
+    def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
@@ -298,16 +298,19 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if max_depth is not None:
             self.base_estimator_.max_depth = max_depth
 
-        # if max_samples is float:
-        if not isinstance(max_samples, (numbers.Integral, np.integer)):
+        # Validate max_samples
+        if max_samples is None:
+            max_samples = self.max_samples
+        elif not isinstance(max_samples, (numbers.Integral, np.integer)):
             max_samples = int(max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
             raise ValueError("max_samples must be in (0, n_samples]")
 
+        # Store validated integer row sampling value
         self._max_samples = max_samples
 
-        # If max_features is float
+        # Validate max_features
         if isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
@@ -316,6 +319,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
 
+        # Store validated integer feature sampling value
         self._max_features = max_features
 
         # Other checks
@@ -392,7 +396,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         return column_or_1d(y, warn=True)
 
     def _get_estimators_indices(self):
-        # Get drawn indices or mask along both sample and feature axes
+        # Get drawn indices along both sample and feature axes
         for seed in self._seeds:
             # Operations accessing random_state must be performed identically
             # to those in `_parallel_build_estimators()`
