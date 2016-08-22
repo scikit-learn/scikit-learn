@@ -992,7 +992,7 @@ def test_homogeneous_time_series_cv():
     # Should fail if there are more folds than samples
     assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
                          next,
-                         HomogeneousTimeSeriesCV(n_splits=9).split(X))
+                         HomogeneousTimeSeriesCV(n_splits=7).split(X))
 
     homo_tscv = HomogeneousTimeSeriesCV(2)
 
@@ -1022,6 +1022,7 @@ def test_homogeneous_time_series_cv():
     n_splits_actual = len(list(splits))
     assert_equal(n_splits_actual, homo_tscv.get_n_splits())
     assert_equal(n_splits_actual, 2)
+
 
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
