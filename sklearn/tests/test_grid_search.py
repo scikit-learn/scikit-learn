@@ -42,7 +42,6 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.linear_model import SGDClassifier
 
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import FitFailedWarning
@@ -672,24 +671,6 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
-
-
-def test_stochastic_gradient_loss_param():
-    # Make sure the predict_proba works when loss is specified
-    # as one of the parameters in the param_grid.
-    param_grid = {
-        'loss': ['log'],
-    }
-    X = np.arange(20).reshape(5, -1)
-    y = [0, 0, 1, 1, 1]
-    clf = GridSearchCV(estimator=SGDClassifier(),
-                       param_grid=param_grid)
-
-    # When the estimator is not fitted, `predict_proba` is not available as the default loss is 'hinge'.
-    assert_false(hasattr(clf, "predict_proba"))
-    clf.fit(X, y)
-    clf.predict_proba(X)
-    clf.predict_log_proba(X)
 
 
 def test_predict_proba_disabled():

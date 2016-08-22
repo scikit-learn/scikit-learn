@@ -52,8 +52,10 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            obj_hasattr = [_hasattr_nested(obj, item) for item in self.attribute_name]
-            if not any(obj_hasattr):
+            for item in self.attribute_name:
+                if _hasattr_nested(obj, item):
+                    break
+            else:
                 attrgetter(self.attribute_name[-1])(obj)
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
