@@ -473,9 +473,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
-                          ' to increase the number of iterations.' +
-                          ' Fitting float32 data with small alpha,' +
-                          ' e.g., 1e-8, may cause precision issues.',
+                          ' to increase the number of iterations.',
                           ConvergenceWarning)
 
         if verbose:
@@ -672,9 +670,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         # when bypassing checks
         if check_input:
             X, y = check_X_y(X, y, accept_sparse='csc',
-                                order='F', dtype=[np.float64, np.float32],
-                                copy=self.copy_X and self.fit_intercept,
-                                multi_output=True, y_numeric=True)
+                             order='F', dtype=[np.float64, np.float32],
+                             copy=self.copy_X and self.fit_intercept,
+                             multi_output=True, y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
