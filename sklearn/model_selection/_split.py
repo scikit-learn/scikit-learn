@@ -677,7 +677,9 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
 
     Notes
     -----
-    Size of each fold here is same as size of each fold split by KFold.
+    The first fold has size ``n_samples // n_splits + n_samples % n_folds``,
+    other folds have size ``n_samples // n_splits``,
+    where ``n_samples`` is the number of samples.
 
     Number of splitting iterations in this cross-validator, n_splits,
     is not equal to other KFold based cross-validators'.
@@ -722,7 +724,7 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
                                                              n_samples))
         indices = np.arange(n_samples)
         fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
-        fold_sizes[:n_samples % n_folds] += 1
+        fold_sizes[0] += n_samples % n_folds
         cum_fold_sizes = np.cumsum(fold_sizes)
         for start, stop in zip(cum_fold_sizes[:-1], cum_fold_sizes[1:]):
             yield indices[:start], indices[start: stop]
