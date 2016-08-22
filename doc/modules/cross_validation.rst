@@ -299,6 +299,9 @@ HomogeneousTimeSeriesCV
 returns first :math:`k` folds as train set and the :math:`(k+1)` th 
 fold as test set. Note that unlike standard cross-validation methods, 
 successive training sets are supersets of those that come before them.
+Also, its foldsizes is not in accordance with :class:`KFold`,
+it add all surplus data to the first training partition, which
+is always used to train the model.
 
 This class can be used to cross-validate homogeneous time series data,
 i.e., samples are observed at fixed time intervals.
