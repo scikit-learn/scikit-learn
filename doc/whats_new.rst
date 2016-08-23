@@ -260,7 +260,7 @@ Enhancements
    - The memory footprint is reduced (sometimes greatly) for :class:`BaseBagging`
      and classes that inherit from it, i.e, :class:`BaggingClassifier`,
      :class:`BaggingRegressor`, and :class:`IsolationForest`, by dynamically
-     generating attribute `estimators_samples_` only when it is needed.
+     generating attribute ``estimators_samples_`` only when it is needed.
      By `David Staub`_.
 
 
@@ -4368,3 +4368,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ibraim Ganiev: https://github.com/olologin
 
 .. _Konstantin Podshumok: https://github.com/podshumok
+
+.. _David Staub: https://github.com/staubda
