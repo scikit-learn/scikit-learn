@@ -193,3 +193,10 @@ def test_iforest_works():
     # assert detect outliers:
     assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
     assert_array_equal(pred, 6 * [1] + 2 * [-1])
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples in iforest and BaseBagging are identical
+    X = iris.data
+    clf = IsolationForest().fit(X)
+    assert_equal(clf.max_samples_, clf._max_samples)
