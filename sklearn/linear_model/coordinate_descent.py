@@ -666,7 +666,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
-        # We expect X and y to be already float64 Fortran ordered arrays
+        # We expect X and y to be float64 or float32 Fortran ordered arrays
         # when bypassing checks
         if check_input:
             X, y = check_X_y(X, y, accept_sparse='csc',
