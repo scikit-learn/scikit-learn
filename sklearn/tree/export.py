@@ -489,4 +489,3 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     finally:
         if own_file:
             out_file.close()
-
