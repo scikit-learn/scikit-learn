@@ -28,7 +28,7 @@ individual cross-validation splits.
 
 This example illustrates how the
 :class:`sklearn.ensemble.GradientBoostingClassifierCV` class can be used to
-train a model which can acheive almost the same accuracy as compared to the
+train a model which can achieve almost the same accuracy as compared to the
 :class:`sklearn.ensemble.GradientBoostingClassifier` but with significantly
 less estimators. This can save memory and prediction time.
 """
