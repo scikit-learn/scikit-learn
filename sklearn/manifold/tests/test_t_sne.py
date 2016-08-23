@@ -7,6 +7,7 @@ from sklearn.neighbors import BallTree
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
@@ -311,7 +312,10 @@ def test_init_not_available():
 
 
 def test_init_ndarray():
+    # Initialize TSNE with ndarray and test fit
     tsne = TSNE(init=np.zeros((100, 2)))
+    X_embedded = tsne.fit_transform(np.ones((100, 5)))
+    assert_array_equal(np.zeros((100, 2)), X_embedded)
 
 
 def test_distance_not_available():
