@@ -89,8 +89,8 @@ for i, (clf_name, clf) in enumerate(classifiers.items()):
     legend2[clf_name] = plt.contour(
         xx2, yy2, Z2, levels=[0], linewidths=2, colors=colors[i])
 
-legend1_values_list = list( legend1.values() )
-legend1_keys_list = list( legend1.keys() )
+legend1_values_list = list(legend1.values())
+legend1_keys_list = list(legend1.keys())
 
 # Plot the results (= shape of the data points cloud)
 plt.figure(1)  # two clusters
@@ -112,8 +112,8 @@ plt.legend((legend1_values_list[0].collections[0],
 plt.ylabel("accessibility to radial highways")
 plt.xlabel("pupil-teacher ratio by town")
 
-legend2_values_list = list( legend2.values() )
-legend2_keys_list = list( legend2.keys() )
+legend2_values_list = list(legend2.values())
+legend2_keys_list = list(legend2.keys())
 
 plt.figure(2)  # "banana" shape
 plt.title("Outlier detection on a real data set (boston housing)")
