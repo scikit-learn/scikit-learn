@@ -709,3 +709,15 @@ def test_estimators_samples():
     new_coefs = estimator.coef_
 
     assert_array_almost_equal(orig_coefs, new_coefs)
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples and original max_samples are identical
+    # when valid integer max_samples supplied by user
+    max_samples = 100
+    X, y = make_hastie_10_2(n_samples=2*max_samples, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(),
+                                max_samples=max_samples,
+                                max_features=0.5, random_state=1)
+    bagging.fit(X, y)
+    assert_equal(bagging._max_samples, max_samples)

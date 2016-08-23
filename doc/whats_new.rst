@@ -257,6 +257,13 @@ Enhancements
      (`#5929 <https://github.com/scikit-learn/scikit-learn/pull/5929>`_)
      By `Konstantin Podshumok`_.
 
+   - The memory footprint is greatly reduced for :class:`BaseBagging` and
+     classes that inherit from it, i.e, :class:`BaggingClassifier`,
+     :class:`BaggingRegressor`, and :class:`IsolationForest`, by dynamically
+     generating attribute `estimators_samples_` only when it is needed.
+     By `David Staub`_.
+
+
 Bug fixes
 .........
 
