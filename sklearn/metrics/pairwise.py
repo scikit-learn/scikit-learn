@@ -893,7 +893,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
         ``False``, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.17
-           parameter *dense_output* for dense output.
+           parameter ``dense_output`` for dense output.
 
     Returns
     -------
