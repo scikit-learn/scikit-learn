@@ -34,11 +34,12 @@ class _BaseGradientBoostingCV(BaseEstimator):
 
     def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
-                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='deviance',
-                 learning_rate=0.1, subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
-                 init=None, random_state=None, max_features=None,
-                 max_leaf_nodes=None, presort='auto'):
+                 n_jobs=1, verbose=0, loss='deviance', learning_rate=0.1,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 min_impurity_split=1e-7, max_depth=3, init=None,
+                 random_state=None, max_features=None, max_leaf_nodes=None,
+                 presort='auto'):
 
         self.n_iter_no_change = n_iter_no_change
         self.score_precision = score_precision
@@ -47,15 +48,16 @@ class _BaseGradientBoostingCV(BaseEstimator):
         self.scoring = scoring
         self.refit = refit
         self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
         self.verbose = verbose
 
         self.loss = loss
         self.learning_rate = learning_rate
         self.subsample = subsample
+        self.criterion = criterion
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.min_impurity_split = min_impurity_split
         self.max_depth = max_depth
         self.init = init
         self.random_state = random_state
@@ -193,9 +195,11 @@ class _BaseGradientBoostingCV(BaseEstimator):
             'loss': self.loss,
             'learning_rate': self.learning_rate,
             'subsample': self.subsample,
+            'criterion': self.criterion,
             'min_samples_split': self.min_samples_split,
             'min_samples_leaf': self.min_samples_leaf,
             'min_weight_fraction_leaf': self.min_weight_fraction_leaf,
+            'min_impurity_split': self.min_impurity_split,
             'max_depth': self.max_depth,
             'init': self.init,
             'max_features': self.max_features,
@@ -320,6 +324,11 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
         The minimum weighted fraction of the input samples required to be at a
         leaf node. If a list is given, each item in the list will be evaluated.
 
+    min_impurity_split : float, list of floats, optional (default=1e-7)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+        If a list is given, each item in the list will be evaluated.
+
     subsample : float, list of floats, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -327,6 +336,15 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
         Choosing ``subsample < 1.0`` leads to a reduction of variance
         and an increase in bias. If a list is given, each item in the list
         will be evaluated.
+
+        criterion : string, list of string, optional (default="friedman_mse")
+        The function to measure the quality of a split. Supported criteria
+        are "friedman_mse" for the mean squared error with improvement
+        score by Friedman, "mse" for mean squared error, and "mae" for
+        the mean absolute error. The default value of "friedman_mse" is
+        generally the best as it can provide a better approximation in
+        some cases. If a list is given, each item in the list will be
+        evaluated.
 
     max_features : int, float, string or None, list, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -407,23 +425,24 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
 
     def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
-                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='deviance',
-                 learning_rate=0.1, subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
-                 init=None, random_state=None, max_features=None,
-                 max_leaf_nodes=None, presort='auto'):
+                 n_jobs=1, verbose=0, loss='deviance', learning_rate=0.1,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 min_impurity_split=1e-7, max_depth=3, init=None,
+                 random_state=None, max_features=None, max_leaf_nodes=None,
+                 presort='auto'):
 
         super(GradientBoostingClassifierCV, self).__init__(
             n_iter_no_change=n_iter_no_change, score_precision=score_precision,
             max_iterations=max_iterations, cv=cv, scoring=scoring, refit=refit,
-            n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose,
-            loss=loss, learning_rate=learning_rate, subsample=subsample,
-            min_samples_split=min_samples_split,
+            n_jobs=n_jobs, verbose=verbose, loss=loss,
+            learning_rate=learning_rate, subsample=subsample,
+            criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, random_state=random_state,
-            max_features=max_features, max_leaf_nodes=max_leaf_nodes,
-            presort=presort)
+            min_impurity_split=min_impurity_split, max_depth=max_depth,
+            init=init, random_state=random_state, max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes, presort=presort)
 
 
 class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
@@ -535,6 +554,11 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
         The minimum weighted fraction of the input samples required to be at a
         leaf node. If a list is given, each item in the list will be evaluated.
 
+    min_impurity_split : float, list of floats, optional (default=1e-7)
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+        If a list is given, each item in the list will be evaluated.
+
     subsample : float, list of floats, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -542,6 +566,15 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
         Choosing ``subsample < 1.0`` leads to a reduction of variance
         and an increase in bias. If a list is given, each item in the list
         will be evaluated.
+
+    criterion : string, list of string, optional (default="friedman_mse")
+        The function to measure the quality of a split. Supported criteria
+        are "friedman_mse" for the mean squared error with improvement
+        score by Friedman, "mse" for mean squared error, and "mae" for
+        the mean absolute error. The default value of "friedman_mse" is
+        generally the best as it can provide a better approximation in
+        some cases. If a list is given, each item in the list will be
+        evaluated.
 
     max_features : int, float, string or None, list, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -622,23 +655,24 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
 
     def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
-                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='ls',
-                 learning_rate=0.1, subsample=1.0, min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
-                 init=None, random_state=None, max_features=None,
-                 max_leaf_nodes=None, presort='auto'):
+                 n_jobs=1, verbose=0, loss='ls', learning_rate=0.1,
+                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
+                 min_impurity_split=1e-7, max_depth=3, init=None,
+                 random_state=None, max_features=None, max_leaf_nodes=None,
+                 presort='auto'):
 
         super(GradientBoostingRegressorCV, self).__init__(
             n_iter_no_change=n_iter_no_change, score_precision=score_precision,
             max_iterations=max_iterations, cv=cv, scoring=scoring, refit=refit,
-            n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose,
-            loss=loss, learning_rate=learning_rate, subsample=subsample,
-            min_samples_split=min_samples_split,
+            n_jobs=n_jobs, verbose=verbose, loss=loss,
+            learning_rate=learning_rate, subsample=subsample,
+            criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, random_state=random_state,
-            max_features=max_features, max_leaf_nodes=max_leaf_nodes,
-            presort=presort)
+            min_impurity_split=min_impurity_split, max_depth=max_depth,
+            init=init, random_state=random_state, max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes, presort=presort)
 
 
 def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
