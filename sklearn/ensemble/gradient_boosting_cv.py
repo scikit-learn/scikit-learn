@@ -14,6 +14,7 @@ import numpy as np
 from ..base import BaseEstimator
 from ..metrics.scorer import check_scoring
 from ..utils.validation import check_X_y
+from ..utils.metaestimators import if_delegate_has_method
 
 from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
@@ -28,7 +29,189 @@ from ..externals.joblib import Parallel, delayed
 __all__ = ["GradientBoostingClassifierCV", "GradientBoostingRegressorCV"]
 
 
-class GradientBoostingClassifierCV(BaseEstimator):
+class _BaseGradientBoostingCV(BaseEstimator):
+    """Gradient Boosting base class withh Cross Validation"""
+
+    def __init__(self, n_iter_no_change=10, score_precision=2,
+                 max_iterations=10000, cv=3, scoring=None, refit=True,
+                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, loss='deviance',
+                 learning_rate=0.1, subsample=1.0, min_samples_split=2,
+                 min_samples_leaf=1, min_weight_fraction_leaf=0., max_depth=3,
+                 init=None, random_state=None, max_features=None,
+                 max_leaf_nodes=None, presort='auto'):
+
+        self.n_iter_no_change = n_iter_no_change
+        self.score_precision = score_precision
+        self.max_iterations = max_iterations
+        self.cv = cv
+        self.scoring = scoring
+        self.refit = refit
+        self.n_jobs = n_jobs
+        self.pre_dispatch = pre_dispatch
+        self.verbose = verbose
+
+        self.loss = loss
+        self.learning_rate = learning_rate
+        self.subsample = subsample
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.max_depth = max_depth
+        self.init = init
+        self.random_state = random_state
+        self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
+        self.presort = presort
+
+    def fit(self, X, y):
+        """Run fit with all sets of parameters till convergence.
+
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes.
+        """
+
+        params = self._get_params()
+        X, y = check_X_y(X, y, dtype=DTYPE)
+
+        cv = check_cv(self.cv, y)
+        param_iter = ParameterGrid(params)
+
+        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                            backend='threading')
+
+        out = parallel(delayed(_fit_single_param)
+                       (self._estimator_class, X, y, train, validation, params,
+                        self.n_iter_no_change, self.max_iterations,
+                        self.scoring, self.score_precision, self.random_state)
+                       for train, validation in cv.split(X)
+                       for params in param_iter)
+
+        n_splits = int(len(out) / len(param_iter))
+
+        grid_scores = []
+        i = 0
+        best_mean = -np.inf
+        for params in param_iter:
+
+            score_list = []
+            n_est_list = []
+            for idx in range(n_splits):
+                score, n_estimators = out[i]
+                n_est_list.append(n_estimators)
+                score_list.append(score)
+                i += 1
+
+            scores = np.array(score_list)
+            mean = np.mean(scores)
+            params['n_estimators'] = int(np.mean(n_est_list))
+            score_tuple = _CVScoreTuple(params, mean, scores)
+            grid_scores.append(_CVScoreTuple(params, mean, scores))
+
+            if mean > best_mean:
+                best_tuple = score_tuple
+                best_params = params
+
+        self.grid_scores_ = grid_scores
+        self.best_score_tuple_ = best_tuple
+        self.best_params_ = best_params
+
+        if self.refit:
+            self.best_params_['random_state'] = self.random_state
+            gb = self._estimator_class(**self.best_params_)
+            gb.fit(X, y)
+            self.best_estimator_ = gb
+
+        return self
+
+    def predict(self, X):
+        """Call ``predict`` on the best estimator.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+        Returns
+        -------
+        y: array of shape = ["n_samples]
+            The predicted values.
+        """
+        return self.best_estimator_.predict(X)
+
+    @if_delegate_has_method(delegate='_estimator_class')
+    def predict_proba(self, X):
+        """Call ``predict_proba`` on the best estimator.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Raises
+        ------
+        AttributeError
+            If the ``loss`` does not support probabilities.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute ``classes_``.
+        """
+        return self.best_estimator_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='_estimator_class')
+    def predict_log_proba(self, X):
+        """Call ``predict_log_proba`` on the best estimator.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+        Raises
+        ------
+
+        AttributeError
+            If the ``loss`` does not support probabilities.
+
+        Returns
+        -------
+        p : array of shape = [n_samples]
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute ``classes_``.
+        """
+        return self.best_estimator_.predict_log_proba(X)
+
+    def _get_params(self):
+        "Return parametrs to iterate over for underlying gradient boosting"
+
+        params = {
+            'loss': self.loss,
+            'learning_rate': self.learning_rate,
+            'subsample': self.subsample,
+            'min_samples_split': self.min_samples_split,
+            'min_samples_leaf': self.min_samples_leaf,
+            'min_weight_fraction_leaf': self.min_weight_fraction_leaf,
+            'max_depth': self.max_depth,
+            'init': self.init,
+            'max_features': self.max_features,
+            'max_leaf_nodes': self.max_leaf_nodes,
+            'presort': self.presort,
+        }
+
+        # Pre processing to ensure every parameter is a list
+        # which ``ParameterGrid`` can iterate over
+        for key, value in params.items():
+            params[key] = np.atleast_1d(value)
+
+        return params
+
+
+class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
     """Gradient Boosting Classifier with Cross Validation
 
     This class implements GradientBoostingClassifier with an additional support
@@ -230,176 +413,20 @@ class GradientBoostingClassifierCV(BaseEstimator):
                  init=None, random_state=None, max_features=None,
                  max_leaf_nodes=None, presort='auto'):
 
-        self.n_iter_no_change = n_iter_no_change
-        self.score_precision = score_precision
-        self.max_iterations = max_iterations
-        self.cv = cv
-        self.scoring = scoring
-        self.refit = refit
-        self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
-        self.verbose = verbose
-
-        self.loss = loss
-        self.learning_rate = learning_rate
-        self.subsample = subsample
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_depth = max_depth
-        self.init = init
-        self.random_state = random_state
-        self.max_features = max_features
-        self.max_leaf_nodes = max_leaf_nodes
-        self.presort = presort
-
-    def fit(self, X, y):
-        """Run fit with all sets of parameters till convergence.
-
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes.
-        """
-
-        params = self._get_params()
-        X, y = check_X_y(X, y, dtype=DTYPE)
-
-        cv = check_cv(self.cv, y)
-        param_iter = ParameterGrid(params)
-
-        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                            backend='threading')
-
-        out = parallel(delayed(_fit_single_param)
-                       (self._estimator_class, X, y, train, validation, params,
-                        self.n_iter_no_change, self.max_iterations,
-                        self.scoring, self.score_precision, self.random_state)
-                       for train, validation in cv.split(X)
-                       for params in param_iter)
-
-        n_splits = int(len(out) / len(param_iter))
-
-        grid_scores = []
-        i = 0
-        best_mean = -np.inf
-        for params in param_iter:
-
-            score_list = []
-            n_est_list = []
-            for idx in range(n_splits):
-                score, n_estimators = out[i]
-                n_est_list.append(n_estimators)
-                score_list.append(score)
-                i += 1
-
-            scores = np.array(score_list)
-            mean = np.mean(scores)
-            params['n_estimators'] = int(np.mean(n_est_list))
-            score_tuple = _CVScoreTuple(params, mean, scores)
-            grid_scores.append(_CVScoreTuple(params, mean, scores))
-
-            if mean > best_mean:
-                best_tuple = score_tuple
-                best_params = params
-
-        self.grid_scores_ = grid_scores
-        self.best_score_tuple_ = best_tuple
-        self.best_params_ = best_params
-
-        if self.refit:
-            self.best_params_['random_state'] = self.random_state
-            gb = self._estimator_class(**self.best_params_)
-            gb.fit(X, y)
-            self.best_estimator_ = gb
-
-        return self
-
-    def predict(self, X):
-        """Call ``predict`` on the best estimator.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-        Returns
-        -------
-        y: array of shape = ["n_samples]
-            The predicted values.
-        """
-        return self.best_estimator_.predict(X)
-
-    def predict_proba(self, X):
-        """Call ``predict_proba`` on the best estimator.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Raises
-        ------
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
-        Returns
-        -------
-        p : array of shape = [n_samples]
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute ``classes_``.
-        """
-        return self.best_estimator_.predict_proba(X)
-
-    def predict_log_proba(self, X):
-        """Call ``predict_log_proba`` on the best estimator.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-        Raises
-        ------
-
-        AttributeError
-            If the ``loss`` does not support probabilities.
-
-        Returns
-        -------
-        p : array of shape = [n_samples]
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute ``classes_``.
-        """
-        return self.best_estimator_.predict_log_proba(X)
-
-    def _get_params(self):
-        "Return parametrs to iterate over for underlying gradient boosting"
-
-        params = {
-            'loss': self.loss,
-            'learning_rate': self.learning_rate,
-            'subsample': self.subsample,
-            'min_samples_split': self.min_samples_split,
-            'min_samples_leaf': self.min_samples_leaf,
-            'min_weight_fraction_leaf': self.min_weight_fraction_leaf,
-            'max_depth': self.max_depth,
-            'init': self.init,
-            'max_features': self.max_features,
-            'max_leaf_nodes': self.max_leaf_nodes,
-            'presort': self.presort,
-        }
-
-        # Pre processing to ensure every parameter is a list
-        # which ``ParameterGrid`` can iterate over
-        for key, value in params.items():
-            params[key] = np.atleast_1d(value)
-
-        return params
+        super(GradientBoostingClassifierCV, self).__init__(
+            n_iter_no_change=n_iter_no_change, score_precision=score_precision,
+            max_iterations=max_iterations, cv=cv, scoring=scoring, refit=refit,
+            n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose,
+            loss=loss, learning_rate=learning_rate, subsample=subsample,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, random_state=random_state,
+            max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+            presort=presort)
 
 
-class GradientBoostingRegressorCV(BaseEstimator):
+class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
     """Gradient Boosting Regressor with Cross Validation
 
     This class implements GradientBoostingRegressor with an additional support
@@ -601,131 +628,17 @@ class GradientBoostingRegressorCV(BaseEstimator):
                  init=None, random_state=None, max_features=None,
                  max_leaf_nodes=None, presort='auto'):
 
-        self.n_iter_no_change = n_iter_no_change
-        self.score_precision = score_precision
-        self.max_iterations = max_iterations
-        self.cv = cv
-        self.scoring = scoring
-        self.refit = refit
-        self.n_jobs = n_jobs
-        self.pre_dispatch = pre_dispatch
-        self.verbose = verbose
-
-        self.loss = loss
-        self.learning_rate = learning_rate
-        self.subsample = subsample
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_depth = max_depth
-        self.init = init
-        self.random_state = random_state
-        self.max_features = max_features
-        self.max_leaf_nodes = max_leaf_nodes
-        self.presort = presort
-
-    def fit(self, X, y):
-        """Run fit with all sets of parameters till convergence.
-
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes.
-        """
-
-        params = self._get_params()
-        X, y = check_X_y(X, y, dtype=DTYPE)
-
-        cv = check_cv(self.cv, y)
-        param_iter = ParameterGrid(params)
-
-        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                            backend='threading')
-
-        out = parallel(delayed(_fit_single_param)
-                       (self._estimator_class, X, y, train, validation, params,
-                        self.n_iter_no_change, self.max_iterations,
-                        self.scoring, self.score_precision, self.random_state)
-                       for train, validation in cv.split(X)
-                       for params in param_iter)
-
-        n_splits = int(len(out) / len(param_iter))
-
-        grid_scores = []
-        i = 0
-        best_mean = -np.inf
-        for params in param_iter:
-
-            score_list = []
-            n_est_list = []
-            for idx in range(n_splits):
-                score, n_estimators = out[i]
-                n_est_list.append(n_estimators)
-                score_list.append(score)
-                i += 1
-
-            scores = np.array(score_list)
-            mean = np.mean(scores)
-            params['n_estimators'] = int(np.mean(n_est_list))
-            score_tuple = _CVScoreTuple(params, mean, scores)
-            grid_scores.append(_CVScoreTuple(params, mean, scores))
-
-            if mean > best_mean:
-                best_tuple = score_tuple
-                best_params = params
-
-        self.grid_scores_ = grid_scores
-        self.best_score_tuple_ = best_tuple
-        self.best_params_ = best_params
-
-        if self.refit:
-            self.best_params_['random_state'] = self.random_state
-            gb = self._estimator_class(**self.best_params_)
-            gb.fit(X, y)
-            self.best_estimator_ = gb
-
-        return self
-
-    def predict(self, X):
-        """Call ``predict`` on the best estimator.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-        Returns
-        -------
-        y: array of shape = ["n_samples]
-            The predicted values.
-        """
-        return self.best_estimator_.predict(X)
-
-    def _get_params(self):
-        "Return parametrs to iterate over for underlying gradient boosting"
-
-        params = {
-            'loss': self.loss,
-            'learning_rate': self.learning_rate,
-            'subsample': self.subsample,
-            'min_samples_split': self.min_samples_split,
-            'min_samples_leaf': self.min_samples_leaf,
-            'min_weight_fraction_leaf': self.min_weight_fraction_leaf,
-            'max_depth': self.max_depth,
-            'init': self.init,
-            'max_features': self.max_features,
-            'max_leaf_nodes': self.max_leaf_nodes,
-            'presort': self.presort,
-        }
-
-        # Pre processing to ensure every parameter is a list
-        # which ``ParameterGrid`` can iterate over
-        for key, value in params.items():
-            params[key] = np.atleast_1d(value)
-
-        return params
+        super(GradientBoostingRegressorCV, self).__init__(
+            n_iter_no_change=n_iter_no_change, score_precision=score_precision,
+            max_iterations=max_iterations, cv=cv, scoring=scoring, refit=refit,
+            n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose,
+            loss=loss, learning_rate=learning_rate, subsample=subsample,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_depth=max_depth, init=init, random_state=random_state,
+            max_features=max_features, max_leaf_nodes=max_leaf_nodes,
+            presort=presort)
 
 
 def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
