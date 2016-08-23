@@ -318,6 +318,13 @@ def test_init_ndarray():
     assert_array_equal(np.zeros((100, 2)), X_embedded)
 
 
+def test_init_ndarray_precomputed():
+    # Initialize TSNE with ndarray and metric 'precomputed'
+    # Make sure no FutureWarning is thrown from _fit
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne.fit(np.zeros((100, 100)))
+
+
 def test_distance_not_available():
     # 'metric' must be valid.
     tsne = TSNE(metric="not available")
