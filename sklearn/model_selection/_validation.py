@@ -28,13 +28,13 @@ from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 
 from ._split import KFold
-from ._split import LabelKFold
-from ._split import LeaveOneLabelOut
+from ._split import GroupKFold
+from ._split import LeaveOneGroupOut
 from ._split import LeaveOneOut
-from ._split import LeavePLabelOut
+from ._split import LeavePGroupsOut
 from ._split import LeavePOut
 from ._split import ShuffleSplit
-from ._split import LabelShuffleSplit
+from ._split import GroupShuffleSplit
 from ._split import StratifiedKFold
 from ._split import StratifiedShuffleSplit
 from ._split import PredefinedSplit
@@ -44,24 +44,24 @@ __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
 
 ALL_CVS = {'KFold': KFold,
-           'LabelKFold': LabelKFold,
-           'LeaveOneLabelOut': LeaveOneLabelOut,
+           'GroupKFold': GroupKFold,
+           'LeaveOneGroupOut': LeaveOneGroupOut,
            'LeaveOneOut': LeaveOneOut,
-           'LeavePLabelOut': LeavePLabelOut,
+           'LeavePGroupsOut': LeavePGroupsOut,
            'LeavePOut': LeavePOut,
            'ShuffleSplit': ShuffleSplit,
-           'LabelShuffleSplit': LabelShuffleSplit,
+           'GroupShuffleSplit': GroupShuffleSplit,
            'StratifiedKFold': StratifiedKFold,
            'StratifiedShuffleSplit': StratifiedShuffleSplit,
            'PredefinedSplit': PredefinedSplit}
 
-LABEL_CVS = {'LabelKFold': LabelKFold,
-             'LeaveOneLabelOut': LeaveOneLabelOut,
-             'LeavePLabelOut': LeavePLabelOut,
-             'LabelShuffleSplit': LabelShuffleSplit}
+GROUP_CVS = {'GroupKFold': GroupKFold,
+             'LeaveOneGroupOut': LeaveOneGroupOut,
+             'LeavePGroupsOut': LeavePGroupsOut,
+             'GroupShuffleSplit': GroupShuffleSplit}
 
 
-def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
+def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
@@ -80,7 +80,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -153,7 +153,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
         Make a scorer from a performance metric or loss function.
 
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -164,7 +164,7 @@ def cross_val_score(estimator, X, y=None, labels=None, scoring=None, cv=None,
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
                                               train, test, verbose, None,
                                               fit_params)
-                      for train, test in cv.split(X, y, labels))
+                      for train, test in cv.split(X, y, groups))
     return np.array(scores)[:, 0]
 
 
@@ -314,7 +314,7 @@ def _score(estimator, X_test, y_test, scorer):
     return score
 
 
-def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
+def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
                       method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -333,7 +333,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -397,7 +397,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y)
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
@@ -412,7 +412,7 @@ def cross_val_predict(estimator, X, y=None, labels=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
         clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, labels))
+        for train, test in cv.split(X, y, groups))
 
     # Concatenate the predictions
     predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
@@ -525,7 +525,7 @@ def _index_param_value(X, v, indices):
     return safe_indexing(v, indices)
 
 
-def permutation_test_score(estimator, X, y, labels=None, cv=None,
+def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=1, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -544,9 +544,14 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
-        Group labels for the samples used while splitting the dataset into
-        train/test set.
+    groups : array-like, with shape (n_samples,), optional
+        Group labels used to constrain the permutation to specific subsets of
+        data.
+
+        NOTE When a grouped cross-validator is used, the group labels are
+        also passed on to the ``split`` method of the cross-validator. The
+        cross-validator uses them for grouping the samples  while splitting
+        the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -606,7 +611,7 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
         vol. 11
 
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -614,11 +619,11 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, labels, cv, scorer)
+    score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
-            clone(estimator), X, _shuffle(y, labels, random_state),
-            labels, cv, scorer)
+            clone(estimator), X, _shuffle(y, groups, random_state),
+            groups, cv, scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
@@ -628,28 +633,28 @@ def permutation_test_score(estimator, X, y, labels=None, cv=None,
 permutation_test_score.__test__ = False  # to avoid a pb with nosetests
 
 
-def _permutation_test_score(estimator, X, y, labels, cv, scorer):
+def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
-    for train, test in cv.split(X, y, labels):
+    for train, test in cv.split(X, y, groups):
         estimator.fit(X[train], y[train])
         avg_score.append(scorer(estimator, X[test], y[test]))
     return np.mean(avg_score)
 
 
-def _shuffle(y, labels, random_state):
-    """Return a shuffled copy of y eventually shuffle among same labels."""
-    if labels is None:
+def _shuffle(y, groups, random_state):
+    """Return a shuffled copy of y eventually shuffle among same groups."""
+    if groups is None:
         indices = random_state.permutation(len(y))
     else:
-        indices = np.arange(len(labels))
-        for label in np.unique(labels):
-            this_mask = (labels == label)
+        indices = np.arange(len(groups))
+        for group in np.unique(groups):
+            this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
     return y[indices]
 
 
-def learning_curve(estimator, X, y, labels=None,
+def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None, scoring=None,
                    exploit_incremental_learning=False, n_jobs=1,
                    pre_dispatch="all", verbose=0):
@@ -679,7 +684,7 @@ def learning_curve(estimator, X, y, labels=None,
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -749,10 +754,10 @@ def learning_curve(estimator, X, y, labels=None,
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, labels)
+    cv_iter = cv.split(X, y, groups)
     # Make a list since we will be iterating multiple times over the folds
     cv_iter = list(cv_iter)
     scorer = check_scoring(estimator, scoring=scoring)
@@ -773,7 +778,7 @@ def learning_curve(estimator, X, y, labels=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv.split(X, y, labels))
+            scorer, verbose) for train, test in cv.split(X, y, groups))
     else:
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train[:n_train_samples], test,
@@ -869,7 +874,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array((train_scores, test_scores)).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, labels=None,
+def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=1, pre_dispatch="all",
                      verbose=0):
     """Validation curve.
@@ -902,7 +907,7 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
 
-    labels : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
@@ -950,7 +955,7 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
 
     """
-    X, y, labels = indexable(X, y, labels)
+    X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
@@ -961,7 +966,7 @@ def validation_curve(estimator, X, y, param_name, param_range, labels=None,
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
-        for train, test in cv.split(X, y, labels) for v in param_range)
+        for train, test in cv.split(X, y, groups) for v in param_range)
 
     out = np.asarray(out)[:, :2]
     n_params = len(param_range)
