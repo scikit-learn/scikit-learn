@@ -9,6 +9,8 @@ Release history
 Version 0.18
 ============
 
+**In Development**
+
 Changelog
 ---------
 
@@ -393,6 +395,8 @@ API changes summary
 Version 0.17.1
 ==============
 
+**February 18, 2016**
+
 Changelog
 ---------
 
@@ -433,6 +437,7 @@ Bug fixes
 Version 0.17
 ============
 
+**November 5, 2015**
 
 Changelog
 ---------
@@ -864,6 +869,8 @@ API changes summary
 Version 0.16.1
 ===============
 
+**April 14, 2015**
+
 Changelog
 ---------
 
@@ -895,6 +902,8 @@ Bug fixes
 
 Version 0.16
 ============
+
+**March 26, 2015**
 
 Highlights
 -----------
@@ -1362,6 +1371,8 @@ API changes summary
 Version 0.15.2
 ==============
 
+**September 4, 2014**
+
 Bug fixes
 ---------
 
@@ -1404,6 +1415,8 @@ Bug fixes
 Version 0.15.1
 ==============
 
+**August 1, 2014**
+
 Bug fixes
 ---------
 
@@ -1442,6 +1455,8 @@ Bug fixes
 
 Version 0.15
 ============
+
+**July 15, 2014**
 
 Highlights
 -----------
@@ -1974,6 +1989,8 @@ List of contributors for release 0.15 by number of commits.
 Version 0.14
 ===============
 
+**August 7, 2013**
+
 Changelog
 ---------
 
@@ -2357,6 +2374,8 @@ List of contributors for release 0.14 by number of commits.
 Version 0.13.1
 ==============
 
+**February 23, 2013**
+
 The 0.13.1 release only fixes some bugs and does not add any new functionality.
 
 Changelog
@@ -2402,6 +2421,8 @@ List of contributors for release 0.13.1 by number of commits.
 
 Version 0.13
 ============
+
+**January 21, 2013**
 
 New Estimator Classes
 ---------------------
@@ -2741,6 +2762,8 @@ List of contributors for release 0.13 by number of commits.
 Version 0.12.1
 ===============
 
+**October 8, 2012**
+
 The 0.12.1 release is a bug-fix release with no additional features, but is
 instead a set of bug fixes
 
@@ -2785,6 +2808,8 @@ People
 
 Version 0.12
 ============
+
+**September 4, 2012**
 
 Changelog
 ---------
@@ -2978,6 +3003,8 @@ People
 
 Version 0.11
 ============
+
+**May 7, 2012**
 
 Changelog
 ---------
@@ -3214,6 +3241,8 @@ People
 Version 0.10
 ============
 
+**January 11, 2012**
+
 Changelog
 ---------
 
@@ -3398,6 +3427,8 @@ The following people contributed to scikit-learn since last release:
 
 Version 0.9
 ===========
+
+**September 21, 2011**
 
 scikit-learn 0.9 was released on September 2011, three months after the 0.8
 release and includes the new modules :ref:`manifold`, :ref:`dirichlet_process`
@@ -3636,6 +3667,8 @@ People
 Version 0.8
 ===========
 
+**May 11, 2011**
+
 scikit-learn 0.8 was released on May 2011, one month after the first
 "international" `scikit-learn coding sprint
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
@@ -3736,6 +3769,8 @@ People that made this release possible preceded by number of commits:
 Version 0.7
 ===========
 
+**March 2, 2011**
+
 scikit-learn 0.7 was released in March 2011, roughly three months
 after the 0.6 release. This release is marked by the speed
 improvements in existing algorithms like k-Nearest Neighbors and
@@ -3826,6 +3861,8 @@ People that made this release possible preceded by number of commits:
 
 Version 0.6
 ===========
+
+**December 21, 2010**
 
 scikit-learn 0.6 was released on December 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
@@ -3926,6 +3963,8 @@ People that made this release possible preceded by number of commits:
 
 Version 0.5
 ===========
+
+**October 11, 2010**
 
 Changelog
 ---------
@@ -4038,6 +4077,8 @@ number of commits:
 
 Version 0.4
 ===========
+
+**August 26, 2010**
 
 Changelog
 ---------
