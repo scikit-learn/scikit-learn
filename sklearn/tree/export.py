@@ -8,12 +8,8 @@ This module defines export functions for decision trees.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Trevor Stephens <trev.stephens@gmail.com>
-<<<<<<< 59bf211789d29d70642fd64d6d4bef95ff518e8d
-# License: BSD 3 clause
-=======
 #          nvdv <modestdev@gmail.com>
 # Licence: BSD 3 clause
->>>>>>> Add decision tree plotting.
 
 import numpy as np
 
@@ -65,13 +61,72 @@ def _color_brew(n):
     return color_list
 
 
-
-def get_graphviz_source(decision_tree, max_depth=None, special_characters=False,
+def get_graphviz_source(decision_tree, max_depth=None,
                         feature_names=None, class_names=None, label='all',
                         filled=False, leaves_parallel=False, impurity=True,
                         node_ids=False, proportion=False, rotate=False,
-                        rounded=False):
-    """Returns decision tree source in GraphViz format."""
+                        rounded=False, special_characters=False):
+    """Return decision tree source in GraphViz format.
+
+    This function returns a GraphViz representation of the decision tree.
+    Read more in the :ref:`User Guide <tree>`.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to GraphViz.
+
+    max_depth : int, optional (default=None)
+        The maximum depth of the representation. If None, the tree is fully
+        generated.
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    class_names : list of strings, bool or None, optional (default=None)
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
+        If ``True``, shows a symbolic representation of the class name.
+
+    label : {'all', 'root', 'none'}, optional (default='all')
+        Whether to show informative labels for impurity, etc.
+        Options include 'all' to show at every node, 'root' to show only at
+        the top root node, or 'none' to not show at any node.
+
+    filled : bool, optional (default=False)
+        When set to ``True``, paint nodes to indicate majority class for
+        classification, extremity of values for regression, or purity of node
+        for multi-output.
+
+    leaves_parallel : bool, optional (default=False)
+        When set to ``True``, draw all leaf nodes at the bottom of the tree.
+
+    impurity : bool, optional (default=True)
+        When set to ``True``, show the impurity at each node.
+
+    node_ids : bool, optional (default=False)
+        When set to ``True``, show the ID number on each node.
+
+    proportion : bool, optional (default=False)
+        When set to ``True``, change the display of 'values' and/or 'samples'
+        to be proportions and percentages respectively.
+
+    rotate : bool, optional (default=False)
+        When set to ``True``, orient tree left to right rather than top-down.
+
+    rounded : bool, optional (default=False)
+        When set to ``True``, draw node boxes with rounded corners and use
+        Helvetica fonts instead of Times-Roman.
+
+    special_characters : bool, optional (default=False)
+        When set to ``False``, ignore special characters for PostScript
+        compatibility.
+
+    Returns
+    -------
+        String containing decision tree source in Graphviz format.
+    """
+
     def get_color(value):
         # Find the appropriate color & intensity for a node
         if colors['bounds'] is None:
@@ -338,16 +393,100 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
                     rounded=False, special_characters=False):
-    """Export a decision tree in DOT format."""
+    """Export a decision tree in DOT format.
+
+    This function generates a GraphViz representation of the decision tree,
+    which is then written into `out_file`. Once exported, graphical renderings
+    can be generated using, for example:
+
+        $ dot -Tps tree.dot -o tree.ps      (PostScript format)
+        $ dot -Tpng tree.dot -o tree.png    (PNG format)
+
+    The sample counts that are shown are weighted with any sample_weights that
+    might be present.
+
+    Read more in the :ref:`User Guide <tree>`.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to GraphViz.
+
+    out_file : file object or string, optional (default="tree.dot")
+        Handle or name of the output file.
+
+    max_depth : int, optional (default=None)
+        The maximum depth of the representation. If None, the tree is fully
+        generated.
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    class_names : list of strings, bool or None, optional (default=None)
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
+        If ``True``, shows a symbolic representation of the class name.
+
+    label : {'all', 'root', 'none'}, optional (default='all')
+        Whether to show informative labels for impurity, etc.
+        Options include 'all' to show at every node, 'root' to show only at
+        the top root node, or 'none' to not show at any node.
+
+    filled : bool, optional (default=False)
+        When set to ``True``, paint nodes to indicate majority class for
+        classification, extremity of values for regression, or purity of node
+        for multi-output.
+
+    leaves_parallel : bool, optional (default=False)
+        When set to ``True``, draw all leaf nodes at the bottom of the tree.
+
+    impurity : bool, optional (default=True)
+        When set to ``True``, show the impurity at each node.
+
+    node_ids : bool, optional (default=False)
+        When set to ``True``, show the ID number on each node.
+
+    proportion : bool, optional (default=False)
+        When set to ``True``, change the display of 'values' and/or 'samples'
+        to be proportions and percentages respectively.
+
+    rotate : bool, optional (default=False)
+        When set to ``True``, orient tree left to right rather than top-down.
+
+    rounded : bool, optional (default=False)
+        When set to ``True``, draw node boxes with rounded corners and use
+        Helvetica fonts instead of Times-Roman.
+
+    special_characters : bool, optional (default=False)
+        When set to ``False``, ignore special characters for PostScript
+        compatibility.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> tree.export_graphviz(clf,
+    ...     out_file='tree.dot')                # doctest: +SKIP
+
+    """
+
     tree_source = get_graphviz_source(
-        tree, max_depth, feature_names, class_names, label, filled,
+        decision_tree, max_depth, feature_names, class_names, label, filled,
         leaves_parallel, impurity, node_ids,proportion, rotate, rounded,
         special_characters)
+    own_file = False
     try:
-        if six.PY3:
-            source_file = open(out_file, "w", encoding="utf-8")
-        else:
-            source_file = open(out_file, "wb")
-        source_file.write(tree_source)
+        if isinstance(out_file, six.string_types):
+            if six.PY3:
+                out_file = open(out_file, "w", encoding="utf-8")
+            else:
+                out_file = open(out_file, "wb")
+            own_file = True
+            out_file.write(tree_source)
     finally:
-        source_file.close()
+        if own_file:
+            out_file.close()
+
