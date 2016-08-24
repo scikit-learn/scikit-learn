@@ -635,6 +635,98 @@ class StratifiedKFold(_BaseKFold):
         return super(StratifiedKFold, self).split(X, y, labels)
 
 
+class TimeSeriesCV(_BaseKFold):
+    """Time Series cross-validator
+
+    Provides train/test indices to split time series data samples
+    that are observed at fixed time intervals, in train/test sets.
+    In each split, test indices must be higher than before, and thus shuffling
+    in cross validator is inappropriate.
+
+    This cross-validation object is a variation of :class:`KFold`.
+    In the kth split, it returns first k folds as train set and the
+    (k+1)th fold as test set.
+
+    Note that unlike standard cross-validation methods, successive
+    training sets are supersets of those that come before them.
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=3
+        Number of splits. Must be at least 1.
+
+    Examples
+    --------
+    >>> from sklearn.model_selection import TimeSeriesCV
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> tscv = TimeSeriesCV(n_splits=3)
+    >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+    TimeSeriesCV(n_splits=3)
+    >>> for train_index, test_index in tscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0] TEST: [1]
+    TRAIN: [0 1] TEST: [2]
+    TRAIN: [0 1 2] TEST: [3]
+
+    Notes
+    -----
+    The training set has size ``i * n_samples // (n_splits + 1)
+    + n_samples % (n_splits + 1)`` in the ``i``th split,
+    with a test set of size ``n_samples//(n_splits + 1)``,
+    where ``n_samples`` is the number of samples.
+    """
+    def __init__(self, n_splits=3):
+        super(TimeSeriesCV, self).__init__(n_splits,
+                                           shuffle=False,
+                                           random_state=None)
+
+    def split(self, X, y=None, labels=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+
+        labels : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        X, y, labels = indexable(X, y, labels)
+        n_samples = _num_samples(X)
+        n_splits = self.n_splits
+        n_folds = n_splits + 1
+        if n_folds > n_samples:
+            raise ValueError(
+                ("Cannot have number of folds ={0} greater"
+                 " than the number of samples: {1}.").format(n_folds,
+                                                             n_samples))
+        indices = np.arange(n_samples)
+        test_size = (n_samples // n_folds)
+        test_starts = range(test_size + n_samples % n_folds,
+                            n_samples, test_size)
+        for test_start in test_starts:
+            yield (indices[:test_start],
+                   indices[test_start:test_start + test_size])
+
+
 class LeaveOneLabelOut(BaseCrossValidator):
     """Leave One Label Out cross-validator
 

@@ -30,6 +30,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import TimeSeriesCV
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import LeaveOneLabelOut
 from sklearn.model_selection import LeavePOut
@@ -995,6 +996,44 @@ def test_label_kfold():
     X = y = np.ones(len(labels))
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          next, LabelKFold(n_splits=3).split(X, y, labels))
+
+
+def test_time_series_cv():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+
+    # Should fail if there are more folds than samples
+    assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
+                         next,
+                         TimeSeriesCV(n_splits=7).split(X))
+
+    tscv = TimeSeriesCV(2)
+
+    # Manually check that Time Series CV preserves the data
+    # ordering on toy datasets
+    splits = tscv.split(X[:-1])
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [4, 5])
+
+    splits = TimeSeriesCV(2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [5, 6])
+
+    # Check get_n_splits returns the correct number of splits
+    splits = TimeSeriesCV(2).split(X)
+    n_splits_actual = len(list(splits))
+    assert_equal(n_splits_actual, tscv.get_n_splits())
+    assert_equal(n_splits_actual, 2)
 
 
 def test_nested_cv():

@@ -521,6 +521,50 @@ See also
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
+Cross validation of time series data
+====================================
+
+Time series data is characterised by the correlation between observations 
+that are near in time (*autocorrelation*). However, classical 
+cross-validation techniques such as :class:`KFold` and 
+:class:`ShuffleSplit` assume the samples are independent and 
+identically distributed, and would result in unreasonable correlation 
+between training and testing instances (yielding poor estimates of 
+generalisation error) on time series data. Therefore, it is very important 
+to evaluate our model for time series data on the "future" observations 
+least like those that are used to train the model. To achieve this, one 
+solution is provided by :class:`TimeSeriesCV`.
+
+
+TimeSeriesCV
+-----------------------
+
+:class:`TimeSeriesCV` is a variation of *k-fold* which 
+returns first :math:`k` folds as train set and the :math:`(k+1)` th 
+fold as test set. Note that unlike standard cross-validation methods, 
+successive training sets are supersets of those that come before them.
+Also, it adds all surplus data to the first training partition, which
+is always used to train the model.
+
+This class can be used to cross-validate time series data samples 
+that are observed at fixed time intervals.
+
+Example of 3-split time series cross-validation on a dataset with 6 samples::
+
+  >>> from sklearn.model_selection import TimeSeriesCV
+
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> y = np.array([1, 2, 3, 4, 5, 6])
+  >>> tscv = TimeSeriesCV(n_splits=3)
+  >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+  TimeSeriesCV(n_splits=3)
+  >>> for train, test in tscv.split(X):
+  ...     print("%s %s" % (train, test))
+  [0 1 2] [3]
+  [0 1 2 3] [4]
+  [0 1 2 3 4] [5]
+
+
 A note on shuffling
 ===================
 

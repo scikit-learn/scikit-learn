@@ -2,6 +2,7 @@ from ._split import BaseCrossValidator
 from ._split import KFold
 from ._split import LabelKFold
 from ._split import StratifiedKFold
+from ._split import TimeSeriesCV
 from ._split import LeaveOneLabelOut
 from ._split import LeaveOneOut
 from ._split import LeavePLabelOut
@@ -27,6 +28,7 @@ from ._search import fit_grid_point
 
 __all__ = ('BaseCrossValidator',
            'GridSearchCV',
+           'TimeSeriesCV',
            'KFold',
            'LabelKFold',
            'LabelShuffleSplit',
