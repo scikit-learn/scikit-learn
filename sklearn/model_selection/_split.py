@@ -720,9 +720,11 @@ class TimeSeriesCV(_BaseKFold):
                                                              n_samples))
         indices = np.arange(n_samples)
         test_size = (n_samples // n_folds)
-        test_starts =  range(test_size + n_samples % n_folds, n_samples, test_size)
+        test_starts = range(test_size + n_samples % n_folds,
+                            n_samples, test_size)
         for test_start in test_starts:
-            yield indices[:test_start], indices[test_start:test_start + test_size]
+            yield (indices[:test_start], \
+                   indices[test_start:test_start + test_size])
 
 
 class LeaveOneLabelOut(BaseCrossValidator):
