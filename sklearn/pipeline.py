@@ -643,6 +643,8 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
                                 (t, type(t)))
 
     def _iter(self):
+        """Generate (name, est, weight) tuples excluding None transformers
+        """
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
