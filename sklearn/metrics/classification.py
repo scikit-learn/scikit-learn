@@ -1551,7 +1551,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
     log-likelihood of the true labels given a probabilistic classifier's
-    predictions. For a single sample with true label yt in {0,1} and
+    predictions. The log loss is only defined for two or more labels.
+    For a single sample with true label yt in {0,1} and
     estimated probability yp that yt = 1, the log loss is
 
         -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
@@ -1563,9 +1564,13 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes)
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
-        predict_proba method.
+        predict_proba method. If ``y_pred.shape = (n_samples,)``
+        the probabilities provided are assumed to be that of the
+        positive class. The labels in ``y_pred`` are assumed to be
+        ordered alphabetically, as done by
+        :class:`preprocessing.LabelBinarizer`.
 
     eps : float
         Log loss is undefined for p=0 or p=1, so probabilities are
@@ -1578,10 +1583,12 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    labels : array-like, optional (default=None) 
-        If not provided, labels will be inferred from y_true
+    labels : array-like, optional (default=None)
+        If not provided, labels will be inferred from y_true. If ``labels``
+        is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
+        assumed to be binary and are inferred from ``y_true``.
         .. versionadded:: 0.18
-        
+
     Returns
     -------
     loss : float
@@ -1601,45 +1608,58 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    lb = LabelBinarizer()
-    lb.fit(labels) if labels is not None else lb.fit(y_true)
-    if labels is None and len(lb.classes_) == 1:
-        raise ValueError('y_true has only one label. Please provide '
-        'the true labels explicitly through the labels argument.')
-
-    T = lb.transform(y_true)
-
-    if T.shape[1] == 1:
-        T = np.append(1 - T, T, axis=1)
     y_pred = check_array(y_pred, ensure_2d=False)
+    check_consistent_length(y_pred, y_true)
+
+    lb = LabelBinarizer()
+
+    if labels is not None:
+        lb.fit(labels)
+    else:
+        lb.fit(y_true)
+
+    if len(lb.classes_) == 1:
+        if labels is None:
+            raise ValueError('y_true contains only one label ({0}). Please provide '
+                             'the true labels explicitly through the labels '
+                             'argument.'.format(lb.classes_[0]))
+        else:
+            raise ValueError('The labels array needs to contain at least two labels'
+                             'for log_loss, got {0}.'.format(lb.classes_))
+
+    transformed_labels = lb.transform(y_true)
+
+    if transformed_labels.shape[1] == 1:
+        transformed_labels = np.append(1 - transformed_labels,
+                                       transformed_labels, axis=1)
 
     # Clipping
-    Y = np.clip(y_pred, eps, 1 - eps)
-
-    # This happens in cases when elements in y_pred have type "str".
-    if not isinstance(Y, np.ndarray):
-        raise ValueError("y_pred should be an array of floats.")
+    y_pred = np.clip(y_pred, eps, 1 - eps)
 
     # If y_pred is of single dimension, assume y_true to be binary
     # and then check.
-    if Y.ndim == 1:
-        Y = Y[:, np.newaxis]
-    if Y.shape[1] == 1:
-        Y = np.append(1 - Y, Y, axis=1)
+    if y_pred.ndim == 1:
+        y_pred = y_pred[:, np.newaxis]
+    if y_pred.shape[1] == 1:
+        y_pred = np.append(1 - y_pred, y_pred, axis=1)
 
     # Check if dimensions are consistent.
-    check_consistent_length(T, Y)
-    T = check_array(T)
-    Y = check_array(Y)
-    if T.shape[1] != Y.shape[1]:
-        raise ValueError("y_true and y_pred have different number of classes "
-                         "%d, %d.\nPlease provide the true labels explicitly "
-                         "through the labels argument" %
-                         (T.shape[1], Y.shape[1]))
+    transformed_labels = check_array(transformed_labels)
+    if len(lb.classes_) != y_pred.shape[1]:
+        if labels is None:
+            raise ValueError("y_true and y_pred contain different number of classes "
+                             "{0}, {1}. Please provide the true labels explicitly "
+                             "through the labels argument. Classes found in"
+                             "y_true: {2}".format(transformed_labels.shape[1],
+                                               y_pred.shape[1], lb.classes_))
+        else:
+            raise ValueError('The number of classes in labels is different '
+                             'from that in y_pred. Classes found in '
+                             'labels: {0}'.format(lb.classes_))
 
     # Renormalize
-    Y /= Y.sum(axis=1)[:, np.newaxis]
-    loss = -(T * np.log(Y)).sum(axis=1)
+    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
+    loss = -(transformed_labels * np.log(y_pred)).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
 

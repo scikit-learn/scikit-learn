@@ -270,10 +270,10 @@ Enhancements
      (`#6913 <https://github.com/scikit-learn/scikit-learn/pull/6913>`_)
      By `YenChen Lin`_.
 
-   - Added `labels` flag to :class:`metrics.log_loss` to correct metric`s when
-     only one class is present in test data set
-     `#7166 <https://github.com/scikit-learn/scikit-learn/pull/7166/>`_ 
-     by `Hong Guangguo`_ with support of `Mads Jensen`_.
+   - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
+     the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
+     (`#7239 <https://github.com/scikit-learn/scikit-learn/pull/7239/>`_)
+     by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
 
 Bug fixes
 .........
