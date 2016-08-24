@@ -389,7 +389,7 @@ def test_set_pipeline_steps():
 
 
 def test_set_pipeline_step_none():
-    """Test setting Pipeline steps to None"""
+    # Test setting Pipeline steps to None
     X = np.array([[1]])
     y = np.array([1])
     mult2 = MultT(mult=2)
@@ -397,7 +397,7 @@ def test_set_pipeline_step_none():
     mult5 = MultT(mult=5)
 
     def make():
-        return Pipeline([('m2', mult2), ('m3', mult3), ('est', mult5)])
+        return Pipeline([('m2', mult2), ('m3', mult3), ('last', mult5)])
 
     pipeline = make()
 
@@ -432,7 +432,7 @@ def test_set_pipeline_step_none():
 
     pipeline = make()
     assert_raises_regex(TypeError, r'Last step of Pipeline .*\bfit\b.*',
-                        pipeline.set_params, est=None)
+                        pipeline.set_params, last=None)
 
 
 def test_make_pipeline():
