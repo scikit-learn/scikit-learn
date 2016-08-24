@@ -290,40 +290,6 @@ both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
 
 
-.. _homogeneous_time_series_cv:
-
-HomogeneousTimeSeriesCV
------------------------
-
-:class:`HomogeneousTimeSeriesCV` is a variation of *k-fold* which 
-returns first :math:`k` folds as train set and the :math:`(k+1)` th 
-fold as test set. Note that unlike standard cross-validation methods, 
-successive training sets are supersets of those that come before them.
-Also, its foldsizes is not in accordance with :class:`KFold`,
-it add all surplus data to the first training partition, which
-is always used to train the model.
-
-This class can be used to cross-validate homogeneous time series data,
-i.e., samples are observed at fixed time intervals.
-
-Example of 3-split time series cross-validation on a dataset with 4 samples::
-
-  >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
-
-  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-  >>> y = np.array([1, 2, 3, 4])
-  >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
-  >>> htscv.get_n_splits(X)
-  3
-  >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
-  HomogeneousTimeSeriesCV(n_splits=3)
-  >>> for train, test in htscv.split(X):
-  ...     print("%s %s" % (train, test))
-  [0] [1]
-  [0 1] [2]
-  [0 1 2] [3]
-
-
 Leave-One-Out - LOO
 -------------------
 
@@ -555,6 +521,51 @@ See also
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
+Cross validation of time series data
+====================================
+
+Time series data is characterised by the correlation between observations 
+that are near in time (*autocorrelation*). However, classical 
+cross-validation techniques such as :class:`KFold` and 
+:class:`ShuffleSplit` assume the samples are independent and 
+identically distributed, and would result in unreasonable correlation 
+between training and testing instances (yielding poor estimates of 
+generalisation error) on time series data. Therefore, it is very important 
+to evaluate our model for time series data on the "future" observations 
+least like those that are used to train the model. To achieve this, one 
+solution is provided by :class:`HomogeneousTimeSeriesCV`.
+
+
+HomogeneousTimeSeriesCV
+-----------------------
+
+:class:`HomogeneousTimeSeriesCV` is a variation of *k-fold* which 
+returns first :math:`k` folds as train set and the :math:`(k+1)` th 
+fold as test set. Note that unlike standard cross-validation methods, 
+successive training sets are supersets of those that come before them.
+Also, its foldsizes are not in accordance with :class:`KFold`,
+it adds all surplus data to the first training partition, which
+is always used to train the model.
+
+This class can be used to cross-validate homogeneous time series data,
+i.e., samples are observed at fixed time intervals.
+
+Example of 3-split time series cross-validation on a dataset with 4 samples::
+
+  >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
+
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> y = np.array([1, 2, 3, 4])
+  >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
+  >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
+  HomogeneousTimeSeriesCV(n_splits=3)
+  >>> for train, test in htscv.split(X):
+  ...     print("%s %s" % (train, test))
+  [0] [1]
+  [0 1] [2]
+  [0 1 2] [3]
+
+
 A note on shuffling
 ===================
 
@@ -581,21 +592,6 @@ to shuffle the data indices before splitting them. Note that:
   of parameters validated by a single call to its ``fit`` method.
 * To ensure results are repeatable (*on the same platform*), use a fixed value
   for ``random_state``.
-
-Cross validation of time series data
-====================================
-
-Time series data is characterised by the correlation between observations 
-that are near in time (*autocorrelation*). However, classical 
-cross-validation techniques such as :class:`KFold` and 
-:class:`ShuffleSplit` assume the samples are independent and 
-identically distributed, and would result in unreasonable correlation 
-between training and testing instances (yielding poor estimates of 
-generalisation error) on time series data. Therefore, it is very important 
-to evaluate our model for time series data on the "future" observations 
-least like those that are used to train the model. To achieve this, one 
-solution is provided by :class:`HomogeneousTimeSeriesCV`, 
-as described :ref:`above <homogeneous_time_series_cv>`.
 
 Cross validation and model selection
 ====================================
