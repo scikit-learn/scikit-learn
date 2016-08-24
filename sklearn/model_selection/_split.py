@@ -675,9 +675,8 @@ class TimeSeriesCV(_BaseKFold):
 
     Notes
     -----
-    The first fold has size
-    ``n_samples // (n_splits + 1) + n_samples % (n_splits + 1)``,
-    and the other folds all have size ``n_samples // (n_splits + 1)``.
+	The training set has size ``i * n_samples // (n_splits + 1) + n_samples % (n_splits + 1)``
+	in the ``i``th split, with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
     def __init__(self, n_splits=3):
