@@ -543,27 +543,26 @@ TimeSeriesCV
 returns first :math:`k` folds as train set and the :math:`(k+1)` th 
 fold as test set. Note that unlike standard cross-validation methods, 
 successive training sets are supersets of those that come before them.
-Also, its foldsizes are not in accordance with :class:`KFold`,
-it adds all surplus data to the first training partition, which
+Also, it adds all surplus data to the first training partition, which
 is always used to train the model.
 
 This class can be used to cross-validate time series data samples 
 that are observed at fixed time intervals.
 
-Example of 3-split time series cross-validation on a dataset with 4 samples::
+Example of 3-split time series cross-validation on a dataset with 6 samples::
 
   >>> from sklearn.model_selection import TimeSeriesCV
 
-  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
-  >>> y = np.array([1, 2, 3, 4])
-  >>> htscv = TimeSeriesCV(n_splits=3)
-  >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> y = np.array([1, 2, 3, 4, 5, 6])
+  >>> tscv = TimeSeriesCV(n_splits=3)
+  >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
   TimeSeriesCV(n_splits=3)
-  >>> for train, test in htscv.split(X):
+  >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
-  [0] [1]
-  [0 1] [2]
   [0 1 2] [3]
+  [0 1 2 3] [4]
+  [0 1 2 3 4] [5]
 
 
 A note on shuffling
