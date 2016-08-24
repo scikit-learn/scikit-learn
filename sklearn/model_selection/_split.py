@@ -675,8 +675,9 @@ class TimeSeriesCV(_BaseKFold):
 
     Notes
     -----
-    The first fold has size ``n_samples // n_splits + n_samples % n_folds``,
-    other folds have size ``n_samples // n_splits``,
+    The first fold has size
+    ``n_samples // (n_splits + 1) + n_samples % (n_splits + 1)``,
+    and the other folds all have size ``n_samples // (n_splits + 1)``.
     where ``n_samples`` is the number of samples.
     """
     def __init__(self, n_splits=3):
@@ -718,11 +719,10 @@ class TimeSeriesCV(_BaseKFold):
                  " than the number of samples: {1}.").format(n_folds,
                                                              n_samples))
         indices = np.arange(n_samples)
-        fold_sizes = (n_samples // n_folds) * np.ones(n_folds, dtype=np.int)
-        fold_sizes[0] += n_samples % n_folds
-        cum_fold_sizes = np.cumsum(fold_sizes)
-        for start, stop in zip(cum_fold_sizes[:-1], cum_fold_sizes[1:]):
-            yield indices[:start], indices[start: stop]
+        test_size = (n_samples // n_folds)
+        test_starts =  range(test_size + n_samples % n_folds, n_samples, test_size)
+        for test_start in test_starts:
+            yield indices[:test_start], indices[test_start:test_start + test_size]
 
 
 class LeaveOneLabelOut(BaseCrossValidator):
