@@ -332,12 +332,12 @@ def _check_param_grid(param_grid):
 
             check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
             if True not in check:
-                raise ValueError("Parameter ({0}) value should be a list."
-                                 "".format(name))
+                raise ValueError("Parameter values for parameter ({}) need to "
+                                 "be a sequence.".format(name))
 
             if len(v) == 0:
-                raise ValueError("Parameter ({0}) value should be a non-empty "
-                                 "list.".format(name))
+                raise ValueError("Parameter values for parameter ({}) need to "
+                                 "be a non-empty sequence.".format(name))
 
 
 class _CVScoreTuple (namedtuple('_CVScoreTuple',
