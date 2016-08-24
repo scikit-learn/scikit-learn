@@ -37,12 +37,12 @@ is an estimator object::
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.svm import SVC
     >>> from sklearn.decomposition import PCA
-    >>> estimators = [('reduce_dim', PCA()), ('svm', SVC())]
-    >>> clf = Pipeline(estimators)
-    >>> clf # doctest: +NORMALIZE_WHITESPACE
+    >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
+    >>> pipe = Pipeline(estimators)
+    >>> pipe # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, iterated_power=4,
     n_components=None, random_state=None, svd_solver='auto', tol=0.0,
-    whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
+    whiten=False)), ('clf', SVC(C=1.0, cache_size=200, class_weight=None,
     coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
     kernel='rbf', max_iter=-1, probability=False, random_state=None,
     shrinking=True, tol=0.001, verbose=False))])
@@ -63,23 +63,23 @@ filling in the names automatically::
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
-    >>> clf.steps[0]
+    >>> pipe.steps[0]
     ('reduce_dim', PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
 and as a ``dict`` in ``named_steps``::
 
-    >>> clf.named_steps['reduce_dim']
+    >>> pipe.named_steps['reduce_dim']
     PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
-    >>> clf.set_params(svm__C=10) # doctest: +NORMALIZE_WHITESPACE
+    >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, iterated_power=4,
         n_components=None, random_state=None, svd_solver='auto', tol=0.0,
-        whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
+        whiten=False)), ('clf', SVC(C=10, cache_size=200, class_weight=None,
         coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
         kernel='rbf', max_iter=-1, probability=False, random_state=None,
         shrinking=True, tol=0.001, verbose=False))])
@@ -89,8 +89,8 @@ This is particularly important for doing grid searches::
 
     >>> from sklearn.model_selection import GridSearchCV
     >>> params = dict(reduce_dim__n_components=[2, 5, 10],
-    ...               svm__C=[0.1, 10, 100])
-    >>> grid_search = GridSearchCV(clf, param_grid=params)
+    ...               clf__C=[0.1, 10, 100])
+    >>> grid_search = GridSearchCV(pipe, param_grid=params)
 
 Individual steps may also be replaced as parameters, and non-final steps may be
 ignored by setting them to ``None``::
@@ -99,7 +99,7 @@ ignored by setting them to ``None``::
     >>> params = dict(reduce_dim=[None, PCA(5), PCA(10)],
     ...               clf=[SVC(), LogisticRegression()],
     ...               clf__C=[0.1, 10, 100])
-    >>> grid_search = GridSearchCV(clf, param_grid=params)
+    >>> grid_search = GridSearchCV(pipe, param_grid=params)
 
 .. topic:: Examples:
 
