@@ -648,7 +648,6 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
                 for name, trans in self.transformer_list
                 if trans is not None)
 
-    @property
     def get_feature_names(self):
         """Get feature names from all transformers.
 
@@ -657,18 +656,14 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         feature_names : list of strings
             Names of the features produced by transform.
         """
-        # Implemented as a proprerty so hasattr(feat_union, get_feature_names)
-        # returns False if any transformer lacks get_feature_names
-        getters = [(name, trans.get_feature_names)
-                   for name, trans, weight in self._iter()]
-
-        def fn():
-            feature_names = []
-            for name, getter in getters:
-                feature_names.extend([name + "__" + f for f in
-                                      getter()])
-            return feature_names
-        return fn
+        feature_names = []
+        for name, trans, weight in self._iter():
+            if not hasattr(trans, 'get_feature_names'):
+                raise AttributeError("Transformer %s does not provide"
+                                     " get_feature_names." % str(name))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
+        return feature_names
 
     def fit(self, X, y=None):
         """Fit all transformers using X.
