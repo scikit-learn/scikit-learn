@@ -263,6 +263,12 @@ Enhancements
      generating attribute ``estimators_samples_`` only when it is needed.
      By `David Staub`_.
 
+   - :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
+     now works with ``np.float32`` input data without converting it
+     into ``np.float64``. This allows to reduce the memory
+     consumption.
+     (`#6913 <https://github.com/scikit-learn/scikit-learn/pull/6913>`_)
+     By `YenChen Lin`_.
 
 Bug fixes
 .........
