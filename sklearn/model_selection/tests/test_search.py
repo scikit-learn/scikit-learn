@@ -28,6 +28,7 @@ from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.externals.six.moves import zip
 from sklearn.base import BaseEstimator
+from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -73,8 +74,10 @@ class MockClassifier(object):
         return T.shape[0]
 
     predict_proba = predict
+    predict_log_proba = predict
     decision_function = predict
     transform = predict
+    inverse_transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -267,6 +270,14 @@ def test_no_refit():
     assert_true(not hasattr(grid_search, "best_estimator_") and
                 hasattr(grid_search, "best_index_") and
                 hasattr(grid_search, "best_params_"))
+
+    # Make sure the predict/transform etc fns raise meaningfull error msg
+    for fn_name in ('predict', 'predict_proba', 'predict_log_proba',
+                    'transform', 'inverse_transform'):
+        assert_raise_message(NotFittedError,
+                             ('refit=False. %s is available only after '
+                              'refitting on the best parameters' % fn_name),
+                             getattr(grid_search, fn_name), X)
 
 
 def test_grid_search_error():
