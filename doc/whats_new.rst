@@ -264,7 +264,9 @@ Enhancements
      By `David Staub`_.
 
 
-   - Added ``n_jobs`` parameter for :class:`VotingClassifier` to fit underlying estimators in parallel
+   - Added ``n_jobs`` and ``sample_weights`` parameters for :class:`VotingClassifier`
+     to fit underlying estimators in parallel.
+     (`#5805 <https://github.com/scikit-learn/scikit-learn/pull/5805>`_)
      By `Ibraim Ganiev`_.
 
 Bug fixes

@@ -209,7 +209,7 @@ def test_gridsearch():
     grid.fit(iris.data, iris.target)
 
 
-def test_parallel_predict_proba_on_toy_problem():
+def test_parallel_predict():
     """Check parallel backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)

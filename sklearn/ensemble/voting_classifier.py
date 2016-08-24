@@ -59,7 +59,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
     n_jobs : int, optional (default=1)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both `fit`.
         If -1, then the number of jobs is set to the number of cores.
 
     Attributes
@@ -155,13 +155,9 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         transformed_y = self.le_.transform(y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(
-                    clone(clf),
-                    X,
-                    transformed_y,
-                    sample_weight
-                ) for _, clf in self.estimators
-            )
+                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                    sample_weight)
+                    for _, clf in self.estimators)
 
         return self
 
