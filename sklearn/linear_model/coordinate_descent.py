@@ -474,7 +474,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
                           ' to increase the number of iterations.' +
-                          ' Fitting data with alpha near zero, e.g., 1e-8,' +
+                          ' Fitting data with alpha near zero,' +
+                          ' e.g., 1e-8,' +
                           ' may cause precision problems.',
                           ConvergenceWarning)
 
