@@ -680,9 +680,6 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
     The first fold has size ``n_samples // n_splits + n_samples % n_folds``,
     other folds have size ``n_samples // n_splits``,
     where ``n_samples`` is the number of samples.
-
-    Number of splitting iterations in this cross-validator, n_splits,
-    is not equal to other KFold based cross-validators'.
     """
     def __init__(self, n_splits=3):
         super(HomogeneousTimeSeriesCV, self).__init__(n_splits,
@@ -728,27 +725,6 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
         cum_fold_sizes = np.cumsum(fold_sizes)
         for start, stop in zip(cum_fold_sizes[:-1], cum_fold_sizes[1:]):
             yield indices[:start], indices[start: stop]
-
-    def get_n_splits(self, X=None, y=None, labels=None):
-        """Returns the number of splitting iterations in the cross-validator
-
-        Parameters
-        ----------
-        X : object
-            Always ignored, exists for compatibility.
-
-        y : object
-            Always ignored, exists for compatibility.
-
-        labels : object
-            Always ignored, exists for compatibility.
-
-        Returns
-        -------
-        n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
-        """
-        return self.n_splits
 
 
 class LeaveOneLabelOut(BaseCrossValidator):
