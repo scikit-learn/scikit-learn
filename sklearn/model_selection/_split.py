@@ -635,11 +635,11 @@ class StratifiedKFold(_BaseKFold):
         return super(StratifiedKFold, self).split(X, y, labels)
 
 
-class HomogeneousTimeSeriesCV(_BaseKFold):
-    """Homogeneous Time Series cross-validator
+class TimeSeriesCV(_BaseKFold):
+    """Time Series cross-validator
 
-    Provides train/test indices to split homogeneous time series data,
-    i.e., samples are observed at fixed time intervals, in train/test sets.
+    Provides train/test indices to split time series data samples
+    that are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffling
     in cross validator is inappropriate.
 
@@ -659,15 +659,13 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
 
     Examples
     --------
-    >>> from sklearn.model_selection import HomogeneousTimeSeriesCV
+    >>> from sklearn.model_selection import TimeSeriesCV
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> htscv = HomogeneousTimeSeriesCV(n_splits=3)
-    >>> htscv.get_n_splits(X)
-    3
-    >>> print(htscv)  # doctest: +NORMALIZE_WHITESPACE
-    HomogeneousTimeSeriesCV(n_splits=3)
-    >>> for train_index, test_index in htscv.split(X):
+    >>> tscv = TimeSeriesCV(n_splits=3)
+    >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+    TimeSeriesCV(n_splits=3)
+    >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -682,9 +680,9 @@ class HomogeneousTimeSeriesCV(_BaseKFold):
     where ``n_samples`` is the number of samples.
     """
     def __init__(self, n_splits=3):
-        super(HomogeneousTimeSeriesCV, self).__init__(n_splits,
-                                                      shuffle=False,
-                                                      random_state=None)
+        super(TimeSeriesCV, self).__init__(n_splits,
+                                           shuffle=False,
+                                           random_state=None)
 
     def split(self, X, y=None, labels=None):
         """Generate indices to split data into training and test set.
