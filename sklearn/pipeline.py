@@ -97,7 +97,8 @@ class Pipeline(_BasePipeline):
     For this, it enables setting parameters of the various steps using their
     names and the parameter name separated by a '__', as in the example below.
     A step's estimator may be replaced entirely by setting the parameter
-    with its name.
+    with its name to another estimator, or a transformer removed by setting
+    to None.
 
     Read more in the :ref:`User Guide <pipeline>`.
 
@@ -571,7 +572,8 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
-    setting the parameter with its name.
+    setting the parameter with its name to another transformer,
+    or removed by setting to None.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
