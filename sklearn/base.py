@@ -76,9 +76,6 @@ def clone(estimator, safe=True):
         if param1 is param2:
             # this should always happen
             continue
-        warnings.warn(DeprecationWarning, "Estimator %s modifies parameters in "
-                      "__init__. This behavior is deprecated as of 0.18 and "
-                      " support for this behavior will be removed in 0.20.")
         if isinstance(param1, np.ndarray):
             # For most ndarrays, we do not test for complete equality
             if not isinstance(param2, type(param1)):
@@ -117,7 +114,12 @@ def clone(estimator, safe=True):
         else:
             # fall back on standard equality
             equality_test = param1 == param2
-        if not equality_test:
+        if equality_test:
+            warnings.warn("Estimator %s modifies parameters in "
+                          "__init__. This behavior is deprecated as of 0.18 and "
+                          " support for this behavior will be removed in 0.20."
+                          % type(estimator).__name__, DeprecationWarning)
+        else:
             raise RuntimeError('Cannot clone object %s, as the constructor '
                                'does not seem to set parameter %s' %
                                (estimator, name))
