@@ -10,39 +10,24 @@ from functools import update_wrapper
 __all__ = ['if_delegate_has_method']
 
 
-def _hasattr_nested(obj, attr):
-    """Check if obj has an attribute
-
-    Unlike `getattr`, this function allows attribute name to contain
-    dots, e.g. `_hasattr_nested(obj, 'name.first')`
-    """
-    parts = attr.split(".")
-    for part in parts:
-        if hasattr(obj, part):
-            obj = getattr(obj, part)
-        else:
-            return False
-    else:
-        return True
-
-
 class _IffHasAttrDescriptor(object):
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
-    if the all items in ``attribute_name`` is not present on the base object.
-    attribute_name can be a single string or a tuple of strings. The
-    ``AttributeError`` raised will indicate the last item is not present on
-    the base object
+    if none of the items in ``delegate_names`` is an attribute of the base
+    object or none of the items has an attribute ``method_name``.
 
-    This allows ducktyping of the decorated method based on ``attribute_name``.
+    This allows ducktyping of the decorated method based on
+    ``delegate.method_name`` where ``delegate`` is the first item in
+    ``delegate_names`` that is an attribute of the base object
 
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
-    def __init__(self, fn, attribute_name):
+    def __init__(self, fn, delegate_names, method_name):
         self.fn = fn
-        self.attribute_name = attribute_name
+        self.delegate_names = delegate_names
+        self.method_name = method_name
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -52,11 +37,13 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            for item in self.attribute_name:
-                if _hasattr_nested(obj, item):
+            for item in self.delegate_names:
+                if hasattr(obj, item):
+                    attrgetter("{0}.{1}".format(item, self.method_name))(obj)
                     break
             else:
-                attrgetter(self.attribute_name[-1])(obj)
+                attrgetter(self.delegate_names[-1])(obj)
+
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
         # update the docstring of the returned function
@@ -67,7 +54,13 @@ class _IffHasAttrDescriptor(object):
 def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
-    Delegate can be string or a tuple of strings
+    ``delegate`` can be a ``string`` or a ``tuple`` of ``string`` which
+    included the name of the sub-estimators as an attribute of the base object
+    Example:
+    ``@if_delegate_has_method(delegate='sub_estimator')``
+    ``@if_delegate_has_method(delegate=('best_sub_estimator_', 'sub_estimator')``
+    If type is ``tuple``, decorated methods are assumed to be delegated to the
+    first sub-estimator in ``delegate`` that is an attribute of the base object
 
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
@@ -110,17 +103,12 @@ def if_delegate_has_method(delegate):
     >>> hasattr(MetaEst(HasPredict(), HasNoPredict()), 'predict_cond')
     True
     >>> hasattr(MetaEst(HasNoPredict(), HasPredict()), 'predict_cond')
-    True
+    False
     >>> hasattr(MetaEst(HasPredict(), HasPredict()), 'predict_cond')
     True
     """
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    def func(fn):
-        attrs = []
-        for item in delegate:
-            attrs.append('%s.%s' % (item, fn.__name__))
-        return _IffHasAttrDescriptor(fn, tuple(attrs))
+    return lambda fn: _IffHasAttrDescriptor(fn, delegate, method_name=fn.__name__)
 
-    return func
