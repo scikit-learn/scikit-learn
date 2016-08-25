@@ -37,9 +37,13 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            for item in self.delegate_names:
-                if hasattr(obj, item):
-                    attrgetter("{0}.{1}".format(item, self.method_name))(obj)
+            for delegate_name in self.delegate_names:
+                try:
+                    delegate = attrgetter(delegate_name)(obj)
+                except AttributeError:
+                    continue
+                else:
+                    getattr(delegate, self.method_name)
                     break
             else:
                 attrgetter(self.delegate_names[-1])(obj)
@@ -54,17 +58,19 @@ class _IffHasAttrDescriptor(object):
 def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
-    ``delegate`` can be a ``string`` or a ``tuple`` of ``string`` which
-    included the name of the sub-estimators as an attribute of the base object
-    Example:
-    ``@if_delegate_has_method(delegate='sub_estimator')``
-    ``@if_delegate_has_method(delegate=('best_sub_estimator_', 'sub_estimator')``
-    If type is ``tuple``, decorated methods are assumed to be delegated to the
-    first sub-estimator in ``delegate`` that is an attribute of the base object
-
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
 
+    Parameters
+    ----------
+    delegate : string, list of strings or tuple of strings
+        Name of the sub-estimator that can be accessed as an attribute of
+        the base object. If a list or a tuple of names are provided,
+        the first sub-estimator that is an attribute of the base object
+        will be used.
+
+    Examples
+    --------
     >>> from sklearn.utils.metaestimators import if_delegate_has_method
     >>>
     >>>
@@ -106,7 +112,10 @@ def if_delegate_has_method(delegate):
     False
     >>> hasattr(MetaEst(HasPredict(), HasPredict()), 'predict_cond')
     True
+
     """
+    if isinstance(delegate, list):
+        delegate = tuple(delegate)
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
