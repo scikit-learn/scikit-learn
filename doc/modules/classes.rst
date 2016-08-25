@@ -174,6 +174,7 @@ Splitter Classes
    model_selection.LabelShuffleSplit
    model_selection.StratifiedShuffleSplit
    model_selection.PredefinedSplit
+   model_selection.TimeSeriesSplit
 
 Splitter Functions
 ------------------
