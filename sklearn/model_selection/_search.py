@@ -24,6 +24,7 @@ from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
+from ..exceptions import NotFittedError
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
@@ -414,6 +415,15 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              % self.best_estimator_)
         return self.scorer_(self.best_estimator_, X, y)
 
+    def _check_is_fitted(self, method_name):
+        if not self.refit:
+            raise NotFittedError(('This GridSearchCV instance was initialized '
+                                  'with refit=False. %s is '
+                                  'available only after refitting on the best '
+                                  'parameters. ') % method_name)
+        else:
+            check_is_fitted(self, 'best_estimator_')
+
     @if_delegate_has_method(delegate='estimator')
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
@@ -428,6 +438,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('predict')
         return self.best_estimator_.predict(X)
 
     @if_delegate_has_method(delegate='estimator')
@@ -444,6 +455,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('predict_proba')
         return self.best_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate='estimator')
@@ -460,6 +472,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('predict_log_proba')
         return self.best_estimator_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate='estimator')
@@ -476,6 +489,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('decision_function')
         return self.best_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate='estimator')
@@ -492,11 +506,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('transform')
         return self.best_estimator_.transform(X)
 
     @if_delegate_has_method(delegate='estimator')
     def inverse_transform(self, Xt):
-        """Call inverse_transform on the estimator with the best found parameters.
+        """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
         ``inverse_transform`` and ``refit=True``.
@@ -508,6 +523,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
     def _fit(self, X, y, labels, parameter_iterable):
