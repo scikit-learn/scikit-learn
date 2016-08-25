@@ -45,7 +45,6 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 
-
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -1383,6 +1382,32 @@ def test_log_loss():
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
+
+    # test labels option
+
+    y_true = [2, 2]
+    y_pred = [[0.2, 0.7], [0.6, 0.5]]
+    y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
+    error_str = ('y_true contains only one label (2). Please provide '
+                 'the true labels explicitly through the labels argument.')
+    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
+    error_str = ('Found arrays with inconsistent numbers of '
+                 'samples: [2 3]')
+    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+
+    # works when the labels argument is used
+
+    true_log_loss = -np.mean(np.log(y_score[:, 1]))
+    calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
+    assert_almost_equal(calculated_log_loss, true_log_loss)
+
+    # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
+    y_true = [1, 2, 2]
+    y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
+    loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+    assert_almost_equal(loss, 1.0630345, decimal=6)
 
 
 def test_log_loss_pandas_input():
