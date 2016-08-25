@@ -429,7 +429,6 @@ def test_set_pipeline_step_none():
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
-    print(pipeline.get_params(deep=True))
     assert_dict_equal(pipeline.get_params(deep=True),
                       {'steps': pipeline.steps,
                        'm2': mult2,

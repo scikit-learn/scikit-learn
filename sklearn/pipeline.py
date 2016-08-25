@@ -41,7 +41,6 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
                 new_steps[i] = (name, new_val)
                 break
         setattr(self, steps_attr, new_steps)
-        print(name, i, new_steps)
 
     def _get_params(self, steps_attr, deep=True):
         out = super(_BasePipeline, self).get_params(deep=False)
@@ -63,7 +62,6 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
             setattr(self, steps_attr, params.pop(steps_attr))
         # 2. Step replacement
         step_names, _ = zip(*getattr(self, steps_attr))
-        print(step_names, params.keys())
         for name in list(six.iterkeys(params)):
             if '__' not in name and name in step_names:
                 self._replace_step(steps_attr, name, params.pop(name))
