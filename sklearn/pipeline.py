@@ -34,14 +34,14 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
         pass
 
     def _replace_step(self, steps_attr, name, new_val):
+        # assumes `name` is a valid step name
         new_steps = getattr(self, steps_attr)[:]
         for i, (step_name, _) in enumerate(new_steps):
             if step_name == name:
                 new_steps[i] = (name, new_val)
                 break
-        else:
-            raise ValueError('Unknown step name: %r' % name)
         setattr(self, steps_attr, new_steps)
+        print(name, i, new_steps)
 
     def _get_params(self, steps_attr, deep=True):
         out = super(_BasePipeline, self).get_params(deep=False)
@@ -63,21 +63,24 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
             setattr(self, steps_attr, params.pop(steps_attr))
         # 2. Step replacement
         step_names, _ = zip(*getattr(self, steps_attr))
+        print(step_names, params.keys())
         for name in list(six.iterkeys(params)):
             if '__' not in name and name in step_names:
                 self._replace_step(steps_attr, name, params.pop(name))
         # 3. Step parameters and other initilisation arguments
+        print('here', getattr(self, steps_attr))
         super(_BasePipeline, self).set_params(**params)
+        print('there', getattr(self, steps_attr))
         return self
 
     def _validate_names(self, names):
         if len(set(names)) != len(names):
             raise ValueError('Names provided are not unique: '
-                             '{!r}'.format(names))
+                             '{!r}'.format(list(names)))
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
             raise ValueError('Step names conflict with constructor arguments: '
-                             '{!r}'.format(invalid_names))
+                             '{!r}'.format(sorted(invalid_names)))
         invalid_names = [name for name in names if '__' in name]
         if invalid_names:
             raise ValueError('Step names must not contain __: got '
@@ -179,7 +182,6 @@ class Pipeline(_BasePipeline):
         self
         """
         self._set_params('steps', **kwargs)
-        self._validate_steps()
         return self
 
     def _validate_steps(self):
@@ -198,12 +200,12 @@ class Pipeline(_BasePipeline):
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All intermediate steps should be "
-                                "Transformers and implement fit and transform"
-                                " '%s' (type %s) doesn't)" % (t, type(t)))
+                                "transformers and implement fit and transform."
+                                " '%s' (type %s) doesn't" % (t, type(t)))
 
         if not hasattr(estimator, "fit"):
-            raise TypeError("Last step of Pipeline should implement fit "
-                            "'%s' (type %s) doesn't)"
+            raise TypeError("Last step of Pipeline should implement fit. "
+                            "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
 
     @property
@@ -263,6 +265,7 @@ class Pipeline(_BasePipeline):
         self : Pipeline
             This estimator
         """
+        self._validate_steps()
         Xt, fit_params = self._fit(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
@@ -623,7 +626,6 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         self
         """
         self._set_params('transformer_list', **kwargs)
-        self._validate_transformers()
         return self
 
     def _validate_transformers(self):
@@ -639,7 +641,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):
                 raise TypeError("All estimators should implement fit and "
-                                "transform '%s' (type %s) doesn't)" %
+                                "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
 
     def _iter(self):
@@ -661,8 +663,9 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         feature_names = []
         for name, trans, weight in self._iter():
             if not hasattr(trans, 'get_feature_names'):
-                raise AttributeError("Transformer %s does not provide"
-                                     " get_feature_names." % str(name))
+                raise AttributeError("Transformer %s (type %s) does not "
+                                     "provide get_feature_names."
+                                     % (str(name), type(trans).__name__))
             feature_names.extend([name + "__" + f for f in
                                   trans.get_feature_names()])
         return feature_names
@@ -683,9 +686,10 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
+        self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)
-            for name, trans in self.transformer_list)
+            for _, trans, _ in self._iter())
         self._update_transformer_list(transformers)
         return self
 
@@ -711,10 +715,10 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
                                         **fit_params)
             for name, trans, weight in self._iter())
 
+        if not result:
+            return np.zeros((X.shape[0], 0))
         Xs, transformers = zip(*result)
         self._update_transformer_list(transformers)
-        if not Xs:
-            return np.zeros((X.shape[0], 0))
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -747,9 +751,10 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         return Xs
 
     def _update_transformer_list(self, transformers):
+        transformers = iter(transformers)
         self.transformer_list[:] = [
-            (name, new)
-            for ((name, old), new) in zip(self.transformer_list, transformers)
+            (name, None if old is None else next(transformers))
+            for name, old in self.transformer_list
         ]
 
 

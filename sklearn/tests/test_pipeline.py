@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_dict_equal
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -68,10 +69,12 @@ class TransfT(T):
         return X
 
 
-class MultT(TransfT):
-    def __init__(self, mult=1, *args, **kwargs):
-        super(TransfT, self).__init__(*args, **kwargs)
+class MultT(BaseEstimator):
+    def __init__(self, mult=1):
         self.mult = mult
+
+    def fit(self, X, y):
+        return self
 
     def transform(self, X):
         return np.asarray(X) * self.mult
@@ -107,7 +110,10 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(TypeError, Pipeline, [('svc', IncorrectT)])
+    assert_raises_regex(TypeError,
+                        'Last step of Pipeline should implement fit. '
+                        '.*IncorrectT.*',
+                        Pipeline, [('clf', IncorrectT())])
     # Smoke test with only an estimator
     clf = T()
     pipe = Pipeline([('svc', clf)])
@@ -127,8 +133,12 @@ def test_pipeline_init():
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
-    # Check that we can't use the same stage name twice
-    assert_raises(ValueError, Pipeline, [('svc', SVC()), ('svc', SVC())])
+    # Check that we can't instantiate with non-transformers on the way
+    # Note that T implements fit, but not transform
+    assert_raises_regex(TypeError,
+                        'All intermediate steps should be transformers'
+                        '.*\\bT\\b.*',
+                        Pipeline, [('t', T()), ('svc', clf)])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -320,6 +330,13 @@ def test_feature_union():
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
 
+    # test error if some elements do not support transform
+    assert_raises_regex(TypeError,
+                        'All estimators should implement fit and '
+                        'transform.*\\bT\\b',
+                        FeatureUnion,
+                        [("transform", TransfT()), ("no_transform", T())])
+
 
 def test_make_union():
     pca = PCA(svd_solver='full')
@@ -385,7 +402,8 @@ def test_set_pipeline_steps():
     assert_equal([('mock', transft2)], pipeline.steps)
 
     # With invalid data
-    assert_raises(TypeError, pipeline.set_params, steps=[('junk', ())])
+    pipeline.set_params(steps=[('junk', ())])
+    assert_raises(TypeError, pipeline.fit, [[1]], [1])
 
 
 def test_set_pipeline_step_none():
@@ -411,6 +429,15 @@ def test_set_pipeline_step_none():
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    print(pipeline.get_params(deep=True))
+    assert_dict_equal(pipeline.get_params(deep=True),
+                      {'steps': pipeline.steps,
+                       'm2': mult2,
+                       'm3': None,
+                       'last': mult5,
+                       'm2__mult': 2,
+                       'last__mult': 5,
+                       })
 
     pipeline.set_params(m2=None)
     exp = 5
@@ -431,8 +458,9 @@ def test_set_pipeline_step_none():
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline = make()
+    pipeline.set_params(last=None)
     assert_raises_regex(TypeError, r'Last step of Pipeline .*\bfit\b.*',
-                        pipeline.set_params, last=None)
+                        pipeline.fit, X, y)
 
 
 def test_make_pipeline():
@@ -539,6 +567,11 @@ def test_feature_union_feature_names():
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
 
+    ft = FeatureUnion([("tr1", TransfT())]).fit([[1]])
+    assert_raise_message(AttributeError,
+                         'Transformer tr1 (type TransfT) does not provide '
+                         'get_feature_names', ft.get_feature_names)
+
 
 def test_classes_property():
     iris = load_iris()
@@ -596,15 +629,52 @@ def test_set_feature_union_step_none():
     mult2.get_feature_names = lambda: ['x2']
     mult3 = MultT(3)
     mult3.get_feature_names = lambda: ['x3']
+    X = np.asarray([[1]])
 
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
-    assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
+    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
 
     ft.set_params(m2=None)
-    assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
     assert_equal(['m3__x3'], ft.get_feature_names())
 
     ft.set_params(m3=None)
-    assert_array_equal([[]], ft.transform(np.asarray([[1]])))
+    assert_array_equal([[]], ft.fit(X).transform(X))
+    assert_array_equal([[]], ft.fit_transform(X))
     assert_equal([], ft.get_feature_names())
+
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+
+
+def test_step_name_validation():
+    bad_steps1 = [('a__q', MultT(2)), ('b', MultT(3))]
+    bad_steps2 = [('a', MultT(2)), ('a', MultT(3))]
+    for cls, param in [(Pipeline, 'steps'),
+                       (FeatureUnion, 'transformer_list')]:
+        # we validate in construction (despite scikit-learn convention)
+        bad_steps3 = [('a', MultT(2)), (param, MultT(3))]
+        for bad_steps, message in [
+            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps2, "Names provided are not unique: ['a', 'a']"),
+            (bad_steps3, "Step names conflict with constructor "
+                         "arguments: ['%s']" % param),
+        ]:
+            # three ways to make invalid:
+            # - construction
+            assert_raise_message(ValueError, message, cls,
+                                 **{param: bad_steps})
+
+            # - setattr
+            est = cls(**{param: [('a', MultT(1))]})
+            setattr(est, param, bad_steps)
+            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+
+            # - set_params
+            est = cls(**{param: [('a', MultT(1))]})
+            est.set_params(**{param: bad_steps})
+            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
