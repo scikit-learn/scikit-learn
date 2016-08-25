@@ -835,6 +835,7 @@ def check_estimators_pickle(name, Estimator):
 
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
+    assert_true(b"version" in pickled_estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     for method in result:
