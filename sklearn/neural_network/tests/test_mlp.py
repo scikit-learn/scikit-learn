@@ -458,25 +458,26 @@ def test_tolerance():
     # It should force the algorithm to exit the loop when it converges.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd', verbose=10)
+    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
 
 
-def test_verbose_sgd():
+def test_verbose():
     # Test verbose.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(algorithm='sgd', max_iter=2, verbose=10,
-                        hidden_layer_sizes=2)
-    old_stdout = sys.stdout
-    sys.stdout = output = StringIO()
-
-    clf.fit(X, y)
-    clf.partial_fit(X, y)
-
-    sys.stdout = old_stdout
-    assert 'Iteration' in output.getvalue()
+    for algorithm in ['sgd', 'l-bfgs']:
+        clf = MLPClassifier(algorithm=algorithm, max_iter=2, verbose=10,
+                            hidden_layer_sizes=2)
+        old_stdout = sys.stdout
+        try:
+            sys.stdout = output = StringIO()
+            clf.fit(X, y)
+            clf.partial_fit(X, y)
+        finally:
+            sys.stdout = old_stdout
+            assert 'Iteration' in output.getvalue()
 
 
 def test_early_stopping():
@@ -499,7 +500,7 @@ def test_adaptive_learning_rate():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd',
-                        learning_rate='adaptive', verbose=10)
+                        learning_rate='adaptive')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
     assert_greater(1e-6, clf._optimizer.learning_rate)
