@@ -68,9 +68,7 @@ class _BasePipeline(six.with_metaclass(ABCMeta, BaseEstimator)):
             if '__' not in name and name in step_names:
                 self._replace_step(steps_attr, name, params.pop(name))
         # 3. Step parameters and other initilisation arguments
-        print('here', getattr(self, steps_attr))
         super(_BasePipeline, self).set_params(**params)
-        print('there', getattr(self, steps_attr))
         return self
 
     def _validate_names(self, names):

@@ -39,7 +39,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class IncorrectT(object):
+class NoFit(object):
     """Small class to test parameter dispatching.
     """
 
@@ -48,7 +48,7 @@ class IncorrectT(object):
         self.b = b
 
 
-class T(IncorrectT):
+class NoTrans(NoFit):
 
     def fit(self, X, y):
         return self
@@ -61,7 +61,7 @@ class T(IncorrectT):
         return self
 
 
-class TransfT(T):
+class Transf(NoTrans):
     def transform(self, X, y=None):
         return X
 
@@ -69,7 +69,7 @@ class TransfT(T):
         return X
 
 
-class MultT(BaseEstimator):
+class Mult(BaseEstimator):
     def __init__(self, mult=1):
         self.mult = mult
 
@@ -112,10 +112,10 @@ def test_pipeline_init():
     # method
     assert_raises_regex(TypeError,
                         'Last step of Pipeline should implement fit. '
-                        '.*IncorrectT.*',
-                        Pipeline, [('clf', IncorrectT())])
+                        '.*NoFit.*',
+                        Pipeline, [('clf', NoFit())])
     # Smoke test with only an estimator
-    clf = T()
+    clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf,
@@ -134,11 +134,11 @@ def test_pipeline_init():
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
     # Check that we can't instantiate with non-transformers on the way
-    # Note that T implements fit, but not transform
+    # Note that NoTrans implements fit, but not transform
     assert_raises_regex(TypeError,
                         'All intermediate steps should be transformers'
-                        '.*\\bT\\b.*',
-                        Pipeline, [('t', T()), ('svc', clf)])
+                        '.*\\bNoTrans\\b.*',
+                        Pipeline, [('t', NoTrans()), ('svc', clf)])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -189,7 +189,7 @@ def test_pipeline_methods_anova():
 
 def test_pipeline_fit_params():
     # Test that the pipeline can take fit parameters
-    pipe = Pipeline([('transf', TransfT()), ('clf', FitParamT())])
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
     pipe.fit(X=None, y=None, clf__should_succeed=True)
     # classifier should return True
     assert_true(pipe.predict(None))
@@ -326,24 +326,24 @@ def test_feature_union():
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
 
     # test it works with transformers missing fit_transform
-    fs = FeatureUnion([("mock", TransfT()), ("svd", svd), ("select", select)])
+    fs = FeatureUnion([("mock", Transf()), ("svd", svd), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
 
     # test error if some elements do not support transform
     assert_raises_regex(TypeError,
                         'All estimators should implement fit and '
-                        'transform.*\\bT\\b',
+                        'transform.*\\bNoTrans\\b',
                         FeatureUnion,
-                        [("transform", TransfT()), ("no_transform", T())])
+                        [("transform", Transf()), ("no_transform", NoTrans())])
 
 
 def test_make_union():
     pca = PCA(svd_solver='full')
-    mock = TransfT()
+    mock = Transf()
     fu = make_union(pca, mock)
     names, transformers = zip(*fu.transformer_list)
-    assert_equal(names, ("pca", "transft"))
+    assert_equal(names, ("pca", "transf"))
     assert_equal(transformers, (pca, mock))
 
 
@@ -372,34 +372,34 @@ def test_pipeline_fit_transform():
     iris = load_iris()
     X = iris.data
     y = iris.target
-    transft = TransfT()
-    pipeline = Pipeline([('mock', transft)])
+    transf = Transf()
+    pipeline = Pipeline([('mock', transf)])
 
     # test fit_transform:
     X_trans = pipeline.fit_transform(X, y)
-    X_trans2 = transft.fit(X, y).transform(X)
+    X_trans2 = transf.fit(X, y).transform(X)
     assert_array_almost_equal(X_trans, X_trans2)
 
 
 def test_set_pipeline_steps():
-    transft1 = TransfT()
-    transft2 = TransfT()
-    pipeline = Pipeline([('mock', transft1)])
-    assert_true(pipeline.named_steps['mock'] is transft1)
+    transf1 = Transf()
+    transf2 = Transf()
+    pipeline = Pipeline([('mock', transf1)])
+    assert_true(pipeline.named_steps['mock'] is transf1)
 
     # Directly setting attr
-    pipeline.steps = [('mock2', transft2)]
+    pipeline.steps = [('mock2', transf2)]
     assert_true('mock' not in pipeline.named_steps)
-    assert_true(pipeline.named_steps['mock2'] is transft2)
-    assert_equal([('mock2', transft2)], pipeline.steps)
+    assert_true(pipeline.named_steps['mock2'] is transf2)
+    assert_equal([('mock2', transf2)], pipeline.steps)
 
     # Using set_params
-    pipeline.set_params(steps=[('mock', transft1)])
-    assert_equal([('mock', transft1)], pipeline.steps)
+    pipeline.set_params(steps=[('mock', transf1)])
+    assert_equal([('mock', transf1)], pipeline.steps)
 
     # Using set_params to replace single step
-    pipeline.set_params(mock=transft2)
-    assert_equal([('mock', transft2)], pipeline.steps)
+    pipeline.set_params(mock=transf2)
+    assert_equal([('mock', transf2)], pipeline.steps)
 
     # With invalid data
     pipeline.set_params(steps=[('junk', ())])
@@ -410,9 +410,9 @@ def test_set_pipeline_step_none():
     # Test setting Pipeline steps to None
     X = np.array([[1]])
     y = np.array([1])
-    mult2 = MultT(mult=2)
-    mult3 = MultT(mult=3)
-    mult5 = MultT(mult=5)
+    mult2 = Mult(mult=2)
+    mult3 = Mult(mult=3)
+    mult5 = Mult(mult=5)
 
     def make():
         return Pipeline([('m2', mult2), ('m3', mult3), ('last', mult5)])
@@ -464,17 +464,17 @@ def test_set_pipeline_step_none():
 
 
 def test_make_pipeline():
-    t1 = TransfT()
-    t2 = TransfT()
+    t1 = Transf()
+    t2 = Transf()
     pipe = make_pipeline(t1, t2)
     assert_true(isinstance(pipe, Pipeline))
-    assert_equal(pipe.steps[0][0], "transft-1")
-    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[0][0], "transf-1")
+    assert_equal(pipe.steps[1][0], "transf-2")
 
     pipe = make_pipeline(t1, t2, FitParamT())
     assert_true(isinstance(pipe, Pipeline))
-    assert_equal(pipe.steps[0][0], "transft-1")
-    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[0][0], "transf-1")
+    assert_equal(pipe.steps[1][0], "transf-2")
     assert_equal(pipe.steps[2][0], "fitparamt")
 
 
@@ -495,7 +495,7 @@ def test_feature_union_weights():
                       transformer_weights={"pca": 10})
     X_fit_transformed = fs.fit_transform(X, y)
     # test it works with transformers missing fit_transform
-    fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)],
+    fs = FeatureUnion([("mock", Transf()), ("pca", pca), ("select", select)],
                       transformer_weights={"mock": 10})
     X_fit_transformed_wo_method = fs.fit_transform(X, y)
     # check against expected result
@@ -567,9 +567,9 @@ def test_feature_union_feature_names():
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
 
-    ft = FeatureUnion([("tr1", TransfT())]).fit([[1]])
+    ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
     assert_raise_message(AttributeError,
-                         'Transformer tr1 (type TransfT) does not provide '
+                         'Transformer tr1 (type Transf) does not provide '
                          'get_feature_names', ft.get_feature_names)
 
 
@@ -589,7 +589,7 @@ def test_classes_property():
 
 
 def test_X1d_inverse_transform():
-    transformer = TransfT()
+    transformer = Transf()
     pipeline = make_pipeline(transformer)
     X = np.ones(10)
     msg = "1d X will not be reshaped in pipeline.inverse_transform"
@@ -597,11 +597,11 @@ def test_X1d_inverse_transform():
 
 
 def test_set_feature_union_steps():
-    mult2 = MultT(2)
+    mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
-    mult3 = MultT(3)
+    mult3 = Mult(3)
     mult3.get_feature_names = lambda: ['x3']
-    mult5 = MultT(5)
+    mult5 = Mult(5)
     mult5.get_feature_names = lambda: ['x5']
 
     ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
@@ -625,9 +625,9 @@ def test_set_feature_union_steps():
 
 
 def test_set_feature_union_step_none():
-    mult2 = MultT(2)
+    mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
-    mult3 = MultT(3)
+    mult3 = Mult(3)
     mult3.get_feature_names = lambda: ['x3']
     X = np.asarray([[1]])
 
@@ -652,12 +652,12 @@ def test_set_feature_union_step_none():
 
 
 def test_step_name_validation():
-    bad_steps1 = [('a__q', MultT(2)), ('b', MultT(3))]
-    bad_steps2 = [('a', MultT(2)), ('a', MultT(3))]
+    bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
+    bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
     for cls, param in [(Pipeline, 'steps'),
                        (FeatureUnion, 'transformer_list')]:
         # we validate in construction (despite scikit-learn convention)
-        bad_steps3 = [('a', MultT(2)), (param, MultT(3))]
+        bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
             (bad_steps1, "Step names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
@@ -670,11 +670,11 @@ def test_step_name_validation():
                                  **{param: bad_steps})
 
             # - setattr
-            est = cls(**{param: [('a', MultT(1))]})
+            est = cls(**{param: [('a', Mult(1))]})
             setattr(est, param, bad_steps)
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
 
             # - set_params
-            est = cls(**{param: [('a', MultT(1))]})
+            est = cls(**{param: [('a', Mult(1))]})
             est.set_params(**{param: bad_steps})
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
