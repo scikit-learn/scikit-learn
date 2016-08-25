@@ -25,8 +25,7 @@ from ..utils.validation import has_fit_parameter, check_is_fitted
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight):
     """Private function used to fit an estimator within a job."""
-    if (sample_weight is not None and
-            has_fit_parameter(estimator, "sample_weight")):
+    if sample_weight is not None:
         estimator.fit(X, y, sample_weight)
     else:
         estimator.fit(X, y)
@@ -59,7 +58,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
     n_jobs : int, optional (default=1)
-        The number of jobs to run in parallel for both `fit`.
+        The number of jobs to run in parallel for ``fit``.
         If -1, then the number of jobs is set to the number of cores.
 
     Attributes
@@ -122,8 +121,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weights.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
 
         Returns
         -------
@@ -146,6 +145,12 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             raise ValueError('Number of classifiers and weights must be equal'
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
+
+        if sample_weight is not None:
+            for name, step in self.estimators:
+                if not has_fit_parameter(step, 'sample_weight'):
+                    raise ValueError('Underlying estimator \'%s\' does not support'
+                                     ' sample weights.' % name)
 
         self.le_ = LabelEncoder()
         self.le_.fit(y)

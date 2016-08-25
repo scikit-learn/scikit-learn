@@ -15,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 
 # Load the iris dataset and randomly permute it
@@ -244,9 +245,16 @@ def test_sample_weight():
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
-    sample_weight_ = np.random.RandomState(123).uniform(size=(len(y),))
+    sample_weight = np.random.RandomState(123).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[('lr', clf1)], voting='soft')
-    eclf3.fit(X, y, sample_weight_)
-    clf1.fit(X, y, sample_weight_)
+    eclf3.fit(X, y, sample_weight)
+    clf1.fit(X, y, sample_weight)
     assert_array_equal(eclf3.predict(X), clf1.predict(X))
     assert_array_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
+
+    clf4 = KNeighborsClassifier()
+    eclf3 = VotingClassifier(estimators=[
+        ('lr', clf1), ('svc', clf3), ('knn', clf4)],
+        voting='soft')
+    msg = ('Underlying estimator \'knn\' does not support sample weights.')
+    assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
