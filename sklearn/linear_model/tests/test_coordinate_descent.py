@@ -670,3 +670,32 @@ def test_lasso_non_float_y():
         clf_float = model(fit_intercept=False)
         clf_float.fit(X, y_float)
         assert_array_equal(clf.coef_, clf_float.coef_)
+
+
+def test_enet_float_precision():
+    # Generate dataset
+    X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
+    # Here we have a small number of iterations, and thus the
+    # ElasticNet might not converge. This is to speed up tests
+
+    for normalize in [True, False]:
+        for fit_intercept in [True, False]:
+            coef = {}
+            intercept = {}
+            clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                            fit_intercept=fit_intercept, normalize=normalize)
+            for dtype in [np.float64, np.float32]:
+                X = dtype(X)
+                y = dtype(y)
+                ignore_warnings(clf.fit)(X, y)
+
+                coef[dtype] = clf.coef_
+                intercept[dtype] = clf.intercept_
+
+                assert_equal(clf.coef_.dtype, dtype)
+
+            assert_array_almost_equal(coef[np.float32], coef[np.float64],
+                                    decimal=4)
+            assert_array_almost_equal(intercept[np.float32],
+                                    intercept[np.float64],
+                                    decimal=4)
