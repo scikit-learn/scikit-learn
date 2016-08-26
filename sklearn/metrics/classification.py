@@ -1505,9 +1505,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     The Hamming loss is upperbounded by the subset zero-one loss. When
     normalized over samples, the Hamming loss is always between 0 and 1.
 
-    'classes' was renamed to 'labels' in version 0.18 and will be removed in
-    0.20.
-
     References
     ----------
     .. [1] Grigorios Tsoumakas, Ioannis Katakis. Multi-Label Classification:
