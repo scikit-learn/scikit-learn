@@ -667,7 +667,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     References
     ----------
-    .. [1] `Wikipedia entry for the F1-score <https://en.wikipedia.org/wiki/F1_score>`_
+    .. [1] `Wikipedia entry for the F1-score
+           <https://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -1452,7 +1453,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
+                 classes=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1467,11 +1469,18 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
+    labels : array, shape = [n_labels], optional (default=None)
+        Integer array of labels. If not provided, labels will be inferred
+        from y_true and y_pred.
+
+        .. versionadded:: 0.18
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    classes : array, shape = [n_labels], optional
+        (deprecated) Integer array of labels. This parameter has been
+         renamed to ``labels`` in version 0.18 and will be removed in 0.20.
 
     Returns
     -------
@@ -1520,12 +1529,17 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
+    if classes is not None:
+        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
+                      "will be removed in 0.20.", DeprecationWarning)
+        labels = classes
+
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
-    if classes is None:
-        classes = unique_labels(y_true, y_pred)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
     else:
-        classes = np.asarray(classes)
+        labels = np.asarray(labels)
 
     if sample_weight is None:
         weight_average = 1.
@@ -1536,7 +1550,7 @@ def hamming_loss(y_true, y_pred, classes=None, sample_weight=None):
         n_differences = count_nonzero(y_true - y_pred,
                                       sample_weight=sample_weight)
         return (n_differences /
-                (y_true.shape[0] * len(classes) * weight_average))
+                (y_true.shape[0] * len(labels) * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -1620,12 +1634,13 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     if len(lb.classes_) == 1:
         if labels is None:
-            raise ValueError('y_true contains only one label ({0}). Please provide '
-                             'the true labels explicitly through the labels '
-                             'argument.'.format(lb.classes_[0]))
+            raise ValueError('y_true contains only one label ({0}). Please '
+                             'provide the true labels explicitly through the '
+                             'labels argument.'.format(lb.classes_[0]))
         else:
-            raise ValueError('The labels array needs to contain at least two labels'
-                             'for log_loss, got {0}.'.format(lb.classes_))
+            raise ValueError('The labels array needs to contain at least two '
+                             'labels for log_loss, '
+                             'got {0}.'.format(lb.classes_))
 
     transformed_labels = lb.transform(y_true)
 
@@ -1647,11 +1662,13 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     transformed_labels = check_array(transformed_labels)
     if len(lb.classes_) != y_pred.shape[1]:
         if labels is None:
-            raise ValueError("y_true and y_pred contain different number of classes "
-                             "{0}, {1}. Please provide the true labels explicitly "
-                             "through the labels argument. Classes found in"
+            raise ValueError("y_true and y_pred contain different number of "
+                             "classes {0}, {1}. Please provide the true "
+                             "labels explicitly through the labels argument. "
+                             "Classes found in "
                              "y_true: {2}".format(transformed_labels.shape[1],
-                                               y_pred.shape[1], lb.classes_))
+                                                  y_pred.shape[1],
+                                                  lb.classes_))
         else:
             raise ValueError('The number of classes in labels is different '
                              'from that in y_pred. Classes found in '
