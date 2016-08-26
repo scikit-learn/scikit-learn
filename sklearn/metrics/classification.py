@@ -1472,6 +1472,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     labels : array, shape = [n_labels], optional (default=None)
         Integer array of labels. If not provided, labels will be inferred
         from y_true and y_pred.
+        .. versionadded:: 0.18
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
