@@ -14,12 +14,13 @@ class _IffHasAttrDescriptor(object):
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
-    if none of the items in ``delegate_names`` is an attribute of the base
-    object or none of the items has an attribute ``method_name``.
+    if none of the delegates (specified in ``delegate_names``) is an attribute
+    of the base object or none of the delegates has an attribute
+    ``method_name``.
 
     This allows ducktyping of the decorated method based on
     ``delegate.method_name`` where ``delegate`` is the first item in
-    ``delegate_names`` that is an attribute of the base object
+    ``delegate_names`` that is an attribute of the base object.
 
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
@@ -64,10 +65,9 @@ def if_delegate_has_method(delegate):
     Parameters
     ----------
     delegate : string, list of strings or tuple of strings
-        Name of the sub-estimator that can be accessed as an attribute of
-        the base object. If a list or a tuple of names are provided,
-        the first sub-estimator that is an attribute of the base object
-        will be used.
+        Name of the sub-estimator that can be accessed as an attribute of the
+        base object. If a list or a tuple of names are provided, the first
+        sub-estimator that is an attribute of the base object  will be used.
 
     Examples
     --------
@@ -80,22 +80,22 @@ def if_delegate_has_method(delegate):
     ...         self.better_sub_est = better_sub_est
     ...
     ...     @if_delegate_has_method(delegate='sub_est')
-    ...     def predict(self, X):
-    ...         return self.sub_est.predict(X)
+    ...     def predict(self):
+    ...         pass
     ...
+    >>> class MetaEstTestTuple(MetaEst):
     ...     @if_delegate_has_method(delegate=('sub_est', 'better_sub_est'))
-    ...     def predict_cond(self, X):
-    ...         if self.better_sub_est is not None:
-    ...             return self.better_sub_est.predict_cond(X)
-    ...         else:
-    ...             return self.sub_est.predict_cond(X)
+    ...     def predict(self):
+    ...         pass
+    ...
+    >>> class MetaEstTestList(MetaEst):
+    ...     @if_delegate_has_method(delegate=['sub_est', 'better_sub_est'])
+    ...     def predict(self):
+    ...         pass
     ...
     >>> class HasPredict(object):
-    ...     def predict(self, X):
-    ...         return X.sum(axis=1)
-    ...
-    ...     def predict_cond(self, X):
-    ...         return X.sum(axis=0)
+    ...     def predict(self):
+    ...         pass
     ...
     >>> class HasNoPredict(object):
     ...     pass
@@ -104,13 +104,15 @@ def if_delegate_has_method(delegate):
     True
     >>> hasattr(MetaEst(HasNoPredict()), 'predict')
     False
-    >>> hasattr(MetaEst(HasNoPredict(), HasNoPredict()), 'predict_cond')
+    >>> hasattr(MetaEstTestTuple(HasNoPredict(), HasNoPredict()), 'predict')
     False
-    >>> hasattr(MetaEst(HasPredict(), HasNoPredict()), 'predict_cond')
+    >>> hasattr(MetaEstTestTuple(HasPredict(), HasNoPredict()), 'predict')
     True
-    >>> hasattr(MetaEst(HasNoPredict(), HasPredict()), 'predict_cond')
+    >>> hasattr(MetaEstTestTuple(HasNoPredict(), HasPredict()), 'predict')
     False
-    >>> hasattr(MetaEst(HasPredict(), HasPredict()), 'predict_cond')
+    >>> hasattr(MetaEstTestList(HasNoPredict(), HasPredict()), 'predict')
+    False
+    >>> hasattr(MetaEstTestList(HasPredict(), HasPredict()), 'predict')
     True
 
     """
@@ -119,5 +121,5 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate, method_name=fn.__name__)
-
+    return lambda fn: _IffHasAttrDescriptor(fn, delegate,
+                                            method_name=fn.__name__)
