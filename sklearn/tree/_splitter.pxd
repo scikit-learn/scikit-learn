@@ -60,6 +60,11 @@ cdef class Splitter:
     cdef bint presort                    # Whether to use presorting, only
                                          # allowed on dense data
 
+    cdef INT32_t* monotonic              # Monotonicity constraints
+                                         # -1: monotonically decreasing
+                                         #  0: no constraint
+                                         # +1: monotonically increasing
+
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight

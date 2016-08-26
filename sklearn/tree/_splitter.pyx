@@ -60,7 +60,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, np.ndarray[INT32_t] monotonic):
         """
         Parameters
         ----------
@@ -101,6 +101,7 @@ cdef class Splitter:
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
         self.presort = presort
+        self.monotonic = <INT32_t*> monotonic.data
 
     def __dealloc__(self):
         """Destructor."""
@@ -242,7 +243,7 @@ cdef class BaseDenseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, np.ndarray[INT32_t] monotonic):
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -251,6 +252,7 @@ cdef class BaseDenseSplitter(Splitter):
         self.X_idx_sorted_stride = 0
         self.sample_mask = NULL
         self.presort = presort
+        self.monotonic = <INT32_t*> monotonic.data
 
     def __dealloc__(self):
         """Destructor."""
@@ -396,6 +398,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                 current.feature = features[f_j]
                 feature_offset = self.X_feature_stride * current.feature
 
+                monotonic_constraint = self.monotonic[current.feature]
+
                 # Sort samples along that feature; either by utilizing
                 # presorting, or by copying the values into an array and
                 # sorting the array in a manner which utilizes the cache more
@@ -456,6 +460,17 @@ cdef class BestSplitter(BaseDenseSplitter):
                             if ((self.criterion.weighted_n_left < min_weight_leaf) or
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
+
+                            # Monotonic check
+                            if monotonic_constraint != 0:
+                                # TODO: is 0.0 divisor possible?
+                                left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
+                                right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
+                                if monotonic_constraint == -1:
+                                    if left < right:
+                                        continue
+                                elif left > right:
+                                        continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -723,6 +738,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 current.feature = features[f_j]
                 feature_stride = X_feature_stride * current.feature
 
+                monotonic_constraint = self.monotonic[current.feature]
+
                 # Find min, max
                 min_feature_value = X[X_sample_stride * samples[start] + feature_stride]
                 max_feature_value = min_feature_value
@@ -789,6 +806,17 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
+                    # Monotonic check
+                    if monotonic_constraint != 0:
+                        # TODO: is 0.0 divisor possible?
+                        left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
+                        right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
+                        if monotonic_constraint == -1:
+                            if left < right:
+                                continue
+                        elif left > right:
+                                continue
+
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
                     if current_proxy_improvement > best_proxy_improvement:
@@ -848,7 +876,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, bint presort):
+                  object random_state, bint presort, np.ndarray[INT32_t] monotonic):
         # Parent __cinit__ is automatically called
 
         self.X_data = NULL
@@ -859,6 +887,7 @@ cdef class BaseSparseSplitter(Splitter):
 
         self.index_to_samples = NULL
         self.sorted_samples = NULL
+        self.monotonic = <INT32_t*> monotonic.data
 
     def __dealloc__(self):
         """Deallocate memory."""
@@ -1269,6 +1298,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
 
+                monotonic_constraint = self.monotonic[current.feature]
+
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
                 sort(Xf + start_positive, samples + start_positive,
@@ -1341,6 +1372,17 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                             if ((self.criterion.weighted_n_left < min_weight_leaf) or
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
+
+                            # Monotonic check
+                            if monotonic_constraint != 0:
+                                # TODO: is 0.0 divisor possible?
+                                left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
+                                right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
+                                if monotonic_constraint == -1:
+                                    if left < right:
+                                        continue
+                                elif left > right:
+                                        continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -1500,6 +1542,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                                  &end_negative, &start_positive,
                                  &is_samples_sorted)
 
+                monotonic_constraint = self.monotonic[current.feature]
+
                 # Add one or two zeros in Xf, if there is any
                 if end_negative < start_positive:
                     start_positive -= 1
@@ -1569,6 +1613,17 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                     if ((self.criterion.weighted_n_left < min_weight_leaf) or
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
+
+                    # Monotonic check
+                    if monotonic_constraint != 0:
+                        # TODO: is 0.0 divisor possible?
+                        left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
+                        right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
+                        if monotonic_constraint == -1:
+                            if left < right:
+                                continue
+                        elif left > right:
+                                continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 

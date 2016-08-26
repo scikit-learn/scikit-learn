@@ -724,7 +724,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, min_impurity_split, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', increasing=None, decreasing=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -744,6 +744,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
         self.presort = presort
+        self.increasing = increasing
+        self.decreasing = decreasing
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -773,7 +775,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                presort=self.presort,
+                increasing=self.increasing, 
+                decreasing=self.decreasing)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1395,6 +1399,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1447,7 +1457,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  max_depth=3, min_impurity_split=1e-7, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto'):
+                 presort='auto', increasing=None, decreasing=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1460,7 +1470,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_split=min_impurity_split,
             warm_start=warm_start,
-            presort=presort)
+            presort=presort, increasing=increasing, decreasing=decreasing)
 
     def _validate_y(self, y):
         check_classification_targets(y)
@@ -1761,6 +1771,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         .. versionadded:: 0.17
            optional parameter *presort*.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1809,7 +1825,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_split=1e-7, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', increasing=None, decreasing=None):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1820,7 +1836,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             max_features=max_features, min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort)
+            presort=presort, increasing=increasing, decreasing=decreasing)
 
     def predict(self, X):
         """Predict regression target for X.

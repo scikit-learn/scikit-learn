@@ -92,7 +92,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  random_state,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 increasing=None,
+                 decreasing=None):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -105,6 +107,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self.increasing = increasing
+        self.decreasing = decreasing
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -350,6 +354,33 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
+        def _encode_monotonic(increasing, decreasing):
+            if increasing is None: increasing = []
+            if decreasing is None: decreasing = []
+            def is_int_in_range(feature):
+                return isinstance(feature, int) and 0 <= feature < self.n_features_
+            def is_valid(features):
+                return (isinstance(features, list) and
+                        all(is_int_in_range(feature) for feature in features))
+            if not is_valid(increasing):
+                raise ValueError("increasing should be a list of ints in the range [0,n_features].")
+            if not is_valid(decreasing):
+                raise ValueError("decreasing should be a list of ints in the range [0,n_features].")       
+            if increasing and decreasing:
+                intersection = set(increasing) & set(decreasing)
+                if intersection:
+                    raise ValueError("The following features cannot be both increasing and decreasing: " + str(list(intersection)))            
+            monotonic = np.zeros(self.n_features_, dtype=np.int32)
+            if increasing:
+                for feature in increasing:
+                    monotonic[feature] = 1
+            if decreasing:
+                for feature in decreasing:
+                    monotonic[feature] = -1
+            return monotonic
+        
+        monotonic = _encode_monotonic(self.increasing, self.decreasing)
+        
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
@@ -357,7 +388,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 min_samples_leaf,
                                                 min_weight_leaf,
                                                 random_state,
-                                                self.presort)
+                                                self.presort,
+                                                monotonic)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
@@ -626,6 +658,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -698,7 +736,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_leaf_nodes=None,
                  min_impurity_split=1e-7,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 increasing=None,
+                 decreasing=None):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -711,7 +751,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             class_weight=class_weight,
             random_state=random_state,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            increasing=increasing,
+            decreasing=decreasing)
 
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
@@ -875,6 +917,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -938,7 +986,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_split=1e-7,
-                 presort=False):
+                 presort=False,
+                 increasing=None,
+                 decreasing=None):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -950,7 +1000,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            increasing=increasing,
+            decreasing=decreasing)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -988,7 +1040,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_split=1e-7,
-                 class_weight=None):
+                 class_weight=None,
+                 increasing=None,
+                 decreasing=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1000,7 +1054,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            increasing=increasing,
+            decreasing=decreasing)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1037,7 +1093,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  max_features="auto",
                  random_state=None,
                  min_impurity_split=1e-7,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 increasing=None,
+                 decreasing=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1048,4 +1106,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            increasing=increasing,
+            decreasing=decreasing)

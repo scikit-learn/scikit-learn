@@ -854,6 +854,12 @@ class RandomForestClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -910,7 +916,9 @@ class RandomForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 increasing=None,
+                 decreasing=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -934,6 +942,8 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_split = min_impurity_split
+        self.increasing = increasing
+        self.decreasing = decreasing
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1039,6 +1049,12 @@ class RandomForestRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeRegressor
@@ -1083,14 +1099,16 @@ class RandomForestRegressor(ForestRegressor):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 increasing=None,
+                 decreasing=None):
         super(RandomForestRegressor, self).__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "random_state", "increasing", "decreasing"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1106,6 +1124,8 @@ class RandomForestRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_split = min_impurity_split
+        self.increasing = increasing
+        self.decreasing = decreasing
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1222,6 +1242,12 @@ class ExtraTreesClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1281,14 +1307,16 @@ class ExtraTreesClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 increasing=None,
+                 decreasing=None):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "random_state", "increasing", "decreasing"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1305,6 +1333,8 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_split = min_impurity_split
+        self.increasing = increasing
+        self.decreasing = decreasing
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1407,6 +1437,12 @@ class ExtraTreesRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeRegressor
@@ -1453,14 +1489,16 @@ class ExtraTreesRegressor(ForestRegressor):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 increasing=None,
+                 decreasin=None):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "random_state", "increasing", "decreasing"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1476,6 +1514,8 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_split = min_impurity_split
+        self.increasing = increasing
+        self.decreasing = decreasing
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1556,6 +1596,12 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1583,14 +1629,16 @@ class RandomTreesEmbedding(BaseForest):
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 increasing=None,
+                 decreasing=None):
         super(RandomTreesEmbedding, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes", "min_impurity_split",
-                              "random_state"),
+                              "random_state", "increasing", "decreasing"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -1607,6 +1655,8 @@ class RandomTreesEmbedding(BaseForest):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
+        self.increasing = increasing
+        self.decreasing = decreasing
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
