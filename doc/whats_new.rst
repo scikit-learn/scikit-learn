@@ -281,6 +281,11 @@ Enhancements
      (`#7239 <https://github.com/scikit-learn/scikit-learn/pull/7239/>`_)
      by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
 
+   - Added ``n_jobs`` and ``sample_weights`` parameters for :class:`VotingClassifier`
+     to fit underlying estimators in parallel.
+     (`#5805 <https://github.com/scikit-learn/scikit-learn/pull/5805>`_)
+     By `Ibraim Ganiev`_.
+
 Bug fixes
 .........
 
