@@ -388,7 +388,7 @@ class GaussianNB(BaseNB):
         if not np.all(unique_y_in_classes):
             raise ValueError("The target label(s) %s in y do not exist in the "
                              "initial classes %s" %
-                             (y[~unique_y_in_classes], classes))
+                             (unique_y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
