@@ -258,6 +258,8 @@ METRICS_WITH_POS_LABEL = [
 METRICS_WITH_LABELS = [
     "confusion_matrix",
 
+    "hamming_loss",
+
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
