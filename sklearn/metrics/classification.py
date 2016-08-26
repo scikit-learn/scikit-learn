@@ -668,7 +668,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     References
     ----------
     .. [1] `Wikipedia entry for the F1-score
-       <https://en.wikipedia.org/wiki/F1_score>`_
+           <https://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
