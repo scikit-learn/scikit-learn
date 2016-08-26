@@ -219,7 +219,7 @@ def _yield_all_checks(name, Estimator):
     yield check_fit1d_1sample
 
 
-def check_estimator(Estimator):
+def check_estimator(Estimator, is_meta_estimator=False):
     """Check if estimator adheres to sklearn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -233,9 +233,12 @@ def check_estimator(Estimator):
     Estimator : class
         Class to check. Estimator is a class object (not an instance).
 
+    is_meta_estimator : boolean
+        Whether the estimator requires passing a classifier parameter to
+        constructor.
     """
     name = Estimator.__name__
-    check_parameters_default_constructible(name, Estimator)
+    check_parameters_default_constructible(name, Estimator, is_meta_estimator)
     for check in _yield_all_checks(name, Estimator):
         check(name, Estimator)
 
@@ -1405,12 +1408,14 @@ def check_estimators_data_not_an_array(name, Estimator, X, y):
     assert_array_almost_equal(pred1, pred2, 2, name)
 
 
-def check_parameters_default_constructible(name, Estimator):
+def check_parameters_default_constructible(name, Estimator,
+                                           is_meta_estimator=False):
     classifier = LinearDiscriminantAnalysis()
     # test default-constructibility
     # get rid of deprecation warnings
     with warnings.catch_warnings(record=True):
-        if name in META_ESTIMATORS:
+        is_meta_estimator = is_meta_estimator or name in META_ESTIMATORS
+        if is_meta_estimator:
             estimator = Estimator(classifier)
         else:
             estimator = Estimator()
