@@ -27,7 +27,7 @@ def expected_mutual_information(contingency, int n_samples):
     cdef np.ndarray[np.int32_t] a, b
     #cdef np.ndarray[int, ndim=2] start, end
     R, C = contingency.shape
-    N = np.double(n_samples)
+    N = <DOUBLE>n_samples
     a = np.sum(contingency, axis=1).astype(np.int32)
     b = np.sum(contingency, axis=0).astype(np.int32)
     # There are three major terms to the EMI equation, which are multiplied to
