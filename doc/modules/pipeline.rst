@@ -45,8 +45,7 @@ is an estimator object::
     whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
     coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
     kernel='rbf', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False))])
-
+    shrinking=True, tol=0.001, verbose=False))], verbose=False)
 
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
@@ -60,7 +59,8 @@ filling in the names automatically::
     Pipeline(steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
                     ('multinomialnb', MultinomialNB(alpha=1.0,
                                                     class_prior=None,
-                                                    fit_prior=True))])
+                                                    fit_prior=True))],
+        verbose=False)
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
@@ -83,7 +83,8 @@ Parameters of the estimators in the pipeline can be accessed using the
         whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
         coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
         kernel='rbf', max_iter=-1, probability=False, random_state=None,
-        shrinking=True, tol=0.001, verbose=False))])
+        shrinking=True, tol=0.001, verbose=False))],
+        verbose=False)
 
 
 This is particularly important for doing grid searches::
