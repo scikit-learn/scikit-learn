@@ -380,7 +380,7 @@ Bug fixes
     - Fix :class:`linear_model.ElasticNet` sparse decision function to match
     output with dense in the multioutput case.
 
-    - `classes` parameter was renamed to `labels` in
+    - ``classes`` parameter was renamed to ``labels`` in
       :func:`metrics.classification.hamming_loss`.
       (`#7237 <https://github.com/scikit-learn/scikit-learn/issues/7237>`_) by
       `Sebastian Vanrell`_.
