@@ -187,10 +187,10 @@ class Pipeline(_BasePipeline):
         self._validate_names(names)
 
         # validate estimators
-        transforms = estimators[:-1]
+        transformers = estimators[:-1]
         estimator = estimators[-1]
 
-        for t in transforms:
+        for t in transformers:
             if t is None:
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
@@ -219,6 +219,7 @@ class Pipeline(_BasePipeline):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
+        self._validate_steps()
         fit_params_steps = dict((name, {}) for name, step in self.steps
                                 if step is not None)
         for pname, pval in six.iteritems(fit_params):
@@ -261,7 +262,6 @@ class Pipeline(_BasePipeline):
         self : Pipeline
             This estimator
         """
-        self._validate_steps()
         Xt, fit_params = self._fit(X, y, **fit_params)
         self.steps[-1][-1].fit(Xt, y, **fit_params)
         return self
@@ -572,7 +572,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
-    or removed by setting to None.
+    or removed by setting to ``None``.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -625,13 +625,13 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
         return self
 
     def _validate_transformers(self):
-        names, transforms = zip(*self.transformer_list)
+        names, transformers = zip(*self.transformer_list)
 
         # validate names
         self._validate_names(names)
 
         # validate estimators
-        for t in transforms:
+        for t in transformers:
             if t is None:
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
@@ -706,12 +706,14 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
+        self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_transform_one)(trans, name, weight, X, y,
                                         **fit_params)
             for name, trans, weight in self._iter())
 
         if not result:
+            # All transformers are None
             return np.zeros((X.shape[0], 0))
         Xs, transformers = zip(*result)
         self._update_transformer_list(transformers)
@@ -739,6 +741,7 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
             delayed(_transform_one)(trans, name, weight, X)
             for name, trans, weight in self._iter())
         if not Xs:
+            # All transformers are None
             return np.zeros((X.shape[0], 0))
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()

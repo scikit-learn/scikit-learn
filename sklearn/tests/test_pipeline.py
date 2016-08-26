@@ -404,6 +404,7 @@ def test_set_pipeline_steps():
     # With invalid data
     pipeline.set_params(steps=[('junk', ())])
     assert_raises(TypeError, pipeline.fit, [[1]], [1])
+    assert_raises(TypeError, pipeline.fit_transform, [[1]], [1])
 
 
 def test_set_pipeline_step_none():
@@ -421,13 +422,13 @@ def test_set_pipeline_step_none():
 
     exp = 2 * 3 * 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
-    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline.set_params(m3=None)
     exp = 2 * 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
-    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
     assert_dict_equal(pipeline.get_params(deep=True),
                       {'steps': pipeline.steps,
@@ -441,7 +442,7 @@ def test_set_pipeline_step_none():
     pipeline.set_params(m2=None)
     exp = 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
-    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     # for other methods, ensure no AttributeErrors on None:
@@ -453,13 +454,20 @@ def test_set_pipeline_step_none():
     pipeline.set_params(m2=mult2)
     exp = 2 * 5
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
-    assert_array_equal([exp], pipeline.predict(X))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     pipeline = make()
     pipeline.set_params(last=None)
     assert_raises_regex(TypeError, r'Last step of Pipeline .*\bfit\b.*',
                         pipeline.fit, X, y)
+
+    # Check None step at construction time
+    exp = 2 * 5
+    pipeline = Pipeline([('m2', mult2), ('m3', None), ('last', mult5)])
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
 
 def test_make_pipeline():
@@ -672,8 +680,12 @@ def test_step_name_validation():
             est = cls(**{param: [('a', Mult(1))]})
             setattr(est, param, bad_steps)
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+            assert_raise_message(ValueError, message, est.fit_transform,
+                                 [[1]], [1])
 
             # - set_params
             est = cls(**{param: [('a', Mult(1))]})
             est.set_params(**{param: bad_steps})
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+            assert_raise_message(ValueError, message, est.fit_transform,
+                                 [[1]], [1])
