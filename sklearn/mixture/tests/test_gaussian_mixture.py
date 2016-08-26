@@ -902,7 +902,6 @@ def test_property():
                               covariance_type=covar_type, random_state=rng,
                               n_init=5)
         gmm.fit(X)
-        print(covar_type)
         if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
