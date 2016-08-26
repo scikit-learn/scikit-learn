@@ -33,6 +33,15 @@ from ..base import clone
 from sklearn.externals.funcsigs import signature
 
 
+def _squeeze(length_scale):
+    """
+    np.squeeze that returns a scalar instead of a 0-D array.
+    """
+    length_scale = np.squeeze(length_scale).astype(float)
+    if length_scale.ndim == 0:
+        length_scale = np.asscalar(length_scale)
+    return length_scale
+
 def _check_length_scale(X, length_scale):
     length_scale = np.squeeze(length_scale).astype(float)
     if np.ndim(length_scale) > 1:
@@ -1204,7 +1213,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
                                                    self.length_scale)))
         else:  # isotropic
             return "{0}(length_scale={1:.3g})".format(
-                self.__class__.__name__, self.length_scale)
+                self.__class__.__name__, _squeeze(self.length_scale))
 
 
 class Matern(RBF):
@@ -1348,9 +1357,9 @@ class Matern(RBF):
                 self.__class__.__name__,
                 ", ".join(map("{0:.3g}".format, self.length_scale)),
                 self.nu)
-        else:  # isotropic
+        else:
             return "{0}(length_scale={1:.3g}, nu={2:.3g})".format(
-                self.__class__.__name__, self.length_scale, self.nu)
+                self.__class__.__name__, _squeeze(self.length_scale), self.nu)
 
 
 class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):

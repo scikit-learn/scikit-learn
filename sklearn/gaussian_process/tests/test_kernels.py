@@ -304,3 +304,12 @@ def test_set_get_params():
                 kernel.set_params(**{hyperparameter.name: value})
                 assert_almost_equal(np.exp(kernel.theta[index]), value)
                 index += 1
+
+
+def test_repr_kernels_isotropic_1D_length_scale():
+    """Test that repr works on isotropic kernels with a 1-D length_scale"""
+    matern = Matern(length_scale=[1.2])
+    assert_equal(repr(matern), "Matern(length_scale=1.2, nu=1.5)")
+
+    rbf = RBF(length_scale=[1.2])
+    assert_equal(repr(rbf), "RBF(length_scale=1.2)")
