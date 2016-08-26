@@ -504,9 +504,9 @@ class BaseDiscreteNB(BaseNB):
             self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
             self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                            dtype=np.float64)
-        elif n_features != self.coef_.shape[1]:
+        elif n_features != self.feature_log_prob_.shape[1]:
             msg = "Number of features %d does not match previous data %d."
-            raise ValueError(msg % (n_features, self.coef_.shape[-1]))
+            raise ValueError(msg % (n_features, self.feature_log_prob_.shape[-1]))
 
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
@@ -589,19 +589,6 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    # XXX The following is a stopgap measure; we need to set the dimensions
-    # of class_log_prior_ and feature_log_prob_ correctly.
-    def _get_coef(self):
-        return (self.feature_log_prob_[1:]
-                if len(self.classes_) == 2 else self.feature_log_prob_)
-
-    def _get_intercept(self):
-        return (self.class_log_prior_[1:]
-                if len(self.classes_) == 2 else self.class_log_prior_)
-
-    coef_ = property(_get_coef)
-    intercept_ = property(_get_intercept)
-
 
 class MultinomialNB(BaseDiscreteNB):
     """
@@ -634,16 +621,14 @@ class MultinomialNB(BaseDiscreteNB):
         Smoothed empirical log probability for each class.
 
     intercept_ : property
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
-        as a linear model.
+        intercept when interpreting MultinomialNB as a linear model.
 
     feature_log_prob_ : array, shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
     coef_ : property
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
-        as a linear model.
+        coefficient when interpreting MultinomialNB as a linear model.
 
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
@@ -706,6 +691,17 @@ class MultinomialNB(BaseDiscreteNB):
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
+
+    def _get_coef(self):
+        return (self.feature_log_prob_[1:]-self.feature_log_prob_[:1]
+                if len(self.classes_) == 2 else self.feature_log_prob_)
+
+    def _get_intercept(self):
+        return (self.class_log_prior_[1:]-self.class_log_prior_[:1]
+                if len(self.classes_) == 2 else self.class_log_prior_)
+
+    coef_ = property(_get_coef)
+    intercept_ = property(_get_intercept)
 
 
 class BernoulliNB(BaseDiscreteNB):
