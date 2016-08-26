@@ -13,17 +13,17 @@ cimport cython
 from sklearn.utils.lgamma cimport lgamma
 
 np.import_array()
-
+ctypedef np.float64_t DOUBLE
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def expected_mutual_information(contingency, int n_samples):
     """Calculate the expected mutual information for two labelings."""
     cdef int R, C
-    cdef double N, gln_N, emi, term2, term3, gln
-    cdef np.ndarray[double] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_Nnij
-    cdef np.ndarray[double] nijs, term1
-    cdef np.ndarray[double, ndim=2] log_ab_outer
+    cdef DOUBLE N, gln_N, emi, term2, term3, gln
+    cdef np.ndarray[DOUBLE] gln_a, gln_b, gln_Na, gln_Nb, gln_nij, log_Nnij
+    cdef np.ndarray[DOUBLE] nijs, term1
+    cdef np.ndarray[DOUBLE, ndim=2] log_ab_outer
     cdef np.ndarray[np.int32_t] a, b
     #cdef np.ndarray[int, ndim=2] start, end
     R, C = contingency.shape
