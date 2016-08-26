@@ -11,7 +11,8 @@ from __future__ import division
 #         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from collections import Mapping, namedtuple, Sized, defaultdict
 from functools import partial, reduce
 from itertools import product
@@ -20,7 +21,10 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, is_classifier, clone
+from ..base import clone
+from ..base import is_classifier
+from ..base import BaseEstimator
+from ..base import EstimatorCVMixin
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
@@ -32,7 +36,6 @@ from ..utils.fixes import sp_version
 from ..utils.fixes import rankdata
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
-from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import check_scoring
 
 
@@ -366,7 +369,7 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      MetaEstimatorMixin)):
+                                      EstimatorCVMixin, MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
@@ -415,117 +418,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         return self.scorer_(self.best_estimator_, X, y)
-
-    def _check_is_fitted(self, method_name):
-        if not self.refit:
-            raise NotFittedError(('This GridSearchCV instance was initialized '
-                                  'with refit=False. %s is '
-                                  'available only after refitting on the best '
-                                  'parameters. ') % method_name)
-        else:
-            check_is_fitted(self, 'best_estimator_')
-
-    @if_delegate_has_method(delegate='estimator')
-    def predict(self, X):
-        """Call predict on the estimator with the best found parameters.
-
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict``.
-
-        Parameters
-        -----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('predict')
-        return self.best_estimator_.predict(X)
-
-    @if_delegate_has_method(delegate='estimator')
-    def predict_proba(self, X):
-        """Call predict_proba on the estimator with the best found parameters.
-
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict_proba``.
-
-        Parameters
-        -----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('predict_proba')
-        return self.best_estimator_.predict_proba(X)
-
-    @if_delegate_has_method(delegate='estimator')
-    def predict_log_proba(self, X):
-        """Call predict_log_proba on the estimator with the best found parameters.
-
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict_log_proba``.
-
-        Parameters
-        -----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('predict_log_proba')
-        return self.best_estimator_.predict_log_proba(X)
-
-    @if_delegate_has_method(delegate='estimator')
-    def decision_function(self, X):
-        """Call decision_function on the estimator with the best found parameters.
-
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``decision_function``.
-
-        Parameters
-        -----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('decision_function')
-        return self.best_estimator_.decision_function(X)
-
-    @if_delegate_has_method(delegate='estimator')
-    def transform(self, X):
-        """Call transform on the estimator with the best found parameters.
-
-        Only available if the underlying estimator supports ``transform`` and
-        ``refit=True``.
-
-        Parameters
-        -----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('transform')
-        return self.best_estimator_.transform(X)
-
-    @if_delegate_has_method(delegate='estimator')
-    def inverse_transform(self, Xt):
-        """Call inverse_transform on the estimator with the best found params.
-
-        Only available if the underlying estimator implements
-        ``inverse_transform`` and ``refit=True``.
-
-        Parameters
-        -----------
-        Xt : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
-        """
-        self._check_is_fitted('inverse_transform')
-        return self.best_estimator_.transform(Xt)
 
     def _fit(self, X, y, labels, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
@@ -617,16 +509,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
         return self
-
-    @property
-    def best_params_(self):
-        check_is_fitted(self, 'results_')
-        return self.results_['params'][self.best_index_]
-
-    @property
-    def best_score_(self):
-        check_is_fitted(self, 'results_')
-        return self.results_['test_mean_score'][self.best_index_]
 
     @property
     def grid_scores_(self):
