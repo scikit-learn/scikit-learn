@@ -61,7 +61,12 @@ class NoTrans(NoFit):
         return self
 
 
-class Transf(NoTrans):
+class NoInvTransf(NoTrans):
+    def transform(self, X, y=None):
+        return X
+
+
+class Transf(NoInvTransf):
     def transform(self, X, y=None):
         return X
 
@@ -459,8 +464,14 @@ def test_set_pipeline_step_none():
 
     pipeline = make()
     pipeline.set_params(last=None)
-    assert_raises_regex(TypeError, r'Last step of Pipeline .*\bfit\b.*',
-                        pipeline.fit, X, y)
+    # mult2 and mult3 are active
+    exp = 6
+    assert_array_equal([[exp]], pipeline.fit(X, y).transform(X))
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    assert_raise_message(AttributeError,
+                         "'NoneType' object has no attribute 'predict'",
+                         getattr, pipeline, 'predict')
 
     # Check None step at construction time
     exp = 2 * 5
@@ -468,6 +479,33 @@ def test_set_pipeline_step_none():
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
+
+def test_pipeline_ducktyping():
+    pipeline = make_pipeline(Mult(5))
+    pipeline.predict
+    pipeline.transform
+    pipeline.inverse_transform
+
+    pipeline = make_pipeline(Transf())
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    pipeline.inverse_transform
+
+    pipeline = make_pipeline(None)
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    pipeline.inverse_transform
+
+    pipeline = make_pipeline(Transf(), NoInvTransf())
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    assert_false(hasattr(pipeline, 'inverse_transform'))
+
+    pipeline = make_pipeline(NoInvTransf(), Transf())
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    assert_false(hasattr(pipeline, 'inverse_transform'))
 
 
 def test_make_pipeline():

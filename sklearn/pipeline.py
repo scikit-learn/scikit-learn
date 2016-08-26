@@ -199,7 +199,8 @@ class Pipeline(_BasePipeline):
                                 "transformers and implement fit and transform."
                                 " '%s' (type %s) doesn't" % (t, type(t)))
 
-        if not hasattr(estimator, "fit"):
+        # We allow last estimator to be None as an identity transformation
+        if estimator is not None and not hasattr(estimator, "fit"):
             raise TypeError("Last step of Pipeline should implement fit. "
                             "'%s' (type %s) doesn't"
                             % (estimator, type(estimator)))
@@ -234,6 +235,8 @@ class Pipeline(_BasePipeline):
             else:
                 Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
                               .transform(Xt)
+        if self._final_estimator is None:
+            return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
@@ -263,7 +266,8 @@ class Pipeline(_BasePipeline):
             This estimator
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        self.steps[-1][-1].fit(Xt, y, **fit_params)
+        if self._final_estimator is not None:
+            self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -293,10 +297,12 @@ class Pipeline(_BasePipeline):
         Xt : array-like, shape = [n_samples, n_transformed_features]
             Transformed samples
         """
-        last_step = self.steps[-1][-1]
+        last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
         if hasattr(last_step, 'fit_transform'):
             return last_step.fit_transform(Xt, y, **fit_params)
+        elif last_step is None:
+            return Xt
         else:
             return last_step.fit(Xt, y, **fit_params).transform(Xt)
 
@@ -413,9 +419,12 @@ class Pipeline(_BasePipeline):
                 Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
-    @if_delegate_has_method(delegate='_final_estimator')
-    def transform(self, X):
+    @property
+    def transform(self):
         """Apply transforms, and transform with the final estimator
+
+        This also works where final estimator is ``None``: all prior
+        transformations are applied.
 
         Parameters
         ----------
@@ -427,15 +436,23 @@ class Pipeline(_BasePipeline):
         -------
         Xt : array-like, shape = [n_samples, n_transformed_features]
         """
+        # _final_estimator is None or has transform, otherwise attribute error
+        if self._final_estimator is not None:
+            self._final_estimator.transform
+        return self._transform
+
+    def _transform(self, X):
         Xt = X
         for name, transform in self.steps:
             if transform is not None:
                 Xt = transform.transform(Xt)
         return Xt
 
-    @if_delegate_has_method(delegate='_final_estimator')
-    def inverse_transform(self, X):
+    @property
+    def inverse_transform(self):
         """Apply inverse transformations in reverse order
+
+        All estimators in the pipeline must support ``inverse_transform``.
 
         Parameters
         ----------
@@ -449,6 +466,13 @@ class Pipeline(_BasePipeline):
         -------
         Xt : array-like, shape = [n_samples, n_features]
         """
+        # raise AttributeError if necessary for hasattr behaviour
+        for name, transform in self.steps:
+            if transform is not None:
+                transform.inverse_transform
+        return self._inverse_transform
+
+    def _inverse_transform(self, X):
         if hasattr(X, 'ndim') and X.ndim == 1:
             warn("From version 0.19, a 1d X will not be reshaped in"
                  " pipeline.inverse_transform any more.", FutureWarning)
