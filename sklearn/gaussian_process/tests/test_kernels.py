@@ -20,7 +20,7 @@ from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
-                                   assert_array_almost_equal)
+                                   assert_array_almost_equal, assert_true)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
@@ -41,7 +41,8 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            4.0 * Matern(length_scale=[0.5, 0.5], nu=2.5),
            RationalQuadratic(length_scale=0.5, alpha=1.5),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
-           DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2]
+           DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
+           RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -306,10 +307,8 @@ def test_set_get_params():
                 index += 1
 
 
-def test_repr_kernels_isotropic_1D_length_scale():
-    """Test that repr works on isotropic kernels with a 1-D length_scale"""
-    matern = Matern(length_scale=[1.2])
-    assert_equal(repr(matern), "Matern(length_scale=1.2, nu=1.5)")
+def test_repr_kernels():
+    """Smoke-test for repr in kernels."""
 
-    rbf = RBF(length_scale=[1.2])
-    assert_equal(repr(rbf), "RBF(length_scale=1.2)")
+    for kernel in kernels:
+        kernel_repr = repr(kernel)
