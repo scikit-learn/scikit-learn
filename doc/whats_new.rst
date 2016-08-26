@@ -141,6 +141,12 @@ New features
      <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
      Liu`_
 
+   - Added new cross-validation splitter 
+     :class:`model_selection.TimeSeriesSplit` to handle time series data. 
+     (`#6586
+     <https://github.com/scikit-learn/scikit-learn/pull/6586>`_) by `YenChen
+     Lin`_
+
 Enhancements
 ............
 
