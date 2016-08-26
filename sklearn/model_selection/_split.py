@@ -635,7 +635,7 @@ class StratifiedKFold(_BaseKFold):
         return super(StratifiedKFold, self).split(X, y, labels)
 
 
-class TimeSeriesCV(_BaseKFold):
+class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator
 
     Provides train/test indices to split time series data samples
@@ -659,12 +659,12 @@ class TimeSeriesCV(_BaseKFold):
 
     Examples
     --------
-    >>> from sklearn.model_selection import TimeSeriesCV
+    >>> from sklearn.model_selection import TimeSeriesSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> tscv = TimeSeriesCV(n_splits=3)
+    >>> tscv = TimeSeriesSplit(n_splits=3)
     >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-    TimeSeriesCV(n_splits=3)
+    TimeSeriesSplit(n_splits=3)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -681,9 +681,9 @@ class TimeSeriesCV(_BaseKFold):
     where ``n_samples`` is the number of samples.
     """
     def __init__(self, n_splits=3):
-        super(TimeSeriesCV, self).__init__(n_splits,
-                                           shuffle=False,
-                                           random_state=None)
+        super(TimeSeriesSplit, self).__init__(n_splits,
+                                              shuffle=False,
+                                              random_state=None)
 
     def split(self, X, y=None, labels=None):
         """Generate indices to split data into training and test set.

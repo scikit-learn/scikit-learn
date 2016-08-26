@@ -533,13 +533,13 @@ between training and testing instances (yielding poor estimates of
 generalisation error) on time series data. Therefore, it is very important 
 to evaluate our model for time series data on the "future" observations 
 least like those that are used to train the model. To achieve this, one 
-solution is provided by :class:`TimeSeriesCV`.
+solution is provided by :class:`TimeSeriesSplit`.
 
 
-TimeSeriesCV
+TimeSeriesSplit
 -----------------------
 
-:class:`TimeSeriesCV` is a variation of *k-fold* which 
+:class:`TimeSeriesSplit` is a variation of *k-fold* which 
 returns first :math:`k` folds as train set and the :math:`(k+1)` th 
 fold as test set. Note that unlike standard cross-validation methods, 
 successive training sets are supersets of those that come before them.
@@ -551,13 +551,13 @@ that are observed at fixed time intervals.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
 
-  >>> from sklearn.model_selection import TimeSeriesCV
+  >>> from sklearn.model_selection import TimeSeriesSplit
 
   >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
   >>> y = np.array([1, 2, 3, 4, 5, 6])
-  >>> tscv = TimeSeriesCV(n_splits=3)
+  >>> tscv = TimeSeriesSplit(n_splits=3)
   >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-  TimeSeriesCV(n_splits=3)
+  TimeSeriesSplit(n_splits=3)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]
