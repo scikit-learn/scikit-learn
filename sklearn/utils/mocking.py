@@ -26,7 +26,7 @@ class MockDataFrame(object):
     def __len__(self):
         return len(self.array)
 
-    def __array__(self):
+    def __array__(self, dtype=None):
         # Pandas data frames also are array-like: we want to make sure that
         # input validation in cross-validation does not try to call that
         # method.
