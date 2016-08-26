@@ -738,7 +738,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     @property
     def sparse_coef_(self):
-        """ sparse representation of the fitted coef """
+        """ sparse representation of the fitted ``coef_`` """
         return sparse.csr_matrix(self.coef_)
 
     @deprecated(" and will be removed in 0.19")
