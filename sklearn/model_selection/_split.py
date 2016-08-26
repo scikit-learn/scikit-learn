@@ -1098,7 +1098,7 @@ class LabelShuffleSplit(ShuffleSplit):
             yield train, test
 
 
-def _approximate_mode(class_counts, n_draws):
+def _approximate_mode(class_counts, n_draws, rng):
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
     continuous = n_draws * class_counts / class_counts.sum()
@@ -1106,10 +1106,13 @@ def _approximate_mode(class_counts, n_draws):
     floored = np.floor(continuous)
     # we add samples according to how much "left over" probability
     # they had, until we arrive at n_samples
-    remainder = continuous - floored
-    sorting = np.argsort(remainder)[::-1]
     need_to_add = int(n_draws - floored.sum())
-    floored[sorting[:need_to_add]] += 1
+    remainder = continuous - floored
+    if need_to_add > 0:
+        remainder /= remainder.sum()
+        choices = rng.choice(range(len(class_counts)), size=need_to_add, replace=False, p=remainder)
+        for choice in choices:
+            floored[choice] += 1
     return floored.astype(np.int)
 
 
@@ -1196,11 +1199,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              (n_test, n_classes))
 
         rng = check_random_state(self.random_state)
-        n_i = _approximate_mode(class_counts, n_train)
-        class_counts_remaining = class_counts - n_i
-        t_i = _approximate_mode(class_counts_remaining, n_test)
 
         for _ in range(self.n_splits):
+            # if there are ties in the class-counts, we want
+            # to make sure to break them anew in each iteration
+            n_i = _approximate_mode(class_counts, n_train, rng)
+            class_counts_remaining = class_counts - n_i
+            t_i = _approximate_mode(class_counts_remaining, n_test, rng)
+
             train = []
             test = []
 

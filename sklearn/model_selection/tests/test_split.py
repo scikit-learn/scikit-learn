@@ -572,8 +572,8 @@ def test_stratified_shuffle_split_even():
         threshold = 0.05 / n_splits
         bf = stats.binom(n_splits, p)
         for count in idx_counts:
-            p = bf.pmf(count)
-            assert_true(p > threshold,
+            prob = bf.pmf(count)
+            assert_true(prob > threshold,
                         "An index is not drawn with chance corresponding "
                         "to even draws")
 
