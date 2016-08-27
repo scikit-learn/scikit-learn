@@ -207,7 +207,7 @@ Grid-search
 
 .. currentmodule:: sklearn.model_selection
 
-The sklearn provides an object that, given data, computes the score
+scikit-learn provides an object that, given data, computes the score
 during the fit of an estimator on a parameter grid and chooses the
 parameters to maximize the cross-validation score. This object takes an
 estimator during the construction and exposes an estimator API::
@@ -257,9 +257,9 @@ Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
-algorithm-by-algorithm basis. This is why for certain estimators the
-sklearn exposes :ref:`cross_validation` estimators that set their parameter
-automatically by cross-validation::
+algorithm-by-algorithm basis. This is why, for certain estimators,
+scikit-learn exposes :ref:`cross_validation` estimators that set their
+parameter automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
     >>> lasso = linear_model.LassoCV()
