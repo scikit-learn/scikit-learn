@@ -5,8 +5,8 @@ recursive feature elimination algorithm.
 """
 
 from .univariate_selection import chi2
-from .univariate_selection import ig
-from .univariate_selection import igr
+from .univariate_selection import info_gain
+from .univariate_selection import info_gain_ratio
 from .univariate_selection import f_classif
 from .univariate_selection import f_oneway
 from .univariate_selection import f_regression
@@ -36,8 +36,8 @@ __all__ = ['GenericUnivariateSelect',
            'SelectPercentile',
            'VarianceThreshold',
            'chi2',
-           'ig',
-           'igr',
+           'info_gain',
+           'info_gain_ratio',
            'f_classif',
            'f_oneway',
            'f_regression',
