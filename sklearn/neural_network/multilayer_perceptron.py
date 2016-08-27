@@ -245,8 +245,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            derivative = DERIVATIVES[self.activation]
-            deltas[i - 1] *= derivative(activations[i])
+            inplace_derivative = DERIVATIVES[self.activation]
+            inplace_derivative(activations[i], deltas[i - 1])
 
             coef_grads, intercept_grads = self._compute_loss_grad(
                 i - 1, n_samples, activations, deltas, coef_grads,
@@ -302,9 +302,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             # Use the initialization method recommended by
             # Glorot et al.
             init_bound = np.sqrt(2. / (fan_in + fan_out))
-        elif self.activation == 'tanh':
-            init_bound = np.sqrt(6. / (fan_in + fan_out))
-        elif self.activation == 'relu':
+        elif self.activation in ('identity', 'tanh', 'relu'):
             init_bound = np.sqrt(6. / (fan_in + fan_out))
         else:
             # this was caught earlier, just to make sure
@@ -414,7 +412,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
 
         # raise ValueError if not registered
-        supported_activations = ['logistic', 'tanh', 'relu']
+        supported_activations = ('identity', 'logistic', 'tanh', 'relu')
         if self.activation not in supported_activations:
             raise ValueError("The activation '%s' is not supported. Supported "
                              "activations are %s." % (self.activation,
@@ -688,8 +686,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         The ith element represents the number of neurons in the ith
         hidden layer.
 
-    activation : {'logistic', 'tanh', 'relu'}, default 'relu'
+    activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
         Activation function for the hidden layer.
+
+        - 'identity', no-op activation, useful to implement linear bottleneck,
+          returns f(x) = x
 
         - 'logistic', the logistic sigmoid function,
           returns f(x) = 1 / (1 + exp(-x)).
@@ -1042,8 +1043,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         The ith element represents the number of neurons in the ith
         hidden layer.
 
-    activation : {'logistic', 'tanh', 'relu'}, default 'relu'
+    activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
         Activation function for the hidden layer.
+
+        - 'identity', no-op activation, useful to implement linear bottleneck,
+          returns f(x) = x
 
         - 'logistic', the logistic sigmoid function,
           returns f(x) = 1 / (1 + exp(-x)).
