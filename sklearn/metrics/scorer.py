@@ -343,7 +343,7 @@ deprecation_msg = ('Scoring method median_absolute_error was renamed to '
                    'neg_median_absolute_error in version 0.18 and will '
                    'be removed in 0.20.')
 median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                           greater_is_better=False
+                                           greater_is_better=False,
                                            deprecation_msg=deprecation_msg)
 
 
