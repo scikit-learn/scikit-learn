@@ -380,11 +380,6 @@ Bug fixes
     - Fix :class:`linear_model.ElasticNet` sparse decision function to match
     output with dense in the multioutput case.
 
-    - ``classes`` parameter was renamed to ``labels`` in
-      :func:`metrics.classification.hamming_loss`.
-      (`#7237 <https://github.com/scikit-learn/scikit-learn/issues/7237>`_) by
-      `Sebastian Vanrell`_.
-
 API changes summary
 -------------------
 
@@ -418,6 +413,11 @@ API changes summary
      and unambiguous interface to represent the number of train-test splits.
      (`#7187 <https://github.com/scikit-learn/scikit-learn/pull/7187>`_)
      by `YenChen Lin`_.
+
+    - ``classes`` parameter was renamed to ``labels`` in
+      :func:`metrics.classification.hamming_loss`.
+      (`#7237 <https://github.com/scikit-learn/scikit-learn/issues/7237>`_) by
+      `Sebastian Vanrell`_.
 
 
 .. currentmodule:: sklearn
