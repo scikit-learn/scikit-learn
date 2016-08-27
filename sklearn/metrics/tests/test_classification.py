@@ -767,6 +767,7 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
+    assert_warns(DeprecationWarning, hamming_loss, y1, y2, classes=np.array([0, 1]))
 
 
 def test_multilabel_jaccard_similarity_score():
