@@ -128,6 +128,6 @@ def test_auto_extract_hier():
     clust.fit(X)
 
     # Extract the result
-    clust.extract(None, 'auto')
+    clust.extract(0.0, 'auto') # eps not used for 'auto' extract
 
     assert_equal(len(set(clust.labels_)), 6)

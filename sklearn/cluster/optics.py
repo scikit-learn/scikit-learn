@@ -4,7 +4,7 @@
 These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
 
-Authors: Shane Grigsby <refuge@rocktalus.comi>,  Amy X. Zhang <axz@mit.edu>
+Authors: Shane Grigsby <refuge@rocktalus.com>,  Amy X. Zhang <axz@mit.edu>
 License: BSD 3 clause
 Dates: May 2013 (implemented), Sept 2015 (Benchmarked), Aug 2016 (updated)
 """
