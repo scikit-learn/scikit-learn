@@ -348,10 +348,10 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
-    mse_scores = cross_val_score(reg, X, y, cv=5,
-                                 scoring="neg_mean_squared_error")
-    expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
-    assert_array_almost_equal(mse_scores, expected_mse, 2)
+    neg_mse_scores = cross_val_score(reg, X, y, cv=5,
+                                     scoring="neg_mean_squared_error")
+    expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
+    assert_array_almost_equal(neg_mse_scores, expected_neg_mse, 2)
 
     # Explained variance
     scoring = make_scorer(explained_variance_score)

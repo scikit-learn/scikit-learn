@@ -34,14 +34,15 @@ from ..base import is_regressor
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
-    def __init__(self, score_func, sign, kwargs):
+    def __init__(self, score_func, sign, kwargs, deprecation_msg=None):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+        self._deprecation_msg = deprecation_msg
 
-    @abstractmethod
     def __call__(self, estimator, X, y, sample_weight=None):
-        pass
+        if self._deprecation_msg is not None:
+            warnings.warn(self._deprecation_msg, category=DeprecationWarning)
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -80,6 +81,8 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        super(_PredictScorer, self).__call__(estimator, X, y_true,
+                                             sample_weight=sample_weight)
         y_pred = estimator.predict(X)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
@@ -115,6 +118,8 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        super(_ProbaScorer, self).__call__(clf, X, y,
+                                           sample_weight=sample_weight)
         y_pred = clf.predict_proba(X)
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
@@ -154,6 +159,8 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        super(_ThresholdScorer, self).__call__(clf, X, y,
+                                               sample_weight=sample_weight)
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
             raise ValueError("{0} format is not supported".format(y_type))
@@ -189,14 +196,6 @@ class _ThresholdScorer(_BaseScorer):
 
 def get_scorer(scoring):
     if isinstance(scoring, six.string_types):
-        if scoring in ('mean_squared_error', 'mean_absolute_error',
-                       'median_absolute_error', 'log_loss'):
-            warnings.warn('Scoring method %s was renamed to '
-                          'neg_%s in version 0.18 and will be '
-                          'removed in 0.20.' % (scoring, scoring),
-                          category=DeprecationWarning)
-            scoring = 'neg_' + scoring
-
         try:
             scorer = SCORERS[scoring]
         except KeyError:
@@ -255,7 +254,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+                needs_threshold=False, deprecation_msg=None, **kwargs):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -317,17 +316,36 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs)
+    return cls(score_func, sign, kwargs, deprecation_msg=deprecation_msg)
 
 
 # Standard regression scores
 r2_scorer = make_scorer(r2_score)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                             greater_is_better=False)
+deprecation_msg = ('Scoring method mean_squared_error was renamed to '
+                   'neg_mean_squared_error in version 0.18 and will '
+                   'be removed in 0.20.')
+mean_squared_error_scorer = make_scorer(mean_squared_error,
+                                        greater_is_better=False,
+                                        deprecation_msg=deprecation_msg)
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
+deprecation_msg = ('Scoring method mean_absolute_error was renamed to '
+                   'neg_mean_absolute_error in version 0.18 and will '
+                   'be removed in 0.20.')
+mean_absolute_error_scorer = make_scorer(mean_absolute_error,
+                                         greater_is_better=False,
+                                         deprecation_msg=deprecation_msg)
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
+deprecation_msg = ('Scoring method median_absolute_error was renamed to '
+                   'neg_median_absolute_error in version 0.18 and will '
+                   'be removed in 0.20.')
+median_absolute_error_scorer = make_scorer(median_absolute_error,
+                                           greater_is_better=False
+                                           deprecation_msg=deprecation_msg)
+
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -344,6 +362,11 @@ recall_scorer = make_scorer(recall_score)
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                                   needs_proba=True)
+deprecation_msg = ('Scoring method log_loss was renamed to '
+                   'neg_log_loss in version 0.18 and will be removed in 0.20.')
+log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
+                              needs_proba=True, deprecation_msg=deprecation_msg)
+
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
@@ -352,6 +375,9 @@ SCORERS = dict(r2=r2_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
+               median_absolute_error=median_absolute_error_scorer,
+               mean_absolute_error=mean_absolute_error_scorer,
+               mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
