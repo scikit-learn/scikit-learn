@@ -4,11 +4,10 @@
 #          L. Buitinck, A. Joly, V. Pekar
 # License: BSD 3 clause
 
+from __future__ import division
 
 import numpy as np
 import warnings
-
-from __future__ import division
 
 from scipy import special, stats
 from scipy.sparse import issparse, csr_matrix, coo_matrix
