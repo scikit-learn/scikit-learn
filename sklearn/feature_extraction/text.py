@@ -676,6 +676,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
+        self.chunksize = 10000
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -685,9 +686,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         sorted_features = sorted(six.iteritems(vocabulary))
         map_index = np.empty(len(sorted_features), dtype=np.int32)
         for new_val, (term, old_val) in enumerate(sorted_features):
-            map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return X[:, map_index]
+            map_index[old_val] = new_val
+
+        # swap columns in place
+        indices = X.indices
+        for idx, val in enumerate(X.indices):
+            indices[idx] = map_index[val]
+        X.indices = indices
+        return X
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
@@ -699,7 +706,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         This does not prune samples with zero features.
         """
-        if high is None and low is None and limit is None:
+        high_not_set = high is None or int(high) == X.shape[0]
+        low_not_set = low is None or int(low) == 1
+        limit_not_set = limit is None or int(limit) == X.shape[1]
+        if high_not_set and low_not_set and limit_not_set:
             return X, set()
 
         # Calculate a mask based on document frequencies
@@ -743,14 +753,24 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         analyze = self.build_analyzer()
         j_indices = _make_int_array()
         indptr = _make_int_array()
+        values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
+            feature_counter = {}
             for feature in analyze(doc):
                 try:
-                    j_indices.append(vocabulary[feature])
+                    feature_idx = vocabulary[feature]
+                    if feature_idx not in feature_counter:
+                        feature_counter[feature_idx] = 1
+                    else:
+                        feature_counter[feature_idx] += 1
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
+
+            j_indices.extend(feature_counter.keys())
+            values.extend(feature_counter.values())
+            del(feature_counter)
             indptr.append(len(j_indices))
 
         if not fixed_vocab:
@@ -762,12 +782,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         j_indices = frombuffer_empty(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+        values = frombuffer_empty(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
-        X.sum_duplicates()
+        X.sort_indices()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
