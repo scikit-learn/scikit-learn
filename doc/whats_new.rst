@@ -416,7 +416,7 @@ API changes summary
 
     - ``classes`` parameter was renamed to ``labels`` in
       :func:`metrics.classification.hamming_loss`.
-      (`#7237 <https://github.com/scikit-learn/scikit-learn/issues/7237>`_) by
+      (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
       `Sebastian Vanrell`_.
 
 
