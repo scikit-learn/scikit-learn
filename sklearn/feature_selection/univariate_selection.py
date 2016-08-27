@@ -8,6 +8,8 @@
 import numpy as np
 import warnings
 
+from __future__ import division
+
 from scipy import special, stats
 from scipy.sparse import issparse, csr_matrix, coo_matrix
 
@@ -226,7 +228,7 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def _ig(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total):
+def _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total):
     def get_t1(fc_prob, c_prob, f_prob):
         t = np.log2(fc_prob/(c_prob * f_prob))
         t[~np.isfinite(t)] = 0
@@ -256,7 +258,7 @@ def _ig(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total):
               get_t4(c_prob, f_prob, f_count, fc_count, total)).mean(axis=0)
 
 
-def ig(X, y):
+def info_gain(X, y):
     """Compute an Information Gain [1] score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -288,7 +290,7 @@ def ig(X, y):
 
     See also:
     ---------
-    * igr : Information Gain Ratio
+    * info_gain_ratio : Information Gain Ratio
 
     References:
     -----------
@@ -305,7 +307,7 @@ def ig(X, y):
 
     """
 
-    X = check_array(X, accept_sparse='csr')
+    X = check_array(X, accept_sparse=['csr', 'coo'])
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
@@ -326,17 +328,18 @@ def ig(X, y):
     # probs
 
     f_prob = f_count / f_count.sum()
-    c_prob = c_count / float(c_count.sum())
+    c_prob = c_count / c_count.sum()
     fc_prob = fc_count / total
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        scores = _ig(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total)
+        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob,
+                            total)
 
     return np.asarray(scores).reshape(-1), []
 
 
-def igr(X, y):
+def info_gain_ratio(X, y):
     """Compute an Information Gain Ratio score for each feature in the data.
 
     The score can be used to weight features by informativeness or select the
@@ -365,7 +368,7 @@ def igr(X, y):
 
     See also:
     ---------
-    * ig : Information Gain
+    * info_gain : Information Gain
     """
 
     def get_t(f_prob):
@@ -373,7 +376,7 @@ def igr(X, y):
         t[~np.isfinite(t)] = 0
         return np.multiply(-f_prob, t)
 
-    X = check_array(X, accept_sparse='csr')
+    X = check_array(X, accept_sparse=['csr', 'coo'])
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
@@ -394,12 +397,13 @@ def igr(X, y):
     # probs
 
     f_prob = f_count / f_count.sum()
-    c_prob = c_count / float(c_count.sum())
+    c_prob = c_count / c_count.sum()
     fc_prob = fc_count / total
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        scores = _ig(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total)
+        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob,
+                            total)
         scores = scores / (get_t(f_prob) + get_t(1 - f_prob))
 
     return np.asarray(scores).reshape(-1), []
