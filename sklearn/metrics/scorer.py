@@ -313,12 +313,12 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
 # Standard regression scores
 r2_scorer = make_scorer(r2_score)
-mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                        greater_is_better=False)
-mean_absolute_error_scorer = make_scorer(mean_absolute_error,
-                                         greater_is_better=False)
-median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                           greater_is_better=False)
+neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
+                                            greater_is_better=False)
+neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
+                                             greater_is_better=False)
+neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
+                                               greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -333,19 +333,19 @@ precision_scorer = make_scorer(precision_score)
 recall_scorer = make_scorer(recall_score)
 
 # Score function for probabilistic classification
-log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
-                              needs_proba=True)
+neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
+                                  needs_proba=True)
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer,
-               median_absolute_error=median_absolute_error_scorer,
-               mean_absolute_error=mean_absolute_error_scorer,
-               mean_squared_error=mean_squared_error_scorer,
+               neg_median_absolute_error=neg_median_absolute_error_scorer,
+               neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+               neg_mean_squared_error=neg_mean_squared_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,
-               log_loss=log_loss_scorer,
+               neg_log_loss=neg_log_loss_scorer,
                adjusted_rand_score=adjusted_rand_scorer)
 
 for name, metric in [('precision', precision_score),

@@ -37,14 +37,14 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
 
 
-REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
-                      'median_absolute_error']
+REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
+                      'neg_mean_squared_error', 'neg_median_absolute_error']
 
 CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'log_loss',
+               'neg_log_loss',
                'adjusted_rand_score'  # not really, but works
                ]
 
@@ -259,7 +259,7 @@ def test_thresholded_scorers():
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3)
 
-    logscore = get_scorer('log_loss')(clf, X_test, y_test)
+    logscore = get_scorer('neg_log_loss')(clf, X_test, y_test)
     logloss = log_loss(y_test, clf.predict_proba(X_test))
     assert_almost_equal(-logscore, logloss)
 
