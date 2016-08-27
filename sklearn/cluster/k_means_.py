@@ -844,8 +844,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return X
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                        warn_on_dtype=True)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:

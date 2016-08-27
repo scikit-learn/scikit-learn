@@ -44,15 +44,6 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-def test_kmeans_dtype():
-    rnd = np.random.RandomState(0)
-    X = rnd.normal(size=(40, 2))
-    X = (X * 10).astype(np.uint8)
-    km = KMeans(n_init=1).fit(X)
-    pred_x = assert_warns(DataConversionWarning, km.predict, X)
-    assert_array_equal(km.labels_, pred_x)
-
-
 def test_elkan_results():
     rnd = np.random.RandomState(0)
     X_normal = rnd.normal(size=(50, 10))
