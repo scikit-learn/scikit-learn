@@ -160,9 +160,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            The input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -184,9 +184,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            The input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -217,9 +217,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
+            The training input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -516,9 +516,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            The input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -552,9 +552,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32``, and if a sparse matrix is provided,
-            to a sparse ``csr_matrix``.
+            The input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -605,9 +605,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            The input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -666,9 +666,9 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
+            The input samples. Internally, it's dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
