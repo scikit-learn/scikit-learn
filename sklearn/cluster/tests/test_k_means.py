@@ -800,8 +800,10 @@ def test_float_precision():
                 inertia[dtype] = estimator.inertia_
                 X_new[dtype] = estimator.transform(X_test)
                 centers[dtype] = estimator.cluster_centers_
+                # ensure the extracted row is a 2d array
+                X_test_0 = X_test[0] if is_sparse else X_test[0].reshape(1, -1)
                 # make sure predictions correspond to the correct label
-                assert_equal(estimator.predict(X_test[0]), estimator.labels_[0])
+                assert_equal(estimator.predict(X_test_0), estimator.labels_[0])
                 if hasattr(estimator, 'partial_fit'):
                     estimator.partial_fit(X_test[0:3])
                     # dtype of cluster centers has to stay the same after partial_fit
