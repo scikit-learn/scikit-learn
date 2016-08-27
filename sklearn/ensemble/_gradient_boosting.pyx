@@ -99,7 +99,6 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
                 node = root_node + node.right_child
         out[i * K + k] += scale * value[node - root_node]
 
-
 def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators,
                                            object X, double scale,
                                            np.ndarray[float64, ndim=2] out):
@@ -107,9 +106,12 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef DTYPE_t* X_data = <DTYPE_t*>(<np.ndarray> X.data).data
-    cdef INT32_t* X_indices = <INT32_t*>(<np.ndarray> X.indices).data
-    cdef INT32_t* X_indptr = <INT32_t*>(<np.ndarray> X.indptr).data
+    cdef DTYPE_t* X_data = <DTYPE_t*>(
+        <np.ndarray[ndim=1, dtype=DTYPE_t]>X.data).data
+    cdef INT32_t* X_indices = <INT32_t*>(
+        <np.ndarray[ndim=1, dtype=INT32_t]> X.indices).data
+    cdef INT32_t* X_indptr = <INT32_t*>(
+        <np.ndarray[ndim=1, dtype=INT32_t]> X.indptr).data
 
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
@@ -128,6 +130,17 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     cdef Node *node = NULL
     cdef double *value = NULL
 
+    cdef Tree tree
+    cdef Node** nodes = NULL
+    cdef double** values = NULL
+    safe_realloc(&nodes, n_stages * n_outputs)
+    safe_realloc(&values, n_stages * n_outputs)
+    for stage_i in range(n_stages):
+        for output_i in range(n_outputs):
+            tree = estimators[stage_i, output_i].tree_
+            nodes[stage_i * n_outputs + output_i] = tree.nodes
+            values[stage_i * n_outputs + output_i] = tree.value
+
     # Initialize auxiliary data-structure
     cdef DTYPE_t feature_value = 0.
     cdef DTYPE_t* X_sample = NULL
@@ -137,8 +150,8 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     # which features are nonzero in the present sample.
     cdef SIZE_t* feature_to_sample = NULL
 
-    safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-    safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+    safe_realloc(&X_sample, n_features)
+    safe_realloc(&feature_to_sample, n_features)
 
     memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
 
@@ -152,8 +165,8 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
         for stage_i in range(n_stages):
             # Cycle through all trees
             for output_i in range(n_outputs):
-                root_node = (<Tree> estimators[stage_i, output_i].tree_).nodes
-                value = (<Tree> estimators[stage_i, output_i].tree_).value
+                root_node = nodes[stage_i * n_outputs + output_i]
+                value = values[stage_i * n_outputs + output_i]
                 node = root_node
 
                 # While node not a leaf
@@ -174,6 +187,8 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     # Free auxiliary arrays
     free(X_sample)
     free(feature_to_sample)
+    free(nodes)
+    free(values)
 
 
 def predict_stages(np.ndarray[object, ndim=2] estimators,
@@ -194,8 +209,8 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
         if not isinstance(X, np.ndarray):
-            raise ValueError("X should be in np.ndarray or csr_matrix format, got %s"
-                                     % type(X))
+            raise ValueError("X should be in np.ndarray or csr_matrix format,"
+              "got %s" % type(X))
 
         for i in range(n_estimators):
             for k in range(K):
