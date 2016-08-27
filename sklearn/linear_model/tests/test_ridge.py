@@ -352,7 +352,7 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with a scorer
-    scorer = get_scorer('mean_squared_error')
+    scorer = get_scorer('neg_mean_squared_error')
     ridge_gcv4 = RidgeCV(fit_intercept=False, scoring=scorer)
     ridge_gcv4.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv4.alpha_, alpha_)
