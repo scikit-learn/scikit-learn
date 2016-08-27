@@ -48,13 +48,17 @@ from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 
 # Conveniently import all assertions in one place.
-from nose.tools import assert_dict_equal
 from nose.tools import assert_equal
 from nose.tools import assert_not_equal
 from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_raises
 from nose.tools import raises
+try:
+    from nose.tools import assert_dict_equal
+except ImportError:
+    # Not in old versions of nose, but is only for formatting anyway
+    assert_dict_equal = assert_equal
 from nose import SkipTest
 from nose import with_setup
 
