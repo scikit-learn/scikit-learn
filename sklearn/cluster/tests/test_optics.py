@@ -2,6 +2,7 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics import OPTICS
 from sklearn.utils.testing import assert_equal, assert_greater_equal
 from .common import generate_clustered_data
+import numpy as np
 
 def test_optics():
     '''
@@ -10,7 +11,7 @@ def test_optics():
     '''
 
 
-    ##############################################################################
+    ##########################################################################
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
@@ -53,7 +54,7 @@ def test_optics2():
     '''
 
 
-    ##############################################################################
+    ##########################################################################
     # Compute OPTICS
     X = [[1,1]]
     clust = OPTICS(eps=0.3, min_samples=10)
@@ -78,17 +79,55 @@ def test_empty_extract():
 
 def test_bad_extract():
     '''
-    Test an extraction of an eps too close to original eps
+    Test an extraction of eps too close to original eps
     '''
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers, 
                                 cluster_std=0.4, random_state=0)
 
-    ##############################################################################
+    ##########################################################################
     # Compute OPTICS
 
     clust = OPTICS(eps=0.003, min_samples=10)
     clust2 = clust.fit(X)
     assert clust2.extract(0.3) == None
 
+def test_close_extract():
+    '''
+    Test extract where extraction eps is close to scaled epsPrime
+    '''
+    centers = [[1, 1], [-1, -1], [1, -1]]
+    X, labels_true = make_blobs(n_samples=750, centers=centers, 
+                                cluster_std=0.4, random_state=0)
 
+    # Compute OPTICS
+
+    clust = OPTICS(eps=0.2, min_samples=10)
+    clust3 = clust.fit(X)
+    clust3.extract(0.3, clustering='dbscan')
+    assert max(clust3.labels_) == 3
+
+def test_auto_extract_hier():
+    # Generate sample data
+
+    np.random.seed(0)
+    n_points_per_cluster = 250
+
+    X = np.empty((0, 2))
+    X = np.r_[X, [-5,-2] + .8 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [4,-1] + .1 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [1,-2] + .2 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [-2,3] + .3 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [3,-2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [5,6] + 2 * np.random.randn(n_points_per_cluster, 2)]
+    # Compute OPTICS
+
+    clust = OPTICS(eps=30.3, min_samples=9)
+
+    # Run the fit
+    clust.fit(X)
+
+    # Extract the result
+    clust.extract(None, 'auto')
+
+    assert_equal(len(set(clust.labels_)), 6)

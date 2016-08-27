@@ -285,8 +285,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
                     _extractDBSCAN(self, epsilon_prime)
                 elif clustering == 'auto':
                     _extract_auto(self)
-                else:
-                    print(clustering + " is not a valid clustering method")
+                # else:
+                #    print(clustering + " is not a valid clustering method")
                 self.labels_ = self._cluster_id[:]
                 # Setting following line to '1' instead of 'True' to keep
                 # line shorter than 79 characters
