@@ -202,7 +202,7 @@ def test_scale_1d():
 
 @skip_if_32bit
 def test_standard_scaler_numerical_stability():
-    """Test numerical stability of scaling"""
+    # Test numerical stability of scaling
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
 
@@ -802,7 +802,7 @@ def test_scale_input_finiteness_validation():
 
 
 def test_robust_scaler_2d_arrays():
-    """Test robust scaling of 2d array along first axis"""
+    # Test robust scaling of 2d array along first axis
     rng = np.random.RandomState(0)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -910,7 +910,7 @@ def test_robust_scale_axis1():
 
 
 def test_robust_scaler_zero_variance_features():
-    """Check RobustScaler on toy data with zero variance features"""
+    # Check RobustScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
@@ -943,7 +943,7 @@ def test_robust_scaler_zero_variance_features():
 
 
 def test_maxabs_scaler_zero_variance_features():
-    """Check MaxAbsScaler on toy data with zero variance features"""
+    # Check MaxAbsScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.3],
          [0., 1., +1.5],
@@ -1400,9 +1400,9 @@ def test_center_kernel():
 
 
 def test_cv_pipeline_precomputed():
-    """Cross-validate a regression on four coplanar points with the same
-    value. Use precomputed kernel to ensure Pipeline with KernelCenterer
-    is treated as a _pairwise operation."""
+    # Cross-validate a regression on four coplanar points with the same
+    # value. Use precomputed kernel to ensure Pipeline with KernelCenterer
+    # is treated as a _pairwise operation.
     X = np.array([[3, 0, 0], [0, 3, 0], [0, 0, 3], [1, 1, 1]])
     y_true = np.ones((4,))
     K = X.dot(X.T)
