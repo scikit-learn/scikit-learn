@@ -24,7 +24,6 @@ from __future__ import division
 
 import numpy as np
 
-from ..utils import deprecated
 from ..utils.validation import check_array, check_consistent_length
 from ..utils.validation import column_or_1d
 from ..externals.six import string_types
@@ -103,8 +102,8 @@ def _check_reg_targets(y_true, y_pred, multioutput):
     return y_type, y_true, y_pred, multioutput
 
 def mean_absolute_error(y_true, y_pred,
-                            sample_weight=None,
-                            multioutput='uniform_average'):
+                        sample_weight=None,
+                        multioutput='uniform_average'):
     """Mean absolute error regression loss
 
     Read more in the :ref:`User Guide <mean_absolute_error>`.

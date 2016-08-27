@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+import warnings
 
 import numpy as np
 
@@ -188,6 +189,14 @@ class _ThresholdScorer(_BaseScorer):
 
 def get_scorer(scoring):
     if isinstance(scoring, six.string_types):
+        if scoring in ('mean_squared_error', 'mean_absolute_error',
+                       'median_absolute_error', 'log_loss'):
+            warnings.warn('Scoring method %s was renamed to '
+                          'neg_%s in version 0.18 and will be '
+                          'removed in 0.20.' % (scoring, scoring),
+                          category=DeprecationWarning)
+            scoring = 'neg_' + scoring
+
         try:
             scorer = SCORERS[scoring]
         except KeyError:
