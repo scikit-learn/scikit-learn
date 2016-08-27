@@ -49,36 +49,37 @@ Common cases: predefined values
 For the most common use cases, you can designate a scorer object with the
 ``scoring`` parameter; the table below shows all possible values.
 All scorer objects follow the convention that **higher return values are better
-than lower return values**.  Thus the returns from mean_absolute_error
-and mean_squared_error, which measure the distance between the model
-and the data, are negated.
+than lower return values**.  Thus metrics which measure the distance between
+the model and the data, like mean_squared_error, are implemented as
+neg_mean_absolute_error and neg_mean_squared_error which return the negated
+value of the metric.
 
 
-========================     =======================================     ==================================
-Scoring                      Function                                    Comment
-========================     =======================================     ==================================
+==========================      =========================================     ==================================
+Scoring                         Function                                      Comment
+==========================      =========================================     ==================================
 **Classification**
-'accuracy'                   :func:`metrics.accuracy_score`
-'average_precision'          :func:`metrics.average_precision_score`
-'f1'                         :func:`metrics.f1_score`                    for binary targets
-'f1_micro'                   :func:`metrics.f1_score`                    micro-averaged
-'f1_macro'                   :func:`metrics.f1_score`                    macro-averaged
-'f1_weighted'                :func:`metrics.f1_score`                    weighted average
-'f1_samples'                 :func:`metrics.f1_score`                    by multilabel sample
-'log_loss'                   :func:`metrics.log_loss`                    requires ``predict_proba`` support
-'precision' etc.             :func:`metrics.precision_score`             suffixes apply as with 'f1'
-'recall' etc.                :func:`metrics.recall_score`                suffixes apply as with 'f1'
-'roc_auc'                    :func:`metrics.roc_auc_score`
+'accuracy'                      :func:`metrics.accuracy_score`
+'average_precision'             :func:`metrics.average_precision_score`
+'f1'                            :func:`metrics.f1_score`                      for binary targets
+'f1_micro'                      :func:`metrics.f1_score`                      micro-averaged
+'f1_macro'                      :func:`metrics.f1_score`                      macro-averaged
+'f1_weighted'                   :func:`metrics.f1_score`                      weighted average
+'f1_samples'                    :func:`metrics.f1_score`                      by multilabel sample
+'neg_log_loss'                  :func:`metrics.log_loss`                      requires ``predict_proba`` support
+'precision' etc.                :func:`metrics.precision_score`               suffixes apply as with 'f1'
+'recall' etc.                   :func:`metrics.recall_score`                  suffixes apply as with 'f1'
+'roc_auc'                       :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'        :func:`metrics.adjusted_rand_score`
+'adjusted_rand_score'           :func:`metrics.adjusted_rand_score`
 
 **Regression**
-'mean_absolute_error'        :func:`metrics.mean_absolute_error`
-'mean_squared_error'         :func:`metrics.mean_squared_error`
-'median_absolute_error'      :func:`metrics.median_absolute_error`
-'r2'                         :func:`metrics.r2_score`
-========================     =======================================     ==================================
+'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
+'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
+'r2'                            :func:`metrics.r2_score`
+===========================     =========================================     ==================================
 
 Usage examples:
 
@@ -87,7 +88,7 @@ Usage examples:
     >>> iris = datasets.load_iris()
     >>> X, y = iris.data, iris.target
     >>> clf = svm.SVC(probability=True, random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='log_loss') # doctest: +ELLIPSIS
+    >>> cross_val_score(clf, X, y, scoring='neg_log_loss') # doctest: +ELLIPSIS
     array([-0.07..., -0.16..., -0.06...])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
