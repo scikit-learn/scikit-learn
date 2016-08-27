@@ -240,21 +240,21 @@ class PCA(_BasePCA):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power=4, n_components=2, random_state=None,
+    PCA(copy=True, iterated_power=None, n_components=2, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    PCA(copy=True, iterated_power=4, n_components=2, random_state=None,
+    PCA(copy=True, iterated_power=None, n_components=2, random_state=None,
       svd_solver='full', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power=4, n_components=1, random_state=None,
+    PCA(copy=True, iterated_power=None, n_components=1, random_state=None,
       svd_solver='arpack', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...]
@@ -268,7 +268,7 @@ class PCA(_BasePCA):
     """
 
     def __init__(self, n_components=None, copy=True, whiten=False,
-                 svd_solver='auto', tol=0.0, iterated_power=4,
+                 svd_solver='auto', tol=0.0, iterated_power=None,
                  random_state=None):
         self.n_components = n_components
         self.copy = copy
@@ -541,9 +541,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         .. versionchanged:: 0.18
 
     whiten : bool, optional
-        When True (False by default) the `components_` vectors are multiplied by
-        the square root of (n_samples) and divided by the singular values to
-        ensure uncorrelated outputs with unit component-wise variances.
+        When True (False by default) the `components_` vectors are multiplied
+        by the square root of (n_samples) and divided by the singular values
+        to ensure uncorrelated outputs with unit component-wise variances.
 
         Whitening will remove some information from the transformed signal
         (the relative variance scales of the components) but can sometime
