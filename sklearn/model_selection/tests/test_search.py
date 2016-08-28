@@ -174,7 +174,7 @@ def test_grid_search_incorrect_param_grid():
         {'C': 1})
 
 
-def test_grid_search_incorrect_param_grid():
+def test_grid_search_param_grid_includes_sequence_of_a_zero_length():
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
