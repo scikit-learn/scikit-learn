@@ -229,6 +229,22 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+    cdef inline bint split_passes_monotonic_check(self, INT32_t monotonic_constraint) nogil:
+        """Check monotonic constraint is satisfied at the current split"""
+        if monotonic_constraint == 0: # No constraint
+            return 1
+        else:
+            left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
+            right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
+            if monotonic_constraint == -1: # Decreasing constraint
+                if left < right: # Fails
+                    return 0
+                else:
+                    return 1
+            elif left > right: # Increasing constraint fails
+                return 0
+            else:
+                return 1
 
 cdef class BaseDenseSplitter(Splitter):
     cdef DTYPE_t* X
@@ -461,16 +477,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            # Monotonic check
-                            if monotonic_constraint != 0:
-                                # TODO: is 0.0 divisor possible?
-                                left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
-                                right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
-                                if monotonic_constraint == -1:
-                                    if left < right:
-                                        continue
-                                elif left > right:
-                                        continue
+                            if not self.split_passes_monotonic_check(monotonic_constraint):
+                                continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -524,7 +532,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         # Return values
         split[0] = best
         n_constant_features[0] = n_total_constants
-
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
@@ -806,16 +813,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    # Monotonic check
-                    if monotonic_constraint != 0:
-                        # TODO: is 0.0 divisor possible?
-                        left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
-                        right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
-                        if monotonic_constraint == -1:
-                            if left < right:
-                                continue
-                        elif left > right:
-                                continue
+                    if not self.split_passes_monotonic_check(monotonic_constraint):
+                        continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -1373,16 +1372,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                                     (self.criterion.weighted_n_right < min_weight_leaf)):
                                 continue
 
-                            # Monotonic check
-                            if monotonic_constraint != 0:
-                                # TODO: is 0.0 divisor possible?
-                                left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
-                                right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
-                                if monotonic_constraint == -1:
-                                    if left < right:
-                                        continue
-                                elif left > right:
-                                        continue
+                            if not self.split_passes_monotonic_check(monotonic_constraint):
+                                continue
 
                             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
@@ -1614,16 +1605,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                             (self.criterion.weighted_n_right < min_weight_leaf)):
                         continue
 
-                    # Monotonic check
-                    if monotonic_constraint != 0:
-                        # TODO: is 0.0 divisor possible?
-                        left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
-                        right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
-                        if monotonic_constraint == -1:
-                            if left < right:
-                                continue
-                        elif left > right:
-                                continue
+                    if not self.split_passes_monotonic_check(monotonic_constraint):
+                        continue
 
                     current_proxy_improvement = self.criterion.proxy_impurity_improvement()
 
