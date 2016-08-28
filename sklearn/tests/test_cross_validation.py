@@ -124,7 +124,7 @@ y = np.arange(10) % 3
 
 
 def check_valid_split(train, test, n_samples=None):
-    # Use python sets to get more informative assertion failure messages
+    # Use Python sets to get more informative assertion failure messages
     train, test = set(train), set(test)
 
     # Train and test split should not overlap

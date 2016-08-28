@@ -1,7 +1,7 @@
 ﻿# Author: Kyle Kastner <kastnerkyle@gmail.com>
 # License: BSD 3 clause
 
-# This script is a helper to download the base python, numpy, and scipy
+# This script is a helper to download the base Python, numpy, and scipy
 # packages from their respective websites.
 # To quickly execute the script, run the following Powershell command:
 # powershell.exe -ExecutionPolicy unrestricted "iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/scikit-learn/scikit-learn/master/continuous_integration/windows/windows_testing_downloader.ps1'))"
@@ -72,7 +72,7 @@ function InstallPython($match_string) {
     $pkg_regex = "python" + $match_string + "*"
     $pkg = Get-ChildItem -Filter $pkg_regex -Name
     Invoke-Expression -Command "msiexec /qn /i $pkg"
-    
+
     Write-Host "Installing Python"
     Start-Sleep 25
     Write-Host "Python installation complete"
@@ -115,7 +115,7 @@ function PipInstall($pkg_name, $python_version, $extra_args) {
 }
 
 function InstallNose($python_version) {
-    PipInstall "nose" $python_version 
+    PipInstall "nose" $python_version
 }
 
 function WheelInstall($name, $url, $python_version) {
@@ -144,9 +144,9 @@ function InstallGit {
     $pkg = Get-ChildItem -Filter $pkg_regex -Name
     $pkg_cmd = $pwd.ToString() + "\" + $pkg + " /verysilent"
     Invoke-Expression -Command $pkg_cmd
-    
+
     Write-Host "Installing Git"
-    Start-Sleep 20 
+    Start-Sleep 20
     # Remove the installer - seems to cause weird issues with Git Bash
     Invoke-Expression -Command "rm git.exe"
     Write-Host "Git installation complete"
@@ -157,7 +157,7 @@ function ReadAndUpdateFromRegistry {
     foreach($level in "Machine","User") {
     [Environment]::GetEnvironmentVariables($level).GetEnumerator() | % {
        # For Path variables, append the new values, if they're not already in there
-       if($_.Name -match 'Path$') { 
+       if($_.Name -match 'Path$') {
           $_.Value = ($((Get-Content "Env:$($_.Name)") + ";$($_.Value)") -split ';' | Select -unique) -join ';'
        }
        $_
@@ -184,7 +184,7 @@ function Python27URLs {
         "scipy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/scipy-0.14.0-cp27-none-win32.whl"
         "get-pip" = "https://bootstrap.pypa.io/get-pip.py"
     }
-    return $urls    
+    return $urls
 }
 
 function Python34URLs {
@@ -194,7 +194,7 @@ function Python34URLs {
         "numpy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/numpy-1.8.1-cp34-none-win32.whl"
         "scipy" = "http://28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com/scipy-0.14.0-cp34-none-win32.whl"
     }
-    return $urls    
+    return $urls
 }
 
 function GitURLs {
@@ -202,7 +202,7 @@ function GitURLs {
     $urls = @{
         "git" = "https://github.com/msysgit/msysgit/releases/download/Git-1.9.4-preview20140611/Git-1.9.4-preview20140611.exe"
     }
-    return $urls    
+    return $urls
 }
 
 function main {
@@ -219,7 +219,7 @@ function main {
     }
 
     if (($python -eq "None")) {
-        Write-Host "Installing all supported python versions"
+        Write-Host "Installing all supported Python versions"
         Write-Host "Current versions supported are:"
         ForEach ($key in $versions.Keys) {
             Write-Host $key
@@ -227,7 +227,7 @@ function main {
         }
     } elseif(!($versions.ContainsKey($python))) {
         Write-Host "Python version not recognized!"
-        Write-Host "Pass python version with -python"
+        Write-Host "Pass Python version with -python"
         Write-Host "Current versions supported are:"
         ForEach ($key in $versions.Keys) {
             Write-Host $key
@@ -252,7 +252,7 @@ function main {
         if ($package_dict.ContainsKey("get-pip")) {
            InstallPip $pystring $py
         } else {
-           EnsurePip $py 
+           EnsurePip $py
         }
         InstallNose $py
         InstallWheel $py

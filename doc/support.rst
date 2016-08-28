@@ -62,10 +62,10 @@ Don't forget to include:
 
   - expected outcome,
 
-  - observed outcome or python (or gdb) tracebacks
+  - observed outcome or Python (or gdb) tracebacks
 
 To help developers fix your bug faster, please link to a https://gist.github.com
-holding a standalone minimalistic python script that reproduces your bug and
+holding a standalone minimalistic Python script that reproduces your bug and
 optionally a minimalistic subsample of your dataset (for instance exported
 as CSV files using ``numpy.savetxt``).
 

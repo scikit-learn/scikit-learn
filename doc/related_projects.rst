@@ -106,9 +106,9 @@ and tasks.
 
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for categorical data, and
   several of its variations.
-  
-- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms 
-  for robust variable density clustering. 
+
+- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single Linkage clustering algorithms
+  for robust variable density clustering.
 
 - `lasagne <https://github.com/Lasagne/Lasagne>`_ A lightweight library to build and train neural networks in Theano.
 
@@ -142,7 +142,7 @@ Other packages useful for data analysis and machine learning.
 - `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
   document indexing and similarity retrieval
 
-- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on 
+- `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
@@ -152,7 +152,7 @@ Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 - `scikit-image <http://scikit-image.org/>`_ Image processing and computer
-  vision in python.
+  vision in Python.
 
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
   processing and some machine learning.

@@ -85,7 +85,7 @@ def test_pls():
          [-0.74697144,  0.11930791,  0.65406368],
          [-0.25668686, -0.95924297, -0.11817271]])
     # x_weights_sign_flip holds columns of 1 or -1, depending on sign flip
-    # between R and python
+    # between R and Python
     x_weights_sign_flip = pls_ca.x_weights_ / x_weights
 
     x_rotations = np.array(
@@ -107,9 +107,9 @@ def test_pls():
     y_rotations_sign_flip = pls_ca.y_rotations_ / y_rotations
 
     # x_weights = X.dot(x_rotation)
-    # Hence R/python sign flip should be the same in x_weight and x_rotation
+    # Hence R/Python sign flip should be the same in x_weight and x_rotation
     assert_array_almost_equal(x_rotations_sign_flip, x_weights_sign_flip)
-    # This test that R / python give the same result up to column
+    # This test that R / Python give the same result up to column
     # sign indeterminacy
     assert_array_almost_equal(np.abs(x_rotations_sign_flip), 1, 4)
     assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)

@@ -1,5 +1,5 @@
 
-# simple python script to collect text paragraphs from various languages on the
+# simple Python script to collect text paragraphs from various languages on the
 # same topic namely the Wikipedia encyclopedia itself
 
 import os

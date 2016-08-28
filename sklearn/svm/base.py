@@ -233,11 +233,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         libsvm.set_verbosity_wrap(self.verbose)
 
         if six.PY2:
-            # In python2 ensure kernel is ascii bytes to prevent a TypeError
+            # In Python 2 ensure kernel is ascii bytes to prevent a TypeError
             if isinstance(kernel, six.types.UnicodeType):
                 kernel = str(kernel)
         if six.PY3:
-            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
+            # In Python 3 ensure kernel is utf8 unicode to prevent a TypeError
             if isinstance(kernel, bytes):
                 kernel = str(kernel, 'utf8')
 

@@ -342,7 +342,7 @@ def format_exc(etype, evalue, etb, context=5, tb_offset=0):
     except AttributeError:
         pass
 
-    # Header with the exception type, python version, and date
+    # Header with the exception type, Python version, and date
     pyver = 'Python ' + sys.version.split()[0] + ': ' + sys.executable
     date = time.ctime(time.time())
     pid = 'PID: %i' % os.getpid()

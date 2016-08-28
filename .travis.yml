@@ -45,7 +45,7 @@ env:
 
 matrix:
   allow_failures:
-    # allow_failures seems to be keyed on the python version
+    # allow_failures seems to be keyed on the Python version
     # We are using this to allow failures for DISTRIB=scipy-dev-wheels
     - python: 3.5
 

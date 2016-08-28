@@ -2484,7 +2484,7 @@ def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):
 def simultaneous_sort(DTYPE_t[:, ::1] distances, ITYPE_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays
 
-    This python wrapper exists primarily to enable unit testing
+    This Python wrapper exists primarily to enable unit testing
     of the _simultaneous_sort C routine.
     """
     assert distances.shape[0] == indices.shape[0]

@@ -5,7 +5,7 @@
 /*
  * Some helper methods for libsvm bindings.
  *
- * We need to access from python some parameters stored in svm_model
+ * We need to access from Python some parameters stored in svm_model
  * but libsvm does not expose this structure, so we define it here
  * along some utilities to convert from numpy arrays.
  *

@@ -64,13 +64,13 @@ Model Selection Enhancements and API Changes
 
   - **Parameters ``n_folds`` and ``n_iter`` renamed to ``n_splits``**
 
-    Some parameter names have changed: 
-    The ``n_folds`` parameter in :class:`model_selection.KFold`, 
-    :class:`model_selection.LabelKFold`, and 
+    Some parameter names have changed:
+    The ``n_folds`` parameter in :class:`model_selection.KFold`,
+    :class:`model_selection.LabelKFold`, and
     :class:`model_selection.StratifiedKFold` is now renamed to ``n_splits``.
     The ``n_iter`` parameter in :class:`model_selection.ShuffleSplit`,
-    :class:`model_selection.LabelShuffleSplit`, 
-    and :class:`model_selection.StratifiedShuffleSplit` is now renamed 
+    :class:`model_selection.LabelShuffleSplit`,
+    and :class:`model_selection.StratifiedShuffleSplit` is now renamed
     to ``n_splits``.
 
 
@@ -141,8 +141,8 @@ New features
      <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
      Liu`_
 
-   - Added new cross-validation splitter 
-     :class:`model_selection.TimeSeriesSplit` to handle time series data. 
+   - Added new cross-validation splitter
+     :class:`model_selection.TimeSeriesSplit` to handle time series data.
      (`#6586
      <https://github.com/scikit-learn/scikit-learn/pull/6586>`_) by `YenChen
      Lin`_
@@ -409,7 +409,7 @@ API changes summary
      `Raghav R V`_.
 
    - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
-     by the new parameter ``n_splits`` since it can provide a consistent 
+     by the new parameter ``n_splits`` since it can provide a consistent
      and unambiguous interface to represent the number of train-test splits.
      (`#7187 <https://github.com/scikit-learn/scikit-learn/pull/7187>`_)
      by `YenChen Lin`_.
@@ -3089,7 +3089,7 @@ Other changes
 
    - Beam pruning option in :class:`_BaseHMM` module has been removed since it
      is difficult to Cythonize. If you are interested in contributing a Cython
-     version, you can use the python version in the git history as a reference.
+     version, you can use the Python version in the git history as a reference.
 
    - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
      nearest neighbors searches. The metric can be specified by argument ``p``.
@@ -3143,7 +3143,7 @@ API changes summary
      following parameters are now used:
 
        - ``analyzer`` can be ``'word'`` or ``'char'`` to switch the default
-         analysis scheme, or use a specific python callable (as previously).
+         analysis scheme, or use a specific Python callable (as previously).
 
        - ``tokenizer`` and ``preprocessor`` have been introduced to make it
          still possible to customize those steps with the new API.

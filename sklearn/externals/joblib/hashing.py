@@ -32,7 +32,7 @@ class _ConsistentSet(object):
         try:
             # Trying first to order the set assuming the type of elements is
             # consistent and orderable.
-            # This fails on python 3 when elements are unorderable
+            # This fails on Python 3 when elements are unorderable
             # but we keep it in a try as it's faster.
             self._sequence = sorted(set_sequence)
         except TypeError:
@@ -56,7 +56,7 @@ class Hasher(Pickler):
     def __init__(self, hash_name='md5'):
         self.stream = io.BytesIO()
         # By default we want a pickle protocol that only changes with
-        # the major python version and not the minor one
+        # the major Python version and not the minor one
         protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
                     else pickle.HIGHEST_PROTOCOL)
         Pickler.__init__(self, self.stream, protocol=protocol)
@@ -141,7 +141,7 @@ class Hasher(Pickler):
         try:
             # Trying first to compare dict assuming the type of keys is
             # consistent and orderable.
-            # This fails on python 3 when keys are unorderable
+            # This fails on Python 3 when keys are unorderable
             # but we keep it in a try as it's faster.
             Pickler._batch_setitems(self, iter(sorted(items)))
         except TypeError:

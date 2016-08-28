@@ -204,7 +204,7 @@ cdef class DistanceMetric:
     3) Symmetry: d(x, y) = d(y, x)
     4) Triangle Inequality: d(x, y) + d(y, z) >= d(x, z)
 
-    Because of the Python object overhead involved in calling the python
+    Because of the Python object overhead involved in calling the Python
     function, this will be fairly slow, but it will have the same
     scaling as other distances.
     """

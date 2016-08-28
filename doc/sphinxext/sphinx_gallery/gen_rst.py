@@ -6,7 +6,7 @@
 RST file generator
 ==================
 
-Generate the rst files for the examples by iterating over the python
+Generate the rst files for the examples by iterating over the Python
 example files.
 
 Files that generate images should start with 'plot'
@@ -28,7 +28,7 @@ import warnings
 # Try Python 2 first, otherwise load from Python 3
 from textwrap import dedent
 try:
-    # textwrap indent only exists in python 3
+    # textwrap indent only exists in Python 3
     from textwrap import indent
 except ImportError:
     def indent(text, prefix, predicate=None):
@@ -155,7 +155,7 @@ def get_docstring_and_rest(filename):
         docstring_node = node.body[0]
         docstring = docstring_node.value.s
         # This get the content of the file after the docstring last line
-        # Note: 'maxsplit' argument is not a keyword argument in python2
+        # Note: 'maxsplit' argument is not a keyword argument in Python 2
         rest = content.split('\n', docstring_node.lineno)[-1]
         return docstring, rest
     else:
@@ -242,7 +242,7 @@ def get_md5sum(src_file):
     with open(src_file, 'r') as src_data:
         src_content = src_data.read()
 
-        # data needs to be encoded in python3 before hashing
+        # data needs to be encoded in Python 3 before hashing
         if sys.version_info[0] == 3:
             src_content = src_content.encode('utf-8')
 

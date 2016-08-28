@@ -296,7 +296,7 @@ def test_tweak_params():
     # accordingly. Notice that this is not trivial since it involves a lot
     # of C/Python copying in the libsvm bindings.
     # The success of this test ensures that the mapping between libsvm and
-    # the python classifier is complete.
+    # the Python classifier is complete.
     clf = svm.SVC(kernel='linear', C=1.0)
     clf.fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[-.25, .25]])
@@ -325,7 +325,7 @@ def test_probability():
 
 def test_decision_function():
     # Test decision_function
-    # Sanity check, test that decision_function implemented in python
+    # Sanity check, test that decision_function implemented in Python
     # returns the same as the one in libsvm
     # multi class:
     clf = svm.SVC(kernel='linear', C=0.1,
@@ -391,7 +391,7 @@ def test_decision_function_shape():
 
 def test_svr_predict():
     # Test SVR's decision_function
-    # Sanity check, test that predict implemented in python
+    # Sanity check, test that predict implemented in Python
     # returns the same as the one in libsvm
 
     X = iris.data
@@ -524,19 +524,19 @@ def test_bad_input():
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError on clf.fit
     if six.PY2:
-        # Test unicode (same as str on python3)
+        # Test unicode (same as str on Python 3)
         clf = svm.SVC(kernel=unicode('linear'))
         clf.fit(X, Y)
 
-        # Test ascii bytes (str is bytes in python2)
+        # Test ascii bytes (str is bytes in Python 2)
         clf = svm.SVC(kernel=str('linear'))
         clf.fit(X, Y)
     else:
-        # Test unicode (str is unicode in python3)
+        # Test unicode (str is unicode in Python 3)
         clf = svm.SVC(kernel=str('linear'))
         clf.fit(X, Y)
 
-        # Test ascii bytes (same as str on python2)
+        # Test ascii bytes (same as str on Python 2)
         clf = svm.SVC(kernel=bytes('linear', 'ascii'))
         clf.fit(X, Y)
 

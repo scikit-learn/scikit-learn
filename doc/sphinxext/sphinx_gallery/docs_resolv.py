@@ -54,7 +54,7 @@ def _get_data(url):
 def get_data(url, gallery_dir):
     """Persistent dictionary usage to retrieve the search indexes"""
 
-    # shelve keys need to be str in python 2
+    # shelve keys need to be str in Python 2
     if sys.version_info[0] == 2 and isinstance(url, unicode):
         url = url.encode('utf-8')
 

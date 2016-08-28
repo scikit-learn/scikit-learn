@@ -141,18 +141,18 @@ the :func:`fbeta_score` function::
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
 The second use case is to build a completely custom scorer object
-from a simple python function using :func:`make_scorer`, which can
+from a simple Python function using :func:`make_scorer`, which can
 take several parameters:
 
-* the python function you want to use (``my_custom_loss_func``
+* the Python function you want to use (``my_custom_loss_func``
   in the example below)
 
-* whether the python function returns a score (``greater_is_better=True``,
+* whether the Python function returns a score (``greater_is_better=True``,
   the default) or a loss (``greater_is_better=False``).  If a loss, the output
-  of the python function is negated by the scorer object, conforming to
+  of the Python function is negated by the scorer object, conforming to
   the cross validation convention that scorers return higher values for better models.
 
-* for classification metrics only: whether the python function you provided requires continuous decision
+* for classification metrics only: whether the Python function you provided requires continuous decision
   certainties (``needs_threshold=True``).  The default value is
   False.
 

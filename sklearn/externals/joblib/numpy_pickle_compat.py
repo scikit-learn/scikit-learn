@@ -39,7 +39,7 @@ def read_zfile(file_handle):
     length = length[len(_ZFILE_PREFIX):]
     length = int(length, 16)
 
-    # With python2 and joblib version <= 0.8.4 compressed pickle header is one
+    # With Python 2 and joblib version <= 0.8.4 compressed pickle header is one
     # character wider so we need to ignore an additional space if present.
     # Note: the first byte of the zlib data is guaranteed not to be a
     # space according to
@@ -229,7 +229,7 @@ def load_compatibility(filename):
             if PY3_OR_LATER:
                 new_exc = ValueError(
                     'You may be trying to read with '
-                    'python 3 a joblib pickle generated with python 2. '
+                    'Python 3 a joblib pickle generated with Python 2. '
                     'This feature is not supported by joblib.')
                 new_exc.__cause__ = exc
                 raise new_exc

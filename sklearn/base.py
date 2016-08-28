@@ -231,7 +231,7 @@ class BaseEstimator(object):
             # We need deprecation warnings to always be on in order to
             # catch deprecated param values.
             # This is set in utils/__init__.py but it gets overwritten
-            # when running under python3 somehow.
+            # when running under Python 3 somehow.
             warnings.simplefilter("always", DeprecationWarning)
             try:
                 with warnings.catch_warnings(record=True) as w:

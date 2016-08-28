@@ -1440,7 +1440,7 @@ def check_parameters_default_constructible(name, Estimator):
             init_params = [p for p in signature(init).parameters.values()
                            if param_filter(p)]
         except (TypeError, ValueError):
-            # init is not a python function.
+            # init is not a Python function.
             # true for mixins
             return
         params = estimator.get_params()

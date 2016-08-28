@@ -1,5 +1,5 @@
 # Backport of OrderedDict() class that runs on Python 2.4, 2.5, 2.6, 2.7 and pypy.
-# Passes Python2.7's test suite and incorporates all the latest updates.
+# Passes Python 2.7's test suite and incorporates all the latest updates.
 # Copyright 2009 Raymond Hettinger
 # http://code.activestate.com/recipes/576693/
 "Ordered dictionary"

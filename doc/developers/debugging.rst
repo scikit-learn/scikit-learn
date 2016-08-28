@@ -7,7 +7,7 @@ Developers' Tips for Debugging
 Memory errors: debugging Cython with valgrind
 =============================================
 
-While python/numpy's built-in memory management is relatively robust, it can
+While Python/numpy's built-in memory management is relatively robust, it can
 lead to performance penalties for some routines. For this reason, much of
 the high-performance code in scikit-learn in written in cython. This
 performance gain comes with a tradeoff, however: it is very easy for memory
@@ -26,11 +26,11 @@ code. Follow these steps:
 
   1. Install `valgrind`_ on your system.
 
-  2. Download the python valgrind suppression file: `valgrind-python.supp`_.
+  2. Download the Python valgrind suppression file: `valgrind-python.supp`_.
 
   3. Follow the directions in the `README.valgrind`_ file to customize your
-     python suppressions. If you don't, you will have spurious output coming
-     related to the python interpreter instead of your own code.
+     Python suppressions. If you don't, you will have spurious output coming
+     related to the Python interpreter instead of your own code.
 
   4. Run valgrind as follows::
 

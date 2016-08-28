@@ -61,9 +61,9 @@ installing build dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 installing from source requires you to have installed the scikit-learn runtime
-dependencies, python development headers and a working C/C++ compiler.
+dependencies, Python development headers and a working C/C++ compiler.
 under Debian-based operating systems, which include Ubuntu, if you have
-python 2 you can install all these requirements by issuing::
+Python 2 you can install all these requirements by issuing::
 
     sudo apt-get install build-essential python-dev python-setuptools \
                          python-numpy python-scipy \
