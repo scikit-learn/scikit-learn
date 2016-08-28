@@ -929,7 +929,7 @@ E.g., below is a custom classifier. For more information on this example, see
 
 get_params and set_params
 -------------------------
-All scikit-learn estimator have ``get_params`` and ``set_params`` functions.
+All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
 It must take one keyword argument, ``deep``,
