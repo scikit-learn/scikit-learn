@@ -79,7 +79,8 @@ def test_pairwise_distances():
     S3 = manhattan_distances(X, Y, size_threshold=10)
     assert_array_almost_equal(S, S3)
     # Test cosine as a string metric versus cosine callable
-    # "cosine" uses scikit-learn metric, cosine (function) is scipy.spatial
+    # The string "cosine" uses sklearn.metric,
+    # while the function cosine is scipy.spatial
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
     assert_equal(S.shape[0], X.shape[0])
