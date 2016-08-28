@@ -165,6 +165,24 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+def test_grid_search_incorrect_param_grid():
+    assert_raise_message(
+        ValueError,
+        "Parameter values for parameter (C) need to be a sequence.",
+        GridSearchCV,
+        None,
+        {'C': 1})
+
+
+def test_grid_search_incorrect_param_grid():
+    assert_raise_message(
+        ValueError,
+        "Parameter values for parameter (C) need to be a non-empty sequence.",
+        GridSearchCV,
+        None,
+        {'C': []})
+
+
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
