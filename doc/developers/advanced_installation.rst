@@ -257,7 +257,7 @@ or::
 building on windows
 -------------------
 
-to build scikit-learn on windows you need a working c/c++ compiler in
+to build scikit-learn on windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
 
 picking the right compiler depends on the version of python (2 or 3)
