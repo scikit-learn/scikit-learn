@@ -1232,7 +1232,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The input samples. Internally, it's dtype will be converted to
+            The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
             be converted to a sparse ``csr_matrix``.
 
@@ -1832,7 +1832,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The input samples. Internally, it's dtype will be converted to
+            The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will
             be converted to a sparse ``csr_matrix``.
 
