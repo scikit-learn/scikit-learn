@@ -280,7 +280,7 @@ path environment variable.
 
 for 32-bit python it is possible use the standalone installers for
 `microsoft visual c++ express 2008 <http://download.microsoft.com/download/A/5/4/A54BADB6-9C3F-478D-8657-93B3FC9FE62D/vcsetup.exe>`_
-for python 2 or microsoft visual c++ express 2010 for python 3.
+for python 2 or microsoft visual C++ express 2010 for python 3.
 
 once installed you should be able to build scikit-learn without any
 particular configuration by running the following command in the scikit-learn
