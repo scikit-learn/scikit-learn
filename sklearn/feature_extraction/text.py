@@ -676,7 +676,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
-        self.chunksize = 10000
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -706,10 +705,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         This does not prune samples with zero features.
         """
-        high_not_set = high is None or int(high) == X.shape[0]
-        low_not_set = low is None or int(low) == 1
-        limit_not_set = limit is None or int(limit) == X.shape[1]
-        if high_not_set and low_not_set and limit_not_set:
+        if high is None and low is None and limit is None:
             return X, set()
 
         # Calculate a mask based on document frequencies
@@ -751,7 +747,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
+        j_indices = []
         indptr = _make_int_array()
         values = _make_int_array()
         indptr.append(0)
@@ -780,7 +776,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
+        j_indices = np.asarray(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         values = frombuffer_empty(values, dtype=np.intc)
 
