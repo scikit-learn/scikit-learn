@@ -871,9 +871,9 @@ an integer called ``n_iter``.
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
-whether it is just for you or for contributing it to sklearn, there are several
-internals of scikit-learn that you should be aware of in addition to the
-sklearn API outlined above. You can check whether your estimator
+whether it is just for you or for contributing it to scikit-learn, there are
+several internals of scikit-learn that you should be aware of in addition to
+the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
 :func:`utils.estimator_checks.check_estimator` on the class::
 
@@ -929,7 +929,7 @@ E.g., below is a custom classifier. For more information on this example, see
 
 get_params and set_params
 -------------------------
-All sklearn estimator have ``get_params`` and ``set_params`` functions.
+All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
 It must take one keyword argument, ``deep``,

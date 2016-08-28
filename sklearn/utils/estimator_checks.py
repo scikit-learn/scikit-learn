@@ -220,7 +220,7 @@ def _yield_all_checks(name, Estimator):
 
 
 def check_estimator(Estimator):
-    """Check if estimator adheres to sklearn conventions.
+    """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
     shapes, etc.

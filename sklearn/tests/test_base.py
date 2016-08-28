@@ -73,7 +73,7 @@ class NoEstimator(object):
 
 
 class VargEstimator(BaseEstimator):
-    """Sklearn estimators shouldn't have vargs."""
+    """scikit-learn estimators shouldn't have vargs."""
     def __init__(self, *vargs):
         pass
 

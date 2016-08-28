@@ -61,7 +61,8 @@ def test_pairwise_distances():
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
     assert_array_almost_equal(S, S2)
-    # "cityblock" uses sklearn metric, cityblock (function) is scipy.spatial.
+    # "cityblock" uses scikit-learn metric, cityblock (function) is
+    # scipy.spatial.
     S = pairwise_distances(X, metric="cityblock")
     S2 = pairwise_distances(X, metric=cityblock)
     assert_equal(S.shape[0], S.shape[1])
@@ -78,7 +79,8 @@ def test_pairwise_distances():
     S3 = manhattan_distances(X, Y, size_threshold=10)
     assert_array_almost_equal(S, S3)
     # Test cosine as a string metric versus cosine callable
-    # "cosine" uses sklearn metric, cosine (function) is scipy.spatial
+    # The string "cosine" uses sklearn.metric,
+    # while the function cosine is scipy.spatial
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
     assert_equal(S.shape[0], X.shape[0])
@@ -330,7 +332,7 @@ def test_pairwise_distances_argmin_min():
     assert_equal(type(Dsp), np.ndarray)
     assert_equal(type(Esp), np.ndarray)
 
-    # Non-euclidean sklearn metric
+    # Non-euclidean scikit-learn metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
     D2 = pairwise_distances_argmin(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
