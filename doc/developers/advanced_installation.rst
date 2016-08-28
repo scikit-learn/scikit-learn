@@ -62,7 +62,7 @@ installing build dependencies
 
 installing from source requires you to have installed the scikit-learn runtime
 dependencies, python development headers and a working C/C++ compiler.
-under debian-based operating systems, which include ubuntu, if you have
+under Debian-based operating systems, which include Ubuntu, if you have
 python 2 you can install all these requirements by issuing::
 
     sudo apt-get install build-essential python-dev python-setuptools \
@@ -75,7 +75,7 @@ if you have python 3::
                          python3-numpy python3-scipy \
                          libatlas-dev libatlas3gf-base
 
-on recent debian and ubuntu (e.g. ubuntu 13.04 or later) make sure that atlas
+on recent Debian and Ubuntu (e.g. Ubuntu 13.04 or later) make sure that atlas
 is used to provide the implementation of the blas and lapack linear algebra
 routines::
 
@@ -95,7 +95,7 @@ routines::
 
     the above installs the atlas implementation of blas
     (the basic linear algebra subprograms library).
-    ubuntu 11.10 and later, and recent (testing) versions of debian,
+    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
     offer an alternative implementation called openblas.
 
     using openblas can give speedups in some scikit-learn modules,
