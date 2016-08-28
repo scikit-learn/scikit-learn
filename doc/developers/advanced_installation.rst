@@ -61,7 +61,7 @@ installing build dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 installing from source requires you to have installed the scikit-learn runtime
-dependencies, python development headers and a working c/c++ compiler.
+dependencies, python development headers and a working C/C++ compiler.
 under debian-based operating systems, which include ubuntu, if you have
 python 2 you can install all these requirements by issuing::
 
@@ -257,7 +257,7 @@ or::
 building on windows
 -------------------
 
-to build scikit-learn on windows you need a working c/c++ compiler in
+to build scikit-learn on windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
 
 picking the right compiler depends on the version of python (2 or 3)
@@ -364,7 +364,7 @@ bleeding edge
 =============
 
 see section :ref:`git_repo` on how to get the development version. then follow
-the previous instructions to build from source depending on your platform. 
+the previous instructions to build from source depending on your platform.
 You will also require Cython >=0.23 in order to build the development version.
 
 
