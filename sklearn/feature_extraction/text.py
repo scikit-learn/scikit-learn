@@ -45,7 +45,7 @@ __all__ = ['CountVectorizer',
 def strip_accents_unicode(s):
     """Transform accentuated unicode symbols into their simple counterpart
 
-    Warning: the python-level loop and join operations make this
+    Warning: the Python-level loop and join operations make this
     implementation 20 times slower than the strip_accents_ascii basic
     normalization.
 
@@ -183,7 +183,7 @@ class VectorizerMixin(object):
         if self.preprocessor is not None:
             return self.preprocessor
 
-        # unfortunately python functools package does not have an efficient
+        # unfortunately Python functools package does not have an efficient
         # `compose` function that would have allowed us to chain a dynamic
         # number of functions. However the cost of a lambda call is a few
         # hundreds of nanoseconds which is negligible when compared to the
@@ -1004,7 +1004,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self

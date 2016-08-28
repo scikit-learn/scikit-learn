@@ -63,10 +63,10 @@ Security & maintainability limitations
 pickle (and joblib by extension), has some issues regarding maintainability
 and security. Because of this,
 
-* Never unpickle untrusted data as it could lead to malicious code being 
+* Never unpickle untrusted data as it could lead to malicious code being
   executed upon loading.
-* While models saved using one version of scikit-learn might load in 
-  other versions, this is entirely unsupported and inadvisable. It should 
+* While models saved using one version of scikit-learn might load in
+  other versions, this is entirely unsupported and inadvisable. It should
   also be kept in mind that operations performed on such data could give
   different and unexpected results.
 
@@ -74,7 +74,7 @@ In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:
 
 * The training data, e.g. a reference to a immutable snapshot
-* The python source code used to generate the model
+* The Python source code used to generate the model
 * The versions of scikit-learn and its dependencies
 * The cross validation score obtained on the training data
 

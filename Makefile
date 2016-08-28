@@ -7,7 +7,7 @@ CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
-# skip doctests on 32bit python
+# skip doctests on 32bit Python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
 
 ifeq ($(BITS),32)

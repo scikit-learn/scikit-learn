@@ -229,7 +229,7 @@ def test_sigmoid_calibration():
     """Test calibration values with Platt sigmoid model"""
     exF = np.array([5, -4, 1.0])
     exY = np.array([1, -1, -1])
-    # computed from my python port of the C++ code in LibSVM
+    # computed from my Python port of the C++ code in LibSVM
     AB_lin_libsvm = np.array([-0.20261354391187855, 0.65236314980010512])
     assert_array_almost_equal(AB_lin_libsvm,
                               _sigmoid_calibration(exF, exY), 3)

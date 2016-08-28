@@ -100,7 +100,7 @@ We can now load the list of files matching those categories as follows::
   ...     categories=categories, shuffle=True, random_state=42)
 
 The returned dataset is a ``scikit-learn`` "bunch": a simple holder
-object with fields that can be both accessed as python ``dict``
+object with fields that can be both accessed as Python ``dict``
 keys or ``object`` attributes for convenience, for instance the
 ``target_names`` holds the list of the requested category names::
 

@@ -44,7 +44,7 @@ def test_delegate_to_func():
     )
 
     # reset the argument stores.
-    args_store[:] = []  # python2 compatible inplace list clear.
+    args_store[:] = []  # Python 2 compatible inplace list clear.
     kwargs_store.clear()
     y = object()
 

@@ -114,7 +114,7 @@ def _buffered_write_file(fobj):
         # Python 2.6 doesn't fully support io.BufferedWriter.
         # Python 2.7 doesn't work with BZ2File through a buffer: no attribute
         # 'writable'.
-        # BZ2File doesn't implement the file object context manager in python 2
+        # BZ2File doesn't implement the file object context manager in Python 2
         # so we wrap the fileobj using `closing`.
         return closing(fobj)
     else:
@@ -194,7 +194,7 @@ def _read_fileobject(fileobj, filename, mmap_mode=None):
             if PY3_OR_LATER:
                 yield _buffered_read_file(bz2.BZ2File(fileobj, 'rb'))
             else:
-                # In python 2, BZ2File doesn't support a fileobj opened in
+                # In Python 2, BZ2File doesn't support a fileobj opened in
                 # binary mode. In this case, we pass the filename.
                 yield _buffered_read_file(bz2.BZ2File(fileobj.name, 'rb'))
         elif (compressor == 'lzma' or compressor == 'xz'):
@@ -203,7 +203,7 @@ def _read_fileobject(fileobj, filename, mmap_mode=None):
             else:
                 raise NotImplementedError("Lzma decompression is not "
                                           "available for this version of "
-                                          "python ({0}.{1})"
+                                          "Python ({0}.{1})"
                                           .format(sys.version_info[0],
                                                   sys.version_info[1]))
         # No compression detected => returning the input file object (open)
@@ -254,7 +254,7 @@ class BinaryZlibFile(io.BufferedIOBase):
     is returned as bytes, and data to be written should be given as bytes.
 
     This object is an adaptation of the BZ2File object and is compatible with
-    versions of python >= 2.6.
+    versions of Python >= 2.6.
 
     If filename is a str or bytes object, it gives the name
     of the file to be opened. Otherwise, it should be a file object,
@@ -587,7 +587,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     Raises ValueError if not EOF is encountered before size bytes are read.
     Non-blocking objects only supported if they derive from io objects.
 
-    Required as e.g. ZipExtFile in python 2.6 can return less data than
+    Required as e.g. ZipExtFile in Python 2.6 can return less data than
     requested.
 
     This function was taken from numpy/lib/format.py in version 1.10.2.
@@ -606,9 +606,9 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     """
     data = bytes()
     while True:
-        # io files (default in python3) return None or raise on
-        # would-block, python2 file will truncate, probably nothing can be
-        # done about that.  note that regular files can't be non-blocking
+        # io files (default in Python 3) return None or raise on
+        # would-block, Python 2 file will truncate, probably nothing can be
+        # done about that. note that regular files can't be non-blocking
         try:
             r = fp.read(size - len(data))
             data += r

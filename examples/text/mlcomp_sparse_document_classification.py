@@ -28,7 +28,7 @@ the root folder holding the uncompressed archive::
 
   % export MLCOMP_DATASETS_HOME="~/data/mlcomp"
 
-Then you are ready to run this example using your favorite python shell::
+Then you are ready to run this example using your favorite Python shell::
 
   % ipython examples/mlcomp_sparse_document_classification.py
 

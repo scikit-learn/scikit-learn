@@ -133,9 +133,9 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 
     Redirects are resolved first.
 
-    Returns X, the scipy sparse adjacency matrix, redirects as python
-    dict from article names to article names and index_map a python dict
-    from article names to python int (article indexes).
+    Returns X, the scipy sparse adjacency matrix, redirects as Python
+    dict from article names to article names and index_map a Python dict
+    from article names to Python int (article indexes).
     """
 
     print("Computing the redirect map")

@@ -110,7 +110,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
     a = np.array(a, copy=False)
     if a.ndim == 0:
         try:
-            # __index__ must return an integer by python rules.
+            # __index__ must return an integer by Python rules.
             pop_size = operator.index(a.item())
         except TypeError:
             raise ValueError("a must be 1-dimensional or an integer")

@@ -211,7 +211,7 @@ Then ``dual_coef_`` looks like this:
 Scores and probabilities
 ------------------------
 
-The :class:`SVC` method ``decision_function`` gives per-class scores 
+The :class:`SVC` method ``decision_function`` gives per-class scores
 for each sample (or a single score per sample in the binary case).
 When the constructor option ``probability`` is set to ``True``,
 class membership probability estimates
@@ -298,8 +298,8 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are three different implementations of Support Vector Regression: 
-:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` 
+There are three different implementations of Support Vector Regression:
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
 provides a faster implementation than :class:`SVR` but only considers
 linear kernels, while :class:`NuSVR` implements a slightly different
 formulation than :class:`SVR` and :class:`LinearSVR`. See
@@ -463,7 +463,7 @@ Custom Kernels
 --------------
 
 You can define your own kernels by either giving the kernel as a
-python function or by precomputing the Gram matrix.
+Python function or by precomputing the Gram matrix.
 
 Classifiers with custom kernels behave the same way as any other
 classifiers, except that:
@@ -535,7 +535,7 @@ correctly.  ``gamma`` defines how much influence a single training example has.
 The larger ``gamma`` is, the closer other examples must be to be affected.
 
 Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
-is advised to use :class:`sklearn.model_selection.GridSearchCV` with 
+is advised to use :class:`sklearn.model_selection.GridSearchCV` with
 ``C`` and ``gamma`` spaced exponentially far apart to choose good values.
 
 .. topic:: Examples:
@@ -683,7 +683,7 @@ term :math:`\rho`
  * `"A Tutorial on Support Vector Regression"
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.114.4288>`_,
    Alex J. Smola, Bernhard Schölkopf - Statistics and Computing archive
-   Volume 14 Issue 3, August 2004, p. 199-222. 
+   Volume 14 Issue 3, August 2004, p. 199-222.
 
 
 .. _svm_implementation_details:

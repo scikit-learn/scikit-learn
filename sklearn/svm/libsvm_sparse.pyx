@@ -185,7 +185,7 @@ def libsvm_sparse_train ( int n_features,
 
     # copy model.nSV
     # TODO: do only in classification
-    cdef np.ndarray n_class_SV 
+    cdef np.ndarray n_class_SV
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
@@ -236,7 +236,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     copy_predict (libsvm_helper.c).
 
     We have to reconstruct model and parameters to make sure we stay
-    in sync with the python object.
+    in sync with the Python object.
 
     See sklearn.svm.predict for a complete list of parameters.
 
@@ -365,7 +365,7 @@ def libsvm_sparse_decision_function(
     Predict margin (libsvm name for this is predict_values)
 
     We have to reconstruct model and parameters to make sure we stay
-    in sync with the python object.
+    in sync with the Python object.
     """
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter *param

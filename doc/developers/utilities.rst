@@ -270,7 +270,7 @@ Helper Functions
 Hash Functions
 ==============
 
-- :func:`murmurhash3_32` provides a python wrapper for the
+- :func:`murmurhash3_32` provides a Python wrapper for the
   ``MurmurHash3_x86_32`` C++ non cryptographic hash function. This hash
   function is suitable for implementing lookup tables, Bloom filters,
   Count Min Sketch, feature hashing and implicitly defined sparse

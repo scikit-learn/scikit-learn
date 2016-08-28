@@ -511,7 +511,7 @@ class Signature(object):
 
     @classmethod
     def from_function(cls, func):
-        '''Constructs Signature for the given python function'''
+        '''Constructs Signature for the given Python function'''
 
         if not isinstance(func, types.FunctionType):
             raise TypeError('{0!r} is not a Python function'.format(func))

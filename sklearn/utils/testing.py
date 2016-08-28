@@ -261,8 +261,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-
+    # XXX: once we may depend on Python >= 2.6, this can be replaced by the
     # warnings module context manager.
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
@@ -286,7 +285,7 @@ def ignore_warnings(obj=None, category=Warning):
     """Context manager and decorator to ignore warnings.
 
     Note. Using this (in both variants) will clear all warnings
-    from all python modules loaded. In case you need to test
+    from all Python modules loaded. In case you need to test
     cross-module-warning-logging this is not your tool of choice.
 
     Parameters

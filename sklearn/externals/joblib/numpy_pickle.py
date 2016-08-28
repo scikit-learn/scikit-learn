@@ -108,7 +108,7 @@ class NumpyArrayWrapper(object):
         else:
             if (not PY3_OR_LATER and
                     unpickler.np.compat.isfileobj(unpickler.file_handle)):
-                # In python 2, gzip.GzipFile is considered as a file so one
+                # In Python 2, gzip.GzipFile is considered as a file so one
                 # can use numpy.fromfile().
                 # For file objects, use np.fromfile function.
                 # This function is faster than the memory-intensive
@@ -210,7 +210,7 @@ class NumpyPickler(Pickler):
         File object handle used for serializing the input object.
     protocol: int
         Pickle protocol used. Default is pickle.DEFAULT_PROTOCOL under
-        python 3, pickle.HIGHEST_PROTOCOL otherwise.
+        Python 3, pickle.HIGHEST_PROTOCOL otherwise.
     """
 
     dispatch = Pickler.dispatch.copy()
@@ -220,7 +220,7 @@ class NumpyPickler(Pickler):
         self.buffered = isinstance(self.file_handle, BinaryZlibFile)
 
         # By default we want a pickle protocol that only changes with
-        # the major python version and not the minor one
+        # the major Python version and not the minor one
         if protocol is None:
             protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
                         else pickle.HIGHEST_PROTOCOL)
@@ -462,7 +462,7 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
 
     if not PY3_OR_LATER and compress_method in ('lzma', 'xz'):
         raise NotImplementedError("{0} compression is only available for "
-                                  "python version >= 3.3. You are using "
+                                  "Python version >= 3.3. You are using "
                                   "{1}.{2}".format(compress_method,
                                                    sys.version_info[0],
                                                    sys.version_info[1]))
@@ -516,7 +516,7 @@ def _unpickle(fobj, filename="", mmap_mode=None):
         if PY3_OR_LATER:
             new_exc = ValueError(
                 'You may be trying to read with '
-                'python 3 a joblib pickle generated with python 2. '
+                'Python 3 a joblib pickle generated with Python 2. '
                 'This feature is not supported by joblib.')
             new_exc.__cause__ = exc
             raise new_exc

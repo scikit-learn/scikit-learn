@@ -31,7 +31,7 @@ or ``conda``::
 **We don't recommend installing scipy or numpy using pip on linux**,
 as this will involve a lengthy build-process with many dependencies.
 Without careful configuration, building numpy yourself can lead to an installation
-that is much slower than it should be. 
+that is much slower than it should be.
 If you are using Linux, consider using your package manager to install
 scikit-learn. It is usually the easiest way, but might not provide the newest
 version.
@@ -40,8 +40,8 @@ your operation system, it is recommended to use a third party distribution.
 
 Third-party Distributions
 ==========================
-If you don't already have a python installation with numpy and scipy, we
-recommend to install either via your package manager or via a python bundle.
+If you don't already have a Python installation with numpy and scipy, we
+recommend to install either via your package manager or via a Python bundle.
 These come with numpy, scipy, scikit-learn, matplotlib and many other helpful
 scientific and data processing libraries.
 
@@ -53,7 +53,7 @@ Canopy and Anaconda for all supported platforms
 `Canopy
 <https://www.enthought.com/products/canopy>`_ and `Anaconda
 <https://www.continuum.io/downloads>`_ both ship a recent
-version of scikit-learn, in addition to a large set of scientific python
+version of scikit-learn, in addition to a large set of scientific Python
 library for Windows, Mac OSX and Linux.
 
 Anaconda offers scikit-learn as part of its free distribution.

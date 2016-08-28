@@ -57,7 +57,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
             <= O(O(np.random.randint) *
                  n_population * 1 / (1 - n_samples / n_population))
 
-    Space complexity of O(n_samples) in a python set.
+    Space complexity of O(n_samples) in a Python set.
 
 
     Parameters
@@ -89,7 +89,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
     rng = check_random_state(random_state)
     rng_randint = rng.randint
 
-    # The following line of code are heavily inspired from python core,
+    # The following line of code are heavily inspired from Python core,
     # more precisely of random.sample.
     cdef set selected = set()
 
@@ -152,7 +152,7 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     for i in xrange(n_population):
         pool[i] = i
 
-    # The following line of code are heavily inspired from python core,
+    # The following line of code are heavily inspired from Python core,
     # more precisely of random.sample.
     for i in xrange(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)

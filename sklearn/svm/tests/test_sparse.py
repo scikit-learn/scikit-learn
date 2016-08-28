@@ -146,7 +146,7 @@ def test_svc_iris():
 def test_sparse_decision_function():
     #Test decision_function
 
-    #Sanity check, test that decision_function implemented in python
+    #Sanity check, test that decision_function implemented in Python
     #returns the same as the one in libsvm
 
     # multi class:

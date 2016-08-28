@@ -5,7 +5,7 @@
 # License: 3-clause BSD
 import subprocess
 
-descr = """A set of python modules for machine learning and data mining"""
+descr = """A set of Python modules for machine learning and data mining"""
 
 import sys
 import os
@@ -27,7 +27,7 @@ else:
 builtins.__SKLEARN_SETUP__ = True
 
 DISTNAME = 'scikit-learn'
-DESCRIPTION = 'A set of python modules for machine learning and data mining'
+DESCRIPTION = 'A set of Python modules for machine learning and data mining'
 with open('README.rst') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'Andreas Mueller'

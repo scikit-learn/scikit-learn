@@ -110,21 +110,21 @@ cdef class SequentialDataset:
         pass
 
     def _shuffle_py(self, np.uint32_t seed):
-        """python function used for easy testing"""
+        """Python function used for easy testing"""
         self.shuffle(seed)
 
     def _next_py(self):
-        """python function used for easy testing"""
+        """Python function used for easy testing"""
         cdef int current_index = self._get_next_index()
         return self._sample_py(current_index)
 
     def _random_py(self):
-        """python function used for easy testing"""
+        """Python function used for easy testing"""
         cdef int current_index = self._get_random_index()
         return self._sample_py(current_index)
 
     def _sample_py(self, int current_index):
-        """python function used for easy testing"""
+        """Python function used for easy testing"""
         cdef double* x_data_ptr
         cdef int* x_indices_ptr
         cdef int nnz, j

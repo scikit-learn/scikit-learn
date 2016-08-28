@@ -122,7 +122,7 @@ def _reduce_memmap_backed(a, m):
 
     a is expected to be an instance of np.ndarray (or np.memmap)
     m is expected to be an instance of np.memmap on the top of the ``base``
-    attribute ancestry of a. ``m.base`` should be the real python mmap object.
+    attribute ancestry of a. ``m.base`` should be the real Python mmap object.
     """
     # offset that comes from the striding differences between a and m
     a_start, a_end = np.byte_bounds(a)

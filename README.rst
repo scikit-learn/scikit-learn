@@ -83,7 +83,7 @@ Install
 =======
 
 This package uses distutils, which is the default way of installing
-python modules. To install in your home directory, use::
+Python modules. To install in your home directory, use::
 
   python setup.py install --user
 

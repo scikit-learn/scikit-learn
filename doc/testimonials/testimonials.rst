@@ -106,7 +106,7 @@ development, it is an essential part of our toolkit. Recent uses are included
 in `digg’s new video recommender system
 <https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3#.g5kk2u89v>`_,
 and Poncho’s `dynamic heuristic subspace clustering
-<http://data.betaworks.com/a-data-driven-approach-to-verbalize-weather-forecasts-at-scale/>`_. 
+<http://data.betaworks.com/a-data-driven-approach-to-verbalize-weather-forecasts-at-scale/>`_.
 
 .. raw:: html
 
@@ -515,7 +515,7 @@ predictive modeling problems. Scikit-learn has emerged as our primary tool for
 developing prototypes and making quick progress. From predicting missing data
 and classifying tweets to clustering communities of social media users, scikit-
 learn proved useful in a variety of applications. Its very intuitive interface
-and excellent compatibility with other python tools makes it and indispensable
+and excellent compatibility with other Python tools makes it and indispensable
 tool in our daily research efforts.
 
 .. raw:: html
@@ -587,7 +587,7 @@ David Koh - Senior Data Scientist at OkCupid
 .. raw:: html
 
    </span>
-   
+
 
 `Lovely <https://livelovely.com/>`_
 -----------------------------------
@@ -609,7 +609,7 @@ our users and our listings. From understanding user behavior, improving data
 quality, and detecting fraud, scikit-learn is a regular tool for gathering
 insights, predictive modeling and improving our product. The easy-to-read
 documentation and intuitive architecture of the API makes machine learning both
-explorable and accessible to a wide range of python developers. I'm constantly
+explorable and accessible to a wide range of Python developers. I'm constantly
 recommending that more developers and scientists try scikit-learn.
 
 .. raw:: html
@@ -778,13 +778,13 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
    </div>
 
-Our software, Data Science Studio (DSS), enables users to create data services 
-that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
-Machine Learning. Our Machine Learning module integrates 
-many scikit-learn algorithms. The scikit-learn library is a perfect integration 
-with DSS because it offers algorithms for virtually all business cases. Our goal 
-is to offer a transparent and flexible tool that makes it easier to optimize 
-time consuming aspects of building a data service, preparing data, and training 
+Our software, Data Science Studio (DSS), enables users to create data services
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with
+Machine Learning. Our Machine Learning module integrates
+many scikit-learn algorithms. The scikit-learn library is a perfect integration
+with DSS because it offers algorithms for virtually all business cases. Our goal
+is to offer a transparent and flexible tool that makes it easier to optimize
+time consuming aspects of building a data service, preparing data, and training
 machine learning algorithms on all types of data.
 
 

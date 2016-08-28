@@ -3,7 +3,7 @@ try:
     from tokenize import open as open_py_source
 
 except ImportError:
-    # Copied from python3 tokenize
+    # Copied from Python 3 tokenize
     from codecs import lookup, BOM_UTF8
     import re
     from io import TextIOWrapper, open

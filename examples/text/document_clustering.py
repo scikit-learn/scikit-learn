@@ -9,7 +9,7 @@ a scipy.sparse matrix to store the features instead of standard numpy arrays.
 
 Two feature extraction methods can be used in this example:
 
-  - TfidfVectorizer uses a in-memory vocabulary (a python dict) to map the most
+  - TfidfVectorizer uses a in-memory vocabulary (a Python dict) to map the most
     frequent words to features indices and hence compute a word occurrence
     frequency (sparse) matrix. The word frequencies are then reweighted using
     the Inverse Document Frequency (IDF) vector collected feature-wise over
@@ -28,7 +28,7 @@ Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
 Additionally, latent semantic analysis can also be used to reduce dimensionality
-and discover latent patterns in the data. 
+and discover latent patterns in the data.
 
 It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
