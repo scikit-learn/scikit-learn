@@ -107,14 +107,6 @@ contains the weight matrices that constitute the model parameters::
     >>> [coef.shape for coef in clf.coefs_]
     [(2, 5), (5, 2), (2, 1)]
 
-To get the raw values before applying the output activation function, run the
-following command,
-
-use :meth:`MLPClassifier.decision_function`::
-
-    >>> clf.decision_function([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([ 47.6...,  47.6...])
-
 Currently, :class:`MLPClassifier` supports only the
 Cross-Entropy loss function, which allows probability estimates by running the
 ``predict_proba`` method.
@@ -125,19 +117,18 @@ classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
     >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
-    array([[ 0.,  1.],
-           [ 0.,  1.]])
+    array([[  1.96718015e-04,   9.99803282e-01],
+           [  1.96718015e-04,   9.99803282e-01]])
 
 :class:`MLPClassifier` supports multi-class classification by
 applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_
 as the output function.
 
 Further, the algorithm supports :ref:`multi-label classification <multiclass>`
-in which a sample can belong to more than one class. For each class, the output
-of :meth:`MLPClassifier.decision_function` passes through the
-logistic function. Values larger or equal to `0.5` are rounded to `1`,
-otherwise to `0`. For a predicted output of a sample, the indices where the
-value is `1` represents the assigned classes of that sample::
+in which a sample can belong to more than one class. For each class, the raw
+output passes through the logistic function. Values larger or equal to `0.5`
+are rounded to `1`, otherwise to `0`. For a predicted output of a sample, the
+indices where the value is `1` represents the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]

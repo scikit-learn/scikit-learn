@@ -13,7 +13,6 @@ from scipy.optimize import fmin_l_bfgs_b
 import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ._base import logistic, softmax
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
@@ -81,7 +80,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             start, end = self._intercept_indptr[i]
             self.intercepts_[i] = packed_parameters[start:end]
 
-    def _forward_pass(self, activations, with_output_activation=True):
+    def _forward_pass(self, activations):
         """Perform a forward pass on the network by computing the values
         of the neurons in the hidden layers and the output layer.
 
@@ -107,9 +106,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 activations[i + 1] = hidden_activation(activations[i + 1])
 
         # For the last layer
-        if with_output_activation:
-            output_activation = ACTIVATIONS[self.out_activation_]
-            activations[i + 1] = output_activation(activations[i + 1])
+        output_activation = ACTIVATIONS[self.out_activation_]
+        activations[i + 1] = output_activation(activations[i + 1])
 
         return activations
 
@@ -222,7 +220,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         activations = self._forward_pass(activations)
 
         # Get loss
-        loss = LOSS_FUNCTIONS[self.loss](y, activations[-1])
+        loss_func_name = self.loss
+        if loss_func_name == 'log_loss' and self.out_activation_ == 'logistic':
+            loss_func_name = 'binary_log_loss'
+        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1])
         # Add L2 regularization term to loss
         values = np.sum(
             np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
@@ -273,18 +274,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Output for binary class and multi-label
         else:
             self.out_activation_ = 'logistic'
-            if self.loss == 'log_loss':
-                self.loss = 'binary_log_loss'
 
         # Initialize coefficient and intercept layers
         self.coefs_ = []
         self.intercepts_ = []
 
         for i in range(self.n_layers_ - 1):
-            rng = check_random_state(self.random_state)
             coef_init, intercept_init = self._init_coef(layer_units[i],
-                                                        layer_units[i + 1],
-                                                        rng)
+                                                        layer_units[i + 1])
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
@@ -297,7 +294,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             else:
                 self.best_loss_ = np.inf
 
-    def _init_coef(self, fan_in, fan_out, rng):
+    def _init_coef(self, fan_in, fan_out):
         if self.activation == 'logistic':
             # Use the initialization method recommended by
             # Glorot et al.
@@ -311,8 +308,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("Unknown activation function %s" %
                              self.activation)
 
-        coef_init = rng.uniform(-init_bound, init_bound, (fan_in, fan_out))
-        intercept_init = rng.uniform(-init_bound, init_bound, fan_out)
+        coef_init = self._random_state.uniform(-init_bound, init_bound,
+                                               (fan_in, fan_out))
+        intercept_init = self._random_state.uniform(-init_bound, init_bound,
+                                                    fan_out)
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
@@ -339,6 +338,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         layer_units = ([n_features] + hidden_layer_sizes +
                        [self.n_outputs_])
+
+        # check random state
+        self._random_state = check_random_state(self.random_state)
 
         if not hasattr(self, 'coefs_') or (not self.warm_start and not
                                            incremental):
@@ -468,7 +470,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, incremental):
-        rng = check_random_state(self.random_state)
 
         if not incremental or not hasattr(self, '_optimizer'):
             params = self.coefs_ + self.intercepts_
@@ -486,7 +487,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         early_stopping = self.early_stopping and not incremental
         if early_stopping:
             X, X_val, y, y_val = train_test_split(
-                X, y, random_state=self.random_state,
+                X, y, random_state=self._random_state,
                 test_size=self.validation_fraction)
             if isinstance(self, ClassifierMixin):
                 y_val = self.label_binarizer_.inverse_transform(y_val)
@@ -503,7 +504,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         try:
             for it in range(self.max_iter):
-                X, y = shuffle(X, y, random_state=rng)
+                X, y = shuffle(X, y, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]
@@ -632,14 +633,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         if self.algorithm not in _STOCHASTIC_ALGOS:
             raise AttributeError("partial_fit is only available for stochastic"
-                                 "optimization algorithms. %s is not"
+                                 " optimization algorithms. %s is not"
                                  " stochastic" % self.algorithm)
         return self._partial_fit
 
     def _partial_fit(self, X, y, classes=None):
         return self._fit(X, y, incremental=True)
 
-    def _decision_scores(self, X):
+    def _predict(self, X):
         """Predict using the trained model
 
         Parameters
@@ -670,7 +671,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             activations.append(np.empty((X.shape[0],
                                          layer_units[i + 1])))
         # forward propagate
-        self._forward_pass(activations, with_output_activation=False)
+        self._forward_pass(activations)
         y_pred = activations[-1]
 
         return y_pred
@@ -913,27 +914,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y = self.label_binarizer_.transform(y)
         return X, y
 
-    def decision_function(self, X):
-        """Decision function of the mlp model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input data.
-
-        Returns
-        -------
-        y : array-like, shape (n_samples,) or (n_samples, n_classes)
-            The values of decision function for each class in the model.
-        """
-        check_is_fitted(self, "coefs_")
-        y_scores = self._decision_scores(X)
-
-        if self.n_outputs_ == 1:
-            return y_scores.ravel()
-        else:
-            return y_scores
-
     def predict(self, X):
         """Predict using the multi-layer perceptron classifier
 
@@ -948,10 +928,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             The predicted classes.
         """
         check_is_fitted(self, "coefs_")
-        y_scores = self.decision_function(X)
-        y_scores = ACTIVATIONS[self.out_activation_](y_scores)
+        y_pred = self._predict(X)
 
-        return self.label_binarizer_.inverse_transform(y_scores)
+        if self.n_outputs_ == 1:
+            y_pred = y_pred.ravel()
+
+        return self.label_binarizer_.inverse_transform(y_pred)
 
     @property
     def partial_fit(self):
@@ -979,7 +961,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         """
         if self.algorithm not in _STOCHASTIC_ALGOS:
             raise AttributeError("partial_fit is only available for stochastic"
-                                 "optimization algorithms. %s is not"
+                                 " optimization algorithms. %s is not"
                                  " stochastic" % self.algorithm)
         return self._partial_fit
 
@@ -1022,13 +1004,16 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        y_scores = self.decision_function(X)
+        check_is_fitted(self, "coefs_")
+        y_pred = self._predict(X)
 
-        if y_scores.ndim == 1:
-            y_scores = logistic(y_scores)
-            return np.vstack([1 - y_scores, y_scores]).T
+        if self.n_outputs_ == 1:
+            y_pred = y_pred.ravel()
+
+        if y_pred.ndim == 1:
+            return np.vstack([1 - y_pred, y_pred]).T
         else:
-            return softmax(y_scores)
+            return y_pred
 
 
 class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
@@ -1255,7 +1240,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
             The predicted values.
         """
         check_is_fitted(self, "coefs_")
-        y_pred = self._decision_scores(X)
+        y_pred = self._predict(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
