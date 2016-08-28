@@ -3,7 +3,7 @@ sudo: false
 
 language: python
 
-# Pre-install packages for the ubuntu distribution
+# Pre-install packages for the Ubuntu distribution
 cache:
   apt: true
   # We use three different cache directory

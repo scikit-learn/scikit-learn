@@ -439,7 +439,7 @@ Using gprof
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
-``python-dbg`` variant of the interpreter on debian / ubuntu: however
+``python-dbg`` variant of the interpreter on Debian / Ubuntu: however
 this approach requires to also have ``numpy`` and ``scipy`` recompiled
 with ``-pg`` which is rather complicated to get working.
 
