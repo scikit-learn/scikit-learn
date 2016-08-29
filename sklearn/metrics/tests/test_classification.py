@@ -1394,8 +1394,8 @@ def test_log_loss():
     assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
 
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
-    error_str = ('Found arrays with inconsistent numbers of '
-                 'samples: [2 3]')
+    error_str = ('Found input variables with inconsistent numbers of samples: '
+                 '[3, 2]')
     assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
 
     # works when the labels argument is used
