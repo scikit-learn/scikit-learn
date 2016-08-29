@@ -69,7 +69,7 @@ Python 2 you can install all these requirements by issuing::
                          python-numpy python-scipy \
                          libatlas-dev libatlas3gf-base
 
-if you have python 3::
+if you have Python 3::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                          python3-numpy python3-scipy \
@@ -132,7 +132,7 @@ ignore any old version of scikit-learn previously installed on the system while
 benefiting from system packages for numpy and scipy. those dependencies can
 be long and complex to build correctly from source.
 
-the ``--install-option="--prefix="`` flag is only required if python has a
+the ``--install-option="--prefix="`` flag is only required if Python has a
 ``distutils.cfg`` configuration with a predefined ``prefix=`` entry.
 
 
@@ -144,7 +144,7 @@ download the source package from
 cd into the source directory.
 
 This packages uses distutils, which is the default way of installing
-python modules. the install command is::
+Python modules. the install command is::
 
     python setup.py install
 
@@ -157,7 +157,7 @@ or alternatively (also from within the scikit-learn source folder)::
    packages installed with the ``python setup.py install`` command cannot
    be uninstalled nor upgraded by ``pip`` later. to properly uninstall
    scikit-learn in that case it is necessary to delete the ``sklearn`` folder
-   from your python ``site-packages`` directory.
+   from your Python ``site-packages`` directory.
 
 
 windows
@@ -174,7 +174,7 @@ latest stable release::
 
     pip install -u scikit-learn
 
-if there are no binary packages matching your python, version you might
+if there are no binary packages matching your Python version, you might
 to try to install scikit-learn and its dependencies from `christoph gohlke
 unofficial windows installers
 <http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn>`_
@@ -193,7 +193,7 @@ these can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
 dependencies (numpy, scipy) that scikit-learn requires.
 
-the following is an incomplete list of python and os distributions
+the following is an incomplete list of Python and os distributions
 that provide their own version of scikit-learn.
 
 
@@ -201,7 +201,7 @@ macports for mac osx
 --------------------
 
 the macports package is named ``py<xy>-scikits-learn``,
-where ``xy`` denotes the python version.
+where ``xy`` denotes the Python version.
 it can be installed by typing the following
 command::
 
@@ -217,7 +217,7 @@ arch linux
 
 arch linux's package is provided through the `official repositories
 <https://www.archlinux.org/packages/?q=scikit-learn>`_ as
-``python-scikit-learn`` for python 3 and ``python2-scikit-learn`` for python 2.
+``python-scikit-learn`` for Python 3 and ``python2-scikit-learn`` for Python 2.
 it can be installed by typing the following command:
 
 .. code-block:: none
@@ -230,7 +230,7 @@ or:
 
      # pacman -s python2-scikit-learn
 
-depending on the version of python you use.
+depending on the version of Python you use.
 
 
 netbsd
@@ -243,8 +243,8 @@ scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_
 fedora
 ------
 
-the fedora package is called ``python-scikit-learn`` for the python 2 version
-and ``python3-scikit-learn`` for the python 3 version. both versions can
+the fedora package is called ``python-scikit-learn`` for the Python 2 version
+and ``python3-scikit-learn`` for the Python 3 version. both versions can
 be installed using ``yum``::
 
     $ sudo yum install python-scikit-learn
@@ -260,9 +260,9 @@ building on windows
 to build scikit-learn on windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
 
-picking the right compiler depends on the version of python (2 or 3)
-and the architecture of the python interpreter, 32-bit or 64-bit.
-you can check the python version by running the following in ``cmd`` or
+picking the right compiler depends on the version of Python (2 or 3)
+and the architecture of the Python interpreter, 32-bit or 64-bit.
+you can check the Python version by running the following in ``cmd`` or
 ``powershell`` console::
 
     python --version
@@ -271,16 +271,16 @@ and the architecture with::
 
     python -c "import struct; print(struct.calcsize('p') * 8)"
 
-the above commands assume that you have the python installation folder in your
+the above commands assume that you have the Python installation folder in your
 path environment variable.
 
 
-32-bit python
+32-bit Python
 -------------
 
-for 32-bit python it is possible use the standalone installers for
+for 32-bit Python it is possible use the standalone installers for
 `microsoft visual c++ express 2008 <http://download.microsoft.com/download/A/5/4/A54BADB6-9C3F-478D-8657-93B3FC9FE62D/vcsetup.exe>`_
-for python 2 or microsoft visual C++ express 2010 for python 3.
+for Python 2 or microsoft visual C++ express 2010 for Python 3.
 
 once installed you should be able to build scikit-learn without any
 particular configuration by running the following command in the scikit-learn
@@ -289,7 +289,7 @@ folder::
    python setup.py install
 
 
-64-bit python
+64-bit Python
 -------------
 
 for the 64-bit architecture, you either need the full visual studio or
@@ -299,11 +299,11 @@ the windows sdks include the msvc compilers both for 32 and 64-bit
 architectures. they come as a ``grmsdkx_en_dvd.iso`` file that can be mounted
 as a new drive with a ``setup.exe`` installer in it.
 
-- for python 2 you need sdk **v7.0**: `ms windows sdk for windows 7 and .net
+- for Python 2 you need sdk **v7.0**: `ms windows sdk for windows 7 and .net
   framework 3.5 sp1
   <https://www.microsoft.com/en-us/download/details.aspx?id=18950>`_
 
-- for python 3 you need sdk **v7.1**: `ms windows sdk for windows 7 and .net
+- for Python 3 you need sdk **v7.1**: `ms windows sdk for windows 7 and .net
   framework 4
   <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
 
@@ -325,10 +325,10 @@ finally you can build scikit-learn in the same ``cmd`` console::
     python setup.py install
 
 replace ``v7.0`` by the ``v7.1`` in the above commands to do the same for
-python 3 instead of python 2.
+Python 3 instead of Oython 2.
 
-replace ``/x64`` by ``/x86``  to build for 32-bit python instead of 64-bit
-python.
+replace ``/x64`` by ``/x86``  to build for 32-bit Python instead of 64-bit
+Python.
 
 
 building binary packages and installers
@@ -346,7 +346,7 @@ using an alternative compiler
 -----------------------------
 
 it is possible to use `mingw <http://www.mingw.org>`_ (a port of gcc to windows
-os) as an alternative to msvc for 32-bit python. not that extensions built with
+os) as an alternative to msvc for 32-bit Python. not that extensions built with
 mingw32 can be redistributed as reusable packages as they depend on gcc runtime
 libraries typically not installed on end-users environment.
 
