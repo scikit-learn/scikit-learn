@@ -1,7 +1,7 @@
 """
-==============================================
-Bayesian Gaussian Mixture Alpha Prior Analysis
-==============================================
+======================================================
+Bayesian Gaussian Mixture Concentration Prior Analysis
+======================================================
 
 Plot the resulting ellipsoids of a mixture of three Gaussians with EM and
 variational Bayesian Gaussian Mixture for three different values of the prior

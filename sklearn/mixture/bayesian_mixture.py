@@ -44,7 +44,7 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
         The parameters values of the Whishart distribution.
 
     log_det_precision_chol : array-like, shape (n_components,)
-        The determinant of the cholesky decomposition of the precision matrix.
+         The determinant of the precision matrix for each component..
 
     n_features : int
         The number of features.
@@ -58,23 +58,26 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
     return -(degrees_of_freedom * log_det_precisions_chol +
              degrees_of_freedom * n_features * .5 * math.log(2.) +
              np.sum(gammaln(.5 * (degrees_of_freedom -
-                                  np.arange(0, n_features)[:,
-                                                           np.newaxis])), 0))
+                                  np.arange(n_features)[:, np.newaxis])), 0))
 
 
 class BayesianGaussianMixture(BaseMixture):
     """Variational estimation of a Gaussian mixture.
 
     This class allows to infer an approximate posterior distribution over the
-    parameters of a Gaussian mixture distribution. The number of components can
-    be inferred from the data.
+    parameters of a Gaussian mixture distribution. The effective number of
+    components can be inferred from the data.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
     Parameters
     ----------
-    n_components: int, defaults to 1.
-        The number of mixture components.
+    n_components : int, defaults to 1.
+        The number of mixture components. Depending on the data and the value
+        of the `dirichlet_concentration_prior` the model can decide to not use
+        all the components by setting some component `weights_` to values very
+        close to zero. The number of effective components is therefore smaller
+        than n_components.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}, defaults to 'full'.
         String describing the type of covariance parameters to use.
@@ -88,6 +91,10 @@ class BayesianGaussianMixture(BaseMixture):
         The convergence threshold. EM iterations will stop when the
         lower bound average gain on the likelihood (of the training data with
         respect to the model) is below this threshold.
+
+    reg_covar : float, defaults to 1e-6.
+        Non-negative regularization added to the diagonal of covariance.
+        Allows to assure that the covariance matrices are all positive.
 
     max_iter : int, defaults to 100.
         The number of EM iterations to perform.
@@ -108,8 +115,8 @@ class BayesianGaussianMixture(BaseMixture):
         distribution (Dirichlet). The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
-        simplex. The value of the parameter must be greater than 0.
-        If it is None, it's set to `1. / n_components`.
+        mixture weights simplex. The value of the parameter must be greater
+        than 0. If it is None, it's set to `1. / n_components`.
 
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
@@ -246,14 +253,14 @@ class BayesianGaussianMixture(BaseMixture):
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
-                 max_iter=100, n_init=1, init_params='kmeans',
+                 reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  dirichlet_concentration_prior=None,
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
                  verbose_interval=20):
         super(BayesianGaussianMixture, self).__init__(
-            n_components=n_components, tol=tol, reg_covar=0,
+            n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,
             verbose=verbose, verbose_interval=verbose_interval)
@@ -580,6 +587,8 @@ class BayesianGaussianMixture(BaseMixture):
         X : array-like, shape (n_samples, n_features)
 
         log_resp : array-like, shape (n_samples, n_components)
+            Logarithm of the posterior probabilities (or responsibilities) of
+            the point of X.
         """
         n_samples, _ = X.shape
 
@@ -588,20 +597,6 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
-
-    def _e_step(self, X):
-        """E step.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-
-        Returns
-        -------
-        log-responsibility : array, shape (n_samples, n_components)
-        """
-        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
-        return log_prob_norm, log_resp
 
     def _estimate_log_weights(self):
         return (digamma(self.dirichlet_concentration_) -

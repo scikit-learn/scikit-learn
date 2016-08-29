@@ -305,8 +305,9 @@ def _compute_precision_cholesky(covariances, covariance_type):
         components. The shape depends of the covariance_type.
     """
     estimate_precision_error_message = (
-        "The algorithm has diverged because of too few samples per "
-        "components. Try to decrease the number of components, "
+        "Fitting the mixture model failed because some components have "
+        "ill-defined empirical covariance (for instance caused by singleton "
+        "or collapsed samples). Try to decrease the number of components, "
         "or increase reg_covar.")
 
     if covariance_type in 'full':
@@ -357,8 +358,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     Returns
     -------
     log_det_precision_chol : array-like, shape (n_components,)
-        The determinant of the cholesky decomposition.
-        matrix.
+        The determinant of the precision matrix for each component.
     """
     if covariance_type == 'full':
         n_components, _, _ = matrix_chol.shape
@@ -635,14 +635,20 @@ class GaussianMixture(BaseMixture):
         else:
             self.precisions_cholesky_ = self.precisions_init
 
-    def _e_step(self, X):
-        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
-        return np.mean(log_prob_norm), np.exp(log_resp)
+    def _m_step(self, X, log_resp):
+        """M step.
 
-    def _m_step(self, X, resp):
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        log_resp : array-like, shape (n_samples, n_components)
+            Logarithm of the posterior probabilities (or responsibilities) of
+            the point of X.
+        """
         n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = (
-            _estimate_gaussian_parameters(X, resp, self.reg_covar,
+            _estimate_gaussian_parameters(X, np.exp(log_resp), self.reg_covar,
                                           self.covariance_type))
         self.weights_ /= n_samples
         self.precisions_cholesky_ = _compute_precision_cholesky(

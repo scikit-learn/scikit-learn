@@ -2,8 +2,6 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 from scipy.special import gammaln
 
@@ -17,7 +15,8 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import assert_greater_equal
+from sklearn.utils.testing import assert_greater_equal, ignore_warnings
+
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
 
@@ -189,7 +188,6 @@ def test_bayesian_mixture_precisions_prior_initialisation():
 
     bgmm = BayesianGaussianMixture(random_state=rng)
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
-        print(cov_type)
         bgmm.covariance_type = cov_type
         bgmm.covariance_prior = covariance_prior[cov_type]
         bgmm.fit(X)
@@ -252,9 +250,10 @@ def test_bayesian_mixture_weights():
     assert_almost_equal(np.sum(bgmm.weights_), 1.0)
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def test_monotonic_likelihood():
-    # We check that each step of the EM without regularization improve
-    # monotonically the training set of the bound
+    # We check that each step of the each step of variational inference without
+    # regularization improve monotonically the training set of the bound
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng, scale=7)
     n_components = rand_data.n_components
@@ -266,22 +265,16 @@ def test_monotonic_likelihood():
                                        warm_start=True, max_iter=1,
                                        random_state=rng, tol=1e-4)
         current_lower_bound = -np.infty
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", ConvergenceWarning)
-            # Do one training iteration at a time so we can make sure that the
-            # training log likelihood increases after each iteration.
-            for _ in range(500):
-                prev_lower_bound = current_lower_bound
-                try:
-                    current_lower_bound = bgmm.fit(X).lower_bound_
-                except ConvergenceWarning:
-                    pass
-                assert_greater_equal(current_lower_bound,
-                                     prev_lower_bound)
+        # Do one training iteration at a time so we can make sure that the
+        # training log likelihood increases after each iteration.
+        for _ in range(500):
+            prev_lower_bound = current_lower_bound
+            current_lower_bound = bgmm.fit(X).lower_bound_
+            assert_greater_equal(current_lower_bound, prev_lower_bound)
 
-                if bgmm.converged_:
-                    break
-            assert(bgmm.converged_)
+            if bgmm.converged_:
+                break
+        assert(bgmm.converged_)
 
 
 def test_compare_covar_type():
@@ -334,6 +327,7 @@ def test_compare_covar_type():
     assert_almost_equal(spherical_covariances, np.mean(diag_covariances, 1))
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def test_check_covariance_precision():
     # We check that the dot product of the covariance and the precision
     # matrices is identity.
@@ -343,7 +337,8 @@ def test_check_covariance_precision():
 
     # Computation of the full_covariance
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   max_iter=100, random_state=rng, tol=1e-3)
+                                   max_iter=100, random_state=rng, tol=1e-3,
+                                   reg_covar=0)
     for covar_type in COVARIANCE_TYPE:
         bgmm.covariance_type = covar_type
         bgmm.fit(rand_data.X[covar_type])
