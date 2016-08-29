@@ -535,6 +535,17 @@ def test_stratified_shuffle_split_init():
                   StratifiedShuffleSplit(test_size=2).split(X, y))
 
 
+def test_stratified_shuffle_split_respects_test_size():
+    y = np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2])
+    test_size = 5
+    train_size = 10
+    sss = StratifiedShuffleSplit(6, test_size=test_size, train_size=train_size,
+                                 random_state=0).split(np.ones(len(y)), y)
+    for train, test in sss:
+        assert_equal(len(train), train_size)
+        assert_equal(len(test), test_size)
+
+
 def test_stratified_shuffle_split_iter():
     ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
           np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
@@ -546,6 +557,9 @@ def test_stratified_shuffle_split_iter():
     for y in ys:
         sss = StratifiedShuffleSplit(6, test_size=0.33,
                                      random_state=0).split(np.ones(len(y)), y)
+        # this is how test-size is computed internally in _validate_shuffle_split
+        test_size = np.ceil(0.33 * len(y))
+        train_size = len(y) - test_size
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
@@ -556,7 +570,9 @@ def test_stratified_shuffle_split_iter():
                                   return_inverse=True)[1]) /
                       float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
-            assert_equal(y[train].size + y[test].size, y.size)
+            assert_equal(len(train) + len(test), y.size)
+            assert_equal(len(train), train_size)
+            assert_equal(len(test), test_size)
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
