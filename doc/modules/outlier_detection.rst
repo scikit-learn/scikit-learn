@@ -191,7 +191,7 @@ lower density than their neighbors. These are considered to be outliers.
 
 In practice the local density is obtained from the k-nearest neighbors.
 The LOF score of an observation is equal to the ratio of the
-average local density of his k-nearest neighbors, and his own local density:
+average local density of his k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 
@@ -203,7 +203,7 @@ with respect to the surrounding neighborhood.
 
 This strategy is illustrated below.
 
-.. figure:: ../auto_examples/neighbors/images/plot_lof_001.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_001.png
    :target: ../auto_examples/neighbors/plot_lof.html
    :align: center
    :scale: 75%
@@ -211,7 +211,7 @@ This strategy is illustrated below.
 .. topic:: Examples:
 
    * See :ref:`example_neighbors_plot_lof.py` for
-     an illustration of the use of IsolationForest.
+     an illustration of the use of LocalOutlierFactor.
 
    * See :ref:`example_covariance_plot_outlier_detection.py` for a
      comparison with other anomaly detection methods.

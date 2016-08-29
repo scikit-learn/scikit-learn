@@ -1,10 +1,16 @@
+# Authors: Nicolas Goix <nicolas.goix@telecom-paristech.fr>
+#          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+# License: BSD 3 clause
+
 from math import sqrt
 import numpy as np
 from sklearn import neighbors
 
 from numpy.testing import assert_array_equal
 
+from sklearn import metrics
 from sklearn.metrics import roc_auc_score
+
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
@@ -61,3 +67,28 @@ def test_lof_values():
     assert_array_almost_equal(-clf.decision_function([[2., 2.]]), [s_0])
     # # check predict(one sample already in train)
     assert_array_almost_equal(-clf.decision_function([[1., 1.]]), [s_1])
+
+
+def test_lof_precomputed(random_state=42):
+    """Tests LOF with a distance matrix."""
+    # Note: smaller samples may result in spurious test success
+    rng = np.random.RandomState(random_state)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((3, 4))
+    DXX = metrics.pairwise_distances(X, metric='euclidean')
+    DYX = metrics.pairwise_distances(Y, X, metric='euclidean')
+    # As a feature matrix (n_samples by n_features)
+    lof_X = neighbors.LocalOutlierFactor(n_neighbors=3)
+    lof_X.fit(X)
+    pred_X_X = lof_X.predict()
+    pred_X_Y = lof_X.predict(Y)
+
+    # As a dense distance matrix (n_samples by n_samples)
+    lof_D = neighbors.LocalOutlierFactor(n_neighbors=3, algorithm='brute',
+                                         metric='precomputed')
+    lof_D.fit(DXX)
+    pred_D_X = lof_D.predict()
+    pred_D_Y = lof_D.predict(DYX)
+
+    assert_array_almost_equal(pred_X_X, pred_D_X)
+    assert_array_almost_equal(pred_X_Y, pred_D_Y)

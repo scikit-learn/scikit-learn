@@ -62,6 +62,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
+        If 'precomputed', the training input X is expected to be a distance
+        matrix.
+
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays as input and return one value indicating the
