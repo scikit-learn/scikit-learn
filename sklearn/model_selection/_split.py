@@ -30,6 +30,7 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import bincount
 from ..utils.fixes import signature
+from ..utils.random import choice
 from ..base import _pprint
 from ..gaussian_process.kernels import Kernel as GPKernel
 
@@ -1110,9 +1111,10 @@ def _approximate_mode(class_counts, n_draws, rng):
     remainder = continuous - floored
     if need_to_add > 0:
         remainder /= remainder.sum()
-        choices = rng.choice(range(len(class_counts)), size=need_to_add, replace=False, p=remainder)
-        for choice in choices:
-            floored[choice] += 1
+        choices = choice(range(len(class_counts)), size=need_to_add,
+                         replace=False, p=remainder, random_state=rng)
+        for pick in choices:
+            floored[pick] += 1
     return floored.astype(np.int)
 
 
