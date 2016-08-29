@@ -33,8 +33,16 @@ from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
 from collections import defaultdict, Mapping
 from functools import partial
 import pickle
+import re
 from io import StringIO
 
+JUNK = (
+    "aa aa aa aa aaa aaa aaaa",
+)
+
+JUNK = (
+    "aa aa aa aa aaa aaa aaaa",
+)
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -519,7 +527,7 @@ def test_hashing_vectorizer():
 
 
 def test_feature_names():
-    cv = CountVectorizer(max_df=0.5)
+    cv = CountVectorizer(max_df=0.5, min_df=1)
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
@@ -631,7 +639,7 @@ def test_vectorizer_min_df():
 def test_count_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
-    vect = CountVectorizer(analyzer='char', max_df=1.0)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
     assert_array_equal([[3, 1, 1, 0, 0],
@@ -639,7 +647,8 @@ def test_count_binary_occurrences():
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
-    vect = CountVectorizer(analyzer='char', max_df=1.0, binary=True)
+    vect = CountVectorizer(analyzer='char', max_df=1.0,
+                           binary=True, min_df=1)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal([[1, 1, 1, 0, 0],
                         [1, 1, 0, 1, 1]], X)
@@ -679,7 +688,7 @@ def test_hashed_binary_occurrences():
 def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
+    for vectorizer in (TfidfVectorizer(min_df=1), CountVectorizer(min_df=1)):
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
@@ -706,7 +715,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     train_data, test_data, target_train, target_test = train_test_split(
         data, target, test_size=.2, random_state=0)
 
-    pipeline = Pipeline([('vect', CountVectorizer()),
+    pipeline = Pipeline([('vect', CountVectorizer(min_df=1)),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -742,7 +751,7 @@ def test_vectorizer_pipeline_grid_selection():
     train_data, test_data, target_train, target_test = train_test_split(
         data, target, test_size=.1, random_state=0)
 
-    pipeline = Pipeline([('vect', TfidfVectorizer()),
+    pipeline = Pipeline([('vect', TfidfVectorizer(min_df=1)),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -803,7 +812,7 @@ def test_vectorizer_unicode():
         "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
         "\x8f.")
 
-    vect = CountVectorizer()
+    vect = CountVectorizer(min_df=1)
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 15))
 
@@ -973,3 +982,74 @@ def test_vectorizer_string_object_as_input():
             ValueError, message, vec.fit, "hello world!")
         assert_raise_message(
             ValueError, message, vec.transform, "hello world!")
+
+
+def test_token_processor_1():
+    # with token_processor
+    def poor_mans_stemmer(tokens):
+        for tok in tokens:
+            yield tok[:3]
+
+    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word",
+                                token_processor=poor_mans_stemmer)
+    vectorized = word_vect.fit_transform(JUNK)
+
+    feature_names = word_vect.get_feature_names()
+    assert_equal(set(feature_names), set(['aa', 'aaa']))
+
+    counts = vectorized.toarray()[0]
+    assert_equal(counts[word_vect.vocabulary_['aa']], 4)
+    assert_equal(counts[word_vect.vocabulary_['aaa']], 3)
+
+    # without token_processor
+    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word")
+    vectorized = word_vect.fit_transform(JUNK)
+
+    feature_names = word_vect.get_feature_names()
+    assert_equal(set(feature_names), set(['aa', 'aaa', 'aaaa']))
+
+    counts = vectorized.toarray()[0]
+    assert_equal(counts[word_vect.vocabulary_['aa']], 4)
+    assert_equal(counts[word_vect.vocabulary_['aaa']], 2)
+    assert_equal(counts[word_vect.vocabulary_['aaaa']], 1)
+
+
+def test_token_processor_2():
+    def to_british(tokens):
+        """Heuristic British->American spelling converter."""
+        for t in tokens:
+            t = re.sub(r"(...)our$", r"\1or", t)
+            t = re.sub(r"([bt])re$", r"\1er", t)
+            t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+            t = re.sub(r"ogue$", "og", t)
+            yield t
+
+    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word",
+                                token_processor=to_british)
+    vectorized = word_vect.fit_transform(["colour color"])
+    assert_equal(['color', 'color'], word_vect.build_analyzer()(u"color colour"))
+    
+    feature_names = word_vect.get_feature_names()
+    assert_equal(set(feature_names), set(['color']))
+
+    counts = vectorized.toarray()[0]
+    assert_equal(counts[word_vect.vocabulary_['color']], 2)
+
+
+def test_token_processor_filter_unwanted_tokens():
+    # with token_processor
+    def filter_short(tokens):
+        for tok in tokens:
+            if len(tok) >= 3:
+                yield tok
+
+    word_vect = CountVectorizer(
+        min_df=0.0, max_df=1.0, analyzer="word", token_processor=filter_short)
+    vectorized = word_vect.fit_transform(JUNK)
+
+    feature_names = word_vect.get_feature_names()
+    assert_equal(set(feature_names), set(['aaa', 'aaaa']))
+
+    counts = vectorized.toarray()[0]
+    assert_equal(counts[word_vect.vocabulary_['aaa']], 2)
+    assert_equal(counts[word_vect.vocabulary_['aaaa']], 1)
