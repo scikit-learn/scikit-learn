@@ -5,9 +5,44 @@
 Bayesian Gaussian Mixture Models
 ================================
 
+The API is identical to that of the :class:`GaussianMixture` class.
+
+The inference algorithm is the one from the following book:
+
+    * `Pattern recognition and machine learning
+      <http://www.springer.com/kr/book/9780387310732>`_
+      Bishop, Christopher M. Springer, Vol. 4 No. 4, 2006.
+
+While the book presents the parts of the variationnl inference algorithm, it
+does not go into detail in the mixture modeling part, which can be just as
+complex, or even more. For this reason we present here a full derivation of the
+inference algorithm and all the update and lower-bound equations. If you're not
+interested in learning how to derive similar algorithms yourself and you're not
+interested in changing/debugging the implementation in the scikit this document
+is not for you.
+
+This implementation is expected to scale at least as well as EM for
+the Gaussian mixture.
+
+Update rules for VB inference
+==============================
+
+Here the full mathematical derivation of the Variational Bayes update
+rules for Gaussian Mixture Models is given.
+
 Notation
 --------
-Add notation of NK xk and Sk
+Let's define some statistics :
+
+.. math::
+   :nowrap:
+
+   \begin{eqnarray*}
+    N_k & = & \sum_{n=1}^N {r_{nk}} \\
+    \bar{\mathbf{x}}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} \mathbf{x}_n}
+    \mathbf{S}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} (\mathbf{x}_n - \bar{\mathbf{x}}_k) (\mathbf{x}_n - \bar{\mathbf{x}}_k)^T}
+
+   \end{eqnarray*}
 
 The full model
 --------------
@@ -580,5 +615,12 @@ Consequently the lower value is :
                        \frac{ND}{2} \ln 2 \pi
    \end{eqnarray*}
 
+
 References
 ----------
+[1] `Bishop, Christopher M. (2006). "Pattern recognition and machine learning".
+     Vol. 4 No. 4. New York: Springer. <http://www.springer.com/kr/book/9780387310732>`_
+
+[2] `Hagai Attias. (2000). "A Variational Bayesian Framework for Graphical Models".
+     In Advances in Neural Information Processing Systems 12
+     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.36.2841&rep=rep1&type=pdf>`_
