@@ -734,7 +734,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         Elkan.
 
         Binary probability estimates for loss="modified_huber" are given by
-        (clip(decision_function(X), -1, 1) + 1) / 2.
+        (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
+        it is necessary to perform proper probability calibration by wrapping
+        the classifier with
+        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
