@@ -32,7 +32,7 @@ import sphinx_gallery
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-    'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
+    'sphinx.ext.imgmath', 'numpy_ext.numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx_gallery.gen_gallery',
 ]
