@@ -57,7 +57,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-            libgfortran nomkl flake8
+            libgfortran nomkl
     fi
     source activate testenv
 
@@ -113,4 +113,8 @@ else
     python -c "import numpy; print('numpy %s' % numpy.__version__)"
     python -c "import scipy; print('scipy %s' % scipy.__version__)"
     python setup.py develop
+fi
+
+if [[ "$RUN_FLAKE8" == "true" ]]; then
+    conda install flake8
 fi
