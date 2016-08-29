@@ -1100,6 +1100,30 @@ class LabelShuffleSplit(ShuffleSplit):
 
 
 def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergemetric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+    """
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
     continuous = n_draws * class_counts / class_counts.sum()
