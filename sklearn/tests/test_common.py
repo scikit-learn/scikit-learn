@@ -12,11 +12,11 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import signature
 
 import numpy as np
 
 from sklearn.externals.six import PY3
+from sklearn.utils.fixes import signature
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_array_almost_equal
@@ -87,8 +87,6 @@ def test_estimator_is_deterministic():
     # We need to make sure that we have non negative data, for some estimators
     X -= X.min() - .1
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.5)
-
     for name, Estimator in all_estimators(type_filter=['classifier',
                                                        'regressor']):
         # XXX skipping bad estimators for the moment
@@ -118,7 +116,6 @@ def test_estimator_is_deterministic():
         est1.fit(X_train, y_train)
         est2.fit(X_train, y_train)
 
-        print(name)
         assert_array_almost_equal(est1.predict(X_test),
                                   est2.predict(X_test))
 
