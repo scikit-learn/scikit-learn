@@ -13,13 +13,9 @@ import sys
 import re
 import pkgutil
 
-import numpy as np
-
 from sklearn.externals.six import PY3
-from sklearn.utils.fixes import signature
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
@@ -28,8 +24,6 @@ from sklearn.utils.testing import ignore_warnings
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
 from sklearn.decomposition import ProjectedGradientNMF
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -79,45 +73,6 @@ def test_non_meta_estimators():
                     yield check, name, Estimator
             else:
                 yield check, name, Estimator
-
-
-def test_estimator_is_deterministic():
-    # all estimators should be deterministic with a fixed random_state
-    X, y = make_classification(n_classes=3, n_informative=3, random_state=3)
-    # We need to make sure that we have non negative data, for some estimators
-    X -= X.min() - .1
-
-    for name, Estimator in all_estimators(type_filter=['classifier',
-                                                       'regressor']):
-        # XXX skipping bad estimators for the moment
-        if name in ('HuberRegressor', 'LogisticRegressionCV',
-                    'LinearRegression', 'RANSACRegressor',
-                    'RadiusNeighborsClassifier'):
-            continue
-
-        if name.startswith("_"):
-            continue
-
-        X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                            train_size=0.5,
-                                                            random_state=3)
-        if "MultiTask" in name:
-            y_train = np.reshape(y_train, (-1, 1))
-            y_test = np.reshape(y_test, (-1, 1))
-
-        needs_state = 'random_state' in signature(Estimator.__init__).parameters
-        if needs_state:
-            est1 = Estimator(random_state=1)
-            est2 = Estimator(random_state=1)
-        else:
-            est1 = Estimator()
-            est2 = Estimator()
-
-        est1.fit(X_train, y_train)
-        est2.fit(X_train, y_train)
-
-        assert_array_almost_equal(est1.predict(X_test),
-                                  est2.predict(X_test))
 
 
 def test_configure():
