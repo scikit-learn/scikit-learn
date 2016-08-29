@@ -1529,6 +1529,9 @@ def check_get_params_invariance(name, estimator):
         def fit(self, X, y):
             return self
 
+        def transform(self, X):
+            return X
+
     if name in ('FeatureUnion', 'Pipeline'):
         e = estimator([('clf', T())])
 

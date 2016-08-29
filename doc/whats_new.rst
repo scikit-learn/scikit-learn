@@ -286,6 +286,12 @@ Enhancements
      (`#5805 <https://github.com/scikit-learn/scikit-learn/pull/5805>`_)
      By `Ibraim Ganiev`_.
 
+   - Added support for substituting or disabling :class:`pipeline.Pipeline`
+     and :class:`pipeline.FeatureUnion` components using the ``set_params``
+     interface that powers :mod:`sklearn.grid_search`.
+     See :ref:`example_plot_compare_reduction.py`. By `Joel Nothman`_ and
+     `Robert McGibbon`_.
+
 Bug fixes
 .........
 
