@@ -284,7 +284,6 @@ def test_compare_covar_type():
     rand_data = RandomData(rng, scale=7)
     X = rand_data.X['full']
     n_components = rand_data.n_components
-    print(n_components)
     # Computation of the full_covariance
     bgmm = BayesianGaussianMixture(n_components=2 * n_components,
                                    covariance_type='full',

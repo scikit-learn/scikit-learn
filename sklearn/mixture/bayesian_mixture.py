@@ -41,10 +41,11 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
     Parameters
     ----------
     degrees_of_freedom : array-like, shape (n_components,)
-        The parameters values of the Whishart distribution.
+        The number of degrees of freedom on the covariance Wishart
+        distributions.
 
     log_det_precision_chol : array-like, shape (n_components,)
-         The determinant of the precision matrix for each component..
+         The determinant of the precision matrix for each component.
 
     n_features : int
         The number of features.
@@ -628,9 +629,12 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        log-resp : array, shape (n_samples, n_components)
+        log_resp : array, shape (n_samples, n_components)
+            Logarithm of the posterior probabilities (or responsibilities) of
+            the point of X.
 
         log_prob_norm : float
+            Logarithm of the probability of X.
 
         Returns
         -------

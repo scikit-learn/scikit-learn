@@ -4,7 +4,7 @@ Bayesian Gaussian Mixture Concentration Prior Analysis
 ======================================================
 
 Plot the resulting ellipsoids of a mixture of three Gaussians with EM and
-variational Bayesian Gaussian Mixture for three different values of the prior
+variational Bayesian Gaussian Mixture for three different values of on the prior
 the dirichlet concentration.
 
 For all models, the Variationnal Bayesian Gaussian Mixture adapts its number of
