@@ -470,11 +470,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
-    def __init__(self, input='content', charset='utf-8',
+    def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, token_processor=None,
-                 tokenizer=None, stop_words=None,
-                 token_pattern=ur"(?u)\b\w\w+\b",
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 token_processor=None, stop_words=None,
+                 token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', alternate_sign=True,
                  non_negative=False, dtype=np.float64):
@@ -714,10 +714,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     be safely removed using delattr or set to None before pickling.
     """
 
-    def __init__(self, input='content', charset='utf-8',
+    def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
-                 lowercase=True,
-                 preprocessor=None, tokenizer=None, token_processor=None,
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 token_processor=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
@@ -1321,14 +1321,15 @@ class TfidfVectorizer(CountVectorizer):
     be safely removed using delattr or set to None before pickling.
     """
 
-    def __init__(self, input='content', charset='utf-8',
+    def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, token_processor=None,
                  analyzer='word', stop_words=None,
                  token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False, dtype=np.int64,
-                 norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
+                 max_features=None, vocabulary=None, binary=False,
+                 dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
+                 sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
