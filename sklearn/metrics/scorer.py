@@ -199,9 +199,11 @@ def get_scorer(scoring):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
+            scorers = [scorer for scorer in SCORERS
+                       if SCORERS[scorer]._deprecation_msg is None]
             raise ValueError('%r is not a valid scoring value. '
                              'Valid options are %s'
-                             % (scoring, sorted(SCORERS.keys())))
+                             % (scoring, sorted(scorers)))
     else:
         scorer = scoring
     return scorer
