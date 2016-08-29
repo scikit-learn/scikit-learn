@@ -589,7 +589,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         log_resp : array-like, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
-            the point of X.
+            the point of each sample in X.
         """
         n_samples, _ = X.shape
 
@@ -631,10 +631,10 @@ class BayesianGaussianMixture(BaseMixture):
 
         log_resp : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
-            the point of X.
+            the point of each sample in X.
 
         log_prob_norm : float
-            Logarithm of the probability of X.
+            Logarithm of the probability of each sample in X.
 
         Returns
         -------

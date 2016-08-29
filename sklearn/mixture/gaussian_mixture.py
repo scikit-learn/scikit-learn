@@ -644,7 +644,7 @@ class GaussianMixture(BaseMixture):
 
         log_resp : array-like, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
-            the point of X.
+            the point of each sample in X.
         """
         n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = (

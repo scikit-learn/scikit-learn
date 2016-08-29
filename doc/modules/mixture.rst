@@ -161,8 +161,8 @@ much so as to render usage unpractical.
 
 Due to its Bayesian nature, the variational algorithm needs more
 hyper-parameters than expectation-maximization, the most
-important of these being the concentration parameter ``alpha``. Specifying
-a high value of alpha leads more often to uniformly-sized mixture
+important of these being the concentration parameter ``dirichlet_concentration_prior``. Specifying
+a high value of prior of the dirichlet concentration leads more often to uniformly-sized mixture
 components, while specifying small (between 0 and 1) values will lead
 to some mixture components getting almost all the points while most
 mixture components will be centered on just a few of the remaining
@@ -177,7 +177,7 @@ points.
 
     * See :ref:`plot_bayesian_gaussian_mixture.py` for a comparaison of
       the results of the ``BayesianGaussianMixture`` for different values
-      of the parameter ``alpha``.
+      of the parameter ``dirichlet_concentration_prior``.
 
 Pros and cons of variational inference with :class:BayesianGaussianMixture
 --------------------------------------------------------------------------

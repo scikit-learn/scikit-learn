@@ -247,11 +247,11 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         log_prob_norm : array, shape (n_samples,)
-            Logarithm of the probability of X.
+            Logarithm of the probability of each sample in X.
 
         log_responsibility : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
-            the point of X.
+            the point of each sample in X.
         """
         log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
         return np.mean(log_prob_norm), log_resp
@@ -266,7 +266,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         log_resp : array-like, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
-            the point of X.
+            the point of each sample in X.
         """
         pass
 
