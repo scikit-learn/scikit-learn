@@ -1108,13 +1108,23 @@ def _approximate_mode(class_counts, n_draws, rng):
     # we add samples according to how much "left over" probability
     # they had, until we arrive at n_samples
     need_to_add = int(n_draws - floored.sum())
-    remainder = continuous - floored
     if need_to_add > 0:
-        remainder /= remainder.sum()
-        choices = choice(range(len(class_counts)), size=need_to_add,
-                         replace=False, p=remainder, random_state=rng)
-        for pick in choices:
-            floored[pick] += 1
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            inds, = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                    break
     return floored.astype(np.int)
 
 
