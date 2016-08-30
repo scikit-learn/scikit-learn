@@ -420,6 +420,11 @@ API changes summary
      (`#7187 <https://github.com/scikit-learn/scikit-learn/pull/7187>`_)
      by `YenChen Lin`_.
 
+    - ``classes`` parameter was renamed to ``labels`` in
+      :func:`metrics.classification.hamming_loss`.
+      (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
+      `Sebastián Vanrell`_.
+
 
 .. currentmodule:: sklearn
 
@@ -4402,3 +4407,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hong Guangguo: https://github.com/hongguangguo
 
 .. _Mads Jensen: https://github.com/indianajensen
+
+.. _Sebastián Vanrell: https://github.com/srvanrell
