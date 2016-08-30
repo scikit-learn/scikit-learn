@@ -166,21 +166,19 @@ def test_grid_search():
 
 
 def test_grid_search_incorrect_param_grid():
+    clf = MockClassifier()
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a sequence.",
-        GridSearchCV,
-        None,
-        {'C': 1})
+        GridSearchCV, clf, {'C': 1})
 
 
 def test_grid_search_param_grid_includes_sequence_of_a_zero_length():
+    clf = MockClassifier()
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
-        GridSearchCV,
-        None,
-        {'C': []})
+        GridSearchCV, clf, {'C': []})
 
 
 @ignore_warnings
