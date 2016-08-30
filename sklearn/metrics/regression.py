@@ -101,6 +101,7 @@ def _check_reg_targets(y_true, y_pred, multioutput):
 
     return y_type, y_true, y_pred, multioutput
 
+
 def mean_absolute_error(y_true, y_pred,
                         sample_weight=None,
                         multioutput='uniform_average'):
