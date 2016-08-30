@@ -192,10 +192,6 @@ default).
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
-.. |plot_dpgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
-   :target: ../auto_examples/mixture/plot_concentration_prior.html
-   :scale: 48%
-
 .. centered:: |plot_bgmm| |plot_dpgmm|
 
 The examples below compare Gaussian mixture models with a fixed number of

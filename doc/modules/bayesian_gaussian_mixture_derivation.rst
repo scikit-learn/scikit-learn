@@ -13,7 +13,7 @@ The inference algorithm is the one from the following book:
       <http://www.springer.com/kr/book/9780387310732>`_
       Bishop, Christopher M. Springer, Vol. 4 No. 4, 2006.
 
-While the book presents the parts of the variationnl inference algorithm, it
+While the book presents the parts of the variationnal inference algorithm, it
 does not go into detail in the mixture modeling part, which can be just as
 complex, or even more. For this reason we present here a full derivation of the
 inference algorithm and all the update and lower-bound equations. If you're not
@@ -27,12 +27,19 @@ the Gaussian mixture.
 Update rules for VB inference
 ==============================
 
-Here the full mathematical derivation of the Variational Bayes update
-rules for Gaussian Mixture Models is given.
+Here, we present the full mathematical derivation of the update rules
+for the :class:`BayesianGaussianMixture` class.
 
 Notation
 --------
-Let's define some statistics :
+During this document, we will use the following notation :
+
+- :math:`\mathcal{N}` is the `Normal distribution. <https://en.wikipedia.org/wiki/Normal_distribution>`_
+- :math:`\mathcal{W}` is the `Wishart distribution. <https://en.wikipedia.org/wiki/Wishart_distribution>`_
+- :math:`Dir` is the `Dirichlet distribution. <https://en.wikipedia.org/wiki/Dirichlet_distribution>`_
+- :math:`z_{nk}` is the indicator variable which represents that :math:`\mathbf{x}_n` belongs to the :math:`k`-th components
+
+For convenience, we introduce the following statictics:
 
 .. math::
    :nowrap:
@@ -43,6 +50,10 @@ Let's define some statistics :
     \mathbf{S}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} (\mathbf{x}_n - \bar{\mathbf{x}}_k) (\mathbf{x}_n - \bar{\mathbf{x}}_k)^T}
 
    \end{eqnarray*}
+
+where :math:`r_{nk}` is the normalized posterior probability that :math:`k` was responsible
+for generating :math:`\mathbf{x}_n` (also called responsibility) defined by the
+Equation :eq:`vbgmm_responsabilities`.
 
 The full model
 --------------
@@ -73,7 +84,7 @@ where
       p(\mathbf{Z} | \boldsymbol{\pi})
         & = & \prod_{n=1}^N \prod_{k=1}^K \pi_k^{z_{nk}} \\
       p(\boldsymbol{\pi})
-        & = & Dirichlet(\boldsymbol{\pi}| \boldsymbol{\alpha}_0) = C(\boldsymbol{\alpha}_0) \prod_{k=1}^K \pi_k^{\alpha_0-1} \\
+        & = & Dir(\boldsymbol{\pi}| \boldsymbol{\alpha}_0) = C(\boldsymbol{\alpha}_0) \prod_{k=1}^K \pi_k^{\alpha_0-1} \\
       p(\boldsymbol{\mu}, \boldsymbol{\Lambda})
         & = & p(\boldsymbol{\mu}|\boldsymbol{\Lambda})p(\boldsymbol{\Lambda})  \\
         & = & \prod_{k=1}^K \mathcal{N}(\boldsymbol{\mu}_k|\mathbf{m}_0, (\beta_0\boldsymbol{\Lambda}_k)^{-1})
@@ -146,7 +157,7 @@ Finally, the weights can be expressed by
    :label: vbgmm_weights
 
    \begin{eqnarray*}
-      q^\star(\boldsymbol{\pi}) & = & Dirichlet(\boldsymbol{\pi}|\boldsymbol{\alpha}) \\
+      q^\star(\boldsymbol{\pi}) & = & Dir(\boldsymbol{\pi}|\boldsymbol{\alpha}) \\
       \alpha_k & = & \alpha_0 + N_k
    \end{eqnarray*}
 
