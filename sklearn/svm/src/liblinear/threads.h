@@ -31,9 +31,11 @@ extern "C" {
     typedef CRITICAL_SECTION   _LL_Mutex;
     typedef HANDLE             _LL_Semaphore;
     typedef DWORD              _LL_ThreadReturnValue;
+    #define _LL_STDCALL        _stdcall
 #else
     typedef void               *_LL_ThreadReturnValue;
     typedef pthread_mutex_t    _LL_Mutex;
+    #define _LL_STDCALL
 #ifdef __SEM_NAMED
     typedef sem_t              *_LL_Semaphore;
 #else
@@ -42,7 +44,7 @@ extern "C" {
 #endif
 
     typedef void *_LL_ThreadHandle;
-    typedef _LL_ThreadReturnValue (*_LL_ThreadStartFunction) (void *startData);
+    typedef _LL_ThreadReturnValue (_LL_STDCALL *_LL_ThreadStartFunction) (void *startData);
 
     bool _LL_MutexInit(_LL_Mutex  * const mutex);
     bool _LL_MutexDestroy(_LL_Mutex  * const mutex);
