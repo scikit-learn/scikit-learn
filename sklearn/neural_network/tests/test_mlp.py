@@ -27,7 +27,7 @@ from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
 
 np.seterr(all='warn')
 
-ACTIVATION_TYPES = ["logistic", "tanh", "relu"]
+ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
 digits_dataset_multi = load_digits(n_class=3)
 
@@ -254,7 +254,11 @@ def test_lbfgs_regression():
                            max_iter=150, shuffle=True, random_state=1,
                            activation=activation)
         mlp.fit(X, y)
-        assert_greater(mlp.score(X, y), 0.95)
+        if activation == 'identity':
+            assert_greater(mlp.score(X, y), 0.84)
+        else:
+            # Non linear models perform much better than linear bottleneck:
+            assert_greater(mlp.score(X, y), 0.95)
 
 
 def test_learning_rate_warmstart():
