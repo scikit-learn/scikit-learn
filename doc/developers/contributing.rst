@@ -157,7 +157,10 @@ Contributing pull requests
 It is recommended to check that your contribution complies with the following
 rules before submitting a pull request:
 
-    * Follow the `coding-guidelines`_ (see below).
+    * Follow the `coding-guidelines`_ (see below). To make sure that
+      your PR does not add PEP8 violations you can run
+      `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+      Unix-like system.
 
     * When applicable, use the validation tools and other code in the
       ``sklearn.utils`` submodule.  A list of utility routines available
