@@ -2362,7 +2362,7 @@ typedef struct
 }
 _LL_ThreadInfo;
 
-_LL_ThreadReturnValue TrainProblem(void *startData)
+_LL_ThreadReturnValue _LL_STDCALL TrainProblem(void *startData)
 {
     _LL_ThreadInfo *ti = (_LL_ThreadInfo *)startData;
 
