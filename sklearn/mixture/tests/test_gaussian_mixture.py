@@ -883,10 +883,12 @@ def test_regularisation():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             assert_raise_message(ValueError,
-                                 "The algorithm has diverged because of too "
-                                 "few samples per components. "
-                                 "Try to decrease the number of components, "
-                                 "or increase reg_covar.", gmm.fit, X)
+                                 "Fitting the mixture model failed because "
+                                 "some components have ill-defined empirical "
+                                 "covariance (for instance caused by "
+                                 "singleton or collapsed samples). Try to "
+                                 "decrease the number of components, or "
+                                 "increase reg_covar.", gmm.fit, X)
 
             gmm.set_params(reg_covar=1e-6).fit(X)
 

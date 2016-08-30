@@ -64,13 +64,13 @@ Model Selection Enhancements and API Changes
 
   - **Parameters ``n_folds`` and ``n_iter`` renamed to ``n_splits``**
 
-    Some parameter names have changed: 
-    The ``n_folds`` parameter in :class:`model_selection.KFold`, 
-    :class:`model_selection.LabelKFold`, and 
+    Some parameter names have changed:
+    The ``n_folds`` parameter in :class:`model_selection.KFold`,
+    :class:`model_selection.LabelKFold`, and
     :class:`model_selection.StratifiedKFold` is now renamed to ``n_splits``.
     The ``n_iter`` parameter in :class:`model_selection.ShuffleSplit`,
-    :class:`model_selection.LabelShuffleSplit`, 
-    and :class:`model_selection.StratifiedShuffleSplit` is now renamed 
+    :class:`model_selection.LabelShuffleSplit`,
+    and :class:`model_selection.StratifiedShuffleSplit` is now renamed
     to ``n_splits``.
 
 
@@ -141,8 +141,8 @@ New features
      <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
      Liu`_
 
-   - Added new cross-validation splitter 
-     :class:`model_selection.TimeSeriesSplit` to handle time series data. 
+   - Added new cross-validation splitter
+     :class:`model_selection.TimeSeriesSplit` to handle time series data.
      (`#6586
      <https://github.com/scikit-learn/scikit-learn/pull/6586>`_) by `YenChen
      Lin`_
@@ -402,10 +402,19 @@ API changes summary
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
 
+   - The old :class:`VBGMM` is deprecated in favor of the new
+     :class:`BayesianGaussianMixture`. The new class solves the computational
+     problems of the old class and computes the Variational Bayesian Gaussian
+     mixture faster than before.
+     Ref :ref:`b` for more information.
+     (`#6651 <https://github.com/scikit-learn/scikit-learn/pull/6651>`_) by
+     `Wei Xue`_ and `Thierry Guillemot`_.
+
    - The old :class:`GMM` is deprecated in favor of the new
      :class:`GaussianMixture`. The new class computes the Gaussian mixture
      faster than before and some of computational problems have been solved.
-     By `Wei Xue`_ and `Thierry Guillemot`_.
+     (`#6666 <https://github.com/scikit-learn/scikit-learn/pull/6666>`_) by
+     `Wei Xue`_ and `Thierry Guillemot`_.
 
    - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
      and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
@@ -415,7 +424,7 @@ API changes summary
      `Raghav R V`_.
 
    - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
-     by the new parameter ``n_splits`` since it can provide a consistent 
+     by the new parameter ``n_splits`` since it can provide a consistent
      and unambiguous interface to represent the number of train-test splits.
      (`#7187 <https://github.com/scikit-learn/scikit-learn/pull/7187>`_)
      by `YenChen Lin`_.
