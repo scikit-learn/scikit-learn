@@ -74,7 +74,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 class_weight, verbose, max_iter, n_threads, random_state):
+                 class_weight, verbose, max_iter, random_state, n_threads=1):
 
         if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -100,8 +100,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight = class_weight
         self.verbose = verbose
         self.max_iter = max_iter
-        self.n_threads = n_threads
         self.random_state = random_state
+        self.n_threads = n_threads
 
     @property
     def _pairwise(self):
@@ -245,7 +245,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
-                max_iter=self.max_iter, n_threads=self.n_threads, random_seed=random_seed)
+                max_iter=self.max_iter, random_seed=random_seed, n_threads=self.n_threads)
 
         self._warn_from_fit_status()
 
@@ -498,14 +498,14 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
-                 max_iter, n_threads, decision_function_shape, random_state):
+                 max_iter, decision_function_shape, random_state, n_threads=1):
         self.decision_function_shape = decision_function_shape
         super(BaseSVC, self).__init__(
             impl=impl, kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
-            n_threads=n_threads, random_state=random_state)
+            random_state=random_state, n_threads=n_threads)
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
@@ -765,10 +765,10 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
 
 
 def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
-                   penalty, dual, verbose, max_iter, n_threads, tol,
+                   penalty, dual, verbose, max_iter, tol,
                    random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1,
-                   sample_weight=None):
+                   sample_weight=None, n_threads=1):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
     Preprocessing is done in this function before supplying it to liblinear.
@@ -818,10 +818,6 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     max_iter : int
         Number of iterations.
 
-    n_threads : int, default: 1
-        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
-        classification. If given a value of -1, all cores are used.
-
     tol : float
         Stopping condition.
 
@@ -849,6 +845,10 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     sample_weight: array-like, optional
         Weights assigned to each sample.
+
+    n_threads : int, default: 1
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
+        classification. If given a value of -1, all cores are used.
 
     Returns
     -------

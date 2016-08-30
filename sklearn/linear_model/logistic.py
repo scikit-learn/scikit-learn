@@ -434,12 +434,12 @@ def _check_solver_option(solver, multi_class, penalty, dual):
 
 
 def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
-                             max_iter=100, n_threads=1, tol=1e-4, verbose=0,
+                             max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None, copy=False,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
-                             max_squared_sum=None, sample_weight=None):
+                             max_squared_sum=None, sample_weight=None, n_threads=1):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -473,9 +473,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     max_iter : int
         Maximum number of iterations for the solver.
-
-    n_threads : int
-        Number of threads to use.
 
     tol : float
         Stopping criterion. For the newton-cg and lbfgs solvers, the iteration
@@ -551,6 +548,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     sample_weight : array-like, shape(n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
+
+    n_threads : int
+        Number of threads to use.
 
     Returns
     -------
@@ -731,8 +731,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, class_weight,
-                penalty, dual, verbose, max_iter, n_threads, tol, random_state,
-                sample_weight=sample_weight)
+                penalty, dual, verbose, max_iter, tol, random_state,
+                sample_weight=sample_weight, n_threads=n_threads)
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
@@ -769,11 +769,12 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 # helper function for LogisticCV
 def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
-                          max_iter=100, n_threads=1, tol=1e-4, class_weight=None,
+                          max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
                           multi_class='ovr', random_state=None,
-                          max_squared_sum=None, sample_weight=None):
+                          max_squared_sum=None, sample_weight=None,
+                          n_threads=1):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -811,9 +812,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     max_iter : int
         Maximum number of iterations for the solver.
-
-    n_threads : int
-        Number of threads to use.
 
     tol : float
         Tolerance for stopping criteria.
@@ -877,6 +875,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
+    n_threads : int
+        Number of threads to use.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -905,12 +906,12 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     coefs, Cs, n_iter = logistic_regression_path(
         X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
-        solver=solver, max_iter=max_iter, n_threads=n_threads, class_weight=class_weight,
+        solver=solver, max_iter=max_iter, class_weight=class_weight,
         pos_class=pos_class, multi_class=multi_class,
         tol=tol, verbose=verbose, dual=dual, penalty=penalty,
         intercept_scaling=intercept_scaling, random_state=random_state,
         check_input=False, max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight)
+        sample_weight=sample_weight, n_threads=n_threads)
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
@@ -1192,8 +1193,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
-                self.max_iter, self.n_threads, self.tol, self.random_state,
-                sample_weight=sample_weight)
+                self.max_iter, self.tol, self.random_state,
+                sample_weight=sample_weight, n_threads=self.n_threads)
             self.n_iter_ = np.array([n_iter_])
             return self
 
@@ -1244,11 +1245,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       fit_intercept=self.fit_intercept, tol=self.tol,
                       verbose=self.verbose, solver=self.solver, copy=False,
                       multi_class=self.multi_class, max_iter=self.max_iter,
-                      n_threads=self.n_threads,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
                       max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight)
+                      sample_weight=sample_weight, n_threads=self.n_threads)
             for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
@@ -1416,10 +1416,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
 
-    n_threads : int, default: 1
-        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
-        classification. If given a value of -1, all cores are used.
-
     verbose : int
         For the 'liblinear', 'sag' and 'lbfgs' solvers set verbose to any
         positive number for verbosity.
@@ -1457,6 +1453,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
+
+    n_threads : int, default: 1
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
+        classification. If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -1638,13 +1638,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=self.solver, tol=self.tol,
-                      max_iter=self.max_iter, n_threads=self.n_threads, verbose=self.verbose,
+                      max_iter=self.max_iter, verbose=self.verbose,
                       class_weight=class_weight, scoring=self.scoring,
                       multi_class=self.multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight
+                      sample_weight=sample_weight, n_threads=self.n_threads
                       )
             for label in iter_labels
             for train, test in folds)
@@ -1709,14 +1709,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 w, _, _ = logistic_regression_path(
                     X, y, pos_class=label, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
-                    max_iter=self.max_iter, n_threads=self.n_threads, tol=self.tol,
+                    max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty, copy=False,
                     class_weight=class_weight,
                     multi_class=self.multi_class,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False, max_squared_sum=max_squared_sum,
-                    sample_weight=sample_weight)
+                    sample_weight=sample_weight, n_threads=self.n_threads)
                 w = w[0]
 
             else:
