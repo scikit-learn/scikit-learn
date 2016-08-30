@@ -928,6 +928,7 @@ def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
     return array.array(str("i"))
 
+
 def _make_long_array():
     """Construct an array.array of a type suitable for large scipy.sparse indices.
 

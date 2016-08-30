@@ -245,7 +245,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
-                max_iter=self.max_iter, random_seed=random_seed, n_threads=self.n_threads)
+                max_iter=self.max_iter, random_seed=random_seed,
+                n_threads=self.n_threads)
 
         self._warn_from_fit_status()
 
@@ -847,8 +848,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         Weights assigned to each sample.
 
     n_threads : int, default: 1
-        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
-        classification. If given a value of -1, all cores are used.
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than
+         2-class classification. If given a value of -1, all cores are used.
 
     Returns
     -------
