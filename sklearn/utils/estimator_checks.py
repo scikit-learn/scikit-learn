@@ -334,8 +334,12 @@ def _is_32bit():
 
 def check_estimators_are_deterministic(name, Estimator):
     # all estimators should be deterministic with a fixed random_state
-    X, y = make_classification(n_classes=3, n_informative=3, random_state=3)
-    # We need to make sure that we have non negative data, for some estimators
+    X, y = make_classification(n_classes=3, n_informative=5, n_samples=4000,
+                               random_state=2)
+    # make sure there is nothing to be learnt
+    rng = np.random.RandomState(0)
+    rng.shuffle(y)
+    # For some estimators we need to make sure that we have non negative data
     X -= X.min() - .1
 
     # XXX skipping bad estimators for the moment
@@ -346,7 +350,7 @@ def check_estimators_are_deterministic(name, Estimator):
 
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         train_size=0.5,
-                                                        random_state=3)
+                                                        random_state=4)
     if "MultiTask" in name:
         y_train = np.reshape(y_train, (-1, 1))
         y_test = np.reshape(y_test, (-1, 1))
@@ -362,7 +366,10 @@ def check_estimators_are_deterministic(name, Estimator):
     est1.fit(X_train, y_train)
     est2.fit(X_train, y_train)
 
-    assert_array_almost_equal(est1.predict(X_test), est2.predict(X_test))
+    # XXX replace me by a better identity test, want identity not just
+    # XXX statistical equivalence
+    assert_array_almost_equal(est1.predict(X_test),
+                              est2.predict(X_test))
 
 
 def check_estimator_sparse_data(name, Estimator):
