@@ -474,11 +474,11 @@ then the shape of the transformed input is
     Imputer(add_indicator_features=True, axis=0, copy=True, missing_values='NaN',
         strategy='mean', verbose=0)
     >>> print(imp_with_in.transform(X))                           # doctest: +ELLIPSIS
-    [[ 4.          2.          1.          0.        ]
-     [ 6.          3.66666667  0.          1.        ]
-     [ 7.          6.          0.          0.        ]]
+    [[ 4.          2.          1.        ]
+     [ 6.          3.66666667  0.        ]
+     [ 7.          6.          0.        ]]
     >>> print(imp_with_in.imputed_features_)
-    [0 1]
+    [0]
 
 The :class:`Imputer` class also supports sparse matrices::
 

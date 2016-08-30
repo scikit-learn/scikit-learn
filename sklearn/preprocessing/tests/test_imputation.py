@@ -8,13 +8,14 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
- 
+
 
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
@@ -367,12 +368,17 @@ def check_indicator(X, expected_imputed_features, axis):
     imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
     Xt = imputer.fit_transform(X)
     Xt_with_in = imputer_with_in.fit_transform(X)
-    imputed_features_mask = X[:, expected_imputed_features] == -1
     n_features_new = Xt.shape[1]
-    n_imputed_features = len(imputer_with_in.imputed_features_)
-    assert_array_equal(imputer.imputed_features_, expected_imputed_features)
-    assert_array_equal(imputer_with_in.imputed_features_,
-                       expected_imputed_features)
+    if axis == 0:
+        assert_array_equal(imputer.imputed_features_,
+                           expected_imputed_features)
+        assert_array_equal(imputer_with_in.imputed_features_,
+                           expected_imputed_features)
+        n_imputed_features = len(imputer.imputed_features_)
+        imputed_features_mask = X[:, expected_imputed_features] == -1
+    else:
+        n_imputed_features = n_features_new
+        imputed_features_mask = X == -1
     assert_equal(Xt_with_in.shape,
                  (n_samples, n_features_new + n_imputed_features))
     assert_array_equal(Xt_with_in, np.hstack((Xt, imputed_features_mask)))
@@ -383,26 +389,105 @@ def check_indicator(X, expected_imputed_features, axis):
                        imputer_with_in.fit_transform(sparse.csr_matrix(X)).A)
 
 
-def test_indicator_features():
-    # one feature with all missng values
+def test_indicator_features_fit_transfrom():
+    # Test indicator feature shape when fit and transform on same inputs
+    # one feature with all missing values
     X = np.array([
-       [-1,  -1,   2,   3],
-       [4,  -1,   6,  -1],
-       [8,  -1,  10,  11],
-       [12,  -1,  -1,  15],
-       [16,  -1,  18,  19]
+        [-1,  -1,   2,   3],
+        [4,  -1,   6,  -1],
+        [8,  -1,  10,  11],
+        [12,  -1,  -1,  15],
+        [16,  -1,  18,  19]
     ])
     check_indicator(X, np.array([0, 2, 3]), axis=0)
-    check_indicator(X, np.array([0, 1, 2, 3]), axis=1)
+    check_indicator(X, None, axis=1)
 
     # one feature with all missing values and one with no missing value
     # when axis=0 the feature gets discarded
     X = np.array([
-       [-1,  -1,   1,   3],
-       [4,  -1,   0,  -1],
-       [8,  -1,   1,  0],
-       [0,  -1,   0,  15],
-       [16,  -1,   1,  19]
+        [-1,  -1,   1,   3],
+        [4,  -1,   0,  -1],
+        [8,  -1,   1,  0],
+        [0,  -1,   0,  15],
+        [16,  -1,   1,  19]
     ])
     check_indicator(X, np.array([0, 3]), axis=0)
-    check_indicator(X, np.array([0, 1, 3]), axis=1)
+    check_indicator(X, None, axis=1)
+
+
+def test_indicator_features_transform():
+    # Test indicator feature shape when fit and transform on different inputs
+    X1 = np.array([
+        [-1,  -1,   2,   3],
+        [4,  -1,   6,  -1],
+        [8,  -1,  10,  11],
+        [12,  -1,  -1,  15],
+        [16,  -1,  18,  19]
+    ])
+
+    X2 = np.array([
+        [-1,  -1,   1,   3],
+        [4,  -1,   0,  -1],
+        [8,  -1,   1,  0],
+        [0,  -1,   0,  15],
+        [16,  -1,   1,  19]
+    ])
+
+    n_samples, n_features = X1.shape
+    imputer = Imputer(missing_values=-1, strategy='mean', axis=0)
+    imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
+    imputer.fit(X1)
+    imputer_with_in.fit(X1)
+    Xt = imputer.transform(X2)
+    Xt_with_in = imputer_with_in.transform(X2)
+    imputed_features_mask = X2[:, imputer.imputed_features_] == -1
+    n_features_new = Xt.shape[1]
+    n_imputed_features = len(imputer.imputed_features_)
+    assert_equal(Xt_with_in.shape,
+                 (n_samples, n_features_new + n_imputed_features))
+    assert_array_equal(Xt_with_in, np.hstack((Xt, imputed_features_mask)))
+    assert_array_equal(Xt_with_in,
+                       imputer_with_in.transform(sparse.csc_matrix(X2)).A)
+    assert_array_equal(Xt_with_in,
+                       imputer_with_in.transform(sparse.csr_matrix(X2)).A)
+
+    imputer = Imputer(missing_values=-1, strategy='mean', axis=1)
+    imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
+    imputer.fit(X1)
+    imputer_with_in.fit(X1)
+    Xt = imputer.transform(X2)
+    Xt_with_in = imputer_with_in.transform(X2)
+    imputed_features_mask = X2 == -1
+    n_features_new = Xt.shape[1]
+    assert_equal(Xt_with_in.shape, (n_samples, 2 * n_features_new))
+    assert_array_equal(Xt_with_in, np.hstack((Xt, imputed_features_mask)))
+    assert_array_equal(Xt_with_in,
+                       imputer_with_in.transform(sparse.csc_matrix(X2)).A)
+    assert_array_equal(Xt_with_in,
+                       imputer_with_in.transform(sparse.csr_matrix(X2)).A)
+
+
+def test_imputer_warn():
+    # Raise a Runtime warning if a feature has all missing values
+    # in fit but has non-missing values for same feature during transform
+    X1 = np.array([
+        [-1,  -1,   1,   3],
+        [4,  -1,   0,  -1],
+        [8,  -1,   1,  0],
+        [0,  -1,   0,  15],
+        [16,  -1,   1,  19]
+    ])
+
+    X2 = np.array([
+        [-1,  -1,   1,   3],
+        [4,  1,   0,  -1],
+        [8,  -1,   1,  0],
+        [0,  -1,   0,  15],
+        [16,  -1,   1,  19]
+    ])
+
+    imputer = Imputer(missing_values=-1, strategy='mean', axis=0)
+    imputer.fit(X1)
+    imputer.transform(X2)
+    assert_warns(RuntimeWarning, imputer.transform, X2)
+    assert_warns(RuntimeWarning, imputer.transform, sparse.csr_matrix(X2))
