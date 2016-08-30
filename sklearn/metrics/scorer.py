@@ -382,6 +382,7 @@ SCORERS = dict(r2=r2_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,
+               log_loss=log_loss_scorer,
                neg_log_loss=neg_log_loss_scorer,
                adjusted_rand_score=adjusted_rand_scorer)
 
