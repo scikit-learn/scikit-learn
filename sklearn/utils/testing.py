@@ -170,8 +170,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    # very important to avoid uncontrolled state propagation
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -221,7 +219,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     result : the return value of `func`
 
     """
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -267,10 +264,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
     # XXX: once we may depend on python >= 2.6, this can be replaced by the
-
     # warnings module context manager.
-    # very important to avoid uncontrolled state propagation
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
 
@@ -341,8 +335,6 @@ class _IgnoreWarnings(object):
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            # very important to avoid uncontrolled state propagation
-            clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
                 return fn(*args, **kwargs)
@@ -359,7 +351,6 @@ class _IgnoreWarnings(object):
         return "%s(%s)" % (name, ", ".join(args))
 
     def __enter__(self):
-        clean_warning_registry()  # be safe and not propagate state + chaos
         warnings.simplefilter("ignore", self.category)
         if self._entered:
             raise RuntimeError("Cannot enter %r twice" % self)
@@ -374,7 +365,6 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()  # be safe and not propagate state + chaos
 
 
 try:

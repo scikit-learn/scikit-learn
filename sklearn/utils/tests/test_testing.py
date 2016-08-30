@@ -189,11 +189,9 @@ def test_ignore_warning():
     assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
 
 
-# This class is inspired from numpy 1.7 with an alteration to check
-# the reset warning filters after calls to assert_warns.
-# This assert_warns behavior is specific to scikit-learn because
-#`clean_warning_registry()` is called internally by assert_warns
-# and clears all previous filters.
+# This class is inspired from numpy 1.7. What we want is to have
+# the same filter after using multiple function which called
+# internally `warnings.simplefilter`.
 class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
@@ -201,14 +199,15 @@ class TestWarns(unittest.TestCase):
             return 3
 
         # Test that assert_warns is not impacted by externally set
-        # filters and is reset internally.
-        # This is because `clean_warning_registry()` is called internally by
-        # assert_warns and clears all previous filters.
+        # filters. The environement values are normally restored
+        # at the end of the with block
         warnings.simplefilter("ignore", UserWarning)
+        expected_filters = sys.modules['warnings'].filters.copy()
         assert_equal(assert_warns(UserWarning, f), 3)
 
-        # Test that the warning registry is empty after assert_warns
-        assert_equal(sys.modules['warnings'].filters, [])
+        # Test that the warning registry is similar at what we have before
+        # calling `assert_warns`
+        assert_equal(sys.modules['warnings'].filters, expected_filters)
 
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
