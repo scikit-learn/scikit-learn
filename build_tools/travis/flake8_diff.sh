@@ -14,6 +14,8 @@
 #     turn-around
 
 set -e
+# pipefail is necessary to propagate exit codes
+set -o pipefail
 
 PROJECT=scikit-learn/scikit-learn
 PROJECT_URL=https://github.com/$PROJECT.git
@@ -79,7 +81,20 @@ echo -e '\nRunning flake8 on the diff in the range'\
      "($(git rev-list $COMMIT.. | wc -l) commit(s)):"
 echo '--------------------------------------------------------------------------------'
 
-# Conservative approach: diff without context so that code that was
-# not changed does not create failures
-git diff --unified=0 $COMMIT | flake8 --diff --show-source
+# We ignore files from sklearn/externals. Unfortunately there is no
+# way to do it with flake8 directly (the --exclude does not seem to
+# work with --diff). We could use the exclude magic in the git pathspec
+# ':!sklearn/externals' but it is only available on git 1.9 and Travis
+# uses git 1.8.
+# We need the following command to exit with 0 hence the echo in case
+# there is no match
+MODIFIED_FILES=$(git diff --name-only $COMMIT | grep -v 'sklearn/externals' || echo "no_match")
+
+if [[ "$MODIFIED_FILES" == "no_match" ]]; then
+    echo "No file outside sklearn/externals has been modified"
+else
+    # Conservative approach: diff without context so that code that
+    # was not changed does not create failures
+    git diff --unified=0 $COMMIT -- $MODIFIED_FILES | flake8 --diff --show-source
+fi
 echo -e "No problem detected by flake8\n"
