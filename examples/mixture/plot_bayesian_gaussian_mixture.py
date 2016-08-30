@@ -3,9 +3,9 @@
 Bayesian Gaussian Mixture Concentration Prior Analysis
 ======================================================
 
-Plot the resulting ellipsoids of a mixture of three Gaussians with EM and
-variational Bayesian Gaussian Mixture for three different values of on the prior
-the dirichlet concentration.
+Plot the resulting ellipsoids of a mixture of three Gaussians with
+variational Bayesian Gaussian Mixture for three different values on the
+prior the dirichlet concentration.
 
 For all models, the Variationnal Bayesian Gaussian Mixture adapts its number of
 mixture automatically. The parameter `dirichlet_concentration_prior` has a
@@ -15,8 +15,7 @@ components, while specifying small (under 0.1) values will lead to some mixture
 components getting almost all the points while most mixture components will be
 centered on just a few of the remaining points.
 """
-# Author: Wei Xue <xuewei4d@gmail.com>
-#         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+# Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
