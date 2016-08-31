@@ -91,7 +91,7 @@ def test_kw_arg():
 
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                               np.around(X, decimals=3))
+                                  np.around(X, decimals=3))
 
 
 def test_kw_arg_update():
@@ -103,7 +103,7 @@ def test_kw_arg_update():
 
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                               np.around(X, decimals=1))
+                                  np.around(X, decimals=1))
 
 
 def test_kw_arg_reset():
@@ -115,4 +115,4 @@ def test_kw_arg_reset():
 
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                               np.around(X, decimals=1))
+                                  np.around(X, decimals=1))
