@@ -176,7 +176,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute ``classes_``.
         """
-        self._check_is_best_estimator_fitted(self, 'predict_proba')
+        self._check_is_best_estimator_fitted('predict_proba')
         return self.best_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate='estimator')
@@ -199,7 +199,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute ``classes_``.
         """
-        self._check_is_best_estimator_fitted(self, 'predict_log_proba')
+        self._check_is_best_estimator_fitted('predict_log_proba')
         return self.best_estimator_.predict_log_proba(X)
 
     def _get_params(self):
