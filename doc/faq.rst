@@ -31,16 +31,22 @@ What's the best way to ask questions about scikit-learn?
 The quickest way to get replies to your questions is posting on 
 `Stack Overflow <http://stackoverflow.com>`_ or 
 `Cross Validated <http://stats.stackexchange.com>`_ 
- with the "scikit-learn" or "machine-learning" tags. These sites may already have an answer
- for your question and provide a convenient search interface. You can also post questions
- on the mailing list, though that often has longer turn-around times.
- Please don't ask general machine learning questions on the mailing list.
+with the "scikit-learn" or "machine-learning" tags. These sites may already
+have an answer for your question and provide a convenient search interface. You
+can also post questions on the `mailing list
+<https://mail.python.org/mailman/listinfo/scikit-learn>`_, though that often
+has longer turn-around times.  Please don't ask general machine learning
+questions on the mailing list.
 
 For bug reports or feature requests, please make use of the
-`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_,
-the `mailing list <https://mail.python.org/mailman/listinfo/scikit-learn>`_, or
-the `scikit-learn community on Gitter <https://gitter.im/scikit-learn/scikit-learn>`_.
-Please do not email the authors directly with bug reports or feature requests.
+`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_.
+
+There is also a `scikit-learn Gitter channel
+<https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
+might be found. 
+
+Please do not email any authors directly with bug reports, feature requests
+or for any other issue related to scikit-learn.
 
 How can I create a bunch object?
 ------------------------------------------------
