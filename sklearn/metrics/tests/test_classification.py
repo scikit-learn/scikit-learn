@@ -287,7 +287,7 @@ def test_precision_recall_f_unused_pos_label():
                          "may use labels=[pos_label] to specify a single "
                          "positive class.", precision_recall_fscore_support,
                          [1, 2, 1], [1, 2, 2], pos_label=2, average='macro')
-    
+
 
 def test_confusion_matrix_binary():
     # Test confusion matrix - binary classification case
