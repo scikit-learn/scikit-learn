@@ -496,7 +496,11 @@ class DensityMixin(object):
 class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
-
+    @property
+    def _pairwise(self):
+    	# Indicate if the wrapped estimator is one using a precomputed Gram matrix
+    	return getattr(self.estimator,"__pairwise",False)
+  
 
 ###############################################################################
 
