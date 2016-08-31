@@ -129,11 +129,9 @@ def test_precision_recall_f1_score_binary():
 
     # individual scoring function that can be used for grid search: in the
     # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1). This is deprecated for average != 'binary'.
-    assert_dep_warning = partial(assert_warns, DeprecationWarning)
+    # class (e.g. label == 1).
     for kwargs, my_assert in [({}, assert_no_warnings),
-                              ({'average': 'binary'}, assert_no_warnings),
-                              ({'average': 'micro'}, assert_dep_warning)]:
+                              ({'average': 'binary'}, assert_no_warnings)]:
         ps = my_assert(precision_score, y_true, y_pred, **kwargs)
         assert_array_almost_equal(ps, 0.85, 2)
 
@@ -146,6 +144,15 @@ def test_precision_recall_f1_score_binary():
         assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=2,
                                       **kwargs),
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
+
+    # Make sure average='micro' raises ValueError
+    assert_raises_verror = partial(assert_raise_message, ValueError,
+                                   "The target, which is of type binary, is "
+                                   "not compatible with average=micro.")
+    assert_raises_verror(precision_score, y_true, y_pred, average='micro')
+    assert_raises_verror(recall_score, y_true, y_pred, average='micro')
+    assert_raises_verror(f1_score, y_true, y_pred, average='micro')
+    assert_raises_verror(fbeta_score, y_true, y_pred, beta=2, average='micro')
 
 
 def test_precision_recall_f_binary_single_class():
@@ -1067,11 +1074,11 @@ def test_prf_warnings():
         # single postive label
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 due to no predicted samples.')
-        my_assert(w, msg, f, [1, 1], [-1, -1], average='macro')
+        my_assert(w, msg, f, [1, 1], [-1, -1], average='binary')
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 due to no true samples.')
-        my_assert(w, msg, f, [-1, -1], [1, 1], average='macro')
+        my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
 
 
 def test_recall_warnings():
@@ -1128,8 +1135,8 @@ def test_fscore_warnings():
                          'being set to 0.0 due to no true samples.')
 
 
-def test_prf_average_compat():
-    # Ensure warning if f1_score et al.'s average is implicit for multiclass
+def test_prf_incorrect_average():
+    # Ensure ValueError if f1_score et al.'s average is not explicitly set
     y_true = [1, 2, 3, 3]
     y_pred = [1, 2, 3, 1]
     y_true_bin = [0, 1, 1]
@@ -1137,24 +1144,24 @@ def test_prf_average_compat():
 
     for metric in [precision_score, recall_score, f1_score,
                    partial(fbeta_score, beta=2)]:
-        score = assert_warns(DeprecationWarning, metric, y_true, y_pred)
+        score = assert_raise_message(ValueError,
+                                     "but the target is of type multiclass",
+                                     metric, y_true, y_pred)
+
         score_weighted = assert_no_warnings(metric, y_true, y_pred,
                                             average='weighted')
-        assert_equal(score, score_weighted,
-                     'average does not act like "weighted" by default')
-
         # check binary passes without warning
         assert_no_warnings(metric, y_true_bin, y_pred_bin)
 
-        # but binary with pos_label=None should behave like multiclass
-        score = assert_warns(DeprecationWarning, metric,
-                             y_true_bin, y_pred_bin, pos_label=None)
+        # but binary with pos_label=None should raise ValueError
+        score = assert_raise_message(ValueError,
+                                     "but the pos_label parameter is None",
+                                     metric, y_true_bin, y_pred_bin,
+                                     pos_label=None)
+        
         score_weighted = assert_no_warnings(metric, y_true_bin, y_pred_bin,
                                             pos_label=None, average='weighted')
-        assert_equal(score, score_weighted,
-                     'average does not act like "weighted" by default with '
-                     'binary data and pos_label=None')
-
+       
 
 def test__check_targets():
     # Check that _check_targets correctly merges target types, squeezes
