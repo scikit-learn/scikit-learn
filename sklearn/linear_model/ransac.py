@@ -51,22 +51,6 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-def _loss_function_1(y_true, y_pred):
-    return np.abs(y_true - y_pred)
-
-
-def _loss_function_2(y_true, y_pred):
-    return np.sum(np.abs(y_true - y_pred), axis=1)
-
-
-def _loss_function_3(y_true, y_pred):
-    return (y_true - y_pred) ** 2
-
-
-def _loss_function_4(y_true, y_pred):
-    return np.sum((y_true - y_pred) ** 2, axis=1)
-
-
 class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
@@ -151,8 +135,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             lambda dy: np.sum(np.abs(dy), axis=1)
 
-        NOTE: residual_metric is deprecated from 0.18 and will be removed in
-        0.20. Use ``loss`` instead.
+        NOTE: residual_metric is deprecated from 0.18 and will be removed in 0.20
+        Use ``loss`` instead.
 
     loss: string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which
@@ -164,8 +148,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         array with the ``i``th value of the array corresponding to the loss
         on `X[i]`.
 
-        If the loss on a sample is greater than the ``residual_threshold``,
-        then this sample is classified as an outlier.
+        If the loss on a sample is greater than the ``residual_threshold``, then
+        this sample is classified as an outlier.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -277,15 +261,17 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         if self.loss == "absolute_loss":
             if y.ndim == 1:
-                loss_function = _loss_function_1
+                loss_function = lambda y_true, y_pred: np.abs(y_true - y_pred)
             else:
-                loss_function = _loss_function_2
+                loss_function = lambda \
+                    y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
 
         elif self.loss == "squared_loss":
             if y.ndim == 1:
-                loss_function = _loss_function_3
+                loss_function = lambda y_true, y_pred: (y_true - y_pred) ** 2
             else:
-                loss_function = _loss_function_4
+                loss_function = lambda \
+                    y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
 
         elif callable(self.loss):
             loss_function = self.loss

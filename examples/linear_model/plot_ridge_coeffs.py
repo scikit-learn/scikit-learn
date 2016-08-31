@@ -39,14 +39,14 @@ it is possible to extract the exact coefficients.
 
 # Author: Kornel Kielczewski -- <kornel.k@plusnet.pl>
 
+print(__doc__)
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import Ridge
 from sklearn.metrics import mean_squared_error
-
-print(__doc__)
 
 clf = Ridge()
 

@@ -69,5 +69,6 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             X = check_array(X, self.accept_sparse)
         func = self.func if self.func is not None else _identity
 
+
         return func(X, *((y,) if self.pass_y else ()),
                     **(self.kw_args if self.kw_args else {}))
