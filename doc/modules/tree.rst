@@ -514,7 +514,7 @@ criterion to minimise is the Mean Squared Error
 Underlying Tree Object Attributes
 ---------------------------------
 
-The ``tree_`` attribute of :class:`DecisionTreeRegressor` and :class:`DecisionTreeClassifier` allows you to access the underlying built ``Tree`` object and its various attributes. However, be aware that these properties are actively used for development, and **may change at any time without prior deprecation warning**.::
+The ``tree_`` attribute of :class:`DecisionTreeRegressor` and :class:`DecisionTreeClassifier` allows you to access the underlying built ``Tree`` object and its various attributes. However, be aware that these properties are actively used for development, and **may change at any time without prior deprecation warning.**::
 
     >>> from sklearn.tree._tree import Tree
     >>> help(Tree)
@@ -636,5 +636,5 @@ The ``tree_`` attribute of :class:`DecisionTreeRegressor` and :class:`DecisionTr
      |  __new__ = <built-in method __new__ of type object>
      |      T.__new__(S, ...) -> a new object with type S, a subtype of T
      |  
-     |  __pyx_vtable__ = <capsule object NULL>
+     |  __pyx_vtable__ = <PyCObject object>
     <BLANKLINE>
