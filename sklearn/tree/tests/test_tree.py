@@ -656,6 +656,7 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
+
         else:
             out = est.tree_.apply(X)
 

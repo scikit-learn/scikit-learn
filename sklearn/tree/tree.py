@@ -305,7 +305,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             min_weight_leaf = int(ceil(self.min_weight_fraction_leaf *
                                        n_samples))
             min_samples_leaf = max(min_samples_leaf, min_weight_leaf)
-            min_weight_leaf = 0.
         else:
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
