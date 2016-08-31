@@ -12,8 +12,11 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator
+from ..base import clone
+from ..exceptions import NotFittedError
 from ..metrics.scorer import check_scoring
 from ..utils.validation import check_X_y
+from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 
 from .gradient_boosting import GradientBoostingClassifier
@@ -65,6 +68,15 @@ class _BaseGradientBoostingCV(BaseEstimator):
         self.max_leaf_nodes = max_leaf_nodes
         self.presort = presort
 
+    def _check_is_best_estimator_fitted(self, method_name):
+        if not self.refit:
+            raise NotFittedError(('This GridSearchCV instance was initialized '
+                                  'with refit=False. %s is '
+                                  'available only after refitting on the best '
+                                  'parameters. ') % method_name)
+        else:
+            check_is_fitted(self, 'best_estimator_')
+
     def fit(self, X, y):
         """Run fit with all sets of parameters till convergence.
 
@@ -87,7 +99,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
                             backend='threading')
 
         out = parallel(delayed(_fit_single_param)
-                       (self._estimator_class, X, y, train, validation, params,
+                       (clone(self.estimator), X, y, train, validation, params,
                         self.n_iter_no_change, self.max_iterations,
                         self.scoring, self.score_precision, self.random_state)
                        for train, validation in cv.split(X)
@@ -124,7 +136,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
 
         if self.refit:
             self.best_params_['random_state'] = self.random_state
-            gb = self._estimator_class(**self.best_params_)
+            gb = clone(self.estimator).set_params(**self.best_params_)
             gb.fit(X, y)
             self.best_estimator_ = gb
 
@@ -144,7 +156,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
         """
         return self.best_estimator_.predict(X)
 
-    @if_delegate_has_method(delegate='_estimator_class')
+    @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
         """Call ``predict_proba`` on the best estimator.
 
@@ -164,9 +176,10 @@ class _BaseGradientBoostingCV(BaseEstimator):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute ``classes_``.
         """
+        self._check_is_best_estimator_fitted(self, 'predict_proba')
         return self.best_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='_estimator_class')
+    @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
         """Call ``predict_log_proba`` on the best estimator.
 
@@ -186,6 +199,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute ``classes_``.
         """
+        self._check_is_best_estimator_fitted(self, 'predict_log_proba')
         return self.best_estimator_.predict_log_proba(X)
 
     def _get_params(self):
@@ -421,7 +435,6 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
 
     """
 
-    _estimator_class = GradientBoostingClassifier
 
     def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
@@ -431,6 +444,7 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
                  min_impurity_split=1e-7, max_depth=3, init=None,
                  random_state=None, max_features=None, max_leaf_nodes=None,
                  presort='auto'):
+        self.estimator = GradientBoostingClassifier()
 
         super(GradientBoostingClassifierCV, self).__init__(
             n_iter_no_change=n_iter_no_change, score_precision=score_precision,
@@ -651,8 +665,6 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
 
     """
 
-    _estimator_class = GradientBoostingRegressor
-
     def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
                  n_jobs=1, verbose=0, loss='ls', learning_rate=0.1,
@@ -661,6 +673,7 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
                  min_impurity_split=1e-7, max_depth=3, init=None,
                  random_state=None, max_features=None, max_leaf_nodes=None,
                  presort='auto'):
+        self.estimator = GradientBoostingRegressor()
 
         super(GradientBoostingRegressorCV, self).__init__(
             n_iter_no_change=n_iter_no_change, score_precision=score_precision,
@@ -740,7 +753,7 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
 
     params['random_state'] = random_state
     params['warm_start'] = True
-    gb = estimator(**params)
+    gb = clone(estimator).set_params(**params)
 
     scorer = check_scoring(estimator, scoring=scoring)
     scores = []
