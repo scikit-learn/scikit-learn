@@ -932,7 +932,8 @@ def _make_int_array():
 def _make_long_array():
     """Construct an array.array of a type suitable for large scipy.sparse indices.
 
-    scipy 0.14 and later can construct sparse matrices with 64 bit integer indices.
+    scipy 0.14 and later can construct sparse matrices with 64 bit integer
+    indices.
 
     NOTE: long on Windows is only 32 bits
     """

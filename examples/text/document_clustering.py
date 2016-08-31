@@ -27,8 +27,8 @@ Two feature extraction methods can be used in this example:
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
-Additionally, latent semantic analysis can also be used to reduce dimensionality
-and discover latent patterns in the data. 
+Additionally, latent semantic analysis can also be used to reduce
+dimensionality and discover latent patterns in the data.
 
 It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
@@ -117,7 +117,7 @@ categories = [
     'sci.space',
 ]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
+# categories = None
 
 print("Loading 20 newsgroups dataset for categories:")
 print(categories)

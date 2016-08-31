@@ -439,7 +439,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
-                             max_squared_sum=None, sample_weight=None, n_threads=1):
+                             max_squared_sum=None, sample_weight=None,
+                             n_threads=1):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -1077,8 +1078,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         a value of -1, all cores are used.
 
     n_threads : int, default: 1
-        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
-        classification. If given a value of -1, all cores are used.
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than
+        2-class classification. If given a value of -1, all cores are used.
 
     Attributes
     ----------
@@ -1126,7 +1127,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1, n_threads=1):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1,
+                 n_threads=1):
 
         self.penalty = penalty
         self.dual = dual
@@ -1455,8 +1457,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         shuffling the data.
 
     n_threads : int, default: 1
-        Number of CPU cores used for liblinear L1 one-vs-rest for more than 2-class
-        classification. If given a value of -1, all cores are used.
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than
+        2-class classification. If given a value of -1, all cores are used.
 
     Attributes
     ----------
