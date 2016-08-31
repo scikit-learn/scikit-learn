@@ -187,7 +187,7 @@ sparse inputs, especially if features are on different scales.
 :class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
 for scaling sparse data, and are the recommended way to go about this.
 However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
-matrices  as input, as long as ``with_centering=False`` is explicitly passed
+matrices  as input, as long as ``with_mean=False`` is explicitly passed
 to the constructor. Otherwise a ``ValueError`` will be raised as
 silently centering would break the sparsity and would often crash the
 execution by allocating excessive amounts of memory unintentionally.
