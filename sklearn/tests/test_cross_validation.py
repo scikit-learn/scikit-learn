@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 from scipy import stats
 
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
@@ -1167,14 +1168,16 @@ def test_cross_val_predict_input_types():
     assert_equal(predictions.shape, (10,))
 
     # test with multioutput y
-    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    with ignore_warnings(category=ConvergenceWarning):
+        predictions = cval.cross_val_predict(clf, X_sparse, X)
     assert_equal(predictions.shape, (10, 2))
 
     predictions = cval.cross_val_predict(clf, X_sparse, y)
     assert_array_equal(predictions.shape, (10,))
 
     # test with multioutput y
-    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    with ignore_warnings(category=ConvergenceWarning):
+        predictions = cval.cross_val_predict(clf, X_sparse, X)
     assert_array_equal(predictions.shape, (10, 2))
 
     # test with X and y as list
