@@ -334,7 +334,7 @@ def _is_32bit():
 
 def check_estimators_are_deterministic(name, Estimator):
     # all estimators should be deterministic with a fixed random_state
-    X, y = make_classification(n_classes=3, n_informative=5, n_samples=4000,
+    X, y = make_classification(n_classes=3, n_informative=5, n_samples=100,
                                random_state=2)
     # make sure there is nothing to be learnt
     rng = np.random.RandomState(0)
@@ -370,6 +370,7 @@ def check_estimators_are_deterministic(name, Estimator):
     # XXX statistical equivalence
     assert_array_almost_equal(est1.predict(X_test),
                               est2.predict(X_test))
+    assert_equal(pickle.dumps(est1), pickle.dumps(est2))
 
 
 def check_estimator_sparse_data(name, Estimator):
