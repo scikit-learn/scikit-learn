@@ -38,10 +38,8 @@ class deprecated(object):
     def __call__(self, obj):
         if isinstance(obj, type):
             return self._decorate_class(obj)
-        elif isfunction(obj):
+        else:
             return self._decorate_fun(obj)
-        else: # it is an instance that is callable
-            return self._decorate_instance(obj)
 
     def _decorate_class(self, cls):
         msg = "Class %s is deprecated" % cls.__name__
@@ -76,22 +74,6 @@ class deprecated(object):
         wrapped.__name__ = fun.__name__
         wrapped.__dict__ = fun.__dict__
         wrapped.__doc__ = self._update_doc(fun.__doc__)
-
-        return wrapped
-
-    def _decorate_instance(self, instance):
-        cls = instance.__class__
-        msg = "Thing %s is deprecated" % cls.__name__
-        if self.extra:
-            msg += "; %s" % self.extra
-
-        def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=DeprecationWarning)
-            return instance(*args, **kwargs)
-
-        wrapped.__name__ = cls.__name__
-        wrapped.__dict__ = instance.__dict__
-        wrapped.__doc__ = self._update_doc(instance.__doc__)
 
         return wrapped
 
