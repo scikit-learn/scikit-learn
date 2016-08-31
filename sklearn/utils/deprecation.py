@@ -1,4 +1,3 @@
-from inspect import isfunction
 import warnings
 
 __all__ = ["deprecated", ]
