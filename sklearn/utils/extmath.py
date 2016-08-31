@@ -25,7 +25,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ..exceptions import NonBLASDotWarning
+from ..exceptions import NonBLASDotWarning, ChangedBehaviorWarning
 
 
 def norm(x):
@@ -351,23 +351,20 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
 
     if n_iter is None:
         # Checks if the number of iterations is explicitely specified
-        n_iter = 4
-        n_iter_specified = False
-    else:
-        n_iter_specified = True
+        # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
+        if n_components < .1 * min(M.shape) and n_iter < 7:
+            n_iter = 7
+            warnings.warn("The default number of power iterations is increased from 4"
+                          "to 7 in version 0.18 to achieve higher precision.",
+                          ChangedBehaviorWarning)
+        else:
+            n_iter = 4
 
     if transpose == 'auto':
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
-
-    # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
-    if n_components < .1 * min(M.shape) and n_iter < 7:
-        if n_iter_specified:
-            warnings.warn("The number of power iterations is increased to "
-                          "7 to achieve higher precision.")
-        n_iter = 7
 
     Q = randomized_range_finder(M, n_random, n_iter,
                                 power_iteration_normalizer, random_state)
