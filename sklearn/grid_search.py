@@ -326,17 +326,18 @@ def _check_param_grid(param_grid):
         param_grid = [param_grid]
 
     for p in param_grid:
-        for v in p.values():
+        for name, v in p.items():
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
             check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
             if True not in check:
-                raise ValueError("Parameter values should be a list.")
+                raise ValueError("Parameter values for parameter ({0}) need "
+                                 "to be a sequence.".format(name))
 
             if len(v) == 0:
-                raise ValueError("Parameter values should be a non-empty "
-                                 "list.")
+                raise ValueError("Parameter values for parameter ({0}) need "
+                                 "to be a non-empty sequence.".format(name))
 
 
 class _CVScoreTuple (namedtuple('_CVScoreTuple',
