@@ -498,8 +498,9 @@ class MetaEstimatorMixin(object):
     # this is just a tag for the moment
     @property
     def _pairwise(self):
-    	# if the wrapped estimator is using a precomputed Gram matrix
-    	return getattr(self.estimator, "_pairwise", False)
+        # if wrapped estimator using precomputed Gram Matrix
+        return getattr(self.estimator, "_pairwise", False)
+
 ###############################################################################
 
 def is_classifier(estimator):
