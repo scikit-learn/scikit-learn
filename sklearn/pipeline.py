@@ -796,7 +796,7 @@ def make_union(*transformers):
     >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1,
            transformer_list=[('pca',
-                              PCA(copy=True, iterated_power=4,
+                              PCA(copy=True, iterated_power='auto',
                                   n_components=None, random_state=None,
                                   svd_solver='auto', tol=0.0, whiten=False)),
                              ('truncatedsvd',
