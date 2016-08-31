@@ -506,6 +506,9 @@ class GaussianMixture(BaseMixture):
         it prints also the log probability and the time needed
         for each step.
 
+    verbose_interval : int, default to 10.
+        Number of iteration done before the next print.
+
     Attributes
     ----------
     weights_ : array-like, shape (n_components,)

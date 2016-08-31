@@ -110,6 +110,9 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         it prints also the log probability and the time needed
         for each step.
 
+    verbose_interval : int, default to 10.
+        Number of iteration done before the next print.
+
     Attributes
     ----------
     weights_ : array-like, shape (`n_components`,)
@@ -170,7 +173,6 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         The beta concentration parameters of the Beta distribution of each
         component.
 
-
     mean_precision_prior : float
         The mean precision prior parameters of the Gaussian distributions of
         the means used during the fit process. Controls the extend to where
@@ -214,7 +216,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
-                 verbose_interval=20):
+                 verbose_interval=10):
         super(DirichletGaussianMixture, self).__init__(
             n_components=n_components, covariance_type=covariance_type,
             tol=tol, reg_covar=reg_covar, max_iter=max_iter, n_init=n_init,
@@ -263,9 +265,12 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        log-resp : array, shape (n_samples, n_components)
+        log_resp : array, shape (n_samples, n_components)
+            Logarithm of the posterior probabilities (or responsibilities) of
+            the point of each sample in X.
 
         log_prob_norm : float
+            Logarithm of the probability of each sample in X.
 
         Returns
         -------

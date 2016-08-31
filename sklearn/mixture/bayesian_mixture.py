@@ -157,6 +157,9 @@ class BayesianGaussianMixture(BaseMixture):
         it prints also the log probability and the time needed
         for each step.
 
+    verbose_interval : int, default to 10.
+        Number of iteration done before the next print.
+
     Attributes
     ----------
     weights_ : array-like, shape (`n_components`,)
@@ -262,7 +265,7 @@ class BayesianGaussianMixture(BaseMixture):
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
-                 verbose_interval=20):
+                 verbose_interval=10):
         super(BayesianGaussianMixture, self).__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,

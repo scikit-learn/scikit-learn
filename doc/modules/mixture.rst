@@ -93,14 +93,14 @@ Cons
    or information theoretical criteria to decide how many components to use
    in the absence of external cues.
 
-Selecting the number of components in a classical GMM
-------------------------------------------------------
+Selecting the number of components in a classical Gaussian Mixture Model
+------------------------------------------------------------------------
 
-The BIC criterion can be used to select the number of components in a GMM
-in an efficient way. In theory, it recovers the true number of components
-only in the asymptotic regime (i.e. if much data is available).
-Note that using a :ref:`DPGMM <dpgmm>` avoids the specification of the
-number of components for a Gaussian mixture model.
+The BIC criterion can be used to select the number of components in a Gaussian
+Mixture in an efficient way. In theory, it recovers the true number of
+components only in the asymptotic regime (i.e. if much data is available). Note
+that using a :ref:`DirichletGaussianMixture <dpgmm>` avoids the specification of
+the number of components for a Gaussian mixture model.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
@@ -227,7 +227,7 @@ concentration parameter.
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
-.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/sphx_glr_plot_dirichlet_process_mixture_001.png
+.. |plot_dirichlet_process_mixture| image:: ../auto_examples/mixture/images/sphx_glr_plot_dirichlet_process_mixture_001.png
    :target: ../auto_examples/mixture/plot_dirichlet_process_mixture.html
    :scale: 48%
 
@@ -235,17 +235,17 @@ concentration parameter.
 
 
 The examples above compare Gaussian mixtures models with fixed number of
-components, to the Dirichlet Gaussian Mixtures models. **On the left** the  GMM
-is fitted with 5 components on a dataset composed of 2 clusters. We can see that
-the Dirichlet Gaussian Mixtures is able to limit itself to only 2 components
-whereas the GMM fits the data fit too many components. Note that with very
-little observations, the Dirichlet Gaussian Mixture can take a conservative
-stand, and fit only one component.
+components, to the Dirichlet Gaussian mixtures models. **On the left** a
+classical Gaussian mixtures is fitted with 5 components on a dataset composed of
+2 clusters. We can see that the Dirichlet Gaussian mixtures is able to limit
+itself to only 2 components whereas the Gaussian mixtures fits the data fit too
+many components. Note that with very little observations, the Dirichlet Gaussian
+Mixture can take a conservative stand, and fit only one component.
 
 **On the right** we present the resulting clusters computed by the Dirichlet
 Gaussian mixtures for different values of the `beta_concentration_prior`.  The
 `beta_concentration_prior` is directly linked to the number of clusters
-obtained. As for the Variational Bayesian Gaussian Mixture, small value of this
+obtained. As for the Variational Bayesian Gaussian Mixtures, small value of this
 parameters will lead to some mixture components while high value leads more
 mixture components but in a more stable way (each component is activated only if
 it is necessary).
@@ -254,11 +254,7 @@ it is necessary).
 
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
       plotting the confidence ellipsoids for both :class:`GaussianMixture`
-      and :class:`Dirichlet Gaussian Mixture`.
-
-    * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
-      :class:`GaussianMixture` and :class:`Dirichlet Gaussian Mixture` to fit
-      a sine wave
+      and :class:`DirichletGaussianMixture`.
 
 Pros and cons of class :class:`DirichletGaussianMixture`: Dirichlet process mixture model
 -----------------------------------------------------------------------------------------
@@ -275,7 +271,7 @@ Pros
 
 :No need to specify the number of components: only an upper bound of
    this number needs to be provided. Note however that the Dirichlet Gaussian
-   Mixture is not a formal model selection procedure, and thus provides no
+   mixtures is not a formal model selection procedure, and thus provides no
    guarantee on the result.
 
 Cons

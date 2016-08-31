@@ -617,8 +617,8 @@ class _DPGMMBase(_GMMBase):
 
 
 @deprecated("The DPGMM class is not working correctly and it's better "
-            "to not use it. DPGMM is deprecated in 0.18 and "
-            "will be removed in 0.20.")
+            "to use sklearn.mixture.DirichletGaussianMixture class instead. "
+            "DPGMM is deprecated in 0.18 and will be removed in 0.20.")
 class DPGMM(_DPGMMBase):
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, tol=1e-3, verbose=0, min_covar=None,

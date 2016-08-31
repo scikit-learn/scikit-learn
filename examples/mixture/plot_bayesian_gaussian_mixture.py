@@ -5,7 +5,7 @@ Bayesian Gaussian Mixture Concentration Prior Analysis
 
 Plot the resulting ellipsoids of a mixture of three Gaussians with
 variational Bayesian Gaussian Mixture for three different values on the
-prior the dirichlet concentration.
+dirichlet concentration prior.
 
 For all models, the Variationnal Bayesian Gaussian Mixture adapts its number of
 mixture automatically. The parameter `dirichlet_concentration_prior` has a
@@ -38,6 +38,7 @@ def plot_ellipses(ax, weights, means, covars):
         ell = mpl.patches.Ellipse(means[n, :2], v[0], v[1], 180 + angle)
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(weights[n])
+        ell.set_facecolor('yellowgreen')
         ax.add_artist(ell)
 
 
@@ -58,7 +59,7 @@ def plot_results(ax1, ax2, estimator, dirichlet_concentration_prior, X, y, plot_
     ax2.get_xaxis().set_tick_params(direction='out')
     ax2.yaxis.grid(True, alpha=0.7)
     for k, w in enumerate(estimator.weights_):
-        ax2.bar(k - .45, w, width=0.9, color='royalblue', zorder=3)
+        ax2.bar(k - .45, w, width=0.9, color='yellowgreen', zorder=3)
         ax2.text(k, w + 0.007, "%.1f%%" % (w * 100.),
                  horizontalalignment='center')
     ax2.set_xlim(-.6, 2 * n_components - .4)
@@ -74,8 +75,7 @@ def plot_results(ax1, ax2, estimator, dirichlet_concentration_prior, X, y, plot_
 # Parameters
 random_state = 2
 n_components, n_features = 3, 2
-colors = np.array(['mediumseagreen', 'royalblue', 'r', 'gold',
-                   'orchid', 'indigo', 'darkcyan', 'tomato'])
+colors = np.array(['c', 'darkorange', 'cornflowerblue'])
 dirichlet_concentration_prior = np.logspace(-3, 3, 3)
 covars = np.array([[[.7, .0], [.0, .1]],
                    [[.5, .0], [.0, .1]],
