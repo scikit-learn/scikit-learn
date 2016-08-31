@@ -9,7 +9,11 @@ See :ref:`decision tree <tree>` for more information on the estimator.
 """
 print(__doc__)
 
-import graphviz
+try:
+    import graphviz
+except ImportError:
+    raise ImportError('This example requires graphviz to be installed')
+
 import six
 
 from matplotlib import pyplot
