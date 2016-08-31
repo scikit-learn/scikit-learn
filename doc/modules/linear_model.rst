@@ -43,10 +43,10 @@ and will store the coefficients :math:`w` of the linear model in its
 ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.LinearRegression()
-    >>> clf.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
+    >>> reg = linear_model.LinearRegression()
+    >>> reg.fit ([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
-    >>> clf.coef_
+    >>> reg.coef_
     array([ 0.5,  0.5])
 
 However, coefficient estimates for Ordinary Least Squares rely on the
@@ -101,13 +101,13 @@ arrays X, y and will store the coefficients :math:`w` of the linear model in
 its ``coef_`` member::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.Ridge (alpha = .5)
-    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> reg = linear_model.Ridge (alpha = .5)
+    >>> reg.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, random_state=None, solver='auto', tol=0.001)
-    >>> clf.coef_
+    >>> reg.coef_
     array([ 0.34545455,  0.34545455])
-    >>> clf.intercept_ #doctest: +ELLIPSIS
+    >>> reg.intercept_ #doctest: +ELLIPSIS
     0.13636...
 
 
@@ -138,11 +138,11 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-    >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
+    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
     RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
         normalize=False)
-    >>> clf.alpha_                                      # doctest: +SKIP
+    >>> reg.alpha_                                      # doctest: +SKIP
     0.1
 
 .. topic:: References
@@ -182,12 +182,12 @@ the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
     >>> from sklearn import linear_model
-    >>> clf = linear_model.Lasso(alpha = 0.1)
-    >>> clf.fit([[0, 0], [1, 1]], [0, 1])
+    >>> reg = linear_model.Lasso(alpha = 0.1)
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
-    >>> clf.predict([[1, 1]])
+    >>> reg.predict([[1, 1]])
     array([ 0.8])
 
 Also useful for lower-level tasks is the function :func:`lasso_path` that
@@ -441,12 +441,12 @@ function of the norm of its coefficients.
 ::
 
    >>> from sklearn import linear_model
-   >>> clf = linear_model.LassoLars(alpha=.1)
-   >>> clf.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
    LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
         fit_path=True, max_iter=500, normalize=True, positive=False,
         precompute='auto', verbose=False)
-   >>> clf.coef_    # doctest: +ELLIPSIS
+   >>> reg.coef_    # doctest: +ELLIPSIS
    array([ 0.717157...,  0.        ])
 
 .. topic:: Examples:
@@ -604,21 +604,21 @@ Bayesian Ridge Regression is used for regression::
     >>> from sklearn import linear_model
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
-    >>> clf = linear_model.BayesianRidge()
-    >>> clf.fit(X, Y)
+    >>> reg = linear_model.BayesianRidge()
+    >>> reg.fit(X, Y)
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
            fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
            normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
-    >>> clf.predict ([[1, 0.]])
+    >>> reg.predict ([[1, 0.]])
     array([ 0.50000013])
 
 
 The weights :math:`w` of the model can be access::
 
-    >>> clf.coef_
+    >>> reg.coef_
     array([ 0.49999993,  0.49999993])
 
 Due to the Bayesian framework, the weights found are slightly different to the
@@ -1239,6 +1239,6 @@ This way, we can solve the XOR problem with a linear classifier::
            [ 1.,  0.,  1.,  0.],
            [ 1.,  1.,  0.,  0.],
            [ 1.,  1.,  1.,  1.]])
-    >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
-    >>> clf.score(X, y)
+    >>> reg = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
+    >>> reg.score(X, y)
     1.0
