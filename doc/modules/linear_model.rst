@@ -1233,12 +1233,19 @@ This way, we can solve the XOR problem with a linear classifier::
     >>> import numpy as np
     >>> X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
     >>> y = X[:, 0] ^ X[:, 1]
-    >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X)
+    >>> y
+    array([0, 1, 1, 0])
+    >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X).astype(int)
     >>> X
-    array([[ 1.,  0.,  0.,  0.],
-           [ 1.,  0.,  1.,  0.],
-           [ 1.,  1.,  0.,  0.],
-           [ 1.,  1.,  1.,  1.]])
+    array([[1, 0, 0, 0],
+           [1, 0, 1, 0],
+           [1, 1, 0, 0],
+           [1, 1, 1, 1]])
     >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
+
+And the classifier "predictions" are perfect
+
+    >>> clf.predict(X)
+    array([0, 1, 1, 0])
     >>> clf.score(X, y)
     1.0
