@@ -18,7 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 import warnings
 
 import numpy as np
@@ -34,15 +34,19 @@ from ..base import is_regressor
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
-    def __init__(self, score_func, sign, kwargs, deprecation_msg=None):
+    def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-        self._deprecation_msg = deprecation_msg
+        # XXX After removing the deprecated scorers (v0.20) remove the
+        # XXX deprecation_msg property again and make __call__ abstract again
+        self._deprecation_msg = None
 
     def __call__(self, estimator, X, y, sample_weight=None):
         if self._deprecation_msg is not None:
-            warnings.warn(self._deprecation_msg, category=DeprecationWarning)
+            warnings.warn(self._deprecation_msg,
+                          category=DeprecationWarning,
+                          stacklevel=13)
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -256,7 +260,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, deprecation_msg=None, **kwargs):
+                needs_threshold=False, **kwargs):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -318,7 +322,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs, deprecation_msg=deprecation_msg)
+    return cls(score_func, sign, kwargs)
 
 
 # Standard regression scores
@@ -329,24 +333,24 @@ deprecation_msg = ('Scoring method mean_squared_error was renamed to '
                    'neg_mean_squared_error in version 0.18 and will '
                    'be removed in 0.20.')
 mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                        greater_is_better=False,
-                                        deprecation_msg=deprecation_msg)
+                                        greater_is_better=False)
+mean_squared_error_scorer._deprecation_msg = deprecation_msg
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
 deprecation_msg = ('Scoring method mean_absolute_error was renamed to '
                    'neg_mean_absolute_error in version 0.18 and will '
                    'be removed in 0.20.')
 mean_absolute_error_scorer = make_scorer(mean_absolute_error,
-                                         greater_is_better=False,
-                                         deprecation_msg=deprecation_msg)
+                                         greater_is_better=False)
+mean_absolute_error_scorer._deprecation_msg = deprecation_msg
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 deprecation_msg = ('Scoring method median_absolute_error was renamed to '
                    'neg_median_absolute_error in version 0.18 and will '
                    'be removed in 0.20.')
 median_absolute_error_scorer = make_scorer(median_absolute_error,
-                                           greater_is_better=False,
-                                           deprecation_msg=deprecation_msg)
+                                           greater_is_better=False)
+median_absolute_error_scorer._deprecation_msg = deprecation_msg
 
 
 # Standard Classification Scores
@@ -367,7 +371,8 @@ neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 deprecation_msg = ('Scoring method log_loss was renamed to '
                    'neg_log_loss in version 0.18 and will be removed in 0.20.')
 log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
-                              needs_proba=True, deprecation_msg=deprecation_msg)
+                              needs_proba=True)
+log_loss_scorer._deprecation_msg = deprecation_msg
 
 
 # Clustering scores
