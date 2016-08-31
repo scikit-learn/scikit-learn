@@ -333,12 +333,12 @@ def _check_param_grid(param_grid):
 
             check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
             if True not in check:
-                raise ValueError("Parameter values for parameter ({0}) need to "
-                                 "be a sequence.".format(name))
+                raise ValueError("Parameter values for parameter ({0}) need "
+                                 "to be a sequence.".format(name))
 
             if len(v) == 0:
-                raise ValueError("Parameter values for parameter ({0}) need to "
-                                 "be a non-empty sequence.".format(name))
+                raise ValueError("Parameter values for parameter ({0}) need "
+                                 "to be a non-empty sequence.".format(name))
 
 
 # XXX Remove in 0.20
