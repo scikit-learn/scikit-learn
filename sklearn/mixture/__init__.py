@@ -9,6 +9,7 @@ from .dpgmm import DPGMM, VBGMM
 
 from .gaussian_mixture import GaussianMixture
 from .bayesian_mixture import BayesianGaussianMixture
+from .dirichlet_gaussian_mixture import DirichletGaussianMixture
 
 
 __all__ = ['DPGMM',
@@ -19,4 +20,5 @@ __all__ = ['DPGMM',
            'log_multivariate_normal_density',
            'sample_gaussian',
            'GaussianMixture',
-           'BayesianGaussianMixture']
+           'BayesianGaussianMixture',
+           'DirichletGaussianMixture']

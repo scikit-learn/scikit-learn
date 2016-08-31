@@ -78,8 +78,9 @@ plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
              'Gaussian Mixture')
 
 # Fit a Dirichlet process Gaussian mixture using five components
-dpgmm = mixture.DPGMM(n_components=5, covariance_type='full').fit(X)
-plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm._get_covars(), 1,
-             'Dirichlet Process GMM')
+dpgmm = mixture.DirichletGaussianMixture(n_components=5,
+                                         covariance_type='full').fit(X)
+plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
+             'Dirichlet Process Gaussian Mixture')
 
 plt.show()

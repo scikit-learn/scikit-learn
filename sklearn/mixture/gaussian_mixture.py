@@ -561,6 +561,9 @@ class GaussianMixture(BaseMixture):
     --------
     BayesianGaussianMixture : Finite gaussian mixture model fit with a
         variational algorithm.
+
+    DirichletGaussianMixture : An infinite gaussian mixture model fit with a
+        Dirichlet Process as a prior distribution on the number of clusters.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,

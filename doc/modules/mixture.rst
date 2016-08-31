@@ -211,12 +211,13 @@ Cons
 
 .. _dpgmm:
 
-DPGMM: Infinite Gaussian mixtures
-=================================
+Dirichlet Process: Infinite Gaussian mixtures
+==============================================================
 
-The :class:`DPGMM` object implements a variant of the Gaussian mixture
-model with a variable (but bounded) number of components using the
-Dirichlet Process.
+The :class:`DirichletGaussianMixture` object implements a variant of the
+Gaussian mixture model with a variable (but bounded) number of components using
+the Dirichlet Process.
+
 This class doesn't require the user to choose the number of
 components, and at the expense of extra computational time the user
 only needs to specify a loose upper bound on this number and a
@@ -226,34 +227,41 @@ concentration parameter.
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
-.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_sin_001.png
-   :target: ../auto_examples/mixture/plot_gmm_sin.html
+.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/sphx_glr_plot_dirichlet_process_mixture_001.png
+   :target: ../auto_examples/mixture/plot_dirichlet_process_mixture.html
    :scale: 48%
 
-.. centered:: |plot_gmm| |plot_gmm_sin|
+.. centered:: |plot_gmm| |plot_dirichlet_process_mixture|
 
 
-The examples above compare Gaussian mixture models with fixed number of
-components, to DPGMM models. **On the left** the GMM is fitted with 5
-components on a dataset composed of 2 clusters. We can see that the DPGMM is
-able to limit itself to only 2 components whereas the GMM fits the data fit too
-many components. Note that with very little observations, the DPGMM can take a
-conservative stand, and fit only one component. **On the right** we are fitting
-a dataset not well-depicted by a Gaussian mixture. Adjusting the `alpha`
-parameter of the DPGMM controls the number of components used to fit this
-data.
+The examples above compare Gaussian mixtures models with fixed number of
+components, to the Dirichlet Gaussian Mixtures models. **On the left** the  GMM
+is fitted with 5 components on a dataset composed of 2 clusters. We can see that
+the Dirichlet Gaussian Mixtures is able to limit itself to only 2 components
+whereas the GMM fits the data fit too many components. Note that with very
+little observations, the Dirichlet Gaussian Mixture can take a conservative
+stand, and fit only one component.
+
+**On the right** we present the resulting clusters computed by the Dirichlet
+Gaussian mixtures for different values of the `beta_concentration_prior`.  The
+`beta_concentration_prior` is directly linked to the number of clusters
+obtained. As for the Variational Bayesian Gaussian Mixture, small value of this
+parameters will lead to some mixture components while high value leads more
+mixture components but in a more stable way (each component is activated only if
+it is necessary).
 
 .. topic:: Examples:
 
-    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on plotting the
-      confidence ellipsoids for both :class:`GaussianMixture`
-      and :class:`DPGMM`.
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
+      plotting the confidence ellipsoids for both :class:`GaussianMixture`
+      and :class:`Dirichlet Gaussian Mixture`.
 
     * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
-      :class:`GaussianMixture` and :class:`DPGMM` to fit a sine wave
+      :class:`GaussianMixture` and :class:`Dirichlet Gaussian Mixture` to fit
+      a sine wave
 
-Pros and cons of class :class:`DPGMM`: Dirichlet process mixture model
-----------------------------------------------------------------------
+Pros and cons of class :class:`DirichletGaussianMixture`: Dirichlet process mixture model
+-----------------------------------------------------------------------------------------
 
 Pros
 .....
@@ -266,9 +274,9 @@ Pros
    stability and less tuning.
 
 :No need to specify the number of components: only an upper bound of
-   this number needs to be provided. Note however that the DPMM is not
-   a formal model selection procedure, and thus provides no guarantee
-   on the result.
+   this number needs to be provided. Note however that the Dirichlet Gaussian
+   Mixture is not a formal model selection procedure, and thus provides no
+   guarantee on the result.
 
 Cons
 .....

@@ -251,6 +251,9 @@ class BayesianGaussianMixture(BaseMixture):
     See Also
     --------
     GaussianMixture : Finite Gaussian mixture fit with EM.
+
+    DirichletGaussianMixture : An infinite gaussian mixture model fit with a
+        Dirichlet Process as a prior distribution on the number of clusters.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
