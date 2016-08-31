@@ -1810,6 +1810,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
+      and n_classes-1.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
