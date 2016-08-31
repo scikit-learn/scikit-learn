@@ -656,11 +656,34 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
 
         if sparse:
             out = est.tree_.apply(X.tocsr())
-
         else:
             out = est.tree_.apply(X)
 
         node_weights = np.bincount(out, weights=weights)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            total_weight * est.min_weight_fraction_leaf,
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf))
+
+    # test case with no weights passed in
+    total_weight = X.shape[0]
+
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 6)):
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
         # drop inner nodes
         leaf_weights = node_weights[node_weights != 0]
         assert_greater_equal(

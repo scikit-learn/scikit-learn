@@ -301,11 +301,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 sample_weight = expanded_class_weight
 
         # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+        if sample_weight is None:
+            min_weight_leaf = int(ceil(self.min_weight_fraction_leaf * n_samples))
+            min_samples_leaf = max(min_samples_leaf, min_weight_leaf)
+            min_weight_leaf = 0.
+        else:
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
-        else:
-            min_weight_leaf = 0.
 
         if self.min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than or equal "
@@ -593,7 +595,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        leaf node where weights are determined by ``sample_weight`` provided
+        to ``fit``.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -863,7 +866,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        leaf node where weights are determined by ``sample_weight`` provided
+        to ``fit``.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
