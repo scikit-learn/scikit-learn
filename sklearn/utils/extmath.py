@@ -25,7 +25,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ..exceptions import NonBLASDotWarning, ChangedBehaviorWarning
+from ..exceptions import NonBLASDotWarning
 
 
 def norm(x):
@@ -267,7 +267,7 @@ def randomized_range_finder(A, size, n_iter,
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
+def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
@@ -287,11 +287,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values.
 
-    n_iter: int (default is 4)
+    n_iter: int or 'auto' (default is 'auto')
         Number of power iterations. It can be used to deal with very noisy
-        problems. When `n_components` is small (< .1 * min(X.shape)) `n_iter`
-        is set to 7, unless the user specifies a higher number. This improves
-        precision with few components.
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
 
         .. versionchanged:: 0.18
 
@@ -349,16 +349,10 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if n_iter is None:
+    if n_iter is 'auto':
         # Checks if the number of iterations is explicitely specified
         # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
-        if n_components < .1 * min(M.shape) and n_iter < 7:
-            n_iter = 7
-            warnings.warn("The default number of power iterations is increased from 4"
-                          "to 7 in version 0.18 to achieve higher precision.",
-                          ChangedBehaviorWarning)
-        else:
-            n_iter = 4
+        n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
     if transpose == 'auto':
         transpose = n_samples < n_features
