@@ -2,7 +2,7 @@
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam

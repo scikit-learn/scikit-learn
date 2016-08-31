@@ -22,8 +22,7 @@ from sklearn.metrics import recall_score
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron, LogisticRegression,
-                                  SGDClassifier)
+                                  Perceptron, LogisticRegression)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -96,7 +95,7 @@ def test_ovr_partial_fit():
     pred = ovr.predict(iris.data)
     ovr2 = OneVsRestClassifier(MultinomialNB())
     pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
-    
+
     assert_almost_equal(pred, pred2)
     assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred), 0.65)
@@ -438,8 +437,9 @@ def test_ovo_fit_on_list():
     # same output as predict from an array
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
-    prediction_from_list = ovo.fit(iris.data,
-                                   list(iris.target)).predict(iris.data)
+    iris_data_list = [list(a) for a in iris.data]
+    prediction_from_list = ovo.fit(iris_data_list,
+                                   list(iris.target)).predict(iris_data_list)
     assert_array_equal(prediction_from_array, prediction_from_list)
 
 

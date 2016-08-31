@@ -17,7 +17,7 @@ from .utils import indexable
 from .utils.fixes import astype
 
 
-warnings.warn("This module has been deprecated in favor of the "
+warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the functions are moved."
               " This module will be removed in 0.20",
               DeprecationWarning)
@@ -75,8 +75,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
-        other cases, :class:`KFold` is used.
+        either binary or multiclass, 
+        :class:`sklearn.model_selection.StratifiedKFold` is used. In all
+        other cases, :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -117,7 +118,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     Notes
     -----
     See :ref:`examples/model_selection/plot_learning_curve.py
-    <example_model_selection_plot_learning_curve.py>`
+    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
@@ -218,7 +219,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     train_sizes_abs = np.unique(train_sizes_abs)
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
-                      "of ticks will be less than than the size of "
+                      "of ticks will be less than the size of "
                       "'train_sizes' %d instead of %d)."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
@@ -288,8 +289,9 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
-        other cases, :class:`KFold` is used.
+        either binary or multiclass, 
+        :class:`sklearn.model_selection.StratifiedKFold` is used. In all
+        other cases, :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -322,7 +324,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     -----
     See
     :ref:`examples/model_selection/plot_validation_curve.py
-    <example_model_selection_plot_validation_curve.py>`
+    <sphx_glr_auto_examples_model_selection_plot_validation_curve.py>`
     """
     X, y = indexable(X, y)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))

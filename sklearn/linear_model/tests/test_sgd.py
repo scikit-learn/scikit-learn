@@ -21,6 +21,8 @@ from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 
+from sklearn.linear_model import sgd_fast
+
 
 class SparseSGDClassifier(SGDClassifier):
 
@@ -445,7 +447,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         assert_array_equal(pred, true_result2)
 
     def test_set_coef_multiclass(self):
-        # Checks coef_init and intercept_init shape for for multi-class
+        # Checks coef_init and intercept_init shape for multi-class
         # problems
         # Provided coef_ does not match dataset
         clf = self.factory()
@@ -1159,3 +1161,117 @@ def test_large_regularization():
         with np.errstate(all='raise'):
             model.fit(iris.data, iris.target)
         assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
+
+
+def _test_gradient_common(loss_function, cases):
+    # Test gradient of different loss functions
+    # cases is a list of (p, y, expected)
+    for p, y, expected in cases:
+        assert_almost_equal(loss_function.dloss(p, y), expected)
+
+
+def test_gradient_hinge():
+    # Test Hinge (hinge / perceptron)
+    # hinge
+    loss = sgd_fast.Hinge(1.0)
+    cases = [
+        # (p, y, expected)
+        (1.1, 1.0, 0.0), (-2.0, -1.0, 0.0),
+        (1.0, 1.0, -1.0), (-1.0, -1.0, 1.0), (0.5, 1.0, -1.0),
+        (2.0, -1.0, 1.0), (-0.5, -1.0, 1.0), (0.0, 1.0, -1.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+    # perceptron
+    loss = sgd_fast.Hinge(0.0)
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, 0.0), (-0.1, -1.0, 0.0),
+        (0.0, 1.0, -1.0), (0.0, -1.0, 1.0), (0.5, -1.0, 1.0),
+        (2.0, -1.0, 1.0), (-0.5, 1.0, -1.0), (-1.0, 1.0, -1.0),
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_squared_hinge():
+    # Test SquaredHinge
+    loss = sgd_fast.SquaredHinge(1.0)
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, 0.0), (-2.0, -1.0, 0.0), (1.0, -1.0, 4.0),
+        (-1.0, 1.0, -4.0), (0.5, 1.0, -1.0), (0.5, -1.0, 3.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_log():
+    # Test Log (logistic loss)
+    loss = sgd_fast.Log()
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, -1.0 / (np.exp(1.0) + 1.0)),
+        (1.0, -1.0, 1.0 / (np.exp(-1.0) + 1.0)),
+        (-1.0, -1.0, 1.0 / (np.exp(1.0) + 1.0)),
+        (-1.0, 1.0, -1.0 / (np.exp(-1.0) + 1.0)),
+        (0.0, 1.0, -0.5), (0.0, -1.0, 0.5),
+        (17.9, -1.0, 1.0), (-17.9, 1.0, -1.0),
+    ]
+    _test_gradient_common(loss, cases)
+    assert_almost_equal(loss.dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
+    assert_almost_equal(loss.dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
+
+
+def test_gradient_squared_loss():
+    # Test SquaredLoss
+    loss = sgd_fast.SquaredLoss()
+    cases = [
+        # (p, y, expected)
+        (0.0, 0.0, 0.0), (1.0, 1.0, 0.0), (1.0, 0.0, 1.0),
+        (0.5, -1.0, 1.5), (-2.5, 2.0, -4.5)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_huber():
+    # Test Huber
+    loss = sgd_fast.Huber(0.1)
+    cases = [
+        # (p, y, expected)
+        (0.0, 0.0, 0.0), (0.1, 0.0, 0.1), (0.0, 0.1, -0.1),
+        (3.95, 4.0, -0.05), (5.0, 2.0, 0.1), (-1.0, 5.0, -0.1)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_modified_huber():
+    # Test ModifiedHuber
+    loss = sgd_fast.ModifiedHuber()
+    cases = [
+        # (p, y, expected)
+        (1.0, 1.0, 0.0), (-1.0, -1.0, 0.0), (2.0, 1.0, 0.0),
+        (0.0, 1.0, -2.0), (-1.0, 1.0, -4.0), (0.5, -1.0, 3.0),
+        (0.5, -1.0, 3.0), (-2.0, 1.0, -4.0), (-3.0, 1.0, -4.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_epsilon_insensitive():
+    # Test EpsilonInsensitive
+    loss = sgd_fast.EpsilonInsensitive(0.1)
+    cases = [
+        (0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-2.05, -2.0, 0.0),
+        (3.05, 3.0, 0.0), (2.2, 2.0, 1.0), (2.0, -1.0, 1.0),
+        (2.0, 2.2, -1.0), (-2.0, 1.0, -1.0)
+    ]
+    _test_gradient_common(loss, cases)
+
+
+def test_gradient_squared_epsilon_insensitive():
+    # Test SquaredEpsilonInsensitive
+    loss = sgd_fast.SquaredEpsilonInsensitive(0.1)
+    cases = [
+        (0.0, 0.0, 0.0), (0.1, 0.0, 0.0), (-2.05, -2.0, 0.0),
+        (3.05, 3.0, 0.0), (2.2, 2.0, 0.2), (2.0, -1.0, 5.8),
+        (2.0, 2.2, -0.2), (-2.0, 1.0, -5.8)
+    ]
+    _test_gradient_common(loss, cases)

@@ -10,7 +10,7 @@ The dataset page is available from UCI Machine Learning Repository
 Courtesy of Jock A. Blackard and Colorado State University.
 """
 
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 

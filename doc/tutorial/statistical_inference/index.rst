@@ -6,7 +6,7 @@ A tutorial on statistical-learning for scientific data processing
 
 .. topic:: Statistical learning 
 
-    `Machine learning <http://en.wikipedia.org/wiki/Machine_learning>`_ is 
+    `Machine learning <https://en.wikipedia.org/wiki/Machine_learning>`_ is
     a technique with a growing importance, as the
     size of the datasets experimental sciences are facing is rapidly
     growing. Problems it tackles range from building a prediction function
@@ -15,14 +15,14 @@ A tutorial on statistical-learning for scientific data processing
     
     This tutorial will explore *statistical learning*, the use of
     machine learning techniques with the goal of `statistical inference 
-    <http://en.wikipedia.org/wiki/Statistical_inference>`_:
+    <https://en.wikipedia.org/wiki/Statistical_inference>`_:
     drawing conclusions on the data at hand.
 
     Scikit-learn is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
     packages (`NumPy <http://www.scipy.org>`_, `SciPy
     <http://www.scipy.org>`_, `matplotlib
-    <http://matplotlib.sourceforge.net/>`_).
+    <http://matplotlib.org>`_).
 
 .. include:: ../../includes/big_toc_css.rst
 

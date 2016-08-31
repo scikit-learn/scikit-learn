@@ -1,6 +1,8 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import sys
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -71,7 +73,7 @@ class NoEstimator(object):
 
 
 class VargEstimator(BaseEstimator):
-    """Sklearn estimators shouldn't have vargs."""
+    """scikit-learn estimators shouldn't have vargs."""
     def __init__(self, *vargs):
         pass
 
@@ -143,6 +145,24 @@ def test_clone_nan():
     assert_true(clf.empty is clf2.empty)
 
 
+def test_clone_sparse_matrices():
+    sparse_matrix_classes = [
+        getattr(sp, name)
+        for name in dir(sp) if name.endswith('_matrix')]
+
+    PY26 = sys.version_info[:2] == (2, 6)
+    if PY26:
+        # sp.dok_matrix can not be deepcopied in Python 2.6
+        sparse_matrix_classes.remove(sp.dok_matrix)
+
+    for cls in sparse_matrix_classes:
+        sparse_matrix = cls(np.eye(5))
+        clf = MyEstimator(empty=sparse_matrix)
+        clf_cloned = clone(clf)
+        assert_true(clf.empty.__class__ is clf_cloned.empty.__class__)
+        assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
+
+
 def test_repr():
     # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
@@ -193,7 +213,7 @@ def test_is_classifier():
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
     assert_true(is_classifier(Pipeline([('svc_cv',
-                              GridSearchCV(svc, {'C': [0.1, 1]}))])))
+                                         GridSearchCV(svc, {'C': [0.1, 1]}))])))
 
 
 def test_set_params():

@@ -10,11 +10,13 @@ from __future__ import print_function
 import os
 import warnings
 import sys
+import re
 import pkgutil
 
 from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
@@ -31,9 +33,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance,
-    check_fit2d_predict1d,
-    check_fit1d_1sample)
+    check_get_params_invariance)
 
 
 def test_all_estimator_no_base_class():
@@ -74,6 +74,7 @@ def test_non_meta_estimators():
             else:
                 yield check, name, Estimator
 
+
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in the scikit
@@ -109,8 +110,8 @@ def test_class_weight_balanced_linear_classifiers():
         linear_classifiers = [
             (name, clazz)
             for name, clazz in classifiers
-            if 'class_weight' in clazz().get_params().keys()
-               and issubclass(clazz, LinearClassifierMixin)]
+            if ('class_weight' in clazz().get_params().keys() and
+                issubclass(clazz, LinearClassifierMixin))]
 
     for name, Classifier in linear_classifiers:
         yield check_class_weight_balanced_linear_classifier, name, Classifier
@@ -141,6 +142,29 @@ def test_root_import_all_completeness():
         if '.' in modname or modname.startswith('_') or modname in EXCEPTIONS:
             continue
         assert_in(modname, sklearn.__all__)
+
+
+def test_all_tests_are_importable():
+    # Ensure that for each contentful subpackage, there is a test directory
+    # within it that is also a subpackage (i.e. a directory with __init__.py)
+
+    HAS_TESTS_EXCEPTIONS = re.compile(r'''(?x)
+                                      \.externals(\.|$)|
+                                      \.tests(\.|$)|
+                                      \._
+                                      ''')
+    lookup = dict((name, ispkg)
+                  for _, name, ispkg
+                  in pkgutil.walk_packages(sklearn.__path__,
+                                           prefix='sklearn.'))
+    missing_tests = [name for name, ispkg in lookup.items()
+                     if ispkg
+                     and not HAS_TESTS_EXCEPTIONS.search(name)
+                     and name + '.tests' not in lookup]
+    assert_equal(missing_tests, [],
+                 '{0} do not have `tests` subpackages. Perhaps they require '
+                 '__init__.py or an add_subpackage directive in the parent '
+                 'setup.py'.format(missing_tests))
 
 
 def test_non_transformer_estimators_n_iter():
@@ -198,17 +222,17 @@ def test_transformer_n_iter():
             else:
                 yield check_transformer_n_iter, name, estimator
 
-
 def test_get_params_invariance():
     # Test for estimators that support get_params, that
     # get_params(deep=False) is a subset of get_params(deep=True)
     # Related to issue #4465
 
-    estimators = all_estimators(include_meta_estimators=False, include_other=True)
+    estimators = all_estimators(include_meta_estimators=False,
+                                include_other=True)
     for name, Estimator in estimators:
         if hasattr(Estimator, 'get_params'):
-            # The ProjectedGradientNMF class is deprecated
-            if issubclass(Estimator, ProjectedGradientNMF):
+            # If class is deprecated, ignore deprecated warnings
+            if hasattr(Estimator.__init__, "deprecated_original"):
                 with ignore_warnings():
                     yield check_get_params_invariance, name, Estimator
             else:

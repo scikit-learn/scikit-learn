@@ -66,7 +66,7 @@ and the results can depend on a particular random choice for the pair of
 (train, validation) sets.
 
 A solution to this problem is a procedure called
-`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_
+`cross-validation <https://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_
 (CV for short).
 A test set should still be held out for final evaluation,
 but the validation set is no longer needed when doing CV.
@@ -137,7 +137,7 @@ validation iterator instead, for instance::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> n_samples = iris.data.shape[0]
-  >>> cv = ShuffleSplit(n_iter=3, test_size=0.3, random_state=0)
+  >>> cv = ShuffleSplit(n_splits=3, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
   ...                                                     # doctest: +ELLIPSIS
   array([ 0.97...,  0.97...,  1.        ])
@@ -196,11 +196,11 @@ section.
 
 .. topic:: Examples
 
-    * :ref:`example_model_selection_plot_roc_crossval.py`,
-    * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`,
-    * :ref:`example_model_selection_grid_search_digits.py`,
-    * :ref:`example_model_selection_grid_search_text_feature_extraction.py`,
-    * :ref:`example_plot_cv_predict.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
+    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`.
 
 Cross validation iterators
 ==========================
@@ -224,7 +224,7 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
   >>> from sklearn.model_selection import KFold
 
   >>> X = ["a", "b", "c", "d"]
-  >>> kf = KFold(n_folds=2)
+  >>> kf = KFold(n_splits=2)
   >>> for train, test in kf.split(X):
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -253,7 +253,7 @@ two slightly unbalanced classes::
 
   >>> X = np.ones(10)
   >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-  >>> skf = StratifiedKFold(n_folds=3)
+  >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):
   ...     print("%s %s" % (train, test))
   [2 3 6 7 8 9] [0 1 4 5]
@@ -278,7 +278,7 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
   >>> y = ["a", "b", "b", "b", "c", "c", "c", "d", "d", "d"]
   >>> labels = [1, 1, 1, 2, 2, 2, 3, 3, 3, 3]
 
-  >>> lkf = LabelKFold(n_folds=3)
+  >>> lkf = LabelKFold(n_splits=3)
   >>> for train, test in lkf.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   [0 1 2 3 4 5] [6 7 8 9]
@@ -316,7 +316,7 @@ Potential users of LOO for model selection should weigh a few known caveats.
 When compared with :math:`k`-fold cross validation, one builds :math:`n` models
 from :math:`n` samples instead of :math:`k` models, where :math:`n > k`.
 Moreover, each is trained on :math:`n - 1` samples rather than
-:math:`(k-1)n / k`. In both ways, assuming :math:`k` is not too large
+:math:`(k-1) n / k`. In both ways, assuming :math:`k` is not too large
 and :math:`k < n`, LOO is more computationally expensive than :math:`k`-fold
 cross validation.
 
@@ -335,17 +335,17 @@ fold cross validation should be preferred to LOO.
 
 .. topic:: References:
 
- * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
+ * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
-   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+   <http://statweb.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
+   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
-   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
+   <http://web.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
-   <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
+   <http://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
+   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013.
 
 
 Leave-P-Out - LPO
@@ -384,7 +384,7 @@ cross-validation folds.
 Each training set is thus constituted by all the samples except the ones
 related to a specific label.
 
-For example, in the cases of multiple experiments, *LOLO* can be used to
+For example, in the cases of multiple experiments, LOLO can be used to
 create a cross-validation based on the different experiments: we create
 a training set using the samples of all the experiments except one::
 
@@ -405,9 +405,10 @@ for cross-validation against time-based splits.
 
 .. warning::
 
-  Contrary to :class:`StratifiedKFold`, the ``labels`` of
-  :class:`LeaveOneLabelOut` should not encode the target class to predict:
-  the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
+  Contrary to :class:`StratifiedKFold`,
+  the ``labels`` of :class:`LeaveOneLabelOut` should not encode
+  the target class to predict: the goal of :class:`StratifiedKFold`
+  is to rebalance dataset classes across
   the train / test split to ensure that the train and test folds have
   approximately the same percentage of samples of each class while
   :class:`LeaveOneLabelOut` will do the opposite by ensuring that the samples
@@ -453,7 +454,7 @@ Here is a usage example::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> X = np.arange(5)
-  >>> ss = ShuffleSplit(n_iter=3, test_size=0.25,
+  >>> ss = ShuffleSplit(n_splits=3, test_size=0.25,
   ...     random_state=0)
   >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
@@ -464,7 +465,7 @@ Here is a usage example::
 
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
-the proportion of samples in on each side of the train / test split.
+the proportion of samples on each side of the train / test split.
 
 
 Label-Shuffle-Split
@@ -484,7 +485,7 @@ Here is a usage example::
   >>> X = [0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001]
   >>> y = ["a", "b", "b", "b", "c", "c", "c", "a"]
   >>> labels = [1, 1, 2, 2, 3, 3, 4, 4]
-  >>> lss = LabelShuffleSplit(n_iter=4, test_size=0.5, random_state=0)
+  >>> lss = LabelShuffleSplit(n_splits=4, test_size=0.5, random_state=0)
   >>> for train, test in lss.split(X, y, labels):
   ...     print("%s %s" % (train, test))
   ...
@@ -519,6 +520,50 @@ See also
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
+
+Cross validation of time series data
+====================================
+
+Time series data is characterised by the correlation between observations 
+that are near in time (*autocorrelation*). However, classical 
+cross-validation techniques such as :class:`KFold` and 
+:class:`ShuffleSplit` assume the samples are independent and 
+identically distributed, and would result in unreasonable correlation 
+between training and testing instances (yielding poor estimates of 
+generalisation error) on time series data. Therefore, it is very important 
+to evaluate our model for time series data on the "future" observations 
+least like those that are used to train the model. To achieve this, one 
+solution is provided by :class:`TimeSeriesSplit`.
+
+
+TimeSeriesSplit
+-----------------------
+
+:class:`TimeSeriesSplit` is a variation of *k-fold* which 
+returns first :math:`k` folds as train set and the :math:`(k+1)` th 
+fold as test set. Note that unlike standard cross-validation methods, 
+successive training sets are supersets of those that come before them.
+Also, it adds all surplus data to the first training partition, which
+is always used to train the model.
+
+This class can be used to cross-validate time series data samples 
+that are observed at fixed time intervals.
+
+Example of 3-split time series cross-validation on a dataset with 6 samples::
+
+  >>> from sklearn.model_selection import TimeSeriesSplit
+
+  >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+  >>> y = np.array([1, 2, 3, 4, 5, 6])
+  >>> tscv = TimeSeriesSplit(n_splits=3)
+  >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+  TimeSeriesSplit(n_splits=3)
+  >>> for train, test in tscv.split(X):
+  ...     print("%s %s" % (train, test))
+  [0 1 2] [3]
+  [0 1 2 3] [4]
+  [0 1 2 3 4] [5]
+
 
 A note on shuffling
 ===================

@@ -23,17 +23,17 @@ scikit-learn, :class:`PCA` is implemented as a *transformer* object
 that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
-The optional parameter ``whiten=True`` parameter make it possible to
+The optional parameter ``whiten=True`` makes it possible to
 project the data onto the singular space while scaling each component
 to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example
 the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm. 
+clustering algorithm.
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
-.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_lda_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_lda_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_lda.html
     :align: center
     :scale: 75%
@@ -44,7 +44,7 @@ probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
 `score` method that can be used in cross-validation:
 
-.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
@@ -52,8 +52,8 @@ data based on the amount of variance it explains. As such it implements a
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_pca_vs_lda.py`
-    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
 
 .. _IncrementalPCA:
@@ -61,13 +61,13 @@ data based on the amount of variance it explains. As such it implements a
 Incremental PCA
 ---------------
 
-The :class:`PCA` object is very useful, but has certain limitations for 
-large datasets. The biggest limitation is that :class:`PCA` only supports 
+The :class:`PCA` object is very useful, but has certain limitations for
+large datasets. The biggest limitation is that :class:`PCA` only supports
 batch processing, which means all of the data to be processed must fit in main
 memory. The :class:`IncrementalPCA` object uses a different form of
 processing and allows for partial computations which almost
 exactly match the results of :class:`PCA` while processing the data in a
-minibatch fashion. :class:`IncrementalPCA` makes it possible to implement 
+minibatch fashion. :class:`IncrementalPCA` makes it possible to implement
 out-of-core Principal Component Analysis either by:
 
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
@@ -77,15 +77,15 @@ out-of-core Principal Component Analysis either by:
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
-memory usage depends on the number of samples per batch, rather than the 
+memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
 
-.. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_incremental_pca_001.png
     :target: ../auto_examples/decomposition/plot_incremental_pca.html
     :align: center
     :scale: 75%
 
-.. figure:: ../auto_examples/decomposition/images/plot_incremental_pca_002.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_incremental_pca_002.png
     :target: ../auto_examples/decomposition/plot_incremental_pca.html
     :align: center
     :scale: 75%
@@ -93,7 +93,7 @@ number of samples to be processed in the dataset.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_incremental_pca.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_incremental_pca.py`
 
 
 .. _RandomizedPCA:
@@ -125,14 +125,14 @@ For instance, the following shows 16 sample portraits (centered around
 0.0) from the Olivetti dataset. On the right hand side are the first 16
 singular vectors reshaped as portraits. Since we only require the top
 16 singular vectors of a dataset with size :math:`n_{samples} = 400`
-and :math:`n_{features} = 64 \times 64 = 4096`, the computation time it
+and :math:`n_{features} = 64 \times 64 = 4096`, the computation time is
 less than 1s:
 
-.. |orig_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_001.png
+.. |orig_img| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_001.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |pca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
+.. |pca_img| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -159,8 +159,8 @@ is not the exact inverse transform of ``transform`` even when
 
 .. topic:: Examples:
 
-    * :ref:`example_applications_face_recognition.py`
-    * :ref:`example_decomposition_plot_faces_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_applications_face_recognition.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
 
@@ -176,19 +176,19 @@ Kernel PCA
 ----------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It 
-has many applications including denoising, compression and structured 
+dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
-.. figure:: ../auto_examples/decomposition/images/plot_kernel_pca_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_kernel_pca.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
 
 
 .. _SparsePCA:
@@ -231,7 +231,7 @@ norms that take into account adjacency and different kinds of structure; see
 For more details on how to use Sparse PCA, see the Examples section, below.
 
 
-.. |spca_img| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_005.png
+.. |spca_img| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_005.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -264,7 +264,7 @@ factorization, while larger values shrink many coefficients to zero.
 
 .. topic:: Examples:
 
-   * :ref:`example_decomposition_plot_faces_decomposition.py`
+   * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 .. topic:: References:
 
@@ -346,7 +346,7 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`example_text_document_clustering.py`
+   * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
 
 .. topic:: References:
 
@@ -408,7 +408,7 @@ a positive sign. Therefore, the split_code is non-negative.
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_sparse_coding.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_sparse_coding.py`
 
 
 Generic dictionary learning
@@ -435,11 +435,11 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
                 0 \leq k < n_{atoms}
 
 
-.. |pca_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
+.. |pca_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |dict_img2| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_006.png
+.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_006.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -451,10 +451,10 @@ sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
-extracted from part of the image of Lena looks like.
+extracted from part of the image of a raccoon face looks like.
 
 
-.. figure:: ../auto_examples/decomposition/images/plot_image_denoising_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_image_denoising_001.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :align: center
     :scale: 50%
@@ -462,7 +462,7 @@ extracted from part of the image of Lena looks like.
 
 .. topic:: Examples:
 
-  * :ref:`example_decomposition_plot_image_denoising.py`
+  * :ref:`sphx_glr_auto_examples_decomposition_plot_image_denoising.py`
 
 
 .. topic:: References:
@@ -492,7 +492,7 @@ does not fit into the memory.
 
 .. currentmodule:: sklearn.cluster
 
-.. image:: ../auto_examples/cluster/images/plot_dict_face_patches_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_dict_face_patches_001.png
     :target: ../auto_examples/cluster/plot_dict_face_patches.html
     :scale: 50%
     :align: right
@@ -505,7 +505,7 @@ does not fit into the memory.
    computationally efficient and implements on-line learning with a
    ``partial_fit`` method.
 
-    Example: :ref:`example_cluster_plot_dict_face_patches.py`
+    Example: :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 .. currentmodule:: sklearn.decomposition
 
@@ -516,7 +516,7 @@ Factor Analysis
 
 In unsupervised learning we only have a dataset :math:`X = \{x_1, x_2, \dots, x_n
 \}`. How can this dataset be described mathematically? A very simple
-`continuous latent variabel` model for :math:`X` is
+`continuous latent variable` model for :math:`X` is
 
 .. math:: x_i = W h_i + \mu + \epsilon
 
@@ -558,7 +558,7 @@ structure of the error covariance :math:`\Psi`:
   :class:`FactorAnalysis`, a classical statistical model. The matrix W is
   sometimes called the "factor loading matrix".
 
-Both model essentially estimate a Gaussian with a low-rank covariance matrix.
+Both models essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probabilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
 :class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
@@ -567,11 +567,11 @@ Factor analysis *can* produce similar components (the columns of its loading
 matrix) to :class:`PCA`. However, one can not make any general statements
 about these components (e.g. whether they are orthogonal):
 
-.. |pca_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
+.. |pca_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |fa_img3| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_009.png
+.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -581,7 +581,7 @@ The main advantage for Factor Analysis (over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
-.. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_008.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
@@ -589,7 +589,7 @@ it can model the variance in every direction of the input space independently
 This allows better model selection than probabilistic PCA in the presence
 of heteroscedastic noise:
 
-.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_002.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_002.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
@@ -597,7 +597,7 @@ of heteroscedastic noise:
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
 
 .. _ICA:
 
@@ -616,7 +616,7 @@ of the PCA variants.
 It is classically used to separate mixed signals (a problem known as
 *blind source separation*), as in the example below:
 
-.. figure:: ../auto_examples/decomposition/images/plot_ica_blind_source_separation_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_ica_blind_source_separation_001.png
     :target: ../auto_examples/decomposition/plot_ica_blind_source_separation.html
     :align: center
     :scale: 60%
@@ -625,11 +625,11 @@ It is classically used to separate mixed signals (a problem known as
 ICA can also be used as yet another non linear decomposition that finds
 components with some sparsity:
 
-.. |pca_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
+.. |pca_img4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |ica_img4| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_004.png
+.. |ica_img4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_004.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -637,9 +637,9 @@ components with some sparsity:
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_ica_blind_source_separation.py`
-    * :ref:`example_decomposition_plot_ica_vs_pca.py`
-    * :ref:`example_decomposition_plot_faces_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_ica_blind_source_separation.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_ica_vs_pca.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
 
 
 .. _NMF:
@@ -673,11 +673,11 @@ resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
 faces dataset, in comparison with the PCA eigenfaces.
 
-.. |pca_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_002.png
+.. |pca_img5| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_002.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |nmf_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_003.png
+.. |nmf_img5| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_003.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -726,13 +726,13 @@ and the regularized objective function is:
 
 .. topic:: Examples:
 
-    * :ref:`example_decomposition_plot_faces_decomposition.py`
-    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`
+    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 
     * `"Learning the parts of objects by non-negative matrix factorization"
-      <http://hebb.mit.edu/people/seung/papers/ls-lponm-99.pdf>`_
+      <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -795,7 +795,7 @@ to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi
   log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
     E_{q}[log\:p(w,z,\theta,\beta|\alpha,\eta)] - E_{q}[log\:q(z, \theta, \beta)]
 
-Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence 
+Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
@@ -821,7 +821,7 @@ when data can be fetched sequentially.
 
 .. topic:: Examples:
 
-    * :ref:`example_applications_topics_extraction_with_nmf_lda.py`
+    * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
 
 .. topic:: References:
 

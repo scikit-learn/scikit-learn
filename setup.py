@@ -42,8 +42,6 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-from sklearn._build_utils import cythonize
-
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
@@ -178,7 +176,13 @@ def get_numpy_status():
 def generate_cython():
     cwd = os.path.abspath(os.path.dirname(__file__))
     print("Cythonizing sources")
-    cythonize.main(cwd)
+    p = subprocess.call([sys.executable, os.path.join(cwd,
+                                                      'build_tools',
+                                                      'cythonize.py'),
+                         'sklearn'],
+                        cwd=cwd)
+    if p != 0:
+        raise RuntimeError("Running cythonize failed!")
 
 
 def setup_package():
@@ -206,8 +210,8 @@ def setup_package():
                                  'Programming Language :: Python :: 2.6',
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.3',
                                  'Programming Language :: Python :: 3.4',
+                                 'Programming Language :: Python :: 3.5',
                                  ],
                     cmdclass=cmdclass,
                     **extra_setuptools_args)

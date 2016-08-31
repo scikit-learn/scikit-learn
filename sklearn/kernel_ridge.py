@@ -166,7 +166,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         return self
 
     def predict(self, X):
-        """Predict using the the kernel ridge model
+        """Predict using the kernel ridge model
 
         Parameters
         ----------

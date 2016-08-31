@@ -45,7 +45,6 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 
-
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -324,6 +323,13 @@ def test_cohen_kappa():
     y2 = np.array([0] * 52 + [1] * 32 + [2] * 16)
     assert_almost_equal(cohen_kappa_score(y1, y2), .8013, decimal=4)
 
+    # Weighting example: none, linear, quadratic.
+    y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
+    y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
+    assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2, weights="linear"), .9412, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"), .9541, decimal=4)
+
 
 @ignore_warnings
 def test_matthews_corrcoef_nan():
@@ -462,7 +468,7 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
     # compute scores with default labels introspection
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  pos_label=None,
-                                                 average='weighted')
+                                                 average='macro')
 
 
 def test_zero_precision_recall():
@@ -475,10 +481,10 @@ def test_zero_precision_recall():
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
         assert_almost_equal(precision_score(y_true, y_pred,
-                                            average='weighted'), 0.0, 2)
-        assert_almost_equal(recall_score(y_true, y_pred, average='weighted'),
+                                            average='macro'), 0.0, 2)
+        assert_almost_equal(recall_score(y_true, y_pred, average='macro'),
                             0.0, 2)
-        assert_almost_equal(f1_score(y_true, y_pred, average='weighted'),
+        assert_almost_equal(f1_score(y_true, y_pred, average='macro'),
                             0.0, 2)
 
     finally:
@@ -543,6 +549,16 @@ def test_confusion_matrix_multiclass_subset_labels():
     cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
     assert_array_equal(cm, [[18, 2],
                             [24, 3]])
+
+    # a label not in y_true should result in zeros for that row/column
+    extra_label = np.max(y_true) + 1
+    cm = confusion_matrix(y_true, y_pred, labels=[2, extra_label])
+    assert_array_equal(cm, [[18, 0],
+                            [0, 0]])
+
+    # check for exception when none of the specified labels are in y_true
+    assert_raises(ValueError, confusion_matrix, y_true, y_pred,
+                  labels=[extra_label, extra_label + 1])
 
 
 def test_classification_report_multiclass():
@@ -669,6 +685,27 @@ avg / total       0.51      0.53      0.47        75
         assert_equal(report, expected_report)
 
 
+def test_classification_report_multiclass_with_long_string_label():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array(["blue", "green"*5, "red"])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = """\
+                           precision    recall  f1-score   support
+
+                     blue       0.83      0.79      0.81        24
+greengreengreengreengreen       0.33      0.10      0.15        31
+                      red       0.42      0.90      0.57        20
+
+              avg / total       0.51      0.53      0.47        75
+"""
+
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -730,6 +767,7 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
+    assert_warns(DeprecationWarning, hamming_loss, y1, y2, classes=[0, 1])
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1346,6 +1384,32 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred)
     assert_almost_equal(loss, 1.0383217, decimal=6)
 
+    # test labels option
+
+    y_true = [2, 2]
+    y_pred = [[0.2, 0.7], [0.6, 0.5]]
+    y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
+    error_str = ('y_true contains only one label (2). Please provide '
+                 'the true labels explicitly through the labels argument.')
+    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
+    error_str = ('Found input variables with inconsistent numbers of samples: '
+                 '[3, 2]')
+    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+
+    # works when the labels argument is used
+
+    true_log_loss = -np.mean(np.log(y_score[:, 1]))
+    calculated_log_loss = log_loss(y_true, y_score, labels=[1, 2])
+    assert_almost_equal(calculated_log_loss, true_log_loss)
+
+    # ensure labels work when len(np.unique(y_true)) != y_pred.shape[1]
+    y_true = [1, 2, 2]
+    y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
+    loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+    assert_almost_equal(loss, 1.0630345, decimal=6)
+
 
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
@@ -1379,3 +1443,6 @@ def test_brier_score_loss():
     assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
     assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
+    # calculate even if only single class in y_true (#6980)
+    assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
+    assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)

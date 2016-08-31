@@ -2,9 +2,9 @@
 
 .. _gmm:
 
-===================================================
+=======================
 Gaussian mixture models
-===================================================
+=======================
 
 .. currentmodule:: sklearn.mixture
 
@@ -14,13 +14,13 @@ matrices supported), sample them, and estimate them from
 data. Facilities to help determine the appropriate number of
 components are also provided.
 
- .. figure:: ../auto_examples/mixture/images/plot_gmm_pdf_001.png
+ .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_pdf_001.png
    :target: ../auto_examples/mixture/plot_gmm_pdf.html
    :align: center
    :scale: 50%
 
-   **Two-component Gaussian mixture model:** *data points, and equi-probability surfaces of 
-   the model.*
+   **Two-component Gaussian mixture model:** *data points, and equi-probability
+   surfaces of the model.*
 
 A Gaussian mixture model is a probabilistic model that assumes all the
 data points are generated from a mixture of a finite number of
@@ -33,67 +33,67 @@ Scikit-learn implements different classes to estimate Gaussian
 mixture models, that correspond to different estimation strategies,
 detailed below.
 
-GMM classifier
-===============
+Gaussian Mixture
+================
 
-The :class:`GMM` object implements the 
+The :class:`GaussianMixture` object implements the
 :ref:`expectation-maximization <expectation_maximization>` (EM)
 algorithm for fitting mixture-of-Gaussian models. It can also draw
 confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
-data. A :meth:`GMM.fit` method is provided that learns a Gaussian
+data. A :meth:`GaussianMixture.fit` method is provided that learns a Gaussian
 Mixture Model from train data. Given test data, it can assign to each
-sample the class of the Gaussian it mostly probably belong to using
-the :meth:`GMM.predict` method.
+sample the Gaussian it mostly probably belong to using
+the :meth:`GaussianMixture.predict` method.
 
-..  
+..
     Alternatively, the probability of each
     sample belonging to the various Gaussians may be retrieved using the
-    :meth:`GMM.predict_proba` method.
+    :meth:`GaussianMixture.predict_proba` method.
 
-The :class:`GMM` comes with different options to constrain the covariance
-of the difference classes estimated: spherical, diagonal, tied or full
-covariance.
+The :class:`GaussianMixture` comes with different options to constrain the
+covariance of the difference classes estimated: spherical, diagonal, tied or
+full covariance.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_classifier_001.png
-   :target: ../auto_examples/mixture/plot_gmm_classifier.html
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_covariances_001.png
+   :target: ../auto_examples/mixture/plot_gmm_covariances.html
    :align: center
    :scale: 75%
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm_classifier.py` for an example of
-      using a GMM as a classifier on the iris dataset.
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_covariances.py` for an example of
+      using the Gaussian mixture as clustering on the iris dataset.
 
-    * See :ref:`example_mixture_plot_gmm_pdf.py` for an example on plotting the 
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py` for an example on plotting the
       density estimation.
 
-Pros and cons of class :class:`GMM`: expectation-maximization inference
-------------------------------------------------------------------------
+Pros and cons of class :class:`GaussianMixture`
+-----------------------------------------------
 
 Pros
-.....
+....
 
-:Speed: it is the fastest algorithm for learning mixture models
+:Speed: It is the fastest algorithm for learning mixture models
 
-:Agnostic: as this algorithm maximizes only the likelihood, it
+:Agnostic: As this algorithm maximizes only the likelihood, it
   will not bias the means towards zero, or bias the cluster sizes to
   have specific structures that might or might not apply.
 
 Cons
 ....
 
-:Singularities: when one has insufficiently many points per
+:Singularities: When one has insufficiently many points per
    mixture, estimating the covariance matrices becomes difficult,
    and the algorithm is known to diverge and find solutions with
    infinite likelihood unless one regularizes the covariances artificially.
 
-:Number of components: this algorithm will always use all the
+:Number of components: This algorithm will always use all the
    components it has access to, needing held-out data
-   or information theoretical criteria to decide how many components to use 
+   or information theoretical criteria to decide how many components to use
    in the absence of external cues.
 
-Selecting the number of components in a classical GMM 
+Selecting the number of components in a classical GMM
 ------------------------------------------------------
 
 The BIC criterion can be used to select the number of components in a GMM
@@ -102,15 +102,15 @@ only in the asymptotic regime (i.e. if much data is available).
 Note that using a :ref:`DPGMM <dpgmm>` avoids the specification of the
 number of components for a Gaussian mixture model.
 
-.. figure:: ../auto_examples/mixture/images/plot_gmm_selection_001.png
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm_selection.py` for an example
-      of model selection performed with classical GMM.
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py` for an example
+      of model selection performed with classical Gaussian mixture.
 
 .. _expectation_maximization:
 
@@ -122,7 +122,7 @@ data is that it is one usually doesn't know which points came from
 which latent component (if one has access to this information it gets
 very easy to fit a separate Gaussian distribution to each set of
 points). `Expectation-maximization
-<http://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
+<https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm>`_
 is a well-founded statistical
 algorithm to get around this problem by an iterative process. First
 one assumes random components (randomly centered on data points,
@@ -131,31 +131,69 @@ origin) and computes for each point a probability of being generated by
 each component of the model. Then, one tweaks the
 parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
-to a local optimum. 
+to a local optimum.
 
-.. _vbgmm:
+.. _bgmm:
 
-VBGMM classifier: variational Gaussian mixtures
-================================================
+Bayesian Gaussian Mixture
+=========================
 
-The :class:`VBGMM` object implements a variant of the Gaussian mixture
-model with :ref:`variational inference <variational_inference>` algorithms. The API is identical to
-:class:`GMM`. It is essentially a middle-ground between :class:`GMM`
-and :class:`DPGMM`, as it has some of the properties of the Dirichlet
-process.
+The :class:`BayesianGaussianMixture` object implements a variant of the Gaussian
+mixture model with variational inference algorithms.
 
-Pros and cons of class :class:`VBGMM`: variational inference
--------------------------------------------------------------
+.. _variational_inference:
+
+Estimation algorithm: variational inference
+---------------------------------------------
+
+Variational inference is an extension of expectation-maximization that
+maximizes a lower bound on model evidence (including
+priors) instead of data likelihood. The principle behind
+variational methods is the same as expectation-maximization (that is
+both are iterative algorithms that alternate between finding the
+probabilities for each point to be generated by each mixture and
+fitting the mixtures to these assigned points), but variational
+methods add regularization by integrating information from prior
+distributions. This avoids the singularities often found in
+expectation-maximization solutions but introduces some subtle biases
+to the model. Inference is often notably slower, but not usually as
+much so as to render usage unpractical.
+
+Due to its Bayesian nature, the variational algorithm needs more
+hyper-parameters than expectation-maximization, the most
+important of these being the concentration parameter ``dirichlet_concentration_prior``. Specifying
+a high value of prior of the dirichlet concentration leads more often to uniformly-sized mixture
+components, while specifying small (between 0 and 1) values will lead
+to some mixture components getting almost all the points while most
+mixture components will be centered on just a few of the remaining
+points.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_bayesian_gaussian_mixture_001.png
+   :target: ../auto_examples/mixture/plot_bayesian_gaussian_mixture.html
+   :align: center
+   :scale: 50%
+
+.. topic:: Examples:
+
+    * See :ref:`plot_bayesian_gaussian_mixture.py` for a comparaison of
+      the results of the ``BayesianGaussianMixture`` for different values
+      of the parameter ``dirichlet_concentration_prior``.
+
+Pros and cons of variational inference with :class:BayesianGaussianMixture
+--------------------------------------------------------------------------
 
 Pros
 .....
 
 :Regularization: due to the incorporation of prior information,
    variational solutions have less pathological special cases than
-   expectation-maximization solutions. One can then use full
-   covariance matrices in high dimensions or in cases where some
-   components might be centered around a single point without
-   risking divergence.
+   expectation-maximization solutions.
+
+:Automatic selection: when `dirichlet_concentration_prior` is small enough and
+`n_components` is larger than what is found necessary by the model, the
+Variational Bayesian mixture model has a natural tendency to set some mixture
+weights values close to zero. This makes it possible to let the model choose a
+suitable number of effective components automatically.
 
 Cons
 .....
@@ -171,51 +209,24 @@ Cons
 :Hyperparameters: this algorithm needs an extra hyperparameter
    that might need experimental tuning via cross-validation.
 
-.. _variational_inference:
-
-Estimation algorithm: variational inference
----------------------------------------------
-
-Variational inference is an extension of expectation-maximization that
-maximizes a lower bound on model evidence (including
-priors) instead of data likelihood.  The principle behind
-variational methods is the same as expectation-maximization (that is
-both are iterative algorithms that alternate between finding the
-probabilities for each point to be generated by each mixture and
-fitting the mixtures to these assigned points), but variational
-methods add regularization by integrating information from prior
-distributions. This avoids the singularities often found in
-expectation-maximization solutions but introduces some subtle biases
-to the model. Inference is often notably slower, but not usually as
-much so as to render usage unpractical.
-
-Due to its Bayesian nature, the variational algorithm needs more
-hyper-parameters than expectation-maximization, the most
-important of these being the concentration parameter ``alpha``. Specifying
-a high value of alpha leads more often to uniformly-sized mixture
-components, while specifying small (between 0 and 1) values will lead
-to some mixture components getting almost all the points while most
-mixture components will be centered on just a few of the remaining
-points.
-
 .. _dpgmm:
 
-DPGMM classifier: Infinite Gaussian mixtures
-============================================
+DPGMM: Infinite Gaussian mixtures
+=================================
 
 The :class:`DPGMM` object implements a variant of the Gaussian mixture
 model with a variable (but bounded) number of components using the
-Dirichlet Process. The API is identical to :class:`GMM`. 
+Dirichlet Process.
 This class doesn't require the user to choose the number of
 components, and at the expense of extra computational time the user
 only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
-.. |plot_gmm| image:: ../auto_examples/mixture/images/plot_gmm_001.png
+.. |plot_gmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
-.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/plot_gmm_sin_001.png
+.. |plot_gmm_sin| image:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_sin_001.png
    :target: ../auto_examples/mixture/plot_gmm_sin.html
    :scale: 48%
 
@@ -228,17 +239,18 @@ components on a dataset composed of 2 clusters. We can see that the DPGMM is
 able to limit itself to only 2 components whereas the GMM fits the data fit too
 many components. Note that with very little observations, the DPGMM can take a
 conservative stand, and fit only one component. **On the right** we are fitting
-a dataset not well-depicted by a mixture of Gaussian. Adjusting the `alpha`
+a dataset not well-depicted by a Gaussian mixture. Adjusting the `alpha`
 parameter of the DPGMM controls the number of components used to fit this
 data.
 
 .. topic:: Examples:
 
-    * See :ref:`example_mixture_plot_gmm.py` for an example on plotting the
-      confidence ellipsoids for both :class:`GMM` and :class:`DPGMM`.
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on plotting the
+      confidence ellipsoids for both :class:`GaussianMixture`
+      and :class:`DPGMM`.
 
-    * :ref:`example_mixture_plot_gmm_sin.py` shows using :class:`GMM` and
-      :class:`DPGMM` to fit a sine wave
+    * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
+      :class:`GaussianMixture` and :class:`DPGMM` to fit a sine wave
 
 Pros and cons of class :class:`DPGMM`: Dirichlet process mixture model
 ----------------------------------------------------------------------
@@ -287,7 +299,7 @@ An important question is how can the Dirichlet process use an
 infinite, unbounded number of clusters and still be consistent. While
 a full explanation doesn't fit this manual, one can think of its
 `chinese restaurant process
-<http://en.wikipedia.org/wiki/Chinese_restaurant_process>`_ 
+<https://en.wikipedia.org/wiki/Chinese_restaurant_process>`_
 analogy to help understanding it. The
 chinese restaurant process is a generative story for the Dirichlet
 process. Imagine a chinese restaurant with an infinite number of
@@ -323,5 +335,3 @@ complexity, not the actual number of components used).
     :hidden:
 
     dp-derivation.rst
-
-

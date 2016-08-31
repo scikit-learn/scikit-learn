@@ -3,7 +3,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 """
 
 # Author: Issam H. Laradji
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import sys
 import warnings
@@ -14,6 +14,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 
 from sklearn.datasets import load_digits, load_boston
 from sklearn.datasets import make_regression, make_multilabel_classification
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
@@ -22,12 +23,12 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false)
+                                   assert_false, ignore_warnings)
 
 
 np.seterr(all='warn')
 
-ACTIVATION_TYPES = ["logistic", "tanh", "relu"]
+ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
 digits_dataset_multi = load_digits(n_class=3)
 
@@ -60,7 +61,8 @@ def test_alpha():
 
     for alpha in alpha_values:
         mlp = MLPClassifier(hidden_layer_sizes=10, alpha=alpha, random_state=1)
-        mlp.fit(X, y)
+        with ignore_warnings(category=ConvergenceWarning):
+            mlp.fit(X, y)
         alpha_vectors.append(np.array([absolute_sum(mlp.coefs_[0]),
                                        absolute_sum(mlp.coefs_[1])]))
 
@@ -254,21 +256,26 @@ def test_lbfgs_regression():
                            max_iter=150, shuffle=True, random_state=1,
                            activation=activation)
         mlp.fit(X, y)
-        assert_greater(mlp.score(X, y), 0.95)
+        if activation == 'identity':
+            assert_greater(mlp.score(X, y), 0.84)
+        else:
+            # Non linear models perform much better than linear bottleneck:
+            assert_greater(mlp.score(X, y), 0.95)
 
 
 def test_learning_rate_warmstart():
-    # Tests that warm_start reuses past solution."""
+    # Test that warm_start reuses past solution."""
     X = [[3, 2], [1, 6], [5, 6], [-2, -4]]
     y = [1, 1, 1, 0]
     for learning_rate in ["invscaling", "constant"]:
         mlp = MLPClassifier(algorithm='sgd', hidden_layer_sizes=4,
                             learning_rate=learning_rate, max_iter=1,
                             power_t=0.25, warm_start=True)
-        mlp.fit(X, y)
-        prev_eta = mlp._optimizer.learning_rate
-        mlp.fit(X, y)
-        post_eta = mlp._optimizer.learning_rate
+        with ignore_warnings(category=ConvergenceWarning):
+            mlp.fit(X, y)
+            prev_eta = mlp._optimizer.learning_rate
+            mlp.fit(X, y)
+            post_eta = mlp._optimizer.learning_rate
 
         if learning_rate == 'constant':
             assert_equal(prev_eta, post_eta)
@@ -317,7 +324,7 @@ def test_partial_fit_classes_error():
 
 def test_partial_fit_classification():
     # Test partial_fit on classification.
-    # `partial_fit` should yield the same results as 'fit'for binary and
+    # `partial_fit` should yield the same results as 'fit' for binary and
     # multi-class classification.
     for X, y in classification_datasets:
         X = X
@@ -325,7 +332,8 @@ def test_partial_fit_classification():
         mlp = MLPClassifier(algorithm='sgd', max_iter=100, random_state=1,
                             tol=0, alpha=1e-5, learning_rate_init=0.2)
 
-        mlp.fit(X, y)
+        with ignore_warnings(category=ConvergenceWarning):
+            mlp.fit(X, y)
         pred1 = mlp.predict(X)
         mlp = MLPClassifier(algorithm='sgd', random_state=1, alpha=1e-5,
                             learning_rate_init=0.2)
@@ -401,7 +409,8 @@ def test_predict_proba_binary():
     y = y_digits_binary[:50]
 
     clf = MLPClassifier(hidden_layer_sizes=5)
-    clf.fit(X, y)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y)
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
@@ -423,7 +432,8 @@ def test_predict_proba_multi():
     y = y_digits_multi[:10]
 
     clf = MLPClassifier(hidden_layer_sizes=5)
-    clf.fit(X, y)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y)
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
@@ -443,10 +453,11 @@ def test_sparse_matrices():
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
     mlp = MLPClassifier(random_state=1, hidden_layer_sizes=15)
-    mlp.fit(X, y)
-    pred1 = mlp.decision_function(X)
-    mlp.fit(X_sparse, y)
-    pred2 = mlp.decision_function(X_sparse)
+    with ignore_warnings(category=ConvergenceWarning):
+        mlp.fit(X, y)
+        pred1 = mlp.decision_function(X)
+        mlp.fit(X_sparse, y)
+        pred2 = mlp.decision_function(X_sparse)
     assert_almost_equal(pred1, pred2)
     pred1 = mlp.predict(X)
     pred2 = mlp.predict(X_sparse)
@@ -458,7 +469,7 @@ def test_tolerance():
     # It should force the algorithm to exit the loop when it converges.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd', verbose=10)
+    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
 
@@ -472,7 +483,8 @@ def test_verbose_sgd():
     old_stdout = sys.stdout
     sys.stdout = output = StringIO()
 
-    clf.fit(X, y)
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y)
     clf.partial_fit(X, y)
 
     sys.stdout = old_stdout
@@ -499,7 +511,7 @@ def test_adaptive_learning_rate():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd',
-                        learning_rate='adaptive', verbose=10)
+                        learning_rate='adaptive')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
     assert_greater(1e-6, clf._optimizer.learning_rate)

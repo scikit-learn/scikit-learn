@@ -7,19 +7,17 @@ hashing of numpy arrays.
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
-import warnings
 import pickle
 import hashlib
 import sys
 import types
 import struct
-from ._compat import _bytes_or_unicode
-
 import io
 
-PY3 = sys.version[0] == '3'
+from ._compat import _bytes_or_unicode, PY3_OR_LATER
 
-if PY3:
+
+if PY3_OR_LATER:
     Pickler = pickle._Pickler
 else:
     Pickler = pickle.Pickler
@@ -30,7 +28,17 @@ class _ConsistentSet(object):
         whatever the order of its items.
     """
     def __init__(self, set_sequence):
-        self._sequence = sorted(set_sequence)
+        # Forces order of elements in set to ensure consistent hash.
+        try:
+            # Trying first to order the set assuming the type of elements is
+            # consistent and orderable.
+            # This fails on python 3 when elements are unorderable
+            # but we keep it in a try as it's faster.
+            self._sequence = sorted(set_sequence)
+        except TypeError:
+            # If elements are unorderable, sorting them using their hash.
+            # This is slower but works in any case.
+            self._sequence = sorted((hash(e) for e in set_sequence))
 
 
 class _MyHash(object):
@@ -49,7 +57,7 @@ class Hasher(Pickler):
         self.stream = io.BytesIO()
         # By default we want a pickle protocol that only changes with
         # the major python version and not the minor one
-        protocol = (pickle.DEFAULT_PROTOCOL if PY3
+        protocol = (pickle.DEFAULT_PROTOCOL if PY3_OR_LATER
                     else pickle.HIGHEST_PROTOCOL)
         Pickler.__init__(self, self.stream, protocol=protocol)
         # Initialise the hash obj
@@ -59,7 +67,8 @@ class Hasher(Pickler):
         try:
             self.dump(obj)
         except pickle.PicklingError as e:
-            warnings.warn('PicklingError while hashing %r: %r' % (obj, e))
+            e.args += ('PicklingError while hashing %r: %r' % (obj, e),)
+            raise
         dumps = self.stream.getvalue()
         self._hash.update(dumps)
         if return_digest:
@@ -128,8 +137,18 @@ class Hasher(Pickler):
     dispatch[type(pickle.dump)] = save_global
 
     def _batch_setitems(self, items):
-        # forces order of keys in dict to ensure consistent hash
-        Pickler._batch_setitems(self, iter(sorted(items)))
+        # forces order of keys in dict to ensure consistent hash.
+        try:
+            # Trying first to compare dict assuming the type of keys is
+            # consistent and orderable.
+            # This fails on python 3 when keys are unorderable
+            # but we keep it in a try as it's faster.
+            Pickler._batch_setitems(self, iter(sorted(items)))
+        except TypeError:
+            # If keys are unorderable, sorting them using their hash. This is
+            # slower but works in any case.
+            Pickler._batch_setitems(self, iter(sorted((hash(k), v)
+                                                      for k, v in items)))
 
     def save_set(self, set_items):
         # forces order of items in Set to ensure consistent hash
@@ -168,24 +187,28 @@ class NumpyHasher(Hasher):
             the Pickler class.
         """
         if isinstance(obj, self.np.ndarray) and not obj.dtype.hasobject:
-            # Compute a hash of the object:
-            try:
-                # memoryview is not supported for some dtypes,
-                # e.g. datetime64, see
-                # https://github.com/numpy/numpy/issues/4983.  The
-                # workaround is to view the array as bytes before
-                # taking the memoryview
-                obj_bytes_view = obj.view(self.np.uint8)
-                self._hash.update(self._getbuffer(obj_bytes_view))
-            # ValueError is raised by .view when the array is not contiguous
-            # BufferError is raised by Python 3 in the hash update if
-            # the array is Fortran rather than C contiguous
-            except (ValueError, BufferError):
+            # Compute a hash of the object
+            # The update function of the hash requires a c_contiguous buffer.
+            if obj.shape == ():
+                # 0d arrays need to be flattened because viewing them as bytes
+                # raises a ValueError exception.
+                obj_c_contiguous = obj.flatten()
+            elif obj.flags.c_contiguous:
+                obj_c_contiguous = obj
+            elif obj.flags.f_contiguous:
+                obj_c_contiguous = obj.T
+            else:
                 # Cater for non-single-segment arrays: this creates a
-                # copy, and thus alleviates this issue.
+                # copy, and thus aleviates this issue.
                 # XXX: There might be a more efficient way of doing this
-                obj_bytes_view = obj.flatten().view(self.np.uint8)
-                self._hash.update(self._getbuffer(obj_bytes_view))
+                obj_c_contiguous = obj.flatten()
+
+            # memoryview is not supported for some dtypes, e.g. datetime64, see
+            # https://github.com/numpy/numpy/issues/4983. The
+            # workaround is to view the array as bytes before
+            # taking the memoryview.
+            self._hash.update(
+                self._getbuffer(obj_c_contiguous.view(self.np.uint8)))
 
             # We store the class, to be able to distinguish between
             # Objects with the same binary content, but different

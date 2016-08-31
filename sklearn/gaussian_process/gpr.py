@@ -23,7 +23,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     The implementation is based on Algorithm 2.1 of Gaussian Processes
     for Machine Learning (GPML) by Rasmussen and Williams.
 
-    In addition to standard sklearn estimator API, GaussianProcessRegressor:
+    In addition to standard scikit-learn estimator API,
+    GaussianProcessRegressor:
 
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method sample_y(X), which evaluates samples
@@ -31,6 +32,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
        * exposes a method log_marginal_likelihood(theta), which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     Parameters
     ----------

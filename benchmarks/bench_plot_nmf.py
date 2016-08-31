@@ -17,7 +17,7 @@ from sklearn.externals.six.moves import xrange
 
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, init='random'):
-    '''
+    """
     A, S = nnmf(X, r, tol=1e-3, R=None)
 
     Implement Lee & Seung's algorithm
@@ -48,7 +48,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, init='random'):
     "Algorithms for Non-negative Matrix Factorization"
     by Daniel D Lee, Sebastian H Seung
     (available at http://citeseer.ist.psu.edu/lee01algorithms.html)
-    '''
+    """
     # Nomenclature in the function follows Lee & Seung
     eps = 1e-5
     n, m = V.shape

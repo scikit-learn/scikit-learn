@@ -170,7 +170,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/RANSAC
+    .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
@@ -256,8 +256,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         if self.residual_metric is not None:
             warnings.warn(
-                "'residual_metric' will be removed in version 0.20. Use "
-                "'loss' instead.", DeprecationWarning)
+                "'residual_metric' was deprecated in version 0.18 and "
+                "will be removed in version 0.20. Use 'loss' instead.",
+                DeprecationWarning)
 
         if self.loss == "absolute_loss":
             if y.ndim == 1:

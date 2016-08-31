@@ -44,8 +44,8 @@ from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .utils.validation import _num_samples
-from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
+from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets)
 from .externals.joblib import Parallel
@@ -242,10 +242,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if _check_partial_fit_first_call(self, classes):
             if (not hasattr(self.estimator, "partial_fit")):
                 raise ValueError("Base estimator {0}, doesn't have partial_fit"
-                                 "method".format(estimator))
+                                 "method".format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
-        
+
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -410,7 +410,6 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
     y = y[cond]
     y_binary = np.zeros_like(y)
     y_binary[y == j] = 1
-    ind = np.arange(X.shape[0])
     return _partial_fit_binary(estimator, X[cond], y_binary)
 
 
@@ -469,8 +468,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
-        y = np.asarray(y)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
@@ -513,13 +511,12 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                 range(self.n_classes_ *
                                 (self.n_classes_-1) // 2)]
 
-        y = np.asarray(y)
-        check_consistent_length(X, y)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_ovo_binary)(
                 estimator, X, y, self.classes_[i], self.classes_[j])
-            for estimator, (i, j) in izip(self.estimators_, ((i, j) for i 
+            for estimator, (i, j) in izip(self.estimators_, ((i, j) for i
                                 in range(self.n_classes_) for j in range
                                             (i + 1, self.n_classes_))))
         return self

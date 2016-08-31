@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
@@ -256,6 +257,8 @@ METRICS_WITH_POS_LABEL = [
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
+
+    "hamming_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
@@ -606,6 +609,29 @@ def test_invariance_string_vs_numbers_labels():
             # TODO those metrics doesn't support string label yet
             assert_raises(ValueError, metric, y1_str, y2)
             assert_raises(ValueError, metric, y1_str.astype('O'), y2)
+
+
+def test_inf_nan_input():
+    invalids =[([0, 1], [np.inf, np.inf]),
+               ([0, 1], [np.nan, np.nan]),
+               ([0, 1], [np.nan, np.inf])]
+
+    METRICS = dict()
+    METRICS.update(THRESHOLDED_METRICS)
+    METRICS.update(REGRESSION_METRICS)
+
+    for metric in METRICS.values():
+        for y_true, y_score in invalids:
+            assert_raise_message(ValueError,
+                                 "contains NaN, infinity",
+                                 metric, y_true, y_score)
+
+    # Classification metrics all raise a mixed input exception
+    for metric in CLASSIFICATION_METRICS.values():
+        for y_true, y_score in invalids:
+            assert_raise_message(ValueError,
+                                 "Can't handle mix of binary and continuous",
+                                 metric, y_true, y_score)
 
 
 @ignore_warnings

@@ -6,14 +6,7 @@ Utilities useful during the build.
 
 from __future__ import division, print_function, absolute_import
 
-HASH_FILE = 'cythonize.dat'
 DEFAULT_ROOT = 'sklearn'
-
-# WindowsError is not defined on unix systems
-try:
-    WindowsError
-except NameError:
-    WindowsError = None
 
 from numpy.distutils.system_info import get_info
 

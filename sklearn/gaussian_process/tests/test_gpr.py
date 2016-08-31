@@ -1,7 +1,7 @@
 """Testing for Gaussian process regression """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -25,14 +25,14 @@ y = f(X).ravel()
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
 kernels = [RBF(length_scale=1.0), fixed_kernel,
            RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2))
-           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2))
-           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
-           + C(1e-5, (1e-5, 1e2)),
-           C(0.1, (1e-2, 1e2))
-           * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
-           + C(1e-5, (1e-5, 1e2))]
+           C(1.0, (1e-2, 1e2)) *
+           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+           C(1.0, (1e-2, 1e2)) *
+           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)) +
+           C(1e-5, (1e-5, 1e2)),
+           C(0.1, (1e-2, 1e2)) *
+           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)) +
+           C(1e-5, (1e-5, 1e2))]
 
 
 def test_gpr_interpolation():
@@ -48,7 +48,8 @@ def test_gpr_interpolation():
 def test_lml_improving():
     """ Test that hyperparameter-tuning improves log-marginal likelihood. """
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
                        gpr.log_marginal_likelihood(kernel.theta))
@@ -65,21 +66,23 @@ def test_lml_precomputed():
 def test_converged_to_local_maximum():
     """ Test that we are in local maximum after hyperparameter-optimization."""
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         lml, lml_gradient = \
             gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
-        assert_true(np.all((np.abs(lml_gradient) < 1e-4)
-                           | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0])
-                           | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
+        assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
+                           (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0]) |
+                           (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
 
 
 def test_solution_inside_bounds():
     """ Test that hyperparameter-optimization remains in bounds"""
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
         bounds = gpr.kernel_.bounds
@@ -128,10 +131,10 @@ def test_sample_statistics():
 
         y_mean, y_cov = gpr.predict(X2, return_cov=True)
 
-        samples = gpr.sample_y(X2, 1000000)
+        samples = gpr.sample_y(X2, 300000)
 
         # More digits accuracy would require many more samples
-        assert_almost_equal(y_mean, np.mean(samples, 1), 2)
+        assert_almost_equal(y_mean, np.mean(samples, 1), 1)
         assert_almost_equal(np.diag(y_cov) / np.diag(y_cov).max(),
                             np.var(samples, 1) / np.diag(y_cov).max(), 1)
 
@@ -172,7 +175,7 @@ def test_random_starts():
     Test that an increasing number of random-starts of GP fitting only
     increases the log marginal likelihood of the chosen theta.
     """
-    n_samples, n_features = 25, 3
+    n_samples, n_features = 25, 2
     np.random.seed(0)
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features) * 2 - 1
@@ -184,7 +187,7 @@ def test_random_starts():
               length_scale_bounds=[(1e-4, 1e+2)] * n_features) \
         + WhiteKernel(noise_level=1e-5, noise_level_bounds=(1e-5, 1e1))
     last_lml = -np.inf
-    for n_restarts_optimizer in range(9):
+    for n_restarts_optimizer in range(5):
         gp = GaussianProcessRegressor(
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
@@ -224,7 +227,7 @@ def test_y_normalization():
 
 def test_y_multioutput():
     """ Test that GPR can deal with multi-dimensional target values"""
-    y_2d = np.vstack((y, y*2)).T
+    y_2d = np.vstack((y, y * 2)).T
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
     # of 1d GP and that second dimension is twice as large
@@ -267,12 +270,12 @@ def test_y_multioutput():
 
 def test_custom_optimizer():
     """ Test that GPR can use externally defined optimizers. """
-    # Define a dummy optimizer that simply tests 1000 random hyperparameters
+    # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
-        for _ in range(1000):
+        for _ in range(50):
             theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
                                               np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)
@@ -281,7 +284,8 @@ def test_custom_optimizer():
         return theta_opt, func_min
 
     for kernel in kernels:
-        if kernel == fixed_kernel: continue
+        if kernel == fixed_kernel:
+            continue
         gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
         gpr.fit(X, y)
         # Checks that optimizer improved marginal likelihood

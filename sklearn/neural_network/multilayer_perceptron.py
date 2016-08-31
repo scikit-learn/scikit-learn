@@ -4,7 +4,7 @@
 # Authors: Issam H. Laradji <issam.laradji@gmail.com>
 #          Andreas Mueller
 #          Jiyuan Qian
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -16,7 +16,7 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ._base import logistic, softmax
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
-from ..cross_validation import train_test_split
+from ..model_selection import train_test_split
 from ..externals import six
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -235,8 +235,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # combinations of output activation and loss function:
         # sigmoid and binary cross entropy, softmax and categorical cross
         # entropy, and identity with squared loss
-        diff = y - activations[-1]
-        deltas[last] = -diff
+        deltas[last] = activations[-1] - y
 
         # Compute gradient for the last layer
         coef_grads, intercept_grads = self._compute_loss_grad(
@@ -245,8 +244,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            derivative = DERIVATIVES[self.activation]
-            deltas[i - 1] *= derivative(activations[i])
+            inplace_derivative = DERIVATIVES[self.activation]
+            inplace_derivative(activations[i], deltas[i - 1])
 
             coef_grads, intercept_grads = self._compute_loss_grad(
                 i - 1, n_samples, activations, deltas, coef_grads,
@@ -302,9 +301,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             # Use the initialization method recommended by
             # Glorot et al.
             init_bound = np.sqrt(2. / (fan_in + fan_out))
-        elif self.activation == 'tanh':
-            init_bound = np.sqrt(6. / (fan_in + fan_out))
-        elif self.activation == 'relu':
+        elif self.activation in ('identity', 'tanh', 'relu'):
             init_bound = np.sqrt(6. / (fan_in + fan_out))
         else:
             # this was caught earlier, just to make sure
@@ -348,6 +345,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # l-bfgs does not support mini-batches
         if self.algorithm == 'l-bfgs':
             batch_size = n_samples
+        elif self.batch_size == 'auto':
+            batch_size = min(200, n_samples)
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
                 warnings.warn("Got `batch_size` less than 1 or larger than "
@@ -412,7 +411,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
 
         # raise ValueError if not registered
-        supported_activations = ['logistic', 'tanh', 'relu']
+        supported_activations = ('identity', 'logistic', 'tanh', 'relu')
         if self.activation not in supported_activations:
             raise ValueError("The activation '%s' is not supported. Supported "
                              "activations are %s." % (self.activation,
@@ -493,7 +492,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             y_val = None
 
         n_samples = X.shape[0]
-        batch_size = np.clip(self.batch_size, 1, n_samples)
+
+        if self.batch_size == 'auto':
+            batch_size = min(200, n_samples)
+        else:
+            batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
             for it in range(self.max_iter):
@@ -682,8 +685,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         The ith element represents the number of neurons in the ith
         hidden layer.
 
-    activation : {'logistic', 'tanh', 'relu'}, default 'relu'
+    activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
         Activation function for the hidden layer.
+
+        - 'identity', no-op activation, useful to implement linear bottleneck,
+          returns f(x) = x
 
         - 'logistic', the logistic sigmoid function,
           returns f(x) = 1 / (1 + exp(-x)).
@@ -714,27 +720,28 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     alpha : float, optional, default 0.0001
         L2 penalty (regularization term) parameter.
 
-    batch_size : int, optional, default 200
+    batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
         If the algorithm is 'l-bfgs', the classifier will not use minibatch.
+        When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
 
-        -'constant', is a constant learning rate given by
-         'learning_rate_init'.
+        - 'constant' is a constant learning rate given by
+          'learning_rate_init'.
 
-        -'invscaling' gradually decreases the learning rate ``learning_rate_`` at
-          each time step 't' using an inverse scaling exponent of 'power_t'.
+        - 'invscaling' gradually decreases the learning rate ``learning_rate_``
+          at each time step 't' using an inverse scaling exponent of 'power_t'.
           effective_learning_rate = learning_rate_init / pow(t, power_t)
 
-        -'adaptive', keeps the learning rate constant to
-         'learning_rate_init' as long as training loss keeps decreasing.
-         Each time two consecutive epochs fail to decrease training loss by at
-         least tol, or fail to increase validation score by at least tol if
-         'early_stopping' is on, the current learning rate is divided by 5.
+        - 'adaptive' keeps the learning rate constant to
+          'learning_rate_init' as long as training loss keeps decreasing.
+          Each time two consecutive epochs fail to decrease training loss by at
+          least tol, or fail to increase validation score by at least tol if
+          'early_stopping' is on, the current learning rate is divided by 5.
 
-         Only used when algorithm='sgd'.
+        Only used when ``algorithm='sgd'``.
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The algorithm iterates until convergence
@@ -864,7 +871,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  algorithm='adam', alpha=0.0001,
-                 batch_size=200, learning_rate="constant",
+                 batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
                  shuffle=True, random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
@@ -1035,8 +1042,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         The ith element represents the number of neurons in the ith
         hidden layer.
 
-    activation : {'logistic', 'tanh', 'relu'}, default 'relu'
+    activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
         Activation function for the hidden layer.
+
+        - 'identity', no-op activation, useful to implement linear bottleneck,
+          returns f(x) = x
 
         - 'logistic', the logistic sigmoid function,
           returns f(x) = 1 / (1 + exp(-x)).
@@ -1067,27 +1077,28 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     alpha : float, optional, default 0.0001
         L2 penalty (regularization term) parameter.
 
-    batch_size : int, optional, default 200
+    batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
         If the algorithm is 'l-bfgs', the classifier will not use minibatch.
+        When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
 
-        -'constant', is a constant learning rate given by
-         'learning_rate_init'.
+        - 'constant' is a constant learning rate given by
+          'learning_rate_init'.
 
-        -'invscaling' gradually decreases the learning rate ``learning_rate_`` at
-          each time step 't' using an inverse scaling exponent of 'power_t'.
+        - 'invscaling' gradually decreases the learning rate ``learning_rate_``
+          at each time step 't' using an inverse scaling exponent of 'power_t'.
           effective_learning_rate = learning_rate_init / pow(t, power_t)
 
-        -'adaptive', keeps the learning rate constant to
-         'learning_rate_init' as long as training loss keeps decreasing.
-         Each time two consecutive epochs fail to decrease training loss by at
-         least tol, or fail to increase validation score by at least tol if
-         'early_stopping' is on, the current learning rate is divided by 5.
+        - 'adaptive' keeps the learning rate constant to
+          'learning_rate_init' as long as training loss keeps decreasing.
+          Each time two consecutive epochs fail to decrease training loss by at
+          least tol, or fail to increase validation score by at least tol if
+          'early_stopping' is on, the current learning rate is divided by 5.
 
-         Only used when algorithm='sgd'.
+        Only used when algorithm='sgd'.
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The algorithm iterates until convergence
@@ -1211,7 +1222,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  algorithm='adam', alpha=0.0001,
-                 batch_size=200, learning_rate="constant",
+                 batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
                  power_t=0.5, max_iter=200, shuffle=True,
                  random_state=None, tol=1e-4,

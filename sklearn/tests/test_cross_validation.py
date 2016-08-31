@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 from scipy import stats
 
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
@@ -19,6 +20,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -160,7 +162,7 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
-    y = [3, 3, -1, -1, 2]
+    y = [3, 3, -1, -1, 3]
 
     cv = assert_warns_message(Warning, "The least populated class",
                               cval.StratifiedKFold, y, 3)
@@ -170,11 +172,21 @@ def test_kfold_valueerrors():
     # side of the split at each split
     check_cv_coverage(cv, expected_n_iter=3, n_samples=len(y))
 
+    # Check that errors are raised if all n_labels for individual
+    # classes are less than n_folds.
+    y = [3, 3, -1, -1, 2]
+
+    assert_raises(ValueError, cval.StratifiedKFold, y, 3)
+
     # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
     assert_raises(ValueError, cval.KFold, 2, 1)
-    assert_raises(ValueError, cval.StratifiedKFold, y, 0)
-    assert_raises(ValueError, cval.StratifiedKFold, y, 1)
+    error_string = ("k-fold cross validation requires at least one"
+                    " train / test split")
+    assert_raise_message(ValueError, error_string,
+                         cval.StratifiedKFold, y, 0)
+    assert_raise_message(ValueError, error_string,
+                         cval.StratifiedKFold, y, 1)
 
     # When n is not integer:
     assert_raises(ValueError, cval.KFold, 2.5, 2)
@@ -324,7 +336,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # for this data. We can highlight this fact be computing k-fold cross-
     # validation with and without shuffling: we observe that the shuffling case
     # wrongly makes the IID assumption and is therefore too optimistic: it
-    # estimates a much higher accuracy (around 0.96) than than the non
+    # estimates a much higher accuracy (around 0.96) than the non
     # shuffling variant (around 0.86).
 
     digits = load_digits()
@@ -533,6 +545,18 @@ def test_stratified_shuffle_split_even():
 
         assert_counts_are_ok(train_counts, ex_train_p)
         assert_counts_are_ok(test_counts, ex_test_p)
+
+
+def test_stratified_shuffle_split_overlap_train_test_bug():
+    # See https://github.com/scikit-learn/scikit-learn/issues/6121 for
+    # the original bug report
+    labels = [0, 1, 2, 3] * 3 + [4, 5] * 5
+
+    splits = cval.StratifiedShuffleSplit(labels, n_iter=1,
+                                         test_size=0.5, random_state=0)
+    train, test = next(iter(splits))
+
+    assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_predefinedsplit_with_kfold_split():
@@ -1144,14 +1168,16 @@ def test_cross_val_predict_input_types():
     assert_equal(predictions.shape, (10,))
 
     # test with multioutput y
-    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    with ignore_warnings(category=ConvergenceWarning):
+        predictions = cval.cross_val_predict(clf, X_sparse, X)
     assert_equal(predictions.shape, (10, 2))
 
     predictions = cval.cross_val_predict(clf, X_sparse, y)
     assert_array_equal(predictions.shape, (10,))
 
     # test with multioutput y
-    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    with ignore_warnings(category=ConvergenceWarning):
+        predictions = cval.cross_val_predict(clf, X_sparse, X)
     assert_array_equal(predictions.shape, (10, 2))
 
     # test with X and y as list

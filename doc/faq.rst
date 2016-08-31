@@ -65,27 +65,32 @@ optimized file format such as HDF5 to reduce data load times. Various libraries
 such as H5Py, PyTables and pandas provides a Python interface for reading and
 writing data in that format.
 
-Can I add this new algorithm that I (or someone else) just published?
--------------------------------------------------------------------------
-No. As a rule we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 200+ citations and wide use and usefullness. A
-technique that provides a clear-cut improvement (e.g. an enhanced  data
-structure or efficient approximation) on a widely-used method will also be
-considered for inclusion.
-Your implementation doesn't need to be in scikit-learn to be used together
-with scikit-learn tools, though. Implement your favorite algorithm
-in a scikit-learn compatible way, upload it to github and we will list
-it under :ref:`related_projects`.
-Also see selectiveness_.
+What are the inclusion criteria for new algorithms ?
+----------------------------------------------------
 
+We only consider well-established algorithms for inclusion. A rule of thumb is
+at least 3 years since publication, 200+ citations and wide use and
+usefulness. A technique that provides a clear-cut improvement (e.g. an
+enhanced data structure or a more efficient approximation technique) on
+a widely-used method will also be considered for inclusion.
 
-Can I add this classical algorithm from the 80s?
----------------------------------------------------
-Depends. If there is a common usecase within the scope of scikit-learn, such
-as classification, regression or clustering, where it outperforms methods
-that are already implemented in scikit-learn, we will consider it.
+From the algorithms or techniques that meet the above criteria, only those
+which fit well within the current API of scikit-learn, that is a ``fit``,
+``predict/transform`` interface and ordinarily having input/output that is a
+numpy array or sparse matrix, are accepted.
 
-.. _selectiveness:
+The contributor should support the importance of the proposed addition with
+research papers and/or implementations in other similar packages, demonstrate
+its usefulness via common use-cases/applications and corroborate performance
+improvements, if any, with benchmarks and/or plots. It is expected that the 
+proposed algorithm should outperform the methods that are already implemented
+in scikit-learn at least in some areas.
+
+Also note that your implementation need not be in scikit-learn to be used
+together with scikit-learn tools. You can implement your favorite algorithm in
+a scikit-learn compatible way, upload it to github and let us know. We will
+list it under :ref:`related_projects`.
+
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
@@ -97,7 +102,7 @@ fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
 Also see `this thread on the mailing list
-<http://sourceforge.net/p/scikit-learn/mailman/scikit-learn-general/thread/CAAkaFLWcBG%2BgtsFQzpTLfZoCsHMDv9UG5WaqT0LwUApte0TVzg%40mail.gmail.com/#msg33104380>`_.
+<https://sourceforge.net/p/scikit-learn/mailman/scikit-learn-general/thread/CAAkaFLWcBG+gtsFQzpTLfZoCsHMDv9UG5WaqT0LwUApte0TVzg@mail.gmail.com/#msg33104380>`_.
 
 Why did you remove HMMs from scikit-learn?
 --------------------------------------------
@@ -226,11 +231,10 @@ consider the lack of fork-safety in Accelerate / vecLib as a bug.
 In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
 'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
 the process pools. This makes it possible to not be subject to this issue
-anymore. The version of joblib shipped with scikit-learn automatically uses
-that setting by default (under Python 3.4 and later).
+anymore.
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
-it via joblib you can enable the the 'forkserver' mode globally for your
+it via joblib you can enable the 'forkserver' mode globally for your
 program: Insert the following instructions in your main script::
 
     import multiprocessing
@@ -246,9 +250,29 @@ You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
 
-Why is there no support for deep learning / Will there be support for deep learning in scikit-learn?
-----------------------------------------------------------------------------------------------------
-Deep learning requires a rich vocabulary to define an architecture and the
-use of GPUs for efficient computing. However, neither of these fit within
-the design constraints of scikit-learn. As a result, deep learning is
-currently out of scope for what scikit-learn seeks to achieve.
+Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
+--------------------------------------------------------------------------------------------------------------------------------------
+Deep learning and reinforcement learning both require a rich vocabulary to
+define an architecture, with deep learning additionally requiring
+GPUs for efficient computing. However, neither of these fit within
+the design constraints of scikit-learn; as a result, deep learning
+and reinforcement learning are currently out of scope for what
+scikit-learn seeks to achieve.
+
+
+Why is my pull request not getting any attention?
+-------------------------------------------------
+The scikit-learn review process takes a significant amount of time, and
+contributors should not be discouraged by a lack of activity or review on
+their pull request. We care a lot about getting things right
+the first time, as maintenance and later change comes at a high cost.
+We rarely release any "experimental" code, so all of our contributions
+will be subject to high use immediately and should be of the highest
+quality possible initially.
+
+Beyond that, scikit-learn is limited in its reviewing bandwidth; many of the
+reviewers and core developers are working on scikit-learn on their own time.
+If a review of your pull request comes slowly, it is likely because the
+reviewers are busy. We ask for your understanding and request that you
+not close your pull request or discontinue your work solely because of
+this reason.

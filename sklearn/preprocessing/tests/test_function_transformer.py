@@ -115,4 +115,16 @@ def test_kw_arg_reset():
 
     # Test that rounding is correct
     testing.assert_array_equal(F.transform(X),
-                                  np.around(X, decimals=1))
+                               np.around(X, decimals=1))
+
+
+def test_inverse_transform():
+    X = np.array([1, 4, 9, 16]).reshape((2, 2))
+
+    # Test that inverse_transform works correctly
+    F = FunctionTransformer(
+            func=np.sqrt,
+            inverse_func=np.around, inv_kw_args=dict(decimals=3))
+    testing.assert_array_equal(
+            F.inverse_transform(F.transform(X)),
+            np.around(np.sqrt(X), decimals=3))

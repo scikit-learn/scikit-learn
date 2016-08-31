@@ -52,7 +52,7 @@ trailing-spaces:
 	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	python sklearn/_build_utils/cythonize.py sklearn
+	python build_tools/cythonize.py sklearn
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim
@@ -68,3 +68,6 @@ doc-noplot: inplace
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
+
+flake8-diff:
+	./build_tools/travis/flake8_diff.sh

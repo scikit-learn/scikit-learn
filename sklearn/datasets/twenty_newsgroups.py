@@ -219,6 +219,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     if cache is None:
         if download_if_missing:
+            logger.info("Downloading 20news dataset. "
+                        "This may take a few minutes.")
             cache = download_20newsgroups(target_dir=twenty_home,
                                           cache_path=cache_path)
         else:

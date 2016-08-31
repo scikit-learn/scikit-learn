@@ -58,6 +58,10 @@ class Isomap(BaseEstimator, TransformerMixin):
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -85,8 +89,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto'):
-
+                 neighbors_algorithm='auto', n_jobs=1):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
@@ -94,20 +97,23 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
+        self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
         X = check_array(X)
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                      algorithm=self.neighbors_algorithm)
+                                      algorithm=self.neighbors_algorithm,
+                                      n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter)
+                                     tol=self.tol, max_iter=self.max_iter,
+                                     n_jobs=self.n_jobs)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               mode='distance')
+                               mode='distance', n_jobs=self.n_jobs)
 
         self.dist_matrix_ = graph_shortest_path(kng,
                                                 method=self.path_method,
@@ -196,14 +202,14 @@ class Isomap(BaseEstimator, TransformerMixin):
         X = check_array(X)
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
-        #Create the graph of shortest distances from X to self.training_data_
+        # Create the graph of shortest distances from X to self.training_data_
         # via the nearest neighbors of X.
-        #This can be done as a single array operation, but it potentially
+        # This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
         G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
         for i in range(X.shape[0]):
-            G_X[i] = np.min((self.dist_matrix_[indices[i]]
-                             + distances[i][:, None]), 0)
+            G_X[i] = np.min(self.dist_matrix_[indices[i]] +
+                            distances[i][:, None], 0)
 
         G_X **= 2
         G_X *= -0.5

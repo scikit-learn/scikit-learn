@@ -140,6 +140,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         check_is_fitted(self, 'classes_')
+        y = column_or_1d(y, warn=True)
 
         classes = np.unique(y)
         _check_numpy_unicode_bug(classes)
@@ -471,10 +472,13 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     classes = np.asarray(classes)
 
     if y_type == "binary":
-        if len(classes) == 1:
-            Y = np.zeros((len(y), 1), dtype=np.int)
-            Y += neg_label
-            return Y
+        if n_classes == 1:
+            if sparse_output:
+                return sp.csr_matrix((n_samples, 1), dtype=int)
+            else:
+                Y = np.zeros((len(y), 1), dtype=np.int)
+                Y += neg_label
+                return Y
         elif len(classes) >= 3:
             y_type = "multiclass"
 
@@ -609,9 +613,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
             return classes[y[:, 1]]
         else:
             if len(classes) == 1:
-                y = np.empty(len(y), dtype=classes.dtype)
-                y.fill(classes[0])
-                return y
+                return np.repeat(classes[0], len(y))
             else:
                 return classes[y.ravel()]
 

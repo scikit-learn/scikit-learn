@@ -12,7 +12,7 @@ the lower the better
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
 #          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
@@ -23,6 +23,7 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
+from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
@@ -100,7 +101,11 @@ def auc(x, y, reorder=False):
                                  "the x array is not increasing: %s" % x)
 
     area = direction * np.trapz(y, x)
-
+    if isinstance(area, np.memmap):
+        # Reductions such as .sum used internally in np.trapz do not return a
+        # scalar by default for numpy.memmap instances contrary to
+        # regular numpy.ndarray instances.
+        area = area.dtype.type(area)
     return area
 
 
@@ -122,7 +127,8 @@ def average_precision_score(y_true, y_score, average="macro",
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -150,7 +156,7 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/wiki/Average_precision>`_
+           <https://en.wikipedia.org/wiki/Average_precision>`_
 
     See also
     --------
@@ -193,7 +199,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -221,7 +228,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
     See also
     --------
@@ -290,6 +297,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     check_consistent_length(y_true, y_score)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
 
@@ -431,7 +441,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
-        class or confidence values.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     pos_label : int
         Label considered as positive and others are considered negative.
@@ -475,7 +486,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
 
     Examples
@@ -561,7 +572,8 @@ def label_ranking_average_precision_score(y_true, y_score):
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     Returns
     -------
@@ -633,7 +645,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -691,7 +704,8 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
 
     y_score : array, shape = [n_samples, n_labels]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class, confidence values, or non-thresholded measure of decisions
+        (as returned by "decision_function" on some classifiers).
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.

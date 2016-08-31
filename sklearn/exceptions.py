@@ -47,7 +47,7 @@ class DataConversionWarning(UserWarning):
     This warning occurs when some input data needs to be converted or
     interpreted in a way that may not match the user's expectations.
 
-    For example, this warning may occur when the the user
+    For example, this warning may occur when the user
         - passes an integer array to a function which expects float input and
           will convert the input
         - requests a non-copying operation, but a copy is required to meet the

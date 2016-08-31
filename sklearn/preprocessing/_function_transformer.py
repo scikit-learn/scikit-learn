@@ -30,6 +30,12 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         the same arguments as transform, with args and kwargs forwarded.
         If func is None, then func will be the identity function.
 
+    inverse_func : callable, optional default=None
+        The callable to use for the inverse transformation. This will be
+        passed the same arguments as inverse transform, with args and
+        kwargs forwarded. If inverse_func is None, then inverse_func
+        will be the identity function.
+
     validate : bool, optional default=True
         Indicate that the input X array should be checked before calling
         func. If validate is false, there will be no input validation.
@@ -49,15 +55,20 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to func.
 
+    inv_kw_args : dict, optional
+        Dictionary of additional keyword arguments to pass to inverse_func.
+
     """
-    def __init__(self, func=None, validate=True,
+    def __init__(self, func=None, inverse_func=None, validate=True,
                  accept_sparse=False, pass_y=False,
-                 kw_args=None):
+                 kw_args=None, inv_kw_args=None):
         self.func = func
+        self.inverse_func = inverse_func
         self.validate = validate
         self.accept_sparse = accept_sparse
         self.pass_y = pass_y
         self.kw_args = kw_args
+        self.inv_kw_args = inv_kw_args
 
     def fit(self, X, y=None):
         if self.validate:
@@ -65,10 +76,17 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
+        return self._transform(X, y, self.func, self.kw_args)
+
+    def inverse_transform(self, X, y=None):
+        return self._transform(X, y, self.inverse_func, self.inv_kw_args)
+
+    def _transform(self, X, y=None, func=None, kw_args=None):
         if self.validate:
             X = check_array(X, self.accept_sparse)
-        func = self.func if self.func is not None else _identity
 
+        if func is None:
+            func = _identity
 
         return func(X, *((y,) if self.pass_y else ()),
-                    **(self.kw_args if self.kw_args else {}))
+                    **(kw_args if kw_args else {}))

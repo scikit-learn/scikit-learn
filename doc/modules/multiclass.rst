@@ -14,7 +14,8 @@ Multiclass and multilabel algorithms
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 ``multiclass`` and ``multilabel`` classification problems
-by decomposing such problems into binary classification problems.
+by decomposing such problems into binary classification problems. Multitarget
+regression is also supported.
 
   - **Multiclass classification** means a classification task with more than
     two classes; e.g., classify a set of images of fruits which may be oranges,
@@ -27,6 +28,11 @@ by decomposing such problems into binary classification problems.
     that are not mutually exclusive, such as topics that are relevant for a
     document. A text might be about any of religion, politics, finance or
     education at the same time or none of these.
+
+  - **Multioutput regression** assigns each sample a set of target
+    values.  This can be thought of as predicting several properties
+    for each data-point, such as wind direction and magnitude at a
+    certain location.
 
   - **Multioutput-multiclass classification** and **multi-task classification**
     means that a single estimator has to handle
@@ -145,7 +151,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 [i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/plot_multilabel_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multilabel_001.png
     :target: ../auto_examples/plot_multilabel.html
     :align: center
     :scale: 75%
@@ -153,7 +159,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_multilabel.py`
+    * :ref:`sphx_glr_auto_examples_plot_multilabel.py`
 
 .. _ovo_classification:
 
@@ -230,7 +236,7 @@ one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
 good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
 
-A number greater than than 1 will require more classifiers than
+A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
 the mistakes made by other classifiers, hence the name "error-correcting".
 In practice, however, this may not happen as classifier mistakes will
@@ -274,3 +280,72 @@ Below is an example of multiclass learning using Output-Codes::
     .. [4] "The Elements of Statistical Learning",
         Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
         2008.
+
+Multioutput regression
+======================
+
+Multioutput regression support can be added to any regressor with
+:class:`MultiOutputRegressor`.  This strategy consists of fitting one
+regressor per target. Since each target is represented by exactly one
+regressor it is possible to gain knowledge about the target by
+inspecting its corresponding regressor. As
+:class:`MultiOutputRegressor` fits one regressor per target it can not
+take advantage of correlations between targets.
+
+Below is an example of multioutput regression:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.multioutput import MultiOutputRegressor
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>> X, y = make_regression(n_samples=10, n_targets=3, random_state=1)
+  >>> MultiOutputRegressor(GradientBoostingRegressor(random_state=0)).fit(X, y).predict(X)
+  array([[-154.75474165, -147.03498585,  -50.03812219],
+         [   7.12165031,    5.12914884,  -81.46081961],
+         [-187.8948621 , -100.44373091,   13.88978285],
+         [-141.62745778,   95.02891072, -191.48204257],
+         [  97.03260883,  165.34867495,  139.52003279],
+         [ 123.92529176,   21.25719016,   -7.84253   ],
+         [-122.25193977,  -85.16443186, -107.12274212],
+         [ -30.170388  ,  -94.80956739,   12.16979946],
+         [ 140.72667194,  176.50941682,  -17.50447799],
+         [ 149.37967282,  -81.15699552,   -5.72850319]])
+
+Multioutput classification
+==========================
+
+Multioutput classification support can be added to any classifier with
+:class:`MultiOutputClassifier`. This strategy consists of fitting one
+classifier per target.  This allows multiple target variable
+classifications. The purpose of this class is to extend estimators
+to be able to estimate a series of target functions (f1,f2,f3...,fn)
+that are trained on a single X predictor matrix to predict a series
+of reponses (y1,y2,y3...,yn).
+
+Below is an example of multioutput classification:
+    
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.utils import shuffle
+    >>> import numpy as np
+    >>> X, y1 = make_classification(n_samples=10, n_features=100, n_informative=30, n_classes=3, random_state=1)
+    >>> y2 = shuffle(y1, random_state=1)
+    >>> y3 = shuffle(y1, random_state=2)
+    >>> Y = np.vstack((y1, y2, y3)).T
+    >>> n_samples, n_features = X.shape # 10,100
+    >>> n_outputs = Y.shape[1] # 3
+    >>> n_classes = 3
+    >>> forest = RandomForestClassifier(n_estimators=100, random_state=1)
+    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
+    >>> multi_target_forest.fit(X, Y).predict(X)
+    array([[2, 2, 0],
+           [1, 2, 1],
+           [2, 1, 0],
+           [0, 0, 2],
+           [0, 2, 1],
+           [0, 0, 2],
+           [1, 1, 0],
+           [1, 1, 1],
+           [0, 0, 2],
+           [2, 0, 0]])
+

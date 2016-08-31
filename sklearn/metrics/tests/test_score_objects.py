@@ -1,4 +1,8 @@
 import pickle
+import tempfile
+import shutil
+import os
+import numbers
 
 import numpy as np
 
@@ -30,6 +34,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.externals import joblib
 
 
 REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
@@ -44,6 +49,46 @@ CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                ]
 
 MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
+
+
+def _make_estimators(X_train, y_train, y_ml_train):
+    # Make estimators that make sense to test various scoring methods
+    sensible_regr = DummyRegressor(strategy='median')
+    sensible_regr.fit(X_train, y_train)
+    sensible_clf = DecisionTreeClassifier(random_state=0)
+    sensible_clf.fit(X_train, y_train)
+    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
+    sensible_ml_clf.fit(X_train, y_ml_train)
+    return dict(
+        [(name, sensible_regr) for name in REGRESSION_SCORERS] +
+        [(name, sensible_clf) for name in CLF_SCORERS] +
+        [(name, sensible_ml_clf) for name in MULTILABEL_ONLY_SCORERS]
+    )
+
+
+X_mm, y_mm, y_ml_mm = None, None, None
+ESTIMATORS = None
+TEMP_FOLDER = None
+
+
+def setup_module():
+    # Create some memory mapped data
+    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
+    TEMP_FOLDER = tempfile.mkdtemp(prefix='sklearn_test_score_objects_')
+    X, y = make_classification(n_samples=30, n_features=5, random_state=0)
+    _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
+                                             random_state=0)
+    filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
+    joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
+    ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
+
+
+def teardown_module():
+    global X_mm, y_mm, y_ml_mm, TEMP_FOLDER, ESTIMATORS
+    # GC closes the mmap file descriptors
+    X_mm, y_mm, y_ml_mm, ESTIMATORS = None, None, None, None
+    shutil.rmtree(TEMP_FOLDER)
 
 
 class EstimatorWithoutFit(object):
@@ -91,7 +136,7 @@ def test_all_scorers_repr():
 def test_check_scoring():
     # Test all branches of check_scoring
     estimator = EstimatorWithoutFit()
-    pattern = (r"estimator should a be an estimator implementing 'fit' method,"
+    pattern = (r"estimator should be an estimator implementing 'fit' method,"
                r" .* was passed")
     assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
 
@@ -324,18 +369,7 @@ def test_scorer_sample_weight():
     sample_weight[:10] = 0
 
     # get sensible estimators for each metric
-    sensible_regr = DummyRegressor(strategy='median')
-    sensible_regr.fit(X_train, y_train)
-    sensible_clf = DecisionTreeClassifier(random_state=0)
-    sensible_clf.fit(X_train, y_train)
-    sensible_ml_clf = DecisionTreeClassifier(random_state=0)
-    sensible_ml_clf.fit(X_train, y_ml_train)
-    estimator = dict([(name, sensible_regr)
-                      for name in REGRESSION_SCORERS] +
-                     [(name, sensible_clf)
-                      for name in CLF_SCORERS] +
-                     [(name, sensible_ml_clf)
-                      for name in MULTILABEL_ONLY_SCORERS])
+    estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
         if name in MULTILABEL_ONLY_SCORERS:
@@ -361,3 +395,21 @@ def test_scorer_sample_weight():
             assert_true("sample_weight" in str(e),
                         "scorer {0} raises unhelpful exception when called "
                         "with sample weights: {1}".format(name, str(e)))
+
+
+@ignore_warnings  # UndefinedMetricWarning for P / R scores
+def check_scorer_memmap(scorer_name):
+    scorer, estimator = SCORERS[scorer_name], ESTIMATORS[scorer_name]
+    if scorer_name in MULTILABEL_ONLY_SCORERS:
+        score = scorer(estimator, X_mm, y_ml_mm)
+    else:
+        score = scorer(estimator, X_mm, y_mm)
+    assert isinstance(score, numbers.Number), scorer_name
+
+
+def test_scorer_memmap_input():
+    # Non-regression test for #6147: some score functions would
+    # return singleton memmap when computed on memmap data instead of scalar
+    # float values.
+    for name in SCORERS.keys():
+        yield check_scorer_memmap, name

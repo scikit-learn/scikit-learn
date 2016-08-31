@@ -18,6 +18,7 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
 w = [1, 1, 1, .5, .5, .5]
+y_degraded = [1, 1, 1, 1, 1, 1]
 
 
 def test_graphviz_toy():
@@ -203,6 +204,20 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '{rank=same ; 0} ;\n' \
                 '{rank=same ; 1; 2} ;\n' \
+                '}'
+
+    assert_equal(contents1, contents2)
+
+    # Test classifier with degraded learning set
+    clf = DecisionTreeClassifier(max_depth=3)
+    clf.fit(X, y_degraded)
+
+    out = StringIO()
+    export_graphviz(clf, out_file=out, filled=True)
+    contents1 = out.getvalue()
+    contents2 = 'digraph Tree {\n' \
+                'node [shape=box, style="filled", color="black"] ;\n' \
+                '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", fillcolor="#e5813900"] ;\n' \
                 '}'
 
     assert_equal(contents1, contents2)

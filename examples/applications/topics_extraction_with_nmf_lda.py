@@ -17,7 +17,7 @@ proportional to (n_samples * iterations).
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-#         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Lars Buitinck
 #         Chyi-Kwei Yau <chyikwei.yau@gmail.com>
 # License: BSD 3 clause
 

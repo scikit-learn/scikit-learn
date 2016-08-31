@@ -227,21 +227,21 @@ def test_toy_ridge_object():
     # TODO: test also n_samples > n_features
     X = np.array([[1], [2]])
     Y = np.array([1, 2])
-    clf = Ridge(alpha=0.0)
-    clf.fit(X, Y)
+    reg = Ridge(alpha=0.0)
+    reg.fit(X, Y)
     X_test = [[1], [2], [3], [4]]
-    assert_almost_equal(clf.predict(X_test), [1., 2, 3, 4])
+    assert_almost_equal(reg.predict(X_test), [1., 2, 3, 4])
 
-    assert_equal(len(clf.coef_.shape), 1)
-    assert_equal(type(clf.intercept_), np.float64)
+    assert_equal(len(reg.coef_.shape), 1)
+    assert_equal(type(reg.intercept_), np.float64)
 
     Y = np.vstack((Y, Y)).T
 
-    clf.fit(X, Y)
+    reg.fit(X, Y)
     X_test = [[1], [2], [3], [4]]
 
-    assert_equal(len(clf.coef_.shape), 2)
-    assert_equal(type(clf.intercept_), np.ndarray)
+    assert_equal(len(reg.coef_.shape), 2)
+    assert_equal(type(reg.intercept_), np.ndarray)
 
 
 def test_ridge_vs_lstsq():
@@ -417,16 +417,16 @@ def _test_multi_ridge_diabetes(filter_):
 def _test_ridge_classifiers(filter_):
     n_classes = np.unique(y_iris).shape[0]
     n_features = X_iris.shape[1]
-    for clf in (RidgeClassifier(), RidgeClassifierCV()):
-        clf.fit(filter_(X_iris), y_iris)
-        assert_equal(clf.coef_.shape, (n_classes, n_features))
-        y_pred = clf.predict(filter_(X_iris))
+    for reg in (RidgeClassifier(), RidgeClassifierCV()):
+        reg.fit(filter_(X_iris), y_iris)
+        assert_equal(reg.coef_.shape, (n_classes, n_features))
+        y_pred = reg.predict(filter_(X_iris))
         assert_greater(np.mean(y_iris == y_pred), .79)
 
     cv = KFold(5)
-    clf = RidgeClassifierCV(cv=cv)
-    clf.fit(filter_(X_iris), y_iris)
-    y_pred = clf.predict(filter_(X_iris))
+    reg = RidgeClassifierCV(cv=cv)
+    reg.fit(filter_(X_iris), y_iris)
+    y_pred = reg.predict(filter_(X_iris))
     assert_true(np.mean(y_iris == y_pred) >= 0.8)
 
 
@@ -442,9 +442,16 @@ def _test_tolerance(filter_):
     assert_true(score >= score2)
 
 
-# ignore warning that solvers are changed to SAG for
-# temporary fix
-@ignore_warnings
+def check_dense_sparse(test_func):
+    # test dense matrix
+    ret_dense = test_func(DENSE_FILTER)
+    # test sparse matrix
+    ret_sparse = test_func(SPARSE_FILTER)
+    # test that the outputs are the same
+    if ret_dense is not None and ret_sparse is not None:
+        assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+
+
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
@@ -452,13 +459,7 @@ def test_dense_sparse():
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
                       _test_tolerance):
-        # test dense matrix
-        ret_dense = test_func(DENSE_FILTER)
-        # test sparse matrix
-        ret_sparse = test_func(SPARSE_FILTER)
-        # test that the outputs are the same
-        if ret_dense is not None and ret_sparse is not None:
-            assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+        yield check_dense_sparse, test_func
 
 
 def test_ridge_cv_sparse_svd():
@@ -480,63 +481,63 @@ def test_class_weights():
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
 
-    clf = RidgeClassifier(class_weight=None)
-    clf.fit(X, y)
-    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+    reg = RidgeClassifier(class_weight=None)
+    reg.fit(X, y)
+    assert_array_equal(reg.predict([[0.2, -1.0]]), np.array([1]))
 
     # we give a small weights to class 1
-    clf = RidgeClassifier(class_weight={1: 0.001})
-    clf.fit(X, y)
+    reg = RidgeClassifier(class_weight={1: 0.001})
+    reg.fit(X, y)
 
     # now the hyperplane should rotate clock-wise and
     # the prediction on this point should shift
-    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+    assert_array_equal(reg.predict([[0.2, -1.0]]), np.array([-1]))
 
     # check if class_weight = 'balanced' can handle negative labels.
-    clf = RidgeClassifier(class_weight='balanced')
-    clf.fit(X, y)
-    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+    reg = RidgeClassifier(class_weight='balanced')
+    reg.fit(X, y)
+    assert_array_equal(reg.predict([[0.2, -1.0]]), np.array([1]))
 
     # class_weight = 'balanced', and class_weight = None should return
     # same values when y has equal number of all labels
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0], [1.0, 1.0]])
     y = [1, 1, -1, -1]
-    clf = RidgeClassifier(class_weight=None)
-    clf.fit(X, y)
-    clfa = RidgeClassifier(class_weight='balanced')
-    clfa.fit(X, y)
-    assert_equal(len(clfa.classes_), 2)
-    assert_array_almost_equal(clf.coef_, clfa.coef_)
-    assert_array_almost_equal(clf.intercept_, clfa.intercept_)
+    reg = RidgeClassifier(class_weight=None)
+    reg.fit(X, y)
+    rega = RidgeClassifier(class_weight='balanced')
+    rega.fit(X, y)
+    assert_equal(len(rega.classes_), 2)
+    assert_array_almost_equal(reg.coef_, rega.coef_)
+    assert_array_almost_equal(reg.intercept_, rega.intercept_)
 
 
 def test_class_weight_vs_sample_weight():
     """Check class_weights resemble sample_weights behavior."""
-    for clf in (RidgeClassifier, RidgeClassifierCV):
+    for reg in (RidgeClassifier, RidgeClassifierCV):
 
         # Iris is balanced, so no effect expected for using 'balanced' weights
-        clf1 = clf()
-        clf1.fit(iris.data, iris.target)
-        clf2 = clf(class_weight='balanced')
-        clf2.fit(iris.data, iris.target)
-        assert_almost_equal(clf1.coef_, clf2.coef_)
+        reg1 = reg()
+        reg1.fit(iris.data, iris.target)
+        reg2 = reg(class_weight='balanced')
+        reg2.fit(iris.data, iris.target)
+        assert_almost_equal(reg1.coef_, reg2.coef_)
 
         # Inflate importance of class 1, check against user-defined weights
         sample_weight = np.ones(iris.target.shape)
         sample_weight[iris.target == 1] *= 100
         class_weight = {0: 1., 1: 100., 2: 1.}
-        clf1 = clf()
-        clf1.fit(iris.data, iris.target, sample_weight)
-        clf2 = clf(class_weight=class_weight)
-        clf2.fit(iris.data, iris.target)
-        assert_almost_equal(clf1.coef_, clf2.coef_)
+        reg1 = reg()
+        reg1.fit(iris.data, iris.target, sample_weight)
+        reg2 = reg(class_weight=class_weight)
+        reg2.fit(iris.data, iris.target)
+        assert_almost_equal(reg1.coef_, reg2.coef_)
 
         # Check that sample_weight and class_weight are multiplicative
-        clf1 = clf()
-        clf1.fit(iris.data, iris.target, sample_weight ** 2)
-        clf2 = clf(class_weight=class_weight)
-        clf2.fit(iris.data, iris.target, sample_weight)
-        assert_almost_equal(clf1.coef_, clf2.coef_)
+        reg1 = reg()
+        reg1.fit(iris.data, iris.target, sample_weight ** 2)
+        reg2 = reg(class_weight=class_weight)
+        reg2.fit(iris.data, iris.target, sample_weight)
+        assert_almost_equal(reg1.coef_, reg2.coef_)
 
 
 def test_class_weights_cv():
@@ -545,14 +546,14 @@ def test_class_weights_cv():
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
 
-    clf = RidgeClassifierCV(class_weight=None, alphas=[.01, .1, 1])
-    clf.fit(X, y)
+    reg = RidgeClassifierCV(class_weight=None, alphas=[.01, .1, 1])
+    reg.fit(X, y)
 
     # we give a small weights to class 1
-    clf = RidgeClassifierCV(class_weight={1: 0.001}, alphas=[.01, .1, 1, 10])
-    clf.fit(X, y)
+    reg = RidgeClassifierCV(class_weight={1: 0.001}, alphas=[.01, .1, 1, 10])
+    reg.fit(X, y)
 
-    assert_array_equal(clf.predict([[-.2, 2]]), np.array([-1]))
+    assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
 def test_ridgecv_store_cv_values():

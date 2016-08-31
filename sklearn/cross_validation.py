@@ -36,7 +36,7 @@ from .gaussian_process.kernels import Kernel as GPKernel
 from .exceptions import FitFailedWarning
 
 
-warnings.warn("This module has been deprecated in favor of the "
+warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the refactored classes "
               "and functions are moved. Also note that the interface of the "
               "new CV iterators are different from that of this module. "
@@ -268,8 +268,8 @@ class KFold(_BaseKFold):
     Provides train/test indices to split data in train test sets. Split
     dataset into k consecutive folds (without shuffling by default).
 
-    Each fold is then used a validation set once while the k - 1 remaining
-    fold form the training set.
+    Each fold is then used as a validation set once while the k - 1 remaining
+    fold(s) form the training set.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -519,6 +519,10 @@ class StratifiedKFold(_BaseKFold):
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
         label_counts = bincount(y_inversed)
         min_labels = np.min(label_counts)
+        if np.all(self.n_folds > label_counts):
+            raise ValueError("All the n_labels for individual classes"
+                             " are less than %d folds."
+                             % (self.n_folds))
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
@@ -1006,14 +1010,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # Because of rounding issues (as n_train and n_test are not
             # dividers of the number of elements per class), we may end
             # up here with less samples in train and test than asked for.
-            if len(train) < self.n_train or len(test) < self.n_test:
+            if len(train) + len(test) < self.n_train + self.n_test:
                 # We complete by affecting randomly the missing indexes
                 missing_idx = np.where(bincount(train + test,
                                                 minlength=len(self.y)) == 0,
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)
-                train.extend(missing_idx[:(self.n_train - len(train))])
-                test.extend(missing_idx[-(self.n_test - len(test)):])
+                n_missing_train = self.n_train - len(train)
+                n_missing_test = self.n_test - len(test)
+
+                if n_missing_train > 0:
+                    train.extend(missing_idx[:n_missing_train])
+                if n_missing_test > 0:
+                    test.extend(missing_idx[-n_missing_test:])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1217,7 +1226,7 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1254,6 +1263,16 @@ def cross_val_predict(estimator, X, y=None, cv=None, n_jobs=1,
     -------
     preds : ndarray
         This is the result of calling 'predict'
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.cross_validation import cross_val_predict
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> y_pred = cross_val_predict(lasso, X, y)
     """
     X, y = indexable(X, y)
 
@@ -1392,7 +1411,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1429,6 +1448,23 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     -------
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> print(cross_val_score(lasso, X, y))  # doctest:  +ELLIPSIS
+    [ 0.33150734  0.08022311  0.03531764]
+
+    See Also
+    ---------
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
     """
     X, y = indexable(X, y)
 
@@ -1512,7 +1548,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     """
     if verbose > 1:
         if parameters is None:
-            msg = "no parameters to be set"
+            msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
                           for k, v in parameters.items()))
@@ -1612,6 +1648,13 @@ def _score(estimator, X_test, y_test, scorer):
         score = scorer(estimator, X_test)
     else:
         score = scorer(estimator, X_test, y_test)
+    if hasattr(score, 'item'):
+        try:
+            # e.g. unwrap memmapped scalars
+            score = score.item()
+        except ValueError:
+            # non-scalar?
+            pass
     if not isinstance(score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s) instead."
                          % (str(score), type(score)))
@@ -1654,7 +1697,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if classifier is True and ``y`` is binary or
-        multiclass, :class:`StratifiedKFold` used. In all other cases,
+        multiclass, :class:`StratifiedKFold` is used. In all other cases,
         :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1728,7 +1771,7 @@ def permutation_test_score(estimator, X, y, cv=None,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` used. In all
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
         other cases, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -1810,13 +1853,8 @@ def train_test_split(*arrays, **options):
     Parameters
     ----------
     *arrays : sequence of indexables with same length / shape[0]
-
-        allowed inputs are lists, numpy arrays, scipy-sparse
+        Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
-
-        .. versionadded:: 0.16
-            preserves input type instead of always casting to numpy array.
-
 
     test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
@@ -1847,7 +1885,9 @@ def train_test_split(*arrays, **options):
         List containing train-test split of inputs.
 
         .. versionadded:: 0.16
-            Output type is the same as the input type.
+            If the input is sparse, the output will be a
+            ``scipy.sparse.csr_matrix``. Else, output type is the same as the
+            input type.
 
     Examples
     --------

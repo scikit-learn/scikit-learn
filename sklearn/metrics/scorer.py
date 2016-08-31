@@ -14,7 +14,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 """
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
@@ -231,7 +231,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     """
     has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
-        raise TypeError("estimator should a be an estimator implementing "
+        raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     elif has_scoring:
         return get_scorer(scoring)
