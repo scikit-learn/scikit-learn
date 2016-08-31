@@ -42,6 +42,10 @@ import sklearn
 
 VERSION = sklearn.__version__
 
+SCIPY_MIN_VERSION = '0.9'
+NUMPY_MIN_VERSION = '1.6.1'
+
+
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
@@ -58,6 +62,12 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
+        extras_require={
+            'alldeps': (
+                'numpy >= {0}'.format(NUMPY_MIN_VERSION),
+                'scipy >= {0}'.format(SCIPY_MIN_VERSION),
+            ),
+        },
     )
 else:
     extra_setuptools_args = dict()
@@ -131,10 +141,6 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-scipy_min_version = '0.9'
-numpy_min_version = '1.6.1'
-
-
 def get_scipy_status():
     """
     Returns a dictionary containing a boolean specifying whether SciPy
@@ -146,7 +152,7 @@ def get_scipy_status():
         import scipy
         scipy_version = scipy.__version__
         scipy_status['up_to_date'] = parse_version(
-            scipy_version) >= parse_version(scipy_min_version)
+            scipy_version) >= parse_version(SCIPY_MIN_VERSION)
         scipy_status['version'] = scipy_version
     except ImportError:
         scipy_status['up_to_date'] = False
@@ -165,7 +171,7 @@ def get_numpy_status():
         import numpy
         numpy_version = numpy.__version__
         numpy_status['up_to_date'] = parse_version(
-            numpy_version) >= parse_version(numpy_min_version)
+            numpy_version) >= parse_version(NUMPY_MIN_VERSION)
         numpy_status['version'] = numpy_version
     except ImportError:
         numpy_status['up_to_date'] = False
@@ -236,10 +242,10 @@ def setup_package():
     else:
         numpy_status = get_numpy_status()
         numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
-            numpy_min_version)
+            NUMPY_MIN_VERSION)
         scipy_status = get_scipy_status()
         scipy_req_str = "scikit-learn requires SciPy >= {0}.\n".format(
-            scipy_min_version)
+            SCIPY_MIN_VERSION)
 
         instructions = ("Installation instructions are available on the "
                         "scikit-learn website: "
