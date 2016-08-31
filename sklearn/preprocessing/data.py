@@ -1744,8 +1744,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    values : 'auto', int, list of ints, or list of lists of objects
-        - 'auto' : determine set of values from training data.
+    values : 'auto', 'seen', int, list of ints, or list of lists of objects
+        - 'auto' : determine set of values from training data. If the input
+                   is an int array, values are determined from range in
+                   training data. For all other inputs, only values observed
+                   during `fit` are considered valid values for each feature.
+        - 'seen': Only values observed during `fit` are considered valid
+                  values for each feature.
         - int : values are in ``range(values)`` for all features
         - list of ints : values for feature ``i`` are in ``range(values[i])``
         - list of lists : values for feature ``i`` are in ``values[i]``
@@ -1828,7 +1833,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self
         """
 
-        X = check_array(X, dtype=np.object, accept_sparse='csc', copy=self.copy)
+        X = check_array(X, dtype=np.object, accept_sparse='csc',
+                        copy=self.copy)
         n_samples, n_features = X.shape
 
         _apply_selected(X, self._fit, dtype=self.dtype,
@@ -1873,6 +1879,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         for i in range(n_features):
             le = self.label_encoders_[i]
             if self.values == 'auto':
+                le.fit(np.arange(1 + np.max(X[:, i])))
+            elif self.values == 'seen':
                 le.fit(X[:, i])
             elif isinstance(self.values, numbers.Integral):
                 if (np.max(X, axis=0) >= self.values).any():
