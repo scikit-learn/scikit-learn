@@ -82,7 +82,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         The user-provided mean prior of the Gaussian distribution.
         If it is None, the mean prior is set to the mean of X.
 
-    freedom_degrees_prior : float, optional.
+    degrees_of_freedom_prior : float, optional.
         The user-provided number of degrees of freedom prior parameter of the
         covariance distribution. If it is None, the prior of the number of
         degrees of freedom is set to `n_features`.

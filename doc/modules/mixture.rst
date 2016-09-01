@@ -223,27 +223,37 @@ components, and at the expense of extra computational time the user
 only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
-.. |plot_gmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_001.png
+
+The examples bellow compare Gaussian mixtures models with fixed number of
+components, to the Dirichlet Gaussian mixtures models.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
-   :scale: 48%
+   :align: center
+   :scale: 70%
 
-.. |plot_dirichlet_process_mixture| image:: ../auto_examples/mixture/images/sphx_glr_plot_dirichlet_process_mixture_001.png
+Here, a classical Gaussian mixtures is fitted with 5 components on a dataset
+composed of 2 clusters. We can see that the Dirichlet Gaussian mixtures is able
+to limit itself to only 2 components whereas the Gaussian mixtures fits the data
+fit too many components. Note that with very little observations, the Dirichlet
+Gaussian Mixture can take a conservative stand, and fit only one component.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_sin_001.png
+   :target: ../auto_examples/mixture/plot_gmm_sin.html
+   :align: center
+   :scale: 65%
+
+On that example, we are fitting a dataset not well-depicted by a Gaussian
+mixture. Adjusting the `beta_concentration_prior`, parameter of the DPGMM
+controls the number of components used to fit this data.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_dirichlet_process_mixture_001.png
    :target: ../auto_examples/mixture/plot_dirichlet_process_mixture.html
-   :scale: 48%
+   :align: center
+   :scale: 50%
 
-.. centered:: |plot_gmm| |plot_dirichlet_process_mixture|
-
-
-The examples above compare Gaussian mixtures models with fixed number of
-components, to the Dirichlet Gaussian mixtures models. **On the left** a
-classical Gaussian mixtures is fitted with 5 components on a dataset composed of
-2 clusters. We can see that the Dirichlet Gaussian mixtures is able to limit
-itself to only 2 components whereas the Gaussian mixtures fits the data fit too
-many components. Note that with very little observations, the Dirichlet Gaussian
-Mixture can take a conservative stand, and fit only one component.
-
-**On the right** we present the resulting clusters computed by the Dirichlet
-Gaussian mixtures for different values of the `beta_concentration_prior`.  The
+The previous figure presents the resulting clusters computed by the Dirichlet
+Gaussian mixtures for different values of `beta_concentration_prior`. The
 `beta_concentration_prior` is directly linked to the number of clusters
 obtained. As for the Variational Bayesian Gaussian Mixtures, small value of this
 parameters will lead to some mixture components while high value leads more
@@ -255,6 +265,16 @@ it is necessary).
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
       plotting the confidence ellipsoids for both :class:`GaussianMixture`
       and :class:`DirichletGaussianMixture`.
+
+    * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
+      :class:`GaussianMixture` and :class:`DirichletGaussianMixture` to fit a
+      sine wave.
+
+    * :ref:`sphx_glr_auto_example_mixture_plot_dirichlet_process_mixture.py`
+      for an example plotting the confidence ellipsoids for the
+      :class:`DirichletGaussianMixture` for different values of the parameter
+      `beta_concentration_prior`.
+
 
 Pros and cons of class :class:`DirichletGaussianMixture`: Dirichlet process mixture model
 -----------------------------------------------------------------------------------------
