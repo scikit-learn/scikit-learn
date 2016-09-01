@@ -293,7 +293,5 @@ execute the following in his or her script::
 
 However, a global random state is prone to modification by other code during
 execution. Thus, the only way to ensure replicability is to pass ``RandomState``
-instances everywhere. In the :func:`cross_val_score` function, there's no option
-to provide a ``RandomState`` instance, so replicability can only be ensured by
-creating a cross-validation generator or an iterable and passing it to
-:func:`cross_val_score` through the ``cv`` parameter.
+instances everywhere and ensure that both estimators and cross-validation
+splitters have their ``random_state`` parameter set.
