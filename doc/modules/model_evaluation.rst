@@ -377,7 +377,7 @@ and not for more than two annotators.
   >>> y_true = [2, 0, 2, 2, 0, 1]
   >>> y_pred = [0, 0, 2, 2, 0, 2]
   >>> cohen_kappa_score(y_true, y_pred)
-  0.42857142857142855
+  0.4285714285714286
 
 .. _confusion_matrix:
 
