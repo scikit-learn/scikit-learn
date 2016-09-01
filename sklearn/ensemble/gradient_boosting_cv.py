@@ -435,7 +435,6 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
 
     """
 
-
     def __init__(self, n_iter_no_change=10, score_precision=2,
                  max_iterations=10000, cv=3, scoring=None, refit=True,
                  n_jobs=1, verbose=0, loss='deviance', learning_rate=0.1,
