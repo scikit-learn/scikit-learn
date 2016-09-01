@@ -573,17 +573,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         stds = np.sqrt(np.average((test_scores - means[:, np.newaxis]) ** 2,
                                   axis=1, weights=weights))
 
-        results = dict()
+        cv_results = dict()
         for split_i in range(n_splits):
-            results["test_split%d_score" % split_i] = test_scores[:, split_i]
-        results["test_mean_score"] = means
-        results["test_std_score"] = stds
+            cv_results["split%d_test_score" % split_i] = test_scores[:,
+                                                                     split_i]
+        cv_results["mean_test_score"] = means
+        cv_results["std_test_score"] = stds
 
         ranks = np.asarray(rankdata(-means, method='min'), dtype=np.int32)
 
         best_index = np.flatnonzero(ranks == 1)[0]
         best_parameters = candidate_params[best_index]
-        results["test_rank_score"] = ranks
+        cv_results["rank_test_score"] = ranks
 
         # Use one np.MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
@@ -597,12 +598,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_i] = value
 
-        results.update(param_results)
+        cv_results.update(param_results)
 
         # Store a list of param dicts at the key 'params'
-        results['params'] = candidate_params
+        cv_results['params'] = candidate_params
 
-        self.results_ = results
+        self.cv_results_ = cv_results
         self.best_index_ = best_index
         self.n_splits_ = n_splits
 
@@ -620,30 +621,31 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @property
     def best_params_(self):
-        check_is_fitted(self, 'results_')
-        return self.results_['params'][self.best_index_]
+        check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['params'][self.best_index_]
 
     @property
     def best_score_(self):
-        check_is_fitted(self, 'results_')
-        return self.results_['test_mean_score'][self.best_index_]
+        check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['mean_test_score'][self.best_index_]
 
     @property
     def grid_scores_(self):
         warnings.warn(
             "The grid_scores_ attribute was deprecated in version 0.18"
-            " in favor of the more elaborate results_ attribute."
+            " in favor of the more elaborate cv_results_ attribute."
             " The grid_scores_ attribute will not be available from 0.20",
             DeprecationWarning)
 
-        check_is_fitted(self, 'results_')
+        check_is_fitted(self, 'cv_results_')
         grid_scores = list()
 
         for i, (params, mean, std) in enumerate(zip(
-                self.results_['params'],
-                self.results_['test_mean_score'],
-                self.results_['test_std_score'])):
-            scores = np.array(list(self.results_['test_split%d_score' % s][i]
+                self.cv_results_['params'],
+                self.cv_results_['mean_test_score'],
+                self.cv_results_['std_test_score'])):
+            scores = np.array(list(self.cv_results_['split%d_test_score'
+                                                    % s][i]
                                    for s in range(self.n_splits_)),
                               dtype=np.float64)
             grid_scores.append(_CVScoreTuple(params, mean, scores))
@@ -763,22 +765,22 @@ class GridSearchCV(BaseSearchCV):
            fit_params={}, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
-    >>> sorted(clf.results_.keys())
+    >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ['param_C', 'param_kernel', 'params', 'test_mean_score',...
-     'test_rank_score', 'test_split0_score', 'test_split1_score',...
-     'test_split2_score', 'test_std_score']
+    ['mean_test_score', 'param_C', 'param_kernel', 'params',...
+     'rank_test_score', 'split0_test_score', 'split1_test_score',...
+     'split2_test_score', 'std_test_score']
 
     Attributes
     ----------
-    results_ : dict of numpy (masked) ndarrays
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
         For instance the below given table
 
         +------------+-----------+------------+-----------------+---+---------+
-        |param_kernel|param_gamma|param_degree|test_split0_score|...|...rank..|
+        |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_....|
         +============+===========+============+=================+===+=========+
         |  'poly'    |     --    |      2     |        0.8      |...|    2    |
         +------------+-----------+------------+-----------------+---+---------+
@@ -789,7 +791,7 @@ class GridSearchCV(BaseSearchCV):
         |  'rbf'     |     0.2   |     --     |        0.9      |...|    1    |
         +------------+-----------+------------+-----------------+---+---------+
 
-        will be represented by a ``results_`` dict of::
+        will be represented by a ``cv_results_`` dict of::
 
             {
             'param_kernel': masked_array(data = ['poly', 'poly', 'rbf', 'rbf'],
@@ -798,11 +800,11 @@ class GridSearchCV(BaseSearchCV):
                                         mask = [ True  True False False]...),
             'param_degree': masked_array(data = [2.0 3.0 -- --],
                                          mask = [False False  True  True]...),
-            'test_split0_score' : [0.8, 0.7, 0.8, 0.9],
-            'test_split1_score' : [0.82, 0.5, 0.7, 0.78],
-            'test_mean_score'   : [0.81, 0.60, 0.75, 0.82],
-            'test_std_score'    : [0.02, 0.01, 0.03, 0.03],
-            'test_rank_score'   : [2, 4, 3, 1],
+            'split0_test_score' : [0.8, 0.7, 0.8, 0.9],
+            'split1_test_score' : [0.82, 0.5, 0.7, 0.78],
+            'mean_test_score'   : [0.81, 0.60, 0.75, 0.82],
+            'std_test_score'    : [0.02, 0.01, 0.03, 0.03],
+            'rank_test_score'   : [2, 4, 3, 1],
             'params'            : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
@@ -821,10 +823,10 @@ class GridSearchCV(BaseSearchCV):
         Parameter setting that gave the best results on the hold out data.
 
     best_index_ : int
-        The index (of the ``results_`` arrays) which corresponds to the best
+        The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.results_['params'][search.best_index_]`` gives
+        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
@@ -1005,14 +1007,14 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    results_ : dict of numpy (masked) ndarrays
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
         For instance the below given table
 
         +--------------+-------------+-------------------+---+---------------+
-        | param_kernel | param_gamma | test_split0_score |...|test_rank_score|
+        | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
         +==============+=============+===================+===+===============+
         |    'rbf'     |     0.1     |        0.8        |...|       2       |
         +--------------+-------------+-------------------+---+---------------+
@@ -1021,17 +1023,17 @@ class RandomizedSearchCV(BaseSearchCV):
         |    'rbf'     |     0.3     |        0.7        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
 
-        will be represented by a ``results_`` dict of::
+        will be represented by a ``cv_results_`` dict of::
 
             {
             'param_kernel' : masked_array(data = ['rbf', rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'test_split0_score' : [0.8, 0.9, 0.7],
-            'test_split1_score' : [0.82, 0.5, 0.7],
-            'test_mean_score'   : [0.81, 0.7, 0.7],
-            'test_std_score'    : [0.02, 0.2, 0.],
-            'test_rank_score'   : [3, 1, 1],
+            'split0_test_score' : [0.8, 0.9, 0.7],
+            'split1_test_score' : [0.82, 0.5, 0.7],
+            'mean_test_score'   : [0.81, 0.7, 0.7],
+            'std_test_score'    : [0.02, 0.2, 0.],
+            'rank_test_score'   : [3, 1, 1],
             'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
@@ -1050,10 +1052,10 @@ class RandomizedSearchCV(BaseSearchCV):
         Parameter setting that gave the best results on the hold out data.
 
     best_index_ : int
-        The index (of the ``results_`` arrays) which corresponds to the best
+        The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.results_['params'][search.best_index_]`` gives
+        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
