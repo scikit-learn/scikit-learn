@@ -1159,9 +1159,7 @@ def test_prf_average_binary_data_non_binary():
                        partial(fbeta_score, beta=2)]:
             assert_raise_message(ValueError,
                                  "Target is %s but average='binary'. Please "
-                                 "choose another average setting. You may "
-                                 "then use labels=[pos_label] to specify a "
-                                 "single positive class." % y_type,
+                                 "choose another average setting." % y_type,
                                  metric, y_true, y_pred)
 
 
