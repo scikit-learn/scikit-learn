@@ -668,7 +668,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
-    Perform a one hot encoding for y labels
+    Perform a one-hot encoding for y labels
 
     >>> import numpy as np
     >>> y = np.array([0, 1, 1, 0])

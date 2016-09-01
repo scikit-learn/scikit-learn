@@ -1737,6 +1737,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
 
+    Note: a one-hot encoding of y labels should use a MultiLabelBinarizer
+    instead.
+
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
