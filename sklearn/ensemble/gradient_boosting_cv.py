@@ -41,8 +41,8 @@ class _BaseGradientBoostingCV(BaseEstimator):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  min_impurity_split=1e-7, max_depth=3, init=None,
-                 random_state=None, max_features=None, max_leaf_nodes=None,
-                 presort='auto'):
+                 max_features=None, max_leaf_nodes=None, iid=True,
+                 presort='auto', random_state=None):
 
         self.n_iter_no_change = n_iter_no_change
         self.score_precision = score_precision
@@ -63,10 +63,12 @@ class _BaseGradientBoostingCV(BaseEstimator):
         self.min_impurity_split = min_impurity_split
         self.max_depth = max_depth
         self.init = init
-        self.random_state = random_state
         self.max_features = max_features
         self.max_leaf_nodes = max_leaf_nodes
+
+        self.iid = iid
         self.presort = presort
+        self.random_state = random_state
 
     def _check_is_best_estimator_fitted(self, method_name):
         if not self.refit:
@@ -107,7 +109,11 @@ class _BaseGradientBoostingCV(BaseEstimator):
 
         n_splits = int(len(out) / len(param_iter))
 
-        grid_scores = []
+        test_scores, n_estimators, test_sample_counts, _, params = zip(*out)
+
+        candidate_params = []
+        test_scores = []
+
         i = 0
         best_mean = -np.inf
         for params in param_iter:
@@ -123,8 +129,6 @@ class _BaseGradientBoostingCV(BaseEstimator):
             scores = np.array(score_list)
             mean = np.mean(scores)
             params['n_estimators'] = int(np.mean(n_est_list))
-            score_tuple = _CVScoreTuple(params, mean, scores)
-            grid_scores.append(_CVScoreTuple(params, mean, scores))
 
             if mean > best_mean:
                 best_tuple = score_tuple
@@ -133,6 +137,39 @@ class _BaseGradientBoostingCV(BaseEstimator):
         self.grid_scores_ = grid_scores
         self.best_score_tuple_ = best_tuple
         self.best_params_ = best_params
+
+        results = dict()
+        for split_i in range(n_splits):
+            results["split%d_test_score" % split_i] = test_scores[:, split_i]
+        results["test_mean_score"] = means
+        results["test_std_score"] = stds
+
+        ranks = np.asarray(rankdata(-means, method='min'), dtype=np.int32)
+
+        best_index = np.flatnonzero(ranks == 1)[0]
+        best_parameters = candidate_params[best_index]
+        results["test_rank_score"] = ranks
+
+        # Use one np.MaskedArray and mask all the places where the param is not
+        # applicable for that candidate. Use defaultdict as each candidate may
+        # not contain all the params
+        param_results = defaultdict(partial(np.ma.masked_all, (n_candidates,),
+                                            dtype=object))
+        for cand_i, params in enumerate(candidate_params):
+            for name, value in params.items():
+                # An all masked empty array gets created for the key
+                # `"param_%s" % name` at the first occurence of `name`.
+                # Setting the value at an index also unmasks that index
+                param_results["param_%s" % name][cand_i] = value
+
+        results.update(param_results)
+
+        # Store a list of param dicts at the key 'params'
+        results['params'] = candidate_params
+
+        self.results_ = results
+        self.best_index_ = best_index
+        self.n_splits_ = n_splits
 
         if self.refit:
             self.best_params_['random_state'] = self.random_state
@@ -151,7 +188,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
             The input samples.
         Returns
         -------
-        y: array of shape = ["n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
         return self.best_estimator_.predict(X)
@@ -172,7 +209,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        proba : array of shape = [n_samples]
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute ``classes_``.
         """
@@ -195,7 +232,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples]
+        log_proba : array of shape = [n_samples]
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute ``classes_``.
         """
@@ -261,8 +298,9 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
 
     max_iter : int, optinal, default=10000
         The maximum number of estimators that will be added to the Gradient
-        Boosting class. If the model converges, the number of estimators will
-        be lower than this.
+        Boosting class. If ``n_iter_no_change`` is not -1 and the model shows
+        no improvement in the test set score for the last ``n_iter_no_change``
+        steps, the number of estimators will be lower than this.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -289,7 +327,7 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
     refit : boolean, default=True
         If set, the data will be fit on a new Gradient Boosting model with
         the parameters that gave the best mean score. If not set, it is not
-        possbile to make predections later with this class.
+        possible to make predictions later with this class.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.
@@ -390,12 +428,10 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
         If None it uses ``loss.init_estimator``.
         If a list is given, each item in the list will be evaluated.
 
-    random_state : int, RandomState instance or None,
-                   list of int or RandomState, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by ``np.random``.
+    iid : boolean, default=True
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
 
     presort : bool or 'auto', list of string or bool optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
@@ -403,6 +439,13 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
         default to normal sorting on sparse data. Setting presort to true on
         sparse data will raise an error. If a list is given, each item in the
         list will be evaluated.
+
+    random_state : int, RandomState instance or None,
+                   list of int or RandomState, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by ``np.random``.
 
     Attributes
     ----------
@@ -441,8 +484,8 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  min_impurity_split=1e-7, max_depth=3, init=None,
-                 random_state=None, max_features=None, max_leaf_nodes=None,
-                 presort='auto'):
+                 max_features=None, max_leaf_nodes=None, iid=True,
+                 presort='auto', random_state=None):
         self.estimator = GradientBoostingClassifier()
 
         super(GradientBoostingClassifierCV, self).__init__(
@@ -454,8 +497,9 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             min_impurity_split=min_impurity_split, max_depth=max_depth,
-            init=init, random_state=random_state, max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes, presort=presort)
+            init=init, max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes, iid=iid,
+            presort=presort, random_state=random_state)
 
 
 class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
@@ -490,8 +534,9 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
 
     max_iter : int, optinal, default=10000
         The maximum number of estimators that will be added to the Gradient
-        Boosting class. If the model converges, the number of estimators will
-        be lower than this.
+        Boosting class. If ``n_iter_no_change`` is not -1 and the model shows
+        no improvement in the test set score for the last ``n_iter_no_change``
+        steps, the number of estimators will be lower than this.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -619,12 +664,10 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
         If None it uses ``loss.init_estimator``.
         If a list is given, each item in the list will be evaluated.
 
-    random_state : int, RandomState instance or None,
-                   list of int or RandomState, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by ``np.random``.
+    iid : boolean, default=True
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
 
     presort : bool or 'auto', list of string or bool optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
@@ -632,6 +675,13 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
         default to normal sorting on sparse data. Setting presort to true on
         sparse data will raise an error. If a list is given, each item in the
         list will be evaluated.
+
+    random_state : int, RandomState instance or None,
+                   list of int or RandomState, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by ``np.random``.
 
     Attributes
     ----------
@@ -670,8 +720,8 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  min_impurity_split=1e-7, max_depth=3, init=None,
-                 random_state=None, max_features=None, max_leaf_nodes=None,
-                 presort='auto'):
+                 max_features=None, max_leaf_nodes=None, iid=True,
+                 presort='auto', random_state=None):
         self.estimator = GradientBoostingRegressor()
 
         super(GradientBoostingRegressorCV, self).__init__(
@@ -683,8 +733,9 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
             min_samples_leaf=min_samples_leaf,
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             min_impurity_split=min_impurity_split, max_depth=max_depth,
-            init=init, random_state=random_state, max_features=max_features,
-            max_leaf_nodes=max_leaf_nodes, presort=presort)
+            init=init, max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes, iid=iid,
+            presort=presort, random_state=random_state)
 
 
 def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
@@ -701,8 +752,7 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         and n_features is the number of features.
 
     y : array-like, shape = [n_samples]
-        Target values (integers in classification, real numbers in
-        regression)
+        Target values (integers in classification, real numbers in regression)
         For classification, labels must correspond to classes.
 
     train : array-like
@@ -739,15 +789,20 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         If None, the random number generator is the RandomState instance used
         by ``np.random``.
 
-
     Returns
     -------
-    score: float
+    score : float
         The score when the model converged.
 
-    n_iterations:
+    n_iterations : int
         The number of iterations it took to converge. This is the same as
         parameter ``n_estimators`` for the gradient boosting model
+
+    test_sample_count : int
+        The number of samples in the test split.
+
+    params : dict
+        Returns the params attribute with n_iterations
     """
 
     params['random_state'] = random_state
@@ -762,6 +817,8 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
     y_train = y[train]
     X_validation = X[validation]
     y_validation = y[validation]
+
+    test_sample_count = X_validation.shape[0]
 
     for i in range(1, max_iter + 1):
         gb.n_estimators = i
@@ -781,4 +838,4 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
     if i == max_iter:
         warnings.warn(str(gb) + ' failed to converge')
 
-    return scores[-1], i
+    return scores[-1], i, test_sample_count, params
