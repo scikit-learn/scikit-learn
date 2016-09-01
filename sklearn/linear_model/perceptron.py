@@ -24,6 +24,10 @@ class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to 5. Deprecated, will be removed in 0.20.
+
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the `fit` method, and not the
