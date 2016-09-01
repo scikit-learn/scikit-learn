@@ -667,7 +667,7 @@ Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
 models are efficient for representing images and text.
 
-It has been observed in [Hoyer, 2004][2]_ that, when carefully constrained,
+It has been observed in [Hoyer, 2004] [2]_ that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
