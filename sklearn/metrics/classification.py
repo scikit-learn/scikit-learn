@@ -624,6 +624,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting `labels=[pos_label]` and `average != 'binary'` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -724,6 +727,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting `labels=[pos_label]` and `average != 'binary'` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -894,6 +900,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting `labels=[pos_label]` and `average != 'binary'` will report
+        scores for that label only.
 
     average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
                        'weighted']
@@ -1002,9 +1011,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             labels = [pos_label]
         else:
             raise ValueError("Target is %s but average='binary'. Please "
-                             "choose another average setting. You may then "
-                             "use labels=[pos_label] to specify a single "
-                             "positive class." % y_type)
+                             "choose another average setting." % y_type)
     elif pos_label not in (None, 1):
         warnings.warn("Note that pos_label (set to %r) is ignored when "
                       "average != 'binary' (got %r). You may use "
@@ -1164,6 +1171,9 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting `labels=[pos_label]` and `average != 'binary'` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -1260,6 +1270,9 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     pos_label : str or int, 1 by default
         The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting `labels=[pos_label]` and `average != 'binary'` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
