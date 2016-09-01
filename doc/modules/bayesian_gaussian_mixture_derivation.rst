@@ -45,10 +45,9 @@ For convenience, we introduce the following statictics:
    :nowrap:
 
    \begin{eqnarray*}
-    N_k & = & \sum_{n=1}^N {r_{nk}} \\
-    \bar{\mathbf{x}}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} \mathbf{x}_n}
-    \mathbf{S}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} (\mathbf{x}_n - \bar{\mathbf{x}}_k) (\mathbf{x}_n - \bar{\mathbf{x}}_k)^T}
-
+      N_k & = & \sum_{n=1}^N {r_{nk}} \\
+      \bar{\mathbf{x}}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} \mathbf{x}_n} \\
+      \mathbf{S}_k & = & \frac{1}{N_k} \sum_{n=1}^N {r_{nk} (\mathbf{x}_n - \bar{\mathbf{x}}_k) (\mathbf{x}_n - \bar{\mathbf{x}}_k)^\top}
    \end{eqnarray*}
 
 where :math:`r_{nk}` is the normalized posterior probability that :math:`k` was responsible
@@ -339,7 +338,7 @@ E-Step
 Estimate Z
 ~~~~~~~~~~
 
-Using the general result of variational inference, and take the expectation of
+Using the general result of variational inference and taking the expectation of
 the terms about :math:`\mathbf{Z}` in the joint probability with the variational
 distribution of :math:`\boldsymbol{\pi}, \boldsymbol{\mu}, \boldsymbol{\Lambda}`,
 we have
