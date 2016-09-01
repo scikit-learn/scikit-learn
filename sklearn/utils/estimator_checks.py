@@ -76,7 +76,8 @@ DEPRECATED_TRANSFORM = [
 
 
 def _set_test_name(function, name):
-    function.description = "sklearn.tests.test_common.{0}({1})".format(function.__name__, name)
+    function.description = ("sklearn.tests.test_common.{0}({1})".format(
+        function.__name__, name))
     return function
 
 
