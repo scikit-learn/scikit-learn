@@ -1745,12 +1745,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     values : 'auto', 'seen', int, list of ints, or list of lists of objects
-        - 'auto' : determine set of values from training data. If the input
-                   is an int array, values are determined from range in
-                   training data. For all other inputs, only values observed
-                   during `fit` are considered valid values for each feature.
-        - 'seen': Only values observed during `fit` are considered valid
-                  values for each feature.
+        - 'auto' : determine set of values from training data. See the
+          documentation of `handle_unknown` for which values are considered
+          acceptable.
         - int : values are in ``range(values)`` for all features
         - list of ints : values for feature ``i`` are in ``range(values[i])``
         - list of lists : values for feature ``i`` are in ``values[i]``
@@ -1771,8 +1768,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Will return sparse matrix if set True else will return an array.
 
     handle_unknown : str, 'error' or 'ignore'
-        Whether to raise an error or ignore if a unknown categorical feature is
-        present during transform.
+
+        - 'ignore': Ignore all unknown feature values.
+        - 'error': Raise an error when the value of a feature is unseen during
+          `fit` and out of range of values seen during `fit`.
+        - 'error-strict': Raise an error when the value of a feature is unseen
+          during`fit`.
 
     copy : bool, default=True
         If unset, `X` maybe modified in space.
@@ -1850,6 +1851,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         self._n_features = n_features
         self.label_encoders_ = [LabelEncoder() for i in range(n_features)]
+        # Maximum value for each featue
+        self._max_values = [None for i in range(n_features)]
 
         if self.n_values is not None:
             warnings.warn('The parameter `n_values` is deprecated, use the'
@@ -1878,9 +1881,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
             le = self.label_encoders_[i]
+
+            self._max_values[i] = np.max(X[:, i])
             if self.values == 'auto':
-                le.fit(np.arange(1 + np.max(X[:, i])))
-            elif self.values == 'seen':
                 le.fit(X[:, i])
             elif isinstance(self.values, numbers.Integral):
                 if (np.max(X, axis=0) >= self.values).any():
@@ -1931,14 +1934,27 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             valid_mask = in1d(X[:, i], self.label_encoders_[i].classes_)
 
             if not np.all(valid_mask):
-
-                if self.handle_unknown == 'error':
+                if self.handle_unknown in ['error', 'error-strict']:
                     diff = setdiff1d(X[:, i], self.label_encoders_[i].classes_)
-                    msg = 'Unknown feature(s) %s in column %d' % (diff, i)
-                    raise ValueError(msg)
+                    if self.handle_unknown == 'error-strict':
+                        msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                        raise ValueError(msg)
+                    else:
+                        if np.all(diff <= self._max_values[i]):
+                            msg = ('Values %s for feature %d are unknown but '
+                                   'in range. This will raise an error in '
+                                   'future versions.' % (str(diff), i))
+                            warnings.warn(FutureWarning(msg))
+                            X_mask[:, i] = valid_mask
+                            le = self.label_encoders_[i]
+                            X[:, i][~valid_mask] = le.classes_[0]
+                        else:
+                            msg = ('Unknown feature(s) %s in column %d' %
+                                   (diff, i))
+                            raise ValueError(msg)
                 elif self.handle_unknown == 'ignore':
                     # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked in `X_mask` and will be
+                    # continue. The rows are marked in `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
                     X[:, i][~valid_mask] = self.label_encoders_[i].classes_[0]

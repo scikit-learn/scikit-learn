@@ -1605,7 +1605,7 @@ def test_one_hot_encoder_string():
 
 def test_one_hot_encoder_categorical_features():
     X = np.array([[3, 2, 1], [0, 1, 1]])
-    X2 = np.array([[3, 1, 1]])
+    X2 = np.array([[1, 1, 1]])
 
     cat = [True, False, False]
     _check_one_hot(X, X2, cat, 4)
@@ -1625,9 +1625,18 @@ def test_one_hot_encoder_unknown_transform():
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
-    oh = OneHotEncoder(handle_unknown='error')
+    oh = OneHotEncoder(handle_unknown='error-strict')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+
+    # Test that one hot encoder raises warning for unknown but in range
+    # features
+    oh = OneHotEncoder(handle_unknown='error')
+    oh.fit(X)
+    msg = ('Values [0] for feature 2 are unknown but in range. '
+           'This will raise an error in future versions.')
+    assert_warns_message(FutureWarning, msg, oh.transform,
+                         np.array([[0, 0, 0]]))
 
     # Test the ignore option, ignores unknown features.
     oh = OneHotEncoder(handle_unknown='ignore')
@@ -1641,7 +1650,7 @@ def test_one_hot_encoder_unknown_transform():
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
-    oh = OneHotEncoder(handle_unknown='error')
+    oh = OneHotEncoder(handle_unknown='error-strict')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
 
