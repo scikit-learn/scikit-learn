@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import warnings
+import re
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
@@ -32,7 +33,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing.data import _transform_selected
+from sklearn.preprocessing.data import _apply_selected
 from sklearn.preprocessing.data import _handle_zeros_in_scale
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
@@ -1501,9 +1502,10 @@ def test_one_hot_encoder_sparse():
     # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
-    error_msg = "unknown categorical feature present \[2\] during transform."
+    error_msg = re.escape("Unknown feature(s) [2] in column 1")
     assert_raises_regex(ValueError, error_msg, enc.transform, X_too_large)
     assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
+    assert_raises(ValueError, OneHotEncoder(values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
@@ -1512,14 +1514,6 @@ def test_one_hot_encoder_sparse():
     assert_raises(ValueError, enc.fit, X[:, :-1])
     # test exception on wrong init param
     assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
-
-    enc = OneHotEncoder()
-    # test negative input to fit
-    assert_raises(ValueError, enc.fit, [[0], [-1]])
-
-    # test negative input to transform
-    enc.fit([[0], [1]])
-    assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 
 def test_one_hot_encoder_dense():
@@ -1539,26 +1533,26 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_transform_selected(X, X_expected, sel):
+def _check_apply_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _transform_selected(M, Binarizer().transform, sel)
+        Xtr = _apply_selected(M, Binarizer().transform, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
 def test_transform_selected():
-    X = [[3, 2, 1], [0, 1, 1]]
+    X = np.array([[3, 2, 1], [0, 1, 1]])
 
     X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0])
-    _check_transform_selected(X, X_expected, [True, False, False])
+    _check_apply_selected(X, X_expected, [0])
+    _check_apply_selected(X, X_expected, [True, False, False])
 
     X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, X_expected, [0, 1, 2])
-    _check_transform_selected(X, X_expected, [True, True, True])
-    _check_transform_selected(X, X_expected, "all")
+    _check_apply_selected(X, X_expected, [0, 1, 2])
+    _check_apply_selected(X, X_expected, [True, True, True])
+    _check_apply_selected(X, X_expected, "all")
 
-    _check_transform_selected(X, X, [])
-    _check_transform_selected(X, X, [False, False, False])
+    _check_apply_selected(X, X, [])
+    _check_apply_selected(X, X, [False, False, False])
 
 
 def test_transform_selected_copy_arg():
@@ -1571,8 +1565,8 @@ def test_transform_selected_copy_arg():
     expected_Xtr = [[2, 2], [3, 4]]
 
     X = original_X.copy()
-    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
-                              selected='all')
+    Xtr = _apply_selected(X, _mutating_transformer, copy=True,
+                          selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
     assert_array_equal(toarray(Xtr), expected_Xtr)
@@ -1601,6 +1595,14 @@ def _check_one_hot(X, X2, cat, n_features):
     assert_array_equal(toarray(B), toarray(D))
 
 
+def test_one_hot_encoder_string():
+    X = [['cat', 'domestic'], ['wolf', 'wild']]
+    enc = OneHotEncoder()
+    enc.fit(X)
+    Xtr = enc.transform([['cat', 'wild']])
+    assert_array_equal(toarray(Xtr), [[1, 0, 0, 1]])
+
+
 def test_one_hot_encoder_categorical_features():
     X = np.array([[3, 2, 1], [0, 1, 1]])
     X2 = np.array([[1, 1, 1]])
@@ -1623,9 +1625,18 @@ def test_one_hot_encoder_unknown_transform():
 
     # Test that one hot encoder raises error for unknown features
     # present during transform.
-    oh = OneHotEncoder(handle_unknown='error')
+    oh = OneHotEncoder(handle_unknown='error-strict')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+
+    # Test that one hot encoder raises warning for unknown but in range
+    # features
+    oh = OneHotEncoder(handle_unknown='error')
+    oh.fit(X)
+    msg = ('Values [0] for feature 2 are unknown but in range. '
+           'This will raise an error in future versions.')
+    assert_warns_message(FutureWarning, msg, oh.transform,
+                         np.array([[0, 0, 0]]))
 
     # Test the ignore option, ignores unknown features.
     oh = OneHotEncoder(handle_unknown='ignore')
@@ -1634,7 +1645,23 @@ def test_one_hot_encoder_unknown_transform():
         oh.transform(y).toarray(),
         np.array([[0.,  0.,  0.,  0.,  1.,  0.,  0.]]))
 
-    # Raise error if handle_unknown is neither ignore or error.
+    X = np.array([['cat', 2, 1], ['dog', 0, 3], ['mouse', 0, 2]])
+    y = np.array([['ET', 1, 1]])
+
+    # Test that one hot encoder raises error for unknown features
+    # present during transform.
+    oh = OneHotEncoder(handle_unknown='error-strict')
+    oh.fit(X)
+    assert_raises(ValueError, oh.transform, y)
+
+    # Test the ignore option, ignores unknown features.
+    oh = OneHotEncoder(handle_unknown='ignore')
+    oh.fit(X)
+    assert_array_equal(
+        oh.transform(y).toarray(),
+        np.array([[0.,  0.,  0., 0.,  0.,  1.,  0.,  0.]]))
+
+    # Raise error if handle_unknown is neither ignore nor error.
     oh = OneHotEncoder(handle_unknown='42')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)

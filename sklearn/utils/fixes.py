@@ -281,12 +281,31 @@ else:
     frombuffer_empty = np.frombuffer
 
 
+def _in1d_object(ar1, ar2, invert=False):
+    # np.argsort(kind='mergesort') is only supported for object types after
+    # version 1.8. Hence in1d for object arrays needs to be handled differently
+    values1 = set(ar1)
+    values2 = set(ar2)
+    absent_values = values1 - values2
+
+    present = np.ones_like(ar1, dtype=np.bool)
+
+    for value in absent_values:
+        present[ar1 == value] = False
+
+    return ~present if invert else present
+
+
 if np_version < (1, 8):
     def in1d(ar1, ar2, assume_unique=False, invert=False):
         # Backport of numpy function in1d 1.8.1 to support numpy 1.6.2
         # Ravel both arrays, behavior for the first array could be different
+
         ar1 = np.asarray(ar1).ravel()
         ar2 = np.asarray(ar2).ravel()
+
+        if ar1.dtype == object or ar2.dtype == object:
+            return _in1d_object(ar1, ar2, invert)
 
         # This code is significantly faster when the condition is satisfied.
         if len(ar2) < 10 * len(ar1) ** 0.145:
@@ -443,3 +462,28 @@ if sp_version < (0, 13, 0):
         return .5 * (count[dense] + count[dense - 1] + 1)
 else:
     from scipy.stats import rankdata
+
+
+if np_version < (1, 8):
+    # Backport of setdiff1d function as it relies on in1d
+    def setdiff1d(ar1, ar2, assume_unique=False):
+        # copy-paste from numpy except for the object type if clause
+        if assume_unique:
+            ar1 = np.asarray(ar1).ravel()
+        else:
+            # Unique is not supported for object arrays till np version 1.8
+            # due to mergesort
+            if ar1.dtype == object:
+                ar1 = np.array(sorted(set(ar1)))
+            else:
+                ar1 = np.unique(ar1)
+
+            if ar2.dtype == object:
+                ar2 = np.array(sorted(set(ar2)))
+            else:
+                ar2 = np.unique(ar2)
+
+        return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
+
+else:
+    from numpy import setdiff1d
