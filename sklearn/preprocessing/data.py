@@ -1812,6 +1812,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
       fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """

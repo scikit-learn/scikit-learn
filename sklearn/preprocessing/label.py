@@ -91,6 +91,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
+    See also
+    --------
+    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+        using a one-hot aka one-of-K scheme.
     """
 
     def fit(self, y):
@@ -257,6 +261,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     --------
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
+    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+        using a one-hot aka one-of-K scheme.
     """
 
     def __init__(self, neg_label=0, pos_label=1, sparse_output=False):
@@ -648,6 +654,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> from sklearn.preprocessing import MultiLabelBinarizer
     >>> mlb = MultiLabelBinarizer()
     >>> mlb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
@@ -661,6 +668,20 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
+    Perform a one hot encoding for y labels
+
+    >>> import numpy as np
+    >>> y = np.array([0, 1, 1, 0])
+    >>> mlb.fit_transform(y.reshape(-1, 1))
+    array([[1, 0],
+           [0, 1],
+           [0, 1],
+           [1, 0]])
+
+    See also
+    --------
+    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
+        using a one-hot aka one-of-K scheme.
     """
     def __init__(self, classes=None, sparse_output=False):
         self.classes = classes
