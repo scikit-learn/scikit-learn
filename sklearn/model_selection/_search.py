@@ -12,7 +12,7 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, Sized, defaultdict
+from collections import Mapping, namedtuple, Sized, defaultdict, Sequence
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -332,7 +332,7 @@ def _check_param_grid(param_grid):
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
-            check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
+            check = [isinstance(v, k) for k in (np.ndarray, Sequence)]
             if True not in check:
                 raise ValueError("Parameter values for parameter ({0}) need "
                                  "to be a sequence.".format(name))
