@@ -9,12 +9,16 @@ Cross Validation.
 # License: BSD 3 clause
 
 import warnings
+import time
 import numpy as np
+from collections import defaultdict
+from functools import partial
 
 from ..base import BaseEstimator
 from ..base import clone
 from ..exceptions import NotFittedError
 from ..metrics.scorer import check_scoring
+from ..utils.fixes import rankdata
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -42,7 +46,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  min_impurity_split=1e-7, max_depth=3, init=None,
                  max_features=None, max_leaf_nodes=None, iid=True,
-                 presort='auto', random_state=None):
+                 return_train_scores=False, presort='auto', random_state=None):
 
         self.n_iter_no_change = n_iter_no_change
         self.score_precision = score_precision
@@ -67,6 +71,7 @@ class _BaseGradientBoostingCV(BaseEstimator):
         self.max_leaf_nodes = max_leaf_nodes
 
         self.iid = iid
+        self.return_train_scores = return_train_scores
         self.presort = presort
         self.random_state = random_state
 
@@ -103,52 +108,79 @@ class _BaseGradientBoostingCV(BaseEstimator):
         out = parallel(delayed(_fit_single_param)
                        (clone(self.estimator), X, y, train, validation, params,
                         self.n_iter_no_change, self.max_iterations,
-                        self.scoring, self.score_precision, self.random_state)
+                        self.scoring, self.score_precision, self.random_state,
+                        return_train_scores=self.return_train_scores)
                        for train, validation in cv.split(X)
                        for params in param_iter)
 
         n_splits = int(len(out) / len(param_iter))
 
-        test_scores, n_estimators, test_sample_counts, _, params = zip(*out)
+        if self.return_train_scores:
+            (train_scores, test_scores, n_estimators, test_sample_counts,
+             times, params) = zip(*out)
+            candidate_params = params[::n_splits]
+            n_candidates = len(candidate_params)
+            train_scores = np.array(train_scores,
+                                    dtype=np.float64).reshape(n_candidates,
+                                                              n_splits)
+            train_means = train_scores.mean(axis=1)
+            # NOTE Leave it unweighted even for i.i.d. case
+            train_stds = ((train_scores -
+                           train_means[:, np.newaxis]) ** 2).std()
+            train_ranks = np.asarray(rankdata(-train_ranks, method='min'),
+                                     dtype=np.int32)
+        else:
+            (test_scores, n_estimators, test_sample_counts,
+             times, params) = zip(*out)
+            candidate_params = params[::n_splits]
+            n_candidates = len(candidate_params)
 
-        candidate_params = []
-        test_scores = []
+        # NOTE test_sample counts (weights) remain the same for all candidates
+        test_sample_counts = np.array(test_sample_counts[:n_splits],
+                                      dtype=np.int)
+        # Computed the (weighted) mean and std for all the candidates
+        test_weights = test_sample_counts if self.iid else None
+        test_scores = np.array(test_scores,
+                               dtype=np.float64).reshape(n_candidates,
+                                                         n_splits)
+        test_means = np.average(test_scores, axis=1, weights=test_weights)
+        test_stds = np.sqrt(np.average((test_scores -
+                                        test_means[:, np.newaxis]) ** 2,
+                                       axis=1, weights=test_weights))
 
-        i = 0
-        best_mean = -np.inf
-        for params in param_iter:
+        # Find the mean n_estimators across the splits
+        n_estimators = np.array(n_estimators,
+                                dtype=np.int).reshape(n_candidates, n_splits)
+        n_estimator_means = np.array(n_estimators.mean(axis=1), dtype=np.int)
 
-            score_list = []
-            n_est_list = []
-            for idx in range(n_splits):
-                score, n_estimators = out[i]
-                n_est_list.append(n_estimators)
-                score_list.append(score)
-                i += 1
+        # Find the mean fitting+scoring time across the splits
+        times = np.array(n_estimators,
+                         dtype=np.float64).reshape(n_candidates, n_splits)
+        time_means = times.mean(axis=1)
 
-            scores = np.array(score_list)
-            mean = np.mean(scores)
-            params['n_estimators'] = int(np.mean(n_est_list))
-
-            if mean > best_mean:
-                best_tuple = score_tuple
-                best_params = params
-
-        self.grid_scores_ = grid_scores
-        self.best_score_tuple_ = best_tuple
-        self.best_params_ = best_params
-
-        results = dict()
+        cv_results = dict()
         for split_i in range(n_splits):
-            results["split%d_test_score" % split_i] = test_scores[:, split_i]
-        results["test_mean_score"] = means
-        results["test_std_score"] = stds
+            cv_results["split%d_test_score"
+                       % split_i] = test_scores[:, split_i]
+        cv_results["mean_test_score"] = test_means
+        cv_results["std_test_score"] = test_stds
 
-        ranks = np.asarray(rankdata(-means, method='min'), dtype=np.int32)
+        test_ranks = np.asarray(rankdata(-test_means, method='min'),
+                                dtype=np.int32)
 
-        best_index = np.flatnonzero(ranks == 1)[0]
+        best_index = np.flatnonzero(test_ranks == 1)[0]
         best_parameters = candidate_params[best_index]
-        results["test_rank_score"] = ranks
+        cv_results["rank_test_score"] = test_ranks
+
+        if self.return_train_scores:
+            cv_results["mean_train_score"] = train_means
+            cv_results["std_train_score"] = train_stds
+            cv_results["rank_train_score"] = train_ranks
+
+        # Overwrite n_estimators with the mean of the converged n_estimators
+        # across the splits.
+        for i in range(n_candidates):
+            candidate_params[i]['n_estimators'] = n_estimator_means[i]
 
         # Use one np.MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
@@ -162,13 +194,15 @@ class _BaseGradientBoostingCV(BaseEstimator):
                 # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_i] = value
 
-        results.update(param_results)
+        cv_results.update(param_results)
 
         # Store a list of param dicts at the key 'params'
-        results['params'] = candidate_params
+        cv_results['params'] = candidate_params
 
-        self.results_ = results
+        self.cv_results_ = cv_results
         self.best_index_ = best_index
+        self.best_params_ = candidate_params[best_index]
+        self.best_score_ = candidate_params[best_index]
         self.n_splits_ = n_splits
 
         if self.refit:
@@ -433,6 +467,10 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
+    return_train_scores : boolean, default=False
+        If True, the ``cv_results_`` dict will also include the scores on
+        training set for each cv-split.
+
     presort : bool or 'auto', list of string or bool optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
         fitting. Auto mode by default will use presorting on dense data and
@@ -449,33 +487,69 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
 
     Attributes
     ----------
-    grid_scores_ : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    results_ : dict of numpy (masked) ndarrays
+        A dict with keys as column headers and values as columns, that can be
+        imported into a pandas ``DataFrame``.
 
-        - ``parameters``, a dict of parameter settings
-        - ``mean_validation_score``, the mean score over the
-          cross-validation folds
-        - ``cv_validation_scores``, the list of scores for each fold
+        For instance the below given table
 
-    best_score_tuple_ : named tuple
-        The attributes of the model which gave the best score.
+        +-----------------+-----------------+------------+-----------------+---+---------+
+        | param_max_depth | |...rank..|
+        +=================+===========+============+=================+===+=========+
+        |       1       |     --    |      2     |        0.8      |...|    2    |
+        +------------+-----------+------------+-----------------+---+---------+
+        |  'poly'    |     --    |      3     |        0.7      |...|    4    |
+        +------------+-----------+------------+-----------------+---+---------+
+        |  'rbf'     |     0.1   |     --     |        0.8      |...|    3    |
+        +------------+-----------+------------+-----------------+---+---------+
+        |  'rbf'     |     0.2   |     --     |        0.9      |...|    1    |
+        +------------+-----------+------------+-----------------+---+---------+
 
-        - ``parameters``, a dict of parameter settings, which includes the
-          ``n_estimators`` parameter
-        - ``mean_validation_score``, the mean score over the
-          cross-validation folds
-        - ``cv_validation_scores``, the list of scores for each fold
+        will be represented by a ``results_`` dict of::
+
+            {
+            'param_kernel': masked_array(data = ['poly', 'poly', 'rbf', 'rbf'],
+                                         mask = [False False False False]...)
+            'param_gamma': masked_array(data = [-- -- 0.1 0.2],
+                                        mask = [ True  True False False]...),
+            'param_degree': masked_array(data = [2.0 3.0 -- --],
+                                         mask = [False False  True  True]...),
+            'test_split0_score' : [0.8, 0.7, 0.8, 0.9],
+            'test_split1_score' : [0.82, 0.5, 0.7, 0.78],
+            'test_mean_score'   : [0.81, 0.60, 0.75, 0.82],
+            'test_std_score'    : [0.02, 0.01, 0.03, 0.03],
+            'test_rank_score'   : [2, 4, 3, 1],
+            'params'            : [{'kernel': 'poly', 'degree': 2}, ...],
+            }
+
+        NOTE that the key ``'params'`` is used to store a list of parameter
+        settings dict for all the parameter candidates.
+
+    best_estimator_ : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data. Not available if refit=False.
+
+    best_score_ : float
+        Score of best_estimator on the left out data.
 
     best_params_ : dict
-        The parameters which gave the best score, along with the
-        ``n_estimators`` parameter.
+        Parameter setting that gave the best results on the hold out data.
 
-    best_estimator_ : GradientBoostingClassifier
-        If ``refit`` was ``True``, the model with the best score fit to the
-        entire dataset.
+    best_index_ : int
+        The index (of the ``results_`` arrays) which corresponds to the best
+        candidate parameter setting.
 
+        The dict at ``search.results_['params'][search.best_index_]`` gives
+        the parameter setting for the best model, that gives the highest
+        mean score (``search.best_score_``).
+
+    scorer_ : function
+        Scorer function used on the held out data to choose the best
+        parameters for the model.
+
+    n_splits_ : int
+        The number of cross-validation splits (folds/iterations).
     """
 
     def __init__(self, n_iter_no_change=10, score_precision=2,
@@ -485,7 +559,7 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  min_impurity_split=1e-7, max_depth=3, init=None,
                  max_features=None, max_leaf_nodes=None, iid=True,
-                 presort='auto', random_state=None):
+                 return_train_scores=False, presort='auto', random_state=None):
         self.estimator = GradientBoostingClassifier()
 
         super(GradientBoostingClassifierCV, self).__init__(
@@ -499,6 +573,7 @@ class GradientBoostingClassifierCV(_BaseGradientBoostingCV):
             min_impurity_split=min_impurity_split, max_depth=max_depth,
             init=init, max_features=max_features,
             max_leaf_nodes=max_leaf_nodes, iid=iid,
+            return_train_scores=return_train_scores,
             presort=presort, random_state=random_state)
 
 
@@ -669,6 +744,10 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
+    return_train_scores : boolean, default=False
+        If True, the ``cv_results_`` dict will also include the scores on
+        training set for each cv-split.
+
     presort : bool or 'auto', list of string or bool optional (default='auto')
         Whether to presort the data to speed up the finding of best splits in
         fitting. Auto mode by default will use presorting on dense data and
@@ -721,7 +800,7 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  min_impurity_split=1e-7, max_depth=3, init=None,
                  max_features=None, max_leaf_nodes=None, iid=True,
-                 presort='auto', random_state=None):
+                 return_train_scores=False, presort='auto', random_state=None):
         self.estimator = GradientBoostingRegressor()
 
         super(GradientBoostingRegressorCV, self).__init__(
@@ -735,11 +814,13 @@ class GradientBoostingRegressorCV(_BaseGradientBoostingCV):
             min_impurity_split=min_impurity_split, max_depth=max_depth,
             init=init, max_features=max_features,
             max_leaf_nodes=max_leaf_nodes, iid=iid,
+            return_train_scores=return_train_scores,
             presort=presort, random_state=random_state)
 
 
 def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
-                      max_iter, scoring, score_precision, random_state):
+                      max_iter, scoring, score_precision, random_state,
+                      return_train_scores):
     """ Fit a single estimator till stopping criteria is reached.
 
     Parameters
@@ -789,10 +870,18 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         If None, the random number generator is the RandomState instance used
         by ``np.random``.
 
+    return_train_scores : boolean, default=False
+        If True, the ``cv_results_`` dict will also include the scores on
+        training set for each cv-split.
+
     Returns
     -------
-    score : float
-        The score when the model converged.
+    train_score : float
+        The score on the training set when the model is converged.
+        This is returned only if ``return_train_scores`` is set to True.
+
+    test_score : float
+        The score on the testing set when the model is converged.
 
     n_iterations : int
         The number of iterations it took to converge. This is the same as
@@ -807,10 +896,12 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
 
     params['random_state'] = random_state
     params['warm_start'] = True
+
+    start_time = time.time()
     gb = clone(estimator).set_params(**params)
 
     scorer = check_scoring(estimator, scoring=scoring)
-    scores = []
+    validation_scores = []
     rounded_scores = []
 
     X_train = X[train]
@@ -827,7 +918,7 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
         this_score = scorer(gb, X_validation, y_validation)
         this_score_rounded = np.round(this_score, score_precision)
 
-        scores.append(this_score)
+        validation_scores.append(this_score)
         rounded_scores.append(this_score_rounded)
 
         # Check if we need to stop early
@@ -838,4 +929,12 @@ def _fit_single_param(estimator, X, y, train, validation, params, stop_rounds,
     if i == max_iter:
         warnings.warn(str(gb) + ' failed to converge')
 
-    return scores[-1], i, test_sample_count, params
+
+    if return_train_scores:
+        train_score = scorer(gb, X_train, y_train)
+        total_time = time.time() - start_time
+        return (train_score, validation_scores[-1], i, test_sample_count,
+                total_time, params)
+    else:
+        total_time = time.time() - start_time
+        return validation_scores[-1], i, test_sample_count, total_time, params
