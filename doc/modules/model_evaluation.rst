@@ -50,8 +50,9 @@ For the most common use cases, you can designate a scorer object with the
 ``scoring`` parameter; the table below shows all possible values.
 All scorer objects follow the convention that **higher return values are better
 than lower return values**.  Thus metrics which measure the distance between
-the model and the data, like mean_squared_error, are implemented as
-neg_mean_squared_error which return the negated value of the metric.
+the model and the data, like :func:`metrics.mean_squared_error`, are
+implemented as neg_mean_squared_error which return the negated value
+of the metric.
 
 
 ==========================      =========================================     ==================================
