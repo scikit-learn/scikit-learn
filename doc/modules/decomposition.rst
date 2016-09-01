@@ -650,7 +650,7 @@ Non-negative matrix factorization (NMF or NNMF)
 NMF with the Frobenius norm
 ---------------------------
 
-:class:`NMF` is an alternative approach to decomposition that assumes that the
+:class:`NMF` [1]_ is an alternative approach to decomposition that assumes that the
 data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values. It finds a decomposition of samples
@@ -666,7 +666,7 @@ Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
 models are efficient for representing images and text.
 
-It has been observed in [Hoyer, 04] that, when carefully constrained,
+It has been observed in [Hoyer, 2004][2]_ that, when carefully constrained,
 :class:`NMF` can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
 sparse components found by :class:`NMF` from the images in the Olivetti
@@ -685,7 +685,7 @@ faces dataset, in comparison with the PCA eigenfaces.
 
 The :attr:`init` attribute determines the initialization method applied, which
 has a great impact on the performance of the method. :class:`NMF` implements
-the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
+the method Nonnegative Double Singular Value Decomposition. NNDSVD [4]_ is based on
 two SVD processes, one approximating the data matrix, the other approximating
 positive sections of the resulting partial SVD factors utilizing an algebraic
 property of unit rank matrices. The basic NNDSVD algorithm is better fit for
@@ -733,21 +733,19 @@ matrices:
 .. math::
     d_{Fro}(X, Y) = \frac{1}{2} ||X - Y||_{Fro}^2 = \frac{1}{2} \sum_{i,j} (X_{ij} - {Y}_{ij})^2
 
-However, NMF can also be used with a different function to measure the
-distance between X and the matrix product WH. Another typical distance
-function used in NMF is the (generalized) Kullback-Leibler (KL) divergence,
-also referred as I-divergence:
+Other distance functions can be used in NMF as, for example, the (generalized)
+Kullback-Leibler (KL) divergence, also referred as I-divergence:
 
 .. math::
-    d_{KL}(X, Y) = \sum_{i,j} (X_{ij} * log(\frac{X_{ij}}{Y_{ij}}) - X_{ij} + Y_{ij})
+    d_{KL}(X, Y) = \sum_{i,j} (X_{ij} log(\frac{X_{ij}}{Y_{ij}}) - X_{ij} + Y_{ij})
 
-Another commonly used distance is the Itakura-Saito (IS) divergence:
+Or, the Itakura-Saito (IS) divergence:
 
 .. math::
     d_{IS}(X, Y) = \sum_{i,j} (\frac{X_{ij}}{Y_{ij}} - log(\frac{X_{ij}}{Y_{ij}}) - 1)
 
 These three distances are special cases of the beta-divergence family, with
-:math:`\beta = 2, 1, 0` respectively [Fevotte, 2011]. The beta-divergence are
+:math:`\beta = 2, 1, 0` respectively [6]_. The beta-divergence are
 defined by :
 
 .. math::
@@ -757,9 +755,9 @@ Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can b
 continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
-:class:`NMF` implements three solvers, using Projected Gradient ('pg')
-(deprecated, it will be removed in 0.19), Coordinate Descent ('cd'), and
-Multiplicative Update ('mu'). The 'mu' solver can optimize every
+:class:`NMF` implements three solvers, using Projected Gradient ('pg') [3]_
+(deprecated, it will be removed in 0.19), Coordinate Descent ('cd') [5]_, and
+Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
 beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
 (generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
 Itakura-Saito divergence (:math:`\beta=0`). Note that for
@@ -777,29 +775,29 @@ different minima, even when optimizing the same distance function.
 
 .. topic:: References:
 
-    * `"Learning the parts of objects by non-negative matrix factorization"
+    .. [1] `"Learning the parts of objects by non-negative matrix factorization"
       <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
-    * `"Non-negative Matrix Factorization with Sparseness Constraints"
+    .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
       <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
-    * `"Projected gradient methods for non-negative matrix factorization"
+    .. [3] `"Projected gradient methods for non-negative matrix factorization"
       <http://www.csie.ntu.edu.tw/~cjlin/nmf/>`_
       C.-J. Lin, 2007
 
-    * `"SVD based initialization: A head start for nonnegative
+    .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
       <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 
-    * `"Fast local algorithms for large scale nonnegative matrix and tensor
+    .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
       A. Cichocki, P. Anh-Huy, 2009
 
-    * `"Algorithms for nonnegative matrix factorization with the beta-divergence"
+    .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
       <http://http://arxiv.org/pdf/1010.1763v3.pdf>`_
       C. Fevotte, J. Idier, 2011
 
