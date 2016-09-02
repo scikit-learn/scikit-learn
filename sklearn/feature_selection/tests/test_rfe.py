@@ -84,20 +84,21 @@ def test_rfe_sample_weights():
     rfe = RFE(estimator=clf, n_features_to_select=1)
 
     sample_weight_test = 2
+    class_test = 2
 
     # Case 1 - double the weight of the class's features
     w = np.ones(y.shape[0])
-    w[y == 2] = sample_weight_test
+    w[y == class_test] = sample_weight_test
 
     rfe.fit(X, y, sample_weight=w)
     ranking_1 = rfe.ranking_.copy()
 
     # Case 2 - duplicate the features of one class
-    extra_X = np.tile(X[y == 2], (sample_weight_test - 1, 1))
+    extra_X = np.tile(X[y == class_test], (sample_weight_test - 1, 1))
     X2 = np.concatenate((X, extra_X), axis=0)
 
-    n_extra = (y == 2).sum() * (sample_weight_test - 1)
-    extra_Y = np.full(n_extra, 2, dtype=int)
+    n_extra = (y == class_test).sum() * (sample_weight_test - 1)
+    extra_Y = np.ones(n_extra, dtype=int) * class_test
     y2 = np.concatenate((y, extra_Y), axis=0)
 
     rfe.fit(X2, y2)
