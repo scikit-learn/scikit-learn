@@ -1730,6 +1730,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    feature_index_range_ : array, shape [n_feature, 2]
+        `feature_index_range_[i]` specifies the range of column indices
+        occupied by the feature `i` in the one-hot encoded array.
+
+    one_hot_feature_index_ : array, shape [n_features_new]
+        `one_hot_feature_index_[i]` specifies which feature of the input
+        is encoded by column `i` in the one-hot encoded array.
 
     Examples
     --------
@@ -1793,6 +1800,45 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         _apply_selected(X, self._fit, dtype=self.dtype,
                         selected=self.categorical_features, copy=True,
                         return_val=False)
+
+        self.feature_index_range_ = np.zeros((n_features, 2), dtype=np.int)
+
+        if (isinstance(self.categorical_features, six.string_types) and
+            self.categorical_features == "all"):
+            categorical = np.ones(n_features, dtype=bool)
+        else:
+            categorical = np.zeros(n_features, dtype=bool)
+            categorical[np.asarray(self.categorical_features)] = True
+
+        num_cat = np.sum(categorical)
+        start = 0
+        cat_index = 0
+        #print(categorical, self.categorical_features)
+        for i in range(n_features):
+            if categorical[i]:
+                le = self._label_encoders[cat_index]
+                end = start + len(le.classes_)
+                self.feature_index_range_[i] = start, end
+                start += len(le.classes_)
+                cat_index += 1
+
+        indices = np.arange(start, start + n_features - num_cat)
+        self.feature_index_range_[~categorical, 0] = indices
+        indices += 1
+        self.feature_index_range_[~categorical, 1] = indices
+
+        if len(indices) > 0:
+            output_cols = indices[-1]
+        else:
+            output_cols = start
+
+        print(output_cols)
+        self.one_hot_feature_index_ = np.empty(output_cols, dtype=np.int)
+
+        for i in range(n_features):
+            s, e = self.feature_index_range_[i]
+            self.one_hot_feature_index_[s:e] = i
+
         return self
 
     def _fit(self, X):
