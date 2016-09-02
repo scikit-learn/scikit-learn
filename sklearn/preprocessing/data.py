@@ -1747,10 +1747,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
     >>> enc.fit([['cat', 4], ['mouse', 15], ['dog', 17]]) # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=None, sparse=True, values='auto')
-    >>> list(enc.label_encoders_[0].classes_)
-    ['cat', 'dog', 'mouse']
+    OneHotEncoder(categorical_features='all', copy=True,
+           dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
+           sparse=True, values='auto')
     >>> enc.transform([['dog', 4]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
@@ -1813,7 +1812,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         num_cat = np.sum(categorical)
         start = 0
         cat_index = 0
-        #print(categorical, self.categorical_features)
+
         for i in range(n_features):
             if categorical[i]:
                 le = self._label_encoders[cat_index]
@@ -1832,7 +1831,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         else:
             output_cols = start
 
-        print(output_cols)
         self.one_hot_feature_index_ = np.empty(output_cols, dtype=np.int)
 
         for i in range(n_features):
