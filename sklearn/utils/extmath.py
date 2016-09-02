@@ -851,3 +851,14 @@ def _deterministic_vector_sign_flip(u):
     signs = np.sign(u[range(u.shape[0]), max_abs_rows])
     u *= signs[:, np.newaxis]
     return u
+
+
+def stable_cumsum(arr):
+    """Use high precision for cumsum and check that final value matches sum
+    """
+    out = np.cumsum(arr, dtype=np.float64)
+    expected = np.sum(arr, dtype=np.float64)
+    if not np.allclose(out, expected):
+        raise RuntimeError('cumsum was found to be unstable: '
+                           'its results do not correspond to sum')
+    return out
