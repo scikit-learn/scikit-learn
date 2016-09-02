@@ -20,7 +20,7 @@ from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
-                                   assert_array_almost_equal, assert_true)
+                                   assert_array_almost_equal)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
