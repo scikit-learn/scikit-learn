@@ -309,17 +309,11 @@ def test_grid_search_when_param_grid_includes_range():
     clf = MockClassifier()
     grid_search = None
     if PY3_OR_LATER:
-        grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)}, verbose=3)
+        grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
     else:
-        grid_search = GridSearchCV(clf, {'foo_param': xrange(1, 4)}, verbose=3)
-    # make sure it selects the smallest parameter in case of ties
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
+        grid_search = GridSearchCV(clf, {'foo_param': xrange(1, 4)})
     grid_search.fit(X, y)
-    sys.stdout = old_stdout
     assert_equal(grid_search.best_estimator_.foo_param, 2)
-
-    assert_array_equal(grid_search.results_["param_foo_param"].data, [1, 2, 3])
 
 
 def test_grid_search_bad_param_grid():
