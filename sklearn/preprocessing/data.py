@@ -1802,8 +1802,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         self.feature_index_range_ = np.zeros((n_features, 2), dtype=np.int)
 
-        if (isinstance(self.categorical_features, six.string_types) and
-            self.categorical_features == "all"):
+        if isinstance(self.categorical_features, six.string_types) and \
+           self.categorical_features == "all":
+
             categorical = np.ones(n_features, dtype=bool)
         else:
             categorical = np.zeros(n_features, dtype=bool)
@@ -1987,12 +1988,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         warnings.warn('The property `active_features_` is deprecated and'
                       ' will be removed in version 0.20')
         if self.n_values is None:
-            #TODO: What to do when classes are strings ?
             classes = [le.classes_ for le in self._label_encoders]
             classes_max = [np.max(cls) + 1 for cls in classes]
             cum_idx = np.cumsum([0] + classes_max)
-            active_idx = [self._label_encoders[i].classes_.astype(np.int)
-                          + cum_idx[i]
+            active_idx = [self._label_encoders[i].classes_.astype(np.int) +
+                          cum_idx[i]
                           for i in range(self._n_features)]
 
             return np.concatenate(active_idx, axis=0).astype(np.int)

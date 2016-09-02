@@ -451,4 +451,4 @@ if np_version < (1, 8):
         return ar1[in1d(ar1, ar2, assume_unique=True, invert=True)]
 
 else:
-    from numpy import setdiff1d
+    from numpy import setdiff1d  # noqa
