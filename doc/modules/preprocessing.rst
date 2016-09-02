@@ -399,8 +399,9 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([['female', 'from US', 'uses Chrome'],
   ... ['male', 'from Asia', 'uses Firefox']])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-         handle_unknown='error', n_values=None, sparse=True, values='auto')
+  OneHotEncoder(categorical_features='all', copy=True,
+         dtype=<type 'numpy.float64'>, handle_unknown='error', n_values=None,
+         sparse=True, values='auto')
   >>> enc.transform([['female', 'from Asia', 'uses Firefox']]).toarray()
   array([[ 1.,  0.,  1.,  0.,  0.,  1.]])
 
@@ -423,9 +424,11 @@ features, one has to explicitly set ``n_values``. For example,
     >>> # feature
     >>> enc.fit([['female', 'from US', 'uses Chrome'],
     ... ['male', 'from Asia', 'uses Internet Explorer']])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=None, sparse=True,
-	   values=[...])
+    OneHotEncoder(categorical_features='all', copy=True,
+           dtype=<type 'numpy.float64'>, handle_unknown='error', n_values=None,
+           sparse=True,
+           values=[...])
+
     >>> enc.transform([['male', 'from Europe', 'uses Safari']]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
