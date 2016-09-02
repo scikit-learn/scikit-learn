@@ -1503,6 +1503,25 @@ def test_one_hot_encoder_sparse():
     assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
 
 
+def test_one_hot_encoder_attr():
+    X = [[1, 7, "cat"], [10, 15, "mouse"], [5, 7, "cat"]]
+
+    enc = OneHotEncoder()
+    enc.fit(X)
+    assert_array_equal(enc.feature_index_range_, [[0, 3], [3, 5], [5, 7]])
+    assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 1, 1, 2, 2])
+
+    enc = OneHotEncoder(categorical_features=[True, False, True])
+    enc.fit(X)
+    assert_array_equal(enc.feature_index_range_, [[0, 3], [5, 6], [3, 5]])
+    assert_array_equal(enc.one_hot_feature_index_, [0, 0, 0, 2, 2, 1])
+
+    enc = OneHotEncoder(categorical_features=[False, False, True])
+    enc.fit(X)
+    assert_array_equal(enc.feature_index_range_, [[2, 3], [3, 4], [0, 2]])
+    assert_array_equal(enc.one_hot_feature_index_, [2, 2, 0, 1])
+
+
 def test_one_hot_encoder_dense():
     # check for sparse=False
     X = [[3, 2, 1], [0, 1, 1]]
