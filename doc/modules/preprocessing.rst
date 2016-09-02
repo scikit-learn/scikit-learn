@@ -405,7 +405,7 @@ Continuing the example above::
   array([[ 1.,  0.,  1.,  0.,  0.,  1.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``xvalues``.
+It is possible to specify this explicitly using the parameter ``values``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
 Then we fit the estimator, and transform a data point.
