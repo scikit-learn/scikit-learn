@@ -129,7 +129,7 @@ def test_ordinary_kriging():
 
 def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
-    y_pred = gp.predict(X)
+    y_pred = gp.predict(X, batch_size=1)
     assert_true(np.allclose(y_pred, y))
 
 
