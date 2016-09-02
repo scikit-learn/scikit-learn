@@ -120,7 +120,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def fit(self, X, y):
+    def fit(self, X, y, **fit_params):
         """Fit the RFE model and then the underlying estimator on the selected
            features.
 
@@ -131,10 +131,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         y : array-like, shape = [n_samples]
             The target values.
-        """
-        return self._fit(X, y)
 
-    def _fit(self, X, y, step_score=None):
+        **fit_params : kwargs
+            Additional parameter passed to the fit function of the estimator.
+        """
+        return self._fit(X, y, **fit_params)
+
+    def _fit(self, X, y, step_score=None, **fit_params):
         X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
@@ -166,7 +169,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
-            estimator.fit(X[:, features], y)
+            estimator.fit(X[:, features], y, **fit_params)
 
             # Get coefs
             if hasattr(estimator, 'coef_'):
