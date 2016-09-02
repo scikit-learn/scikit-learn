@@ -423,7 +423,8 @@ features, one has to explicitly set ``n_values``. For example,
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> enc.fit([['female', 'from US', 'uses Chrome'],
-    ... ['male', 'from Asia', 'uses Internet Explorer']])  # doctest: +ELLIPSIS
+    ... ['male', 'from Asia', 'uses Internet Explorer']]) \
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features='all', copy=True,
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True,
