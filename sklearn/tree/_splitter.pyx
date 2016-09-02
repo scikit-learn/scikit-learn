@@ -231,20 +231,22 @@ cdef class Splitter:
 
     cdef inline bint split_passes_monotonic_check(self, INT32_t monotonic_constraint) nogil:
         """Check monotonic constraint is satisfied at the current split"""
+
         if monotonic_constraint == 0: # No constraint
             return 1
         else:
             left = self.criterion.sum_left[0]/self.criterion.weighted_n_left
             right = self.criterion.sum_right[0]/self.criterion.weighted_n_right
-            if monotonic_constraint == -1: # Decreasing constraint
+            if monotonic_constraint == -1: # Monotonically decreasing constraint
                 if left < right: # Fails
                     return 0
-                else:
+                else: # Passes
                     return 1
-            elif left > right: # Increasing constraint fails
-                return 0
-            else:
-                return 1
+            else: # Monotonically increasing constraint
+                if left > right: # Fails
+                    return 0
+                else: # Passes
+                    return 1
 
 cdef class BaseDenseSplitter(Splitter):
     cdef DTYPE_t* X
