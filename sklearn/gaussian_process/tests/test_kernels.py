@@ -311,4 +311,4 @@ def test_repr_kernels():
     """Smoke-test for repr in kernels."""
 
     for kernel in kernels:
-        kernel_repr = repr(kernel)
+        repr(kernel)
