@@ -8,7 +8,8 @@ Here we try to give some answers to questions that regularly pop up on the maili
 
 What is the project name (a lot of people get it wrong)?
 --------------------------------------------------------
-scikit-learn, but not scikit or SciKit nor sci-kit learn. Also not scikits.learn or scikits-learn, which were previously used.
+scikit-learn, but not scikit or SciKit nor sci-kit learn.
+Also not scikits.learn or scikits-learn, which were previously used.
 
 How do you pronounce the project name?
 ------------------------------------------
@@ -276,7 +277,7 @@ reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
 
-How do I set a random_state for an entire execution?
+How do I set a ``random_state`` for an entire execution?
 ----------------------------------------------------
 
 For testing and replicability, it is often important to have the entire execution
