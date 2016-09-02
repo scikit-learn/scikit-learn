@@ -75,6 +75,36 @@ def test_rfe_features_importance():
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
 
 
+def test_rfe_sample_weights():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=1)
+
+    sample_weight_test = 2
+
+    # Case 1 - double the weight of the class's features
+    w = np.ones(y.shape[0])
+    w[y == 2] = sample_weight_test
+
+    rfe.fit(X, y, sample_weight=w)
+    ranking_1 = rfe.ranking_.copy()
+
+    # Case 2 - duplicate the features of one class
+    extra_X = np.tile(X[y == 2], (sample_weight_test - 1, 1))
+    X2 = np.concatenate((X, extra_X), axis=0)
+
+    n_extra = (y == 2).sum() * (sample_weight_test - 1)
+    extra_Y = np.full(n_extra, 2, dtype=int)
+    y2 = np.concatenate((y, extra_Y), axis=0)
+
+    rfe.fit(X2, y2)
+    ranking_2 = rfe.ranking_.copy()
+
+    assert_array_equal(ranking_1, ranking_2)
+
 def test_rfe():
     generator = check_random_state(0)
     iris = load_iris()
