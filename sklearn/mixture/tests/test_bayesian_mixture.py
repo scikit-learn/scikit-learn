@@ -24,10 +24,10 @@ COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
 def test_log_dirichlet_norm():
     rng = np.random.RandomState(0)
 
-    dirichlet_concentration = rng.rand(2)
-    expected_norm = (gammaln(np.sum(dirichlet_concentration)) -
-                     np.sum(gammaln(dirichlet_concentration)))
-    predected_norm = _log_dirichlet_norm(dirichlet_concentration)
+    weight_concentration = rng.rand(2)
+    expected_norm = (gammaln(np.sum(weight_concentration)) -
+                     np.sum(gammaln(weight_concentration)))
+    predected_norm = _log_dirichlet_norm(weight_concentration)
 
     assert_almost_equal(expected_norm, predected_norm)
 
@@ -73,29 +73,29 @@ def test_bayesian_mixture_weights_prior_initialisation():
     n_samples, n_components, n_features = 10, 5, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of dirichlet_concentration_prior
-    bad_dirichlet_concentration_prior_ = 0.
+    # Check raise message for a bad value of weight_concentration_prior
+    bad_weight_concentration_prior_ = 0.
     bgmm = BayesianGaussianMixture(
-        dirichlet_concentration_prior=bad_dirichlet_concentration_prior_,
+        weight_concentration_prior=bad_weight_concentration_prior_,
         random_state=0)
     assert_raise_message(ValueError,
-                         "The parameter 'dirichlet_concentration_prior' "
+                         "The parameter 'weight_concentration_prior' "
                          "should be greater than 0., but got %.3f."
-                         % bad_dirichlet_concentration_prior_,
+                         % bad_weight_concentration_prior_,
                          bgmm.fit, X)
 
-    # Check correct init for a given value of dirichlet_concentration_prior
-    dirichlet_concentration_prior = rng.rand()
+    # Check correct init for a given value of weight_concentration_prior
+    weight_concentration_prior = rng.rand()
     bgmm = BayesianGaussianMixture(
-        dirichlet_concentration_prior=dirichlet_concentration_prior,
+        weight_concentration_prior=weight_concentration_prior,
         random_state=rng).fit(X)
-    assert_almost_equal(dirichlet_concentration_prior,
-                        bgmm.dirichlet_concentration_prior_)
+    assert_almost_equal(weight_concentration_prior,
+                        bgmm.weight_concentration_prior_)
 
-    # Check correct init for the default value of dirichlet_concentration_prior
+    # Check correct init for the default value of weight_concentration_prior
     bgmm = BayesianGaussianMixture(n_components=n_components,
                                    random_state=rng).fit(X)
-    assert_almost_equal(1. / n_components, bgmm.dirichlet_concentration_prior_)
+    assert_almost_equal(1. / n_components, bgmm.weight_concentration_prior_)
 
 
 def test_bayesian_mixture_means_prior_initialisation():
@@ -240,8 +240,8 @@ def test_bayesian_mixture_weights():
     bgmm = BayesianGaussianMixture(random_state=rng).fit(X)
 
     # Check the weights values
-    expected_weights = (bgmm.dirichlet_concentration_ /
-                        np.sum(bgmm.dirichlet_concentration_))
+    expected_weights = (bgmm.weight_concentration_ /
+                        np.sum(bgmm.weight_concentration_))
     predected_weights = bgmm.weights_
 
     assert_almost_equal(expected_weights, predected_weights)

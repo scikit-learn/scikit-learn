@@ -64,7 +64,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         'kmeans' : responsibilities are initialized using kmeans.
         'random' : responsibilities are initialized randomly.
 
-    beta_concentration_prior : float, default to 1.
+    weight_concentration_prior : float, default to 1.
         The user-provided concentration prior parameter of the
         Beta distribution. The higher concentration puts more mass in the
         center and will lead to more components being active, while a lower
@@ -212,7 +212,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
-                 beta_concentration_prior=1,
+                 weight_concentration_prior=1,
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
@@ -220,20 +220,20 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         super(DirichletGaussianMixture, self).__init__(
             n_components=n_components, covariance_type=covariance_type,
             tol=tol, reg_covar=reg_covar, max_iter=max_iter, n_init=n_init,
-            init_params=init_params, dirichlet_concentration_prior=None,
+            init_params=init_params, weight_concentration_prior=None,
             mean_precision_prior=mean_precision_prior, mean_prior=mean_prior,
             degrees_of_freedom_prior=degrees_of_freedom_prior,
             covariance_prior=covariance_prior, random_state=random_state,
             warm_start=warm_start, verbose=verbose,
             verbose_interval=verbose_interval)
-        self.beta_concentration_prior = beta_concentration_prior
+        self.weight_concentration_prior = weight_concentration_prior
 
     def _check_weights_parameters(self):
         """Check the parameter of the Beta distribution."""
-        if self.beta_concentration_prior <= 0:
-            raise ValueError("The parameter 'beta_concentration_prior' "
+        if self.weight_concentration_prior <= 0:
+            raise ValueError("The parameter 'weight_concentration_prior' "
                              "should be greater than 0., but got %.3f."
-                             % self.beta_concentration_prior)
+                             % self.weight_concentration_prior)
 
     def _estimate_weights(self, nk):
         """Estimate the parameters of the Dirichlet distribution.
@@ -244,7 +244,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
         """
         self.beta_concentration_alpha_ = 1. + nk
         self.beta_concentration_beta_ = (
-            self.beta_concentration_prior +
+            self.weight_concentration_prior +
             np.hstack((np.cumsum(nk[::-1])[-2::-1], 0)))
 
     def _estimate_log_weights(self):

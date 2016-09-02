@@ -75,7 +75,7 @@ class BayesianGaussianMixture(BaseMixture):
     ----------
     n_components : int, defaults to 1.
         The number of mixture components. Depending on the data and the value
-        of the `dirichlet_concentration_prior` the model can decide to not use
+        of the `weight_concentration_prior` the model can decide to not use
         all the components by setting some component `weights_` to values very
         close to zero. The number of effective components is therefore smaller
         than n_components.
@@ -111,7 +111,7 @@ class BayesianGaussianMixture(BaseMixture):
         'kmeans' : responsibilities are initialized using kmeans.
         'random' : responsibilities are initialized randomly.
 
-    dirichlet_concentration_prior : float | None, optional.
+    weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
@@ -213,14 +213,14 @@ class BayesianGaussianMixture(BaseMixture):
         Lower bound value on the likelihood (of the training data with
         respect to the model) of the best fit of inference.
 
-    dirichlet_concentration_prior_ : float
+    weight_concentration_prior_ : float
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         simplex.
 
-    dirichlet_concentration_ : array-like, shape (`n_components`, )
+    weight_concentration_ : array-like, shape (`n_components`, )
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet).
 
@@ -261,7 +261,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
-                 dirichlet_concentration_prior=None,
+                 weight_concentration_prior=None,
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
@@ -273,7 +273,7 @@ class BayesianGaussianMixture(BaseMixture):
             verbose=verbose, verbose_interval=verbose_interval)
 
         self.covariance_type = covariance_type
-        self.dirichlet_concentration_prior = dirichlet_concentration_prior
+        self.weight_concentration_prior = weight_concentration_prior
         self.mean_precision_prior = mean_precision_prior
         self.mean_prior = mean_prior
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
@@ -298,15 +298,15 @@ class BayesianGaussianMixture(BaseMixture):
 
     def _check_weights_parameters(self):
         """Check the parameter of the Dirichlet distribution."""
-        if self.dirichlet_concentration_prior is None:
-            self.dirichlet_concentration_prior_ = 1. / self.n_components
-        elif self.dirichlet_concentration_prior > 0.:
-            self.dirichlet_concentration_prior_ = (
-                self.dirichlet_concentration_prior)
+        if self.weight_concentration_prior is None:
+            self.weight_concentration_prior_ = 1. / self.n_components
+        elif self.weight_concentration_prior > 0.:
+            self.weight_concentration_prior_ = (
+                self.weight_concentration_prior)
         else:
-            raise ValueError("The parameter 'dirichlet_concentration_prior' "
+            raise ValueError("The parameter 'weight_concentration_prior' "
                              "should be greater than 0., but got %.3f."
-                             % self.dirichlet_concentration_prior)
+                             % self.weight_concentration_prior)
 
     def _check_means_parameters(self, X):
         """Check the parameters of the Gaussian distribution.
@@ -416,8 +416,8 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         nk : array-like, shape (n_components,)
         """
-        self.dirichlet_concentration_ = (
-            self.dirichlet_concentration_prior_ + nk)
+        self.weight_concentration_ = (
+            self.weight_concentration_prior_ + nk)
 
     def _estimate_means(self, nk, xk):
         """Estimate the parameters of the Gaussian distribution.
@@ -581,7 +581,7 @@ class BayesianGaussianMixture(BaseMixture):
         self.covariances_ /= self.degrees_of_freedom_
 
     def _check_is_fitted(self):
-        check_is_fitted(self, ['dirichlet_concentration_', 'mean_precision_',
+        check_is_fitted(self, ['weight_concentration_', 'mean_precision_',
                                'means_', 'degrees_of_freedom_',
                                'covariances_', 'precisions_',
                                'precisions_cholesky_'])
@@ -606,8 +606,8 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_precisions(nk, xk, sk)
 
     def _estimate_log_weights(self):
-        return (digamma(self.dirichlet_concentration_) -
-                digamma(np.sum(self.dirichlet_concentration_)))
+        return (digamma(self.weight_concentration_) -
+                digamma(np.sum(self.weight_concentration_)))
 
     def _estimate_log_prob(self, X):
         _, n_features = X.shape
@@ -664,23 +664,23 @@ class BayesianGaussianMixture(BaseMixture):
                 self.degrees_of_freedom_, log_det_precisions_chol, n_features))
 
         return (-np.sum(np.exp(log_resp) * log_resp) - log_wishart -
-                _log_dirichlet_norm(self.dirichlet_concentration_) -
+                _log_dirichlet_norm(self.weight_concentration_) -
                 0.5 * n_features * np.sum(np.log(self.mean_precision_)))
 
     def _get_parameters(self):
-        return (self.dirichlet_concentration_,
+        return (self.weight_concentration_,
                 self.mean_precision_, self.means_,
                 self.degrees_of_freedom_, self.covariances_,
                 self.precisions_cholesky_)
 
     def _set_parameters(self, params):
-        (self.dirichlet_concentration_, self.mean_precision_, self.means_,
+        (self.weight_concentration_, self.mean_precision_, self.means_,
          self.degrees_of_freedom_, self.covariances_,
          self.precisions_cholesky_) = params
 
         # Attributes computation
-        self. weights_ = (self.dirichlet_concentration_ /
-                          np.sum(self.dirichlet_concentration_))
+        self. weights_ = (self.weight_concentration_ /
+                          np.sum(self.weight_concentration_))
 
         if self.covariance_type == 'full':
             self.precisions_ = np.array([

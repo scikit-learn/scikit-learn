@@ -37,21 +37,21 @@ def test_dirichlet_mixture_weights_prior_initialisation():
     n_samples, n_features = 10, 2
     X = rng.rand(n_samples, n_features)
 
-    # Check raise message for a bad value of beta_concentration_prior
-    bad_beta_concentration_prior_ = 0.
+    # Check raise message for a bad value of weight_concentration_prior
+    bad_weight_concentration_prior_ = 0.
     dpgm = DirichletGaussianMixture(
-        beta_concentration_prior=bad_beta_concentration_prior_,
+        weight_concentration_prior=bad_weight_concentration_prior_,
         random_state=0)
     assert_raise_message(ValueError,
-                         "The parameter 'beta_concentration_prior' "
+                         "The parameter 'weight_concentration_prior' "
                          "should be greater than 0., but got %.3f."
-                         % bad_beta_concentration_prior_,
+                         % bad_weight_concentration_prior_,
                          dpgm.fit, X)
 
-    # Check correct init for a given value of beta_concentration_prior
-    beta_concentration_prior = rng.rand()
+    # Check correct init for a given value of weight_concentration_prior
+    weight_concentration_prior = rng.rand()
     dpgm = DirichletGaussianMixture(
-        beta_concentration_prior=beta_concentration_prior,
+        weight_concentration_prior=weight_concentration_prior,
         random_state=rng).fit(X)
 
 
