@@ -1623,6 +1623,7 @@ def add_dummy_feature(X, value=1.0):
 def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
                     return_val=True):
     """Apply a function to portion of selected features
+
     Parameters
     ----------
     X : {array, sparse matrix}, shape [n_samples, n_features]
@@ -1636,9 +1637,10 @@ def _apply_selected(X, transform, selected="all", dtype=np.float, copy=True,
     return_val : boolean, optional
         Whether to return the transformed matrix. If not set `None` is
         returned.
+
     Returns
     -------
-        X : array or sparse matrix, shape=(n_samples, n_features_new)
+    X : array or sparse matrix, shape=(n_samples, n_features_new)
     """
 
     if copy:
@@ -1728,11 +1730,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    label_encoders_ : list of size n_features.
-        The :class:`sklearn.preprocessing.LabelEncoder` objects used to encode
-        the features. ``self.label_encoders[i]_`` is the LabelEncoder object
-        used to encode the ith column. The unique features found on column
-        ``i`` can be accessed using ``self.label_encoders_[i].classes_``.
 
     Examples
     --------
@@ -1805,7 +1802,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         self._n_features = n_features
-        self.label_encoders_ = [LabelEncoder() for i in range(n_features)]
+        self._label_encoders = [LabelEncoder() for i in range(n_features)]
         # Maximum value for each featue
         self._max_values = [None for i in range(n_features)]
 
@@ -1835,7 +1832,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                      " integers or a list of list")
 
         for i in range(n_features):
-            le = self.label_encoders_[i]
+            le = self._label_encoders[i]
 
             self._max_values[i] = np.max(X[:, i])
             if self.values == 'auto':
@@ -1886,11 +1883,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
 
-            valid_mask = in1d(X[:, i], self.label_encoders_[i].classes_)
+            valid_mask = in1d(X[:, i], self._label_encoders[i].classes_)
 
             if not np.all(valid_mask):
                 if self.handle_unknown in ['error', 'error-strict']:
-                    diff = setdiff1d(X[:, i], self.label_encoders_[i].classes_)
+                    le = self._label_encoders[i]
+                    diff = setdiff1d(X[:, i], le.classes_)
                     if self.handle_unknown == 'error-strict':
                         msg = 'Unknown feature(s) %s in column %d' % (diff, i)
                         raise ValueError(msg)
@@ -1901,7 +1899,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    'future versions.' % (str(diff), i))
                             warnings.warn(FutureWarning(msg))
                             X_mask[:, i] = valid_mask
-                            le = self.label_encoders_[i]
+                            le = self._label_encoders[i]
                             X[:, i][~valid_mask] = le.classes_[0]
                         else:
                             msg = ('Unknown feature(s) %s in column %d' %
@@ -1912,16 +1910,16 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                     # continue. The rows are marked in `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    X[:, i][~valid_mask] = self.label_encoders_[i].classes_[0]
+                    X[:, i][~valid_mask] = self._label_encoders[i].classes_[0]
                 else:
                     template = ("handle_unknown should be either 'error' or "
                                 "'ignore', got %s")
                     raise ValueError(template % self.handle_unknown)
 
-            X_int[:, i] = self.label_encoders_[i].transform(X[:, i])
+            X_int[:, i] = self._label_encoders[i].transform(X[:, i])
 
         mask = X_mask.ravel()
-        n_values = [le.classes_.shape[0] for le in self.label_encoders_]
+        n_values = [le.classes_.shape[0] for le in self._label_encoders]
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
 
@@ -1946,10 +1944,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                       ' will be removed in version 0.20')
         if self.n_values is None:
             #TODO: What to do when classes are strings ?
-            classes = [le.classes_ for le in self.label_encoders_]
+            classes = [le.classes_ for le in self._label_encoders]
             classes_max = [np.max(cls) + 1 for cls in classes]
             cum_idx = np.cumsum([0] + classes_max)
-            active_idx = [self.label_encoders_[i].classes_.astype(np.int)
+            active_idx = [self._label_encoders[i].classes_.astype(np.int)
                           + cum_idx[i]
                           for i in range(self._n_features)]
 
@@ -1961,11 +1959,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def feature_indices_(self):
         warnings.warn('The property `feature_indices_` is deprecated and'
                       ' will be removed in version 0.20')
-        classes_max = [np.max(le.classes_) + 1 for le in self.label_encoders_]
+        classes_max = [np.max(le.classes_) + 1 for le in self._label_encoders]
         return np.cumsum([0] + classes_max)
 
     @property
     def n_values_(self):
         warnings.warn('The property `n_values_` is deprecated and'
                       ' will be removed in version 0.20')
-        return np.array([le.classes_.shape[0] for le in self.label_encoders_])
+        return np.array([le.classes_.shape[0] for le in self._label_encoders])
