@@ -1746,8 +1746,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
-    >>> enc.fit([['cat', 4], ['mouse', 15], ['dog', 17]]) # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', copy=True,
+    >>> enc.fit([['cat', 4], ['mouse', 15], ['dog', 17]]) \
+        # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+        OneHotEncoder(categorical_features='all', copy=True,
            dtype=<... 'numpy.float64'>, handle_unknown='error', n_values=None,
            sparse=True, values='auto')
     >>> enc.transform([['dog', 4]]).toarray()
