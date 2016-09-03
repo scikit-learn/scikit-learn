@@ -332,10 +332,14 @@ def _check_param_grid(param_grid):
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
-            check = [isinstance(v, k) for k in (np.ndarray, Sequence)]
-            if True not in check:
+            if not isinstance(v, (np.ndarray, Sequence)):
                 raise ValueError("Parameter values for parameter ({0}) need "
-                                 "to be a sequence.".format(name))
+                                 "to be a sequence or np.ndarray."
+                                 .format(name))
+
+            if isinstance(v, six.string_types):
+                raise ValueError("Parameter values for parameter ({0}) should"
+                                 " not be a string.".format(name))
 
             if len(v) == 0:
                 raise ValueError("Parameter values for parameter ({0}) need "

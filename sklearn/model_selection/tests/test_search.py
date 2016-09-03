@@ -321,7 +321,8 @@ def test_grid_search_bad_param_grid():
     clf = SVC()
     assert_raise_message(
         ValueError,
-        "Parameter values for parameter (C) need to be a sequence.",
+        "Parameter values for parameter (C) need to be a sequence or "
+        "np.ndarray.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
@@ -329,6 +330,13 @@ def test_grid_search_bad_param_grid():
     assert_raise_message(
         ValueError,
         "Parameter values for parameter (C) need to be a non-empty sequence.",
+        GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": "1,2,3"}
+    clf = SVC()
+    assert_raise_message(
+        ValueError,
+        "Parameter values for parameter (C) should not be a string.",
         GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones(6).reshape(3, 2)}
