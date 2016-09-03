@@ -5,7 +5,7 @@
 
 from operator import attrgetter
 from functools import update_wrapper
-
+from .validation import check_is_fitted
 
 __all__ = ['if_delegate_has_method']
 
@@ -14,20 +14,17 @@ class _IffHasAttrDescriptor(object):
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``
-    if none of the delegates (specified in ``delegate_names``) is an attribute
-    of the base object or none of the delegates has an attribute
-    ``attribute_name``.
+    if the delegate doesn't have an attribute ``attribute_name``.
 
     This allows ducktyping of the decorated method based on
-    ``delegate.attribute_name`` where ``delegate`` is the first item in
-    ``delegate_names`` that is an attribute of the base object.
+    ``delegate.attribute_name``
 
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
-    def __init__(self, fn, delegate_names, attribute_name):
+    def __init__(self, fn, delegate_name, attribute_name):
         self.fn = fn
-        self.delegate_names = delegate_names
+        self.delegate_name = delegate_name
         self.attribute_name = attribute_name
 
         # update the docstring of the descriptor
@@ -38,16 +35,9 @@ class _IffHasAttrDescriptor(object):
         if obj is not None:
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
-            for delegate_name in self.delegate_names:
-                try:
-                    delegate = attrgetter(delegate_name)(obj)
-                except AttributeError:
-                    continue
-                else:
-                    getattr(delegate, self.attribute_name)
-                    break
-            else:
-                attrgetter(self.delegate_names[-1])(obj)
+            check_is_fitted(obj, self.delegate_name)
+            delegate = attrgetter(self.delegate_name)(obj)
+            getattr(delegate, self.attribute_name)
 
         # lambda, but not partial, allows help() to work with update_wrapper
         out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)
@@ -64,16 +54,11 @@ def if_delegate_has_method(delegate):
 
     Parameters
     ----------
-    delegate : string, list of strings or tuple of strings
+    delegate : string
         Name of the sub-estimator that can be accessed as an attribute of the
-        base object. If a list or a tuple of names are provided, the first
-        sub-estimator that is an attribute of the base object  will be used.
+        base object.
 
     """
-    if isinstance(delegate, list):
-        delegate = tuple(delegate)
-    if not isinstance(delegate, tuple):
-        delegate = (delegate,)
 
     return lambda fn: _IffHasAttrDescriptor(fn, delegate,
                                             attribute_name=fn.__name__)
