@@ -860,5 +860,5 @@ def stable_cumsum(arr):
     expected = np.sum(arr, dtype=np.float64)
     if not np.allclose(out[-1], expected):
         raise RuntimeError('cumsum was found to be unstable: '
-                           'its results do not correspond to sum')
+                           'its last element does not correspond to sum')
     return out
