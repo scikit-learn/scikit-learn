@@ -296,9 +296,10 @@ Bug fixes
 .........
 
     - :func: `model_selection.tests._search._check_param_grid` now works correctly with all types
-      that extended from sequence (except string), including range (Python 3.x) and xrange
+      that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
       (Python 2.x).
       (`#7323 <https://github.com/scikit-learn/scikit-learn/pull/7323>`_) by `Viacheslav Kovalevskyi`_.
+
     - :class:`StratifiedKFold` now raises error if all n_labels for individual classes is less than n_folds.
       (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
 
