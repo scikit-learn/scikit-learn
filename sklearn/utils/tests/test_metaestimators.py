@@ -1,6 +1,6 @@
 import warnings
 import numpy as np
-from nose.tools import assert_true, assert_false, assert_raises
+from nose.tools import assert_true, assert_false
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.linear_model import SGDClassifier
 with warnings.catch_warnings():
