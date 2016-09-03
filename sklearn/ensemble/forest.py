@@ -363,10 +363,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    backend="threading")(
-            delayed(getattr)(tree, 'feature_importances_')
+            delayed(parallel_helper)(tree, '_compute_feature_importances',
+                                     normalize=False)
             for tree in self.estimators_)
 
-        return sum(all_importances) / len(self.estimators_)
+        all_importances_sum = sum(all_importances)
+        return all_importances_sum / sum(all_importances_sum)
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,

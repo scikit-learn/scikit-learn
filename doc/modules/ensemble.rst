@@ -775,7 +775,7 @@ accessed via the ``feature_importances_`` property::
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0).fit(X, y)
     >>> clf.feature_importances_  # doctest: +ELLIPSIS
-    array([ 0.11,  0.1 ,  0.11,  ...
+    array([ 0.10684213,  0.10461707,  0.11265447,  ...
 
 .. topic:: Examples:
 
