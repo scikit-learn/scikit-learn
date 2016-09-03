@@ -41,7 +41,8 @@ kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            4.0 * Matern(length_scale=[0.5, 0.5], nu=2.5),
            RationalQuadratic(length_scale=0.5, alpha=1.5),
            ExpSineSquared(length_scale=0.5, periodicity=1.5),
-           DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2]
+           DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
+           RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -304,3 +305,10 @@ def test_set_get_params():
                 kernel.set_params(**{hyperparameter.name: value})
                 assert_almost_equal(np.exp(kernel.theta[index]), value)
                 index += 1
+
+
+def test_repr_kernels():
+    """Smoke-test for repr in kernels."""
+
+    for kernel in kernels:
+        repr(kernel)
