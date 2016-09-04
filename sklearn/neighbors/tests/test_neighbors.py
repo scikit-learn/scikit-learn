@@ -944,7 +944,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     for metric, metric_params in metrics:
         results = {}
         p = metric_params.pop('p', 2)
-        for i, algorithm in enumerate(algorithms):
+        for algorithm in algorithms:
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
                     metric not in neighbors.KDTree.valid_metrics):
