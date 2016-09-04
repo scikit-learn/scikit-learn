@@ -46,7 +46,7 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         if self._deprecation_msg is not None:
             warnings.warn(self._deprecation_msg,
                           category=DeprecationWarning,
-                          stacklevel=13)
+                          stacklevel=2)
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
