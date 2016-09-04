@@ -441,6 +441,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                    (n_node_samples < self.min_samples_leaf) or
                    (weighted_n_node_samples < self.min_weight_leaf) or
                    (impurity <= min_impurity_split))
+
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
             is_leaf = is_leaf or (split.pos >= end)

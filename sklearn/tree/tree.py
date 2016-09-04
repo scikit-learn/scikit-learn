@@ -226,8 +226,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
-        # min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
-
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
                 if is_classification:
@@ -308,8 +306,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             min_weight_leaf = 0.
 
         if self.min_impurity_split < 0.:
-            raise ValueError("min_impurity_split must be greater than or equal "
-                             "to 0")
+            raise ValueError("min_impurity_split must be greater than "
+                             "or equal to 0")
 
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
@@ -372,7 +370,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                            min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
-                                           max_leaf_nodes, self.min_impurity_split)
+                                           max_leaf_nodes,
+                                           self.min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
@@ -592,7 +591,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, \
+                   optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
