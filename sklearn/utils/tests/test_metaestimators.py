@@ -63,4 +63,3 @@ def test_stochastic_gradient_loss_param():
     assert_false(hasattr(clf, "predict_proba"))
     clf.fit(X, y)
     assert_false(hasattr(clf, "predict_proba"))
-
