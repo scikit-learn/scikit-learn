@@ -944,25 +944,28 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     for metric, metric_params in metrics:
         results = []
         p = metric_params.pop('p', 2)
-        for algorithm in algorithms:
+        kd = True
+        for i, algorithm in enumerate(algorithms):
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
                     metric not in neighbors.KDTree.valid_metrics):
+                kd = False
                 assert_raises(ValueError,
                               neighbors.NearestNeighbors,
                               algorithm=algorithm,
                               metric=metric, metric_params=metric_params)
                 continue
-
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
             neigh.fit(X)
             results.append(neigh.kneighbors(test, return_distance=True))
-
         assert_array_almost_equal(results[0][0], results[1][0])
         assert_array_almost_equal(results[0][1], results[1][1])
+        if kd:
+            assert_array_almost_equal(results[0][0], results[2][0])
+            assert_array_almost_equal(results[0][1], results[2][1])
 
 
 def test_callable_metric():
