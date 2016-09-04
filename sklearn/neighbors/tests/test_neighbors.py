@@ -962,8 +962,10 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
         if 'kd_tree' in results:
-            assert_array_almost_equal(results['brute'][0], results['kd_tree'][0])
-            assert_array_almost_equal(results['brute'][1], results['kd_tree'][1])
+            assert_array_almost_equal(results['brute'][0],
+                                      results['kd_tree'][0])
+            assert_array_almost_equal(results['brute'][1],
+                                      results['kd_tree'][1])
 
 
 def test_callable_metric():
