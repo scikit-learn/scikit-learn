@@ -218,7 +218,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 is_leaf = ((depth >= max_depth) or
                            (n_node_samples < min_samples_split) or
-                           (n_node_samples < 2 * min_samples_leaf) or
+                           (n_node_samples < min_samples_leaf) or
                            (weighted_n_node_samples < min_weight_leaf))
 
                 if first:
@@ -438,7 +438,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         n_node_samples = end - start
         is_leaf = ((depth > self.max_depth) or
                    (n_node_samples < self.min_samples_split) or
-                   (n_node_samples < 2 * self.min_samples_leaf) or
+                   (n_node_samples < self.min_samples_leaf) or
                    (weighted_n_node_samples < self.min_weight_leaf) or
                    (impurity <= min_impurity_split))
 
