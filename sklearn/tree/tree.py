@@ -226,7 +226,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
-        min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
+        # min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
