@@ -83,5 +83,6 @@ def if_fitted_delegate_has_method(delegate, *args, **kwargs):
         base object.
 
     """
-    fn = lambda obj: check_is_fitted(obj, *args, **kwargs)
+    def fn(obj):
+        return check_is_fitted(obj, *args, **kwargs)
     return if_delegate_has_method(delegate, fn_check_obj=fn)
