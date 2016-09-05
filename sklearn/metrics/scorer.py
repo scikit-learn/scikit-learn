@@ -18,7 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 import warnings
 
 import numpy as np
@@ -39,9 +39,10 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         self._score_func = score_func
         self._sign = sign
         # XXX After removing the deprecated scorers (v0.20) remove the
-        # XXX deprecation_msg property again and make __call__ abstract again
+        # XXX deprecation_msg property again and remove __call__'s body again
         self._deprecation_msg = None
 
+    @abstractmethod
     def __call__(self, estimator, X, y, sample_weight=None):
         if self._deprecation_msg is not None:
             warnings.warn(self._deprecation_msg,
