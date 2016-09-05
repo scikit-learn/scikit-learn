@@ -768,24 +768,6 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                           est.min_weight_fraction_leaf,
                                           est.min_samples_leaf))
 
-    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0.1, 0.5, 3)):
-        # test that min_samples_leaf and min_weight_fraction_leaf
-        # yield the same results when sample_weight is None.
-        est_weight = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                                   min_weight_fraction_leaf=frac,
-                                   random_state=0)
-        est_sample = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
-                                   min_samples_leaf=frac,
-                                   random_state=0)
-        est_weight.fit(X, y)
-        est_sample.fit(X, y)
-
-        assert_tree_equal(est_weight.tree_, est_sample.tree_,
-                          "{0} with equal values of min_samples_leaf "
-                          "and min_weight_fraction_leaf "
-                          "are unequal with parameter value "
-                          "{1}".format(name, frac))
-
 
 def test_min_weight_fraction_leaf_with_min_samples_leaf():
     # Check on dense input
