@@ -140,14 +140,14 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
     >>> import os
     >>> os.unlink('iris.dot')
 
-Alternatively, if we have Python module ``pydot`` installed, we can generate
+Alternatively, if we have Python module ``pydotplus`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
     >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
-    >>> import pydot # doctest: +SKIP
+    >>> import pydotplus # doctest: +SKIP
     >>> dot_data = StringIO() # doctest: +SKIP
     >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
@@ -162,7 +162,7 @@ render these plots inline using the `Image()` function::
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
     >>> Image(graph.create_png())  # doctest: +SKIP
 
 .. only:: html
