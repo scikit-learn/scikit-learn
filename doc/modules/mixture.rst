@@ -272,7 +272,7 @@ necessary.
       :class:`GaussianMixture` and :class:`DirichletGaussianMixture` to fit a
       sine wave.
 
-    * :ref:`sphx_glr_auto_example_mixture_plot_concentration_prior_mixture.py`
+    * See :ref:`sphx_glr_auto_example_mixture_plot_concentration_prior.py`
       for an example plotting the confidence ellipsoids for the
       :class:`DirichletGaussianMixture` for different values of the parameter
       ``weight_concentration_prior``.
