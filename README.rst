@@ -36,7 +36,7 @@ SciPy and distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the AUTHORS.rst file for a complete list of contributors.
+the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
