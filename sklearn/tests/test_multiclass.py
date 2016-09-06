@@ -610,8 +610,9 @@ def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC()
 
-    ovrFalse = OneVsRestClassifier(clf_notprecomputed)
-    assert_false(ovrFalse._pairwise)
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        ovrFalse = MultiClassClassifier(clf_notprecomputed)
+        assert_false(ovrFalse._pairwise)
     
-    ovrTrue = OneVsRestClassifier(clf_precomputed)
-    assert_true(ovrTrue._pairwise)
+        ovrTrue = MultiClassClassifier(clf_precomputed)
+        assert_true(ovrTrue._pairwise)
