@@ -605,3 +605,13 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+def test_pairwise_attribute():
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_notprecomputed = svm.SVC()
+
+    ovrFalse = OneVsRestClassifier(clf_notprecomputed)
+    assert_false(ovrFalse._pairwise)
+    
+    ovrTrue = OneVsRestClassifier(clf_precomputed)
+    assert_true(ovrTrue._pairwise)

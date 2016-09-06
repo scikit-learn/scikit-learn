@@ -391,6 +391,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 "Base estimator doesn't have an intercept_ attribute.")
         return np.array([e.intercept_.ravel() for e in self.estimators_])
 
+    @property
+    def _pairwise(self):
+        '''Indicate if wrapped estimator is using a precomputed Gram matrix'''
+        return getattr(self.estimator, "_pairwise", False)
+
 
 def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
@@ -567,6 +572,11 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     @property
     def n_classes_(self):
         return len(self.classes_)
+
+    @property
+    def _pairwise(self):
+        '''Indicate if wrapped estimator is using a precomputed Gram matrix'''
+        return getattr(self.estimator, "_pairwise", False)
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
