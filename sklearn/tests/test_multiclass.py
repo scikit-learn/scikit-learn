@@ -631,13 +631,13 @@ def test_pairwise_cross_val_score():
 
 #    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
     for MultiClassClassifier in [OneVsRestClassifier]:
-        ovrFalse = MultiClassClassifier(clf_notprecomputed)
-        ovrTrue = MultiClassClassifier(clf_precomputed)
+        ovr_false = MultiClassClassifier(clf_notprecomputed)
+        ovr_true = MultiClassClassifier(clf_precomputed)
 
         linear_kernel = np.dot(X, X.T)
         print("0 shape", X.shape[0])
-        print("1 shape",X.shape[1])
-        score_precomputed = cval.cross_val_score(ovrTrue, linear_kernel, y)
+        print("1 shape", X.shape[1])
+        score_precomputed = cval.cross_val_score(ovr_true, linear_kernel, y)
         clf = clf_notprecomputed
-        score_linear = cval.cross_val_score(ovrFalse, X, y)
+        score_linear = cval.cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
