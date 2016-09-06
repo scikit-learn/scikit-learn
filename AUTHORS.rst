@@ -65,7 +65,7 @@ The following people have been core contributors to scikit-learn's development a
   * `Gael Varoquaux <http://gael-varoquaux.info/>`_
   * Ron Weiss
 
-Please do not email the authors directly with bug reports or feature requests.
+Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
 <http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-ask-questions-about-scikit-learn>`_
 in the FAQ.

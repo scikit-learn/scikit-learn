@@ -26,17 +26,31 @@ See :ref:`contributing`. Before wanting to add a new algorithm, which is
 usually a major and lengthy undertaking, it is recommended to start with :ref:`known
 issues <easy_issues>`.
 
-What's the best way to ask questions about scikit-learn?
+What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
-The quickest way to get replies to your questions is posting on 
-`Stack Overflow <http://stackoverflow.com>`_ or 
-`Cross Validated <http://stats.stackexchange.com>`_ 
-with the "scikit-learn" or "machine-learning" tags. These sites may already
-have an answer for your question and provide a convenient search interface. You
-can also post questions on the `mailing list
-<https://mail.python.org/mailman/listinfo/scikit-learn>`_, though that often
-has longer turn-around times.  Please don't ask general machine learning
-questions on the mailing list.
+**For general machine learning questions**, please use
+`Cross Validated <http://stats.stackexchange.com>`_ with the ``[machine-learning]`` tag.
+
+**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com>`_
+with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+<https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+
+Please make sure to include a minimal reproduction code snippet (ideally shorter
+than 10 lines) that highlights your problem on a toy dataset (for instance from
+``sklearn.datasets`` or randomly generated with functions of ``numpy.random`` with
+a fixed random seed). Please remove any line of code that is not necessary to
+reproduce your problem.
+
+The problem should be reproducible by simply copy-pasting your code snippet in a Python
+shell with scikit-learn installed. Do not forget to include the import statements.
+
+More guidance to write good reproduction code snippets can be found at:
+
+  http://stackoverflow.com/help/mcve
+
+  If your problem raises an exception that you do not understand (even after googling it),
+  please make sure to include the full traceback that you obtain when running the
+  reproduction script.
 
 For bug reports or feature requests, please make use of the
 `issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_.
@@ -45,7 +59,7 @@ There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
 might be found. 
 
-Please do not email any authors directly with bug reports, feature requests
+Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.
 
 How can I create a bunch object?
