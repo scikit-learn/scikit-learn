@@ -1045,10 +1045,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
         cls_count = bincount(self.y_indices)
-        #p_i = cls_count / float(self.n)
-        #n_i = np.round(self.n_train * p_i).astype(int)
-        #t_i = np.minimum(cls_count - n_i,
-        #                 np.round(self.n_test * p_i).astype(int))
 
         for n in range(self.n_iter):
             # if there are ties in the class-counts, we want
