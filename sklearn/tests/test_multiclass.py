@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -29,6 +31,10 @@ from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
 from sklearn.externals.six.moves import zip
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn import cross_validation as cval
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -613,6 +619,25 @@ def test_pairwise_attribute():
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
         ovrFalse = MultiClassClassifier(clf_notprecomputed)
         assert_false(ovrFalse._pairwise)
-    
+
         ovrTrue = MultiClassClassifier(clf_precomputed)
         assert_true(ovrTrue._pairwise)
+
+def test_pairwise_cross_val_score():
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_notprecomputed = svm.SVC(kernel='linear')
+
+    X, y = iris.data, iris.target
+
+#    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+    for MultiClassClassifier in [OneVsRestClassifier]:
+        ovrFalse = MultiClassClassifier(clf_notprecomputed)
+        ovrTrue = MultiClassClassifier(clf_precomputed)
+
+        linear_kernel = np.dot(X, X.T)
+        print("0 shape", X.shape[0])
+        print("1 shape",X.shape[1])
+        score_precomputed = cval.cross_val_score(ovrTrue, linear_kernel, y)
+        clf = clf_notprecomputed
+        score_linear = cval.cross_val_score(ovrFalse, X, y)
+        assert_array_equal(score_precomputed, score_linear)
