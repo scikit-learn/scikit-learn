@@ -908,7 +908,7 @@ def _validate_shuffle_split(n, test_size, train_size):
 
 
 def _approximate_mode(class_counts, n_draws, rng):
-    """Computes approximate mode of multivariate hypergemetric.
+    """Computes approximate mode of multivariate hypergeometric.
 
     This is an approximation to the mode of the multivariate
     hypergeometric given by class_counts and n_draws.
