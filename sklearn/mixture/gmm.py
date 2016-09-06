@@ -65,6 +65,9 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
         X, means, covars)
 
 
+@deprecated("The function sample_gaussian is deprecated in 0.18"
+            " and will be removed in 0.20."
+            " Use numpy.random.multivariate_normal instead.")
 def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
                     random_state=None):
     """Generate random samples from a Gaussian distribution.

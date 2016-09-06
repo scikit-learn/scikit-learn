@@ -98,9 +98,11 @@ Selecting the number of components in a classical Gaussian Mixture Model
 
 The BIC criterion can be used to select the number of components in a Gaussian
 Mixture in an efficient way. In theory, it recovers the true number of
-components only in the asymptotic regime (i.e. if much data is available). Note
-that using a :ref:`Dirichlet Gaussian Mixture <dpgmm>` avoids the specification
-of the number of components for a Gaussian mixture model.
+components only in the asymptotic regime (i.e. if much data is available and
+assuming that the data was actually generated i.i.d. from a mixture of Gaussian
+distribution). Note that using a :ref:`Dirichlet Gaussian Mixture <dpgmm>`
+avoids the specification of the number of components for a Gaussian mixture
+model.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
@@ -224,7 +226,7 @@ only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
 
-The examples bellow compare Gaussian mixture models with fixed number of
+The examples bellow compare Gaussian mixture models with a fixed number of
 components, to the Gaussian mixture models with a Dirichlet process prior. Here,
 a classical Gaussian mixture is fitted with 5 components on a dataset composed
 of 2 clusters. We can see that the Dirichlet Gaussian mixture is able to limit
@@ -241,7 +243,7 @@ component.
    :scale: 70%
 
 
-On the following example, we are fitting a dataset not well-depicted by a Gaussian
+On the following example we are fitting a dataset not well-depicted by a Gaussian
 mixture. Adjusting the ``weight_concentration_prior``, parameter of the DPGMM
 controls the number of components used to fit this data.
 
@@ -252,9 +254,9 @@ controls the number of components used to fit this data.
 
 The next figure presents the resulting clusters computed by the Gaussian mixture
 with a Dirichlet process prior for different values of
-``weight_concentration_prior``. The ``weight_concentration_prior`` is related to
-the number of clusters obtained.  As in Variational Bayesian Gaussian Mixture
-(for the ``weight_concentration_prior`` parameter), smaller values of
+``weight_concentration_prior``.  The value of the ``weight_concentration_prior``
+parameter has a strong impact on the effective number of active components
+obtained. As in Variational Bayesian Gaussian Mixture, smaller values of
 ``weight_concentration_prior`` lead to fewer components and higher values lead
 to more components but is more stable as each component is activated only if
 necessary.
