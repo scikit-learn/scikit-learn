@@ -10,6 +10,13 @@ from __future__ import print_function
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+# Important note for the deprecation cleaning of 0.20 :
+# All the function and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg

@@ -27,8 +27,8 @@ color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
                               'darkorange'])
 
 
-def plot_results(X, Y_, means, covariances, index, title):
-    splot = plt.subplot(3, 1, 1 + index)
+def plot_results(X, Y, means, covariances, index, title):
+    splot = plt.subplot(5, 1, 1 + index)
     for i, (mean, covar, color) in enumerate(zip(
             means, covariances, color_iter)):
         v, w = linalg.eigh(covar)
@@ -37,9 +37,9 @@ def plot_results(X, Y_, means, covariances, index, title):
         # as the DP will not use every component it has access to
         # unless it needs it, we shouldn't plot the redundant
         # components.
-        if not np.any(Y_ == i):
+        if not np.any(Y == i):
             continue
-        plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
+        plt.scatter(X[Y == i, 0], X[Y == i, 1], .8, color=color)
 
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])
@@ -55,7 +55,25 @@ def plot_results(X, Y_, means, covariances, index, title):
     plt.xticks(())
     plt.yticks(())
 
-plt.figure(figsize=(2.8 * 3, 7))
+
+def plot_samples(X, Y, n_components, index, title):
+    plt.subplot(5, 1, 4 + index)
+    for i, color in zip(range(n_components), color_iter):
+        # as the DP will not use every component it has access to
+        # unless it needs it, we shouldn't plot the redundant
+        # components.
+        if not np.any(Y == i):
+            continue
+        plt.scatter(X[Y == i, 0], X[Y == i, 1], .8, color=color)
+
+    plt.xlim(-6., 4. * np.pi - 6.)
+    plt.ylim(-5., 5.)
+    plt.title(title)
+    plt.xticks(())
+    plt.yticks(())
+
+
+plt.figure(figsize=(10, 10))
 plt.subplots_adjust(bottom=.04, top=0.95, hspace=.2, wspace=.05,
                     left=.03, right=.97)
 
@@ -79,7 +97,8 @@ gmm = mixture.GaussianMixture(n_components=10, covariance_type='full',
 plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
              'Expectation-maximization')
 
-# Fit a Dirichlet process Gaussian mixture using ten components
+# Fit a Gaussian mixture models with a Dirichlet process prior
+# with ten components
 dpgmm = mixture.DirichletGaussianMixture(
     n_components=10, covariance_type='full', weight_concentration_prior=1e-2,
     mean_precision_prior=1e-2, covariance_prior=1e0 * np.eye(2),
@@ -87,12 +106,22 @@ dpgmm = mixture.DirichletGaussianMixture(
 plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
              r'Dirichlet Process with $\beta_0=0.01$')
 
+# Sample the Dirichlet process Gaussian mixture
+X_s, y_s = dpgmm.sample(n_samples=5000)
+plot_samples(X_s, y_s, dpgmm.n_components, 0, "Sampling of model obtained "
+             r"with a Dirichlet Process with $\beta_0=100$ and $5000$ samples")
 
-# Fit a Dirichlet process Gaussian mixture using ten components
+# Fit a Gaussian mixture models with a Dirichlet process prior ten components
 dpgmm = mixture.DirichletGaussianMixture(
     n_components=10, covariance_type='full', weight_concentration_prior=1e+2,
     mean_precision_prior=1e-2, covariance_prior=1e0 * np.eye(2),
     init_params="kmeans", max_iter=100, random_state=2).fit(X)
 plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 2,
              r'Dirichlet Process with $\beta_0=100$')
+
+# Sample the Dirichlet process Gaussian mixture
+X_s, y_s = dpgmm.sample(n_samples=5000)
+plot_samples(X_s, y_s, dpgmm.n_components, 1, "Sampling of model obtained "
+             r"with a Dirichlet Process with $\beta_0=100$ and $5000$ samples")
+
 plt.show()

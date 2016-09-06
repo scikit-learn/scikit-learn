@@ -9,6 +9,13 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy import linalg
 from time import time

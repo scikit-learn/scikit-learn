@@ -355,6 +355,51 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
 
+    def sample(self, n_samples=1):
+        """Generate random samples from the fitted Gaussian distribution.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
+
+        Returns
+        -------
+        X : array, shape (n_features, n_samples)
+            Randomly generated sample
+        """
+        self._check_is_fitted()
+
+        if n_samples < 1:
+            raise ValueError(
+                "Invalid value for 'n_samples': %d . The sampling requires at "
+                "least one sample." % (self.n_components))
+
+        _, n_features = self.means_.shape
+        rng = check_random_state(self.random_state)
+        n_samples_comp = np.round(self.weights_ * n_samples).astype(int)
+
+        if self.covariance_type == 'full':
+            X = np.vstack([
+                rng.multivariate_normal(mean, covariance, int(sample))
+                for (mean, covariance, sample) in zip(
+                    self.means_, self.covariances_, n_samples_comp)])
+        elif self.covariance_type == "tied":
+            X = np.vstack([
+                rng.multivariate_normal(mean, self.covariances_, int(sample))
+                for (mean, sample) in zip(
+                    self.means_, n_samples_comp)])
+        else:
+            X = np.vstack([
+                mean + rng.randn(sample, n_features) * np.sqrt(covariance)
+                for (mean, covariance, sample) in zip(
+                    self.means_, self.covariances_, n_samples_comp)])
+
+        y = np.concatenate([j * np.ones(sample, dtype=int)
+                           for j, sample in enumerate(n_samples_comp)])
+
+        return (X, y)
+
     def _estimate_weighted_log_prob(self, X):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
 

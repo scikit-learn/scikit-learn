@@ -1,3 +1,9 @@
+# Important note for the deprecation cleaning of 0.20 :
+# All the function and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_gmm.py'
 import unittest
 import sys
 

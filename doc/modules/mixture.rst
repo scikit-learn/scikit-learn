@@ -229,13 +229,13 @@ concentration parameter.
 The examples bellow compare Gaussian mixture models with a fixed number of
 components, to the Gaussian mixture models with a Dirichlet process prior. Here,
 a classical Gaussian mixture is fitted with 5 components on a dataset composed
-of 2 clusters. We can see that the Dirichlet Gaussian mixture is able to limit
-itself to only 2 components whereas the Gaussian mixture fits the data with a
-fixed number of components that has to be set a priori by the user. In this case
-the user has select ``n_components=5`` which does not match the true generative
-distribution of this toy dataset. Note that with very little observations, the
-Dirichlet Gaussian Mixture can take a conservative stand, and fit only one
-component.
+of 2 clusters. We can see that the Gaussian mixture with a Dirichlet process
+prior is able to limit itself to only 2 components whereas the Gaussian mixture
+fits the data with a fixed number of components that has to be set a priori by
+the user. In this case the user has select ``n_components=5`` which does not
+match the true generative distribution of this toy dataset. Note that with very
+little observations, the Dirichlet Gaussian Mixture can take a conservative
+stand, and fit only one component.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
@@ -243,9 +243,11 @@ component.
    :scale: 70%
 
 
-On the following example we are fitting a dataset not well-depicted by a Gaussian
-mixture. Adjusting the ``weight_concentration_prior``, parameter of the DPGMM
-controls the number of components used to fit this data.
+On the following example we are fitting a dataset not well-depicted by a
+Gaussian mixture. Adjusting the ``weight_concentration_prior``, parameter of the
+class:`DirichletGaussianMixture` controls the number of components used to fit
+this data. We also present on the last two plots a random sampling generated
+from the two resulting mixtures.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_sin_001.png
    :target: ../auto_examples/mixture/plot_gmm_sin.html
@@ -254,7 +256,7 @@ controls the number of components used to fit this data.
 
 The next figure presents the resulting clusters computed by the Gaussian mixture
 with a Dirichlet process prior for different values of
-``weight_concentration_prior``.  The value of the ``weight_concentration_prior``
+``weight_concentration_prior``. The value of the ``weight_concentration_prior``
 parameter has a strong impact on the effective number of active components
 obtained. As in Variational Bayesian Gaussian Mixture, smaller values of
 ``weight_concentration_prior`` lead to fewer components and higher values lead
@@ -296,11 +298,11 @@ Pros
    won't change much with changes to the parameters, leading to more
    stability and less tuning.
 
-:No need to specify the number of components: only an upper bound of    this
-number needs to be provided. Note however that the "ideal" number of active
-components is very application specific and is typically ill-defined in a data
-exploration setting. The effective number of active components often depends a
-lot on the value for the weights concentration prior.
+:No need to specify the number of components: only an upper bound of this
+   number needs to be provided. Note however that the "ideal" number of active
+   components is very application specific and is typically ill-defined in a data
+   exploration setting. The effective number of active components often depends a
+   lot on the value for the weights concentration prior.
 
 Cons
 .....
