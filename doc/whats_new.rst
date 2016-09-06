@@ -11,9 +11,6 @@ Version 0.18
 
 **In Development**
 
-Changelog
----------
-
 .. _model_selection_changes:
 
 Model Selection Enhancements and API Changes
@@ -75,6 +72,8 @@ Model Selection Enhancements and API Changes
     and :class:`model_selection.StratifiedShuffleSplit` is now renamed
     to ``n_splits``.
 
+Changelog
+---------
 
 New features
 ............
