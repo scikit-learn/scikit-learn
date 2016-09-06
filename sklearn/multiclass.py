@@ -393,7 +393,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     @property
     def _pairwise(self):
-        '''Indicate if wrapped estimator is using a precomputed Gram matrix'''
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
 
 
@@ -575,7 +575,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     @property
     def _pairwise(self):
-        '''Indicate if wrapped estimator is using a precomputed Gram matrix'''
+        """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
 
 
