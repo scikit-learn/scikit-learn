@@ -1694,7 +1694,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    values : 'auto', 'seen', int, list of ints, or list of lists of objects
+    values : 'auto', int, list of ints, or list of lists of objects
         - 'auto' : determine set of values from training data. See the
           documentation of `handle_unknown` for which values are considered
           acceptable.
@@ -1731,11 +1731,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     feature_index_range_ : array, shape [n_feature, 2]
-        `feature_index_range_[i]` specifies the range of column indices
-        occupied by the feature `i` in the one-hot encoded array.
+        ``feature_index_range_[i]`` specifies the range of column indices
+        occupied by the input feature `i` in the one-hot encoded array.
 
     one_hot_feature_index_ : array, shape [n_features_new]
-        `one_hot_feature_index_[i]` specifies which feature of the input
+        ``one_hot_feature_index_[i]`` specifies which feature of the input
         is encoded by column `i` in the one-hot encoded array.
 
     Examples
@@ -1820,7 +1820,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 le = self._label_encoders[cat_index]
                 end = start + len(le.classes_)
                 self.feature_index_range_[i] = start, end
-                start += len(le.classes_)
+                start = end
                 cat_index += 1
 
         indices = np.arange(start, start + n_features - num_cat)
@@ -1844,7 +1844,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     def _fit(self, X):
         "Assumes `X` contains only catergorical features."
 
-        X = check_array(X, dtype=np.object)
+        if not np.issubdtype(X.dtype.type, np.integer):
+            X = check_array(X, dtype=np.object)
         n_samples, n_features = X.shape
 
         self._n_features = n_features
@@ -1854,7 +1855,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         if self.n_values is not None:
             warnings.warn('The parameter `n_values` is deprecated, use the'
-                          'parameter `classes_` instead and specify the '
+                          'parameter `values` instead and specify the '
                           'expected values for each feature')
 
             if isinstance(self.n_values, numbers.Integral):
