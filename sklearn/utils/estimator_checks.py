@@ -10,6 +10,7 @@ from copy import deepcopy
 import numpy as np
 from scipy import sparse
 import struct
+import inspect
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
@@ -76,8 +77,8 @@ DEPRECATED_TRANSFORM = [
 
 
 def _set_test_name(function, name):
-    function.description = ("sklearn.tests.test_common.{0}({1})".format(
-        function.__name__, name))
+    function.description = ("sklearn.tests.test_common.{0}.{1}({2})".format(
+        inspect.stack()[1][3], function.__name__, name))
     return function
 
 
