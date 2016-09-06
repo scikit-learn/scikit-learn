@@ -40,7 +40,8 @@ from sklearn.externals import joblib
 REGRESSION_SCORERS = ['r2', 'mean_absolute_error', 'mean_squared_error',
                       'median_absolute_error']
 
-CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
+CLF_SCORERS = ['accuracy', 'balanced_accuracy',
+               'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
