@@ -115,9 +115,9 @@ def clone(estimator, safe=True):
             # fall back on standard equality
             equality_test = param1 == param2
         if equality_test:
-            warnings.warn("Estimator %s modifies parameters in "
-                          "__init__. This behavior is deprecated as of 0.18 and "
-                          " support for this behavior will be removed in 0.20."
+            warnings.warn("Estimator %s modifies parameters in __init__."
+                          " This behavior is deprecated as of 0.18 and "
+                          "support for this behavior will be removed in 0.20."
                           % type(estimator).__name__, DeprecationWarning)
         else:
             raise RuntimeError('Cannot clone object %s, as the constructor '
