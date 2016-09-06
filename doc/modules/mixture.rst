@@ -179,8 +179,8 @@ points.
       the results of the ``BayesianGaussianMixture`` for different values
       of the parameter ``weight_concentration_prior``.
 
-Pros and cons of variational inference with :class:BayesianGaussianMixture
---------------------------------------------------------------------------
+Pros and cons of variational inference with :class:`BayesianGaussianMixture`
+----------------------------------------------------------------------------
 
 Pros
 .....
@@ -189,8 +189,8 @@ Pros
    variational solutions have less pathological special cases than
    expectation-maximization solutions.
 
-:Automatic selection: when `dirichlet_concentration_prior` is small enough and
-   `n_components` is larger than what is found necessary by the model, the
+:Automatic selection: when ``weight_concentration_prior`` is small enough and
+   ``n_components`` is larger than what is found necessary by the model, the
    Variational Bayesian mixture model has a natural tendency to set some mixture
    weights values close to zero. This makes it possible to let the model choose a
    suitable number of effective components automatically.
@@ -225,42 +225,45 @@ concentration parameter.
 
 
 The examples bellow compare Gaussian mixture models with fixed number of
-components, to the Dirichlet Gaussian mixture models.
+components, to the Gaussian mixture models with a Dirichlet process prior. Here,
+a classical Gaussian mixture is fitted with 5 components on a dataset composed
+of 2 clusters. We can see that the Dirichlet Gaussian mixture is able to limit
+itself to only 2 components whereas the Gaussian mixture fits the data with a
+fixed number of components that has to be set a priori by the user. In this case
+the user has select ``n_components=5`` which does not match the true generative
+distribution of this toy dataset. Note that with very little observations, the
+Dirichlet Gaussian Mixture can take a conservative stand, and fit only one
+component.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
    :align: center
    :scale: 70%
 
-Here, a classical Gaussian mixture is fitted with 5 components on a dataset
-composed of 2 clusters. We can see that the Dirichlet Gaussian mixture is able
-to limit itself to only 2 components whereas the Gaussian mixture fits the data
-fit with too many components. Note that with very little observations, the
-Dirichlet Gaussian Mixture can take a conservative stand, and fit only one
-component.
+
+On the following example, we are fitting a dataset not well-depicted by a Gaussian
+mixture. Adjusting the ``weight_concentration_prior``, parameter of the DPGMM
+controls the number of components used to fit this data.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_sin_001.png
    :target: ../auto_examples/mixture/plot_gmm_sin.html
    :align: center
    :scale: 65%
 
-On that example, we are fitting a dataset not well-depicted by a Gaussian
-mixture. Adjusting the ``weight_concentration_prior``, parameter of the DPGMM
-controls the number of components used to fit this data.
+The next figure presents the resulting clusters computed by the Gaussian mixture
+with a Dirichlet process prior for different values of
+``weight_concentration_prior``. The ``weight_concentration_prior`` is related to
+the number of clusters obtained.  As in Variational Bayesian Gaussian Mixture
+(for the ``weight_concentration_prior`` parameter), smaller values of
+``weight_concentration_prior`` lead to fewer components and higher values lead
+to more components but is more stable as each component is activated only if
+necessary.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
    :target: ../auto_examples/mixture/plot_concentration_prior.html
    :align: center
    :scale: 50%
 
-The previous figure presents the resulting clusters computed by the Dirichlet
-Gaussian mixture for different values of ``weight_concentration_prior``. The
-``weight_concentration_prior`` is related to the number of clusters obtained.  As
-in Variational Bayesian Gaussian Mixture (for the
-``weight_concentration_prior`` parameter), smaller values of
-``weight_concentration_prior`` lead to fewer components and higher values lead to
-more components but is more stable as each component is activated only if
-necessary.
 
 .. topic:: Examples:
 
@@ -291,10 +294,11 @@ Pros
    won't change much with changes to the parameters, leading to more
    stability and less tuning.
 
-:No need to specify the number of components: only an upper bound of
-   this number needs to be provided. Note however that the Dirichlet process
-   Gaussian mixture is not a formal model selection procedure, and thus
-   provides no guarantee on the result.
+:No need to specify the number of components: only an upper bound of    this
+number needs to be provided. Note however that the "ideal" number of active
+components is very application specific and is typically ill-defined in a data
+exploration setting. The effective number of active components often depends a
+lot on the value for the weights concentration prior.
 
 Cons
 .....
