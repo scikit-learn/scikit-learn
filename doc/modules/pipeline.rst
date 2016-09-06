@@ -40,7 +40,7 @@ is an estimator object::
     >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> pipe = Pipeline(estimators)
     >>> pipe # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, iterated_power=4,
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',
     n_components=None, random_state=None, svd_solver='auto', tol=0.0,
     whiten=False)), ('clf', SVC(C=1.0, cache_size=200, class_weight=None,
     coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
@@ -64,20 +64,20 @@ filling in the names automatically::
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
     >>> pipe.steps[0]
-    ('reduce_dim', PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
+    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
 and as a ``dict`` in ``named_steps``::
 
     >>> pipe.named_steps['reduce_dim']
-    PCA(copy=True, iterated_power=4, n_components=None, random_state=None,
+    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
     >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, iterated_power=4,
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',
         n_components=None, random_state=None, svd_solver='auto', tol=0.0,
         whiten=False)), ('clf', SVC(C=10, cache_size=200, class_weight=None,
         coef0=0.0, decision_function_shape=None, degree=3, gamma='auto',
@@ -166,7 +166,7 @@ and ``value`` is an estimator object::
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
-        iterated_power=4, n_components=None, random_state=None,
+        iterated_power='auto', n_components=None, random_state=None,
         svd_solver='auto', tol=0.0, whiten=False)), ('kernel_pca',
         KernelPCA(alpha=1.0, coef0=1, copy_X=True, degree=3,
         eigen_solver='auto', fit_inverse_transform=False, gamma=None,
@@ -184,7 +184,7 @@ and ignored by setting to ``None``::
 
     >>> combined.set_params(kernel_pca=None) # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
-          iterated_power=4, n_components=None, random_state=None,
+          iterated_power='auto', n_components=None, random_state=None,
           svd_solver='auto', tol=0.0, whiten=False)), ('kernel_pca', None)],
         transformer_weights=None)
 
