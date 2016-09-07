@@ -612,6 +612,7 @@ def test_ecoc_gridsearch():
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
 
+
 def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC()
@@ -622,6 +623,7 @@ def test_pairwise_attribute():
 
         ovrTrue = MultiClassClassifier(clf_precomputed)
         assert_true(ovrTrue._pairwise)
+
 
 def test_pairwise_cross_val_score():
     clf_precomputed = svm.SVC(kernel='precomputed')
@@ -638,6 +640,5 @@ def test_pairwise_cross_val_score():
         print("0 shape", X.shape[0])
         print("1 shape", X.shape[1])
         score_precomputed = cval.cross_val_score(ovr_true, linear_kernel, y)
-        clf = clf_notprecomputed
         score_linear = cval.cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
