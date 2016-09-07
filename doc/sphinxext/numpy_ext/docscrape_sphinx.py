@@ -132,15 +132,15 @@ class SphinxDocString(NumpyDocString):
                 out += [''] + autosum
 
             if others:
-                maxlen_0 = max(3, max([len(x[0]) for x in others]))
-                hdr = sixu("=")*maxlen_0 + sixu("  ") + sixu("=")*10
+                maxlen_0 = max(3, max([len(x[0]) + 4 for x in others]))
+                hdr = sixu("=") * maxlen_0 + sixu("  ") + sixu("=") * 10
                 fmt = sixu('%%%ds  %%s  ') % (maxlen_0,)
                 out += ['', '', hdr]
                 for param, param_type, desc in others:
                     desc = sixu(" ").join(x.strip() for x in desc).strip()
                     if param_type:
                         desc = "(%s) %s" % (param_type, desc)
-                    out += [fmt % (param.strip(), desc)]
+                    out += [fmt % ("**" + param.strip() + "**", desc)]
                 out += [hdr]
             out += ['']
         return out
