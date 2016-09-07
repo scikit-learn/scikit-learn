@@ -638,7 +638,7 @@ def test_grid_search_results():
     param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
     score_keys = ('test_mean_score', 'test_rank_score',
                   'test_split0_score', 'test_split1_score',
-                  'test_split2_score', 'test_std_score')
+                  'test_split2_score', 'test_std_score', 'test_mean_time')
     n_candidates = n_grid_points
 
     for search, iid in zip((grid_search, grid_search_iid), (False, True)):
@@ -687,7 +687,7 @@ def test_random_search_results():
     param_keys = ('param_C', 'param_gamma')
     score_keys = ('test_mean_score', 'test_rank_score',
                   'test_split0_score', 'test_split1_score',
-                  'test_split2_score', 'test_std_score')
+                  'test_split2_score', 'test_std_score', 'test_mean_time')
     n_cand = n_search_iter
 
     for search, iid in zip((random_search, random_search_iid), (False, True)):
