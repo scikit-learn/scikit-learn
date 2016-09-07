@@ -3,6 +3,7 @@
 from collections import Iterable, Sized
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
+from sklearn.externals.joblib._compat import PY3_OR_LATER
 from itertools import chain, product
 import pickle
 import sys
@@ -169,22 +170,6 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
-def test_grid_search_incorrect_param_grid():
-    clf = MockClassifier()
-    assert_raise_message(
-        ValueError,
-        "Parameter values for parameter (C) need to be a sequence.",
-        GridSearchCV, clf, {'C': 1})
-
-
-def test_grid_search_param_grid_includes_sequence_of_a_zero_length():
-    clf = MockClassifier()
-    assert_raise_message(
-        ValueError,
-        "Parameter values for parameter (C) need to be a non-empty sequence.",
-        GridSearchCV, clf, {'C': []})
-
-
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
@@ -320,14 +305,41 @@ def test_grid_search_one_grid_point():
     assert_array_equal(clf.dual_coef_, cv.best_estimator_.dual_coef_)
 
 
+def test_grid_search_when_param_grid_includes_range():
+    # Test that the best estimator contains the right value for foo_param
+    clf = MockClassifier()
+    grid_search = None
+    if PY3_OR_LATER:
+        grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
+    else:
+        grid_search = GridSearchCV(clf, {'foo_param': xrange(1, 4)})
+    grid_search.fit(X, y)
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
+
+
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
     clf = SVC()
-    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+    assert_raise_message(
+        ValueError,
+        "Parameter values for parameter (C) need to be a sequence"
+        "(but not a string) or np.ndarray.",
+        GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
     clf = SVC()
-    assert_raises(ValueError, GridSearchCV, clf, param_dict)
+    assert_raise_message(
+        ValueError,
+        "Parameter values for parameter (C) need to be a non-empty sequence.",
+        GridSearchCV, clf, param_dict)
+
+    param_dict = {"C": "1,2,3"}
+    clf = SVC()
+    assert_raise_message(
+        ValueError,
+        "Parameter values for parameter (C) need to be a sequence"
+        "(but not a string) or np.ndarray.",
+        GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones(6).reshape(3, 2)}
     clf = SVC()
