@@ -39,27 +39,27 @@ Model Selection Enhancements and API Changes
     :class:`model_selection.GridSearchCV` and
     :class:`model_selection.RandomizedSearchCV` utilities.
 
-  - **The enhanced `results_` attribute**
+  - **The enhanced ``cv_results_`` attribute**
 
-    The new ``results_`` attribute (of :class:`model_selection.GridSearchCV`
+    The new ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`
     and :class:`model_selection.RandomizedSearchCV`) introduced in lieu of the
     ``grid_scores_`` attribute is a dict of 1D arrays with elements in each
     array corresponding to the parameter settings (i.e. search candidates).
 
-    The ``results_`` dict can be easily imported into ``pandas`` as a
+    The ``cv_results_`` dict can be easily imported into ``pandas`` as a
     ``DataFrame`` for exploring the search results.
 
-    The ``results_`` arrays include scores for each cross-validation split
-    (with keys such as ``test_split0_score``), as well as their mean
-    (``test_mean_score``) and standard deviation (``test_std_score``).
+    The ``cv_results_`` arrays include scores for each cross-validation split
+    (with keys such as ``'split0_test_score'``), as well as their mean
+    (``'mean_test_score'``) and standard deviation (``'std_test_score'``).
 
     The ranks for the search candidates (based on their mean
-    cross-validation score) is available at ``results_['test_rank_score']``.
+    cross-validation score) is available at ``cv_results_['rank_test_score']``.
 
     The parameter values for each parameter is stored separately as numpy
     masked object arrays. The value, for that search candidate, is masked if
     the corresponding parameter is not applicable. Additionally a list of all
-    the parameter dicts are stored at ``results_['params']``.
+    the parameter dicts are stored at ``cv_results_['params']``.
 
   - **Parameters ``n_folds`` and ``n_iter`` renamed to ``n_splits``**
 
@@ -235,7 +235,7 @@ Enhancements
    - The :func: `ignore_warnings` now accept a category argument to ignore only
      the warnings of a specified type. By `Thierry Guillemot`_.
 
-   - The new ``results_`` attribute of :class:`model_selection.GridSearchCV`
+   - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
      into pandas as a ``DataFrame``. Ref :ref:`model_selection_changes` for
      more information.
@@ -419,7 +419,7 @@ API changes summary
 
    - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
      and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
-     the attribute ``results_``.
+     the attribute ``cv_results_``.
      Ref :ref:`model_selection_changes` for more information.
      (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
      `Raghav R V`_.

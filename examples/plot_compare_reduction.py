@@ -53,7 +53,7 @@ grid = GridSearchCV(pipe, cv=3, n_jobs=2, param_grid=param_grid)
 digits = load_digits()
 grid.fit(digits.data, digits.target)
 
-mean_scores = np.array(grid.results_['test_mean_score'])
+mean_scores = np.array(grid.cv_results_['mean_test_score'])
 # scores are in the order of param_grid iteration, which is alphabetical
 mean_scores = mean_scores.reshape(len(C_OPTIONS), -1, len(N_FEATURES_OPTIONS))
 # select score for best C

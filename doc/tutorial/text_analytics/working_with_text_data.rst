@@ -458,9 +458,9 @@ mean score and the parameters setting corresponding to that score::
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-A more detailed summary of the search is available at ``gs_clf.results_``.
+A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 
-The ``results_`` parameter can be easily imported into pandas as a
+The ``cv_results_`` parameter can be easily imported into pandas as a
 ``DataFrame`` for further inspection.
 
 .. note:
