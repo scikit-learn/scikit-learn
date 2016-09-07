@@ -37,6 +37,11 @@ extensions = [
     'sphinx_gallery.gen_gallery',
 ]
 
+# this is needed for some reason...
+# http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
+numpydoc_show_class_members = False
+
+
 # pngmath / imgmath compatibility layer for different sphinx versions
 import sphinx
 from distutils.version import LooseVersion
