@@ -3,6 +3,7 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
+from abc import ABCMeta
 import copy
 import warnings
 
@@ -11,7 +12,10 @@ from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
 from .utils.deprecation import deprecated
+from .utils.metaestimators import if_delegate_has_method
+from .utils.validation import check_is_fitted
 from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
+from .exceptions import NotFittedError as _NotFittedError
 
 
 @deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
@@ -496,6 +500,153 @@ class DensityMixin(object):
 class MetaEstimatorMixin(object):
     """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
+
+
+class EstimatorCVMixin(six.with_metaclass(ABCMeta)):
+    """For making methods of ``best_estimator_`` available to the EstimatorCV.
+
+    It implements "predict", "predict_proba", "decision_function",
+    "transform" and "inverse_transform" for the inheriting ``EstimatorCV``
+    class if there is a ``best_estimator_`` attribute is present.
+    
+    The ``best_estimator`` is a fitted model (of the base ``estimator``)
+    formed by setting the hyper-parameters of the ``estimator`` to the
+    ``best_params_`` found by the cross-validated search.
+
+    NOTE
+    ----
+
+    Make sure the base estimator is available as an instance at the
+    ``estimator`` attribute and the attribute ``refit`` should be overrided
+    if the ``best_estimator_`` is not made available at the end of the ``fit``.
+
+    Additionally, at the end of ``fit``, ``best_index_`` is expected to be
+    present to check if the inheriting ``EstimatorCV`` class is fitted with
+    data or not.
+    """
+
+    refit = True
+
+    def _is_best_model_fitted(self, method_name):
+        if not self.refit:
+            raise _NotFittedError(('This %s instance was initialized with '
+                                   'refit=False. %s is available only after '
+                                   'refitting on the best parameters. ')
+                                   % (self.__class__, method_name))
+        else:
+            check_is_fitted(self, 'best_index_')
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict(self, X):
+        """Call predict on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._is_best_model_fitted(method_name='predict')
+        return self.best_estimator_.predict(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_proba(self, X):
+        """Call predict_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._is_best_model_fitted(method_name='predict_proba')
+        return self.best_estimator_.predict_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_log_proba(self, X):
+        """Call predict_log_proba on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict_log_proba``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._is_best_model_fitted(method_name='predict_log_proba')
+        return self.best_estimator_.predict_log_proba(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def decision_function(self, X):
+        """Call decision_function on the estimator with the best found params.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``decision_function``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._is_best_model_fitted(method_name='decision_function')
+        return self.best_estimator_.decision_function(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def transform(self, X):
+        """Call transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator supports ``transform`` and
+        ``refit=True``.
+
+        Parameters
+        -----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._is_best_model_fitted(method_name='transform')
+        return self.best_estimator_.transform(X)
+
+    @if_delegate_has_method(delegate='estimator')
+    def inverse_transform(self, Xt):
+        """Call inverse_transform on the estimator with the best found params.
+
+        Only available if the underlying estimator implements
+        ``inverse_transform`` and ``refit=True``.
+
+        Parameters
+        -----------
+        Xt : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._is_best_model_fitted(method_name='inverse_transform')
+        return self.best_estimator_.inverse_transform(Xt)
+
+    @property
+    def best_params_(self):
+        check_is_fitted(self, 'best_index_')
+        return self.results_['params'][self.best_index_]
+
+    @property
+    def best_score_(self):
+        check_is_fitted(self, 'best_index_')
+        return self.results_['test_mean_score'][self.best_index_]
 
 
 ###############################################################################
