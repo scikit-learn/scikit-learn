@@ -26,15 +26,11 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV,cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
 from sklearn.externals.six.moves import zip
-
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    from sklearn import cross_validation as cval
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -617,12 +613,12 @@ def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC()
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovrFalse = MultiClassClassifier(clf_notprecomputed)
-        assert_false(ovrFalse._pairwise)
+    for multi_class_classifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        ovr_false = multi_class_classifier(clf_notprecomputed)
+        assert_false(ovr_false._pairwise)
 
-        ovrTrue = MultiClassClassifier(clf_precomputed)
-        assert_true(ovrTrue._pairwise)
+        ovr_true = multi_class_classifier(clf_precomputed)
+        assert_true(ovr_true._pairwise)
 
 
 def test_pairwise_cross_val_score():
@@ -631,14 +627,14 @@ def test_pairwise_cross_val_score():
 
     X, y = iris.data, iris.target
 
-    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-#    for MultiClassClassifier in [OneVsRestClassifier]:
-        ovr_false = MultiClassClassifier(clf_notprecomputed)
-        ovr_true = MultiClassClassifier(clf_precomputed)
+    for multi_class_classifier in [OneVsRestClassifier, OneVsOneClassifier]:
+#    for multi_class_classifier in [OneVsRestClassifier]:
+        ovr_false = multi_class_classifier(clf_notprecomputed)
+        ovr_true = multi_class_classifier(clf_precomputed)
 
         linear_kernel = np.dot(X, X.T)
         print("0 shape", X.shape[0])
         print("1 shape", X.shape[1])
-        score_precomputed = cval.cross_val_score(ovr_true, linear_kernel, y)
-        score_linear = cval.cross_val_score(ovr_false, X, y)
+        score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
+        score_linear = cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
