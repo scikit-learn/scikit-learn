@@ -629,8 +629,8 @@ def test_pairwise_cross_val_score():
 
     X, y = iris.data, iris.target
 
-#    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-    for MultiClassClassifier in [OneVsRestClassifier]:
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+#    for MultiClassClassifier in [OneVsRestClassifier]:
         ovr_false = MultiClassClassifier(clf_notprecomputed)
         ovr_true = MultiClassClassifier(clf_precomputed)
 
