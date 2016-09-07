@@ -88,7 +88,7 @@ echo '--------------------------------------------------------------------------
 # uses git 1.8.
 # We need the following command to exit with 0 hence the echo in case
 # there is no match
-MODIFIED_FILES=$(git diff --name-only $COMMIT | grep -v 'sklearn/externals' || echo "no_match")
+MODIFIED_FILES=$(git diff --name-only $COMMIT | grep -v 'sklearn/externals' | grep -v 'doc/sphinxext' || echo "no_match")
 
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals has been modified"
