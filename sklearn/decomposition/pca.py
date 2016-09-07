@@ -183,7 +183,7 @@ class PCA(_BasePCA):
     components_ : array, [n_components, n_features]
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
-        explained_variance_.
+        ``explained_variance_``.
 
     explained_variance_ : array, [n_components]
         The amount of variance explained by each of the selected components.
@@ -514,7 +514,7 @@ class PCA(_BasePCA):
 
 @deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in 0.20. "
             "Use PCA(svd_solver='randomized') instead. The new implementation "
-            "DOES NOT store whiten components_. Apply transform to get them.")
+            "DOES NOT store whiten ``components_``. Apply transform to get them.")
 class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
 
