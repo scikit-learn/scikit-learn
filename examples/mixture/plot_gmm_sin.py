@@ -109,7 +109,7 @@ plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
 # Sample the Dirichlet process Gaussian mixture
 X_s, y_s = dpgmm.sample(n_samples=5000)
 plot_samples(X_s, y_s, dpgmm.n_components, 0, "Sampling of model obtained "
-             r"with a Dirichlet Process with $\beta_0=100$ and $5000$ samples")
+             r"with a Dirichlet Process with $\beta_0=0.01$ and $5000$ samples")
 
 # Fit a Gaussian mixture models with a Dirichlet process prior ten components
 dpgmm = mixture.DirichletGaussianMixture(
