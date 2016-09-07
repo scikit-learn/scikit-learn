@@ -1491,7 +1491,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  verbose=0,
                  warm_start=False,
                  increasing=None,
-                 decreasin=None):
+                 decreasing=None):
         super(ExtraTreesRegressor, self).__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
