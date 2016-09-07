@@ -71,7 +71,8 @@ def auc(x, y, reorder=False, interpolation='linear',
         unless interpolation is 'step'.
 
         ``'right'``:
-            Intermediate points inherit their y-value from the subsequent point.
+            Intermediate points inherit their y-value from the subsequent
+            point.
         ``'left'``:
             Intermediate points inherit their y-value from the previous point.
 
@@ -198,9 +199,10 @@ def average_precision_score(y_true, y_score, average="macro",
 
     interpolation : string ['linear' (default), 'step']
         Determines the kind of interpolation used when computed AUC. If there
-        are many repeated scores, 'step' is recommended to avoid under- or over-
-        estimating the AUC. See `Roam Analytics blog post
-        <https://github.com/roaminsight/roamresearch/blob/master/BlogPosts/Average_precision/Average_precision_post.ipynb>`
+        are many repeated scores, 'step' is recommended to avoid under- or
+        over-estimating the AUC. See `Roam Analytics blog post
+        <https://github.com/roaminsight/roamresearch/blob/master/BlogPosts/
+        Average_precision/Average_precision_post.ipynb>`
         for details.
 
         ``'linear'``:
@@ -217,7 +219,8 @@ def average_precision_score(y_true, y_score, average="macro",
     .. [1] `Wikipedia entry for the Average precision
            <http://en.wikipedia.org/wiki/Average_precision>`_
     .. [2] `Roam Analytics blog post
-           <https://github.com/roaminsight/roamresearch/blob/master/BlogPosts/Average_precision/Average_precision_post.ipynb>`
+           <https://github.com/roaminsight/roamresearch/blob/master/BlogPosts/
+           Average_precision/Average_precision_post.ipynb>`
     See also
     --------
     roc_auc_score : Area under the ROC curve
