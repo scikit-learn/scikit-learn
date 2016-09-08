@@ -12,12 +12,16 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import deprecated
+
+from sklearn.base import TransformerMixin
+from sklearn.utils.mocking import MockDataFrame
 
 
 #############################################################################
@@ -39,6 +43,15 @@ class T(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
+
+
+class ModifyInitParams(BaseEstimator):
+    """Deprecated behavior.
+    Equal parameters but with a type cast.
+    Doesn't fulfill a is a
+    """
+    def __init__(self, a=np.array([0])):
+        self.a = a.copy()
 
 
 class DeprecatedAttributeEstimator(BaseEstimator):
@@ -143,6 +156,16 @@ def test_clone_nan():
     clf2 = clone(clf)
 
     assert_true(clf.empty is clf2.empty)
+
+
+def test_clone_copy_init_params():
+    # test for deprecation warning when copying or casting an init parameter
+    est = ModifyInitParams()
+    message = ("Estimator ModifyInitParams modifies parameters in __init__. "
+               "This behavior is deprecated as of 0.18 and support "
+               "for this behavior will be removed in 0.20.")
+
+    assert_warns_message(DeprecationWarning, message, clone, est)
 
 
 def test_clone_sparse_matrices():
@@ -252,3 +275,41 @@ def test_score_sample_weight():
                                    sample_weight=sample_weight),
                          msg="Unweighted and weighted scores "
                              "are unexpectedly equal")
+
+
+def test_clone_pandas_dataframe():
+
+    class DummyEstimator(BaseEstimator, TransformerMixin):
+        """This is a dummy class for generating numerical features
+
+        This feature extractor extracts numerical features from pandas data
+        frame.
+
+        Parameters
+        ----------
+
+        df: pandas data frame
+            The pandas data frame parameter.
+
+        Notes
+        -----
+        """
+        def __init__(self, df=None, scalar_param=1):
+            self.df = df
+            self.scalar_param = scalar_param
+
+        def fit(self, X, y=None):
+            pass
+
+        def transform(self, X, y=None):
+            pass
+
+    # build and clone estimator
+    d = np.arange(10)
+    df = MockDataFrame(d)
+    e = DummyEstimator(df, scalar_param=1)
+    cloned_e = clone(e)
+
+    # the test
+    assert_true((e.df == cloned_e.df).values.all())
+    assert_equal(e.scalar_param, cloned_e.scalar_param)
