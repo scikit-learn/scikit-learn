@@ -510,7 +510,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         raise ValueError("y_true cannot be sparse")
         
     if isinstance(y_score,pandas.sparse.series.SparseSeries):
-        raise ValueError("y_true cannot be sparse")
+        raise ValueError("y_score cannot be sparse")
     
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
