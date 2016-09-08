@@ -57,7 +57,7 @@ def auc(x, y, reorder=False, interpolation='linear',
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
 
-    interpolation : string ['trapezoid' (default), 'step']
+    interpolation : string ['linear' (default), 'step']
         This determines the type of interpolation performed on the data.
 
         ``'linear'``:
