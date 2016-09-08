@@ -829,6 +829,22 @@ def test_shufflesplit_reproducible():
                        list(a for a, b in ss.split(X)))
 
 
+def test_leave_one_out_get_n_splits():
+    loo = LeaveOneOut()
+
+    error_string = ("The X parameter should not be None")
+    assert_raise_message(ValueError, error_string,
+                         loo.get_n_splits, None)
+
+
+def test_leave_p_out_get_n_splits():
+    lpo = LeavePOut(2)
+
+    error_string = ("The X parameter should not be None")
+    assert_raise_message(ValueError, error_string,
+                         lpo.get_n_splits, None)
+
+
 def test_safe_split_with_precomputed_kernel():
     clf = SVC()
     clfp = SVC(kernel="precomputed")
