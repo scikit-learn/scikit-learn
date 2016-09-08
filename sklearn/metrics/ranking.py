@@ -22,6 +22,7 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
+import pandas
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
@@ -504,6 +505,13 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
 
     """
+    # Check to make sure y_true and y_score are not SparseSeries
+    if isinstance(y_true,pandas.sparse.series.SparseSeries):
+        raise ValueError("y_true cannot be sparse")
+        
+    if isinstance(y_score,pandas.sparse.series.SparseSeries):
+        raise ValueError("y_true cannot be sparse")
+    
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
 
