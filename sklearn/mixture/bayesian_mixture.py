@@ -122,7 +122,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
         Controls the extend to where means can be placed. Smaller
-        values concentrates the means of each clusters around `mean_prior`.
+        values concentrate the means of each clusters around `mean_prior`.
         The value of the parameter must be greater than 0.
         If it is None, it's set to 1.
 
@@ -227,7 +227,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_prior : float
         The precision prior on the mean distribution (Gaussian).
         Controls the extend to where means can be placed.
-        Smaller values concentrates the means of each clusters around
+        Smaller values concentrate the means of each clusters around
         `mean_prior`.
 
     mean_precision_ : array-like, shape (`n_components`, )
@@ -255,7 +255,7 @@ class BayesianGaussianMixture(BaseMixture):
     --------
     GaussianMixture : Finite Gaussian mixture fit with EM.
 
-    DirichletGaussianMixture : An infinite gaussian mixture model fit with a
+    DirichletGaussianMixture : An infinite Gaussian mixture model fit with a
         Dirichlet Process as a prior distribution on the number of clusters.
     """
 

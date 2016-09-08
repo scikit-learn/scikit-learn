@@ -365,7 +365,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        X : array, shape (n_features, n_samples)
+        X : array, shape (n_samples, n_features)
             Randomly generated sample
         """
         self._check_is_fitted()

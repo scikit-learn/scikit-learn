@@ -194,8 +194,8 @@ Pros
 :Automatic selection: when ``weight_concentration_prior`` is small enough and
    ``n_components`` is larger than what is found necessary by the model, the
    Variational Bayesian mixture model has a natural tendency to set some mixture
-   weights values close to zero. This makes it possible to let the model choose a
-   suitable number of effective components automatically.
+   weights values close to zero. This makes it possible to let the model choose
+   a suitable number of effective components automatically.
 
 Cons
 .....
@@ -226,13 +226,13 @@ only needs to specify a loose upper bound on this number and a
 concentration parameter.
 
 
-The examples bellow compare Gaussian mixture models with a fixed number of
+The examples below compare Gaussian mixture models with a fixed number of
 components, to the Gaussian mixture models with a Dirichlet process prior. Here,
 a classical Gaussian mixture is fitted with 5 components on a dataset composed
 of 2 clusters. We can see that the Gaussian mixture with a Dirichlet process
 prior is able to limit itself to only 2 components whereas the Gaussian mixture
 fits the data with a fixed number of components that has to be set a priori by
-the user. In this case the user has select ``n_components=5`` which does not
+the user. In this case the user has selected ``n_components=5`` which does not
 match the true generative distribution of this toy dataset. Note that with very
 little observations, the Dirichlet Gaussian Mixture can take a conservative
 stand, and fit only one component.

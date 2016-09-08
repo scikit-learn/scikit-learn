@@ -15,16 +15,15 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
     """Dirichlet Process Bayesian Gaussian Mixture.
 
     An infinite mixture model with the Dirichlet Process as a prior
-    distribution on the number of clusters. In practice the
-    approximate inference algorithm uses a truncated distribution with
-    a fixed maximum number of components, but almost always the number
-    of components actually used depends on the data.
+    distribution on the number of clusters. In practice the approximate
+    inference algorithm uses a truncated distribution with a fixed maximum
+    number of components (called the Stick-breaking representation), but almost
+    always the number of components actually used depends on the data.
 
-    Stick-breaking Representation of a Gaussian mixture model
-    probability distribution. This class allows for easy and efficient
-    inference of an approximate posterior distribution over the
-    parameters of a Gaussian mixture model with a variable number of
-    components (smaller than the truncation parameter n_components).
+    This class allows for easy and efficient inference of an approximate
+    posterior distribution over the parameters of a Gaussian mixture model with
+    a variable number of components (smaller than the truncation parameter
+    n_components).
 
     Read more in the :ref:`User Guide <dpgmm>`.
 
@@ -74,7 +73,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
     mean_precision_prior : float, optional.
         The user-provided mean precision prior parameter of the Gaussian
         distribution. Controls the extend to where means can be placed. Smaller
-        values concentrates the means of each clusters around `mean_prior`.
+        values concentrate the means of each clusters around `mean_prior`.
         The value of the parameter must be greater than 0.
         If it is None, mean precision prior is set to 1.
 
@@ -176,7 +175,7 @@ class DirichletGaussianMixture(BayesianGaussianMixture):
     mean_precision_prior : float
         The mean precision prior parameters of the Gaussian distributions of
         the means used during the fit process. Controls the extend to where
-        means can be placed. Smaller values concentrates the means of each
+        means can be placed. Smaller values concentrate the means of each
         clusters around `mean_prior`.
 
     mean_precision_ : array-like, shape (`n_components`, )

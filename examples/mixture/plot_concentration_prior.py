@@ -12,13 +12,13 @@ For all the models, the ``BayesianGaussianMixture`` and the
 parameter ``weight_concentration_prior`` has a direct link with the resulting
 number of components. Specifying higher values more often leads to uniformly-
 sized mixture components, while specifying smaller values will lead to some
-mixture components getting almost all the points while most of the other
+mixture components getting almost all the points with most of the other
 mixture components centering on just a few of the remaining points.
 
-The Dirichlet Process allows to definite an infinite number of component and
+The Dirichlet Process allows to define an infinite number of components and
 automatically selects the correct number of components. Contrary to the
-classical variation Bayesian model, it activates a components only if it is
-necessary (resulting a better selection of the mixtures).
+classical variation Bayesian model, it activates a component only if it is
+necessary (resulting in a better selection of the mixtures).
 """
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause

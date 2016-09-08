@@ -108,10 +108,12 @@ plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
 
 # Sample the Dirichlet process Gaussian mixture
 X_s, y_s = dpgmm.sample(n_samples=5000)
-plot_samples(X_s, y_s, dpgmm.n_components, 0, "Sampling of model obtained "
-             r"with a Dirichlet Process with $\beta_0=0.01$ and $5000$ samples")
+plot_samples(X_s, y_s, dpgmm.n_components, 0,
+             "Sampling of model obtained with a Dirichlet Process "
+             r"with $\beta_0=0.01$ and $5000$ samples")
 
-# Fit a Gaussian mixture models with a Dirichlet process prior ten components
+# Fit a Gaussian mixture models with a Dirichlet process prior
+# and ten components
 dpgmm = mixture.DirichletGaussianMixture(
     n_components=10, covariance_type='full', weight_concentration_prior=1e+2,
     mean_precision_prior=1e-2, covariance_prior=1e0 * np.eye(2),
