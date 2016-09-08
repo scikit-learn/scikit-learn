@@ -100,6 +100,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`k_neighbors` and :meth:`kneighbors_graph` methods.
 
+
+    Attributes
+    ----------
+    outlier_factor_ : numpy array, shape (n_samples,)
+        The LOF of X. The lower, the more normal.
+
+        The local outlier factor (LOF) of a sample captures its
+        supposed `degree of abnormality'.
+        It is the average of the ratio of the local reachability density of
+        a sample and those of its k-nearest neighbors.
+
     References
     ----------
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
@@ -115,8 +126,27 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         self.contamination = contamination
 
+    def fit_predict(self, X):
+        """Compute the local outlier factor (LOF) on X.
+        Return the labels (1 inlier, -1 outlier) of X according to LOF score
+        and the contamination parameter.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features), default=None
+            The query sample or samples to compute the Local Outlier Factor
+            wrt to the training samples.
+
+        Returns
+        -------
+        is_inlier : array of shape (n_samples,)
+            Returns 1 for anomalies/outliers and -1 for inliers.
+        """
+
+        return self.fit(X)._predict()
+
     def fit(self, X, y=None):
-        """Fit the model using X as training data
+        """Fit the model using X as training data.
 
         Parameters
         ----------
@@ -133,23 +163,20 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             self.kneighbors(None))
 
         # Compute decision_function over training samples to define threshold_:
-        self.decision_function_train_ = -self._local_outlier_factor()
-        # minus as bigger is better (less abnormal)
+        self.outlier_factor_ = self._local_outlier_factor()
 
         self.threshold_ = -scoreatpercentile(
-            -self.decision_function_train_, 100. * (1. - self.contamination))
+            self.outlier_factor_, 100. * (1. - self.contamination))
 
         # XXX may be optimized (if X is not None) by only computing it for
         # X_sub_samples = neighbors of neighbors of X ?
         return self
 
-    def predict(self, X=None):
+    def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
-
-        The local outlier factor (LOF) of a sample captures its
-        supposed `degree of abnormality'.
-        It is the average of the ratio of the local reachability density of
-        a sample and those of its k-nearest neighbors.
+        If X is None, fit(X)._predict(X) returns the same as fit_predict(X).
+        This method allows to generalize prediction to new observations (not
+        in the training set).
 
         Parameters
         ----------
@@ -163,7 +190,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         is_inlier : array of shape (n_samples,)
             Returns 1 for anomalies/outliers and -1 for inliers.
         """
-        check_is_fitted(self, ["threshold_", "decision_function_train_",
+        check_is_fitted(self, ["threshold_", "outlier_factor_",
                                "_k_distance_value_fit_X_",
                                "neighbors_indices_fit_X_"])
 
@@ -173,17 +200,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         else:
             is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
 
-        is_inlier[self.decision_function(X) <= self.threshold_] = -1
+        is_inlier[self._decision_function(X) <= self.threshold_] = -1
 
         return is_inlier
 
-    def decision_function(self, X=None):
+    def _decision_function(self, X=None):
         """Opposite of the Local Outlier Factor of X (as bigger is better).
-
-        The local outlier factor (LOF) of a sample captures its
-        supposed `degree of abnormality'.
-        It is the average of the ratio of the local reachability density of
-        a sample and those of its k-nearest neighbors.
 
         Parameters
         ----------
@@ -199,14 +221,15 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             The Local Outlier Factor of each input samples. The lower,
             the more abnormal.
         """
-        check_is_fitted(self, ["threshold_", "decision_function_train_",
+        check_is_fitted(self, ["threshold_", "outlier_factor_",
                                "_k_distance_value_fit_X_",
                                "neighbors_indices_fit_X_"])
 
         # if X is None, make prediction on X=X_train without considered each
         # query point as its own neighbor.
         if X is None:
-            return self.decision_function_train_
+            # minus as bigger is better (here less abnormal):
+            return -self.outlier_factor_
 
         else:
             X = check_array(X, accept_sparse='csr')
@@ -258,10 +281,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
 
     def _local_outlier_factor(self, X=None):
-        """Compute local outlier factor (LOF)
+        """Compute the local outlier factor (LOF)
 
-        The local outlier factor (LOF) of a sample captures its
-        supposed `degree of abnormality'.
         It is the average of the ratio of the local reachability density of
         a sample and those of its k-nearest neighbors.
 
@@ -279,7 +300,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         Returns
         -------
-        lof : array-like of shape (n_samples,)
+        lof : numpy array of shape (n_samples,)
             The LOF of X. The lower, the more normal.
         """
         if X is None:

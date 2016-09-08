@@ -22,7 +22,7 @@ def test_lof():
 
     # Test LocalOutlierFactor:
     clf = neighbors.LocalOutlierFactor()
-    score = -clf.fit(X).decision_function()
+    score = -clf.fit(X)._decision_function()
     assert_array_equal(clf._fit_X, X)
 
     # Assert scores are good:
@@ -30,7 +30,7 @@ def test_lof():
 
     # Assert predict() works:
     clf = neighbors.LocalOutlierFactor(contamination=0.25).fit(X)
-    assert_array_equal(clf.predict(), 6 * [1] + 2 * [-1])
+    assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
 
 
 def test_lof_performance():
@@ -49,7 +49,7 @@ def test_lof_performance():
     clf = neighbors.LocalOutlierFactor().fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = - clf.decision_function(X_test)
+    y_pred = - clf._decision_function(X_test)
 
     # check that roc_auc is good
     assert_greater(roc_auc_score(y_test, y_pred), .99)
@@ -62,11 +62,11 @@ def test_lof_values():
     s_0 = 2. * sqrt(2.) / (1. + sqrt(2.))
     s_1 = (1. + sqrt(2)) * (1. / (4. * sqrt(2.)) + 1. / (2. + 2. * sqrt(2)))
     # check predict()
-    assert_array_almost_equal(-clf.decision_function(), [s_0, s_1, s_1])
+    assert_array_almost_equal(-clf._decision_function(), [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf.decision_function([[2., 2.]]), [s_0])
+    assert_array_almost_equal(-clf._decision_function([[2., 2.]]), [s_0])
     # # check predict(one sample already in train)
-    assert_array_almost_equal(-clf.decision_function([[1., 1.]]), [s_1])
+    assert_array_almost_equal(-clf._decision_function([[1., 1.]]), [s_1])
 
 
 def test_lof_precomputed(random_state=42):
@@ -80,15 +80,15 @@ def test_lof_precomputed(random_state=42):
     # As a feature matrix (n_samples by n_features)
     lof_X = neighbors.LocalOutlierFactor(n_neighbors=3)
     lof_X.fit(X)
-    pred_X_X = lof_X.predict()
-    pred_X_Y = lof_X.predict(Y)
+    pred_X_X = lof_X._predict()
+    pred_X_Y = lof_X._predict(Y)
 
     # As a dense distance matrix (n_samples by n_samples)
     lof_D = neighbors.LocalOutlierFactor(n_neighbors=3, algorithm='brute',
                                          metric='precomputed')
     lof_D.fit(DXX)
-    pred_D_X = lof_D.predict()
-    pred_D_Y = lof_D.predict(DYX)
+    pred_D_X = lof_D._predict()
+    pred_D_Y = lof_D._predict(DYX)
 
     assert_array_almost_equal(pred_X_X, pred_D_X)
     assert_array_almost_equal(pred_X_Y, pred_D_Y)
