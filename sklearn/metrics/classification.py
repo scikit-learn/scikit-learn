@@ -623,9 +623,10 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
            parameter *labels* improved for multiclass problem.
 
     pos_label : str or int, 1 by default
-        The class to report if ``average='binary'``. Until version 0.18 it is
-        necessary to set ``pos_label=None`` if seeking to use another averaging
-        method over binary targets.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -651,10 +652,6 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
-
-        Note that if ``pos_label`` is given in binary classification with
-        `average != 'binary'`, only that positive class is reported. This
-        behavior is deprecated and will change in version 0.18.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -729,9 +726,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
            parameter *labels* improved for multiclass problem.
 
     pos_label : str or int, 1 by default
-        The class to report if ``average='binary'``. Until version 0.18 it is
-        necessary to set ``pos_label=None`` if seeking to use another averaging
-        method over binary targets.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -757,10 +755,6 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
-
-        Note that if ``pos_label`` is given in binary classification with
-        `average != 'binary'`, only that positive class is reported. This
-        behavior is deprecated and will change in version 0.18.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -905,9 +899,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         ``y_pred`` are used in sorted order.
 
     pos_label : str or int, 1 by default
-        The class to report if ``average='binary'``. Until version 0.18 it is
-        necessary to set ``pos_label=None`` if seeking to use another averaging
-        method over binary targets.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
 
     average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
                        'weighted']
@@ -932,10 +927,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
-
-        Note that if ``pos_label`` is given in binary classification with
-        `average != 'binary'`, only that positive class is reported. This
-        behavior is deprecated and will change in version 0.18.
 
     warn_for : tuple or set, for internal use
         This determines which warnings will be made in the case that this
@@ -1008,25 +999,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     present_labels = unique_labels(y_true, y_pred)
 
-    if average == 'binary' and (y_type != 'binary' or pos_label is None):
-        warnings.warn('The default `weighted` averaging is deprecated, '
-                      'and from version 0.18, use of precision, recall or '
-                      'F-score with multiclass or multilabel data or '
-                      'pos_label=None will result in an exception. '
-                      'Please set an explicit value for `average`, one of '
-                      '%s. In cross validation use, for instance, '
-                      'scoring="f1_weighted" instead of scoring="f1".'
-                      % str(average_options), DeprecationWarning, stacklevel=2)
-        average = 'weighted'
-
-    if y_type == 'binary' and pos_label is not None and average is not None:
-        if average != 'binary':
-            warnings.warn('From version 0.18, binary input will not be '
-                          'handled specially when using averaged '
-                          'precision/recall/F-score. '
-                          'Please use average=\'binary\' to report only the '
-                          'positive class performance.', DeprecationWarning)
-        if labels is None or len(labels) <= 2:
+    if average == 'binary':
+        if y_type == 'binary':
             if pos_label not in present_labels:
                 if len(present_labels) < 2:
                     # Only negative labels
@@ -1035,6 +1009,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                     raise ValueError("pos_label=%r is not a valid label: %r" %
                                      (pos_label, present_labels))
             labels = [pos_label]
+        else:
+            raise ValueError("Target is %s but average='binary'. Please "
+                             "choose another average setting." % y_type)
+    elif pos_label not in (None, 1):
+        warnings.warn("Note that pos_label (set to %r) is ignored when "
+                      "average != 'binary' (got %r). You may use "
+                      "labels=[pos_label] to specify a single positive class."
+                      % (pos_label, average), UserWarning)
+
     if labels is None:
         labels = present_labels
         n_labels = None
@@ -1187,9 +1170,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
            parameter *labels* improved for multiclass problem.
 
     pos_label : str or int, 1 by default
-        The class to report if ``average='binary'``. Until version 0.18 it is
-        necessary to set ``pos_label=None`` if seeking to use another averaging
-        method over binary targets.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -1215,10 +1199,6 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
-
-        Note that if ``pos_label`` is given in binary classification with
-        `average != 'binary'`, only that positive class is reported. This
-        behavior is deprecated and will change in version 0.18.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -1289,9 +1269,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
            parameter *labels* improved for multiclass problem.
 
     pos_label : str or int, 1 by default
-        The class to report if ``average='binary'``. Until version 0.18 it is
-        necessary to set ``pos_label=None`` if seeking to use another averaging
-        method over binary targets.
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
 
     average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
@@ -1317,10 +1298,6 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
-
-        Note that if ``pos_label`` is given in binary classification with
-        `average != 'binary'`, only that positive class is reported. This
-        behavior is deprecated and will change in version 0.18.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
