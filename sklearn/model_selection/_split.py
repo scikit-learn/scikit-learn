@@ -1148,7 +1148,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             floored[inds] += 1
             need_to_add -= add_now
             if need_to_add == 0:
-                    break
+                break
     return floored.astype(np.int)
 
 

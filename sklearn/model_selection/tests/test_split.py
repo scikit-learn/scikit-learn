@@ -551,7 +551,8 @@ def test_stratified_shuffle_split_iter():
           np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
           np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2] * 2),
           np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
-          np.array([-1] * 800 + [1] * 50)
+          np.array([-1] * 800 + [1] * 50),
+          np.concatenate([[i] * (100 + i) for i in range(11)])
           ]
 
     for y in ys:
