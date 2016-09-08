@@ -593,9 +593,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node where weights are determined by ``sample_weight`` provided
-        to ``fit``.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -864,9 +863,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node where weights are determined by ``sample_weight`` provided
-        to ``fit``.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.

@@ -1330,9 +1330,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
            Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node where weights are determined by ``sample_weight`` provided
-        to ``fit``.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node.
 
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
@@ -1699,9 +1698,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
            Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node where weights are determined by ``sample_weight`` provided
-        to ``fit``.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node.
 
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
