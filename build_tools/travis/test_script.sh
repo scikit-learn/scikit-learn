@@ -26,18 +26,7 @@ run_tests() {
     # disk caching does not work.
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
-    if [[ "$COVERAGE" == "true" ]]; then
-        nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
-    else
-        nosetests -s --with-timer --timer-top-n 20 sklearn
-    fi
-
-    # Is directory still empty ?
-    ls -ltra
-
-    # Test doc
-    cd $CACHED_BUILD_DIR/scikit-learn
-    make test-doc test-sphinxext
+    python -m sklearn.bench_sample_without_replacement --n-population 1000000
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
