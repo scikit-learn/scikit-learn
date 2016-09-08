@@ -299,13 +299,13 @@ class BaseEstimator(object):
 
     def __getstate__(self):
         if type(self).__module__.startswith('sklearn.'):
-            return dict(self.__dict__.items(), __version__=__version__)
+            return dict(self.__dict__.items(), _sklearn_version=__version__)
         else:
             return dict(self.__dict__.items())
 
     def __setstate__(self, state):
         if type(self).__module__.startswith('sklearn.'):
-            pickle_version = state.pop("__version__", "pre-0.18")
+            pickle_version = state.pop("_sklearn_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
