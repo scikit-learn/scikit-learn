@@ -228,7 +228,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         if not self.converged_:
             warnings.warn('Initialization %d did not converged. '
                           'Try different init parameters, '
-                          'or increase n_init, tol '
+                          'or increase max_init, tol '
                           'or check for degenerate data.'
                           % (init + 1), ConvergenceWarning)
 

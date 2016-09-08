@@ -1,24 +1,28 @@
 """
 ========================================================================
-Concentration Prior Analysis of Variation Bayesian and Dirichlet Process
+Concentration Prior Type Analysis of Variation Bayesian Gaussian Mixture
 ========================================================================
 
-Plot the resulting ellipsoids of a mixture of three Gaussians with a
-Variational Bayesian Gaussian Mixture and a Dirichlet Process Gaussian Mixture
-for three different values of the weight concentration prior.
+This example plots the ellipsoids obtained from a toy dataset (mixture of three
+Gaussians) fitted by the ``BayesianGaussianMixture`` class models with a
+Dirichlet process distribution
+(``weight_concencration_prior_type='dirichlet_distribution'``) and a Dirichlet
+process prior (``weight_concencration_prior_type='dirichlet_process'``). On
+each figure, we plot the results for three different values of the weight
+concentration prior.
 
-For all the models, the ``BayesianGaussianMixture`` and the
-``DirichletGaussianMixture`` adapt its number of mixture automatically. The
-parameter ``weight_concentration_prior`` has a direct link with the resulting
-number of components. Specifying higher values more often leads to uniformly-
-sized mixture components, while specifying smaller values will lead to some
-mixture components getting almost all the points with most of the other
+The ``BayesianGaussianMixture`` can adapt its number of mixture automatically.
+The parameter ``weight_concentration_prior`` has a direct link with the
+resulting number of components. Specifying higher values more often leads to
+uniformly- sized mixture components, while specifying smaller values will lead
+to some mixture components getting almost all the points with most of the other
 mixture components centering on just a few of the remaining points.
 
 The Dirichlet Process allows to define an infinite number of components and
 automatically selects the correct number of components. Contrary to the
-classical variation Bayesian model, it activates a component only if it is
-necessary (resulting in a better selection of the mixtures).
+classical variation Bayesian model using a Dirichlet distribution, it activates
+a component only if it is necessary (resulting in a better selection of the
+mixtures).
 """
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
@@ -28,7 +32,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-from sklearn.mixture import BayesianGaussianMixture, DirichletGaussianMixture
+from sklearn.mixture import BayesianGaussianMixture
 
 print(__doc__)
 
@@ -90,13 +94,15 @@ means = np.array([[.0, -.70],
 
 # mean_precision_prior= 0.8 to minimize the influence of the prior
 estimators = [
-    (r"Bayesian Gaussian Mixture for $dc_0=$", BayesianGaussianMixture(
+    (r"Bayesian Gaussian Mixture for $\gamma_0=$", BayesianGaussianMixture(
+        weight_concentration_prior_type="dirichlet_distribution",
         n_components=2 * n_components, reg_covar=0, init_params='random',
-        max_iter=1500, mean_precision_prior=.8, tol=1e-6,
+        max_iter=1500, mean_precision_prior=.8,
         random_state=random_state), [0.001, 1, 1000]),
-    (r"Dirichlet Process Mixture for $\beta_0=$", DirichletGaussianMixture(
+    (r"Dirichlet Process Mixture for $\gamma_0=$", BayesianGaussianMixture(
+        weight_concentration_prior_type="dirichlet_process",
         n_components=2 * n_components, reg_covar=0, init_params='random',
-        max_iter=1500, mean_precision_prior=.8, tol=1e-6,
+        max_iter=1500, mean_precision_prior=.8,
         random_state=random_state), [1, 1000, 100000])]
 
 # Generate data
@@ -111,7 +117,7 @@ y = np.concatenate([j * np.ones(samples[j], dtype=int)
 for (title, estimator, concentrations_prior) in estimators:
     plt.figure(figsize=(4.7 * 3, 8))
     plt.subplots_adjust(bottom=.04, top=0.95, hspace=.05, wspace=.05,
-                        left=.03, right=.97)
+                        left=.03, right=.99)
 
     gs = gridspec.GridSpec(3, len(concentrations_prior))
     for k, concentration in enumerate(concentrations_prior):

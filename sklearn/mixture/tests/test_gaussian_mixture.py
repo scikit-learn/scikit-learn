@@ -650,7 +650,7 @@ def test_gaussian_mixture_fit_convergence_warning():
         assert_warns_message(ConvergenceWarning,
                              'Initialization %d did not converged. '
                              'Try different init parameters, '
-                             'or increase n_init, tol '
+                             'or increase max_init, tol '
                              'or check for degenerate data.'
                              % max_iter, g.fit, X)
 

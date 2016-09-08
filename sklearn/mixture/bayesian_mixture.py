@@ -5,7 +5,7 @@
 
 import math
 import numpy as np
-from scipy.special import digamma, gammaln
+from scipy.special import betaln, digamma, gammaln
 
 from .base import BaseMixture, _check_shape
 from .gaussian_mixture import _check_precision_matrix
@@ -63,11 +63,19 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
 
 
 class BayesianGaussianMixture(BaseMixture):
-    """Variational estimation of a Gaussian mixture.
+    """Variational Bayesian estimation of a Gaussian mixture.
 
     This class allows to infer an approximate posterior distribution over the
     parameters of a Gaussian mixture distribution. The effective number of
     components can be inferred from the data.
+
+    This class implements two different prior type for the weight distribution:
+    a finite mixture model with Dirichlet distribution and an infinite mixture
+    model with the Dirichlet Process. In practice the approximate the Dirichlet
+    Process inference algorithm uses a truncated distribution with a fixed
+    maximum number of components (called the Stick-breaking representation),
+    but almost always the number of components actually used depends on the
+    data.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -83,10 +91,10 @@ class BayesianGaussianMixture(BaseMixture):
     covariance_type : {'full', 'tied', 'diag', 'spherical'}, defaults to 'full'.
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix).
+        'full' (each component has its own general covariance matrix),
         'tied' (all components share the same general covariance matrix),
         'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance),
+        'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
@@ -110,6 +118,12 @@ class BayesianGaussianMixture(BaseMixture):
         Must be one of::
         'kmeans' : responsibilities are initialized using kmeans.
         'random' : responsibilities are initialized randomly.
+
+    weight_concentration_prior_type : {'dirichlet_process', 'dirichlet_distribution'}, defaults to 'full'.
+        String describing the type of the weight concentration prior.
+        Must be one of::
+        'dirichlet_process' (using the Stick-breaking representation),
+        'dirichlet_distribution'.
 
     weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
@@ -213,9 +227,13 @@ class BayesianGaussianMixture(BaseMixture):
         Lower bound value on the likelihood (of the training data with
         respect to the model) of the best fit of inference.
 
-    weight_concentration_prior_ : float
+    weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
-        distribution (Dirichlet). The higher concentration puts more mass in
+        distribution (Dirichlet). The type depends on
+        `weight_concentration_prior_type`::
+            (float, float) if 'dirichlet_process' (Beta parameters),
+            float          if 'dirichlet_distribution' (Dirichlet parameters).
+        The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         simplex.
@@ -255,12 +273,26 @@ class BayesianGaussianMixture(BaseMixture):
     --------
     GaussianMixture : Finite Gaussian mixture fit with EM.
 
-    DirichletGaussianMixture : An infinite Gaussian mixture model fit with a
-        Dirichlet Process as a prior distribution on the number of clusters.
+    References
+    ----------
+
+    .. [1] `Bishop, Christopher M. (2006). "Pattern recognition and machine
+       learning". Vol. 4 No. 4. New York: Springer.
+       <http://www.springer.com/kr/book/9780387310732>`_
+
+    .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
+       Graphical Models". In Advances in Neural Information Processing
+       Systems 12.
+       <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.36.2841&rep=rep1&type=pdf>`_
+
+    .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
+       inference for Dirichlet process mixtures". Bayesian analysis 1.1
+       <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
+                 weight_concentration_prior_type='dirichlet_process',
                  weight_concentration_prior=None,
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
@@ -273,6 +305,7 @@ class BayesianGaussianMixture(BaseMixture):
             verbose=verbose, verbose_interval=verbose_interval)
 
         self.covariance_type = covariance_type
+        self.weight_concentration_prior_type = weight_concentration_prior_type
         self.weight_concentration_prior = weight_concentration_prior
         self.mean_precision_prior = mean_precision_prior
         self.mean_prior = mean_prior
@@ -291,6 +324,15 @@ class BayesianGaussianMixture(BaseMixture):
                              "'covariance_type' should be in "
                              "['spherical', 'tied', 'diag', 'full']"
                              % self.covariance_type)
+
+        if (self.weight_concentration_prior_type not in
+                ['dirichlet_process', 'dirichlet_distribution']):
+            raise ValueError(
+                "Invalid value for 'weight_concentration_prior_type': %s "
+                "'weight_concentration_prior_type' should be in "
+                "['dirichlet_process', 'dirichlet_distribution']"
+                % self.weight_concentration_prior_type)
+
         self._check_weights_parameters()
         self._check_means_parameters(X)
         self._check_precision_parameters(X)
@@ -416,8 +458,16 @@ class BayesianGaussianMixture(BaseMixture):
         ----------
         nk : array-like, shape (n_components,)
         """
-        self.weight_concentration_ = (
-            self.weight_concentration_prior_ + nk)
+        if self.weight_concentration_prior_type == 'dirichlet_process':
+            # For dirichlet process weight_concentration will be a tuple
+            # containing the two parameters of the beta distribution
+            self.weight_concentration_ = (
+                1. + nk,
+                (self.weight_concentration_prior_ +
+                 np.hstack((np.cumsum(nk[::-1])[-2::-1], 0))))
+        else:
+            # case Variationnal Gaussian mixture with dirichlet distribution
+            self.weight_concentration_ = self.weight_concentration_prior_ + nk
 
     def _estimate_means(self, nk, xk):
         """Estimate the parameters of the Gaussian distribution.
@@ -606,8 +656,17 @@ class BayesianGaussianMixture(BaseMixture):
         self._estimate_precisions(nk, xk, sk)
 
     def _estimate_log_weights(self):
-        return (digamma(self.weight_concentration_) -
-                digamma(np.sum(self.weight_concentration_)))
+        if self.weight_concentration_prior_type == 'dirichlet_process':
+            digamma_sum = digamma(self.weight_concentration_[0] +
+                                  self.weight_concentration_[1])
+            digamma_a = digamma(self.weight_concentration_[0])
+            digamma_b = digamma(self.weight_concentration_[1])
+            return (digamma_a - digamma_sum +
+                    np.hstack((0, np.cumsum(digamma_b - digamma_sum)[:-1])))
+        else:
+            # case Variationnal Gaussian mixture with dirichlet distribution
+            return (digamma(self.weight_concentration_) -
+                    digamma(np.sum(self.weight_concentration_)))
 
     def _estimate_log_prob(self, X):
         _, n_features = X.shape
@@ -663,8 +722,14 @@ class BayesianGaussianMixture(BaseMixture):
             log_wishart = np.sum(_log_wishart_norm(
                 self.degrees_of_freedom_, log_det_precisions_chol, n_features))
 
-        return (-np.sum(np.exp(log_resp) * log_resp) - log_wishart -
-                _log_dirichlet_norm(self.weight_concentration_) -
+        if self.weight_concentration_prior_type == 'dirichlet_process':
+            log_norm_weight = -np.sum(betaln(self.weight_concentration_[0],
+                                             self.weight_concentration_[1]))
+        else:
+            log_norm_weight = _log_dirichlet_norm(self.weight_concentration_)
+
+        return (-np.sum(np.exp(log_resp) * log_resp) -
+                log_wishart - log_norm_weight -
                 0.5 * n_features * np.sum(np.log(self.mean_precision_)))
 
     def _get_parameters(self):
@@ -678,10 +743,20 @@ class BayesianGaussianMixture(BaseMixture):
          self.degrees_of_freedom_, self.covariances_,
          self.precisions_cholesky_) = params
 
-        # Attributes computation
-        self. weights_ = (self.weight_concentration_ /
-                          np.sum(self.weight_concentration_))
+        # Weights computation
+        if self.weight_concentration_prior_type == "dirichlet_process":
+            weight_dirichlet_sum = (self.weight_concentration_[0] +
+                                    self.weight_concentration_[1])
+            tmp = self.weight_concentration_[1] / weight_dirichlet_sum
+            self.weights_ = (
+                self.weight_concentration_[0] / weight_dirichlet_sum *
+                np.hstack((1, np.cumprod(tmp[:-1]))))
+            self.weights_ /= np.sum(self.weights_)
+        else:
+            self. weights_ = (self.weight_concentration_ /
+                              np.sum(self.weight_concentration_))
 
+        # Precisions matrices computation
         if self.covariance_type == 'full':
             self.precisions_ = np.array([
                 np.dot(prec_chol, prec_chol.T)

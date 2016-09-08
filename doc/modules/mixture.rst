@@ -100,7 +100,7 @@ The BIC criterion can be used to select the number of components in a Gaussian
 Mixture in an efficient way. In theory, it recovers the true number of
 components only in the asymptotic regime (i.e. if much data is available and
 assuming that the data was actually generated i.i.d. from a mixture of Gaussian
-distribution). Note that using a :ref:`Dirichlet Gaussian Mixture <dpgmm>`
+distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bgmm>`
 avoids the specification of the number of components for a Gaussian mixture
 model.
 
@@ -137,11 +137,11 @@ to a local optimum.
 
 .. _bgmm:
 
-Bayesian Gaussian Mixture
-=========================
+Variational Bayesian Gaussian Mixture
+=====================================
 
-The :class:`BayesianGaussianMixture` object implements a variant of the Gaussian
-mixture model with variational inference algorithms.
+The :class:`BayesianGaussianMixture` object implements a variant of the
+Gaussian mixture model with variational inference algorithms.
 
 .. _variational_inference:
 
@@ -161,14 +161,33 @@ expectation-maximization solutions but introduces some subtle biases
 to the model. Inference is often notably slower, but not usually as
 much so as to render usage unpractical.
 
-Due to its Bayesian nature, the variational algorithm needs more
-hyper-parameters than expectation-maximization, the most
-important of these being the concentration parameter ``weight_concentration_prior``. Specifying
-a high value of prior of the dirichlet concentration leads more often to uniformly-sized mixture
-components, while specifying small (between 0 and 1) values will lead
-to some mixture components getting almost all the points while most
-mixture components will be centered on just a few of the remaining
-points.
+Due to its Bayesian nature, the variational algorithm needs more hyper-
+parameters than expectation-maximization, the most important of these being the
+concentration parameter ``weight_concentration_prior``. Specifying a high value
+of prior of the dirichlet concentration leads more often to uniformly-sized
+mixture components, while specifying small (between 0 and 1) values will lead
+to some mixture components getting almost all the points while most mixture
+components will be centered on just a few of the remaining points.
+Moreover, the parameter ``weight_concentration_prior_type`` proposes two different priors
+to model the weight : a Dirichlet distribution or a Dirichlet process.
+
+The next figures compare the results obtained from the
+:class:`BayesianGaussianMixture` class models with a Dirichlet distribution
+(``weight_concentration_prior_type='dirichlet_distribution'``) for different values of
+``weight_concentration_prior``. Here, we can see the the value of the
+``weight_concentration_prior`` parameter has a strong impact on the effective
+number of active components obtained.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
+   :target: ../auto_examples/mixture/plot_concentration_prior.html
+   :align: center
+   :scale: 50%
+
+On the following example we have use the :class:`BayesianGaussianMixture`
+class models with a Dirichlet process prior
+(``weight_concentration_prior_type='dirichlet_process'``) that proposes a model
+with an infinite number of mixture (see :ref:`Dirichlet process<dpgmm>`
+for more detail)
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_001.png
    :target: ../auto_examples/mixture/plot_concentration_prior_mixture.html
@@ -177,9 +196,9 @@ points.
 
 .. topic:: Examples:
 
-    * See :ref:`sphx_glr_auto_examples_plot_bayesian_gaussian_mixture.py` for a comparaison of
-      the results of the ``BayesianGaussianMixture`` for different values
-      of the parameter ``weight_concentration_prior``.
+    * See :ref:`sphx_glr_auto_examples_plot_concentration_prior_mixture.py` for a
+      comparaison of the results of the ``BayesianGaussianMixture`` for
+      different values of the parameter ``weight_concentration_prior``.
 
 Pros and cons of variational inference with :class:`BayesianGaussianMixture`
 ----------------------------------------------------------------------------
@@ -216,7 +235,7 @@ Cons
 Dirichlet Process: Infinite Gaussian mixture
 ============================================
 
-The :class:`DirichletGaussianMixture` class implements a variant of the
+The :class:`BayesianGaussianMixture` class implements a variant of the
 Gaussian mixture model with a variable (but bounded) number of components using
 the Dirichlet Process.
 
@@ -227,15 +246,16 @@ concentration parameter.
 
 
 The examples below compare Gaussian mixture models with a fixed number of
-components, to the Gaussian mixture models with a Dirichlet process prior. Here,
-a classical Gaussian mixture is fitted with 5 components on a dataset composed
-of 2 clusters. We can see that the Gaussian mixture with a Dirichlet process
-prior is able to limit itself to only 2 components whereas the Gaussian mixture
-fits the data with a fixed number of components that has to be set a priori by
-the user. In this case the user has selected ``n_components=5`` which does not
-match the true generative distribution of this toy dataset. Note that with very
-little observations, the Dirichlet Gaussian Mixture can take a conservative
-stand, and fit only one component.
+components, to the variational Gaussian mixture models with a Dirichlet process
+prior. Here, a classical Gaussian mixture is fitted with 5 components on a
+dataset composed of 2 clusters. We can see that the variational Gaussian mixture
+with a Dirichlet process prior is able to limit itself to only 2 components
+whereas the Gaussian mixture fits the data with a fixed number of components
+that has to be set a priori by the user. In this case the user has selected
+``n_components=5`` which does not match the true generative distribution of this
+toy dataset. Note that with very little observations, the variational Gaussian
+mixture models with a Dirichlet process prior can take a conservative stand, and
+fit only one component.
 
 .. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_001.png
    :target: ../auto_examples/mixture/plot_gmm.html
@@ -245,7 +265,7 @@ stand, and fit only one component.
 
 On the following example we are fitting a dataset not well-depicted by a
 Gaussian mixture. Adjusting the ``weight_concentration_prior``, parameter of the
-class:`DirichletGaussianMixture` controls the number of components used to fit
+class:`BayesianGaussianMixture` controls the number of components used to fit
 this data. We also present on the last two plots a random sampling generated
 from the two resulting mixtures.
 
@@ -254,39 +274,25 @@ from the two resulting mixtures.
    :align: center
    :scale: 65%
 
-The next figure presents the resulting clusters computed by the Gaussian mixture
-with a Dirichlet process prior for different values of
-``weight_concentration_prior``. The value of the ``weight_concentration_prior``
-parameter has a strong impact on the effective number of active components
-obtained. As in Variational Bayesian Gaussian Mixture, smaller values of
-``weight_concentration_prior`` lead to fewer components and higher values lead
-to more components but is more stable as each component is activated only if
-necessary.
-
-.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
-   :target: ../auto_examples/mixture/plot_concentration_prior.html
-   :align: center
-   :scale: 50%
-
 
 .. topic:: Examples:
 
     * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm.py` for an example on
       plotting the confidence ellipsoids for both :class:`GaussianMixture`
-      and :class:`DirichletGaussianMixture`.
+      and :class:`BayesianGaussianMixture`.
 
     * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
-      :class:`GaussianMixture` and :class:`DirichletGaussianMixture` to fit a
+      :class:`GaussianMixture` and :class:`BayesianGaussianMixture` to fit a
       sine wave.
 
     * See :ref:`sphx_glr_auto_example_mixture_plot_concentration_prior.py`
       for an example plotting the confidence ellipsoids for the
-      :class:`DirichletGaussianMixture` for different values of the parameter
+      :class:`BayesianGaussianMixture` for different values of the parameter
       ``weight_concentration_prior``.
 
 
-Pros and cons of Dirichlet process with class :class:`DirichletGaussianMixture`
--------------------------------------------------------------------------------
+Pros and cons of Dirichlet process with class :class:`BayesianGaussianMixture`
+------------------------------------------------------------------------------
 
 Pros
 .....

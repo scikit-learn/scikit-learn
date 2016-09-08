@@ -623,9 +623,11 @@ class _DPGMMBase(_GMMBase):
         return z
 
 
-@deprecated("The DPGMM class is not working correctly and it's better "
-            "to use sklearn.mixture.DirichletGaussianMixture class instead. "
-            "DPGMM is deprecated in 0.18 and will be removed in 0.20.")
+@deprecated("The `DPGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type='dirichlet_process'` "
+            "instead. DPGMM is deprecated in 0.18 and will be "
+            "removed in 0.20.")
 class DPGMM(_DPGMMBase):
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, tol=1e-3, verbose=0, min_covar=None,
@@ -636,10 +638,12 @@ class DPGMM(_DPGMMBase):
             min_covar=min_covar, n_iter=n_iter, params=params,
             init_params=init_params)
 
-
-@deprecated("The VBGMM class is not working correctly and it's better "
-            "to use sklearn.mixture.BayesianGaussianMixture class instead. "
+@deprecated("The `VBGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type="
+            "'dirichlet_distribution'` instead. "
             "VBGMM is deprecated in 0.18 and will be removed in 0.20.")
+
 class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 

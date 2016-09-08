@@ -149,11 +149,12 @@ def test_wishart_logz():
 
 @ignore_warnings(category=DeprecationWarning)
 def test_DPGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The DPGMM class is not working "
-                         "correctly and it's better to use "
-                         "sklearn.mixture.DirichletGaussianMixture class "
-                         "instead. DPGMM is deprecated in 0.18 and will be "
-                         "removed in 0.20.", DPGMM)
+    assert_warns_message(
+      DeprecationWarning, "The `DPGMM` class is not working correctly and "
+      "it's better to use `sklearn.mixture.BayesianGaussianMixture` class "
+      "with parameter `weight_concentration_prior_type='dirichlet_process'` "
+      "instead. DPGMM is deprecated in 0.18 and will be removed in 0.20.",
+      DPGMM)
 
 
 def do_model(self, **kwds):
@@ -190,11 +191,12 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
 
 
 def test_VBGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The VBGMM class is not working "
-                         "correctly and it's better to use "
-                         "sklearn.mixture.BayesianGaussianMixture class "
-                         "instead. VBGMM is deprecated in 0.18 and will be "
-                         "removed in 0.20.", VBGMM)
+    assert_warns_message(
+        DeprecationWarning, "The `VBGMM` class is not working correctly and "
+        "it's better to use `sklearn.mixture.BayesianGaussianMixture` class "
+        "with parameter `weight_concentration_prior_type="
+        "'dirichlet_distribution'` instead. VBGMM is deprecated "
+        "in 0.18 and will be removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):

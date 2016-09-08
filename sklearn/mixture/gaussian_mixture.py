@@ -448,10 +448,10 @@ class GaussianMixture(BaseMixture):
         defaults to 'full'.
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix).
+        'full' (each component has its own general covariance matrix),
         'tied' (all components share the same general covariance matrix),
         'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance),
+        'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
@@ -562,11 +562,8 @@ class GaussianMixture(BaseMixture):
 
     See Also
     --------
-    BayesianGaussianMixture : Finite gaussian mixture model fit with a
-        variational algorithm.
-
-    DirichletGaussianMixture : An infinite gaussian mixture model fit with a
-        Dirichlet Process as a prior distribution on the number of clusters.
+    BayesianGaussianMixture : Gaussian mixture model fit with a variational
+        inference.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
