@@ -688,11 +688,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
 
-        # swap columns in place
-        indices = X.indices
-        for idx, val in enumerate(X.indices):
-            indices[idx] = map_index[val]
-        X.indices = indices
+        X.indices = map_index.take(X.indices, mode='clip')
         return X
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
@@ -766,7 +762,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
             j_indices.extend(feature_counter.keys())
             values.extend(feature_counter.values())
-            del(feature_counter)
             indptr.append(len(j_indices))
 
         if not fixed_vocab:
