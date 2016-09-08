@@ -406,7 +406,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y_binary[y == i] = 0
     y_binary[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, _safe_split(estimator, X, y, indices=ind[cond])[0], y_binary, classes=[i, j])
+    return _fit_binary(estimator, _safe_split(estimator, X, None, indices=ind[cond])[0], y_binary, classes=[i, j])
 
 def _partial_fit_ovo_binary(estimator, X, y, i, j):
     """Partially fit a single binary estimator(one-vs-one)."""
