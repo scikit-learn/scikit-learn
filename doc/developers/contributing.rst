@@ -954,8 +954,7 @@ like translating string arguments into functions, should be done in ``fit``.
 
 While it is possible to pass parameters into the ``fit`` method, these
 should be restricted to variables that need to be sliced during
-cross-validation. These variables would be either arrays with shape=[N] where N=n_samples
-or array-like with shape=[N,*] where N=n_samples and * is any number. An example of
+cross-validation. These variables need to be arrays with shape[0]==n_samples. An example of
 this type of variable would be
 ``sample_weight``. This interface allows all data-dependent
 parameters to be sliced cleanly during cross-validation, and allows
