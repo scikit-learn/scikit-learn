@@ -186,6 +186,6 @@ if __name__ == "__main__":
     print("Results are averaged over %s repetition(s)." % opts.n_times)
     print("")
 
-    print('RATIO', *map('{:.3g}'.format, ratio), sep='\t')
+    print('RATIO', *map('{0:.3g}'.format, ratio), sep='\t')
     for name in sampling_algorithm:
-        print(name, *map('{:.3g}'.format, time[name]), sep='\t')
+        print(name, *map('{0:.3g}'.format, time[name]), sep='\t')
