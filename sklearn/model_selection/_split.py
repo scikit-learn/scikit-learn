@@ -1123,6 +1123,20 @@ def _approximate_mode(class_counts, n_draws, rng):
     sampled_classes : ndarray of int
         Number of samples drawn from each class.
         np.sum(sampled_classes) == n_draws
+
+    Examples
+    --------
+    >>> from sklearn.model_selection._split import _approximate_mode
+    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
+    array([2, 1])
+    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
+    array([3, 1])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=0)
+    array([0, 1, 1, 0])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=42)
+    array([1, 1, 0, 0])
     """
     # this computes a bad approximation to the mode of the
     # multivariate hypergeometric given by class_counts and n_draws
