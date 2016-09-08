@@ -24,7 +24,6 @@ from sklearn.utils.testing import _named_check
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.decomposition import ProjectedGradientNMF
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -69,12 +68,7 @@ def test_non_meta_estimators():
         if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
-            if issubclass(Estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield _named_check(check, name), name, Estimator
-            else:
-                yield _named_check(check, name), name, Estimator
+            yield _named_check(check, name), name, Estimator
 
 
 def test_configure():
@@ -117,7 +111,7 @@ def test_class_weight_balanced_linear_classifiers():
 
     for name, Classifier in linear_classifiers:
         yield _named_check(check_class_weight_balanced_linear_classifier,
-                             name), name, Classifier
+                           name), name, Classifier
 
 
 @ignore_warnings
@@ -182,7 +176,8 @@ def test_non_transformer_estimators_n_iter():
             if name == 'LassoLars':
                 estimator = Estimator(alpha=0.)
             else:
-                estimator = Estimator()
+                with ignore_warnings(category=DeprecationWarning):
+                    estimator = Estimator()
             if hasattr(estimator, "max_iter"):
                 # These models are dependent on external solvers like
                 # libsvm and accessing the iter parameter is non-trivial.
@@ -207,11 +202,7 @@ def test_non_transformer_estimators_n_iter():
 def test_transformer_n_iter():
     transformers = all_estimators(type_filter='transformer')
     for name, Estimator in transformers:
-        if issubclass(Estimator, ProjectedGradientNMF):
-            # The ProjectedGradientNMF class is deprecated
-            with ignore_warnings():
-                estimator = Estimator()
-        else:
+        with ignore_warnings(category=DeprecationWarning):
             estimator = Estimator()
         # Dependent on external solvers and hence accessing the iter
         # param is non-trivial.
@@ -219,14 +210,8 @@ def test_transformer_n_iter():
                            'RandomizedLasso', 'LogisticRegressionCV']
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
-            if isinstance(estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield _named_check(
-                        check_transformer_n_iter, name), name, estimator
-            else:
-                yield _named_check(
-                    check_transformer_n_iter, name), name, estimator
+            yield _named_check(
+                check_transformer_n_iter, name), name, estimator
 
 
 def test_get_params_invariance():
