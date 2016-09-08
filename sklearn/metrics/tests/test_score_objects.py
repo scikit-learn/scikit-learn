@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -415,3 +416,22 @@ def test_scorer_memmap_input():
     # float values.
     for name in SCORERS.keys():
         yield check_scorer_memmap, name
+
+
+def test_deprecated_names():
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X_train, y_train)
+
+    for name in ('mean_absolute_error', 'mean_squared_error',
+                 'median_absolute_error', 'log_loss'):
+        warning_msg = "Scoring method %s was renamed to" % name
+        for scorer in (get_scorer(name), SCORERS[name]):
+            assert_warns_message(DeprecationWarning,
+                                 warning_msg,
+                                 scorer, clf, X, y)
+
+        assert_warns_message(DeprecationWarning,
+                             warning_msg,
+                             cross_val_score, clf, X, y, scoring=name)
