@@ -175,7 +175,7 @@ points.
 
 .. topic:: Examples:
 
-    * See :ref:`plot_bayesian_gaussian_mixture.py` for a comparaison of
+    * See :ref:`sphx_glr_auto_examples_plot_bayesian_gaussian_mixture.py` for a comparaison of
       the results of the ``BayesianGaussianMixture`` for different values
       of the parameter ``dirichlet_concentration_prior``.
 
@@ -190,10 +190,10 @@ Pros
    expectation-maximization solutions.
 
 :Automatic selection: when `dirichlet_concentration_prior` is small enough and
-`n_components` is larger than what is found necessary by the model, the
-Variational Bayesian mixture model has a natural tendency to set some mixture
-weights values close to zero. This makes it possible to let the model choose a
-suitable number of effective components automatically.
+   `n_components` is larger than what is found necessary by the model, the
+   Variational Bayesian mixture model has a natural tendency to set some mixture
+   weights values close to zero. This makes it possible to let the model choose a
+   suitable number of effective components automatically.
 
 Cons
 .....

@@ -290,7 +290,7 @@ Enhancements
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
      and :class:`pipeline.FeatureUnion` components using the ``set_params``
      interface that powers :mod:`sklearn.grid_search`.
-     See :ref:`example_plot_compare_reduction.py`. By `Joel Nothman`_ and
+     See :ref:`sphx_glr_plot_compare_reduction.py`. By `Joel Nothman`_ and
      `Robert McGibbon`_.
 
    - Simplification of the ``clone`` function, deprecate support for estimators
@@ -395,7 +395,7 @@ Bug fixes
       Oliveira <https://github.com/caioaao>`_.
 
     - Fix :class:`linear_model.ElasticNet` sparse decision function to match
-    output with dense in the multioutput case.
+      output with dense in the multioutput case.
 
 API changes summary
 -------------------
@@ -4468,3 +4468,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Mads Jensen: https://github.com/indianajensen
 
 .. _Sebastián Vanrell: https://github.com/srvanrell
+
+.. _Robert McGibbon: https://github.com/rmcgibbo

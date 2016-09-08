@@ -933,7 +933,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
-        Quantile range used to calculate scale_
+        Quantile range used to calculate ``scale_``.
 
         .. versionadded:: 0.18
 
@@ -1101,7 +1101,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
-        Quantile range used to calculate scale_
+        Quantile range used to calculate ``scale_``.
 
         .. versionadded:: 0.18
 
