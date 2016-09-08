@@ -38,6 +38,7 @@ import numpy as np
 import warnings
 import scipy.sparse as sp
 
+from .cross_validation import _safe_split
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
@@ -405,8 +406,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y_binary[y == i] = 0
     y_binary[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y_binary, classes=[i, j])
-
+    return _fit_binary(estimator, _safe_split(estimator, X, y, indices=ind[cond])[0], y_binary, classes=[i, j])
 
 def _partial_fit_ovo_binary(estimator, X, y, i, j):
     """Partially fit a single binary estimator(one-vs-one)."""

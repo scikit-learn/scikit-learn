@@ -633,8 +633,6 @@ def test_pairwise_cross_val_score():
         ovr_true = multi_class_classifier(clf_precomputed)
 
         linear_kernel = np.dot(X, X.T)
-        print("0 shape", X.shape[0])
-        print("1 shape", X.shape[1])
         score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
         score_linear = cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
