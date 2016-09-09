@@ -200,10 +200,7 @@ def average_precision_score(y_true, y_score, average="macro",
     interpolation : string ['linear' (default), 'step']
         Determines the kind of interpolation used when computed AUC. If there
         are many repeated scores, 'step' is recommended to avoid under- or
-        over-estimating the AUC. See `Roam Analytics blog post
-        <https://github.com/roaminsight/roamresearch/blob/master/BlogPosts/
-        Average_precision/Average_precision_post.ipynb>`
-        for details.
+        over-estimating the AUC.
 
         ``'linear'``:
             Linearly interpolates between operating points.
