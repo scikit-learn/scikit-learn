@@ -69,13 +69,15 @@ class BayesianGaussianMixture(BaseMixture):
     parameters of a Gaussian mixture distribution. The effective number of
     components can be inferred from the data.
 
-    This class implements two different prior type for the weight distribution:
-    a finite mixture model with Dirichlet distribution and an infinite mixture
-    model with the Dirichlet Process. In practice the approximate the Dirichlet
-    Process inference algorithm uses a truncated distribution with a fixed
-    maximum number of components (called the Stick-breaking representation),
-    but almost always the number of components actually used depends on the
-    data.
+    This class implements two types of prior for the weights distribution: a
+    finite mixture model with Dirichlet distribution and an infinite mixture
+    model with the Dirichlet Process. In practice Dirichlet Process inference
+    algorithm is approximated and uses a truncated distribution with a fixed
+    maximum number of components (called the Stick-breaking representation).
+    The number of components actually used almost always depends on the data.
+
+    .. versionadded:: 0.18
+    *BayesianGaussianMixture*.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -119,7 +121,7 @@ class BayesianGaussianMixture(BaseMixture):
         'kmeans' : responsibilities are initialized using kmeans.
         'random' : responsibilities are initialized randomly.
 
-    weight_concentration_prior_type : {'dirichlet_process', 'dirichlet_distribution'}, defaults to 'full'.
+    weight_concentration_prior_type : {'dirichlet_process', 'dirichlet_distribution'}, defaults to 'dirichlet_process'.
         String describing the type of the weight concentration prior.
         Must be one of::
         'dirichlet_process' (using the Stick-breaking representation),

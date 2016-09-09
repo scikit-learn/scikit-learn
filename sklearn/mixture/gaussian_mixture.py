@@ -439,6 +439,11 @@ class GaussianMixture(BaseMixture):
     This class allows to estimate the parameters of a Gaussian mixture
     distribution.
 
+    .. versionadded:: 0.18
+    *GaussianMixture*.
+
+    Read more in the :ref:`User Guide <gmm>`.
+
     Parameters
     ----------
     n_components : int, defaults to 1.

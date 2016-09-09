@@ -33,6 +33,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -650,7 +651,7 @@ def test_gaussian_mixture_fit_convergence_warning():
         assert_warns_message(ConvergenceWarning,
                              'Initialization %d did not converged. '
                              'Try different init parameters, '
-                             'or increase max_init, tol '
+                             'or increase max_iter, tol '
                              'or check for degenerate data.'
                              % max_iter, g.fit, X)
 
@@ -954,3 +955,19 @@ def test_sample():
         means_s = np.array([np.mean(X_s[y_s == k], 0)
                            for k in range(n_features)])
         assert_array_almost_equal(gmm.means_, means_s, decimal=1)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_init():
+    # We check that by increasing the n_init number we have a better solution
+    random_state = 0
+    rand_data = RandomData(np.random.RandomState(random_state), scale=1)
+    n_features, n_components = rand_data.n_features, rand_data.n_components
+    X = rand_data.X['full']
+
+    gmm1 = GaussianMixture(n_components=n_components, n_init=1,
+                           max_iter=1, random_state=random_state).fit(X)
+    gmm2 = GaussianMixture(n_components=n_components, n_init=100,
+                           max_iter=1, random_state=random_state).fit(X)
+
+    assert_greater(gmm2.lower_bound_, gmm1.lower_bound_)

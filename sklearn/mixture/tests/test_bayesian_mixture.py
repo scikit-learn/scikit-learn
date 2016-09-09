@@ -282,7 +282,7 @@ def test_monotonic_likelihood():
     # We check that each step of the each step of variational inference without
     # regularization improve monotonically the training set of the bound
     rng = np.random.RandomState(0)
-    rand_data = RandomData(rng, scale=7)
+    rand_data = RandomData(rng, scale=20)
     n_components = rand_data.n_components
 
     for prior_type in PRIOR_TYPE:
@@ -394,3 +394,28 @@ def test_check_covariance_precision():
         else:
             assert_almost_equal(bgmm.covariances_ * bgmm.precisions_,
                                 np.ones(n_components))
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_invariant_translation():
+    # We check here that adding a constant in the data change correctly the
+    # parameters of the mixture
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=100)
+    n_components = 2 * rand_data.n_components
+
+    for prior_type in PRIOR_TYPE:
+        for covar_type in COVARIANCE_TYPE:
+            X = rand_data.X[covar_type]
+            bgmm1 = BayesianGaussianMixture(
+                weight_concentration_prior_type=prior_type,
+                n_components=n_components, max_iter=100, random_state=0,
+                tol=1e-3, reg_covar=0).fit(X)
+            bgmm2 = BayesianGaussianMixture(
+                weight_concentration_prior_type=prior_type,
+                n_components=n_components, max_iter=100, random_state=0,
+                tol=1e-3, reg_covar=0).fit(X + 100)
+
+            assert_almost_equal(bgmm1.means_, bgmm2.means_ - 100)
+            assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
+            assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)

@@ -638,12 +638,12 @@ class DPGMM(_DPGMMBase):
             min_covar=min_covar, n_iter=n_iter, params=params,
             init_params=init_params)
 
+
 @deprecated("The `VBGMM` class is not working correctly and it's better "
             "to use `sklearn.mixture.BayesianGaussianMixture` class with "
             "parameter `weight_concentration_prior_type="
             "'dirichlet_distribution'` instead. "
             "VBGMM is deprecated in 0.18 and will be removed in 0.20.")
-
 class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 

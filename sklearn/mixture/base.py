@@ -130,15 +130,17 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         pass
 
-    def _initialize_parameters(self, X):
+    def _initialize_parameters(self, X, random_state):
         """Initialize the model parameters.
 
         Parameters
         ----------
         X : array-like, shape  (n_samples, n_features)
+
+        random_state: RandomState
+            A random number generator instance.
         """
         n_samples, _ = X.shape
-        random_state = check_random_state(self.random_state)
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
@@ -195,12 +197,14 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         max_lower_bound = -np.infty
         self.converged_ = False
 
+        random_state = check_random_state(self.random_state)
+
         n_samples, _ = X.shape
         for init in range(n_init):
             self._print_verbose_msg_init_beg(init)
 
             if do_init:
-                self._initialize_parameters(X)
+                self._initialize_parameters(X, random_state)
                 self.lower_bound_ = -np.infty
 
             for n_iter in range(self.max_iter):
@@ -228,7 +232,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         if not self.converged_:
             warnings.warn('Initialization %d did not converged. '
                           'Try different init parameters, '
-                          'or increase max_init, tol '
+                          'or increase max_iter, tol '
                           'or check for degenerate data.'
                           % (init + 1), ConvergenceWarning)
 
