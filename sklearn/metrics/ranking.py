@@ -27,6 +27,7 @@ from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
+from ..utils.extmath import stable_cumsum
 from ..utils.fixes import isclose
 from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
@@ -337,9 +338,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold
-    tps = (y_true * weight).cumsum()[threshold_idxs]
+    tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
-        fps = weight.cumsum()[threshold_idxs] - tps
+        fps = stable_cumsum(weight)[threshold_idxs] - tps
     else:
         fps = 1 + threshold_idxs - tps
     return fps, tps, y_score[threshold_idxs]
