@@ -410,6 +410,9 @@ def test_error():
     # Test support of decision_function
     assert_false(hasattr(BaggingClassifier(base).fit(X, y), 'decision_function'))
 
+    bad_X = X.copy()
+    bad_X[0, 2] = np.nan
+    assert_raises(ValueError, BaggingClassifier(base).fit, bad_X, y)
 
 def test_parallel_classification():
     # Check parallel classification.

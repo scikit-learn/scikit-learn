@@ -285,7 +285,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], force_all_finite=False)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
