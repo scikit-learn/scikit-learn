@@ -397,6 +397,11 @@ Bug fixes
     - Fix :class:`linear_model.ElasticNet` sparse decision function to match
       output with dense in the multioutput case.
 
+    - Fix in :class:`sklearn.model_selection.StratifiedShuffleSplit` to
+      return splits of size ``train_size`` and ``test_size`` in all cases
+      (`#6472 <https://github.com/scikit-learn/scikit-learn/pull/6472>`).
+      By `Andreas Müller`_.
+
 API changes summary
 -------------------
 

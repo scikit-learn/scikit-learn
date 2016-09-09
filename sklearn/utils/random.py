@@ -123,7 +123,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
         if pop_size is 0:
             raise ValueError("a must be non-empty")
 
-    if None != p:
+    if p is not None:
         p = np.array(p, dtype=np.double, ndmin=1, copy=False)
         if p.ndim != 1:
             raise ValueError("p must be 1-dimensional")
@@ -142,7 +142,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
 
     # Actual sampling
     if replace:
-        if None != p:
+        if p is not None:
             cdf = p.cumsum()
             cdf /= cdf[-1]
             uniform_samples = random_state.random_sample(shape)
@@ -156,7 +156,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
             raise ValueError("Cannot take a larger sample than "
                              "population when 'replace=False'")
 
-        if None != p:
+        if p is not None:
             if np.sum(p > 0) < size:
                 raise ValueError("Fewer non-zero entries in p than size")
             n_uniq = 0
