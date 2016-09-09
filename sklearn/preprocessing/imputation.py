@@ -309,14 +309,17 @@ class Imputer(BaseEstimator, TransformerMixin):
         """
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
-            if X.shape[1] != self.statistics_.shape[0]:
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite=False, copy=self.copy)
+            statistics = self.statistics_
+            if X.shape[1] != statistics.shape[0]:
                 raise ValueError("X has %d features per sample, expected %d"
                                  % (X.shape[1], self.statistics_.shape[0]))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
-        if self.axis == 1:
+        else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
 
@@ -331,10 +334,6 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.strategy,
                                              self.missing_values,
                                              self.axis)
-        else:
-            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
-            statistics = self.statistics_
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
