@@ -379,6 +379,20 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return y_inv
 
 
+class LabelBinarizerPipelineFriendly(LabelBinarizer):
+    """Binarize Label in a One vs all fashion. This utility class would
+    enable people to use this with categorical variables in pipelines. 
+
+    Refer to LabelBinarizer for detailed info. 
+    """ 
+    def fit(self, X, y = None):
+        """this would allow us to fit the model based on the X input."""
+        super(LabelBinarizerPipelineFriendly, self).fit(X)
+    def transform(self, X,y = None):
+        return super(LabelBinarizerPipelineFriendly, self).transform(X)
+
+
+
 def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion
 
