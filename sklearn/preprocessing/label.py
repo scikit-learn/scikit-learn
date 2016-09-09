@@ -385,10 +385,10 @@ class LabelBinarizerPipelineFriendly(LabelBinarizer):
 
     Refer to LabelBinarizer for detailed info. 
     """ 
-    def fit(self, X, y = None):
+    def fit(self, X, y=None):
         """this would allow us to fit the model based on the X input."""
         super(LabelBinarizerPipelineFriendly, self).fit(X)
-    def transform(self, X,y = None):
+    def transform(self, X, y=None):
         return super(LabelBinarizerPipelineFriendly, self).transform(X)
 
 
