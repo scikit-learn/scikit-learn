@@ -40,8 +40,8 @@ from ._k_means_elkan import k_means_elkan
 ###############################################################################
 # Initialization heuristic
 
-
-def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
+def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None,
+            check_inputs=True):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -65,6 +65,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
+    check_inputs : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
@@ -77,8 +80,6 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """
     n_samples, n_features = X.shape
 
-    centers = np.empty((n_clusters, n_features), dtype=X.dtype)
-
     assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
 
     # Set the number of local seeding trials if none is given
@@ -87,6 +88,18 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         # specific results for other than mentioning in the conclusion
         # that it helped.
         n_local_trials = 2 + int(np.log(n_clusters))
+
+    # Do type checks before the critical loop
+    if check_inputs:
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
+                        warn_on_dtype=False, estimator='kmeans++',
+                        force_all_finite=True)
+        x_squared_norms = check_array(x_squared_norms, dtype=FLOAT_DTYPES,
+                                      warn_on_dtype=False,
+                                      estimator='kmeans++',
+                                      force_all_finite=True)
+
+    centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
     # Pick first center randomly
     center_id = random_state.randint(n_samples)
@@ -98,7 +111,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
-        squared=True)
+        squared=True, check_inputs=False)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -110,7 +123,9 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
+            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True,
+            check_inputs=False,
+        )
 
         # Decide which candidate is the best
         best_candidate = None
@@ -624,7 +639,7 @@ def _labels_inertia(X, x_squared_norms, centers,
 
 
 def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
-                    init_size=None):
+                    init_size=None, check_inputs=True):
     """Compute the initial centroids
 
     Parameters
@@ -653,6 +668,10 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
+    check_inputs : boolean (default=True)
+        Whether to check if inputs are finite and floats
+        if init is `kmeans++`.
+
     Returns
     -------
     centers: array, shape(k, n_features)
@@ -680,7 +699,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if isinstance(init, string_types) and init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
-                          x_squared_norms=x_squared_norms)
+                          x_squared_norms=x_squared_norms,
+                          check_inputs=check_inputs)
     elif isinstance(init, string_types) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
@@ -883,9 +903,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
-                n_init=self.n_init, max_iter=self.max_iter, verbose=self.verbose,
-                precompute_distances=self.precompute_distances,
-                tol=self.tol, random_state=random_state, copy_x=self.copy_x,
+                n_init=self.n_init, max_iter=self.max_iter,
+                verbose=self.verbose,
+                precompute_distances=self.precompute_distances, tol=self.tol,
+                random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs, algorithm=self.algorithm,
                 return_n_iter=True)
         return self
@@ -1165,8 +1186,8 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     else:
         no_improvement += 1
 
-    if (model.max_no_improvement is not None
-            and no_improvement >= model.max_no_improvement):
+    if (model.max_no_improvement is not None and
+            no_improvement >= model.max_no_improvement):
         if verbose:
             print('Converged (lack of improvement in inertia)'
                   ' at iteration %d/%d'
@@ -1379,7 +1400,7 @@ class MiniBatchKMeans(KMeans):
                 X, self.n_clusters, self.init,
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
-                init_size=init_size)
+                init_size=init_size, check_inputs=False)
 
             # Compute the label assignment on the init dataset
             batch_inertia, centers_squared_diff = _mini_batch_step(
@@ -1487,8 +1508,8 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
-        if (not hasattr(self, 'counts_')
-                or not hasattr(self, 'cluster_centers_')):
+        if (not hasattr(self, 'counts_') or
+                not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(

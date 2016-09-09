@@ -160,7 +160,7 @@ def check_paired_arrays(X, Y):
 
 # Pairwise distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
-                        X_norm_squared=None):
+                        X_norm_squared=None, check_inputs=True):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
@@ -198,6 +198,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
 
+    check_inputs : boolean (default=True)
+        Whether to check if inputs are finite and floats.
+
     Returns
     -------
     distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
@@ -219,10 +222,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     --------
     paired_distances : distances betweens pairs of elements of X and Y.
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    if check_inputs:
+        X, Y = check_pairwise_arrays(X, Y)
 
     if X_norm_squared is not None:
-        XX = check_array(X_norm_squared)
+        if check_inputs:
+            XX = check_array(X_norm_squared)
         if XX.shape == (1, X.shape[0]):
             XX = XX.T
         elif XX.shape != (X.shape[0], 1):
