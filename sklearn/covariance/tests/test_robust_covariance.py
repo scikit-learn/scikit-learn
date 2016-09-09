@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
 from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
@@ -100,11 +101,20 @@ def test_outlier_detection():
     assert_raises(NotFittedError, clf.decision_function, X)
     clf.fit(X)
     y_pred = clf.predict(X)
-    decision = clf.decision_function(X, raw_values=True)
-    decision_transformed = clf.decision_function(X, raw_values=False)
+
+    previous_decision = assert_warns(
+        DeprecationWarning, clf.decision_function, X, raw_values=True)
+
+    clf.raw_values = True
+    new_decision = clf.decision_function(X)
+
+    assert_array_almost_equal(previous_decision, new_decision)
+
+    clf.raw_values = False
+    decision_transformed = clf.decision_function(X)
 
     assert_array_almost_equal(
-        decision, clf.mahalanobis(X))
+        new_decision, clf.mahalanobis(X))
     assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)

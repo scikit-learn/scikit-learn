@@ -12,6 +12,7 @@ covariance estimator (the Minimum Covariance Determinant).
 #
 # License: BSD 3 clause
 
+import warnings
 import numpy as np
 import scipy as sp
 from . import MinCovDet
@@ -28,6 +29,11 @@ class OutlierDetectionMixin(object):
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
+    raw_values : bool
+        Whether or not to consider raw Mahalanobis distances as the
+        decision function. Must be False (default) for compatibility
+        with the others outlier detection tools.
+
     Notes
     -----
     Outlier detection from covariance estimation may break or not
@@ -35,10 +41,11 @@ class OutlierDetectionMixin(object):
     always take care to work with ``n_samples > n_features ** 2``.
 
     """
-    def __init__(self, contamination=0.1):
+    def __init__(self, contamination=0.1, raw_values=False):
         self.contamination = contamination
+        self.raw_values = raw_values
 
-    def decision_function(self, X, raw_values=False):
+    def decision_function(self, X, raw_values=None):
         """Compute the decision function of the given observations.
 
         Parameters
@@ -46,8 +53,8 @@ class OutlierDetectionMixin(object):
         X : array-like, shape (n_samples, n_features)
 
         raw_values : bool
-            Whether or not to consider raw Mahalanobis distances as the
-            decision function. Must be False (default) for compatibility
+            (Deprecated) Whether or not to consider raw Mahalanobis distances
+            as the decision function. Must be False (default) for compatibility
             with the others outlier detection tools.
 
         Returns
@@ -62,9 +69,16 @@ class OutlierDetectionMixin(object):
             such as the One-Class SVM.
 
         """
+
+        if raw_values is not None:
+            warnings.warn(
+                'raw_values keyword has been moved to class initialization',
+                DeprecationWarning)
+            self.raw_values = raw_values
+
         check_is_fitted(self, 'threshold_')
         mahal_dist = self.mahalanobis(X)
-        if raw_values:
+        if self.raw_values:
             decision = mahal_dist
         else:
             check_is_fitted(self, 'threshold_')
@@ -93,7 +107,7 @@ class OutlierDetectionMixin(object):
         check_is_fitted(self, 'threshold_')
         is_inlier = -np.ones(X.shape[0], dtype=int)
         if self.contamination is not None:
-            values = self.decision_function(X, raw_values=True)
+            values = self.mahalanobis(X)
             is_inlier[values <= self.threshold_] = 1
         else:
             raise NotImplementedError("You must provide a contamination rate.")
