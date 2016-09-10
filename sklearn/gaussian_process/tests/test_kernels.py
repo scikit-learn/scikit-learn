@@ -317,4 +317,4 @@ def test_repr_kernels():
 
 def test_no_warnings_matern_eval_gradient():
     mat = Matern(length_scale=[0.5, 2.0], nu=0.5)
-    assert_no_warnings(mat, X, eval_gradient=True)
+    assert_no_warnings(mat.__call__, X, eval_gradient=True)
