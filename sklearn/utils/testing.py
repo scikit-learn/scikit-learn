@@ -86,13 +86,15 @@ except AttributeError:
 
 # raises?
 
-assert_dict_equal = _dummy.assertDictEqual
 
 try:
+    assert_dict_equal = _dummy.assertDictEqual
     assert_in = _dummy.assertIn
     assert_not_in = _dummy.assertNotIn
 except AttributeError:
     # Python <= 2.6
+
+    assert_dict_equal = assert_equal
 
     def assert_in(x, container):
         assert_true(x in container, msg="%r in %r" % (x, container))
