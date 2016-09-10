@@ -861,8 +861,8 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
 
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.all(np.isclose(out[-1], expected, rtol=rtol, atol=atol,
-                             equal_nan=True)):
+    if not np.all(np.isclose(out.take(-1, axis=axis), expected, rtol=rtol,
+                             atol=atol, equal_nan=True)):
         raise RuntimeError('cumsum was found to be unstable: '
                            'its last element does not correspond to sum')
     return out
