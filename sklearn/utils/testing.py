@@ -77,7 +77,12 @@ assert_not_equal = _dummy.assertNotEqual
 assert_true = _dummy.assertTrue
 assert_false = _dummy.assertFalse
 assert_raises = _dummy.assertRaises
-SkipTest = unittest.case.SkipTest
+
+try:
+    SkipTest = unittest.case.SkipTest
+except AttributeError:
+    # Python <= 2.6, we stil need nose here
+    from nose import SkipTest
 
 # raises?
 
