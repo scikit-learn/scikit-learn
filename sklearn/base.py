@@ -12,6 +12,7 @@ from .externals import six
 from .utils.fixes import signature
 from .utils.deprecation import deprecated
 from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
+from . import __version__
 
 
 @deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
@@ -295,6 +296,24 @@ class BaseEstimator(object):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
+
+    def __getstate__(self):
+        if type(self).__module__.startswith('sklearn.'):
+            return dict(self.__dict__.items(), _sklearn_version=__version__)
+        else:
+            return dict(self.__dict__.items())
+
+    def __setstate__(self, state):
+        if type(self).__module__.startswith('sklearn.'):
+            pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            if pickle_version != __version__:
+                warnings.warn(
+                    "Trying to unpickle estimator {0} from version {1} when "
+                    "using version {2}. This might lead to breaking code or "
+                    "invalid results. Use at your own risk.".format(
+                        self.__class__.__name__, pickle_version, __version__),
+                    UserWarning)
+        self.__dict__.update(state)
 
 
 ###############################################################################

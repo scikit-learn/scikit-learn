@@ -6,22 +6,29 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 
+import sklearn
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn import datasets
 from sklearn.utils import deprecated
 
 from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
+import pickle
 
 
 #############################################################################
@@ -235,8 +242,8 @@ def test_is_classifier():
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
-    assert_true(is_classifier(Pipeline([('svc_cv',
-                                         GridSearchCV(svc, {'C': [0.1, 1]}))])))
+    assert_true(is_classifier(Pipeline(
+        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))])))
 
 
 def test_set_params():
@@ -253,9 +260,6 @@ def test_set_params():
 
 
 def test_score_sample_weight():
-    from sklearn.tree import DecisionTreeClassifier
-    from sklearn.tree import DecisionTreeRegressor
-    from sklearn import datasets
 
     rng = np.random.RandomState(0)
 
@@ -313,3 +317,45 @@ def test_clone_pandas_dataframe():
     # the test
     assert_true((e.df == cloned_e.df).values.all())
     assert_equal(e.scalar_param, cloned_e.scalar_param)
+
+
+class TreeNoVersion(DecisionTreeClassifier):
+    def __getstate__(self):
+        return self.__dict__
+
+
+def test_pickle_version_warning():
+    # check that warnings are raised when unpickling in a different version
+
+    # first, check no warning when in the same version:
+    iris = datasets.load_iris()
+    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
+    tree_pickle = pickle.dumps(tree)
+    assert_true(b"version" in tree_pickle)
+    assert_no_warnings(pickle.loads, tree_pickle)
+
+    # check that warning is raised on different version
+    tree_pickle_other = tree_pickle.replace(sklearn.__version__.encode(),
+                                            b"something")
+    message = ("Trying to unpickle estimator DecisionTreeClassifier from "
+               "version {0} when using version {1}. This might lead to "
+               "breaking code or invalid results. "
+               "Use at your own risk.".format("something",
+                                              sklearn.__version__))
+    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
+
+    # check that not including any version also works:
+    # TreeNoVersion has no getstate, like pre-0.18
+    tree = TreeNoVersion().fit(iris.data, iris.target)
+
+    tree_pickle_noversion = pickle.dumps(tree)
+    assert_false(b"version" in tree_pickle_noversion)
+    message = message.replace("something", "pre-0.18")
+    message = message.replace("DecisionTreeClassifier", "TreeNoVersion")
+    # check we got the warning about using pre-0.18 pickle
+    assert_warns_message(UserWarning, message, pickle.loads,
+                         tree_pickle_noversion)
+
+    # check that no warning is raised for external estimators
+    TreeNoVersion.__module__ = "notsklearn"
+    assert_no_warnings(pickle.loads, tree_pickle_noversion)

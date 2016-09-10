@@ -412,8 +412,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
-        # copy __dict__
-        state = dict(self.__dict__)
+        state = super(IsotonicRegression, self).__getstate__()
         # remove interpolation method
         state.pop('f_', None)
         return state
@@ -423,6 +422,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         We need to rebuild the interpolation function.
         """
-        self.__dict__.update(state)
+        super(IsotonicRegression, self).__setstate__(state)
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
