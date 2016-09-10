@@ -36,6 +36,7 @@ import tempfile
 import shutil
 import os.path as op
 import atexit
+import unittest
 
 # WindowsError only exist on Windows
 try:
@@ -47,19 +48,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 
-# Conveniently import all assertions in one place.
-from nose.tools import assert_equal
-from nose.tools import assert_not_equal
-from nose.tools import assert_true
-from nose.tools import assert_false
-from nose.tools import assert_raises
 from nose.tools import raises
-try:
-    from nose.tools import assert_dict_equal
-except ImportError:
-    # Not in old versions of nose, but is only for formatting anyway
-    assert_dict_equal = assert_equal
-from nose import SkipTest
 from nose import with_setup
 
 from numpy.testing import assert_almost_equal
@@ -82,10 +71,23 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_approx_equal"]
 
 
+_dummy = unittest.TestCase('__init__')
+assert_equal = _dummy.assertEqual
+assert_not_equal = _dummy.assertNotEqual
+assert_true = _dummy.assertTrue
+assert_false = _dummy.assertFalse
+assert_raises = _dummy.assertRaises
+SkipTest = unittest.SkipTest
+
+# raises?
+
+assert_dict_equal = _dummy.assertDictEqual
+
 try:
-    from nose.tools import assert_in, assert_not_in
+    assert_in = _dummy.assertIn
+    assert_not_in = _dummy.assertNotIn
 except ImportError:
-    # Nose < 1.0.0
+    # Python <= 2.6
 
     def assert_in(x, container):
         assert_true(x in container, msg="%r in %r" % (x, container))
@@ -94,9 +96,9 @@ except ImportError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 try:
-    from nose.tools import assert_raises_regex
+    assert_raises_reges = _dummy.assertRaisesRegex
 except ImportError:
-    # for Python 2
+    # for Python 2.6
     def assert_raises_regex(expected_exception, expected_regexp,
                             callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions."""
@@ -378,13 +380,10 @@ class _IgnoreWarnings(object):
 
 
 try:
-    from nose.tools import assert_less
+    assert_less = _dummy.assertLess
+    assert_greater = _dummy.assertGreater
 except ImportError:
     assert_less = _assert_less
-
-try:
-    from nose.tools import assert_greater
-except ImportError:
     assert_greater = _assert_greater
 
 

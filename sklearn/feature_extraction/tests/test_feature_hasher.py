@@ -1,11 +1,10 @@
 from __future__ import unicode_literals
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-
-from nose.tools import assert_raises, assert_true
-from numpy.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_raises, assert_true, assert_equal
 
 
 def test_feature_hasher_dicts():

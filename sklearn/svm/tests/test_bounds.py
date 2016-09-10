@@ -1,7 +1,3 @@
-import nose
-from nose.tools import assert_equal, assert_true
-from sklearn.utils.testing import clean_warning_registry
-from sklearn.utils.testing import assert_raise_message
 import warnings
 
 import numpy as np
@@ -10,6 +6,10 @@ from scipy import sparse as sp
 from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
+
+from sklearn.utils.testing import assert_equal, assert_true, raises
+from sklearn.utils.testing import clean_warning_registry
+from sklearn.utils.testing import assert_raise_message
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
@@ -66,13 +66,13 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
                 (np.asarray(clf.intercept_) != 0).any())
 
 
-@nose.tools.raises(ValueError)
+@raises(ValueError)
 def test_ill_posed_min_c():
     X = [[0, 0], [0, 0]]
     y = [0, 1]
     l1_min_c(X, y)
 
 
-@nose.tools.raises(ValueError)
+@raises(ValueError)
 def test_unsupported_loss():
     l1_min_c(dense_X, Y1, 'l1')
