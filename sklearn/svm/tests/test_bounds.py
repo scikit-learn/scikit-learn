@@ -7,8 +7,7 @@ from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
 
-from sklearn.utils.testing import assert_equal, assert_true, raises
-from sklearn.utils.testing import clean_warning_registry
+from sklearn.utils.testing import assert_true, raises
 from sklearn.utils.testing import assert_raise_message
 
 
