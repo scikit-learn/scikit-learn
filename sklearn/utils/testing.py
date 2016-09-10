@@ -382,7 +382,7 @@ class _IgnoreWarnings(object):
 try:
     assert_less = _dummy.assertLess
     assert_greater = _dummy.assertGreater
-except ImportError:
+except AttributeError:
     assert_less = _assert_less
     assert_greater = _assert_greater
 

@@ -70,7 +70,7 @@ def test_feature_hasher_pairs_with_string_values():
     x2_nz = np.abs(x2[x2 != 0])
     assert_equal([1], x1_nz)
     assert_equal([1], x2_nz)
-    assert_equal(x1, x2)
+    assert_array_equal(x1, x2)
 
 
 def test_hash_empty_input():
