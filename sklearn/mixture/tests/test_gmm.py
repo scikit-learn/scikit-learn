@@ -1,5 +1,9 @@
-# These tests are those of the deprecated GMM class
-
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
 import unittest
 import copy
 import sys
