@@ -86,7 +86,7 @@ assert_dict_equal = _dummy.assertDictEqual
 try:
     assert_in = _dummy.assertIn
     assert_not_in = _dummy.assertNotIn
-except ImportError:
+except AttributeError:
     # Python <= 2.6
 
     def assert_in(x, container):
@@ -97,7 +97,7 @@ except ImportError:
 
 try:
     assert_raises_reges = _dummy.assertRaisesRegex
-except ImportError:
+except AttributeError:
     # for Python 2.6
     def assert_raises_regex(expected_exception, expected_regexp,
                             callable_obj=None, *args, **kwargs):
