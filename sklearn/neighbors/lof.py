@@ -126,7 +126,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         self.contamination = contamination
 
-    def fit_predict(self, X):
+    def fit_predict(self, X, y=None):
         """Compute the local outlier factor (LOF) on X.
         Return the labels (1 inlier, -1 outlier) of X according to LOF score
         and the contamination parameter.
