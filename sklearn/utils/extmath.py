@@ -844,7 +844,7 @@ def _deterministic_vector_sign_flip(u):
     return u
 
 
-def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
+def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum
 
     Parameters
@@ -857,10 +857,10 @@ def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
         Absolute tolerance, see ``np.allclose``
     """
     if np_version < (1, 9):
-        return np.cumsum(arr, dtype=np.float64)
+        return np.cumsum(arr, axis=axis, dtype=np.float64)
 
-    out = np.cumsum(arr, dtype=np.float64)
-    expected = np.sum(arr, dtype=np.float64)
+    out = np.cumsum(arr, axis=axis, dtype=np.float64)
+    expected = np.sum(arr, axis=axis, dtype=np.float64)
     if not np.all(np.isclose(out[-1], expected, rtol=rtol, atol=atol,
                              equal_nan=True)):
         raise RuntimeError('cumsum was found to be unstable: '
