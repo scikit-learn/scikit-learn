@@ -439,6 +439,11 @@ class GaussianMixture(BaseMixture):
     This class allows to estimate the parameters of a Gaussian mixture
     distribution.
 
+    .. versionadded:: 0.18
+    *GaussianMixture*.
+
+    Read more in the :ref:`User Guide <gmm>`.
+
     Parameters
     ----------
     n_components : int, defaults to 1.
@@ -448,10 +453,10 @@ class GaussianMixture(BaseMixture):
         defaults to 'full'.
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix).
+        'full' (each component has its own general covariance matrix),
         'tied' (all components share the same general covariance matrix),
         'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance),
+        'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
@@ -506,6 +511,9 @@ class GaussianMixture(BaseMixture):
         it prints also the log probability and the time needed
         for each step.
 
+    verbose_interval : int, default to 10.
+        Number of iteration done before the next print.
+
     Attributes
     ----------
     weights_ : array-like, shape (n_components,)
@@ -559,8 +567,8 @@ class GaussianMixture(BaseMixture):
 
     See Also
     --------
-    BayesianGaussianMixture : Finite gaussian mixture model fit with a
-        variational algorithm.
+    BayesianGaussianMixture : Gaussian mixture model fit with a variational
+        inference.
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,

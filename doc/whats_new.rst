@@ -419,10 +419,20 @@ API changes summary
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
 
    - The old :class:`VBGMM` is deprecated in favor of the new
-     :class:`BayesianGaussianMixture`. The new class solves the computational
+     :class:`BayesianGaussianMixture` (with the parameter
+     ``weight_concentration_prior_type='dirichlet_distribution'``).
+     The new class solves the computational
+     problems of the old class and computes the Gaussian mixture with a
+     Dirichlet process prior faster than before.
+     (`#7295 <https://github.com/scikit-learn/scikit-learn/pull/7295>`_) by
+     `Wei Xue`_ and `Thierry Guillemot`_.
+
+   - The old :class:`VBGMM` is deprecated in favor of the new
+     :class:`BayesianGaussianMixture` (with the parameter
+     ``weight_concentration_prior_type='dirichlet_distribution'``).
+     The new class solves the computational
      problems of the old class and computes the Variational Bayesian Gaussian
      mixture faster than before.
-     Ref :ref:`b` for more information.
      (`#6651 <https://github.com/scikit-learn/scikit-learn/pull/6651>`_) by
      `Wei Xue`_ and `Thierry Guillemot`_.
 
