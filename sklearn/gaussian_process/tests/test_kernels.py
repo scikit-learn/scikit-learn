@@ -20,7 +20,8 @@ from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
-                                   assert_array_almost_equal)
+                                   assert_array_almost_equal,
+                                   assert_no_warnings)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
@@ -312,3 +313,8 @@ def test_repr_kernels():
 
     for kernel in kernels:
         repr(kernel)
+
+
+def test_no_warnings_matern_eval_gradient():
+    mat = Matern(length_scale=[0.5, 2.0], nu=0.5)
+    assert_no_warnings(mat, X, eval_gradient=True)
