@@ -86,6 +86,10 @@ for dat in datasets:
     y_train = y[:n_samples_train]
     y_test = y[n_samples_train:]
 
+    # novelty detection: (comment for outlier detection)
+    X_train = X_train[y_train == 0]
+    y_train = y_train[y_train == 0]
+
     print('LocalOutlierFactor processing...')
     model = LocalOutlierFactor(n_neighbors=20)
     tstart = time()
@@ -93,11 +97,13 @@ for dat in datasets:
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = -model.decision_function(X_test)  # the lower, the more normal
+    scoring = -model._decision_function(X_test)  # the lower, the more normal
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     AUC = auc(fpr, tpr)
-    plt.plot(fpr, tpr, lw=1, label='ROC for %s (area = %0.3f, train-time: %0.2fs, test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
+    plt.plot(fpr, tpr, lw=1,
+             label=('ROC for %s (area = %0.3f, train-time: %0.2fs,'
+                    'test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time)))
 
 plt.xlim([-0.05, 1.05])
 plt.ylim([-0.05, 1.05])
