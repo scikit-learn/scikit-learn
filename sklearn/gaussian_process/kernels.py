@@ -1321,8 +1321,8 @@ class Matern(RBF):
 
             if self.nu == 0.5:
                 dist = np.ma.masked_array(np.sqrt(D.sum(2))[:, :, np.newaxis])
-                K_gradient = K[..., np.newaxis] * D / dist
-                K_gradient = K_gradient.filled(0)
+                D = np.ma.masked_array(D)
+                K_gradient = K[..., np.newaxis] * (D / dist).filled(0)
             elif self.nu == 1.5:
                 K_gradient = \
                     3 * D * np.exp(-np.sqrt(3 * D.sum(-1)))[..., np.newaxis]
