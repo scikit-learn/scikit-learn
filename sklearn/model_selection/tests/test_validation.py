@@ -29,10 +29,10 @@ from sklearn.model_selection import permutation_test_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneLabelOut
-from sklearn.model_selection import LeavePLabelOut
-from sklearn.model_selection import LabelKFold
-from sklearn.model_selection import LabelShuffleSplit
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
@@ -181,22 +181,22 @@ def test_cross_val_score():
     assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
 
 
-def test_cross_val_score_predict_labels():
-    # Check if ValueError (when labels is None) propagates to cross_val_score
+def test_cross_val_score_predict_groups():
+    # Check if ValueError (when groups is None) propagates to cross_val_score
     # and cross_val_predict
-    # And also check if labels is correctly passed to the cv object
+    # And also check if groups is correctly passed to the cv object
     X, y = make_classification(n_samples=20, n_classes=2, random_state=0)
 
     clf = SVC(kernel="linear")
 
-    label_cvs = [LeaveOneLabelOut(), LeavePLabelOut(2), LabelKFold(),
-                 LabelShuffleSplit()]
-    for cv in label_cvs:
+    group_cvs = [LeaveOneGroupOut(), LeavePGroupsOut(2), GroupKFold(),
+                 GroupShuffleSplit()]
+    for cv in group_cvs:
         assert_raise_message(ValueError,
-                             "The labels parameter should not be None",
+                             "The groups parameter should not be None",
                              cross_val_score, estimator=clf, X=X, y=y, cv=cv)
         assert_raise_message(ValueError,
-                             "The labels parameter should not be None",
+                             "The groups parameter should not be None",
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
@@ -372,21 +372,21 @@ def test_permutation_score():
     assert_greater(score, 0.9)
     assert_almost_equal(pvalue, 0.0, 1)
 
-    score_label, _, pvalue_label = permutation_test_score(
+    score_group, _, pvalue_group = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
-        labels=np.ones(y.size), random_state=0)
-    assert_true(score_label == score)
-    assert_true(pvalue_label == pvalue)
+        groups=np.ones(y.size), random_state=0)
+    assert_true(score_group == score)
+    assert_true(pvalue_group == pvalue)
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
     cv_sparse = StratifiedKFold(2)
-    score_label, _, pvalue_label = permutation_test_score(
+    score_group, _, pvalue_group = permutation_test_score(
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
-        scoring="accuracy", labels=np.ones(y.size), random_state=0)
+        scoring="accuracy", groups=np.ones(y.size), random_state=0)
 
-    assert_true(score_label == score)
-    assert_true(pvalue_label == pvalue)
+    assert_true(score_group == score)
+    assert_true(pvalue_group == pvalue)
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):
@@ -483,7 +483,7 @@ def test_cross_val_predict():
     assert_equal(len(preds), len(y))
 
     class BadCV():
-        def split(self, X, y=None, labels=None):
+        def split(self, X, y=None, groups=None):
             for i in range(4):
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 

@@ -64,16 +64,41 @@ Model Selection Enhancements and API Changes
   - **Parameters ``n_folds`` and ``n_iter`` renamed to ``n_splits``**
 
     Some parameter names have changed:
-    The ``n_folds`` parameter in :class:`model_selection.KFold`,
-    :class:`model_selection.LabelKFold`, and
-    :class:`model_selection.StratifiedKFold` is now renamed to ``n_splits``.
-    The ``n_iter`` parameter in :class:`model_selection.ShuffleSplit`,
-    :class:`model_selection.LabelShuffleSplit`,
-    and :class:`model_selection.StratifiedShuffleSplit` is now renamed
-    to ``n_splits``.
+    The ``n_folds`` parameter in new :class:`model_selection.KFold`,
+    :class:`model_selection.GroupKFold` (see below for the name change),
+    and :class:`model_selection.StratifiedKFold` is now renamed to
+    ``n_splits``. The ``n_iter`` parameter in
+    :class:`model_selection.ShuffleSplit`, the new class
+    :class:`model_selection.GroupShuffleSplit` and
+    :class:`model_selection.StratifiedShuffleSplit` is now renamed to
+    ``n_splits``.
 
-Changelog
----------
+  - **Rename of splitter classes which accepts group labels along with data**
+
+    The cross-validation splitters ``LabelKFold``,
+    ``LabelShuffleSplit``, ``LeaveOneLabelOut`` and ``LeavePLabelOut`` have
+    been renamed to :class:`model_selection.GroupKFold`,
+    :class:`model_selection.GroupShuffleSplit`,
+    :class:`model_selection.LeaveOneGroupOut` and
+    :class:`model_selection.LeavePGroupsOut` respectively.
+
+    NOTE the change from singular to plural form in
+    :class:`model_selection.LeavePGroupsOut`.
+
+  - **Fit parameter ``labels`` renamed to ``groups``**
+
+    The ``labels`` parameter in the :func:`split` method of the newly renamed
+    splitters :class:`model_selection.GroupKFold`,
+    :class:`model_selection.LeaveOneGroupOut`,
+    :class:`model_selection.LeavePGroupsOut`,
+    :class:`model_selection.GroupShuffleSplit` is renamed to ``groups``
+    following the new nomenclature of their class names.
+
+  - **Parameter ``n_labels`` renamed to ``n_groups``**
+
+    The parameter ``n_labels`` in the newly renamed
+    :class:`model_selection.LeavePGroupsOut` is changed to ``n_groups``.
+
 
 New features
 ............
@@ -464,6 +489,20 @@ API changes summary
       :func:`metrics.classification.hamming_loss`.
       (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
       `Sebastián Vanrell`_.
+   
+    - The splitter classes ``LabelKFold``, ``LabelShuffleSplit``,
+     ``LeaveOneLabelOut`` and ``LeavePLabelsOut`` are renamed to
+     :class:`model_selection.GroupKFold`,
+     :class:`model_selection.GroupShuffleSplit`,
+     :class:`model_selection.LeaveOneGroupOut`
+     and :class:`model_selection.LeavePGroupsOut` respectively.
+     Also the parameter ``labels`` in the :func:`split` method of the newly
+     renamed splitters :class:`model_selection.LeaveOneGroupOut` and
+     :class:`model_selection.LeavePGroupsOut` is renamed to
+     ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
+     the parameter ``n_labels``is renamed to ``n_groups``.
+     (`#6660 <https://github.com/scikit-learn/scikit-learn/pull/6660>`_)
+     by `Raghav RV`_.
 
 
 .. currentmodule:: sklearn
