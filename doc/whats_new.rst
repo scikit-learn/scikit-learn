@@ -402,6 +402,11 @@ Bug fixes
       (`#6472 <https://github.com/scikit-learn/scikit-learn/pull/6472>`).
       By `Andreas Müller`_.
 
+    - :func:`metrics.roc_curve` and :func:`metrics.precision_recall_curve` no
+      longer round ``y_score`` values when creating ROC curves; this was causing
+      problems for users with very small differences in scores (`#7353
+      <https://github.com/scikit-learn/scikit-learn/pull/7353>`_).
+
 API changes summary
 -------------------
 
