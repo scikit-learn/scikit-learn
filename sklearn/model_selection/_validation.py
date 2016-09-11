@@ -545,8 +545,9 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         supervised learning.
 
     groups : array-like, with shape (n_samples,), optional
-        Group labels used to constrain the permutation to specific subsets of
-        data.
+        Labels to constrain permutation within groups, i.e. ``y`` values
+        are permuted among samples with the same group identifier.
+        When not specified, ``y`` values are permuted among all samples.
 
         NOTE When a grouped cross-validator is used, the group labels are
         also passed on to the ``split`` method of the cross-validator. The
