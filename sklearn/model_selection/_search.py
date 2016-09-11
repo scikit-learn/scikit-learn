@@ -528,15 +528,15 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
-    def _fit(self, X, y, labels, parameter_iterable):
+    def _fit(self, X, y, groups, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
-        X, y, labels = indexable(X, y, labels)
-        n_splits = cv.get_n_splits(X, y, labels)
+        X, y, groups = indexable(X, y, groups)
+        n_splits = cv.get_n_splits(X, y, groups)
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
             print("Fitting {0} folds for each of {1} candidates, totalling"
@@ -554,7 +554,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   self.fit_params, return_parameters=True,
                                   error_score=self.error_score)
           for parameters in parameter_iterable
-          for train, test in cv.split(X, y, labels))
+          for train, test in cv.split(X, y, groups))
 
         test_scores, test_sample_counts, _, parameters = zip(*out)
 
@@ -876,7 +876,7 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None, labels=None):
+    def fit(self, X, y=None, groups=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -890,11 +890,11 @@ class GridSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-        return self._fit(X, y, labels, ParameterGrid(self.param_grid))
+        return self._fit(X, y, groups, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1104,7 +1104,7 @@ class RandomizedSearchCV(BaseSearchCV):
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
 
-    def fit(self, X, y=None, labels=None):
+    def fit(self, X, y=None, groups=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -1117,11 +1117,11 @@ class RandomizedSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, labels, sampled_params)
+        return self._fit(X, y, groups, sampled_params)
