@@ -1320,9 +1320,12 @@ class Matern(RBF):
                 D = squareform(dists**2)[:, :, np.newaxis]
 
             if self.nu == 0.5:
-                dist = np.ma.masked_array(np.sqrt(D.sum(2))[:, :, np.newaxis])
-                D = np.ma.masked_array(D)
-                K_gradient = K[..., np.newaxis] * (D / dist).filled(0)
+                K_gradient = np.zeros_like(D)
+                dist = np.repeat(
+                    np.sqrt(D.sum(2))[:, :, np.newaxis], D.shape[-1], axis=2)
+                nz_dist = dist != 0.0
+                K_gradient[nz_dist] = (
+                    (K[..., np.newaxis] * D)[nz_dist] / dist[nz_dist])
             elif self.nu == 1.5:
                 K_gradient = \
                     3 * D * np.exp(-np.sqrt(3 * D.sum(-1)))[..., np.newaxis]
