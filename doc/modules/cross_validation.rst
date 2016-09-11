@@ -215,9 +215,9 @@ validation strategies.
 Cross-validation iterators for i.i.d. data
 ==========================================
 
-Independent Identically Distributed (i.i.d.) data is simply the one where
-samples are assumed to be created from the same generative process
-and that generative process is assumed to have no memory of past generated
+Assuming that some data is Independent Identically Distributed (i.i.d.) is
+making the assumption that all samples stem from the same generative process
+and that the generative process is assumed to have no memory of past generated
 samples.
 
 The following cross-validators can be used in such cases.
