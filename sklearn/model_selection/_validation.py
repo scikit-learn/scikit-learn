@@ -549,7 +549,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         are permuted among samples with the same group identifier.
         When not specified, ``y`` values are permuted among all samples.
 
-        NOTE When a grouped cross-validator is used, the group labels are
+        When a grouped cross-validator is used, the group labels are
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
