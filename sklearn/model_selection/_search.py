@@ -533,10 +533,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
-
         X, y, labels = indexable(X, y, labels)
         n_splits = cv.get_n_splits(X, y, labels)
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
+                                     metric_check_y=y)
+
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
             print("Fitting {0} folds for each of {1} candidates, totalling"
