@@ -416,10 +416,10 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
                                "; ".join(r for r in ranks[rank]) + "} ;\n")
         out_file.write("}")
 
-        #write the file or return the string
-        try: #out_file is a StringIO buffer
+        # If out_file is a StringIO buffer, return its contents
+        try:
             return out_file.getvalue()
-        except AttributeError: # out_file is not a StringIO buffer
+        except AttributeError:
             pass
 
     finally:
