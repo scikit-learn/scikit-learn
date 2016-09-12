@@ -12,6 +12,7 @@ Logistic Regression
 
 import numbers
 import warnings
+import multiprocessing
 
 import numpy as np
 from scipy import optimize, sparse
@@ -451,7 +452,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              class_weight=None, dual=False, penalty='l2',
                              intercept_scaling=1., multi_class='ovr',
                              random_state=None, check_input=True,
-                             max_squared_sum=None, sample_weight=None):
+                             max_squared_sum=None, sample_weight=None,
+                             n_threads=1):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -563,6 +565,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     sample_weight : array-like, shape(n_samples,) optional
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
+
+    n_threads : int
+        Number of threads to use.
 
     Returns
     -------
@@ -730,7 +735,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, None,
                 penalty, dual, verbose, max_iter, tol, random_state,
-                sample_weight=sample_weight)
+                sample_weight=sample_weight, n_threads=n_threads)
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
@@ -771,7 +776,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
                           multi_class='ovr', random_state=None,
-                          max_squared_sum=None, sample_weight=None):
+                          max_squared_sum=None, sample_weight=None,
+                          n_threads=1):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -874,6 +880,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
+    n_threads : int
+        Number of threads to use.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -907,7 +916,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         tol=tol, verbose=verbose, dual=dual, penalty=penalty,
         intercept_scaling=intercept_scaling, random_state=random_state,
         check_input=False, max_squared_sum=max_squared_sum,
-        sample_weight=sample_weight)
+        sample_weight=sample_weight, n_threads=n_threads)
 
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
@@ -1073,6 +1082,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Number of CPU cores used during the cross-validation loop. If given
         a value of -1, all cores are used.
 
+    n_threads : int, default: 1
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than
+        2-class classification. If given a value of -1, all cores are used.
+
     Attributes
     ----------
     coef_ : array, shape (n_classes, n_features)
@@ -1119,7 +1132,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1,
+                 n_threads=1):
 
         self.penalty = penalty
         self.dual = dual
@@ -1135,6 +1149,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
+        if n_threads == -1:
+            n_threads = multiprocessing.cpu_count()
+        self.n_threads = n_threads
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1184,7 +1201,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
                 self.max_iter, self.tol, self.random_state,
-                sample_weight=sample_weight)
+                sample_weight=sample_weight, n_threads=self.n_threads)
             self.n_iter_ = np.array([n_iter_])
             return self
 
@@ -1238,7 +1255,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
                       max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight)
+                      sample_weight=sample_weight, n_threads=self.n_threads)
             for (class_, warm_start_coef_) in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
@@ -1444,6 +1461,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
+    n_threads : int, default: 1
+        Number of CPU cores used for liblinear L1 one-vs-rest for more than
+        2-class classification. If given a value of -1, all cores are used.
+
     Attributes
     ----------
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
@@ -1501,7 +1522,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',
-                 random_state=None):
+                 random_state=None, n_threads=1):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -1512,6 +1533,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.max_iter = max_iter
         self.class_weight = class_weight
         self.n_jobs = n_jobs
+        if n_threads == -1:
+            n_threads = multiprocessing.cpu_count()
+        self.n_threads = n_threads
         self.verbose = verbose
         self.solver = solver
         self.refit = refit
@@ -1627,7 +1651,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight
+                      sample_weight=sample_weight, n_threads=self.n_threads
                       )
             for label in iter_labels
             for train, test in folds)
@@ -1699,7 +1723,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     verbose=max(0, self.verbose - 1),
                     random_state=self.random_state,
                     check_input=False, max_squared_sum=max_squared_sum,
-                    sample_weight=sample_weight)
+                    sample_weight=sample_weight, n_threads=self.n_threads)
                 w = w[0]
 
             else:

@@ -33,6 +33,7 @@ struct parameter
 	int *weight_label;
 	double* weight;
 	int max_iter;
+    int n_threads;
 	double p;
 };
 

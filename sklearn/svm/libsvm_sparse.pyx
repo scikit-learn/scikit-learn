@@ -32,7 +32,7 @@ cdef extern from "libsvm_sparse_helper.c":
     svm_parameter *set_parameter (int , int , int , double, double ,
                                   double , double , double , double,
                                   double, int, int, int, char *, char *, int,
-                                  int)
+                                  int, int)
     void copy_sv_coef   (char *, svm_csr_model *)
     void copy_support   (char *, svm_csr_model *)
     void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
@@ -77,7 +77,7 @@ def libsvm_sparse_train ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] class_weight,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
                      double nu, double cache_size, double p, int
-                     shrinking, int probability, int max_iter,
+                     shrinking, int probability, int max_iter, int n_threads,
                      int random_seed):
     """
     Wrap svm_train from libsvm using a scipy.sparse.csr matrix
@@ -132,7 +132,7 @@ def libsvm_sparse_train ( int n_features,
                           nu, cache_size, C, eps, p, shrinking,
                           probability, <int> class_weight.shape[0],
                           class_weight_label.data, class_weight.data, max_iter,
-                          random_seed)
+                          n_threads, random_seed)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -263,7 +263,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                           C, eps, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data, -1,
-                          -1) # random seed has no effect on predict either
+                          1, -1) # random seed has no effect on predict either
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
@@ -317,7 +317,7 @@ def libsvm_sparse_predict_proba(
                           C, eps, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
                           class_weight.data, -1,
-                          -1) # random seed has no effect on predict either
+                          1, -1) # random seed has no effect on predict either
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
@@ -379,7 +379,7 @@ def libsvm_sparse_decision_function(
                           100., # cache size has no effect on predict
                           C, eps, p, shrinking,
                           probability, <int> class_weight.shape[0],
-                          class_weight_label.data, class_weight.data, -1, -1)
+                          class_weight_label.data, class_weight.data, -1, 1, -1)
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,

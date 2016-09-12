@@ -32,6 +32,8 @@
 #include <locale.h>
 #include "linear.h"
 #include "tron.h"
+#include "threads.h"
+
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
@@ -1425,7 +1427,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 // To support weights for instances, use GETI(i) (i)
 
 static int solve_l1r_l2_svc(
-	problem *prob_col, double *w, double eps,
+	const problem *prob_col, double *w, double eps,
 	double Cp, double Cn, int max_iter)
 {
 	int l = prob_col->l;
@@ -2077,28 +2079,17 @@ static int solve_l1r_lr(
 }
 
 // transpose matrix X from row format to column format
-static void transpose(const problem *prob, feature_node **x_space_ret, problem *prob_col)
+static void transpose(feature_node **prob_x, int l, int n, feature_node **x_space, feature_node **x_transposed)
 {
 	int i;
-	int l = prob->l;
-	int n = prob->n;
 	size_t nnz = 0;
-	size_t *col_ptr = new size_t [n+1];
-	feature_node *x_space;
-	prob_col->l = l;
-	prob_col->n = n;
-	prob_col->y = new double[l];
-	prob_col->x = new feature_node*[n];
-	prob_col->sample_weight=prob->sample_weight;
-
-	for(i=0; i<l; i++)
-		prob_col->y[i] = prob->y[i];
+	size_t *col_ptr = new size_t[n+1];
 
 	for(i=0; i<n+1; i++)
 		col_ptr[i] = 0;
 	for(i=0; i<l; i++)
 	{
-		feature_node *x = prob->x[i];
+		feature_node *x = prob_x[i];
 		while(x->index != -1)
 		{
 			nnz++;
@@ -2109,26 +2100,24 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 	for(i=1; i<n+1; i++)
 		col_ptr[i] += col_ptr[i-1] + 1;
 
-	x_space = new feature_node[nnz+n];
+	*x_space = Malloc(feature_node,nnz+n);
 	for(i=0; i<n; i++)
-		prob_col->x[i] = &x_space[col_ptr[i]];
+		x_transposed[i] = &(*x_space)[col_ptr[i]];
 
 	for(i=0; i<l; i++)
 	{
-		feature_node *x = prob->x[i];
+		feature_node *x = prob_x[i];
 		while(x->index != -1)
 		{
 			int ind = x->index-1;
-			x_space[col_ptr[ind]].index = i+1; // starts from 1
-			x_space[col_ptr[ind]].value = x->value;
+			(*x_space)[col_ptr[ind]].index = i+1; // starts from 1
+			(*x_space)[col_ptr[ind]].value = x->value;
 			col_ptr[ind]++;
 			x++;
 		}
 	}
 	for(i=0; i<n; i++)
-		x_space[col_ptr[i]].index = -1;
-
-	*x_space_ret = x_space;
+		(*x_space)[col_ptr[i]].index = -1;
 
 	delete [] col_ptr;
 }
@@ -2307,24 +2296,12 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			break;
 		case L1R_L2LOSS_SVC:
 		{
-			problem prob_col;
-			feature_node *x_space = NULL;
-			transpose(prob, &x_space ,&prob_col);
-			n_iter=solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
-			delete [] prob_col.y;
-			delete [] prob_col.x;
-			delete [] x_space;
+			n_iter=solve_l1r_l2_svc(prob, w, primal_solver_tol, Cp, Cn, max_iter);
 			break;
 		}
 		case L1R_LR:
 		{
-			problem prob_col;
-			feature_node *x_space = NULL;
-			transpose(prob, &x_space ,&prob_col);
-			n_iter=solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
-			delete [] prob_col.y;
-			delete [] prob_col.x;
-			delete [] x_space;
+			n_iter=solve_l1r_lr(prob, w, primal_solver_tol, Cp, Cn, max_iter);
 			break;
 		}
 		case L2R_LR_DUAL:
@@ -2358,16 +2335,78 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 	return n_iter;
 }
 
+#ifdef _LL_THREADS
+
+typedef struct
+{
+    _LL_Mutex       mutex;
+    parameter       *param;
+    model           *model_;
+    int             *start;
+    int             *count;
+    double          *weighted_C;
+    int             w_size;
+    int             nr_class;
+    int             nextClass;  // Must have mutex to modify this
+
+}
+_LL_WorkInfo;
+
+typedef struct
+{
+    _LL_ThreadHandle    threadHandle;
+    _LL_WorkInfo        *workInfo;
+    problem             sub_prob;
+    int                 classIndex;
+    double              *w;
+}
+_LL_ThreadInfo;
+
+_LL_ThreadReturnValue _LL_STDCALL TrainProblem(void *startData)
+{
+    _LL_ThreadInfo *ti = (_LL_ThreadInfo *)startData;
+
+    while (true) {
+
+        (void)_LL_MutexLock(&ti->workInfo->mutex);
+        int i = ti->workInfo->nextClass++;
+        (void)_LL_MutexUnlock(&ti->workInfo->mutex);
+
+        if (i >= ti->workInfo->nr_class) {
+            return NULL;
+        }
+
+        int si = ti->workInfo->start[i];
+        int ei = si+ti->workInfo->count[i];
+
+        int k=0;
+        for(; k<si; k++)
+            ti->sub_prob.y[k] = -1;
+        for(; k<ei; k++)
+            ti->sub_prob.y[k] = +1;
+        for(; k<ti->sub_prob.l; k++)
+            ti->sub_prob.y[k] = -1;
+
+        ti->workInfo->model_->n_iter[i]=train_one(&ti->sub_prob, ti->workInfo->param, ti->w, ti->workInfo->weighted_C[i], ti->workInfo->param->C);
+
+        for(int j=0;j<ti->workInfo->w_size;j++)
+            ti->workInfo->model_->w[j*ti->workInfo->nr_class+i] = ti->w[j];
+    }
+
+    return NULL;
+}
+
+#endif
+
 //
 // Interface functions
 //
 model* train(const problem *prob, const parameter *param)
 {
 	int i,j;
-	int l = prob->l;
-	int n = prob->n;
-	int w_size = prob->n;
-	int n_iter;
+	int l = prob->l;		// Number of samples
+	int n = prob->n;		// Number of features
+	int w_size = prob->n;	// Number of features
 	model *model_ = Malloc(model,1);
 
 	if(prob->bias>=0)
@@ -2391,12 +2430,13 @@ model* train(const problem *prob, const parameter *param)
 		int *label = NULL;
 		int *start = NULL;
 		int *count = NULL;
-		int *perm = Malloc(int,l);
+		int *perm = Malloc(int,l);	// Indirect index into samples
+        feature_node *extra = NULL;
 
 		// group training data of the same class
 		group_classes(prob,&nr_class,&label,&start,&count,perm);
 
-		model_->nr_class=nr_class;
+		model_->nr_class=nr_class;	// Number of labels
 		model_->label = Malloc(int,nr_class);
 		for(i=0;i<nr_class;i++)
 			model_->label[i] = label[i];
@@ -2417,7 +2457,7 @@ model* train(const problem *prob, const parameter *param)
 		}
 
 		// constructing the subproblem
-		feature_node **x = Malloc(feature_node *,l);
+		feature_node **x = Malloc(feature_node *,l);	// Copy (pointers) of samples
 		double *sample_weight = new double[l];
 		for(i=0;i<l;i++)
 		{
@@ -2425,80 +2465,156 @@ model* train(const problem *prob, const parameter *param)
 			sample_weight[i] = prob->sample_weight[perm[i]];
 		}
 
-		int k;
-		problem sub_prob;
-		sub_prob.l = l;
-		sub_prob.n = n;
-		sub_prob.x = Malloc(feature_node *,sub_prob.l);
-		sub_prob.y = Malloc(double,sub_prob.l);
-		sub_prob.sample_weight = sample_weight;
+        if (param->solver_type == L1R_L2LOSS_SVC || param->solver_type == L1R_LR)
+        {
+            // Transpose x for L1 solvers
+            feature_node **x_transposed = Malloc(feature_node *,n);
+            transpose(x, l, n, &extra, x_transposed);
+            free(x);
+            x = x_transposed;
+        }
 
-		for(k=0; k<sub_prob.l; k++)
-			sub_prob.x[k] = x[k];
+#ifdef _LL_THREADS
 
-		// multi-class svm by Crammer and Singer
-		if(param->solver_type == MCSVM_CS)
-		{
-			model_->w=Malloc(double, n*nr_class);
-			model_->n_iter=Malloc(int, 1);
-			for(i=0;i<nr_class;i++)
-				for(j=start[i];j<start[i]+count[i];j++)
-					sub_prob.y[j] = i;
-			Solver_MCSVM_CS Solver(&sub_prob, nr_class, weighted_C, param->eps);
-			model_->n_iter[0]=Solver.Solve(model_->w);
-		}
-		else
-		{
-			if(nr_class == 2)
-			{
-				model_->w=Malloc(double, w_size);
-				model_->n_iter=Malloc(int, 1);
-				int e0 = start[0]+count[0];
-				k=0;
-				for(; k<e0; k++)
-					sub_prob.y[k] = -1;
-				for(; k<sub_prob.l; k++)
-					sub_prob.y[k] = +1;
+        if (param->n_threads > 1 && param->solver_type != MCSVM_CS && nr_class != 2) {
 
-				model_->n_iter[0]=train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
-			}
-			else
-			{
-				model_->w=Malloc(double, w_size*nr_class);
-				double *w=Malloc(double, w_size);
-				model_->n_iter=Malloc(int, nr_class);
-				for(i=0;i<nr_class;i++)
-				{
-					int si = start[i];
-					int ei = si+count[i];
+            // Parallel training by class
+            int n_threads = param->n_threads;
+            _LL_WorkInfo workInfo;
+            (void)_LL_MutexInit(&workInfo.mutex);
+            workInfo.model_ = model_;
+            workInfo.param = (parameter *)param;
+            workInfo.weighted_C = weighted_C;
+            workInfo.start = start;
+            workInfo.count = count;
+            workInfo.w_size = w_size;
+            workInfo.nr_class = nr_class;
+            workInfo.nextClass = 0;
 
-					k=0;
-					for(; k<si; k++)
-						sub_prob.y[k] = -1;
-					for(; k<ei; k++)
-						sub_prob.y[k] = +1;
-					for(; k<sub_prob.l; k++)
-						sub_prob.y[k] = -1;
+            // Final weight output
+            model_->w=Malloc(double, w_size*nr_class);
 
-					model_->n_iter[i]=train_one(&sub_prob, param, w, weighted_C[i], param->C);
+            // Number of iterations per class
+            model_->n_iter=Malloc(int, nr_class);
 
-					for(int j=0;j<w_size;j++)
-						model_->w[j*nr_class+i] = w[j];
-				}
-				free(w);
-			}
+            _LL_ThreadInfo *threadInfos = Malloc(_LL_ThreadInfo, n_threads);
+            for(i=0;i<n_threads;i++)
+            {
+                _LL_ThreadInfo *threadInfo = &threadInfos[i];
+                threadInfo->workInfo = &workInfo;
+                problem *sub_prob = &threadInfo->sub_prob;
+                sub_prob->l = l;
+                sub_prob->n = n;
+                sub_prob->x = x;
+                sub_prob->y = Malloc(double,l);			// +1/-1 values for samples while solving
+                sub_prob->sample_weight = sample_weight;
 
-		}
+                threadInfo->w = Malloc(double, w_size);
 
-		free(x);
-		free(label);
-		free(start);
-		free(count);
-		free(perm);
-		free(sub_prob.x);
-		free(sub_prob.y);
-		free(weighted_C);
-		delete[] sample_weight;
+                (void)_LL_ThreadCreate(&threadInfo->threadHandle, TrainProblem, threadInfo, 8 * 1024);
+            }
+
+            // Free allocations for each job
+            for(i=0;i<n_threads;i++)
+            {
+                _LL_ThreadInfo *threadInfo = &threadInfos[i];
+                (void)_LL_ThreadJoin(threadInfo->threadHandle);
+                problem *sub_prob = &threadInfo->sub_prob;
+                free(sub_prob->y);
+                free(threadInfo->w);
+            }
+            (void)_LL_MutexDestroy(&workInfo.mutex);
+            free(threadInfos);
+        }
+        else
+
+#endif // _LL_THREADS
+            
+        {
+
+            int k;
+            problem sub_prob;
+            sub_prob.l = l;
+            sub_prob.n = n;
+            sub_prob.y = Malloc(double,sub_prob.l);			// +1/-1 values for samples while solving
+            sub_prob.sample_weight = sample_weight;
+
+            // multi-class svm by Crammer and Singer
+            if(param->solver_type == MCSVM_CS)
+            {
+            	sub_prob.x = Malloc(feature_node *,sub_prob.l);	// Copy (pointers) of samples
+	            for(k=0; k<sub_prob.l; k++)
+	                sub_prob.x[k] = x[k];	// Copy permutated samples (grouped by label)
+
+                model_->w=Malloc(double, n*nr_class);
+                model_->n_iter=Malloc(int, 1);
+                for(i=0;i<nr_class;i++)
+                    for(j=start[i];j<start[i]+count[i];j++)
+                        sub_prob.y[j] = i;
+                Solver_MCSVM_CS Solver(&sub_prob, nr_class, weighted_C, param->eps);
+                model_->n_iter[0]=Solver.Solve(model_->w);
+            }
+            else
+            {
+            	sub_prob.x = x;
+
+                if(nr_class == 2)
+                {
+                    model_->w=Malloc(double, w_size);
+                    model_->n_iter=Malloc(int, 1);
+                    int e0 = start[0]+count[0];
+                    k=0;
+                    for(; k<e0; k++)
+                        sub_prob.y[k] = -1;
+                    for(; k<sub_prob.l; k++)
+                        sub_prob.y[k] = +1;
+
+                    model_->n_iter[0]=train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
+                }
+                else
+                {
+                    model_->w=Malloc(double, w_size*nr_class);
+                    double *w=Malloc(double, w_size);
+                    model_->n_iter=Malloc(int, nr_class);
+                    for(i=0;i<nr_class;i++)
+                    {
+                        int si = start[i];
+                        int ei = si+count[i];
+
+                        k=0;
+                        for(; k<si; k++)
+                            sub_prob.y[k] = -1;
+                        for(; k<ei; k++)
+                            sub_prob.y[k] = +1;
+                        for(; k<sub_prob.l; k++)
+                            sub_prob.y[k] = -1;
+
+                        model_->n_iter[i]=train_one(&sub_prob, param, w, weighted_C[i], param->C);
+
+                        for(int j=0;j<w_size;j++)
+                            model_->w[j*nr_class+i] = w[j];
+                    }
+                    free(w);
+                }
+
+            }
+
+            if (param->solver_type == MCSVM_CS) {
+	            free(sub_prob.x);
+	        }
+            free(sub_prob.y);
+        }
+
+        if (extra) {
+            free(extra);
+        }
+        free(x);
+        free(label);
+        free(start);
+        free(count);
+        free(perm);
+        free(weighted_C);
+        delete[] sample_weight;
 	}
 	return model_;
 }
