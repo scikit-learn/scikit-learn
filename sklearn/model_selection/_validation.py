@@ -476,11 +476,11 @@ def _check_is_permutation(indices, n_samples):
     Returns
     -------
     is_partition : bool
-        True iff sorted(locs) is range(n)
+        True iff sorted(indices) is np.arange(n)
     """
     if len(indices) != n_samples:
         return False
-    hit = np.zeros(n_samples, bool)
+    hit = np.zeros(n_samples, dtype=bool)
     hit[indices] = True
     if not np.all(hit):
         return False

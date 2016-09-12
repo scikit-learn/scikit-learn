@@ -731,12 +731,17 @@ def test_validation_curve():
 
 
 def test_check_is_permutation():
+    rng = np.random.RandomState(0)
     p = np.arange(100)
+    rng.shuffle(p)
     assert_true(_check_is_permutation(p, 100))
     assert_false(_check_is_permutation(np.delete(p, 23), 100))
 
     p[0] = 23
     assert_false(_check_is_permutation(p, 100))
+
+    # Check if the additional duplicate indices are caught
+    assert_false(_check_is_permutation(np.hstack((p, 0)), 100))
 
 
 def test_cross_val_predict_sparse_prediction():
