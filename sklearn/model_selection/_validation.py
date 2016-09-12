@@ -27,38 +27,10 @@ from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 
-from ._split import KFold
-from ._split import GroupKFold
-from ._split import LeaveOneGroupOut
-from ._split import LeaveOneOut
-from ._split import LeavePGroupsOut
-from ._split import LeavePOut
-from ._split import ShuffleSplit
-from ._split import GroupShuffleSplit
-from ._split import StratifiedKFold
-from ._split import StratifiedShuffleSplit
-from ._split import PredefinedSplit
 from ._split import check_cv, _safe_split
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
-
-ALL_CVS = {'KFold': KFold,
-           'GroupKFold': GroupKFold,
-           'LeaveOneGroupOut': LeaveOneGroupOut,
-           'LeaveOneOut': LeaveOneOut,
-           'LeavePGroupsOut': LeavePGroupsOut,
-           'LeavePOut': LeavePOut,
-           'ShuffleSplit': ShuffleSplit,
-           'GroupShuffleSplit': GroupShuffleSplit,
-           'StratifiedKFold': StratifiedKFold,
-           'StratifiedShuffleSplit': StratifiedShuffleSplit,
-           'PredefinedSplit': PredefinedSplit}
-
-GROUP_CVS = {'GroupKFold': GroupKFold,
-             'LeaveOneGroupOut': LeaveOneGroupOut,
-             'LeavePGroupsOut': LeavePGroupsOut,
-             'GroupShuffleSplit': GroupShuffleSplit}
 
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
