@@ -731,7 +731,9 @@ def test_validation_curve():
 
 
 def test_check_is_permutation():
+    rng = np.random.RandomState(0)
     p = np.arange(100)
+    rng.shuffle(p)
     assert_true(_check_is_permutation(p, 100))
     assert_false(_check_is_permutation(np.delete(p, 23), 100))
 
