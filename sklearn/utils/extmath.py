@@ -851,6 +851,9 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     ----------
     arr : array-like
         To be cumulatively summed as flat
+    axis : int, optional
+        Axis along which the cumulative sum is computed.
+        The default (None) is to compute the cumsum over the flattened array.
     rtol : float
         Relative tolerance, see ``np.allclose``
     atol : float
