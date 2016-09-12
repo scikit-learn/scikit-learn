@@ -60,7 +60,7 @@ def _color_brew(n):
     return color_list
 
 
-def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
+def export_graphviz(decision_tree, out_file=None, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
@@ -84,8 +84,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, optional (default="tree.dot")
-        Handle or name of the output file.
+    out_file : file object or string, optional (default=None)
+        Handle or name of the output file. If ``None``, return the result is
+        returned as a string.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -370,6 +371,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                 out_file = open(out_file, "wb")
             own_file = True
 
+        if out_file is None:
+            out_file = six.StringIO()
+
         # The depth of each node for plotting with 'leaf' option
         ranks = {'leaves': []}
         # The colors to render each node with
@@ -411,6 +415,12 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                 out_file.write("{rank=same ; " +
                                "; ".join(r for r in ranks[rank]) + "} ;\n")
         out_file.write("}")
+
+        #write the file or return the string
+        try: #out_file is a StringIO buffer
+            return out_file.getvalue()
+        except AttributeError: # out_file is not a StringIO buffer
+            pass
 
     finally:
         if own_file:
