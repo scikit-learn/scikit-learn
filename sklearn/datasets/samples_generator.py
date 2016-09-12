@@ -15,6 +15,7 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils.extmath import stable_cumsum
 from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
@@ -333,7 +334,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
-    cumulative_p_c = np.cumsum(p_c)
+    cumulative_p_c = stable_cumsum(p_c)
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
 
@@ -1193,8 +1194,8 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     dim : integer, optional (default=1)
         The size of the random matrix to generate.
 
-    alpha : float between 0 and 1, optional (default=0.95)
-        The probability that a coefficient is zero (see notes). Larger values 
+    alpha: float between 0 and 1, optional (default=0.95)
+        The probability that a coefficient is zero (see notes). Larger values
         enforce more sparsity.
 
     random_state : int, RandomState instance or None, optional (default=None)
