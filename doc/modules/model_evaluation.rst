@@ -409,6 +409,15 @@ from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` 
    :scale: 75
    :align: center
 
+For binary problems, we can get counts of true negatives, false positives,
+false negatives and true positives as follows::
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp
+  (2, 1, 2, 3)
+
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
