@@ -8,7 +8,8 @@ Here we try to give some answers to questions that regularly pop up on the maili
 
 What is the project name (a lot of people get it wrong)?
 --------------------------------------------------------
-scikit-learn, but not scikit or SciKit nor sci-kit learn. Also not scikits.learn or scikits-learn, which where previously used.
+scikit-learn, but not scikit or SciKit nor sci-kit learn.
+Also not scikits.learn or scikits-learn, which were previously used.
 
 How do you pronounce the project name?
 ------------------------------------------
@@ -201,7 +202,6 @@ DBSCAN with Levenshtein distances::
 Similar tricks can be used, with some care, for tree kernels, graph kernels,
 etc.
 
-
 Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
 ------------------------------------------------------------------------
 
@@ -249,9 +249,9 @@ program: Insert the following instructions in your main script::
 You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
 
-
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
 --------------------------------------------------------------------------------------------------------------------------------------
+
 Deep learning and reinforcement learning both require a rich vocabulary to
 define an architecture, with deep learning additionally requiring
 GPUs for efficient computing. However, neither of these fit within
@@ -259,9 +259,9 @@ the design constraints of scikit-learn; as a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
 
-
 Why is my pull request not getting any attention?
 -------------------------------------------------
+
 The scikit-learn review process takes a significant amount of time, and
 contributors should not be discouraged by a lack of activity or review on
 their pull request. We care a lot about getting things right
@@ -276,3 +276,23 @@ If a review of your pull request comes slowly, it is likely because the
 reviewers are busy. We ask for your understanding and request that you
 not close your pull request or discontinue your work solely because of
 this reason.
+
+How do I set a ``random_state`` for an entire execution?
+----------------------------------------------------
+
+For testing and replicability, it is often important to have the entire execution
+controlled by a single seed for the pseudo-random number generator used in
+algorithms that have a randomized component. Scikit-learn does not use its own
+global random state; whenever a RandomState instance or an integer random seed
+is not provided as an argument, it relies on the numpy global random state,
+which can be set using :func:`numpy.random.seed`.
+For example, to set an execution's numpy global random state to 42, one could
+execute the following in his or her script::
+
+    import numpy as np
+    np.random.seed(42)
+
+However, a global random state is prone to modification by other code during
+execution. Thus, the only way to ensure replicability is to pass ``RandomState``
+instances everywhere and ensure that both estimators and cross-validation
+splitters have their ``random_state`` parameter set.
