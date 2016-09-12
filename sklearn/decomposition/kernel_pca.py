@@ -100,7 +100,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     dual_coef_ : array, (n_samples, n_features)
         Inverse transform matrix. If `fit_inverse_transform=False`,
-        dual_coef_ is not present.
+        ``dual_coef_`` is not present.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.

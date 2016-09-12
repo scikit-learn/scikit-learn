@@ -27,6 +27,7 @@ from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
                                column_or_1d)
 from .utils.multiclass import type_of_target
+from .utils.random import choice
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
@@ -414,9 +415,9 @@ class LabelKFold(_BaseKFold):
 
         if n_folds > n_labels:
             raise ValueError(
-                    ("Cannot have number of folds n_folds={0} greater"
-                     " than the number of labels: {1}.").format(n_folds,
-                                                                n_labels))
+                ("Cannot have number of folds n_folds={0} greater"
+                 " than the number of labels: {1}.").format(n_folds,
+                                                            n_labels))
 
         # Weight labels by their number of occurrences
         n_samples_per_label = np.bincount(labels)
@@ -906,6 +907,59 @@ def _validate_shuffle_split(n, test_size, train_size):
     return int(n_train), int(n_test)
 
 
+def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergeometric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+    """
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = n_draws * class_counts / class_counts.sum()
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    need_to_add = int(n_draws - floored.sum())
+    if need_to_add > 0:
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            inds, = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                    break
+    return floored.astype(np.int)
+
+
 class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross validation iterator
 
@@ -991,39 +1045,24 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def _iter_indices(self):
         rng = check_random_state(self.random_state)
         cls_count = bincount(self.y_indices)
-        p_i = cls_count / float(self.n)
-        n_i = np.round(self.n_train * p_i).astype(int)
-        t_i = np.minimum(cls_count - n_i,
-                         np.round(self.n_test * p_i).astype(int))
 
         for n in range(self.n_iter):
+            # if there are ties in the class-counts, we want
+            # to make sure to break them anew in each iteration
+            n_i = _approximate_mode(cls_count, self.n_train, rng)
+            class_counts_remaining = cls_count - n_i
+            t_i = _approximate_mode(class_counts_remaining, self.n_test, rng)
+
             train = []
             test = []
 
-            for i, cls in enumerate(self.classes):
+            for i, _ in enumerate(self.classes):
                 permutation = rng.permutation(cls_count[i])
-                cls_i = np.where((self.y == cls))[0][permutation]
+                perm_indices_class_i = np.where(
+                    (i == self.y_indices))[0][permutation]
 
-                train.extend(cls_i[:n_i[i]])
-                test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
-
-            # Because of rounding issues (as n_train and n_test are not
-            # dividers of the number of elements per class), we may end
-            # up here with less samples in train and test than asked for.
-            if len(train) + len(test) < self.n_train + self.n_test:
-                # We complete by affecting randomly the missing indexes
-                missing_idx = np.where(bincount(train + test,
-                                                minlength=len(self.y)) == 0,
-                                       )[0]
-                missing_idx = rng.permutation(missing_idx)
-                n_missing_train = self.n_train - len(train)
-                n_missing_test = self.n_test - len(test)
-
-                if n_missing_train > 0:
-                    train.extend(missing_idx[:n_missing_train])
-                if n_missing_test > 0:
-                    test.extend(missing_idx[-n_missing_test:])
-
+                train.extend(perm_indices_class_i[:n_i[i]])
+                test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
             train = rng.permutation(train)
             test = rng.permutation(test)
 

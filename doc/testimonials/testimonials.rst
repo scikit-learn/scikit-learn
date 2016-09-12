@@ -292,7 +292,9 @@ Greg Lamp, Co-founder Yhat
 .. raw:: html
 
    </span>
-------------------------------------------
+
+`Rangespan <https://www.rangespan.com>_`
+----------------------------------------
 
 .. raw:: html
 

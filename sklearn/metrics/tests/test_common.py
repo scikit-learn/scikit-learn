@@ -217,6 +217,13 @@ METRIC_UNDEFINED_BINARY = [
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
     "matthews_corrcoef_score",
+
+    # with default average='binary', multiclass is prohibited
+    "precision_score",
+    "recall_score",
+    "f1_score",
+    "f2_score",
+    "f0.5_score",
 ]
 
 # Metric undefined with "binary" or "multiclass" input
@@ -303,16 +310,14 @@ MULTILABELS_METRICS = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
-
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
 
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
@@ -332,7 +337,11 @@ SYMMETRIC_METRICS = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
+    "f1_score", "micro_f1_score", "macro_f1_score",
+    "weighted_recall_score",
+    # P = R = F = accuracy in multiclass case
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error",
@@ -349,11 +358,8 @@ NOT_SYMMETRIC_METRICS = [
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
-    "weighted_f0.5_score", "weighted_f2_score", "weighted_precision_score",
-    "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f2_score", "micro_precision_score",
-    "micro_recall_score",
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
@@ -382,7 +388,8 @@ def test_symmetry():
     # We shouldn't forget any metrics
     assert_equal(set(SYMMETRIC_METRICS).union(
         NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
-        METRIC_UNDEFINED_BINARY_MULTICLASS), set(ALL_METRICS))
+        METRIC_UNDEFINED_BINARY_MULTICLASS),
+        set(ALL_METRICS))
 
     assert_equal(
         set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
@@ -1062,6 +1069,7 @@ def test_sample_weight_invariance(n_samples=50):
                    y_pred)
 
 
+@ignore_warnings
 def test_no_averaging_labels():
     # test labels argument when not using averaging
     # in multi-class and multi-label cases
@@ -1075,7 +1083,7 @@ def test_no_averaging_labels():
     for name in METRICS_WITH_AVERAGING:
         for y_true, y_pred in [[y_true_multiclass, y_pred_multiclass],
                                [y_true_multilabel, y_pred_multilabel]]:
-            if name not in MULTILABELS_METRICS and y_pred.shape[1] > 0:
+            if name not in MULTILABELS_METRICS and y_pred.ndim > 1:
                 continue
 
             metric = ALL_METRICS[name]
