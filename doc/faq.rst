@@ -31,7 +31,7 @@ What's the best way to get help on scikit-learn usage?
 **For general machine learning questions**, please use
 `Cross Validated <http://stats.stackexchange.com>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com>`_
+**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com/questions/tagged/scikit-learn>`_
 with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
 <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
@@ -46,11 +46,11 @@ shell with scikit-learn installed. Do not forget to include the import statement
 
 More guidance to write good reproduction code snippets can be found at:
 
-  http://stackoverflow.com/help/mcve
+http://stackoverflow.com/help/mcve
 
-  If your problem raises an exception that you do not understand (even after googling it),
-  please make sure to include the full traceback that you obtain when running the
-  reproduction script.
+If your problem raises an exception that you do not understand (even after googling it),
+please make sure to include the full traceback that you obtain when running the
+reproduction script.
 
 For bug reports or feature requests, please make use of the
 `issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_.
@@ -59,8 +59,8 @@ There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
 might be found. 
 
-Please do not email any authors directly to ask for assistance, report bugs,
-or for any other issue related to scikit-learn.
+**Please do not email any authors directly to ask for assistance, report bugs,
+or for any other issue related to scikit-learn.**
 
 How can I create a bunch object?
 ------------------------------------------------
