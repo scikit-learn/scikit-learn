@@ -12,11 +12,11 @@ By comparing the local density of a sample to the local densities of
 its neighbors, one can identify samples that have a substantially lower
 density than their neighbors. These are considered as outliers.
 """
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import LocalOutlierFactor
+print(__doc__)
 
 np.random.seed(42)
 
@@ -33,7 +33,7 @@ y_pred_outliers = y_pred[200:]
 
 # plot the level sets of the decision function
 xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
-Z = clf._decision_function(np.c_[xx.ravel(), yy.ravel()])
+Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
 plt.title("Local Outlier Factor (LOF)")

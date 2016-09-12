@@ -174,7 +174,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
-        If X is None, fit(X)._predict(X) returns the same as fit_predict(X).
+        If X is None, returns the same as fit_predict(X_train).
         This method allows to generalize prediction to new observations (not
         in the training set).
 
@@ -197,23 +197,27 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             is_inlier = np.ones(X.shape[0], dtype=int)
+            is_inlier[self.decision_function(X) <= self.threshold_] = -1
         else:
             is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
-
-        is_inlier[self._decision_function(X) <= self.threshold_] = -1
+            is_inlier[-self.outlier_factor_ <= self.threshold_] = -1
 
         return is_inlier
 
-    def _decision_function(self, X=None):
+    def decision_function(self, X):
         """Opposite of the Local Outlier Factor of X (as bigger is better).
+
+        WARNING: The argument X is supposed to contain new data. The samples in
+        X are not considered in any neighborhood.
+        The decision function on training data is available by considering the
+        opposite of the outlier_factor_ attribute.
 
         Parameters
         ----------
 
         X : array-like, shape (n_samples, n_features), optional
             The query sample or samples to compute the Local Outlier Factor
-            w.r.t. the training samples. If None, makes prediction on the
-            training data without considering them as their own neighbors.
+            w.r.t. the training samples.
 
         Returns
         -------
@@ -225,15 +229,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
                                "_k_distance_value_fit_X_",
                                "neighbors_indices_fit_X_"])
 
-        # if X is None, make prediction on X=X_train without considered each
-        # query point as its own neighbor.
-        if X is None:
-            # minus as bigger is better (here less abnormal):
-            return -self.outlier_factor_
-
-        else:
-            X = check_array(X, accept_sparse='csr')
-            return -self._local_outlier_factor(X)  # as bigger is better
+        X = check_array(X, accept_sparse='csr')
+        return -self._local_outlier_factor(X)  # as bigger is better
 
     def _k_distance(self, X=None):
         """

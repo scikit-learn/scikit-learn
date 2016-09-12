@@ -81,23 +81,18 @@ for i, offset in enumerate(clusters_separation):
     plt.figure(figsize=(9, 7))
     for i, (clf_name, clf) in enumerate(classifiers.items()):
         # fit the data and tag outliers
-        clf.fit(X)
         if clf_name == "Local Outlier Factor":
+            y_pred = clf.fit_predict(X)
             scores_pred = -clf.outlier_factor_
         else:
+            clf.fit(X)
             scores_pred = clf.decision_function(X)
+            y_pred = clf.predict(X)
         threshold = stats.scoreatpercentile(scores_pred,
                                             100 * outliers_fraction)
-        if clf_name == "Local Outlier Factor":
-            y_pred = clf._predict(X)
-        else:
-            y_pred = clf.predict(X)
         n_errors = (y_pred != ground_truth).sum()
         # plot the levels lines and the points
-        if clf_name == "Local Outlier Factor":
-            Z = clf._decision_function(np.c_[xx.ravel(), yy.ravel()])
-        else:
-            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+        Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
         subplot = plt.subplot(2, 2, i + 1)
         subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
