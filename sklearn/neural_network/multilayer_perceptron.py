@@ -421,9 +421,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
-        if self.algorithm not in _STOCHASTIC_ALGOS + ["l-bfgs"]:
-            raise ValueError("The algorithm %s is not supported. " %
-                             self.algorithm)
+        supported_algorithms = _STOCHASTIC_ALGOS + ["l-bfgs"]
+        if self.algorithm not in supported_algorithms:
+            raise ValueError("The algorithm %s is not supported. "
+                             " Expected one of: %s" %
+                             (self.algorithm, ", ".join(supported_algorithms)))
 
     def _fit_lbfgs(self, X, y, activations, deltas, coef_grads,
                    intercept_grads, layer_units):
