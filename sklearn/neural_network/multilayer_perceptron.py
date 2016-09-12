@@ -27,7 +27,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call
 
 
-_STOCHASTIC_ALGOS = ['sgd', 'adam']
+_STOCHASTIC_SOLVERS = ['sgd', 'adam']
 
 
 def _pack(coefs_, intercepts_):
@@ -43,13 +43,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
     """
 
     @abstractmethod
-    def __init__(self, hidden_layer_sizes, activation, algorithm,
+    def __init__(self, hidden_layer_sizes, activation, solver,
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
                  validation_fraction, beta_1, beta_2, epsilon):
         self.activation = activation
-        self.algorithm = algorithm
+        self.solver = solver
         self.alpha = alpha
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -284,7 +284,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
-        if self.algorithm in _STOCHASTIC_ALGOS:
+        if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
             self._no_improvement_count = 0
             if self.early_stopping:
@@ -345,7 +345,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._initialize(y, layer_units)
 
         # lbgfs does not support mini-batches
-        if self.algorithm == 'lbgfs':
+        if self.solver == 'lbgfs':
             batch_size = n_samples
         elif self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -368,13 +368,13 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         intercept_grads = [np.empty(n_fan_out_) for n_fan_out_ in
                            layer_units[1:]]
 
-        # Run the Stochastic optimization algorithm
-        if self.algorithm in _STOCHASTIC_ALGOS:
+        # Run the Stochastic optimization solver
+        if self.solver in _STOCHASTIC_SOLVERS:
             self._fit_stochastic(X, y, activations, deltas, coef_grads,
                                  intercept_grads, layer_units, incremental)
 
-        # Run the LBFGS algorithm
-        elif self.algorithm == 'lbgfs':
+        # Run the LBFGS solver
+        elif self.solver == 'lbgfs':
             self._fit_lbfgs(X, y, activations, deltas, coef_grads,
                             intercept_grads, layer_units)
         return self
@@ -421,11 +421,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
-        supported_algorithms = _STOCHASTIC_ALGOS + ["lbgfs"]
-        if self.algorithm not in supported_algorithms:
-            raise ValueError("The algorithm %s is not supported. "
+        supported_solvers = _STOCHASTIC_SOLVERS + ["lbgfs"]
+        if self.solver not in supported_solvers:
+            raise ValueError("The solver %s is not supported. "
                              " Expected one of: %s" %
-                             (self.algorithm, ", ".join(supported_algorithms)))
+                             (self.solver, ", ".join(supported_solvers)))
 
     def _fit_lbfgs(self, X, y, activations, deltas, coef_grads,
                    intercept_grads, layer_units):
@@ -473,11 +473,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if not incremental or not hasattr(self, '_optimizer'):
             params = self.coefs_ + self.intercepts_
 
-            if self.algorithm == 'sgd':
+            if self.solver == 'sgd':
                 self._optimizer = SGDOptimizer(
                     params, self.learning_rate_init, self.learning_rate,
                     self.momentum, self.nesterovs_momentum, self.power_t)
-            elif self.algorithm == 'adam':
+            elif self.solver == 'adam':
                 self._optimizer = AdamOptimizer(
                     params, self.learning_rate_init, self.beta_1, self.beta_2,
                     self.epsilon)
@@ -630,10 +630,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         self : returns a trained MLP model.
         """
-        if self.algorithm not in _STOCHASTIC_ALGOS:
+        if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError("partial_fit is only available for stochastic"
-                                 " optimization algorithms. %s is not"
-                                 " stochastic" % self.algorithm)
+                                 " optimizers. %s is not stochastic."
+                                 % self.solver)
         return self._partial_fit
 
     def _partial_fit(self, X, y, classes=None):
@@ -679,8 +679,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     """Multi-layer Perceptron classifier.
 
-    This algorithm optimizes the log-loss function using lbgfs or gradient
-    descent.
+    This model optimizes the log-loss function using LBFGS or stochastic
+    gradient descent.
 
     Parameters
     ----------
@@ -703,18 +703,17 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    algorithm : {'lbgfs', 'sgd', 'adam'}, default 'adam'
-        The algorithm for weight optimization.
+    solver : {'lbgfs', 'sgd', 'adam'}, default 'adam'
+        The solver for weight optimization.
 
-        - 'lbgfs' is an optimization algorithm in the family of
-          quasi-Newton methods.
+        - 'lbgfs' is an optimizer in the family of quasi-Newton methods.
 
         - 'sgd' refers to stochastic gradient descent.
 
-        - 'adam' refers to a stochastic gradient-based optimization algorithm
-          proposed by Kingma, Diederik, and Jimmy Ba
+        - 'adam' refers to a stochastic gradient-based optimizer proposed
+          by Kingma, Diederik, and Jimmy Ba
 
-        Note: The default algorithm 'adam' works pretty well on relatively
+        Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
         For small datasets, however, 'lbgfs' can converge faster and perform
@@ -725,7 +724,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
-        If the algorithm is 'lbgfs', the classifier will not use minibatch.
+        If the solver is 'lbgfs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
@@ -744,10 +743,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
           least tol, or fail to increase validation score by at least tol if
           'early_stopping' is on, the current learning rate is divided by 5.
 
-        Only used when ``algorithm='sgd'``.
+        Only used when ``solver='sgd'``.
 
     max_iter : int, optional, default 200
-        Maximum number of iterations. The algorithm iterates until convergence
+        Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations.
 
     random_state : int or RandomState, optional, default None
@@ -755,7 +754,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
-        algorithm='sgd' or 'adam'.
+        solver='sgd' or 'adam'.
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
@@ -765,12 +764,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
-        in updating the weights. Only used when algorithm='sgd' or 'adam'.
+        in updating the weights. Only used when solver='sgd' or 'adam'.
 
     power_t : double, optional, default 0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
-        is set to 'invscaling'. Only used when algorithm='sgd'.
+        is set to 'invscaling'. Only used when solver='sgd'.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -782,10 +781,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     momentum : float, default 0.9
         Momentum for gradient descent update. Should be between 0 and 1. Only
-        used when algorithm='sgd'.
+        used when solver='sgd'.
 
     nesterovs_momentum : boolean, default True
-        Whether to use Nesterov's momentum. Only used when algorithm='sgd' and
+        Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
     early_stopping : bool, default False
@@ -794,7 +793,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         aside 10% of training data as validation and terminate training when
         validation score is not improving by at least tol for two consecutive
         epochs.
-        Only effective when algorithm='sgd' or 'adam'
+        Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -803,14 +802,14 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
-        should be in [0, 1). Only used when algorithm='adam'
+        should be in [0, 1). Only used when solver='adam'
 
     beta_2 : float, optional, default 0.999
         Exponential decay rate for estimates of second moment vector in adam,
-        should be in [0, 1). Only used when algorithm='adam'
+        should be in [0, 1). Only used when solver='adam'
 
     epsilon : float, optional, default 1e-8
-        Value for numerical stability in adam. Only used when algorithm='adam'
+        Value for numerical stability in adam. Only used when solver='adam'
 
     Attributes
     ----------
@@ -832,7 +831,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         layer i + 1.
 
     n_iter_ : int,
-        The number of iterations the algorithm has ran.
+        The number of iterations the solver has ran.
 
     n_layers_ : int
         Number of layers.
@@ -873,7 +872,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
-                 algorithm='adam', alpha=0.0001,
+                 solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
                  shuffle=True, random_state=None, tol=1e-4,
@@ -884,7 +883,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
-                     activation=activation, algorithm=algorithm, alpha=alpha,
+                     activation=activation, solver=solver, alpha=alpha,
                      batch_size=batch_size, learning_rate=learning_rate,
                      learning_rate_init=learning_rate_init, power_t=power_t,
                      max_iter=max_iter, loss='log_loss', shuffle=shuffle,
@@ -961,10 +960,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         self : returns a trained MLP model.
         """
-        if self.algorithm not in _STOCHASTIC_ALGOS:
+        if self.solver not in _STOCHASTIC_SOLVERS:
             raise AttributeError("partial_fit is only available for stochastic"
-                                 " optimization algorithms. %s is not"
-                                 " stochastic" % self.algorithm)
+                                 " optimizer. %s is not stochastic"
+                                 % self.solver)
         return self._partial_fit
 
     def _partial_fit(self, X, y, classes=None):
@@ -1021,7 +1020,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     """Multi-layer Perceptron regressor.
 
-    This algorithm optimizes the squared-loss using lbgfs or gradient descent.
+    This model optimizes the squared-loss using LBFGS or stochastic gradient
+    descent.
 
     Parameters
     ----------
@@ -1044,18 +1044,17 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    algorithm : {'lbgfs', 'sgd', 'adam'}, default 'adam'
-        The algorithm for weight optimization.
+    solver : {'lbgfs', 'sgd', 'adam'}, default 'adam'
+        The solver for weight optimization.
 
-        - 'lbgfs' is an optimization algorithm in the family of
-          quasi-Newton methods.
+        - 'lbgfs' is an optimizer in the family of quasi-Newton methods.
 
         - 'sgd' refers to stochastic gradient descent.
 
-        - 'adam' refers to a stochastic gradient-based optimization algorithm
-          proposed by Kingma, Diederik, and Jimmy Ba
+        - 'adam' refers to a stochastic gradient-based optimizer proposed by
+          Kingma, Diederik, and Jimmy Ba
 
-        Note: The default algorithm 'adam' works pretty well on relatively
+        Note: The default solver 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
         For small datasets, however, 'lbgfs' can converge faster and perform
@@ -1066,7 +1065,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
-        If the algorithm is 'lbgfs', the classifier will not use minibatch.
+        If the solver is 'lbgfs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
@@ -1085,10 +1084,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
           least tol, or fail to increase validation score by at least tol if
           'early_stopping' is on, the current learning rate is divided by 5.
 
-        Only used when algorithm='sgd'.
+        Only used when solver='sgd'.
 
     max_iter : int, optional, default 200
-        Maximum number of iterations. The algorithm iterates until convergence
+        Maximum number of iterations. The solver iterates until convergence
         (determined by 'tol') or this number of iterations.
 
     random_state : int or RandomState, optional, default None
@@ -1096,7 +1095,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
-        algorithm='sgd' or 'adam'.
+        solver='sgd' or 'adam'.
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
@@ -1106,12 +1105,12 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
-        in updating the weights. Only used when algorithm='sgd' or 'adam'.
+        in updating the weights. Only used when solver='sgd' or 'adam'.
 
     power_t : double, optional, default 0.5
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
-        is set to 'invscaling'. Only used when algorithm='sgd'.
+        is set to 'invscaling'. Only used when solver='sgd'.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -1123,10 +1122,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     momentum : float, default 0.9
         Momentum for gradient descent update.  Should be between 0 and 1. Only
-        used when algorithm='sgd'.
+        used when solver='sgd'.
 
     nesterovs_momentum : boolean, default True
-        Whether to use Nesterov's momentum. Only used when algorithm='sgd' and
+        Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
     early_stopping : bool, default False
@@ -1135,7 +1134,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         aside 10% of training data as validation and terminate training when
         validation score is not improving by at least tol for two consecutive
         epochs.
-        Only effective when algorithm='sgd' or 'adam'
+        Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -1144,14 +1143,14 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
-        should be in [0, 1). Only used when algorithm='adam'
+        should be in [0, 1). Only used when solver='adam'
 
     beta_2 : float, optional, default 0.999
         Exponential decay rate for estimates of second moment vector in adam,
-        should be in [0, 1). Only used when algorithm='adam'
+        should be in [0, 1). Only used when solver='adam'
 
     epsilon : float, optional, default 1e-8
-        Value for numerical stability in adam. Only used when algorithm='adam'
+        Value for numerical stability in adam. Only used when solver='adam'
 
     Attributes
     ----------
@@ -1167,7 +1166,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         layer i + 1.
 
     n_iter_ : int,
-        The number of iterations the algorithm has ran.
+        The number of iterations the solver has ran.
 
     n_layers_ : int
         Number of layers.
@@ -1208,7 +1207,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
-                 algorithm='adam', alpha=0.0001,
+                 solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
                  power_t=0.5, max_iter=200, shuffle=True,
@@ -1220,7 +1219,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
         sup = super(MLPRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
-                     activation=activation, algorithm=algorithm, alpha=alpha,
+                     activation=activation, solver=solver, alpha=alpha,
                      batch_size=batch_size, learning_rate=learning_rate,
                      learning_rate_init=learning_rate_init, power_t=power_t,
                      max_iter=max_iter, loss='squared_loss', shuffle=shuffle,

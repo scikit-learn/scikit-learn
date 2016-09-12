@@ -74,7 +74,7 @@ def test_fit():
     # Test that the algorithm solution is equal to a worked out example.
     X = np.array([[0.6, 0.8, 0.7]])
     y = np.array([0])
-    mlp = MLPClassifier(algorithm='sgd', learning_rate_init=0.1, alpha=0.1,
+    mlp = MLPClassifier(solver='sgd', learning_rate_init=0.1, alpha=0.1,
                         activation='logistic', random_state=1, max_iter=1,
                         hidden_layer_sizes=2, momentum=0)
     # set weights
@@ -179,7 +179,7 @@ def test_gradient():
 
         for activation in ACTIVATION_TYPES:
             mlp = MLPClassifier(activation=activation, hidden_layer_sizes=10,
-                                algorithm='lbgfs', alpha=1e-5,
+                                solver='lbgfs', alpha=1e-5,
                                 learning_rate_init=0.2, max_iter=1,
                                 random_state=1)
             mlp.fit(X, y)
@@ -238,7 +238,7 @@ def test_lbfgs_classification():
         expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
 
         for activation in ACTIVATION_TYPES:
-            mlp = MLPClassifier(algorithm='lbgfs', hidden_layer_sizes=50,
+            mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=50,
                                 max_iter=150, shuffle=True, random_state=1,
                                 activation=activation)
             mlp.fit(X_train, y_train)
@@ -253,7 +253,7 @@ def test_lbfgs_regression():
     X = Xboston
     y = yboston
     for activation in ACTIVATION_TYPES:
-        mlp = MLPRegressor(algorithm='lbgfs', hidden_layer_sizes=50,
+        mlp = MLPRegressor(solver='lbgfs', hidden_layer_sizes=50,
                            max_iter=150, shuffle=True, random_state=1,
                            activation=activation)
         mlp.fit(X, y)
@@ -269,7 +269,7 @@ def test_learning_rate_warmstart():
     X = [[3, 2], [1, 6], [5, 6], [-2, -4]]
     y = [1, 1, 1, 0]
     for learning_rate in ["invscaling", "constant"]:
-        mlp = MLPClassifier(algorithm='sgd', hidden_layer_sizes=4,
+        mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=4,
                             learning_rate=learning_rate, max_iter=1,
                             power_t=0.25, warm_start=True)
         with ignore_warnings(category=ConvergenceWarning):
@@ -290,14 +290,14 @@ def test_multilabel_classification():
     # test fit method
     X, y = make_multilabel_classification(n_samples=50, random_state=0,
                                           return_indicator=True)
-    mlp = MLPClassifier(algorithm='lbgfs', hidden_layer_sizes=50, alpha=1e-5,
+    mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=50, alpha=1e-5,
                         max_iter=150, random_state=0, activation='logistic',
                         learning_rate_init=0.2)
     mlp.fit(X, y)
     assert_equal(mlp.score(X, y), 1)
 
     # test partial fit method
-    mlp = MLPClassifier(algorithm='sgd', hidden_layer_sizes=50, max_iter=150,
+    mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=50, max_iter=150,
                         random_state=0, activation='logistic', alpha=1e-5,
                         learning_rate_init=0.2)
     for i in range(100):
@@ -308,7 +308,7 @@ def test_multilabel_classification():
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
-    mlp = MLPRegressor(algorithm='lbgfs', hidden_layer_sizes=50, max_iter=200,
+    mlp = MLPRegressor(solver='lbgfs', hidden_layer_sizes=50, max_iter=200,
                        random_state=1)
     mlp.fit(X, y)
     assert_greater(mlp.score(X, y), 0.9)
@@ -318,7 +318,7 @@ def test_partial_fit_classes_error():
     # Tests that passing different classes to partial_fit raises an error
     X = [[3, 2]]
     y = [0]
-    clf = MLPClassifier(algorithm='sgd')
+    clf = MLPClassifier(solver='sgd')
     clf.partial_fit(X, y, classes=[0, 1])
     assert_raises(ValueError, clf.partial_fit, X, y, classes=[1, 2])
 
@@ -330,13 +330,13 @@ def test_partial_fit_classification():
     for X, y in classification_datasets:
         X = X
         y = y
-        mlp = MLPClassifier(algorithm='sgd', max_iter=100, random_state=1,
+        mlp = MLPClassifier(solver='sgd', max_iter=100, random_state=1,
                             tol=0, alpha=1e-5, learning_rate_init=0.2)
 
         with ignore_warnings(category=ConvergenceWarning):
             mlp.fit(X, y)
         pred1 = mlp.predict(X)
-        mlp = MLPClassifier(algorithm='sgd', random_state=1, alpha=1e-5,
+        mlp = MLPClassifier(solver='sgd', random_state=1, alpha=1e-5,
                             learning_rate_init=0.2)
         for i in range(100):
             mlp.partial_fit(X, y, classes=np.unique(y))
@@ -352,14 +352,14 @@ def test_partial_fit_regression():
     y = yboston
 
     for momentum in [0, .9]:
-        mlp = MLPRegressor(algorithm='sgd', max_iter=100, activation='relu',
+        mlp = MLPRegressor(solver='sgd', max_iter=100, activation='relu',
                            random_state=1, learning_rate_init=0.01,
                            batch_size=X.shape[0], momentum=momentum)
         with warnings.catch_warnings(record=True):
             # catch convergence warning
             mlp.fit(X, y)
         pred1 = mlp.predict(X)
-        mlp = MLPRegressor(algorithm='sgd', activation='relu',
+        mlp = MLPRegressor(solver='sgd', activation='relu',
                            learning_rate_init=0.01, random_state=1,
                            batch_size=X.shape[0], momentum=momentum)
         for i in range(100):
@@ -378,13 +378,10 @@ def test_partial_fit_errors():
 
     # no classes passed
     assert_raises(ValueError,
-                  MLPClassifier(
-                      algorithm='sgd').partial_fit,
-                  X, y,
-                  classes=[2])
+                  MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
     # lbgfs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(algorithm='lbgfs'), 'partial_fit'))
+    assert_false(hasattr(MLPClassifier(solver='lbgfs'), 'partial_fit'))
 
 
 def test_params_errors():
@@ -410,7 +407,7 @@ def test_params_errors():
     assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
     assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
 
-    assert_raises(ValueError, clf(algorithm='hadoken').fit, X, y)
+    assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
     assert_raises(ValueError, clf(activation='cloak').fit, X, y)
 
@@ -466,7 +463,7 @@ def test_predict_proba_multilabel():
                                           return_indicator=True)
     n_samples, n_classes = Y.shape
 
-    clf = MLPClassifier(algorithm='lbgfs', hidden_layer_sizes=30,
+    clf = MLPClassifier(solver='lbgfs', hidden_layer_sizes=30,
                         random_state=0)
     clf.fit(X, Y)
     y_proba = clf.predict_proba(X)
@@ -488,7 +485,7 @@ def test_sparse_matrices():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
-    mlp = MLPClassifier(algorithm='lbgfs', hidden_layer_sizes=15,
+    mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=15,
                         random_state=1)
     mlp.fit(X, y)
     pred1 = mlp.predict(X)
@@ -502,10 +499,10 @@ def test_sparse_matrices():
 
 def test_tolerance():
     # Test tolerance.
-    # It should force the algorithm to exit the loop when it converges.
+    # It should force the solver to exit the loop when it converges.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd')
+    clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
 
@@ -514,7 +511,7 @@ def test_verbose_sgd():
     # Test verbose.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(algorithm='sgd', max_iter=2, verbose=10,
+    clf = MLPClassifier(solver='sgd', max_iter=2, verbose=10,
                         hidden_layer_sizes=2)
     old_stdout = sys.stdout
     sys.stdout = output = StringIO()
@@ -531,7 +528,7 @@ def test_early_stopping():
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
     tol = 0.2
-    clf = MLPClassifier(tol=tol, max_iter=3000, algorithm='sgd',
+    clf = MLPClassifier(tol=tol, max_iter=3000, solver='sgd',
                         early_stopping=True)
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)
@@ -546,7 +543,7 @@ def test_early_stopping():
 def test_adaptive_learning_rate():
     X = [[3, 2], [1, 6]]
     y = [1, 0]
-    clf = MLPClassifier(tol=0.5, max_iter=3000, algorithm='sgd',
+    clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd',
                         learning_rate='adaptive')
     clf.fit(X, y)
     assert_greater(clf.max_iter, clf.n_iter_)

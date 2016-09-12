@@ -86,14 +86,16 @@ training samples::
     >>> from sklearn.neural_network import MLPClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MLPClassifier(algorithm='lbgfs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    MLPClassifier(activation='relu', algorithm='lbgfs', alpha=1e-05,
-           batch_size='auto', beta_1=0.9, beta_2=0.999, early_stopping=False,
+    >>> clf = MLPClassifier(solver='lbgfs', alpha=1e-5,
+    ...                     hidden_layer_sizes=(5, 2), random_state=1)
+    ...
+    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
+    MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
+           beta_1=0.9, beta_2=0.999, early_stopping=False,
            epsilon=1e-08, hidden_layer_sizes=(5, 2), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           tol=0.0001, validation_fraction=0.1, verbose=False,
+           solver='lbgfs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
@@ -124,7 +126,7 @@ of probability estimates :math:`P(y|x)` per sample :math:`x`::
 applying `Softmax <https://en.wikipedia.org/wiki/Softmax_activation_function>`_
 as the output function.
 
-Further, the algorithm supports :ref:`multi-label classification <multiclass>`
+Further, the model supports :ref:`multi-label classification <multiclass>`
 in which a sample can belong to more than one class. For each class, the raw
 output passes through the logistic function. Values larger or equal to `0.5`
 are rounded to `1`, otherwise to `0`. For a predicted output of a sample, the
@@ -132,15 +134,16 @@ indices where the value is `1` represents the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]
-    >>> clf = MLPClassifier(algorithm='lbgfs', alpha=1e-5,
+    >>> clf = MLPClassifier(solver='lbgfs', alpha=1e-5,
     ...                     hidden_layer_sizes=(15,), random_state=1)
-    >>> clf.fit(X, y)
-    MLPClassifier(activation='relu', algorithm='lbgfs', alpha=1e-05,
-           batch_size='auto', beta_1=0.9, beta_2=0.999, early_stopping=False,
+    ...
+    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
+    MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
+           beta_1=0.9, beta_2=0.999, early_stopping=False,
            epsilon=1e-08, hidden_layer_sizes=(15,), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           tol=0.0001, validation_fraction=0.1, verbose=False,
+           solver='lbgfs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
     >>> clf.predict([1., 2.])
     array([[1, 1]])
@@ -208,19 +211,19 @@ for the network.
 More details can be found in the documentation of
 `SGD <http://scikit-learn.org/stable/modules/sgd.html>`_
 
-Adam is similar to SGD in a sense that it is a stochastic optimization
-algorithm, but it can automatically adjust the amount to update parameters
-based on adaptive estimates of lower-order moments.
+Adam is similar to SGD in a sense that it is a stochastic optimizer, but it can
+automatically adjust the amount to update parameters based on adaptive estimates
+of lower-order moments.
 
 With SGD or Adam, training supports online and mini-batch learning.
 
-L-BFGS is a fast learning algorithm that approximates the Hessian matrix which
-represents the second-order partial derivative of a function. Further it
-approximates the inverse of the Hessian matrix to perform parameter updates.
-The implementation uses the Scipy version of
-`L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`__..
+L-BFGS is a solver that approximates the Hessian matrix which represents the
+second-order partial derivative of a function. Further it approximates the
+inverse of the Hessian matrix to perform parameter updates. The implementation
+uses the Scipy version of `L-BFGS
+<http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_.
 
-If the selected algorithm is 'L-BFGS', training does not support online nor
+If the selected solver is 'L-BFGS', training does not support online nor
 mini-batch learning.
 
 
