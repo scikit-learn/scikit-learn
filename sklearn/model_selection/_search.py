@@ -426,7 +426,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             check_is_fitted(self, 'best_estimator_')
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -443,7 +443,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('predict')
         return self.best_estimator_.predict(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -460,7 +460,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('predict_proba')
         return self.best_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -477,7 +477,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('predict_log_proba')
         return self.best_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -494,7 +494,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('decision_function')
         return self.best_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -511,7 +511,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted('transform')
         return self.best_estimator_.transform(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def inverse_transform(self, Xt):
         """Call inverse_transform on the estimator with the best found params.
 
