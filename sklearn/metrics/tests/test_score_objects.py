@@ -435,3 +435,14 @@ def test_deprecated_names():
         assert_warns_message(DeprecationWarning,
                              warning_msg,
                              cross_val_score, clf, X, y, scoring=name)
+
+
+def test_scoring_is_not_metric():
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         LogisticRegression(), f1_score)
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         LogisticRegression(), roc_auc_score)
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         Ridge(), r2_score)
+    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
+                         KMeans(), adjusted_rand_score)
