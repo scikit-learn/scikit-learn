@@ -160,7 +160,7 @@ render these plots inline using the `Image()` function::
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
+    >>> graph = pydotplus.graph_from_dot_data(dot_data)  # doctest: +SKIP
     >>> Image(graph.create_png())  # doctest: +SKIP
 
 .. only:: html
