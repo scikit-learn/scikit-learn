@@ -110,7 +110,7 @@ scoring method.
 
     - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
 
-    - :class:`LabelKFold` **(n_splits, shuffle, random_state)**
+    - :class:`GroupKFold` **(n_splits, shuffle, random_state)**
 
 
    *
@@ -119,7 +119,7 @@ scoring method.
 
     - Same as K-Fold but preserves the class distribution within each fold.
 
-    - Ensures that the same label is not in both testing and training sets.
+    - Ensures that the same group is not in both testing and training sets.
 
 
 .. list-table::
@@ -130,7 +130,7 @@ scoring method.
 
     - :class:`StratifiedShuffleSplit`
 
-    - :class:`LabelShuffleSplit`
+    - :class:`GroupShuffleSplit`
 
    *
 
@@ -138,16 +138,16 @@ scoring method.
 
     - Same as shuffle split but preserves the class distribution within each iteration.
 
-    - Ensures that the same label is not in both testing and training sets.
+    - Ensures that the same group is not in both testing and training sets.
 
 
 .. list-table::
 
    *
 
-    - :class:`LeaveOneLabelOut` **()**
+    - :class:`LeaveOneGroupOut` **()**
 
-    - :class:`LeavePLabelOut`  **(p)**
+    - :class:`LeavePGroupsOut`  **(p)**
 
     - :class:`LeaveOneOut` **()**
 
@@ -155,9 +155,9 @@ scoring method.
 
    *
 
-    - Takes a label array to group observations.
+    - Takes a group array to group observations.
 
-    - Leave P labels out.
+    - Leave P groups out.
 
     - Leave one observation out.
 

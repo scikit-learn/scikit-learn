@@ -108,9 +108,12 @@ class PCA(_BasePCA):
     Linear dimensionality reduction using Singular Value Decomposition of the
     data to project it to a lower dimensional space.
 
-    It uses the scipy.linalg ARPACK implementation of the SVD or a randomized
-    SVD by the method of Halko et al. 2009, depending on which is the most
-    efficient.
+    It uses the LAPACK implementation of the full SVD or a randomized truncated
+    SVD by the method of Halko et al. 2009, depending on the shape of the input
+    data and the number of components to extract.
+
+    It can also use the scipy.sparse.linalg ARPACK implementation of the
+    truncated SVD.
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -147,10 +150,13 @@ class PCA(_BasePCA):
     svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
         auto :
             the solver is selected by a default policy based on `X.shape` and
-            `n_components` which favors 'randomized' when the problem is
-            computationally demanding for 'full' PCA
+            `n_components`: if the input data is larger than 500x500 and the
+            number of components to extract is lower than 80% of the smallest
+            dimension of the data, then then more efficient 'randomized'
+            method is enabled. Otherwise the exact full SVD is computed and
+            optionally truncated afterwards.
         full :
-            run exact SVD calling ARPACK solver via
+            run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
         arpack :
             run SVD truncated to n_components calling ARPACK solver via
@@ -183,7 +189,7 @@ class PCA(_BasePCA):
     components_ : array, [n_components, n_features]
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
-        explained_variance_.
+        ``explained_variance_``.
 
     explained_variance_ : array, [n_components]
         The amount of variance explained by each of the selected components.
@@ -514,7 +520,7 @@ class PCA(_BasePCA):
 
 @deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in 0.20. "
             "Use PCA(svd_solver='randomized') instead. The new implementation "
-            "DOES NOT store whiten components_. Apply transform to get them.")
+            "DOES NOT store whiten ``components_``. Apply transform to get them.")
 class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
 

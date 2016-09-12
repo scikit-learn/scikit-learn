@@ -147,8 +147,8 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         predicts the expected value of y, disregarding the input features,
         would get a R^2 score of 0.0.
 
-        Note
-        ----
+        Notes
+        -----
         R^2 is calculated by weighting all the targets equally using
         `multioutput='uniform_average'`.
 

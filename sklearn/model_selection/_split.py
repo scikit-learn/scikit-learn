@@ -30,18 +30,19 @@ from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..utils.fixes import bincount
 from ..utils.fixes import signature
+from ..utils.random import choice
 from ..base import _pprint
 from ..gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['BaseCrossValidator',
            'KFold',
-           'LabelKFold',
-           'LeaveOneLabelOut',
+           'GroupKFold',
+           'LeaveOneGroupOut',
            'LeaveOneOut',
-           'LeavePLabelOut',
+           'LeavePGroupsOut',
            'LeavePOut',
            'ShuffleSplit',
-           'LabelShuffleSplit',
+           'GroupShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
@@ -60,7 +61,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         # see #6304
         pass
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -72,7 +73,7 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         y : array-like, of length n_samples
             The target variable for supervised learning problems.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -84,31 +85,31 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, labels = indexable(X, y, labels)
+        X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
-        for test_index in self._iter_test_masks(X, y, labels):
+        for test_index in self._iter_test_masks(X, y, groups):
             train_index = indices[np.logical_not(test_index)]
             test_index = indices[test_index]
             yield train_index, test_index
 
     # Since subclasses must implement either _iter_test_masks or
     # _iter_test_indices, neither can be abstract.
-    def _iter_test_masks(self, X=None, y=None, labels=None):
+    def _iter_test_masks(self, X=None, y=None, groups=None):
         """Generates boolean masks corresponding to test sets.
 
-        By default, delegates to _iter_test_indices(X, y, labels)
+        By default, delegates to _iter_test_indices(X, y, groups)
         """
-        for test_index in self._iter_test_indices(X, y, labels):
+        for test_index in self._iter_test_indices(X, y, groups):
             test_mask = np.zeros(_num_samples(X), dtype=np.bool)
             test_mask[test_index] = True
             yield test_mask
 
-    def _iter_test_indices(self, X=None, y=None, labels=None):
+    def _iter_test_indices(self, X=None, y=None, groups=None):
         """Generates integer indices corresponding to test sets."""
         raise NotImplementedError
 
     @abstractmethod
-    def get_n_splits(self, X=None, y=None, labels=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator"""
 
     def __repr__(self):
@@ -154,17 +155,17 @@ class LeaveOneOut(BaseCrossValidator):
 
     See also
     --------
-    LeaveOneLabelOut
+    LeaveOneGroupOut
         For splitting the data according to explicit, domain-specific
         stratification of the dataset.
 
-    LabelKFold: K-fold iterator variant with non-overlapping labels.
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
-    def _iter_test_indices(self, X, y=None, labels=None):
+    def _iter_test_indices(self, X, y=None, groups=None):
         return range(_num_samples(X))
 
-    def get_n_splits(self, X, y=None, labels=None):
+    def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -176,7 +177,7 @@ class LeaveOneOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -236,11 +237,11 @@ class LeavePOut(BaseCrossValidator):
     def __init__(self, p):
         self.p = p
 
-    def _iter_test_indices(self, X, y=None, labels=None):
+    def _iter_test_indices(self, X, y=None, groups=None):
         for combination in combinations(range(_num_samples(X)), self.p):
             yield np.array(combination)
 
-    def get_n_splits(self, X, y=None, labels=None):
+    def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -252,7 +253,7 @@ class LeavePOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
         """
         if X is None:
@@ -261,7 +262,7 @@ class LeavePOut(BaseCrossValidator):
 
 
 class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
-    """Base class for KFold, LabelKFold, and StratifiedKFold"""
+    """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
     def __init__(self, n_splits, shuffle, random_state):
@@ -285,7 +286,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         self.shuffle = shuffle
         self.random_state = random_state
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -297,7 +298,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -309,7 +310,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, labels = indexable(X, y, labels)
+        X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
         if self.n_splits > n_samples:
             raise ValueError(
@@ -317,10 +318,10 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
                  " than the number of samples: {1}.").format(self.n_splits,
                                                              n_samples))
 
-        for train, test in super(_BaseKFold, self).split(X, y, labels):
+        for train, test in super(_BaseKFold, self).split(X, y, groups):
             yield train, test
 
-    def get_n_splits(self, X=None, y=None, labels=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -331,7 +332,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -391,18 +392,18 @@ class KFold(_BaseKFold):
     See also
     --------
     StratifiedKFold
-        Takes label information into account to avoid building folds with
+        Takes group information into account to avoid building folds with
         imbalanced class distributions (for binary or multiclass
         classification tasks).
 
-    LabelKFold: K-fold iterator variant with non-overlapping labels.
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
     def __init__(self, n_splits=3, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n_splits, shuffle, random_state)
 
-    def _iter_test_indices(self, X, y=None, labels=None):
+    def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
         if self.shuffle:
@@ -418,14 +419,14 @@ class KFold(_BaseKFold):
             current = stop
 
 
-class LabelKFold(_BaseKFold):
-    """K-fold iterator variant with non-overlapping labels.
+class GroupKFold(_BaseKFold):
+    """K-fold iterator variant with non-overlapping groups.
 
-    The same label will not appear in two different folds (the number of
-    distinct labels has to be at least equal to the number of folds).
+    The same group will not appear in two different folds (the number of
+    distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
-    distinct labels is approximately the same in each fold.
+    distinct groups is approximately the same in each fold.
 
     Parameters
     ----------
@@ -434,16 +435,16 @@ class LabelKFold(_BaseKFold):
 
     Examples
     --------
-    >>> from sklearn.model_selection import LabelKFold
+    >>> from sklearn.model_selection import GroupKFold
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
-    >>> labels = np.array([0, 0, 2, 2])
-    >>> label_kfold = LabelKFold(n_splits=2)
-    >>> label_kfold.get_n_splits(X, y, labels)
+    >>> groups = np.array([0, 0, 2, 2])
+    >>> group_kfold = GroupKFold(n_splits=2)
+    >>> group_kfold.get_n_splits(X, y, groups)
     2
-    >>> print(label_kfold)
-    LabelKFold(n_splits=2)
-    >>> for train_index, test_index in label_kfold.split(X, y, labels):
+    >>> print(group_kfold)
+    GroupKFold(n_splits=2)
+    >>> for train_index, test_index in group_kfold.split(X, y, groups):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
@@ -460,46 +461,46 @@ class LabelKFold(_BaseKFold):
 
     See also
     --------
-    LeaveOneLabelOut
+    LeaveOneGroupOut
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
     def __init__(self, n_splits=3):
-        super(LabelKFold, self).__init__(n_splits, shuffle=False,
+        super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
 
-    def _iter_test_indices(self, X, y, labels):
-        if labels is None:
-            raise ValueError("The labels parameter should not be None")
+    def _iter_test_indices(self, X, y, groups):
+        if groups is None:
+            raise ValueError("The groups parameter should not be None")
 
-        unique_labels, labels = np.unique(labels, return_inverse=True)
-        n_labels = len(unique_labels)
+        unique_groups, groups = np.unique(groups, return_inverse=True)
+        n_groups = len(unique_groups)
 
-        if self.n_splits > n_labels:
+        if self.n_splits > n_groups:
             raise ValueError("Cannot have number of splits n_splits=%d greater"
-                             " than the number of labels: %d."
-                             % (self.n_splits, n_labels))
+                             " than the number of groups: %d."
+                             % (self.n_splits, n_groups))
 
-        # Weight labels by their number of occurrences
-        n_samples_per_label = np.bincount(labels)
+        # Weight groups by their number of occurrences
+        n_samples_per_group = np.bincount(groups)
 
-        # Distribute the most frequent labels first
-        indices = np.argsort(n_samples_per_label)[::-1]
-        n_samples_per_label = n_samples_per_label[indices]
+        # Distribute the most frequent groups first
+        indices = np.argsort(n_samples_per_group)[::-1]
+        n_samples_per_group = n_samples_per_group[indices]
 
         # Total weight of each fold
         n_samples_per_fold = np.zeros(self.n_splits)
 
-        # Mapping from label index to fold index
-        label_to_fold = np.zeros(len(unique_labels))
+        # Mapping from group index to fold index
+        group_to_fold = np.zeros(len(unique_groups))
 
         # Distribute samples by adding the largest weight to the lightest fold
-        for label_index, weight in enumerate(n_samples_per_label):
+        for group_index, weight in enumerate(n_samples_per_group):
             lightest_fold = np.argmin(n_samples_per_fold)
             n_samples_per_fold[lightest_fold] += weight
-            label_to_fold[indices[label_index]] = lightest_fold
+            group_to_fold[indices[group_index]] = lightest_fold
 
-        indices = label_to_fold[labels]
+        indices = group_to_fold[groups]
 
         for f in range(self.n_splits):
             yield np.where(indices == f)[0]
@@ -556,7 +557,7 @@ class StratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=3, shuffle=False, random_state=None):
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
-    def _make_test_folds(self, X, y=None, labels=None):
+    def _make_test_folds(self, X, y=None, groups=None):
         if self.shuffle:
             rng = check_random_state(self.random_state)
         else:
@@ -565,17 +566,17 @@ class StratifiedKFold(_BaseKFold):
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = bincount(y_inversed)
-        min_labels = np.min(y_counts)
+        min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
-            raise ValueError("All the n_labels for individual classes"
+            raise ValueError("All the n_groups for individual classes"
                              " are less than n_splits=%d."
                              % (self.n_splits))
-        if self.n_splits > min_labels:
+        if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
-                           " number of labels for any class cannot"
+                           " number of groups for any class cannot"
                            " be less than n_splits=%d."
-                           % (min_labels, self.n_splits)), Warning)
+                           % (min_groups, self.n_splits)), Warning)
 
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each class so as to respect the balance of
@@ -603,12 +604,12 @@ class StratifiedKFold(_BaseKFold):
 
         return test_folds
 
-    def _iter_test_masks(self, X, y=None, labels=None):
+    def _iter_test_masks(self, X, y=None, groups=None):
         test_folds = self._make_test_folds(X, y)
         for i in range(self.n_splits):
             yield test_folds == i
 
-    def split(self, X, y, labels=None):
+    def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -620,7 +621,7 @@ class StratifiedKFold(_BaseKFold):
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -632,7 +633,7 @@ class StratifiedKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        return super(StratifiedKFold, self).split(X, y, labels)
+        return super(StratifiedKFold, self).split(X, y, groups)
 
 
 class TimeSeriesSplit(_BaseKFold):
@@ -685,7 +686,7 @@ class TimeSeriesSplit(_BaseKFold):
                                               shuffle=False,
                                               random_state=None)
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -697,7 +698,7 @@ class TimeSeriesSplit(_BaseKFold):
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -709,7 +710,7 @@ class TimeSeriesSplit(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, labels = indexable(X, y, labels)
+        X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
         n_splits = self.n_splits
         n_folds = n_splits + 1
@@ -727,30 +728,30 @@ class TimeSeriesSplit(_BaseKFold):
                    indices[test_start:test_start + test_size])
 
 
-class LeaveOneLabelOut(BaseCrossValidator):
-    """Leave One Label Out cross-validator
+class LeaveOneGroupOut(BaseCrossValidator):
+    """Leave One Group Out cross-validator
 
     Provides train/test indices to split data according to a third-party
-    provided label. This label information can be used to encode arbitrary
+    provided group. This group information can be used to encode arbitrary
     domain specific stratifications of the samples as integers.
 
-    For instance the labels could be the year of collection of the samples
+    For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
     Examples
     --------
-    >>> from sklearn.model_selection import LeaveOneLabelOut
+    >>> from sklearn.model_selection import LeaveOneGroupOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
-    >>> labels = np.array([1, 1, 2, 2])
-    >>> lol = LeaveOneLabelOut()
-    >>> lol.get_n_splits(X, y, labels)
+    >>> groups = np.array([1, 1, 2, 2])
+    >>> lol = LeaveOneGroupOut()
+    >>> lol.get_n_splits(X, y, groups)
     2
     >>> print(lol)
-    LeaveOneLabelOut()
-    >>> for train_index, test_index in lol.split(X, y, labels):
+    LeaveOneGroupOut()
+    >>> for train_index, test_index in lol.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -766,16 +767,16 @@ class LeaveOneLabelOut(BaseCrossValidator):
 
     """
 
-    def _iter_test_masks(self, X, y, labels):
-        if labels is None:
-            raise ValueError("The labels parameter should not be None")
-        # We make a copy of labels to avoid side-effects during iteration
-        labels = np.array(labels, copy=True)
-        unique_labels = np.unique(labels)
-        for i in unique_labels:
-            yield labels == i
+    def _iter_test_masks(self, X, y, groups):
+        if groups is None:
+            raise ValueError("The groups parameter should not be None")
+        # We make a copy of groups to avoid side-effects during iteration
+        groups = np.array(groups, copy=True)
+        unique_groups = np.unique(groups)
+        for i in unique_groups:
+            yield groups == i
 
-    def get_n_splits(self, X, y, labels):
+    def get_n_splits(self, X, y, groups):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -786,7 +787,7 @@ class LeaveOneLabelOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -795,45 +796,45 @@ class LeaveOneLabelOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        if labels is None:
-            raise ValueError("The labels parameter should not be None")
-        return len(np.unique(labels))
+        if groups is None:
+            raise ValueError("The groups parameter should not be None")
+        return len(np.unique(groups))
 
 
-class LeavePLabelOut(BaseCrossValidator):
-    """Leave P Labels Out cross-validator
+class LeavePGroupsOut(BaseCrossValidator):
+    """Leave P Group(s) Out cross-validator
 
     Provides train/test indices to split data according to a third-party
-    provided label. This label information can be used to encode arbitrary
+    provided group. This group information can be used to encode arbitrary
     domain specific stratifications of the samples as integers.
 
-    For instance the labels could be the year of collection of the samples
+    For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    The difference between LeavePLabelOut and LeaveOneLabelOut is that
+    The difference between LeavePGroupsOut and LeaveOneGroupOut is that
     the former builds the test sets with all the samples assigned to
-    ``p`` different values of the labels while the latter uses samples
-    all assigned the same labels.
+    ``p`` different values of the groups while the latter uses samples
+    all assigned the same groups.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
     Parameters
     ----------
-    n_labels : int
-        Number of labels (``p``) to leave out in the test split.
+    n_groups : int
+        Number of groups (``p``) to leave out in the test split.
 
     Examples
     --------
-    >>> from sklearn.model_selection import LeavePLabelOut
+    >>> from sklearn.model_selection import LeavePGroupsOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
-    >>> labels = np.array([1, 2, 3])
-    >>> lpl = LeavePLabelOut(n_labels=2)
-    >>> lpl.get_n_splits(X, y, labels)
+    >>> groups = np.array([1, 2, 3])
+    >>> lpl = LeavePGroupsOut(n_groups=2)
+    >>> lpl.get_n_splits(X, y, groups)
     3
     >>> print(lpl)
-    LeavePLabelOut(n_labels=2)
-    >>> for train_index, test_index in lpl.split(X, y, labels):
+    LeavePGroupsOut(n_groups=2)
+    >>> for train_index, test_index in lpl.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -850,25 +851,25 @@ class LeavePLabelOut(BaseCrossValidator):
 
     See also
     --------
-    LabelKFold: K-fold iterator variant with non-overlapping labels.
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
-    def __init__(self, n_labels):
-        self.n_labels = n_labels
+    def __init__(self, n_groups):
+        self.n_groups = n_groups
 
-    def _iter_test_masks(self, X, y, labels):
-        if labels is None:
-            raise ValueError("The labels parameter should not be None")
-        labels = np.array(labels, copy=True)
-        unique_labels = np.unique(labels)
-        combi = combinations(range(len(unique_labels)), self.n_labels)
+    def _iter_test_masks(self, X, y, groups):
+        if groups is None:
+            raise ValueError("The groups parameter should not be None")
+        groups = np.array(groups, copy=True)
+        unique_groups = np.unique(groups)
+        combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
             test_index = np.zeros(_num_samples(X), dtype=np.bool)
-            for l in unique_labels[np.array(indices)]:
-                test_index[labels == l] = True
+            for l in unique_groups[np.array(indices)]:
+                test_index[groups == l] = True
             yield test_index
 
-    def get_n_splits(self, X, y, labels):
+    def get_n_splits(self, X, y, groups):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -879,7 +880,7 @@ class LeavePLabelOut(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -888,9 +889,9 @@ class LeavePLabelOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        if labels is None:
-            raise ValueError("The labels parameter should not be None")
-        return int(comb(len(np.unique(labels)), self.n_labels, exact=True))
+        if groups is None:
+            raise ValueError("The groups parameter should not be None")
+        return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
 
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
@@ -904,7 +905,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.train_size = train_size
         self.random_state = random_state
 
-    def split(self, X, y=None, labels=None):
+    def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -916,7 +917,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -928,15 +929,15 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, labels = indexable(X, y, labels)
-        for train, test in self._iter_indices(X, y, labels):
+        X, y, groups = indexable(X, y, groups)
+        for train, test in self._iter_indices(X, y, groups):
             yield train, test
 
     @abstractmethod
-    def _iter_indices(self, X, y=None, labels=None):
+    def _iter_indices(self, X, y=None, groups=None):
         """Generate (train, test) indices"""
 
-    def get_n_splits(self, X=None, y=None, labels=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -947,7 +948,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -1018,7 +1019,7 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3]
     """
 
-    def _iter_indices(self, X, y=None, labels=None):
+    def _iter_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
@@ -1031,26 +1032,26 @@ class ShuffleSplit(BaseShuffleSplit):
             yield ind_train, ind_test
 
 
-class LabelShuffleSplit(ShuffleSplit):
-    '''Shuffle-Labels-Out cross-validation iterator
+class GroupShuffleSplit(ShuffleSplit):
+    '''Shuffle-Group(s)-Out cross-validation iterator
 
     Provides randomized train/test indices to split data according to a
-    third-party provided label. This label information can be used to encode
+    third-party provided group. This group information can be used to encode
     arbitrary domain specific stratifications of the samples as integers.
 
-    For instance the labels could be the year of collection of the samples
+    For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
 
-    The difference between LeavePLabelOut and LabelShuffleSplit is that
-    the former generates splits using all subsets of size ``p`` unique labels,
-    whereas LabelShuffleSplit generates a user-determined number of random
-    test splits, each with a user-determined fraction of unique labels.
+    The difference between LeavePGroupsOut and GroupShuffleSplit is that
+    the former generates splits using all subsets of size ``p`` unique groups,
+    whereas GroupShuffleSplit generates a user-determined number of random
+    test splits, each with a user-determined fraction of unique groups.
 
     For example, a less computationally intensive alternative to
-    ``LeavePLabelOut(p=10)`` would be
-    ``LabelShuffleSplit(test_size=10, n_splits=100)``.
+    ``LeavePGroupsOut(p=10)`` would be
+    ``GroupShuffleSplit(test_size=10, n_splits=100)``.
 
-    Note: The parameters ``test_size`` and ``train_size`` refer to labels, and
+    Note: The parameters ``test_size`` and ``train_size`` refer to groups, and
     not to samples, as in ShuffleSplit.
 
 
@@ -1061,14 +1062,14 @@ class LabelShuffleSplit(ShuffleSplit):
 
     test_size : float (default 0.2), int, or None
         If float, should be between 0.0 and 1.0 and represent the
-        proportion of the labels to include in the test split. If
-        int, represents the absolute number of test labels. If None,
+        proportion of the groups to include in the test split. If
+        int, represents the absolute number of test groups. If None,
         the value is automatically set to the complement of the train size.
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
-        proportion of the labels to include in the train split. If
-        int, represents the absolute number of train labels. If None,
+        proportion of the groups to include in the train split. If
+        int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState
@@ -1077,25 +1078,92 @@ class LabelShuffleSplit(ShuffleSplit):
 
     def __init__(self, n_splits=5, test_size=0.2, train_size=None,
                  random_state=None):
-        super(LabelShuffleSplit, self).__init__(
+        super(GroupShuffleSplit, self).__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
             random_state=random_state)
 
-    def _iter_indices(self, X, y, labels):
-        if labels is None:
-            raise ValueError("The labels parameter should not be None")
-        classes, label_indices = np.unique(labels, return_inverse=True)
-        for label_train, label_test in super(
-                LabelShuffleSplit, self)._iter_indices(X=classes):
+    def _iter_indices(self, X, y, groups):
+        if groups is None:
+            raise ValueError("The groups parameter should not be None")
+        classes, group_indices = np.unique(groups, return_inverse=True)
+        for group_train, group_test in super(
+                GroupShuffleSplit, self)._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
 
-            train = np.flatnonzero(np.in1d(label_indices, label_train))
-            test = np.flatnonzero(np.in1d(label_indices, label_test))
+            train = np.flatnonzero(np.in1d(group_indices, group_train))
+            test = np.flatnonzero(np.in1d(group_indices, group_test))
 
             yield train, test
+
+
+def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergeometric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+
+    Examples
+    --------
+    >>> from sklearn.model_selection._split import _approximate_mode
+    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
+    array([2, 1])
+    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
+    array([3, 1])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=0)
+    array([0, 1, 1, 0])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=42)
+    array([1, 1, 0, 0])
+    """
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = n_draws * class_counts / class_counts.sum()
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    need_to_add = int(n_draws - floored.sum())
+    if need_to_add > 0:
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            inds, = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = choice(inds, size=add_now, replace=False, random_state=rng)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                break
+    return floored.astype(np.int)
 
 
 class StratifiedShuffleSplit(BaseShuffleSplit):
@@ -1157,7 +1225,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         super(StratifiedShuffleSplit, self).__init__(
             n_splits, test_size, train_size, random_state)
 
-    def _iter_indices(self, X, y, labels=None):
+    def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
@@ -1168,7 +1236,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         if np.min(class_counts) < 2:
             raise ValueError("The least populated class in y has only 1"
                              " member, which is too few. The minimum"
-                             " number of labels for any class cannot"
+                             " number of groups for any class cannot"
                              " be less than 2.")
 
         if n_train < n_classes:
@@ -1181,12 +1249,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              (n_test, n_classes))
 
         rng = check_random_state(self.random_state)
-        p_i = class_counts / float(n_samples)
-        n_i = np.round(n_train * p_i).astype(int)
-        t_i = np.minimum(class_counts - n_i,
-                         np.round(n_test * p_i).astype(int))
 
         for _ in range(self.n_splits):
+            # if there are ties in the class-counts, we want
+            # to make sure to break them anew in each iteration
+            n_i = _approximate_mode(class_counts, n_train, rng)
+            class_counts_remaining = class_counts - n_i
+            t_i = _approximate_mode(class_counts_remaining, n_test, rng)
+
             train = []
             test = []
 
@@ -1196,29 +1266,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
-
-            # Because of rounding issues (as n_train and n_test are not
-            # dividers of the number of elements per class), we may end
-            # up here with less samples in train and test than asked for.
-            if len(train) + len(test) < n_train + n_test:
-                # We complete by affecting randomly the missing indexes
-                missing_indices = np.where(bincount(train + test,
-                                                    minlength=len(y)) == 0)[0]
-                missing_indices = rng.permutation(missing_indices)
-                n_missing_train = n_train - len(train)
-                n_missing_test = n_test - len(test)
-
-                if n_missing_train > 0:
-                    train.extend(missing_indices[:n_missing_train])
-                if n_missing_test > 0:
-                    test.extend(missing_indices[-n_missing_test:])
-
             train = rng.permutation(train)
             test = rng.permutation(test)
 
             yield train, test
 
-    def split(self, X, y, labels=None):
+    def split(self, X, y, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1230,7 +1283,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
 
@@ -1242,7 +1295,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         test : ndarray
             The testing set indices for that split.
         """
-        return super(StratifiedShuffleSplit, self).split(X, y, labels)
+        return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
 def _validate_shuffle_split_init(test_size, train_size):
@@ -1285,13 +1338,13 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
-    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i'
-            and test_size >= n_samples):
+    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i' and
+            test_size >= n_samples):
         raise ValueError('test_size=%d should be smaller than the number of '
                          'samples %d' % (test_size, n_samples))
 
-    if (train_size is not None and np.asarray(train_size).dtype.kind == 'i'
-            and train_size >= n_samples):
+    if (train_size is not None and np.asarray(train_size).dtype.kind == 'i' and
+            train_size >= n_samples):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
 
@@ -1353,7 +1406,7 @@ class PredefinedSplit(BaseCrossValidator):
         self.unique_folds = np.unique(self.test_fold)
         self.unique_folds = self.unique_folds[self.unique_folds != -1]
 
-    def split(self, X=None, y=None, labels=None):
+    def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1364,7 +1417,7 @@ class PredefinedSplit(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -1389,7 +1442,7 @@ class PredefinedSplit(BaseCrossValidator):
             test_mask[test_index] = True
             yield test_mask
 
-    def get_n_splits(self, X=None, y=None, labels=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1400,7 +1453,7 @@ class PredefinedSplit(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -1416,7 +1469,7 @@ class _CVIterableWrapper(BaseCrossValidator):
     def __init__(self, cv):
         self.cv = cv
 
-    def get_n_splits(self, X=None, y=None, labels=None):
+    def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
 
         Parameters
@@ -1427,7 +1480,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -1437,7 +1490,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         """
         return len(self.cv)  # Both iterables and old-cv objects support len
 
-    def split(self, X=None, y=None, labels=None):
+    def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -1448,7 +1501,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         y : object
             Always ignored, exists for compatibility.
 
-        labels : object
+        groups : object
             Always ignored, exists for compatibility.
 
         Returns
@@ -1550,7 +1603,7 @@ def train_test_split(*arrays, **options):
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
-        the labels array.
+        the groups array.
 
     Returns
     -------
