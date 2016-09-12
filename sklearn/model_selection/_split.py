@@ -1308,27 +1308,27 @@ def _validate_shuffle_split_init(test_size, train_size):
         raise ValueError('test_size and train_size can not both be None')
 
     if test_size is not None:
-        if np.asarray(test_size).dtype.kind == 'f':
+        if isinstance(test_size, float):
             if test_size >= 1.:
                 raise ValueError(
                     'test_size=%f should be smaller '
                     'than 1.0 or be an integer' % test_size)
-        elif np.asarray(test_size).dtype.kind != 'i':
+        elif not isinstance(test_size, numbers.Integral):
             # int values are checked during split based on the input
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
-        if np.asarray(train_size).dtype.kind == 'f':
+        if isinstance(train_size, float):
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif (np.asarray(test_size).dtype.kind == 'f' and
+            elif (isinstance(test_size, float) and
                     (train_size + test_size) > 1.):
                 raise ValueError('The sum of test_size and train_size = %f, '
                                  'should be smaller than 1.0. Reduce '
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
-        elif np.asarray(train_size).dtype.kind != 'i':
+        elif not isinstance(train_size, numbers.Integral):
             # int values are checked during split based on the input
             raise ValueError("Invalid value for train_size: %r" % train_size)
 
@@ -1338,24 +1338,24 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
-    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i' and
+    if (test_size is not None and isinstance(test_size, numbers.Integral) and
             test_size >= n_samples):
         raise ValueError('test_size=%d should be smaller than the number of '
                          'samples %d' % (test_size, n_samples))
 
-    if (train_size is not None and np.asarray(train_size).dtype.kind == 'i' and
+    if (train_size is not None and isinstance(train_size, numbers.Integral) and
             train_size >= n_samples):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
 
-    if np.asarray(test_size).dtype.kind == 'f':
+    if isinstance(test_size, float):
         n_test = ceil(test_size * n_samples)
-    elif np.asarray(test_size).dtype.kind == 'i':
+    elif isinstance(test_size, numbers.Integral):
         n_test = float(test_size)
 
     if train_size is None:
         n_train = n_samples - n_test
-    elif np.asarray(train_size).dtype.kind == 'f':
+    elif isinstance(train_size, float):
         n_train = floor(train_size * n_samples)
     else:
         n_train = float(train_size)
