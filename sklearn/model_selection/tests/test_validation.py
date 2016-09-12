@@ -740,6 +740,9 @@ def test_check_is_permutation():
     p[0] = 23
     assert_false(_check_is_permutation(p, 100))
 
+    # Check if the additional duplicate indices are caught
+    assert_false(_check_is_permutation(np.hstack((p, 0)), 100))
+
 
 def test_cross_val_predict_sparse_prediction():
     # check that cross_val_predict gives same result for sparse and dense input
