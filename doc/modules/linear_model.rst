@@ -754,7 +754,7 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
 
-  * :ref:`example_linear_model_plot_logistic_multinomial.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
 
 .. _liblinear_differences:
 
@@ -1118,7 +1118,7 @@ in the following ways.
 
 .. topic:: Examples:
 
-  * :ref:`example_linear_model_plot_huber_vs_ridge.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
 
 .. topic:: References:
 

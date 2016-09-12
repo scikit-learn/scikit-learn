@@ -164,14 +164,14 @@ Splitter Classes
    :template: class.rst
 
    model_selection.KFold
-   model_selection.LabelKFold
+   model_selection.GroupKFold
    model_selection.StratifiedKFold
-   model_selection.LeaveOneLabelOut
-   model_selection.LeavePLabelOut
+   model_selection.LeaveOneGroupOut
+   model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
    model_selection.ShuffleSplit
-   model_selection.LabelShuffleSplit
+   model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
    model_selection.PredefinedSplit
    model_selection.TimeSeriesSplit

@@ -479,7 +479,7 @@ def test_stratified_shuffle_split_init():
 def test_stratified_shuffle_split_iter():
     ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
           np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2] * 2),
           np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
           np.array([-1] * 800 + [1] * 50)
           ]
@@ -487,16 +487,22 @@ def test_stratified_shuffle_split_iter():
     for y in ys:
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0)
+        test_size = np.ceil(0.33 * len(y))
+        train_size = len(y) - test_size
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = (np.bincount(np.unique(y[train], return_inverse=True)[1])
-                       / float(len(y[train])))
-            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1])
-                      / float(len(y[test])))
+            p_train = (np.bincount(np.unique(y[train],
+                                   return_inverse=True)[1]) /
+                       float(len(y[train])))
+            p_test = (np.bincount(np.unique(y[test],
+                                  return_inverse=True)[1]) /
+                      float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
-            assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.intersect1d(train, test), [])
+            assert_equal(len(train) + len(test), y.size)
+            assert_equal(len(train), train_size)
+            assert_equal(len(test), test_size)
+            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -906,10 +912,10 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
-    mse_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                      scoring="mean_squared_error")
-    expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
-    assert_array_almost_equal(mse_scores, expected_mse, 2)
+    neg_mse_scores = cval.cross_val_score(reg, X, y, cv=5,
+                                          scoring="neg_mean_squared_error")
+    expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
+    assert_array_almost_equal(neg_mse_scores, expected_neg_mse, 2)
 
     # Explained variance
     scoring = make_scorer(explained_variance_score)

@@ -28,7 +28,7 @@ from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import isclose
+from ..utils.extmath import stable_cumsum
 from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
 from ..utils.stats import rankdata
@@ -331,16 +331,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    # We need to use isclose to avoid spurious repeated thresholds
-    # stemming from floating point roundoff errors.
-    distinct_value_indices = np.where(np.logical_not(isclose(
-        np.diff(y_score), 0)))[0]
+    distinct_value_indices = np.where(np.diff(y_score))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold
-    tps = (y_true * weight).cumsum()[threshold_idxs]
+    tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
-        fps = weight.cumsum()[threshold_idxs] - tps
+        fps = stable_cumsum(weight)[threshold_idxs] - tps
     else:
         fps = 1 + threshold_idxs - tps
     return fps, tps, y_score[threshold_idxs]
