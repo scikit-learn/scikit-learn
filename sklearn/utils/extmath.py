@@ -859,6 +859,7 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     atol : float
         Absolute tolerance, see ``np.allclose``
     """
+    # sum is as unstable as cumsum for numpy < 1.9
     if np_version < (1, 9):
         return np.cumsum(arr, axis=axis, dtype=np.float64)
 
