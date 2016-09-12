@@ -899,7 +899,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
-        if not hasattr(self, 'classes_') or not incremental:
+        if not incremental:
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
