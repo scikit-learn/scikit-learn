@@ -186,6 +186,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     is equal to the number of observations known to be in group :math:`i` but
     predicted to be in group :math:`j`.
 
+    Thus in binary classification, the count of true negatives is
+    :math:`C_{0,0}`, false negatives is :math:`C_{1,0}`, true positives is
+    :math:`C_{1,1}` and false positives is :math:`C_{0,1}`.
+
     Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
