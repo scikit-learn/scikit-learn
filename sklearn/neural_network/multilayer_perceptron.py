@@ -133,7 +133,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         with respect to the different parameters given in the initialization.
 
         Returned gradients are packed in a single vector so it can be used
-        in l-bfgs
+        in lbgfs
 
         Parameters
         ----------
@@ -344,8 +344,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             # First time training the model
             self._initialize(y, layer_units)
 
-        # l-bfgs does not support mini-batches
-        if self.algorithm == 'l-bfgs':
+        # lbgfs does not support mini-batches
+        if self.algorithm == 'lbgfs':
             batch_size = n_samples
         elif self.batch_size == 'auto':
             batch_size = min(200, n_samples)
@@ -374,7 +374,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  intercept_grads, layer_units, incremental)
 
         # Run the LBFGS algorithm
-        elif self.algorithm == 'l-bfgs':
+        elif self.algorithm == 'lbgfs':
             self._fit_lbfgs(X, y, activations, deltas, coef_grads,
                             intercept_grads, layer_units)
         return self
@@ -421,7 +421,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
-        supported_algorithms = _STOCHASTIC_ALGOS + ["l-bfgs"]
+        supported_algorithms = _STOCHASTIC_ALGOS + ["lbgfs"]
         if self.algorithm not in supported_algorithms:
             raise ValueError("The algorithm %s is not supported. "
                              " Expected one of: %s" %
@@ -679,7 +679,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     """Multi-layer Perceptron classifier.
 
-    This algorithm optimizes the log-loss function using l-bfgs or gradient
+    This algorithm optimizes the log-loss function using lbgfs or gradient
     descent.
 
     Parameters
@@ -703,10 +703,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    algorithm : {'l-bfgs', 'sgd', 'adam'}, default 'adam'
+    algorithm : {'lbgfs', 'sgd', 'adam'}, default 'adam'
         The algorithm for weight optimization.
 
-        - 'l-bfgs' is an optimization algorithm in the family of
+        - 'lbgfs' is an optimization algorithm in the family of
           quasi-Newton methods.
 
         - 'sgd' refers to stochastic gradient descent.
@@ -717,7 +717,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Note: The default algorithm 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
-        For small datasets, however, 'l-bfgs' can converge faster and perform
+        For small datasets, however, 'lbgfs' can converge faster and perform
         better.
 
     alpha : float, optional, default 0.0001
@@ -725,7 +725,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
-        If the algorithm is 'l-bfgs', the classifier will not use minibatch.
+        If the algorithm is 'lbgfs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
@@ -1021,7 +1021,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     """Multi-layer Perceptron regressor.
 
-    This algorithm optimizes the squared-loss using l-bfgs or gradient descent.
+    This algorithm optimizes the squared-loss using lbgfs or gradient descent.
 
     Parameters
     ----------
@@ -1044,10 +1044,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
 
-    algorithm : {'l-bfgs', 'sgd', 'adam'}, default 'adam'
+    algorithm : {'lbgfs', 'sgd', 'adam'}, default 'adam'
         The algorithm for weight optimization.
 
-        - 'l-bfgs' is an optimization algorithm in the family of
+        - 'lbgfs' is an optimization algorithm in the family of
           quasi-Newton methods.
 
         - 'sgd' refers to stochastic gradient descent.
@@ -1058,7 +1058,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Note: The default algorithm 'adam' works pretty well on relatively
         large datasets (with thousands of training samples or more) in terms of
         both training time and validation score.
-        For small datasets, however, 'l-bfgs' can converge faster and perform
+        For small datasets, however, 'lbgfs' can converge faster and perform
         better.
 
     alpha : float, optional, default 0.0001
@@ -1066,7 +1066,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
-        If the algorithm is 'l-bfgs', the classifier will not use minibatch.
+        If the algorithm is 'lbgfs', the classifier will not use minibatch.
         When set to "auto", `batch_size=min(200, n_samples)`
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
