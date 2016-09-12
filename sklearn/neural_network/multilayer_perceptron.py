@@ -24,7 +24,7 @@ from ..utils import check_array, check_X_y, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 
 
@@ -269,7 +269,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if not isinstance(self, ClassifierMixin):
             self.out_activation_ = 'identity'
         # Output for multi class
-        elif self.label_binarizer_.y_type_ == 'multiclass':
+        elif self._label_binarizer.y_type_ == 'multiclass':
             self.out_activation_ = 'softmax'
         # Output for binary class and multi-label
         else:
@@ -490,7 +490,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 X, y, random_state=self._random_state,
                 test_size=self.validation_fraction)
             if isinstance(self, ClassifierMixin):
-                y_val = self.label_binarizer_.inverse_transform(y_val)
+                y_val = self._label_binarizer.inverse_transform(y_val)
         else:
             X_val = None
             y_val = None
@@ -821,9 +821,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     `loss_` : float
         The current loss computed with the loss function.
 
-    `label_binarizer_` : LabelBinarizer
-        A LabelBinarizer object trained on the training set.
-
     `coefs_` : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
@@ -896,25 +893,24 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      validation_fraction=validation_fraction,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
 
-        self.label_binarizer_ = LabelBinarizer()
-
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
-            
+
         if not hasattr(self, 'classes_') or not incremental:
-            self.label_binarizer_.fit(y)
-            self.classes_ = self.label_binarizer_.classes_
+            self._label_binarizer = LabelBinarizer()
+            self._label_binarizer.fit(y)
+            self.classes_ = self._label_binarizer.classes_
         else:
-            classes = self.label_binarizer_.classes_
-            if not np.all(np.in1d(classes, self.classes_)):
+            classes = unique_labels(y)
+            if np.setdiff1d(classes, self.classes_, assume_unique=True):
                 raise ValueError("`y` has classes not in `self.classes_`."
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
-        
-        y = self.label_binarizer_.transform(y)
+
+        y = self._label_binarizer.transform(y)
         return X, y
 
     def predict(self, X):
@@ -936,7 +932,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
 
-        return self.label_binarizer_.inverse_transform(y_pred)
+        return self._label_binarizer.inverse_transform(y_pred)
 
     @property
     def partial_fit(self):
@@ -969,12 +965,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         return self._partial_fit
 
     def _partial_fit(self, X, y, classes=None):
-        _check_partial_fit_first_call(self, classes)
-        if not hasattr(self.label_binarizer_, "classes_"):
+        if _check_partial_fit_first_call(self, classes):
+            self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith('multilabel'):
-                self.label_binarizer_.fit(y)
+                self._label_binarizer.fit(y)
             else:
-                self.label_binarizer_.fit(classes)
+                self._label_binarizer.fit(classes)
 
         super(MLPClassifier, self)._partial_fit(X, y)
 

@@ -80,7 +80,6 @@ def test_fit():
     # set weights
     mlp.coefs_ = [0] * 2
     mlp.intercepts_ = [0] * 2
-    mlp.classes_ = [0, 1]
     mlp.n_outputs_ = 1
     mlp.coefs_[0] = np.array([[0.1, 0.2], [0.3, 0.1], [0.5, 0]])
     mlp.coefs_[1] = np.array([[0.1], [0.2]])
@@ -88,8 +87,6 @@ def test_fit():
     mlp.intercepts_[1] = np.array([1.0])
     mlp._coef_grads = [] * 2
     mlp._intercept_grads = [] * 2
-
-    mlp.label_binarizer_.y_type_ = 'binary'
 
     # Initialize parameters
     mlp.n_iter_ = 0
@@ -349,7 +346,7 @@ def test_partial_fit_unseen_classes():
     # Non regression test for bug 6994
     # Tests for labeling errors in partial fit
 
-    clf = MLPClassifier()
+    clf = MLPClassifier(random_state=0)
     clf.partial_fit([[1], [2], [3]], ["a", "b", "c"],
                     classes=["a", "b", "c", "d"])
     clf.partial_fit([[4]], ["d"])
