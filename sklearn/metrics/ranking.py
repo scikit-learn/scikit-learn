@@ -298,7 +298,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_type = type_of_target(y_true)
     if y_type != "binary":
         raise ValueError("{0} format is not supported".format(y_type))
-    
+
     check_consistent_length(y_true, y_score)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)

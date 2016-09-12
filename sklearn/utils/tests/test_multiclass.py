@@ -289,13 +289,13 @@ def test_type_of_target():
                'representation. Sequence of sequences are no longer supported;'
                ' use a binary array or sparse matrix instead.')
         assert_raises_regex(ValueError, msg, type_of_target, example)
-    
+
     try:
         from pandas import SparseSeries
     except ImportError:
         pass
     y = SparseSeries([1, 0, 0, 1, 0])
-    msg="y cannot be class 'SparseSeries'."
+    msg = "y cannot be class 'SparseSeries'."
     assert_raises_regex(ValueError, msg, type_of_target, y)
 
 
