@@ -521,6 +521,8 @@ Note that polynomial features are used implicitily in `kernel methods <https://e
 
 See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 
+.. _function_transformer:
+
 Custom transformers
 ===================
 
