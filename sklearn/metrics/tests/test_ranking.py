@@ -432,6 +432,13 @@ def test_auc_score_non_binary_class():
                              roc_auc_score, y_true, y_pred)
 
 
+def test_binary_clf_curve():
+    rng = check_random_state(404)
+    y_true = rng.randint(0, 3, size=10)
+    y_pred = rng.rand(10)
+    msg = "multiclass format is not supported"
+    assert_raises_message(ValueError, msg, precision_recall_curve, y_true, y_pred)
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -450,6 +457,21 @@ def test_precision_recall_curve():
     assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
+
+
+def test_precision_recall_curve_pos_label():
+    y_true, _, probas_pred = make_prediction(binary=False)
+    pos_label = 2
+    p, r, thresholds = precision_recall_curve(y_true,
+                                              probas_pred[:, pos_label],
+                                              pos_label=pos_label)
+    p2, r2, thresholds2 = precision_recall_curve(y_true == pos_label,
+                                                 probas_pred[:, pos_label])
+    assert_array_almost_equal(p, p2)
+    assert_array_almost_equal(r, r2)
+    assert_array_almost_equal(thresholds, thresholds2)
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, thresholds.size + 1)
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
