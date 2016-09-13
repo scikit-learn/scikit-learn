@@ -324,9 +324,8 @@ Enhancements
      By `Andreas Müller`_.
 
    - When unpickling a scikit-learn estimator in a different version than the one
-     the estimator was trained with, a ``UserWarning`` is raised, see `the documentation
-     on model persistence
-     <http://scikit-learn.org/stable/modules/model_persistence.html#security-maintainability-limitations>`_
+     the estimator was trained with, a ``UserWarning`` is raised, see :ref:`the documentation
+     on model persistence <persistence_limitations>`
      for more details.
      (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>_`)
      By `Andreas Müller`_.
