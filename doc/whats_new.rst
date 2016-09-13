@@ -432,6 +432,13 @@ Bug fixes
       problems for users with very small differences in scores (`#7353
       <https://github.com/scikit-learn/scikit-learn/pull/7353>`_).
 
+    - Fix incomplete ``predict_proba`` method delegation from
+      :class:`model_selection.GridSearchCV` to
+      :class:`linear_model.SGDClassifier` (`#7159
+      <https://github.com/scikit-learn/scikit-learn/pull/7159>`_)
+      by `Yichuan Liu <https://github.com/yl565>`_.
+
+
 API changes summary
 -------------------
 
