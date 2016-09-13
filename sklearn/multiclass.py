@@ -38,7 +38,7 @@ import numpy as np
 import warnings
 import scipy.sparse as sp
 
-from .cross_validation import _safe_split
+
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
@@ -48,7 +48,8 @@ from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
-                               check_classification_targets)
+                               check_classification_targets,
+                               _safe_split)
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 from .externals.six.moves import zip as izip
