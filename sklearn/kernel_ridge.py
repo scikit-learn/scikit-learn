@@ -69,8 +69,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    dual_coef_ : array, shape = [n_features] or [n_targets, n_features]
-        Weight vector(s) in kernel space
+    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
+        Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training data, which is also required for prediction
