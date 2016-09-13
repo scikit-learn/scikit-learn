@@ -342,7 +342,7 @@ def test_pickle_version_warning():
     # check that warning is raised on different version
     tree = TreeBadVersion().fit(iris.data, iris.target)
     tree_pickle_other = pickle.dumps(tree)
-    message = ("Trying to unpickle estimator DecisionTreeClassifier from "
+    message = ("Trying to unpickle estimator TreeBadVersion from "
                "version {0} when using version {1}. This might lead to "
                "breaking code or invalid results. "
                "Use at your own risk.".format("something",
@@ -356,7 +356,7 @@ def test_pickle_version_warning():
     tree_pickle_noversion = pickle.dumps(tree)
     assert_false(b"version" in tree_pickle_noversion)
     message = message.replace("something", "pre-0.18")
-    message = message.replace("DecisionTreeClassifier", "TreeNoVersion")
+    message = message.replace("TreeBadVersion", "TreeNoVersion")
     # check we got the warning about using pre-0.18 pickle
     assert_warns_message(UserWarning, message, pickle.loads,
                          tree_pickle_noversion)
