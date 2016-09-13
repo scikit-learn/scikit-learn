@@ -15,6 +15,7 @@ from __future__ import division
 import warnings
 import numbers
 import time
+from itertools import chain
 
 import numpy as np
 import scipy.sparse as sp
@@ -590,29 +591,23 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer)
-    permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_permutation_test_score)(
-            clone(estimator), X, _shuffle(y, groups, random_state),
-            groups, cv, scorer)
-        for _ in range(n_permutations))
-    permutation_scores = np.array(permutation_scores)
+    score = cross_val_score(estimator, X, y, groups=groups, cv=cv,
+                            scoring=scorer).mean()
+    y_shuffled = (_shuffle(y=y, groups=groups, random_state=random_state)
+                  for _ in range(n_permutations))
+    jobs = ((delayed(_fit_and_score)(clone(estimator), X, y_i, scorer, train,
+                                     test, verbose, parameters=None,
+                                     fit_params=None)
+             for train, test in cv.split(X, y_i, groups=groups))
+            for y_i in y_shuffled)
+    out = Parallel(n_jobs=n_jobs, verbose=verbose)(chain.from_iterable(jobs))
+    permutation_scores = np.array(zip(*out)[0]).reshape(-1, n_permutations)
+    permutation_scores = permutation_scores.mean(axis=0)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue
 
 
 permutation_test_score.__test__ = False  # to avoid a pb with nosetests
-
-
-def _permutation_test_score(estimator, X, y, groups, cv, scorer):
-    """Auxiliary function for permutation_test_score"""
-    avg_score = []
-    for train, test in cv.split(X, y, groups):
-        estimator.fit(X[train], y[train])
-        avg_score.append(scorer(estimator, X[test], y[test]))
-    return np.mean(avg_score)
 
 
 def _shuffle(y, groups, random_state):
