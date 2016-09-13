@@ -41,6 +41,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     Warning: This class should not be used directly.
     Use derived classes instead.
+
+    .. versionadded:: 0.18
     """
 
     @abstractmethod
@@ -868,6 +870,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
+
+    .. versionadded:: 0.18
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -1207,6 +1211,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
+
+    .. versionadded:: 0.18
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,

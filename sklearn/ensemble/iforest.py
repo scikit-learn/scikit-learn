@@ -105,6 +105,8 @@ class IsolationForest(BaseBagging):
     .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
+
+    .. versionadded:: 0.18
     """
 
     def __init__(self,
