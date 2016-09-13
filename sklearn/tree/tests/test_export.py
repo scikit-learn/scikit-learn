@@ -81,7 +81,7 @@ def test_graphviz_toy():
 
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
-                    proportion=True, special_characters=True, rounded=True)
+                                proportion=True, special_characters=True, rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -116,7 +116,7 @@ def test_graphviz_toy():
 
     # Test max_depth with plot_options
     contents1 = export_graphviz(clf, max_depth=0, filled=True,
-                    node_ids=True)
+                                node_ids=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
@@ -169,7 +169,7 @@ def test_graphviz_toy():
     clf.fit(X, y)
 
     contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
-                    rotate=True, rounded=True)
+                                rotate=True, rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
