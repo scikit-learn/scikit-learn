@@ -491,15 +491,20 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
 
 
 def test_shuffle_split():
+    # Use numpy float as input
+    ss0 = ShuffleSplit(test_size=np.float16(0.2), random_state=0).split(X)
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
+    # Use numpy int as input
     ss3 = ShuffleSplit(test_size=np.int32(2), random_state=0).split(X)
     for typ in six.integer_types:
         ss4 = ShuffleSplit(test_size=typ(2), random_state=0).split(X)
-    for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
+    for t0, t1, t2, t3, t4 in zip(ss0, ss1, ss2, ss3, ss4):
+        assert_array_equal(t0[0], t1[0])
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
         assert_array_equal(t3[0], t4[0])
+        assert_array_equal(t0[1], t1[1])
         assert_array_equal(t1[1], t2[1])
         assert_array_equal(t2[1], t3[1])
         assert_array_equal(t3[1], t4[1])
