@@ -992,9 +992,7 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
 
-        centered_kernel = True
-        if sparse.issparse(X) or not self.fit_intercept:
-            centered_kernel = False
+        centered_kernel = not sparse.issparse(X) and self.fit_intercept
 
         v, Q, QT_y = _pre_compute(X, y, centered_kernel)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
