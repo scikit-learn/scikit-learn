@@ -58,6 +58,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
+from sklearn.linear_model import SGDClassifier
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -967,11 +968,13 @@ def test_grid_search_failing_classifier():
                       refit=False, error_score=0.0)
     assert_warns(FitFailedWarning, gs.fit, X, y)
     n_candidates = len(gs.cv_results_['params'])
+
     # Ensure that grid scores were set to zero as required for those fits
     # that are expected to fail.
-    get_cand_scores = lambda i: np.array(list(
-        gs.cv_results_['split%d_test_score' % s][i]
-        for s in range(gs.n_splits_)))
+    def get_cand_scores(i):
+        return np.array(list(gs.cv_results_['split%d_test_score' % s][i]
+                             for s in range(gs.n_splits_)))
+
     assert all((np.all(get_cand_scores(cand_i) == 0.0)
                 for cand_i in range(n_candidates)
                 if gs.cv_results_['param_parameter'][cand_i] ==
@@ -1028,3 +1031,33 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_stochastic_gradient_loss_param():
+    # Make sure the predict_proba works when loss is specified
+    # as one of the parameters in the param_grid.
+    param_grid = {
+        'loss': ['log'],
+    }
+    X = np.arange(20).reshape(5, -1)
+    y = [0, 0, 1, 1, 1]
+    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge'),
+                       param_grid=param_grid)
+
+    # When the estimator is not fitted, `predict_proba` is not available as the
+    # loss is 'hinge'.
+    assert_false(hasattr(clf, "predict_proba"))
+    clf.fit(X, y)
+    clf.predict_proba(X)
+    clf.predict_log_proba(X)
+
+    # Make sure `predict_proba` is not available when setting loss=['hinge']
+    # in param_grid
+    param_grid = {
+        'loss': ['hinge'],
+    }
+    clf = GridSearchCV(estimator=SGDClassifier(loss='hinge'),
+                       param_grid=param_grid)
+    assert_false(hasattr(clf, "predict_proba"))
+    clf.fit(X, y)
+    assert_false(hasattr(clf, "predict_proba"))
