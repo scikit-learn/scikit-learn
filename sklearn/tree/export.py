@@ -134,6 +134,12 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
         When set to ``False``, ignore special characters for PostScript
         compatibility.
 
+    Returns
+    -------
+    dot_data : string
+        String representation of the input tree in GraphViz dot format.
+        Only returned if out_file is None.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -363,6 +369,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
     own_file = False
+    return_string = False
     try:
         if isinstance(out_file, six.string_types):
             if six.PY3:
@@ -372,6 +379,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             own_file = True
 
         if out_file is None:
+            return_string = True
             out_file = six.StringIO()
 
         # The depth of each node for plotting with 'leaf' option
@@ -416,11 +424,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
                                "; ".join(r for r in ranks[rank]) + "} ;\n")
         out_file.write("}")
 
-        # If out_file is a StringIO buffer, return its contents
-        try:
+        if return_string:
             return out_file.getvalue()
-        except AttributeError:
-            pass
 
     finally:
         if own_file:
