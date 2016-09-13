@@ -5,7 +5,8 @@
 
 from operator import attrgetter
 from functools import update_wrapper
-
+import numpy as np
+from ..utils import safe_indexing
 
 __all__ = ['if_delegate_has_method']
 
@@ -77,3 +78,35 @@ def if_delegate_has_method(delegate):
 
     return lambda fn: _IffHasAttrDescriptor(fn, delegate,
                                             attribute_name=fn.__name__)
+
+def _safe_split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset and properly handle kernels."""
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel) \
+       and not isinstance(estimator.kernel, GPKernel):
+        # cannot compute the kernel values with custom function
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
+
+    if not hasattr(X, "shape"):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_subset = [X[idx] for idx in indices]
+    else:
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            if train_indices is None:
+                X_subset = X[np.ix_(indices, indices)]
+            else:
+                X_subset = X[np.ix_(indices, train_indices)]
+        else:
+            X_subset = safe_indexing(X, indices)
+
+    if y is not None:
+        y_subset = safe_indexing(y, indices)
+    else:
+        y_subset = None
+
+    return X_subset, y_subset
