@@ -452,21 +452,6 @@ def test_precision_recall_curve():
     assert_equal(p.size, t.size + 1)
 
 
-def test_precision_recall_curve_pos_label():
-    y_true, _, probas_pred = make_prediction(binary=False)
-    pos_label = 2
-    p, r, thresholds = precision_recall_curve(y_true,
-                                              probas_pred[:, pos_label],
-                                              pos_label=pos_label)
-    p2, r2, thresholds2 = precision_recall_curve(y_true == pos_label,
-                                                 probas_pred[:, pos_label])
-    assert_array_almost_equal(p, p2)
-    assert_array_almost_equal(r, r2)
-    assert_array_almost_equal(thresholds, thresholds2)
-    assert_equal(p.size, r.size)
-    assert_equal(p.size, thresholds.size + 1)
-
-
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
