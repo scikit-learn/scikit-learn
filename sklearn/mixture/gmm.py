@@ -22,7 +22,7 @@ from time import time
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp, stable_cumsum
+from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -404,7 +404,7 @@ class _GMMBase(BaseEstimator):
         if random_state is None:
             random_state = self.random_state
         random_state = check_random_state(random_state)
-        weight_cdf = stable_cumsum(self.weights_)
+        weight_cdf = np.cumsum(self.weights_)
 
         X = np.empty((n_samples, self.means_.shape[1]))
         rand = random_state.rand(n_samples)

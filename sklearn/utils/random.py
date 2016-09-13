@@ -10,7 +10,6 @@ import array
 from sklearn.utils import check_random_state
 from sklearn.utils.fixes import astype
 from ._random import sample_without_replacement
-from ..utils.extmath import stable_cumsum
 
 __all__ = ['sample_without_replacement', 'choice']
 
@@ -168,7 +167,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
                 x = random_state.rand(size - n_uniq)
                 if n_uniq > 0:
                     p[flat_found[0:n_uniq]] = 0
-                cdf = stable_cumsum(p)
+                cdf = np.cumsum(p)
                 cdf /= cdf[-1]
                 new = cdf.searchsorted(x, side='right')
                 _, unique_indices = np.unique(new, return_index=True)
@@ -279,8 +278,8 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             class_probability_nz = class_prob_j[classes_j_nonzero]
             class_probability_nz_norm = (class_probability_nz /
                                          np.sum(class_probability_nz))
-            classes_ind = np.searchsorted(
-                stable_cumsum(class_probability_nz_norm), rng.rand(nnz))
+            classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),
+                                          rng.rand(nnz))
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 

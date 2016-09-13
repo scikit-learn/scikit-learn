@@ -15,7 +15,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.extmath import stable_cumsum
 from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
@@ -334,7 +333,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
-    cumulative_p_c = stable_cumsum(p_c)
+    cumulative_p_c = np.cumsum(p_c)
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
 
