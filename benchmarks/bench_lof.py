@@ -6,7 +6,6 @@ LocalOutlierFactor benchmark
 A test of LocalOutlierFactor on classical anomaly detection datasets.
 
 """
-print(__doc__)
 
 from time import time
 import numpy as np
@@ -16,6 +15,8 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
+
+print(__doc__)
 
 np.random.seed(2)
 
@@ -97,7 +98,7 @@ for dat in datasets:
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = -model._decision_function(X_test)  # the lower, the more normal
+    scoring = -model.decision_function(X_test)  # the lower, the more normal
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     AUC = auc(fpr, tpr)

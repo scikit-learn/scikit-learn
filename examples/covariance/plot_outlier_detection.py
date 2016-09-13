@@ -30,7 +30,6 @@ Thus rather than using the 'predict' method of the objects, we set the
 threshold on the decision_function to separate out the corresponding
 fraction.
 """
-print(__doc__)
 
 import numpy as np
 from scipy import stats
@@ -41,6 +40,8 @@ from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
+
+print(__doc__)
 
 rng = np.random.RandomState(42)
 
