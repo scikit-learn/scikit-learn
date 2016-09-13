@@ -79,10 +79,11 @@ def if_delegate_has_method(delegate):
     return lambda fn: _IffHasAttrDescriptor(fn, delegate,
                                             attribute_name=fn.__name__)
 
+
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
-    if hasattr(estimator, 'kernel') and callable(estimator.kernel) \
-       and not isinstance(estimator.kernel, GPKernel):
+    if (hasattr(estimator, 'kernel') and callable(estimator.kernel) and
+            not isinstance(estimator.kernel, GPKernel)):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
@@ -91,7 +92,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         if getattr(estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
-        X_subset = [X[idx] for idx in indices]
+        X_subset = [X[index] for index in indices]
     else:
         if getattr(estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix

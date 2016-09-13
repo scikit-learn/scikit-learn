@@ -23,11 +23,23 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
+from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring
 from ..exceptions import FitFailedWarning
 
-from ._split import check_cv, _safe_split
+from ._split import KFold
+from ._split import LabelKFold
+from ._split import LeaveOneLabelOut
+from ._split import LeaveOneOut
+from ._split import LeavePLabelOut
+from ._split import LeavePOut
+from ._split import ShuffleSplit
+from ._split import LabelShuffleSplit
+from ._split import StratifiedKFold
+from ._split import StratifiedShuffleSplit
+from ._split import PredefinedSplit
+from ._split import check_cv
 
 __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
