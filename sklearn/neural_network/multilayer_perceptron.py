@@ -84,7 +84,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             start, end = self._intercept_indptr[i]
             self.intercepts_[i] = packed_parameters[start:end]
 
-    def _forward_pass(self, activations, training_time=True,
+    def _forward_pass(self, activations, is_training=True,
                       dropout_masks=None):
         """Perform a forward pass on the network by computing the values
         of the neurons in the hidden layers and the output layer.
@@ -94,19 +94,19 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         activations: list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
 
-        training_time : bool, default True
+        is_training : bool, default True
             If False, it is considered to be test time and dropout won't be
             applied.
 
         dropout_masks : dict, optional
             Mapping from layer index to mask for dropout. It won't be used when
-            training_time=False, otherwise it should be provided.
+            is_training=False, otherwise it should be provided.
         """
         hidden_activation = ACTIVATIONS[self.activation]
 
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
-            if training_time and self.dropout and self.dropout[i] > 0:
+            if is_training and self.dropout and self.dropout[i] > 0:
                 retain_prob = 1 - self.dropout[i]
                 dropout_masks[i] = self._random_state.binomial(
                     1, retain_prob, activations[i].shape) / retain_prob
@@ -711,7 +711,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             activations.append(np.empty((X.shape[0],
                                          layer_units[i + 1])))
         # forward propagate
-        self._forward_pass(activations, training_time=False)
+        self._forward_pass(activations, is_training=False)
         y_pred = activations[-1]
 
         return y_pred
