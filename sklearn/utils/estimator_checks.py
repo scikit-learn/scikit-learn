@@ -75,10 +75,16 @@ DEPRECATED_TRANSFORM = [
     "GradientBoostingClassifier", "GradientBoostingRegressor"]
 
 
-def _set_test_name(function, name):
-    function.description = ("sklearn.tests.test_common.{0}({1})".format(
-        function.__name__, name))
-    return function
+class _set_test_name(object):
+    # Setting the description on the function itself can give incorrect results
+    # in failing tests
+    def __init__(self, function, name):
+        self.function = function
+        self.description = ("sklearn.tests.test_common.{0}({1})".format(
+            function.__name__, name))
+
+    def __call__(self, *args, **kwargs):
+        return self.function(*args, **kwargs)
 
 
 def _yield_non_meta_checks(name, Estimator):
