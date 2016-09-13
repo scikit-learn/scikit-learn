@@ -658,3 +658,9 @@ def test_stable_cumsum():
                          'cumsum was found to be unstable: its last element '
                          'does not correspond to sum',
                          stable_cumsum, r, rtol=0, atol=0)
+
+    # test axis parameter
+    A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))
+    assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
+    assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
+    assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
