@@ -297,8 +297,8 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    fit_intercept = filter_ == DENSE_FILTER 
-    if fit_intercept: 
+    fit_intercept = filter_ == DENSE_FILTER
+    if fit_intercept:
         X_diabetes_ = X_diabetes - X_diabetes.mean(0)
     else:
         X_diabetes_ = X_diabetes
