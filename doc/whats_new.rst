@@ -323,6 +323,13 @@ Enhancements
      (`#5540 <https://github.com/scikit-learn/scikit-learn/pull/5540>_`)
      By `Andreas Müller`_.
 
+   - When unpickling a scikit-learn estimator in a different version than the one
+     the estimator was trained with, a ``UserWarning`` is raised, see :ref:`the documentation
+     on model persistence <persistence_limitations>`
+     for more details.
+     (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>_`)
+     By `Andreas Müller`_.
+
 Bug fixes
 .........
 

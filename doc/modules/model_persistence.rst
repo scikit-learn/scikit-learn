@@ -56,6 +56,7 @@ with::
    filesystem. All files are required in the same folder when reloading the
    model with joblib.load.
 
+.. _persistence_limitations:
 
 Security & maintainability limitations
 --------------------------------------
