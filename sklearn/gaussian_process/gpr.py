@@ -35,6 +35,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     kernel : kernel object
@@ -126,7 +128,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     log_marginal_likelihood_value_: float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
-    .. versionadded:: 0.18
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,

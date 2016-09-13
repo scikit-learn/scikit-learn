@@ -486,6 +486,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
     def decision_path(self, X, check_input=True):
         """Return the decision path in the tree
 
+        .. versionadded:: 0.18
+
         Parameters
         ----------
         X : array_like or sparse matrix, shape = [n_samples, n_features]
@@ -503,7 +505,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             Return a node indicator matrix where non zero elements
             indicates that the samples goes through the nodes.
 
-        .. versionadded:: 0.18
         """
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)

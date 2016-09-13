@@ -45,6 +45,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     Currently, the implementation is restricted to using the logistic link
     function.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     kernel : kernel object
@@ -139,7 +141,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     log_marginal_likelihood_value_: float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
-    .. versionadded:: 0.18
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,

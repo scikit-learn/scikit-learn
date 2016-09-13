@@ -116,6 +116,8 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     subset : None, 'SA', 'SF', 'http', 'smtp'
@@ -157,7 +159,6 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
            Michael Prerau, Leonid Portnoy, Sal Stolfo
 
-    .. versionadded:: 0.18
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
                                      download_if_missing=download_if_missing)

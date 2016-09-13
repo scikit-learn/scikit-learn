@@ -685,6 +685,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     This model optimizes the log-loss function using LBFGS or stochastic
     gradient descent.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     hidden_layer_sizes : tuple, length = n_layers - 2, default (100,)
@@ -871,7 +873,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
 
-    .. versionadded:: 0.18
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,
@@ -1028,6 +1029,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     This model optimizes the squared-loss using LBFGS or stochastic gradient
     descent.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1212,7 +1215,6 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
 
-    .. versionadded:: 0.18
     """
     def __init__(self, hidden_layer_sizes=(100,), activation="relu",
                  solver='adam', alpha=0.0001,

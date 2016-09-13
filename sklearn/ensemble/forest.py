@@ -73,12 +73,14 @@ __all__ = ["RandomForestClassifier",
 
 MAX_INT = np.iinfo(np.int32).max
 
+
 def _generate_sample_indices(random_state, n_samples):
     """Private function used to _parallel_build_trees function."""
     random_instance = check_random_state(random_state)
     sample_indices = random_instance.randint(0, n_samples, n_samples)
 
     return sample_indices
+
 
 def _generate_unsampled_indices(random_state, n_samples):
     """Private function used to forest._set_oob_score function."""
@@ -89,6 +91,7 @@ def _generate_unsampled_indices(random_state, n_samples):
     unsampled_indices = indices_range[unsampled_mask]
 
     return unsampled_indices
+
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
@@ -181,6 +184,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     def decision_path(self, X):
         """Return the decision path in the forest
 
+        .. versionadded:: 0.18
+
         Parameters
         ----------
         X : array-like or sparse matrix, shape = [n_samples, n_features]
@@ -198,7 +203,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
 
-        .. versionadded:: 0.18
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
