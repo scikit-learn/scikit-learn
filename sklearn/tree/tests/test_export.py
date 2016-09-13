@@ -81,7 +81,8 @@ def test_graphviz_toy():
 
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
-                                proportion=True, special_characters=True, rounded=True)
+                                proportion=True, special_characters=True,
+                                rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
