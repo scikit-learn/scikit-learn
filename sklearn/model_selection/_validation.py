@@ -607,7 +607,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
             for y_i in y_shuffled)
     out = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                    verbose=verbose)(chain.from_iterable(jobs))
-    permutation_scores = np.array(zip(*out)[0]).reshape(-1, n_permutations)
+    permutation_scores = np.array(list(zip(*out))[0]).reshape(-1,
+                                                              n_permutations)
     permutation_scores = permutation_scores.mean(axis=0)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue
