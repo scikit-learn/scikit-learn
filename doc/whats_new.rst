@@ -19,9 +19,10 @@ Model Selection Enhancements and API Changes
   - **The ``model_selection`` module**
 
     The new module :mod:`sklearn.model_selection`, which groups together the
-    functionalities of formerly :mod:`cross_validation`, :mod:`grid_search` and
-    :mod:`learning_curve`, introduces new possibilities such as nested
-    cross-validation and better manipulation of parameter searches with Pandas.
+    functionalities of formerly :mod:`sklearn.cross_validation`,
+    :mod:`sklearn.grid_search` and :mod:`sklearn.learning_curve`, introduces new
+    possibilities such as nested cross-validation and better manipulation of
+    parameter searches with Pandas.
 
     Many things will stay the same but there are some key differences. Read
     below to know more about the changes.
@@ -245,7 +246,7 @@ Enhancements
    - Prediction of out-of-sample events with Isotonic Regression is now much
      faster (over 1000x in tests with synthetic data). By `Jonathan Arfa`_.
 
-   - Added ``inverse_transform`` function to :class:`decomposition.nmf` to compute
+   - Added ``inverse_transform`` function to :class:`decomposition.NMF` to compute
      data matrix of original shape. By `Anish Shah`_.
 
    - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
@@ -254,8 +255,10 @@ Enhancements
    - Add option to show ``indicator features`` in the output of Imputer.
      By `Mani Teja`_.
 
-   - Reduce the memory usage for 32-bit float input arrays of :func:`utils.mean_variance_axis` and
-     :func:`utils.incr_mean_variance_axis` by supporting cython fused types. By `YenChen Lin`_.
+   - Reduce the memory usage for 32-bit float input arrays of
+     :func:`utils.sparse_func.mean_variance_axis` and
+     :func:`utils.sparse_func.incr_mean_variance_axis` by supporting cython
+     fused types. By `YenChen Lin`_.
 
    - The :func: `ignore_warnings` now accept a category argument to ignore only
      the warnings of a specified type. By `Thierry Guillemot`_.
@@ -285,15 +288,16 @@ Enhancements
      `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
      `Manvendra Singh`_.
 
-   - :class:`RobustScaler` now accepts ``quantile_range`` parameter.
+   - :class:`preprocessing.RobustScaler` now accepts ``quantile_range`` parameter.
      (`#5929 <https://github.com/scikit-learn/scikit-learn/pull/5929>`_)
      By `Konstantin Podshumok`_.
 
-   - The memory footprint is reduced (sometimes greatly) for :class:`BaseBagging`
-     and classes that inherit from it, i.e, :class:`BaggingClassifier`,
-     :class:`BaggingRegressor`, and :class:`IsolationForest`, by dynamically
-     generating attribute ``estimators_samples_`` only when it is needed.
-     By `David Staub`_.
+   - The memory footprint is reduced (sometimes greatly) for
+     :class:`ensemble.bagging.BaseBagging` and classes that inherit from it,
+     i.e, :class:`ensemble.BaggingClassifier`,
+     :class:`ensemble.BaggingRegressor`, and :class:`ensemble.IsolationForest`,
+     by dynamically generating attribute ``estimators_samples_`` only when it is
+     needed. By `David Staub`_.
 
    - :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
      now works with ``np.float32`` input data without converting it
@@ -307,8 +311,8 @@ Enhancements
      (`#7239 <https://github.com/scikit-learn/scikit-learn/pull/7239/>`_)
      by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
 
-   - Added ``n_jobs`` and ``sample_weights`` parameters for :class:`VotingClassifier`
-     to fit underlying estimators in parallel.
+   - Added ``n_jobs`` and ``sample_weights`` parameters for
+     :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
      (`#5805 <https://github.com/scikit-learn/scikit-learn/pull/5805>`_)
      By `Ibraim Ganiev`_.
 
@@ -320,21 +324,30 @@ Enhancements
 
    - Simplification of the ``clone`` function, deprecate support for estimators
      that modify parameters in ``__init__``.
-     (`#5540 <https://github.com/scikit-learn/scikit-learn/pull/5540>_`)
+     (`#5540 <https://github.com/scikit-learn/scikit-learn/pull/5540>`_)
      By `Andreas Müller`_.
+
+   - When unpickling a scikit-learn estimator in a different version than the one
+     the estimator was trained with, a ``UserWarning`` is raised, see :ref:`the documentation
+     on model persistence <persistence_limitations>`
+     for more details.
+     (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>`_)
+     By `Andreas Müller`_.
+
 
 Bug fixes
 .........
 
-    - :func: `model_selection.tests._search._check_param_grid` now works correctly with all types
+    - :func:`model_selection.tests._search._check_param_grid` now works correctly with all types
       that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
       (Python 2.x).
       (`#7323 <https://github.com/scikit-learn/scikit-learn/pull/7323>`_) by `Viacheslav Kovalevskyi`_.
 
-    - :class:`StratifiedKFold` now raises error if all n_labels for individual classes is less than n_folds.
+    - :class:`model_selection.StratifiedKFold` now raises error if all n_labels
+      for individual classes is less than n_folds.
       (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
 
-    - :class:`RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
+    - :class:`decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
       (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
@@ -359,7 +372,7 @@ Bug fixes
       Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
 
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
-      occurrences. Affects :class:`cluster.SpectralBiclustering`,
+      occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
       and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
 
@@ -367,7 +380,7 @@ Bug fixes
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
       are required to split a decision tree node. By `Arnaud Joly`_
 
-    - :class:`VotingClassifier` now raises ``NotFittedError`` if ``predict``,
+    - :class:`ensemble.VotingClassifier` now raises ``NotFittedError`` if ``predict``,
       ``transform`` or ``predict_proba`` are called on the non-fitted estimator.
       by `Sebastian Raschka`_.
 
@@ -402,8 +415,8 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/issues/6902>`_).  By
       `LeonieBorne <https://github.com/LeonieBorne>`_.
 
-    - :func:`pairwise_distances` now converts arrays to boolean arrays when
-      required in scipy.spatial.distance.
+    - :func:`metrics.pairwise.pairwise_distances` now converts arrays to
+      boolean arrays when required in scipy.spatial.distance.
       (`#5460 <https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
       By `Tom Dupre la Tour`_.
 
@@ -411,11 +424,11 @@ Bug fixes
       (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
       By `Ibraim Ganiev`_.
 
-    - Fix sparse input support in :func:`silhouette_score` as well as example
-      examples/text/document_clustering.py. By `YenChen Lin`_.
+    - Fix sparse input support in :func:`metrics.silhouette_score` as well as
+      example examples/text/document_clustering.py. By `YenChen Lin`_.
 
-    - :func:`_transform_selected` now always passes a copy of `X` to transform
-      function when `copy=True` (`#7194
+    - :func:`preprocessing.data._transform_selected` now always passes a copy
+      of `X` to transform function when `copy=True` (`#7194
       <https://github.com/scikit-learn/scikit-learn/issues/7194>`_). By `Caio
       Oliveira <https://github.com/caioaao>`_.
 
@@ -424,7 +437,7 @@ Bug fixes
 
     - Fix in :class:`sklearn.model_selection.StratifiedShuffleSplit` to
       return splits of size ``train_size`` and ``test_size`` in all cases
-      (`#6472 <https://github.com/scikit-learn/scikit-learn/pull/6472>`).
+      (`#6472 <https://github.com/scikit-learn/scikit-learn/pull/6472>`_).
       By `Andreas Müller`_.
 
     - :func:`metrics.roc_curve` and :func:`metrics.precision_recall_curve` no
@@ -444,8 +457,8 @@ API changes summary
 
    - The :mod:`sklearn.cross_validation`, :mod:`sklearn.grid_search` and
      :mod:`sklearn.learning_curve` have been deprecated and the classes and
-     functions have been reorganized into the :mod:`model_selection` module.
-     Ref :ref:`model_selection_changes` for more information.
+     functions have been reorganized into the :mod:`sklearn.model_selection`
+     module. Ref :ref:`model_selection_changes` for more information.
      (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
      `Raghav R V`_.
 
@@ -455,17 +468,17 @@ API changes summary
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
 
-   - The old :class:`VBGMM` is deprecated in favor of the new
-     :class:`BayesianGaussianMixture` (with the parameter
-     ``weight_concentration_prior_type='dirichlet_distribution'``).
+   - The old :class:`mixture.DPGMM` is deprecated in favor of the new
+     :class:`mixture.BayesianGaussianMixture` (with the parameter
+     ``weight_concentration_prior_type='dirichlet_process'``).
      The new class solves the computational
      problems of the old class and computes the Gaussian mixture with a
      Dirichlet process prior faster than before.
      (`#7295 <https://github.com/scikit-learn/scikit-learn/pull/7295>`_) by
      `Wei Xue`_ and `Thierry Guillemot`_.
 
-   - The old :class:`VBGMM` is deprecated in favor of the new
-     :class:`BayesianGaussianMixture` (with the parameter
+   - The old :class:`mixture.VBGMM` is deprecated in favor of the new
+     :class:`mixture.BayesianGaussianMixture` (with the parameter
      ``weight_concentration_prior_type='dirichlet_distribution'``).
      The new class solves the computational
      problems of the old class and computes the Variational Bayesian Gaussian
@@ -473,8 +486,8 @@ API changes summary
      (`#6651 <https://github.com/scikit-learn/scikit-learn/pull/6651>`_) by
      `Wei Xue`_ and `Thierry Guillemot`_.
 
-   - The old :class:`GMM` is deprecated in favor of the new
-     :class:`GaussianMixture`. The new class computes the Gaussian mixture
+   - The old :class:`mixture.GMM` is deprecated in favor of the new
+     :class:`mixture.GaussianMixture`. The new class computes the Gaussian mixture
      faster than before and some of computational problems have been solved.
      (`#6666 <https://github.com/scikit-learn/scikit-learn/pull/6666>`_) by
      `Wei Xue`_ and `Thierry Guillemot`_.
@@ -492,12 +505,12 @@ API changes summary
      (`#7187 <https://github.com/scikit-learn/scikit-learn/pull/7187>`_)
      by `YenChen Lin`_.
 
-    - ``classes`` parameter was renamed to ``labels`` in
-      :func:`metrics.classification.hamming_loss`.
-      (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
-      `Sebastián Vanrell`_.
-   
-    - The splitter classes ``LabelKFold``, ``LabelShuffleSplit``,
+   - ``classes`` parameter was renamed to ``labels`` in
+     :func:`metrics.classification.hamming_loss`.
+     (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
+     `Sebastián Vanrell`_.
+
+   - The splitter classes ``LabelKFold``, ``LabelShuffleSplit``,
      ``LeaveOneLabelOut`` and ``LeavePLabelsOut`` are renamed to
      :class:`model_selection.GroupKFold`,
      :class:`model_selection.GroupShuffleSplit`,
