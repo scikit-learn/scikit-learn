@@ -456,6 +456,12 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/pull/7159>`_)
       by `Yichuan Liu <https://github.com/yl565>`_.
 
+      - Add ``_pairwise`` to :class:`OneVsOneClassifier` and
+	:class:`OneVsRestClassifier`.  Also moves ``_safe_split``
+	to ``utils/metaestimators``.      (`#7350
+      <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
+      by `Russell Smith <https://github.com/rsmith54>`_.
+
 
 API changes summary
 -------------------
