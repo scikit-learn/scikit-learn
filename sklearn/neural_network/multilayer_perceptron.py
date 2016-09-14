@@ -888,7 +888,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Probabilities of dropout for inputs at each layer. Value of each
         element should be in [0, 1). The first element corresponds to dropout
         from input layer to the first hidden layer, and second element
-        correponds to dropout from first hidden layer to the second hidden
+        corresponds to dropout from first hidden layer to the second hidden
         layer, and so on. If None, it is equivalent to a list of all zeros,
         which adds no dropout.
 
@@ -1245,7 +1245,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Probabilities of dropout for inputs at each layer. Value of each
         element should be in [0, 1). The first element corresponds to dropout
         from input layer to the first hidden layer, and second element
-        correponds to dropout from first hidden layer to the second hidden
+        corresponds to dropout from first hidden layer to the second hidden
         layer, and so on. If None, it is equivalent to a list of all zeros,
         which adds no dropout.
 
