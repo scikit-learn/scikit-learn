@@ -120,7 +120,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
     """
     precisions = check_array(precisions, dtype=[np.float64, np.float32],
                              ensure_2d=False,
-                             allow_nd=covariance_type is 'full')
+                             allow_nd=covariance_type == 'full')
 
     precisions_shape = {'full': (n_components, n_features, n_features),
                         'tied': (n_features, n_features),
@@ -321,7 +321,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
             precisions_chol[k] = linalg.solve_triangular(cov_chol,
                                                          np.eye(n_features),
                                                          lower=True).T
-    elif covariance_type is 'tied':
+    elif covariance_type == 'tied':
         _, n_features = covariances.shape
         try:
             cov_chol = linalg.cholesky(covariances, lower=True)
@@ -633,11 +633,11 @@ class GaussianMixture(BaseMixture):
             self.covariances_ = covariances
             self.precisions_cholesky_ = _compute_precision_cholesky(
                 covariances, self.covariance_type)
-        elif self.covariance_type is 'full':
+        elif self.covariance_type == 'full':
             self.precisions_cholesky_ = np.array(
                 [linalg.cholesky(prec_init, lower=True)
                  for prec_init in self.precisions_init])
-        elif self.covariance_type is 'tied':
+        elif self.covariance_type == 'tied':
             self.precisions_cholesky_ = linalg.cholesky(self.precisions_init,
                                                         lower=True)
         else:
@@ -686,12 +686,12 @@ class GaussianMixture(BaseMixture):
         # Attributes computation
         _, n_features = self.means_.shape
 
-        if self.covariance_type is 'full':
+        if self.covariance_type == 'full':
             self.precisions_ = np.empty(self.precisions_cholesky_.shape)
             for k, prec_chol in enumerate(self.precisions_cholesky_):
                 self.precisions_[k] = np.dot(prec_chol, prec_chol.T)
 
-        elif self.covariance_type is 'tied':
+        elif self.covariance_type == 'tied':
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
         else:
