@@ -894,7 +894,7 @@ def check_clustering(name, Alg):
     pred = alg.labels_
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
-    if name is 'SpectralClustering':
+    if name == 'SpectralClustering':
         # there is no way to make Spectral clustering deterministic :(
         return
     set_random_state(alg)
