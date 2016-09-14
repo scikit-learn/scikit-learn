@@ -614,11 +614,11 @@ def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
     clf_notprecomputed = svm.SVC()
 
-    for multi_class_classifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        ovr_false = multi_class_classifier(clf_notprecomputed)
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        ovr_false = MultiClassClassifier(clf_notprecomputed)
         assert_false(ovr_false._pairwise)
 
-        ovr_true = multi_class_classifier(clf_precomputed)
+        ovr_true = MultiClassClassifier(clf_precomputed)
         assert_true(ovr_true._pairwise)
 
 
@@ -628,10 +628,9 @@ def test_pairwise_cross_val_score():
 
     X, y = iris.data, iris.target
 
-    for multi_class_classifier in [OneVsRestClassifier, OneVsOneClassifier]:
-#    for multi_class_classifier in [OneVsRestClassifier]:
-        ovr_false = multi_class_classifier(clf_notprecomputed)
-        ovr_true = multi_class_classifier(clf_precomputed)
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        ovr_false = MultiClassClassifier(clf_notprecomputed)
+        ovr_true = MultiClassClassifier(clf_precomputed)
 
         linear_kernel = np.dot(X, X.T)
         score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
