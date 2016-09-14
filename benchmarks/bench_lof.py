@@ -1,7 +1,7 @@
 """
-==========================================
+============================
 LocalOutlierFactor benchmark
-==========================================
+============================
 
 A test of LocalOutlierFactor on classical anomaly detection datasets.
 
@@ -21,17 +21,20 @@ print(__doc__)
 np.random.seed(2)
 
 # datasets available: ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+datasets = ['shuttle']
 
-for dat in datasets:
+novelty_detection = True  # if False, training set polluted by outliers
+
+for dataset_name in datasets:
     # loading and vectorization
     print('loading data')
-    if dat in ['http', 'smtp', 'SA', 'SF']:
-        dataset = fetch_kddcup99(subset=dat, shuffle=True, percent10=False)
+    if dataset_name in ['http', 'smtp', 'SA', 'SF']:
+        dataset = fetch_kddcup99(subset=dataset_name, shuffle=True,
+                                 percent10=False)
         X = dataset.data
         y = dataset.target
 
-    if dat == 'shuttle':
+    if dataset_name == 'shuttle':
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
@@ -43,7 +46,7 @@ for dat in datasets:
         y = y[s]
         y = (y != 1).astype(int)
 
-    if dat == 'forestcover':
+    if dataset_name == 'forestcover':
         dataset = fetch_covtype(shuffle=True)
         X = dataset.data
         y = dataset.target
@@ -56,14 +59,14 @@ for dat in datasets:
 
     print('vectorizing data')
 
-    if dat == 'SF':
+    if dataset_name == 'SF':
         lb = LabelBinarizer()
         lb.fit(X[:, 1])
         x1 = lb.transform(X[:, 1])
         X = np.c_[X[:, :1], x1, X[:, 2:]]
         y = (y != 'normal.').astype(int)
 
-    if dat == 'SA':
+    if dataset_name == 'SA':
         lb = LabelBinarizer()
         lb.fit(X[:, 1])
         x1 = lb.transform(X[:, 1])
@@ -74,7 +77,7 @@ for dat in datasets:
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
         y = (y != 'normal.').astype(int)
 
-    if dat == 'http' or dat == 'smtp':
+    if dataset_name == 'http' or dataset_name == 'smtp':
         y = (y != 'normal.').astype(int)
 
     n_samples, n_features = np.shape(X)
@@ -87,9 +90,9 @@ for dat in datasets:
     y_train = y[:n_samples_train]
     y_test = y[n_samples_train:]
 
-    # novelty detection: (comment for outlier detection)
-    X_train = X_train[y_train == 0]
-    y_train = y_train[y_train == 0]
+    if novelty_detection:
+        X_train = X_train[y_train == 0]
+        y_train = y_train[y_train == 0]
 
     print('LocalOutlierFactor processing...')
     model = LocalOutlierFactor(n_neighbors=20)
@@ -104,7 +107,8 @@ for dat in datasets:
     AUC = auc(fpr, tpr)
     plt.plot(fpr, tpr, lw=1,
              label=('ROC for %s (area = %0.3f, train-time: %0.2fs,'
-                    'test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time)))
+                    'test-time: %0.2fs)' % (dataset_name, AUC, fit_time,
+                                            predict_time)))
 
 plt.xlim([-0.05, 1.05])
 plt.ylim([-0.05, 1.05])

@@ -3,14 +3,11 @@
 Anomaly detection with Local Outlier Factor (LOF)
 =================================================
 
-This example uses the LocalOutlierFactor (LOF) estimator
-for anomaly detection.
-LOF is a unsupervised Outlier Detection method.
-Its anomaly score measures the local deviation of density of a given
-sample with respect to its neighbors.
-By comparing the local density of a sample to the local densities of
-its neighbors, one can identify samples that have a substantially lower
-density than their neighbors. These are considered as outliers.
+This example presents the Local Outlier Factor (LOF) estimator. The LOF
+algorithm is an unsupervised outlier detection method which computes the local
+density deviation of a given data point with respect to its neighbors.
+It considers as outlier samples that have a substantially lower density than
+their neighbors.
 """
 
 import numpy as np

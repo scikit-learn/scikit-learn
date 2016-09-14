@@ -178,16 +178,15 @@ This strategy is illustrated below.
 
 Local Outlier Factor
 --------------------
+Another efficient way to perform outlier detection on moderately high dimensional
+datasets is to use the Local Outlier Factor (LOF) algorithm.
 
-One other very efficient way of performing outlier detection in datasets whose
-dimension is moderately large is to use the Local Outlier Factor (LOF) algorithm.
-
-The :class:`neighbors.LocalOutlierFactor` computes a score reflecting the
-degree of abnormality of the observations, the so-called local outlier factor.
-It measures the local deviation of a given data point with respect to
-its neighbors. By comparing the local density near a sample to the local
-densities of its neighbors, one can identify points which have a substantially
-lower density than their neighbors. These are considered to be outliers.
+The :class:`neighbors.LocalOutlierFactor` (LOF) algorithm computes a score
+(called local outlier factor) reflecting the degree of abnormality of the
+observations.
+It measures the local density deviation of a given data point with respect to
+its neighbors. The idea is to detect the samples that have a substantially
+lower density than their neighbors.
 
 In practice the local density is obtained from the k-nearest neighbors.
 The LOF score of an observation is equal to the ratio of the
@@ -210,17 +209,18 @@ This strategy is illustrated below.
 
 .. topic:: Examples:
 
-   * See :ref:`example_neighbors_plot_lof.py` for
+   * See :ref:`sphx_glr_auto_example_neighbors_plot_lof.py` for
      an illustration of the use of LocalOutlierFactor.
 
-   * See :ref:`example_covariance_plot_outlier_detection.py` for a
+   * See :ref:`sphx_glr_auto_example_covariance_plot_outlier_detection.py` for a
      comparison with other anomaly detection methods.
 
 .. topic:: References:
 
-    .. [BKNS2000]  Breunig, M. M., Kriegel, H. P., Ng, R. T., and Sander, J. LOF: identifying density-based local outliers.
-       In ACM sigmod record (Vol. 29, No. 2, pp. 93-104). ACM.
-
+   .. [BKNS2000]  Breunig, Kriegel, Ng, and Sander (2000)
+      `LOF: identifying density-based local outliers.
+      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      Proc. ACM SIGMOD
 
 One-class SVM versus Elliptic Envelope versus Isolation Forest versus LOF
 -------------------------------------------------------------------------

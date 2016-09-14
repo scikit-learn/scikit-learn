@@ -38,7 +38,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDtree`
+        - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -47,19 +47,19 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or KDTree. This can affect the
-        speed of the construction and query, as well as the memory
+        Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
+        affect the speed of the construction and query, as well as the memory
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
     p: integer, optional (default = 2)
         Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : string or callable, default 'minkowski'
-        metric to use for distance computation. Any metric from scikit-learn
+        metric used for the distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
         If 'precomputed', the training input X is expected to be a distance
@@ -105,9 +105,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     ----------
     outlier_factor_ : numpy array, shape (n_samples,)
         The LOF of X. The lower, the more normal.
+        Inliers tend to have a LOF score close to 1, while outliers tend
+        to have a larger LOF score.
 
         The local outlier factor (LOF) of a sample captures its
-        supposed `degree of abnormality'.
+        supposed 'degree of abnormality'.
         It is the average of the ratio of the local reachability density of
         a sample and those of its k-nearest neighbors.
 
@@ -153,17 +155,23 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         X : {array-like, sparse matrix, BallTree, KDTree}
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
+
+        Returns
+        -------
+        self : object
+            Returns self.
         """
         if not (0. < self.contamination <= .5):
             raise ValueError("contamination must be in (0, 0.5]")
 
         super(LocalOutlierFactor, self).fit(X)
 
-        self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_ = (
+        self._distances_fit_X_, self._neighbors_indices_fit_X_ = (
             self.kneighbors(None))
 
-        # Compute decision_function over training samples to define threshold_:
-        self.outlier_factor_ = self._local_outlier_factor()
+        # Compute score over training samples to define threshold_:
+        self.outlier_factor_ = self._local_outlier_factor(
+            self._distances_fit_X_, self._neighbors_indices_fit_X_)
 
         self.threshold_ = -scoreatpercentile(
             self.outlier_factor_, 100. * (1. - self.contamination))
@@ -174,9 +182,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
     def _predict(self, X=None):
         """Predict the labels (1 inlier, -1 outlier) of X according to LOF.
+
         If X is None, returns the same as fit_predict(X_train).
         This method allows to generalize prediction to new observations (not
-        in the training set).
+        in the training set). As LOF originally does not deal with new data,
+        this method is kept private.
 
         Parameters
         ----------
@@ -191,8 +201,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             Returns 1 for anomalies/outliers and -1 for inliers.
         """
         check_is_fitted(self, ["threshold_", "outlier_factor_",
-                               "_k_distance_value_fit_X_",
-                               "neighbors_indices_fit_X_"])
+                               "_distances_fit_X_",
+                               "_neighbors_indices_fit_X_"])
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
@@ -207,15 +217,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     def decision_function(self, X):
         """Opposite of the Local Outlier Factor of X (as bigger is better).
 
-        WARNING: The argument X is supposed to contain new data. The samples in
-        X are not considered in any neighborhood.
+        The argument X is supposed to contain *new data*: if X contains a
+        point from training, it consider the later in its own neighborhood.
+        Also, the samples in X are not considered in the neighborhood of any
+        point.
         The decision function on training data is available by considering the
         opposite of the outlier_factor_ attribute.
 
         Parameters
         ----------
 
-        X : array-like, shape (n_samples, n_features), optional
+        X : array-like, shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
@@ -226,24 +238,54 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             the more abnormal.
         """
         check_is_fitted(self, ["threshold_", "outlier_factor_",
-                               "_k_distance_value_fit_X_",
-                               "neighbors_indices_fit_X_"])
+                               "_distances_fit_X_",
+                               "_neighbors_indices_fit_X_"])
 
         X = check_array(X, accept_sparse='csr')
-        return -self._local_outlier_factor(X)  # as bigger is better
 
-    def _k_distance(self, X=None):
-        """
-        Compute the k_distance and the neighborhood of query samples wrt
-        training samples self._fit_X.
-        If X=None, neighbors of each sample self._fit_X are returned.
-        In this case, the query point is not considered its own neighbor.
-        """
-        distances, neighbors_indices = self.kneighbors(
-            X=X, n_neighbors=self.n_neighbors)
-        k_dist = distances[:, self.n_neighbors - 1]
+        distances_X, neighbors_indices_X = self.kneighbors(X)
+        # as bigger is better:
+        return -self._local_outlier_factor(distances_X, neighbors_indices_X)
 
-        return k_dist, neighbors_indices
+    def _local_outlier_factor(self, distances_X, neighbors_indices_X):
+        """Compute the local outlier factor (LOF)
+
+        It is the average of the ratio of the local reachability density of
+        a sample and those of its k-nearest neighbors.
+
+        Parameters
+        ----------
+        distances_X : Array of shape (n_query, self.n_neighbors).
+            Distances to the neighbors (in the training samples self._fit_X) of
+            each query point to compute the LRD.
+
+        neighbors_indices : Array of shape (n_query, self.n_neighbors)
+            Neighbors indices (of each query point) among training samples
+            self._fit_X.
+
+        Returns
+        -------
+        lof : numpy array of shape (n_samples,)
+            The LOF of X. The lower, the more normal.
+        """
+        n_samples = distances_X.shape[0]
+
+        # Compute the local_reachability_density of samples X:
+        X_lrd = self._local_reachability_density(distances_X,
+                                                 neighbors_indices_X)
+        lrd_ratios_array = np.zeros((n_samples, self.n_neighbors))
+
+        # Avoid re-computing X_lrd if same parameters:
+        if not (np.all(distances_X == self._distances_fit_X_) *
+                np.all(self._neighbors_indices_fit_X_ == neighbors_indices_X)):
+            lrd = self._local_reachability_density(
+                self._distances_fit_X_, self._neighbors_indices_fit_X_)
+        else:
+            lrd = X_lrd
+
+        lrd_ratios_array = lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
+
+        return np.mean(lrd_ratios_array, axis=1)
 
     def _local_reachability_density(self, distances_X, neighbors_indices):
         """The local reachability density (LRD)
@@ -253,70 +295,22 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The samples to compute the LRD w.r.t. self._fit_X
-            If None, compute the LRD of self._fit_X w.r.t. itself.
-            (In this case samples are not considered in their own
-            neighborhood)
+        distances_X : Array of shape (n_query, self.n_neighbors).
+            Distances to the neighbors (in the training samples self._fit_X) of
+            each query point to compute the LRD.
 
-        neighbors_indices : array-like of shape (n_samples, self.n_neighbors)
-            neighbors indices of X (or of self._fit_X if X is None)
-            Added as a parameter to avoid re-computing it with
-            self._k_distance(X)[1] when X is not None (if X is None, it is
-            equal to self.neighbors_indices_fit_X_)
+        neighbors_indices : Array of shape (n_query, self.n_neighbors)
+            Neighbors indices (of each query point) among training samples
+            self._fit_X.
 
         Returns
         -------
         local_reachability_density : array, shape (n_samples,)
             The local reachability density of each sample.
         """
-        dist_k = self._k_distance_value_fit_X_[neighbors_indices,
-                                               self.n_neighbors - 1]
+        dist_k = self._distances_fit_X_[neighbors_indices,
+                                        self.n_neighbors - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
         #  1e-10 to avoid `nan' when when nb of duplicates > n_neighbors:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
-
-    def _local_outlier_factor(self, X=None):
-        """Compute the local outlier factor (LOF)
-
-        It is the average of the ratio of the local reachability density of
-        a sample and those of its k-nearest neighbors.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The points to compute the LOF w.r.t. training samples self._fit_X.
-            Note that samples X are not considered in the neighborhood of
-            self._fit_X for computing their local_reachability_density, but a
-            sample both in X and self._fit_X is counted twice (thus considered
-            in his own neighborhood).
-            If None, compute LOF of self._fit_X w.r.t. to itself. (In this case
-            samples are not counted twice, ie not considered in their own
-            neighbourhood).
-
-        Returns
-        -------
-        lof : numpy array of shape (n_samples,)
-            The LOF of X. The lower, the more normal.
-        """
-        if X is None:
-            n_samples = self._fit_X.shape[0]
-            distances_X = self._k_distance_value_fit_X_
-            neighbors_indices_X = self.neighbors_indices_fit_X_
-        else:
-            n_samples = X.shape[0]
-            distances_X, neighbors_indices_X = self.kneighbors(X)
-
-        # Compute the local_reachability_density of samples X:
-        X_lrd = self._local_reachability_density(distances_X,
-                                                 neighbors_indices_X)
-        lrd_ratios_array = np.zeros((n_samples, self.n_neighbors))
-
-        # Avoid re-computing X_lrd if X is None:
-        lrd = X_lrd if X is None else self._local_reachability_density(
-            self._k_distance_value_fit_X_, self.neighbors_indices_fit_X_)
-
-        lrd_ratios_array = lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
-
-        return np.mean(lrd_ratios_array, axis=1)
