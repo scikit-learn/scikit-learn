@@ -84,8 +84,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, optional (default=None)
-        Handle or name of the output file. If ``None``, return the result is
+    out_file : file object or string, optional (default='tree.dot')
+        Handle or name of the output file. If ``None``, the result is
         returned as a string.
 
     max_depth : int, optional (default=None)
@@ -138,7 +138,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     -------
     dot_data : string
         String representation of the input tree in GraphViz dot format.
-        Only returned if out_file is None.
+        Only returned if ``out_file`` is None.
 
     Examples
     --------
