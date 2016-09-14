@@ -61,7 +61,7 @@ def _color_brew(n):
     return color_list
 
 
-def export_graphviz(decision_tree, out_file='tree.dot', max_depth=None,
+def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
