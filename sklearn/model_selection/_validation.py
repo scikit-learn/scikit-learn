@@ -500,7 +500,7 @@ def _index_param_value(X, v, indices):
 
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=1, random_state=0,
-                           verbose=0, scoring=None):
+                           verbose=0, scoring=None, pre_dispatch='2*n_jobs'):
     """Evaluate the significance of a cross-validated score with permutations
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -561,6 +561,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     verbose : integer, optional
         The verbosity level.
 
+    pre_dispatch : integer or string, optional
+        Number of predispatched jobs for parallel execution (default is
+        all). The option can reduce the allocated memory. The string can
+        be an expression like '2*n_jobs'.
+
     Returns
     -------
     score : float
@@ -600,7 +605,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
                                      fit_params=None)
              for train, test in cv.split(X, y_i, groups=groups))
             for y_i in y_shuffled)
-    out = Parallel(n_jobs=n_jobs, verbose=verbose)(chain.from_iterable(jobs))
+    out = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
+                   verbose=verbose)(chain.from_iterable(jobs))
     permutation_scores = np.array(zip(*out)[0]).reshape(-1, n_permutations)
     permutation_scores = permutation_scores.mean(axis=0)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
