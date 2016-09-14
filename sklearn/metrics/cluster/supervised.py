@@ -207,21 +207,9 @@ def adjusted_rand_score(labels_true, labels_pred):
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
 
     # Compute the ARI using the contingency data
-    if isinstance(contingency, np.ndarray):
-        # For an array
-        sum_comb_c = sum(comb2(n_c) for n_c in contingency.sum(axis=1))
-        sum_comb_k = sum(comb2(n_k) for n_k in contingency.sum(axis=0))
-        sum_comb = sum(comb2(n_ij) for n_ij in contingency.flatten())
-    elif sp.issparse(contingency):
-        # For a sparse matrix
-        sum_comb_c = sum(comb2(n_c)
-                         for n_c in np.ravel(contingency.sum(axis=1)))
-        sum_comb_k = sum(comb2(n_k)
-                         for n_k in np.ravel(contingency.sum(axis=0)))
-        sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
-    else:
-        raise ValueError(
-            "Unsupported type for 'contingency': " + str(type(contingency)))
+    sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
+    sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
+    sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
 
     prod_comb = (sum_comb_c * sum_comb_k) / float(comb(n_samples, 2))
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
