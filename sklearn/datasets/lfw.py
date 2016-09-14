@@ -42,14 +42,15 @@ from ..externals.six import b
 logger = logging.getLogger(__name__)
 
 
-BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
 ARCHIVE_NAME = "lfw.tgz"
+ARCHIVE_URL = "https://ndownloader.figshare.com/files/5976018"
 FUNNELED_ARCHIVE_NAME = "lfw-funneled.tgz"
-TARGET_FILENAMES = [
-    'pairsDevTrain.txt',
-    'pairsDevTest.txt',
-    'pairs.txt',
-]
+FUNNELED_ARCHIVE_URL = "https://ndownloader.figshare.com/files/5976015"
+TARGET_FILENAMES = {
+    'pairsDevTrain.txt': "https://ndownloader.figshare.com/files/5976012",
+    'pairsDevTest.txt': "https://ndownloader.figshare.com/files/5976009",
+    'pairs.txt': "https://ndownloader.figshare.com/files/5976006",
+}
 
 
 def scale_face(face):
@@ -73,11 +74,11 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     if funneled:
         archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
         data_folder_path = join(lfw_home, "lfw_funneled")
-        archive_url = BASE_URL + FUNNELED_ARCHIVE_NAME
+        archive_url = FUNNELED_ARCHIVE_URL
     else:
         archive_path = join(lfw_home, ARCHIVE_NAME)
         data_folder_path = join(lfw_home, "lfw")
-        archive_url = BASE_URL + ARCHIVE_NAME
+        archive_url = ARCHIVE_URL
 
     if not exists(lfw_home):
         makedirs(lfw_home)
@@ -86,7 +87,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         target_filepath = join(lfw_home, target_filename)
         if not exists(target_filepath):
             if download_if_missing:
-                url = BASE_URL + target_filename
+                url = TARGET_FILENAMES[target_filename]
                 logger.warning("Downloading LFW metadata: %s", url)
                 urllib.urlretrieve(url, target_filepath)
             else:
