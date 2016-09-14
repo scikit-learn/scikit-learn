@@ -64,8 +64,8 @@ else:
 logger = logging.getLogger(__name__)
 
 
-URL = ("http://people.csail.mit.edu/jrennie/"
-       "20Newsgroups/20news-bydate.tar.gz")
+URL = ("https://ndownloader.figshare.com/files/5975967"
+       "?private_link=a566db624bc36463dd10")
 ARCHIVE_NAME = "20news-bydate.tar.gz"
 CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"
