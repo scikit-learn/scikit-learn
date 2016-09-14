@@ -10,6 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 from scipy.optimize import fmin_l_bfgs_b
+from scipy.sparse import issparse
 import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -34,6 +35,17 @@ _STOCHASTIC_SOLVERS = ['sgd', 'adam']
 def _pack(coefs_, intercepts_):
     """Pack the parameters into a single vector."""
     return np.hstack([l.ravel() for l in coefs_ + intercepts_])
+
+
+def _safe_sparse_elementwise_multiply(a, b):
+    """element-wise multiplication that deals with sparse matrix
+    """
+    if issparse(a):
+        return a.multiply(b)
+    elif issparse(b):
+        return b.multiply(a)
+    else:
+        return a * b
 
 
 class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -110,7 +122,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 retain_prob = 1 - self.dropout[i]
                 dropout_masks[i] = self._random_state.binomial(
                     1, retain_prob, activations[i].shape) / retain_prob
-                dropout_input = activations[i] * dropout_masks[i]
+                dropout_input = _safe_sparse_elementwise_multiply(
+                    activations[i], dropout_masks[i])
                 activations[i + 1] = safe_sparse_dot(dropout_input,
                                                      self.coefs_[i])
             else:
@@ -136,7 +149,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         This function does backpropagation for the specified one layer.
         """
         if layer in dropout_masks:
-            activation = activations[layer] * dropout_masks[layer]
+            activation = _safe_sparse_elementwise_multiply(
+                activations[layer], dropout_masks[layer])
         else:
             activation = activations[layer]
 

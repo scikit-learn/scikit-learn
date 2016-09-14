@@ -242,7 +242,7 @@ def test_gradient_with_dropout():
             for dropout in [[0, 0.5], [0.5, 0.5], [0.5, 0], [0, 0]]:
                 mlp = MLPClassifier(activation=activation,
                                     hidden_layer_sizes=10,
-                                    algorithm='l-bfgs', alpha=1e-5,
+                                    solver='lbgfs', alpha=1e-5,
                                     learning_rate_init=0.2, max_iter=1,
                                     random_state=1, dropout=dropout)
                 mlp.fit(X, y)
@@ -567,6 +567,23 @@ def test_sparse_matrices():
     X_sparse = csr_matrix(X)
     mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=15,
                         random_state=1)
+    mlp.fit(X, y)
+    pred1 = mlp.predict(X)
+    mlp.fit(X_sparse, y)
+    pred2 = mlp.predict(X_sparse)
+    assert_almost_equal(pred1, pred2)
+    pred1 = mlp.predict(X)
+    pred2 = mlp.predict(X_sparse)
+    assert_array_equal(pred1, pred2)
+
+
+def test_sparse_matrices_with_dropout():
+    # Test that sparse and dense input matrices output the same results.
+    X = X_digits_binary[:50]
+    y = y_digits_binary[:50]
+    X_sparse = csr_matrix(X)
+    mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=15,
+                        random_state=1, dropout=[0.5, 0.5])
     mlp.fit(X, y)
     pred1 = mlp.predict(X)
     mlp.fit(X_sparse, y)
