@@ -7,6 +7,7 @@ from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
 from ..utils import safe_indexing
+from ..gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['if_delegate_has_method']
 

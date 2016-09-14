@@ -32,7 +32,6 @@ from ..utils.fixes import bincount
 from ..utils.fixes import signature
 from ..utils.random import choice
 from ..base import _pprint
-from ..gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['BaseCrossValidator',
            'KFold',
