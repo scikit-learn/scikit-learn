@@ -88,11 +88,16 @@ def _partial_fit_binary(estimator, X, y):
 
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
+    print('CALLING predict_binary')
+    print(estimator, X)
     if is_regressor(estimator):
+        print('is regressor')
         return estimator.predict(X)
     try:
+        print('try scoring')
         score = np.ravel(estimator.decision_function(X))
     except (AttributeError, NotImplementedError):
+        print('exception')
         # probabilities of the positive class
         score = estimator.predict_proba(X)[:, 1]
     return score
@@ -577,13 +582,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if indices is None:
             Xs = [X] * len(self.estimators_)
         else:
-            Xs = (X[:, idx] for idx in indices)
+            Xs = [X[:, idx] for idx in indices]
 
-        predictions = np.vstack([est.predict(X)          for est,X in zip(self.estimators_, Xs)]).T
-        print('predictions', predictions)
-        print('confidenc3es' )
-        print([_predict_binary(est, X) for est,X in zip(self.estimators_, Xs)])
-        confidences = np.vstack([_predict_binary(est, X) for est,X in zip(self.estimators_, Xs)]).T
+        predictions = np.vstack([est.predict(Xi) for est,Xi in zip(self.estimators_, Xs)]).T
+        confidences = np.vstack([_predict_binary(est, Xi) for est,Xi in zip(self.estimators_, Xs)]).T
         Y = _ovr_decision_function(predictions, confidences, len(self.classes_))
 
         return Y
