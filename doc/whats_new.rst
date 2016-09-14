@@ -1007,6 +1007,45 @@ API changes summary
       gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
       Use ``gamma="auto"`` instead.
 
+      People
+      ------
+
+      List of contributors for release 0.17, ordered alphabetically:
+      Aaron Schumacher, Adithya Ganesh, akitty, Alexandre Gramfort, Alexey Grigorev,
+      Ali Baharev, Allen Riddell, Ando Saabas, Andreas Mueller, Andrew Lamb,
+      Anish Shah, Ankur Ankan, Anthony Erlinger, Ari Rouvinen, Arnaud Joly,
+      Arnaud Rachez, Arthur Mensch, banilo, Barmaley.exe, benjaminirving,
+      Boyuan Deng, Brett Naul, Brian McFee, Buddha Prakash, Chi Zhang,
+      Chih-Wei Chang, Christof Angermueller, Christoph Gohlke, Christophe Bourguignat,
+      Christopher Erick Moody, Chyi-Kwei Yau, Cindy Sridharan, CJ Carey, Clyde-fare,
+      Cory Lorenz, Dan Blanchard, Daniel Galvez, Daniel Kronovet, Danny Sullivan,
+      Data1010, David, David D Lowe, David Dotson, djipey, Dmitry Spikhalskiy,
+      Donne Martin, Dougal J. Sutherland, Dougal Sutherland, edson duarte,
+      Eduardo Caro, Eric Larson, Eric Martin, Erich Schubert, Fernando Carrillo,
+      Frank C. Eckert, Frank Zalkow, Gael Varoquaux, Ganiev Ibraim, Gilles Louppe,
+      Giorgio Patrini, giorgiop, Graham Clenaghan, Gryllos Prokopis, gwulfs,
+      Henry Lin, Hsuan-Tien Lin, Immanuel Bayer, Ishank Gulati, Jack Martin,
+      Jacob Schreiber, Jaidev Deshpande, Jake VanderPlas, Jan Hendrik Metzen,
+      Jean Kossaifi, Jeffrey04, Jeremy, jfraj, Jiali Mei, jnothman, Joe Jevnik,
+      Joel Nothman, John Kirkham, John Wittenauer, Joseph, Joshua Loyal,
+      Jungkook Park, KamalakerDadi, Kashif Rasul, Keith Goodman, Kian Ho,
+      Konstantin Shmelkov, Kyler Brown, Lars Buitinck, Lilian Besson,
+      Loic Esteve, Louis Tiao, maheshakya, Maheshakya Wijewardena, Manoj Kumar,
+      MarkTab marktab.net, Martin Ku, Martin Spacek, MartinBpr, martinosorb,
+      MaryanMorel, Masafumi Oyamada, Mathieu Blondel, Matt Krump, Matti Lyra,
+      Maxim Kolganov, mbillinger, mhg, Michael Heilman, Michael Patterson,
+      Miroslav Batchkarov, Nelle Varoquaux, Nicolas, Nikolay Mayorov, Olivier Grisel,
+      Omer Katz, Óscar Nájera, Pauli Virtanen, Peter Fischer, Peter Prettenhofer,
+      Phil Roth, pianomania, Preston Parry, Raghav, Raghav R V, rasbt, Rob Zinkov,
+      Robert Layton, Rohan Ramanath, Saket Choudhary, Sam Zhang, santi,
+      saurabh.bansod, scls19fr, Sebastian Saeger, Shivan Sornarajah, SimonPL,
+      sinhrks, Skipper Seabold, Sonny Hu, sseg, Stephen Hoover, Steven De Gryze,
+      Steven Seguin, Theodore Vasiloudis, Thomas Unterthiner, Tiago Freitas Pereira,
+      Tian Wang, Tim Head, Timothy Hopper, tokoroten, Tom DLT, Tom Dupré la Tour,
+      TomDLT, trevorstephens, unknown, Valentin Stolbunov, Vighnesh Birodkar,
+      Vinayak Mehta, Vincent, Vincent Michel, vstolbunov, wangz10, Wei Xue,
+      Yucheng Low, Yury Zhauniarovich, Zac Stewart, zhai_pro, Zichen Wang
+
 .. _changes_0_1_16:
 
 Version 0.16.1
@@ -1508,6 +1547,43 @@ API changes summary
 
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
       `random_state` parameter is deprecated. By `Erich Schubert`_.
+
+      People
+      ------
+
+      List of contributors for release 0.16, ordered alphabetically.
+      A. Flaxman, Aaron Schumacher, Aaron Staple, abhishek thakur, Akshay,
+      akshayah3, Aldrian Obaja, Alexander Fabisch, Alexandre Gramfort, Alexis Mignon,
+      Anders Aagaard, Andreas Mueller, Andreas van Cranenburgh, Andrew Tulloch,
+      Andrew Walker, Antony Lee, Arnaud Joly, banilo, Barmaley.exe, Ben Davies,
+      Benedikt Koehler, bhsu, Boris Feld, Borja Ayerdi, Boyuan Deng, Brent Pedersen,
+      Brian Wignall, Brooke Osborn, Calvin Giles, Cathy Deng, Celeo, cgohlke,
+      chebee7i, Christian Stade-Schuldt, Christof Angermueller, Chyi-Kwei Yau,
+      CJ Carey, Clemens Brunner, Daiki Aminaka, Dan Blanchard, danfrankj,
+      Danny Sullivan, David Fletcher, Dmitrijs Milajevs, Dougal J. Sutherland,
+      Erich Schubert, Fabian Pedregosa, Florian Wilhelm, floydsoft,
+      Félix-Antoine Fortin, Gael Varoquaux, Garrett-R, Gilles Louppe, gpassino,
+      gwulfs, Hampus Bengtsson, Hamzeh Alsalhi, Hanna Wallach, Harry Mavroforakis,
+      Hasil Sharma, Helder, Herve Bredin, Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore,
+      Ilambharathi Kanniah, Imran Haque, isms, Jake VanderPlas, Jan Dlabal,
+      Jan Hendrik Metzen, Jatin Shah, Javier López Peña, jdcaballero, Jean Kossaifi,
+      Jeff Hammerbacher, Joel Nothman, Jonathan Helmus, Joseph, Kaicheng Zhang,
+      Kevin Markham, Kyle Beauchamp, Kyle Kastner, Lagacherie Matthieu, Lars Buitinck,
+      Laurent Direr, leepei, Loic Esteve, Luis Pedro Coelho, Lukas Michelbacher,
+      maheshakya, Manoj Kumar, Manuel, Mario Michael Krell, Martin, Martin Billinger,
+      Martin Ku, Mateusz Susik, Mathieu Blondel, Matt Pico, Matt Terry,
+      Matteo Visconti dOC, Matti Lyra, Max Linke, Mehdi Cherti, Michael Bommarito,
+      Michael Eickenberg, Michal Romaniuk, MLG, mr.Shu, Nelle Varoquaux,
+      Nicola Montecchio, Nicolas, Nikolay Mayorov, Noel Dawe, Okal Billy,
+      Olivier Grisel, Óscar Nájera, Paolo Puggioni, Peter Prettenhofer, Pratap Vardhan,
+      pvnguyen, queqichao, Rafael Carrascosa, Raghav R V, Rahiel Kasim, Randall Mason,
+      Rob Zinkov, Robert Bradshaw, Saket Choudhary, Sam Nicholls, Samuel Charron,
+      Saurabh Jha, sethdandridge, sinhrks, snuderl, Stefan Otte, Stefan van der Walt,
+      Steve Tjoa, swu, Sylvain Zimmer, tejesh95, terrycojones, Thomas Delteil,
+      Thomas Unterthiner, Tomas Kazmar, trevorstephens, tttthomasssss, Tzu-Ming Kuo,
+      ugurcaliskan, ugurthemaster, Vinayak Mehta, Vincent Dubourg, Vjacheslav Murashkin,
+      Vlad Niculae, wadawson, Wei Xue, Will Lamond, Wu Jiang, x0l, Xinfan Meng,
+      Yan Yi, Yu-Chin
 
 .. _changes_0_15_2:
 
