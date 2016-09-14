@@ -187,6 +187,10 @@ def test_contingency_matrix_sparse():
     C = contingency_matrix(labels_a, labels_b)
     C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
     assert_array_almost_equal(C, C_sparse)
+    C_sparse = assert_raise_message(ValueError,
+                                    "Cannot set 'eps' when sparse=True",
+                                    contingency_matrix, labels_a, labels_b,
+                                    eps=1e-10, sparse=True)
 
 
 def test_exactly_zero_info_score():

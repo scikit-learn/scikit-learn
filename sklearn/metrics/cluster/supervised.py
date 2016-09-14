@@ -70,6 +70,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
         If True, return a sparse CSR continency matrix. If ``eps is not None``,
         and ``sparse is True``, will throw ValueError.
 
+        .. versionadded:: 0.18
+
     Returns
     -------
     contingency: {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
@@ -80,7 +82,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
     """
 
     if eps is not None and sparse:
-        raise ValueError("Cannot set 'eps' and return a sparse matrix")
+        raise ValueError("Cannot set 'eps' when sparse=True")
 
     classes, class_idx = np.unique(labels_true, return_inverse=True)
     clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
