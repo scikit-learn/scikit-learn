@@ -260,9 +260,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(
             _partial_fit_binary)(self.estimators_[i],
-            X, next(columns) if self.classes_[i] in
-            self.label_binarizer_.classes_ else
-            np.zeros((1, len(y))))
+                                 X, next(columns) if self.classes_[i] in
+                                 self.label_binarizer_.classes_ else
+                                 np.zeros((1, len(y))))
             for i in range(self.n_classes_))
 
         return self
@@ -408,7 +408,10 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y_binary[y == i] = 0
     y_binary[y == j] = 1
     indcond = np.arange(X.shape[0])[cond]
-    return _fit_binary(estimator, _safe_split(estimator, X, None, indices=indcond)[0], y_binary, classes=[i, j]) , indcond
+    return _fit_binary(estimator,
+                       _safe_split(estimator, X, None, indices=indcond)[0],
+                       y_binary, classes=[i, j]), indcond
+
 
 def _partial_fit_ovo_binary(estimator, X, y, i, j):
     """Partially fit a single binary estimator(one-vs-one)."""
@@ -480,11 +483,12 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
-        estimators_indices = Parallel(n_jobs=self.n_jobs)(delayed(_fit_ovo_binary)(self.estimator, X, y,
-                                                                                   self.classes_[i], self.classes_[j])
-                                                          for i in range(n_classes) for j in range(i + 1, n_classes))
+        estimators_indices = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_ovo_binary)
+            (self.estimator, X, y, self.classes_[i], self.classes_[j])
+            for i in range(n_classes) for j in range(i + 1, n_classes))
 
-        self.estimators_ , self.pairwise_indices_ =  zip(*estimators_indices)
+        self.estimators_, self.pairwise_indices_ = zip(*estimators_indices)
 
         if not self._pairwise:
             self.pairwise_indices_ = None
@@ -521,16 +525,19 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         if _check_partial_fit_first_call(self, classes):
             self.estimators_ = [clone(self.estimator) for i in
                                 range(self.n_classes_ *
-                                (self.n_classes_-1) // 2)]
+                                      (self.n_classes_ - 1) // 2)]
 
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_ovo_binary)(
-                estimator, X, y, self.classes_[i], self.classes_[j])
-            for estimator, (i, j) in izip(self.estimators_, ((i, j) for i
-                                in range(self.n_classes_) for j in range
-                                            (i + 1, self.n_classes_))))
+        self.estimators_ = Parallel(
+            n_jobs=self.n_jobs)(
+                delayed(_partial_fit_ovo_binary)(
+                    estimator, X, y, self.classes_[i], self.classes_[j])
+                for estimator, (i, j) in izip(
+                        self.estimators_, ((i, j)
+                                           for i in range(self.n_classes_)
+                                           for j in range(i + 1,
+                                                          self.n_classes_))))
         return self
 
     def predict(self, X):
@@ -578,9 +585,12 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         else:
             Xs = [X[:, idx] for idx in indices]
 
-        predictions = np.vstack([est.predict(Xi) for est,Xi in zip(self.estimators_, Xs)]).T
-        confidences = np.vstack([_predict_binary(est, Xi) for est,Xi in zip(self.estimators_, Xs)]).T
-        Y = _ovr_decision_function(predictions, confidences, len(self.classes_))
+        predictions = np.vstack([est.predict(Xi)
+                                 for est, Xi in zip(self.estimators_, Xs)]).T
+        confidences = np.vstack([_predict_binary(est, Xi)
+                                 for est, Xi in zip(self.estimators_, Xs)]).T
+        Y = _ovr_decision_function(predictions,
+                                   confidences, len(self.classes_))
 
         return Y
 
