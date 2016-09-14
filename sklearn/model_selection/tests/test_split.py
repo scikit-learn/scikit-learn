@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils.metaestimators import _safe_split
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
@@ -45,7 +46,6 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.linear_model import Ridge
 
-from sklearn.model_selection._split import _safe_split
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
