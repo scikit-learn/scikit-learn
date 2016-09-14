@@ -266,7 +266,7 @@ def test_check_classification_targets():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
             for example in EXAMPLES[y_type]:
                 msg = 'Unknown label type: '
-                assert_raises_regex(ValueError, msg, 
+                assert_raises_regex(ValueError, msg,
                     check_classification_targets, example)
         else:
             for example in EXAMPLES[y_type]:
@@ -345,3 +345,21 @@ def test_class_distribution():
         assert_array_almost_equal(classes_sp[k], classes_expected[k])
         assert_array_almost_equal(n_classes_sp[k], n_classes_expected[k])
         assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
+
+def test_safe_split_with_precomputed_kernel():
+    clf = SVC()
+    clfp = SVC(kernel="precomputed")
+
+    X, y = iris.data, iris.target
+    K = np.dot(X, X.T)
+
+    cv = ShuffleSplit(test_size=0.25, random_state=0)
+    tr, te = list(cv.split(X))[0]
+
+    X_tr, y_tr = _safe_split(clf, X, y, tr)
+    K_tr, y_tr2 = _safe_split(clfp, K, y, tr)
+    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
+
+    X_te, y_te = _safe_split(clf, X, y, te, tr)
+    K_te, y_te2 = _safe_split(clfp, K, y, te, tr)
+    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))

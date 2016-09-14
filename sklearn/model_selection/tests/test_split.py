@@ -846,25 +846,6 @@ def test_shufflesplit_reproducible():
                        list(a for a, b in ss.split(X)))
 
 
-def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
-    clfp = SVC(kernel="precomputed")
-
-    X, y = iris.data, iris.target
-    K = np.dot(X, X.T)
-
-    cv = ShuffleSplit(test_size=0.25, random_state=0)
-    tr, te = list(cv.split(X))[0]
-
-    X_tr, y_tr = _safe_split(clf, X, y, tr)
-    K_tr, y_tr2 = _safe_split(clfp, K, y, tr)
-    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
-
-    X_te, y_te = _safe_split(clf, X, y, te, tr)
-    K_te, y_te2 = _safe_split(clfp, K, y, te, tr)
-    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
-
-
 def test_train_test_split_allow_nans():
     # Check that train_test_split allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
