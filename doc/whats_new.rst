@@ -334,6 +334,11 @@ Enhancements
      (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>`_)
      By `Andreas Müller`_.
 
+   - Support sparse contingency matrices in cluster evaluation
+     (:mod:`metrics.cluster.supervised`) and use these by default.
+     (`#7419 <https://github.com/scikit-learn/scikit-learn/pull/7419>_`)
+     By `Gregory Stupp`_ and `Joel Nothman`_.
+
 Bug fixes
 .........
 
@@ -4548,3 +4553,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Sebastián Vanrell: https://github.com/srvanrell
 
 .. _Robert McGibbon: https://github.com/rmcgibbo
+
+.. _Gregory Stupp: https://github.com/stuppie
