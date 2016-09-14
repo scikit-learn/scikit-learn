@@ -88,16 +88,11 @@ def _partial_fit_binary(estimator, X, y):
 
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
-    print('CALLING predict_binary')
-    print(estimator, X)
     if is_regressor(estimator):
-        print('is regressor')
         return estimator.predict(X)
     try:
-        print('try scoring')
         score = np.ravel(estimator.decision_function(X))
     except (AttributeError, NotImplementedError):
-        print('exception')
         # probabilities of the positive class
         score = estimator.predict_proba(X)[:, 1]
     return score
@@ -577,7 +572,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         check_is_fitted(self, 'estimators_')
 
-        print('X' , X)
         indices = self.pairwise_indices_
         if indices is None:
             Xs = [X] * len(self.estimators_)
