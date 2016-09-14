@@ -13,11 +13,12 @@ better.
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
+
 from math import log
 
 import numpy as np
 from scipy.misc import comb
-from scipy.sparse import coo_matrix
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
@@ -575,8 +576,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     labels_pred : array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    contingency: {None, array, sparse matrix},
-                shape = [n_classes_true, n_classes_pred]
+    contingency : {None, array, sparse matrix},
+                  shape = [n_classes_true, n_classes_pred]
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
@@ -601,39 +602,26 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     if isinstance(contingency, np.ndarray):
         # For an array
-        contingency = np.array(contingency, dtype='float')
-        contingency_sum = np.sum(contingency)
-        pi = np.sum(contingency, axis=1)
-        pj = np.sum(contingency, axis=0)
-        outer = np.outer(pi, pj)
-        nz = contingency != 0.0
-        # normalized contingency
-        contingency_nm = contingency[nz]
-        log_contingency_nm = np.log(contingency_nm)
-        contingency_nm /= contingency_sum
-        # log(a / b) should be calculated as log(a) - log(b) for
-        # possible loss of precision
-        log_outer = -np.log(outer[nz]) + log(pi.sum()) + log(pj.sum())
-        mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
-              contingency_nm * log_outer)
-        return mi.sum()
+        nzx, nzy = np.nonzero(contingency)
+        nz_val = contingency[nzx, nzy]
     elif sp.issparse(contingency):
         # For a sparse matrix
-        contingency_sum = contingency.sum()
-        pi = np.array(contingency.sum(axis=1))
-        pj = np.array(contingency.sum(axis=0)).T
         nzx, nzy, nz_val = sp.find(contingency)
-        log_contingency_nm = np.log(nz_val)
-        contingency_nm = nz_val * 1.0 / contingency_sum
-        # Don't need to calculate the full outer product, just for non-zeroes
-        outer = pi.take(nzx) * pj.take(nzy)
-        log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
-        mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
-              contingency_nm * log_outer)
-        return mi.sum()
     else:
-        raise ValueError(
-            "Unsupported type for 'contingency': " + str(type(contingency)))
+        raise ValueError("Unsupported type for 'contingency': %s" %
+                         type(contingency))
+
+    contingency_sum = contingency.sum()
+    pi = np.ravel(contingency.sum(axis=1))
+    pj = np.ravel(contingency.sum(axis=0))
+    log_contingency_nm = np.log(nz_val)
+    contingency_nm = nz_val / contingency_sum
+    # Don't need to calculate the full outer product, just for non-zeroes
+    outer = pi.take(nzx) * pj.take(nzy)
+    log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
+    mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
+          contingency_nm * log_outer)
+    return mi.sum()
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred):

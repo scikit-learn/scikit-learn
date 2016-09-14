@@ -139,9 +139,16 @@ def test_adjusted_mutual_info_score():
     # Mutual information
     mi = mutual_info_score(labels_a, labels_b)
     assert_almost_equal(mi, 0.41022, 5)
-    # Expected mutual information
+    # with provided sparse contingency
+    C = contingency_matrix(labels_a, labels_b, sparse=True)
+    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    assert_almost_equal(mi, 0.41022, 5)
+    # with provided dense contingency
     C = contingency_matrix(labels_a, labels_b)
-    n_samples = np.sum(C)
+    mi = mutual_info_score(labels_a, labels_b, contingency=C)
+    assert_almost_equal(mi, 0.41022, 5)
+    # Expected mutual information
+    n_samples = C.sum()
     emi = expected_mutual_information(C, n_samples)
     assert_almost_equal(emi, 0.15042, 5)
     # Adjusted mutual information
