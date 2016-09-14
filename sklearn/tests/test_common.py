@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import named_check
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -33,8 +34,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance,
-    _set_test_name)
+    check_get_params_invariance)
 
 
 def test_all_estimator_no_base_class():
@@ -56,7 +56,7 @@ def test_all_estimators():
 
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
-        yield (_set_test_name(check_parameters_default_constructible, name),
+        yield (named_check(check_parameters_default_constructible, name),
                name, Estimator)
 
 
@@ -72,9 +72,9 @@ def test_non_meta_estimators():
             if issubclass(Estimator, ProjectedGradientNMF):
                 # The ProjectedGradientNMF class is deprecated
                 with ignore_warnings():
-                    yield _set_test_name(check, name), name, Estimator
+                    yield named_check(check, name), name, Estimator
             else:
-                yield _set_test_name(check, name), name, Estimator
+                yield named_check(check, name), name, Estimator
 
 
 def test_configure():
@@ -116,7 +116,7 @@ def test_class_weight_balanced_linear_classifiers():
                 issubclass(clazz, LinearClassifierMixin))]
 
     for name, Classifier in linear_classifiers:
-        yield _set_test_name(check_class_weight_balanced_linear_classifier,
+        yield named_check(check_class_weight_balanced_linear_classifier,
                              name), name, Classifier
 
 
@@ -199,7 +199,7 @@ def test_non_transformer_estimators_n_iter():
                 else:
                     # Multitask models related to ENet cannot handle
                     # if y is mono-output.
-                    yield (_set_test_name(
+                    yield (named_check(
                         check_non_transformer_estimators_n_iter, name),
                         name, estimator, 'Multi' in name)
 
@@ -222,10 +222,10 @@ def test_transformer_n_iter():
             if isinstance(estimator, ProjectedGradientNMF):
                 # The ProjectedGradientNMF class is deprecated
                 with ignore_warnings():
-                    yield _set_test_name(
+                    yield named_check(
                         check_transformer_n_iter, name), name, estimator
             else:
-                yield _set_test_name(
+                yield named_check(
                     check_transformer_n_iter, name), name, estimator
 
 
@@ -241,8 +241,8 @@ def test_get_params_invariance():
             # If class is deprecated, ignore deprecated warnings
             if hasattr(Estimator.__init__, "deprecated_original"):
                 with ignore_warnings():
-                    yield _set_test_name(
+                    yield named_check(
                         check_get_params_invariance, name), name, Estimator
             else:
-                yield _set_test_name(
+                yield named_check(
                     check_get_params_invariance, name), name, Estimator
