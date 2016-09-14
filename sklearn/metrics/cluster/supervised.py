@@ -849,7 +849,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
            <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred, )
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples, = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred, sparse=True)
