@@ -11,6 +11,7 @@ This module defines export functions for decision trees.
 # License: BSD 3 clause
 
 import numpy as np
+import warnings
 
 from ..externals import six
 
@@ -60,7 +61,7 @@ def _color_brew(n):
     return color_list
 
 
-def export_graphviz(decision_tree, out_file=None, max_depth=None,
+def export_graphviz(decision_tree, out_file='tree.dot', max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
@@ -371,6 +372,10 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
     own_file = False
     return_string = False
     try:
+        if out_file == 'tree.dot':
+            warnings.warn("out_file can be set to None from 0.18, "
+                          "this will be the default in 0.20.", DeprecationWarning)
+
         if isinstance(out_file, six.string_types):
             if six.PY3:
                 out_file = open(out_file, "w", encoding="utf-8")

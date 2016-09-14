@@ -200,7 +200,7 @@ def test_graphviz_toy():
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X, y_degraded)
 
-    contents1 = export_graphviz(clf, filled=True)
+    contents1 = export_graphviz(clf, filled=True, out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", ' \
