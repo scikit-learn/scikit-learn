@@ -204,9 +204,8 @@ def adjusted_rand_score(labels_true, labels_pred):
             n_classes == n_clusters == n_samples):
         return 1.0
 
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-
     # Compute the ARI using the contingency data
+    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
     sum_comb_c = sum(comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
