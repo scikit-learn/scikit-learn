@@ -11,6 +11,7 @@ import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 import traceback
+import subprocess
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
