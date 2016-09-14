@@ -32,7 +32,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+        Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -85,7 +85,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
           'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
-        metrics.
+        metrics:
+        http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -98,7 +99,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`k_neighbors` and :meth:`kneighbors_graph` methods.
+        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
 
     Attributes
