@@ -10,6 +10,7 @@ better.
 #          Arnaud Fouchet <foucheta@gmail.com>
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 #          Gregory Stupp <stuppie@gmail.com>
+#          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
 from math import log
