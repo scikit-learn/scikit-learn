@@ -407,8 +407,8 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y_binary = np.empty(y.shape, np.int)
     y_binary[y == i] = 0
     y_binary[y == j] = 1
-    ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, _safe_split(estimator, X, None, indices=ind[cond])[0], y_binary, classes=[i, j])
+    indcond = np.arange(X.shape[0])[cond]
+    return _fit_binary(estimator, _safe_split(estimator, X, None, indices=indcond)[0], y_binary, classes=[i, j]) , indcond
 
 def _partial_fit_ovo_binary(estimator, X, y, i, j):
     """Partially fit a single binary estimator(one-vs-one)."""
@@ -459,6 +459,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.pairwise_indices_ = None
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -479,10 +480,14 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_ovo_binary)(
-                self.estimator, X, y, self.classes_[i], self.classes_[j])
-            for i in range(n_classes) for j in range(i + 1, n_classes))
+        estimators_indices = Parallel(n_jobs=self.n_jobs)(delayed(_fit_ovo_binary)(self.estimator, X, y,
+                                                                                   self.classes_[i], self.classes_[j])
+                                                          for i in range(n_classes) for j in range(i + 1, n_classes))
+
+        self.estimators_ , self.pairwise_indices_ =  zip(*estimators_indices)
+
+        if not self._pairwise:
+            self.pairwise_indices_ = None
 
         return self
 
@@ -545,6 +550,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
+
         Y = self.decision_function(X)
         return self.classes_[Y.argmax(axis=1)]
 
@@ -566,10 +572,21 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         check_is_fitted(self, 'estimators_')
 
-        predictions = np.vstack([est.predict(X) for est in self.estimators_]).T
-        confidences = np.vstack([_predict_binary(est, X) for est in self.estimators_]).T
-        return _ovr_decision_function(predictions, confidences,
-                                      len(self.classes_))
+        print('X' , X)
+        indices = self.pairwise_indices_
+        if indices is None:
+            Xs = [X] * len(self.estimators_)
+        else:
+            Xs = (X[:, idx] for idx in indices)
+
+        predictions = np.vstack([est.predict(X)          for est,X in zip(self.estimators_, Xs)]).T
+        print('predictions', predictions)
+        print('confidenc3es' )
+        print([_predict_binary(est, X) for est,X in zip(self.estimators_, Xs)])
+        confidences = np.vstack([_predict_binary(est, X) for est,X in zip(self.estimators_, Xs)]).T
+        Y = _ovr_decision_function(predictions, confidences, len(self.classes_))
+
+        return Y
 
     @property
     def n_classes_(self):
