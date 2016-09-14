@@ -210,9 +210,9 @@ def adjusted_rand_score(labels_true, labels_pred):
     sum_comb_k = sum(comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
     sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
 
-    prod_comb = (sum_comb_c * sum_comb_k) / float(comb(n_samples, 2))
+    prod_comb = (sum_comb_c * sum_comb_k) / comb(n_samples, 2)
     mean_comb = (sum_comb_k + sum_comb_c) / 2.
-    return float((sum_comb - prod_comb) / (mean_comb - prod_comb))
+    return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
 def homogeneity_completeness_v_measure(labels_true, labels_pred):
