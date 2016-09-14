@@ -16,11 +16,12 @@ from math import log
 
 import numpy as np
 from scipy.misc import comb
-from scipy.sparse import coo_matrix, find
-from scipy.sparse.data import _data_matrix
+from scipy.sparse import coo_matrix
+from scipy import sparse
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.fixes import bincount
+from ...utils.validation import check_array
 
 
 def comb2(n):
@@ -72,7 +73,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000,
         `max_n_classes` is ignored.
 
     sparse: boolean, optional.
-        If True, return a sparse continency matrix. If ``eps is not None``,
+        If True, return a sparse CSR continency matrix. If ``eps is not None``,
         and ``sparse is True``, will throw ValueError.
 
     Returns
@@ -106,18 +107,21 @@ def contingency_matrix(labels_true, labels_pred, eps=None, max_n_classes=5000,
                               (class_idx, cluster_idx)),
                              shape=(n_classes, n_clusters),
                              dtype=np.int)
-    if not sparse:
+    if sparse:
+        contingency = contingency.tocsr()
+        contingency.sum_duplicates()
+    else:
         contingency = contingency.toarray()
-    if eps is not None:
-        # don't use += as contingency is integer
-        contingency = contingency + eps
+        if eps is not None:
+            # don't use += as contingency is integer
+            contingency = contingency + eps
     return contingency
 
 
 # clustering measures
 
 def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000,
-                        contingency=None):
+                        sparse=False):
     """Rand index adjusted for chance.
 
     The Rand Index computes a similarity measure between two clusterings
@@ -153,11 +157,6 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000,
         Maximal number of classes handled by the adjusted_rand_score
         metric. Setting it too high can lead to MemoryError or OS
         freeze
-
-    contingency: {None, sparse matrix}, shape = [n_classes_true, n_classes_pred]
-        A contingency matrix given by the :func:`contingency_matrix` function.
-        If value is ``None``, it will be computed, otherwise the given value is
-        used, with ``labels_true`` and ``labels_pred`` ignored.
 
     Returns
     -------
@@ -208,16 +207,10 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000,
     adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
-    if contingency is None:
-        labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-        n_samples = labels_true.shape[0]
-        n_classes = np.unique(labels_true).shape[0]
-        n_clusters = np.unique(labels_pred).shape[0]
-    elif isinstance(contingency, _data_matrix):
-        n_samples = contingency.nnz
-        n_classes, n_clusters = contingency.shape
-    else:
-        raise ValueError("'contingency' must be a sparse matrix or None")
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+    n_samples = labels_true.shape[0]
+    n_classes = np.unique(labels_true).shape[0]
+    n_clusters = np.unique(labels_pred).shape[0]
 
     # Special limit cases: no clustering since the data is not split;
     # or trivial clustering where each document is assigned a unique cluster.
@@ -227,10 +220,9 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000,
                     n_classes == n_clusters == n_samples):
         return 1.0
 
-    # Compute contingency matrix if we weren't given it
-    if contingency is None:
-        contingency = contingency_matrix(labels_true, labels_pred,
-                                         max_n_classes=max_n_classes)
+    contingency = contingency_matrix(labels_true, labels_pred,
+                                     max_n_classes=max_n_classes,
+                                     sparse=sparse)
 
     # Compute the ARI using the contingency data
     if isinstance(contingency, np.ndarray):
@@ -238,13 +230,13 @@ def adjusted_rand_score(labels_true, labels_pred, max_n_classes=5000,
         sum_comb_c = sum(comb2(n_c) for n_c in contingency.sum(axis=1))
         sum_comb_k = sum(comb2(n_k) for n_k in contingency.sum(axis=0))
         sum_comb = sum(comb2(n_ij) for n_ij in contingency.flatten())
-    elif isinstance(contingency, _data_matrix):
+    elif sparse.issparse(contingency):
         # For a sparse matrix
-        sum_comb_c = sum(
-            comb2(n_c) for n_c in np.array(contingency.sum(axis=1)))
-        sum_comb_k = sum(
-            comb2(n_k) for n_k in np.array(contingency.sum(axis=0)).T)
-        sum_comb = sum(comb2(n_ij) for n_ij in find(contingency)[2])
+        sum_comb_c = sum(comb2(n_c)
+                         for n_c in np.ravel(contingency.sum(axis=1)))
+        sum_comb_k = sum(comb2(n_k)
+                         for n_k in np.ravel(contingency.sum(axis=0)))
+        sum_comb = sum(comb2(n_ij) for n_ij in contingency.data)
     else:
         raise ValueError(
             "Unsupported type for 'contingency': " + str(type(contingency)))
@@ -423,9 +415,9 @@ def homogeneity_score(labels_true, labels_pred, max_n_classes=5000,
       0.0...
 
     """
-    return \
-    homogeneity_completeness_v_measure(labels_true, labels_pred, sparse=sparse,
-                                       max_n_classes=max_n_classes)[0]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              sparse=sparse,
+                                              max_n_classes=max_n_classes)[0]
 
 
 def completeness_score(labels_true, labels_pred, max_n_classes=5000,
@@ -505,9 +497,9 @@ def completeness_score(labels_true, labels_pred, max_n_classes=5000,
       0.0
 
     """
-    return \
-    homogeneity_completeness_v_measure(labels_true, labels_pred, sparse=sparse,
-                                       max_n_classes=max_n_classes)[1]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              sparse=sparse,
+                                              max_n_classes=max_n_classes)[1]
 
 
 def v_measure_score(labels_true, labels_pred, max_n_classes=5000, sparse=False):
@@ -677,6 +669,11 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
         contingency = contingency_matrix(labels_true, labels_pred,
                                          max_n_classes=max_n_classes)
+    else:
+        contingency = check_array(contingency,
+                                  accept_sparse=['csr', 'csc', 'coo'],
+                                  dtype=[int, np.int32, np.int64])
+
     if isinstance(contingency, np.ndarray):
         # For an array
         contingency = np.array(contingency, dtype='float')
@@ -684,37 +681,38 @@ def mutual_info_score(labels_true, labels_pred, contingency=None,
         pi = np.sum(contingency, axis=1)
         pj = np.sum(contingency, axis=0)
         outer = np.outer(pi, pj)
-        nnz = contingency != 0.0
+        nz = contingency != 0.0
         # normalized contingency
-        contingency_nm = contingency[nnz]
+        contingency_nm = contingency[nz]
         log_contingency_nm = np.log(contingency_nm)
         contingency_nm /= contingency_sum
         # log(a / b) should be calculated as log(a) - log(b) for
         # possible loss of precision
-        log_outer = -np.log(outer[nnz]) + log(pi.sum()) + log(pj.sum())
+        log_outer = -np.log(outer[nz]) + log(pi.sum()) + log(pj.sum())
         mi = (contingency_nm * (log_contingency_nm - log(contingency_sum))
               + contingency_nm * log_outer)
         return mi.sum()
-    elif isinstance(contingency, _data_matrix):
+    elif sparse.issparse(contingency):
         # For a sparse matrix
         contingency_sum = contingency.sum()
         pi = np.array(contingency.sum(axis=1))
         pj = np.array(contingency.sum(axis=0)).T
-        nnzx, nnzy, nnz_val = find(contingency)
-        log_contingency_nm = np.log(nnz_val)
-        contingency_nm = nnz_val * 1.0 / contingency_sum
-        # Don't need to calculate the full outer product. Just for the non-zero values
-        outer = np.array([pi[x] * pj[y] for x, y in zip(nnzx, nnzy)]).T
+        nzx, nzy, nz_val = sparse.find(contingency)
+        log_contingency_nm = np.log(nz_val)
+        contingency_nm = nz_val * 1.0 / contingency_sum
+        # Don't need to calculate the full outer product, just for non-zeroes
+        outer = pi.take(nzx) * pj.take(nzy)
         log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
-        mi = contingency_nm * (log_contingency_nm - log(contingency_sum)) + \
-             contingency_nm * log_outer
+        mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
+              contingency_nm * log_outer)
         return mi.sum()
     else:
         raise ValueError(
             "Unsupported type for 'contingency': " + str(type(contingency)))
 
 
-def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
+def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000,
+                               sparse=False):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -803,8 +801,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
                 classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred,
-                                     max_n_classes=max_n_classes)
-    contingency = np.array(contingency, dtype='float')
+                                     max_n_classes=max_n_classes,
+                                     sparse=sparse)
+    contingency = contingency.astype(float)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
                            contingency=contingency)
@@ -816,7 +815,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
     return ami
 
 
-def normalized_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
+def normalized_mutual_info_score(labels_true, labels_pred, sparse=False,
+                                 max_n_classes=5000):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is an normalization of the Mutual
@@ -890,8 +890,9 @@ def normalized_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
                     classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred,
-                                     max_n_classes=max_n_classes)
-    contingency = np.array(contingency, dtype='float')
+                                     max_n_classes=max_n_classes,
+                                     sparse=sparse)
+    contingency = contingency.astype(float)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
                            contingency=contingency)
@@ -902,7 +903,8 @@ def normalized_mutual_info_score(labels_true, labels_pred, max_n_classes=5000):
     return nmi
 
 
-def fowlkes_mallows_score(labels_true, labels_pred, max_n_classes=5000):
+def fowlkes_mallows_score(labels_true, labels_pred, sparse=False,
+                          max_n_classes=5000):
     """Measure the similarity of two clusterings of a set of points.
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean between of
@@ -973,10 +975,16 @@ def fowlkes_mallows_score(labels_true, labels_pred, max_n_classes=5000):
     n_samples, = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred,
-                           max_n_classes=max_n_classes)
-    tk = np.dot(c.ravel(), c.ravel()) - n_samples
-    pk = np.sum(np.sum(c, axis=0) ** 2) - n_samples
-    qk = np.sum(np.sum(c, axis=1) ** 2) - n_samples
+                           max_n_classes=max_n_classes,
+                           sparse=sparse)
+    if sparse:
+        tk = np.dot(c.data, c.data) - n_samples
+        pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
+        qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
+    else:
+        tk = np.dot(c.ravel(), c.ravel()) - n_samples
+        pk = np.sum(np.sum(c, axis=0) ** 2) - n_samples
+        qk = np.sum(np.sum(c, axis=1) ** 2) - n_samples
 
     return tk / np.sqrt(pk * qk) if tk != 0. else 0.
 

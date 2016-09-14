@@ -208,11 +208,15 @@ def test_contingency_matrix_sparse():
     assert_array_almost_equal(C, C_sparse)
 
 
-def test_adjusted_rand_score_sparse():
+def test_sparse_scores():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
-    C_sparse = contingency_matrix(labels_a, labels_b, sparse=True)
-    assert_almost_equal(adjusted_rand_score(labels_a, labels_b), adjusted_rand_score(None, None, contingency=C_sparse))
+    for metric in [adjusted_rand_score, adjusted_mutual_info_score,
+                   normalized_mutual_info_score,
+                   homogeneity_completeness_v_measure,
+                   fowlkes_mallows_score]:
+        assert_array_almost_equal(metric(labels_a, labels_b),
+                                  metric(labels_a, labels_b, sparse=True))
 
 
 def test_exactly_zero_info_score():
