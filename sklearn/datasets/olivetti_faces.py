@@ -43,7 +43,7 @@ from ..utils import check_random_state
 from ..externals import joblib
 
 
-DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
+DATA_URL = "https://ndownloader.figshare.com/files/5976027"
 TARGET_FILENAME = "olivetti.pkz"
 
 # Grab the module-level docstring to use as a description of the
