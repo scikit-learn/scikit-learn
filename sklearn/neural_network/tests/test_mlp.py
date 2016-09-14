@@ -561,24 +561,28 @@ def test_predict_proba_multilabel():
 
 
 def test_sparse_matrices():
-    # Test that sparse and dense input matrices output the same results.
+    # Test that sparse and dense input matrices output the same results when
+    # there's no dropout
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
     mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=15,
                         random_state=1)
     mlp.fit(X, y)
-    pred1 = mlp.predict(X)
+    pred1 = mlp.predict_proba(X)
     mlp.fit(X_sparse, y)
-    pred2 = mlp.predict(X_sparse)
+    pred2 = mlp.predict_proba(X_sparse)
     assert_almost_equal(pred1, pred2)
-    pred1 = mlp.predict(X)
-    pred2 = mlp.predict(X_sparse)
-    assert_array_equal(pred1, pred2)
+    pred1 = mlp.predict_proba(X)
+    pred2 = mlp.predict_proba(X_sparse)
+    assert_almost_equal(pred1, pred2)
 
 
 def test_sparse_matrices_with_dropout():
-    # Test that sparse and dense input matrices output the same results.
+    # With dropout, as the way we sample dropout masks is different when having
+    # sparse input, random factors differ as training goes, and the trained
+    # model is expected to be different. So we only check if predicitions are
+    # equal for the same trained model
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
@@ -586,13 +590,13 @@ def test_sparse_matrices_with_dropout():
         mlp = MLPClassifier(solver=solver, hidden_layer_sizes=15,
                             random_state=1, dropout=[0.5, 0.5])
         mlp.fit(X, y)
-        pred1 = mlp.predict(X)
-        mlp.fit(X_sparse, y)
-        pred2 = mlp.predict(X_sparse)
+        pred1 = mlp.predict_proba(X)
+        pred2 = mlp.predict_proba(X_sparse)
         assert_almost_equal(pred1, pred2)
-        pred1 = mlp.predict(X)
-        pred2 = mlp.predict(X_sparse)
-        assert_array_equal(pred1, pred2)
+        mlp.fit(X_sparse, y)
+        pred1 = mlp.predict_proba(X)
+        pred2 = mlp.predict_proba(X_sparse)
+        assert_almost_equal(pred1, pred2)
 
 
 def test_tolerance():

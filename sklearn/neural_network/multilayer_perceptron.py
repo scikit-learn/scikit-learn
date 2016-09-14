@@ -10,7 +10,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.sparse import issparse
+from scipy.sparse import issparse, coo_matrix
 import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -46,6 +46,22 @@ def _safe_sparse_elementwise_multiply(a, b):
         return b.multiply(a)
     else:
         return a * b
+
+
+def _efficient_dropout_mask_sample(X, retain_prob, random_state):
+    """Efficient way of sampling dropout mask, given X could be sparse matrix
+
+    If X is sparse matrix, we should sample only as many times as number of
+    non-zero values in X.
+    """
+    if issparse(X):
+        sampled_values = random_state.binomial(
+            1, retain_prob, X.nnz) / retain_prob
+        X_coo = X.tocoo()
+        return coo_matrix((sampled_values, (X_coo.row, X_coo.col)),
+                          shape=X.shape)
+    else:
+        return random_state.binomial(1, retain_prob, X.shape) / retain_prob
 
 
 class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -120,8 +136,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         for i in range(self.n_layers_ - 1):
             if is_training and self.dropout and self.dropout[i] > 0:
                 retain_prob = 1 - self.dropout[i]
-                dropout_masks[i] = self._random_state.binomial(
-                    1, retain_prob, activations[i].shape) / retain_prob
+                dropout_masks[i] = _efficient_dropout_mask_sample(
+                    activations[i], retain_prob, self._random_state)
                 dropout_input = _safe_sparse_elementwise_multiply(
                     activations[i], dropout_masks[i])
                 activations[i + 1] = safe_sparse_dot(dropout_input,
