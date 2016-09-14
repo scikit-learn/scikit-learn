@@ -610,8 +610,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         # log(a / b) should be calculated as log(a) - log(b) for
         # possible loss of precision
         log_outer = -np.log(outer[nz]) + log(pi.sum()) + log(pj.sum())
-        mi = (contingency_nm * (log_contingency_nm - log(contingency_sum))
-              + contingency_nm * log_outer)
+        mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
+              contingency_nm * log_outer)
         return mi.sum()
     elif sparse.issparse(contingency):
         # For a sparse matrix
