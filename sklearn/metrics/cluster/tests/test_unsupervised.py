@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.metrics.cluster import silhouette_score
+from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics import pairwise_distances
 
@@ -32,6 +33,26 @@ def test_silhouette():
         # Test without calculating D
         score_euclidean = silhouette_score(X, y, metric='euclidean')
         assert_almost_equal(score_precomputed, score_euclidean)
+
+        # test block_size
+        score_batched = silhouette_score(X, y, block_size=10,
+                                         metric='euclidean')
+        assert_almost_equal(score_batched, score_euclidean)
+        score_batched = silhouette_score(D, y, block_size=10,
+                                         metric='precomputed')
+        assert_almost_equal(score_batched, score_euclidean)
+        # absurdly large block_size
+        score_batched = silhouette_score(D, y, block_size=10000,
+                                         metric='precomputed')
+        assert_almost_equal(score_batched, score_euclidean)
+
+        # smoke test n_jobs with and without explicit block_size
+        score_parallel = silhouette_score(X, y,
+                                          n_jobs=2, metric='euclidean')
+        assert_almost_equal(score_parallel, score_euclidean)
+        score_parallel = silhouette_score(X, y, block_size=10,
+                                          n_jobs=2, metric='euclidean')
+        assert_almost_equal(score_parallel, score_euclidean)
 
         if X is X_dense:
             score_dense_without_sampling = score_precomputed
@@ -56,16 +77,69 @@ def test_silhouette():
             assert_almost_equal(score_euclidean, score_dense_with_sampling)
 
 
+def test_silhouette_invalid_block_size():
+    X = [[0], [0], [1]]
+    y = [1, 1, 2]
+    assert_raise_message(ValueError, 'block_size should be at least n_samples '
+                         '* 8 bytes = 1 MiB, got 0',
+                         silhouette_score, X, y, block_size=0)
+
+
 def test_no_nan():
     # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-    # This tests for the condition that caused issue 960.
+    # This tests for the condition that caused issue #960.
     # Note that there is only one sample in cluster 0. This used to cause the
-    # silhouette_score to return nan (see bug #960).
+    # silhouette_score to return nan.
     labels = np.array([1, 0, 1, 1, 1])
     # The distance matrix doesn't actually matter.
     D = np.random.RandomState(0).rand(len(labels), len(labels))
     silhouette = silhouette_score(D, labels, metric='precomputed')
     assert_false(np.isnan(silhouette))
+    ss = silhouette_samples(D, labels, metric='precomputed')
+    assert_false(np.isnan(ss).any())
+
+
+def test_silhouette_paper_example():
+    # Explicitly check per-sample results against Rousseeuw (1987)
+    lower = [5.58,
+             7.00, 6.50,
+             7.08, 7.00, 3.83,
+             4.83, 5.08, 8.17, 5.83,
+             2.17, 5.75, 6.67, 6.92, 4.92,
+             6.42, 5.00, 5.58, 6.00, 4.67, 6.42,
+             3.42, 5.50, 6.42, 6.42, 5.00, 3.92, 6.17,
+             2.50, 4.92, 6.25, 7.33, 4.50, 2.25, 6.33, 2.75,
+             6.08, 6.67, 4.25, 2.67, 6.00, 6.17, 6.17, 6.92, 6.17,
+             5.25, 6.83, 4.50, 3.75, 5.75, 5.42, 6.08, 5.83, 6.67, 3.67,
+             4.75, 3.00, 6.08, 6.67, 5.00, 5.58, 4.83, 6.17, 5.67, 6.50, 6.92]
+    D = np.zeros((12, 12))
+    D[np.tril_indices(12, -1)] = lower
+    D += D.T
+
+    names = ['BEL', 'BRA', 'CHI', 'CUB', 'EGY', 'FRA', 'IND', 'ISR', 'USA',
+             'USS', 'YUG', 'ZAI']
+
+    labels1 = [1, 1, 2, 2, 1, 1, 2, 1, 1, 2, 2, 1]
+    labels2 = [1, 2, 3, 3, 1, 1, 2, 1, 1, 3, 3, 2]
+
+    expected1 = {'USA': .43, 'BEL': .39, 'FRA': .35, 'ISR': .30, 'BRA': .22,
+                 'EGY': .20, 'ZAI': .19, 'CUB': .40, 'USS': .34, 'CHI': .33,
+                 'YUG': .26, 'IND': -.04}
+    score1 = .28
+    expected2 = {'USA': .47, 'FRA': .44, 'BEL': .42, 'ISR': .37, 'EGY': .02,
+                 'ZAI': .28, 'BRA': .25, 'IND': .17, 'CUB': .48, 'USS': .44,
+                 'YUG': .31, 'CHI': .31}
+    score2 = .33
+
+    for labels, expected, score in [(labels1, expected1, score1),
+                                    (labels2, expected2, score2)]:
+        expected = [expected[name] for name in names]
+        assert_almost_equal(expected, silhouette_samples(D, np.array(labels),
+                                                         metric='precomputed'),
+                            decimal=2)
+        assert_almost_equal(score, silhouette_score(D, np.array(labels),
+                                                    metric='precomputed'),
+                            decimal=2)
 
 
 def test_correct_labelsize():
