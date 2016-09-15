@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -16,7 +14,6 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
-from sklearn.utils.metaestimators import _safe_split
 from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score

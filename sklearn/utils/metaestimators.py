@@ -7,7 +7,6 @@ from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
 from ..utils import safe_indexing
-from ..gaussian_process.kernels import Kernel as GPKernel
 
 __all__ = ['if_delegate_has_method']
 
@@ -83,6 +82,8 @@ def if_delegate_has_method(delegate):
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
+    from ..gaussian_process.kernels import Kernel as GPKernel
+
     if (hasattr(estimator, 'kernel') and callable(estimator.kernel) and
             not isinstance(estimator.kernel, GPKernel)):
         # cannot compute the kernel values with custom function

@@ -48,7 +48,8 @@ from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
-                               check_classification_targets)
+                               check_classification_targets,
+                               _ovr_decision_function)
 from .utils.metaestimators import _safe_split
 
 from .externals.joblib import Parallel
@@ -535,7 +536,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in izip(
-                        self.estimators_, (combinations )))
+                        self.estimators_, (combinations)))
         return self
 
     def predict(self, X):
@@ -600,54 +601,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
-
-
-def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
-
-    It is important to include a continuous value, not only votes,
-    to make computing AUC or calibration meaningful.
-
-    Parameters
-    ----------
-    predictions : array-like, shape (n_samples, n_classifiers)
-        Predicted classes for each binary classifier.
-
-    confidences : array-like, shape (n_samples, n_classifiers)
-        Decision functions or predicted probabilities for positive class
-        for each binary classifier.
-
-    n_classes : int
-        Number of classes. n_classifiers must be
-        ``n_classes * (n_classes - 1 ) / 2``
-    """
-    n_samples = predictions.shape[0]
-    votes = np.zeros((n_samples, n_classes))
-    sum_of_confidences = np.zeros((n_samples, n_classes))
-
-    k = 0
-    for i in range(n_classes):
-        for j in range(i + 1, n_classes):
-            sum_of_confidences[:, i] -= confidences[:, k]
-            sum_of_confidences[:, j] += confidences[:, k]
-            votes[predictions[:, k] == 0, i] += 1
-            votes[predictions[:, k] == 1, j] += 1
-            k += 1
-
-    max_confidences = sum_of_confidences.max()
-    min_confidences = sum_of_confidences.min()
-
-    if max_confidences == min_confidences:
-        return votes
-
-    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
-    # The motivation is to use confidence levels as a way to break ties in
-    # the votes without switching any decision made based on a difference
-    # of 1 vote.
-    eps = np.finfo(sum_of_confidences.dtype).eps
-    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
-    scale = (0.5 - eps) / max_abs_confidence
-    return votes + sum_of_confidences * scale
 
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):

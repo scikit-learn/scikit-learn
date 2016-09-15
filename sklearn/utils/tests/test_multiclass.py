@@ -359,6 +359,7 @@ def test_class_distribution():
         assert_array_almost_equal(n_classes_sp[k], n_classes_expected[k])
         assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
 
+
 def test_safe_split_with_precomputed_kernel():
     clf = SVC()
     clfp = SVC(kernel="precomputed")

@@ -385,3 +385,50 @@ def class_distribution(y, sample_weight=None):
             class_prior.append(class_prior_k / class_prior_k.sum())
 
     return (classes, n_classes, class_prior)
+
+def _ovr_decision_function(predictions, confidences, n_classes):
+    """Compute a continuous, tie-breaking ovr decision function.
+
+    It is important to include a continuous value, not only votes,
+    to make computing AUC or calibration meaningful.
+
+    Parameters
+    ----------
+    predictions : array-like, shape (n_samples, n_classifiers)
+        Predicted classes for each binary classifier.
+
+    confidences : array-like, shape (n_samples, n_classifiers)
+        Decision functions or predicted probabilities for positive class
+        for each binary classifier.
+
+    n_classes : int
+        Number of classes. n_classifiers must be
+        ``n_classes * (n_classes - 1 ) / 2``
+    """
+    n_samples = predictions.shape[0]
+    votes = np.zeros((n_samples, n_classes))
+    sum_of_confidences = np.zeros((n_samples, n_classes))
+
+    k = 0
+    for i in range(n_classes):
+        for j in range(i + 1, n_classes):
+            sum_of_confidences[:, i] -= confidences[:, k]
+            sum_of_confidences[:, j] += confidences[:, k]
+            votes[predictions[:, k] == 0, i] += 1
+            votes[predictions[:, k] == 1, j] += 1
+            k += 1
+
+    max_confidences = sum_of_confidences.max()
+    min_confidences = sum_of_confidences.min()
+
+    if max_confidences == min_confidences:
+        return votes
+
+    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # The motivation is to use confidence levels as a way to break ties in
+    # the votes without switching any decision made based on a difference
+    # of 1 vote.
+    eps = np.finfo(sum_of_confidences.dtype).eps
+    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
+    scale = (0.5 - eps) / max_abs_confidence
+    return votes + sum_of_confidences * scale
