@@ -678,7 +678,7 @@ def check_fit_score_takes_y(name, Estimator):
         if func is not None:
             func(X, y)
             args = [p.name for p in signature(func).parameters.values()]
-            assert_true(args[1] in ["y", "Y"],
+            assert_true(len(args) > 1 and args[1] in ["y", "Y"],
                         "Expected y or Y as second argument for method "
                         "%s of %s. Got arguments: %r."
                         % (func_name, Estimator.__name__, args))
