@@ -29,11 +29,9 @@ from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
 
-URL10 = ('http://archive.ics.uci.edu/ml/'
-         'machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz')
+URL10 = ('https://ndownloader.figshare.com/files/5976042')
 
-URL = ('http://archive.ics.uci.edu/ml/'
-       'machine-learning-databases/kddcup99-mld/kddcup.data.gz')
+URL = ('https://ndownloader.figshare.com/files/5976045')
 
 
 logger = logging.getLogger()
