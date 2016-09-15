@@ -743,14 +743,27 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         analyze = self.build_analyzer()
         j_indices = _make_int_array()
         indptr = _make_int_array()
+        values = _make_int_array()
         indptr.append(0)
+
         for doc in raw_documents:
+
+            j_idx_to_count_dict = {}
+
             for feature in analyze(doc):
                 try:
-                    j_indices.append(vocabulary[feature])
+                    vocab_idx = vocabulary[feature]
+                    word_occurences = j_idx_to_count_dict.get(vocab_idx, 0)
+                    j_idx_to_count_dict[vocab_idx] = word_occurences + 1
+
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
+
+            for (vocabIdx, wordCount) in six.iteritems(j_idx_to_count_dict):
+                values.append(wordCount)
+                j_indices.append(vocabIdx)
+
             indptr.append(len(j_indices))
 
         if not fixed_vocab:
@@ -762,12 +775,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         j_indices = frombuffer_empty(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+        values = frombuffer_empty(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
-        X.sum_duplicates()
+        X.sort_indices()
+
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
