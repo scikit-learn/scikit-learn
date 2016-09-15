@@ -38,10 +38,20 @@ fi
 if [[ "$TRAVIS" == "true" ]]; then
     if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]
     then
-        # Travis does the git clone with a limited depth (50 at the time of
-        # writing). This may not be enough to find the common ancestor with
-        # $REMOTE/master so we unshallow the git checkout
-        git fetch --unshallow || echo "Unshallowing the git checkout failed"
+        # In main repo, using TRAVIS_COMMIT_RANGE to test the commits
+        # that were pushed into a branch
+        if [[ "$PROJECT" == "$TRAVIS_REPO_SLUG" ]]; then
+            if [[ -z "$TRAVIS_COMMIT_RANGE" ]]; then
+                echo "New branch, no commit range from Travis so passing this test by convention"
+                exit 0
+            fi
+            COMMIT_RANGE=$TRAVIS_COMMIT_RANGE
+        else
+            # Travis does the git clone with a limited depth (50 at the time of
+            # writing). This may not be enough to find the common ancestor with
+            # $REMOTE/master so we unshallow the git checkout
+            git fetch --unshallow || echo "Unshallowing the git checkout failed"
+        fi
     else
         # We want to fetch the code as it is in the PR branch and not
         # the result of the merge into master. This way line numbers
@@ -57,28 +67,36 @@ echo -e '\nLast 2 commits:'
 echo '--------------------------------------------------------------------------------'
 git log -2 --pretty=short
 
-git fetch $REMOTE master
-REMOTE_MASTER_REF="$REMOTE/master"
+# If not using the commit range from Travis we need to find the common
+# ancestor between HEAD and $REMOTE/master
+if [[ -z "$COMMIT_RANGE" ]]; then
+    REMOTE_MASTER_REF="$REMOTE/master"
+    # Make sure that $REMOTE_MASTER_REF is a valid reference
+    git fetch $REMOTE master:refs/$REMOTE_MASTER_REF
 
-# Find common ancestor between HEAD and remotes/$REMOTE/master
-COMMIT=$(git merge-base @ $REMOTE_MASTER_REF) || \
-    echo "No common ancestor found for $(git show @ -q) and $(git show $REMOTE_MASTER_REF -q)"
+    COMMIT=$(git merge-base @ $REMOTE_MASTER_REF) || \
+        echo "No common ancestor found for $(git show @ -q) and $(git show $REMOTE_MASTER_REF -q)"
 
-if [[ -n "$TMP_REMOTE" ]]; then
-    git remote remove $TMP_REMOTE
+    if [[ -n "$TMP_REMOTE" ]]; then
+        git remote remove $TMP_REMOTE
+    fi
+
+    if [ -z "$COMMIT" ]; then
+        exit 1
+    fi
+
+    echo -e "\nCommon ancestor between HEAD and $REMOTE_MASTER_REF is:"
+    echo '--------------------------------------------------------------------------------'
+    git show --no-patch $COMMIT
+
+    COMMIT_RANGE="$(git rev-parse --short $COMMIT)..$(git rev-parse --short @)"
+
+else
+    echo "Got the commit range from Travis: $COMMIT_RANGE"
 fi
 
-if [ -z "$COMMIT" ]; then
-    exit 1
-fi
-
-echo -e "\nCommon ancestor between HEAD and $REMOTE_MASTER_REF is:"
-echo '--------------------------------------------------------------------------------'
-git show --no-patch $COMMIT
-
-echo -e '\nRunning flake8 on the diff in the range'\
-     "$(git rev-parse --short $COMMIT)..$(git rev-parse --short @)" \
-     "($(git rev-list $COMMIT.. | wc -l) commit(s)):"
+echo -e '\nRunning flake8 on the diff in the range' "$COMMIT_RANGE" \
+     "($(git rev-list $COMMIT_RANGE | wc -l) commit(s)):"
 echo '--------------------------------------------------------------------------------'
 
 # We ignore files from sklearn/externals. Unfortunately there is no
@@ -88,7 +106,7 @@ echo '--------------------------------------------------------------------------
 # uses git 1.8.
 # We need the following command to exit with 0 hence the echo in case
 # there is no match
-MODIFIED_FILES=$(git diff --name-only $COMMIT | grep -v 'sklearn/externals' || echo "no_match")
+MODIFIED_FILES=$(git diff --name-only $COMMIT_RANGE | grep -v 'sklearn/externals' || echo "no_match")
 
 if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals has been modified"
