@@ -28,7 +28,19 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
 
+from sklearn.utils.metaestimators import _safe_split
+
+from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
+from sklearn import datasets
+
+iris = datasets.load_iris()
+rng = np.random.RandomState(0)
+perm = rng.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
+n_classes = 3
+
 
 class NotAnArray(object):
     """An object that is convertable to an array. This is useful to
