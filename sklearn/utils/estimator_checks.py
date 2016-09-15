@@ -1023,7 +1023,7 @@ def check_estimators_fit_returns_self(name, Estimator):
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     y = multioutput_estimator_convert_y_2d(name, y)
     # some want non-negative input
-    X -= X.min()
+    X -= X.min() - .1
 
     estimator = Estimator()
 
