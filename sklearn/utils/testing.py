@@ -805,7 +805,7 @@ with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)
 
 
-class named_check(object):
+class _named_check(object):
     """Wraps a check to show a useful description
 
     Parameters
