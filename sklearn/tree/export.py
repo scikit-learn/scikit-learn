@@ -87,7 +87,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     out_file : file object or string, optional (default='tree.dot')
         Handle or name of the output file. If ``None``, the result is
-        returned as a string.
+        returned as a string. This will the default from version 0.20.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -140,6 +140,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     dot_data : string
         String representation of the input tree in GraphViz dot format.
         Only returned if ``out_file`` is None.
+
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -373,8 +375,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     return_string = False
     try:
         if out_file == 'tree.dot':
-            warnings.warn("out_file can be set to None from 0.18, "
-                          "this will be the default in 0.20.", DeprecationWarning)
+            warnings.warn("out_file can be set to None starting from 0.18. "
+                          "This will be the default in 0.20.",
+                          DeprecationWarning)
 
         if isinstance(out_file, six.string_types):
             if six.PY3:
