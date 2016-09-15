@@ -384,7 +384,7 @@ def test_scorer_sample_weight():
                               sample_weight=sample_weight)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
-            if name != "median_absolute_error":
+            if "median_absolute_error" not in name:
                 assert_not_equal(weighted, unweighted,
                                  msg="scorer {0} behaves identically when "
                                  "called with sample weights: {1} vs "
