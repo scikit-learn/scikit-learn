@@ -519,7 +519,7 @@ def check_transformer_general(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
-    X -= X.min()
+    X -= X.min() - .1
     _check_transformer(name, Transformer, X, y)
     _check_transformer(name, Transformer, X.tolist(), y.tolist())
 
@@ -630,7 +630,7 @@ def check_pipeline_consistency(name, Estimator):
     # check that make_pipeline(est) gives same score as est
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
-    X -= X.min()
+    X -= X.min() - .1
     y = multioutput_estimator_convert_y_2d(name, y)
     estimator = Estimator()
     set_testing_parameters(estimator)
@@ -684,7 +684,7 @@ def check_fit_score_takes_y(name, Estimator):
 @ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
-    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    X_train_32 = 3 * rnd.uniform(1.0, 2.0, size=(20, 5)).astype(np.float32)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
@@ -812,7 +812,7 @@ def check_estimators_pickle(name, Estimator):
                       random_state=0, n_features=2, cluster_std=0.1)
 
     # some estimators can't do features less than 0
-    X -= X.min()
+    X -= X.min() - .1
 
     # some estimators only take multioutputs
     y = multioutput_estimator_convert_y_2d(name, y)
@@ -1311,8 +1311,8 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 def check_estimators_overwrite_params(name, Estimator):
     X, y = make_blobs(random_state=0, n_samples=9)
     y = multioutput_estimator_convert_y_2d(name, y)
-    # some want non-negative input
-    X -= X.min()
+    # some want non-negative input and some want positive input (boxcox)
+    X -= X.min() - 1
     estimator = Estimator()
 
     set_testing_parameters(estimator)
