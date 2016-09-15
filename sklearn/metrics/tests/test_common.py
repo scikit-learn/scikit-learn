@@ -956,7 +956,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
     if name != "median_absolute_error":
-    # unweighted and weighted give same value for this metric. see #6217
+        # unweighted and weighted give same value for this metric. see #6217
         assert_not_equal(
             unweighted_score, weighted_score,
             msg="Unweighted and weighted scores are unexpectedly "

@@ -142,23 +142,23 @@ def test_regression_custom_weights():
     assert_almost_equal(maew, 0.475, decimal=3)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
-    
+
+
 def test_median_absolute_error_weights():
     y_tr = [3, -0.5, 2, 7]
     y_pr = [2.5, 0.0, 2, 8]
     sample_weight = [2, 3, 1, 4]
     # check that unit weights gives the same score as no weight
     unweighted_score = median_absolute_error(y_tr, y_pr, sample_weight=None)
-    assert_almost_equal(
-        unweighted_score, median_absolute_error(y_tr, y_pr,
-                        sample_weight=np.ones(shape=len(y_tr))),
-        err_msg="For median_absolute_error sample_weight=None is not "
-                "equivalent to sample_weight=ones" )
+    weighted_score = median_absolute_error(y_tr, y_pr,
+                                           sample_weight=np.ones(len(y_tr)))
+    assert_almost_equal(unweighted_score, weighted_score,
+                        err_msg="For median_absolute_error sample_weight=None"
+                        "is not equivalent to sample_weight=ones")
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = median_absolute_error(y_tr, y_pr,
-                            sample_weight=sample_weight)
-    assert_not_equal(
-        unweighted_score, weighted_score,
-        msg="Unweighted and weighted scores are unexpectedly "
-            "equal (%f) for median_absolute_error" % weighted_score)
+                                           sample_weight=sample_weight)
+    assert_not_equal(unweighted_score, weighted_score,
+                     msg="Unweighted and weighted scores are unexpectedly "
+                     "equal (%f) for median_absolute_error" % weighted_score)

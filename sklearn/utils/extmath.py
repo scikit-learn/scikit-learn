@@ -896,7 +896,8 @@ def weighted_median(array, sample_weight):
     sample_weight = np.asarray(sample_weight)
     sorted_sample_weight = sample_weight[sorted_idx]
     weight_cdf = sorted_sample_weight.cumsum()
-    weighted_percentile = (weight_cdf - sorted_sample_weight/2.0) / weight_cdf[-1]
+    weighted_percentile = weight_cdf - sorted_sample_weight/2.0
+    weighted_percentile /= weight_cdf[-1]
     sorted_array = array[sorted_idx]
     weighted_median = np.interp(0.5, weighted_percentile, sorted_array)
     return weighted_median
