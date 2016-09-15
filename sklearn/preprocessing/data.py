@@ -1996,7 +1996,8 @@ def boxcox(X, copy=True):
     """
     X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=copy)
     if any(np.any(X <= 0, axis=0)):
-        raise ValueError("BoxCox transform can only be applied on positive data")
+        raise ValueError("BoxCox transform can only be applied"
+                         "on positive data")
     n_features = X.shape[1]
     outputs = Parallel(n_jobs=-1)(delayed(_boxcox)(X[:, i], lambda_x=None)
                                   for i in range(n_features))
@@ -2067,8 +2068,10 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             if self.feature_indices_.dtype == np.bool:
                 self.feature_indices_ = np.where(self.feature_indices_)[0]
         if any(np.any(X[:, self.feature_indices_] <= 0, axis=0)):
-            raise ValueError("BoxCox transform can only be applied on positive data")
-        out = Parallel(n_jobs=self.n_jobs)(delayed(_boxcox)(X[:, i], lambda_x=None)
+            raise ValueError("BoxCox transform can only be applied"
+                             "on positive data")
+        out = Parallel(n_jobs=self.n_jobs)(delayed(_boxcox)(X[:, i],
+                                           lambda_x=None)
                                            for i in self.feature_indices_)
         self.lambdas_ = np.array([o[1] for o in out])
         return self
@@ -2088,7 +2091,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
         if any(np.any(X[:, self.feature_indices_] <= 0, axis=0)):
-            raise ValueError("BoxCox transform can only be applied on positive data")
+            raise ValueError("BoxCox transform can only be applied"
+                             "on positive data")
         if X.shape[1] != self.n_features_:
             raise ValueError("X has a different shape than during fitting.")
         X_tr = _transform_selected(X, self._transform, self.feature_indices_,
