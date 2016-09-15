@@ -37,7 +37,7 @@ import array
 import numpy as np
 import warnings
 import scipy.sparse as sp
-
+import itertools
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin, is_regressor
@@ -529,15 +529,13 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
+        combinations = itertools.combinations(range(self.n_classes_), 2)
         self.estimators_ = Parallel(
             n_jobs=self.n_jobs)(
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in izip(
-                        self.estimators_, ((i, j)
-                                           for i in range(self.n_classes_)
-                                           for j in range(i + 1,
-                                                          self.n_classes_))))
+                        self.estimators_, (combinations )))
         return self
 
     def predict(self, X):
