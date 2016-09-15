@@ -2028,6 +2028,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         The indices of the features to be transformed
     lambdas_ : array of float, shape (n_transformed_features,)
         The parameters of the BoxCox transform for the selected features.
+    n_features_ : int
+        Number of features in input during fit
 
     Notes
     -----
@@ -2057,9 +2059,9 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
 
         """
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES)
-        n_features = X.shape[1]
+        self.n_features_ = X.shape[1]
         if self.feature_indices is None:
-            self.feature_indices_ = np.arange(n_features)
+            self.feature_indices_ = np.arange(self.n_features_)
         else:
             self.feature_indices_ = np.copy(self.feature_indices)
             if self.feature_indices_.dtype == np.bool:
@@ -2087,6 +2089,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
         if any(np.any(X[:, self.feature_indices_] <= 0, axis=0)):
             raise ValueError("BoxCox transform can only be applied on positive data")
+        if X.shape[1] != self.n_features_:
+            raise ValueError("X has a different shape than during fitting.")
         X_tr = _transform_selected(X, self._transform, self.feature_indices_,
                                    copy=False, order=True)
         return X_tr
