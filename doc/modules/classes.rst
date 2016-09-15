@@ -259,6 +259,7 @@ Loaders
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
+   datasets.fetch_species_distributions
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.dump_svmlight_file
