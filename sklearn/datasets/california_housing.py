@@ -40,7 +40,7 @@ from .base import _pkl_filepath
 from ..externals import joblib
 
 
-DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
+DATA_URL = "https://ndownloader.figshare.com/files/5976036"
 TARGET_FILENAME = "cal_housing.pkz"
 
 # Grab the module-level docstring to use as a description of the
