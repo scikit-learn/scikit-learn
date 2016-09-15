@@ -50,7 +50,6 @@ from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
 
 from sklearn.datasets import load_digits
-from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
 
 from sklearn.externals import six
@@ -61,7 +60,6 @@ from sklearn.svm import SVC
 X = np.ones(10)
 y = np.arange(10) // 2
 P_sparse = coo_matrix(np.eye(5))
-iris = load_iris()
 digits = load_digits()
 
 
