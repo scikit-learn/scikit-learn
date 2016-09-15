@@ -1009,14 +1009,6 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
         idf = np.log(float(n_samples_calc) / df) + 1.0
         self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, n=n_features)
 
-        # sum along rows for document lengths
-        lengths = np.array(X.sum(axis=1)).reshape((n_samples,))
-        avglen = sum(lengths) / n_samples
-
-        beta = (1 - self.b + self.b * lengths / avglen)
-        self._beta_diag = sp.spdiags(beta, diags=0, m=n_samples, n=n_samples,
-                                     format='csr')
-
         return self
 
     def transform(self, X, copy=True):
@@ -1046,7 +1038,6 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
-        check_is_fitted(self, '_beta_diag', 'beta vector is not fitted')
 
         expected_n_features = self._idf_diag.shape[0]
 
@@ -1055,14 +1046,20 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
                              " has been trained with n_features=%d" % (
                                  n_features, expected_n_features))
 
-        weightedtfs = X.copy()
+        # sum along rows for document lengths
+        lengths = np.array(X.sum(axis=1)).reshape((n_samples,))
+        avglen = sum(lengths) / n_samples
 
+        beta = (1 - self.b + self.b * lengths / avglen)
+        self._beta_diag = sp.spdiags(beta, diags=0, m=n_samples, n=n_samples,
+                                     format='csr')
+
+        weightedtfs = X.copy()
         binary = X.copy()
         binary.data = np.sign(X.data)
 
-        weightedtfs.data = (self.k + 1) / \
-                           (self.k * self._beta_diag.dot(
-                               binary).data / X.data + 1)
+        weightedtfs.data = ((self.k + 1) / (self.k * self._beta_diag.dot(
+            binary).data / X.data + 1))
 
         bm25 = weightedtfs.dot(self._idf_diag)
         return bm25
