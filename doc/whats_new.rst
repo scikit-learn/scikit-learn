@@ -467,6 +467,10 @@ Bug fixes
       (`#7350 <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
       By `Russell Smith`_.
 
+    - Fix regression in :func:`metrics.silhouette_score` in which clusters of
+      size 1 were incorrectly scored. By `Ramana Subramanyam
+      <https://github.com/Sentient07>`_.
+
 
 API changes summary
 -------------------
