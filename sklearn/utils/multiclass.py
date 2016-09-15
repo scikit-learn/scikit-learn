@@ -386,6 +386,7 @@ def class_distribution(y, sample_weight=None):
 
     return (classes, n_classes, class_prior)
 
+
 def _ovr_decision_function(predictions, confidences, n_classes):
     """Compute a continuous, tie-breaking ovr decision function.
 
