@@ -29,6 +29,10 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
 
 from sklearn.utils.metaestimators import _safe_split
+from sklearn.model_selection import ShuffleSplit
+from sklearn.svm import SVC
+from sklearn import datasets
+
 
 class NotAnArray(object):
     """An object that is convertable to an array. This is useful to
@@ -349,10 +353,6 @@ def test_class_distribution():
 
 
 def test_safe_split_with_precomputed_kernel():
-    from sklearn.model_selection import ShuffleSplit
-    from sklearn.svm import SVC
-    from sklearn import datasets
-
     clf = SVC()
     clfp = SVC(kernel="precomputed")
 
