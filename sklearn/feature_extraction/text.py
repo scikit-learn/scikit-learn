@@ -685,9 +685,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         sorted_features = sorted(six.iteritems(vocabulary))
         map_index = np.empty(len(sorted_features), dtype=np.int32)
         for new_val, (term, old_val) in enumerate(sorted_features):
-            map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return X[:, map_index]
+            map_index[old_val] = new_val
+
+        X.indices = map_index.take(X.indices, mode='clip')
+        return X
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
@@ -741,16 +743,25 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
+        j_indices = []
         indptr = _make_int_array()
+        values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
+            feature_counter = {}
             for feature in analyze(doc):
                 try:
-                    j_indices.append(vocabulary[feature])
+                    feature_idx = vocabulary[feature]
+                    if feature_idx not in feature_counter:
+                        feature_counter[feature_idx] = 1
+                    else:
+                        feature_counter[feature_idx] += 1
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
+
+            j_indices.extend(feature_counter.keys())
+            values.extend(feature_counter.values())
             indptr.append(len(j_indices))
 
         if not fixed_vocab:
@@ -760,14 +771,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
+        j_indices = np.asarray(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+        values = frombuffer_empty(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
-        X.sum_duplicates()
+        X.sort_indices()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
