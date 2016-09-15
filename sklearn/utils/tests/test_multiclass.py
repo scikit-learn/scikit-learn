@@ -28,6 +28,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
 
+from sklearn.svm import SVC
 
 class NotAnArray(object):
     """An object that is convertable to an array. This is useful to
