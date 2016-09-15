@@ -667,3 +667,18 @@ def test_weighted_median():
     median = np.median(x)
     wmedian = weighted_median(x, weights)
     assert_almost_equal(median, wmedian)
+
+
+def test_weighted_median_equal_split():
+    rng = np.random.RandomState(0)
+    weights_left = rng.multinomial(20, [1/5.]*5, size=1)[0]
+    weights_right = rng.multinomial(20, [1/5.]*5, size=1)[0]
+    x = np.asarray(range(20))
+    rng.shuffle(x)
+    x = x[10:]
+    x.sort()
+    weights = np.hstack((weights_left, weights_right))
+    wmedian = weighted_median(x, weights)
+    sum_left = np.sum(weights[np.where(x < wmedian)])
+    sum_right = np.sum(weights[np.where(x > wmedian)])
+    assert_equal(sum_left, sum_right)
