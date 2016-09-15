@@ -54,10 +54,8 @@ from sklearn.datasets.base import get_data_home, Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
-DIRECTORY_URL = "http://www.cs.princeton.edu/~schapire/maxent/datasets/"
-
-SAMPLES_URL = DIRECTORY_URL + "samples.zip"
-COVERAGES_URL = DIRECTORY_URL + "coverages.zip"
+SAMPLES_URL = "https://ndownloader.figshare.com/files/5976075"
+COVERAGES_URL = "https://ndownloader.figshare.com/files/5976078"
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
