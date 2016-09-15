@@ -28,10 +28,14 @@ from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
 
 
-URL = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
-       'a13-vector-files/lyrl2004_vectors')
-URL_topics = ('http://jmlr.csail.mit.edu/papers/volume5/lewis04a/'
-              'a08-topic-qrels/rcv1-v2.topics.qrels.gz')
+FILE_URLS = [
+    'https://ndownloader.figshare.com/files/5976069',
+    'https://ndownloader.figshare.com/files/5976066',
+    'https://ndownloader.figshare.com/files/5976063',
+    'https://ndownloader.figshare.com/files/5976060',
+    'https://ndownloader.figshare.com/files/5976057'
+]
+URL_topics = ('https://ndownloader.figshare.com/files/5976048')
 
 logger = logging.getLogger()
 
@@ -124,8 +128,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     # load data (X) and sample_id
     if download_if_missing and (not exists(samples_path) or
                                 not exists(sample_id_path)):
-        file_urls = ["%s_test_pt%d.dat.gz" % (URL, i) for i in range(4)]
-        file_urls.append("%s_train.dat.gz" % URL)
+        file_urls = FILE_URLS
         files = []
         for file_url in file_urls:
             logger.warning("Downloading %s" % file_url)
