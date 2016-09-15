@@ -61,7 +61,11 @@ def _color_brew(n):
     return color_list
 
 
-def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
+class Sentinel:
+    __repr__ = lambda x: '"tree.dot"'
+SENTINEL = Sentinel()
+
+def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
@@ -374,10 +378,11 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     own_file = False
     return_string = False
     try:
-        if out_file == 'tree.dot':
+        if out_file == SENTINEL:
             warnings.warn("out_file can be set to None starting from 0.18. "
                           "This will be the default in 0.20.",
                           DeprecationWarning)
+            out_file = "tree.dot"
 
         if isinstance(out_file, six.string_types):
             if six.PY3:
