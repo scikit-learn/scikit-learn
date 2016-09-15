@@ -204,7 +204,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
                     inter_clust_dists[mask], other_distances)
 
     sil_samples = inter_clust_dists - intra_clust_dists
-    sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
     # nan values are for clusters of size 1, and should be 0
     return np.nan_to_num(sil_samples)
 
