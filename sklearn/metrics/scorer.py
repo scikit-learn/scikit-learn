@@ -19,6 +19,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+import collections
 import warnings
 
 import numpy as np
@@ -29,6 +30,7 @@ from . import (r2_score, median_absolute_error, mean_absolute_error,
                precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
+from ..utils.validation import _is_arraylike
 from ..externals import six
 from ..base import is_regressor
 
@@ -89,6 +91,10 @@ class _PredictScorer(_BaseScorer):
         super(_PredictScorer, self).__call__(estimator, X, y_true,
                                              sample_weight=sample_weight)
         y_pred = estimator.predict(X)
+        if not _is_arraylike(y_pred) and isinstance(y_pred,
+                                                    collections.Iterable):
+            y_pred = np.array(list(y_pred))
+
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
