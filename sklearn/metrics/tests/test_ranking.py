@@ -101,7 +101,13 @@ def _auc(y_true, y_score):
 
 def _average_precision(y_true, y_score):
     """Alternative implementation to check for correctness of
-    `average_precision_score`."""
+    `average_precision_score`.
+
+    Note that this implementation fails on some edge cases.
+    For example, for constant predictions e.g. [0.5, 0.5, 0.5],
+    y_true = [1, 0, 0] returns an average precision of 0.33...
+    but y_true = [0, 0, 1] returns 1.0.
+    """
     pos_label = np.unique(y_true)[1]
     n_pos = np.sum(y_true == pos_label)
     order = np.argsort(y_score)[::-1]
@@ -121,6 +127,25 @@ def _average_precision(y_true, y_score):
             score += prec
 
     return score / n_pos
+
+
+def _average_precision_slow(y_true, y_score):
+    """A second alternative implementation of average precision that closely
+    follows the Wikipedia article's definition (see References). This should
+    give identical results as `average_precision_score` for all inputs.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Average precision
+       <http://en.wikipedia.org/wiki/Average_precision>`_
+    """
+    precision, recall, threshold = precision_recall_curve(y_true, y_score)
+    precision = list(reversed(precision))
+    recall = list(reversed(recall))
+    average_precision = 0
+    for i in range(1, len(precision)):
+        average_precision += precision[i] * (recall[i] - recall[i - 1])
+    return average_precision
 
 
 def test_roc_curve():
@@ -494,7 +519,7 @@ def test_precision_recall_curve_pos_label():
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
-    precision_recall_auc = auc(r, p)
+    precision_recall_auc = _average_precision_slow(y_true, probas_pred)
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
