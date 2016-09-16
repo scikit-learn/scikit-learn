@@ -13,17 +13,17 @@ import sys
 
 # Try Python 2 first, otherwise load from Python 3
 try:
-    from StringIO import StringIO
     import cPickle as pickle
     import urllib2 as urllib
     from urllib2 import HTTPError, URLError
 except ImportError:
-    from io import StringIO
     import pickle
     import urllib.request
     import urllib.error
     import urllib.parse
     from urllib.error import HTTPError, URLError
+
+from io import StringIO
 
 
 def _get_data(url):

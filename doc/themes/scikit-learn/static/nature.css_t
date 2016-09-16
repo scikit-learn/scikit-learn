@@ -129,7 +129,7 @@ div.navbar div.nav-icon {
         margin-left: 6px;
     }
     div.navbar.responsive > ul li.btn-li + li {
-        margin-top: -5px;   
+        margin-top: -5px;
     }
     div.navbar.responsive > ul {
         visiblity: visible;
@@ -776,6 +776,11 @@ div.sprint-wrapper:hover {
 }
 
 /*-----------------------The Examples Gallery-------------------------------*/
+
+div.sphx-glr-download code.download {
+  display: inline-block;
+  white-space: normal;
+}
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
