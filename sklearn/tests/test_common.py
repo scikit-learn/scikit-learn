@@ -24,9 +24,6 @@ from sklearn.utils.testing import _named_check
 
 import sklearn
 
-from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.decomposition import ProjectedGradientNMF
-
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
