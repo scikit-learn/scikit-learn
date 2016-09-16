@@ -152,7 +152,7 @@ def average_precision_score(y_true, y_score, average="macro",
         ``'eleven_point'``:
             For each of the recall values, r in {0, 0.1, 0.2, ..., 1.0},
             compute the arithmetic mean of the first precision value with a
-            corresponding recall ≥ r. See the `Stanford Information Retrieval
+            corresponding recall >= r. See the `Stanford Information Retrieval
             book <http://nlp.stanford.edu/IR-book/html/htmledition/
             evaluation-of-ranked-retrieval-results-1.html>`
 
