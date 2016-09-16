@@ -37,49 +37,22 @@ from ..exceptions import UndefinedMetricWarning
 from .base import _average_binary_score
 
 
-def auc(x, y, reorder=False, interpolation='linear',
-        interpolation_direction='right'):
-    """Estimate Area Under the Curve (AUC) using finitely many points and an
-    interpolation strategy.
-
+def auc(x, y, reorder=False):
+    """Compute Area Under the Curve (AUC) using the trapezoidal rule
     This is a general function, given points on a curve.  For computing the
     area under the ROC-curve, see :func:`roc_auc_score`.
-
     Parameters
     ----------
     x : array, shape = [n]
         x coordinates.
-
     y : array, shape = [n]
         y coordinates.
-
     reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
-
-    interpolation : string ['linear' (default), 'step']
-        This determines the type of interpolation performed on the data.
-
-        ``'linear'``:
-            Use the trapezoidal rule (linearly interpolating between points).
-        ``'step'``:
-            Use a step function where we ascend/descend from each point to the
-            y-value of the subsequent point.
-
-    interpolation_direction : string ['right' (default), 'left']
-        This determines the direction to interpolate from. The value is ignored
-        unless interpolation is 'step'.
-
-        ``'right'``:
-            Intermediate points inherit their y-value from the subsequent
-            point.
-        ``'left'``:
-            Intermediate points inherit their y-value from the previous point.
-
     Returns
     -------
     auc : float
-
     Examples
     --------
     >>> import numpy as np
@@ -89,14 +62,11 @@ def auc(x, y, reorder=False, interpolation='linear',
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
-
     See also
     --------
     roc_auc_score : Computes the area under the ROC curve
-
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
-
     """
     check_consistent_length(x, y)
     x = column_or_1d(x)
@@ -121,39 +91,12 @@ def auc(x, y, reorder=False, interpolation='linear',
                 raise ValueError("Reordering is not turned on, and "
                                  "the x array is not increasing: %s" % x)
 
-    if interpolation == 'linear':
-
-        area = direction * np.trapz(y, x)
-        if isinstance(area, np.memmap):
-            # Reductions such as .sum used internally in np.trapz do not return
-            # a scalar by default for numpy.memmap instances contrary to
-            # regular numpy.ndarray instances.
-            area = area.dtype.type(area)
-
-    elif interpolation == 'step':
-
-        # we need the data to start in ascending order
-        if direction == -1:
-            x, y = list(reversed(x)), list(reversed(y))
-
-        if interpolation_direction == 'right':
-            # The left-most y-value is not used
-            area = sum(np.diff(x) * np.array(y)[1:])
-
-        elif interpolation_direction == 'left':
-            # The right-most y-value is not used
-            area = sum(np.diff(x) * np.array(y)[:-1])
-
-        else:
-            raise ValueError("interpolation_direction '{}' not recognised."
-                             " Should be one of ['right', 'left']".format(
-                                 interpolation_direction))
-
-    else:
-        raise ValueError("interpolation value '{}' not recognized. "
-                         "Should be one of ['linear', 'step']".format(
-                             interpolation))
-
+    area = direction * np.trapz(y, x)
+    if isinstance(area, np.memmap):
+        # Reductions such as .sum used internally in np.trapz do not return a
+        # scalar by default for numpy.memmap instances contrary to
+        # regular numpy.ndarray instances.
+        area = area.dtype.type(area)
     return area
 
 
