@@ -147,14 +147,13 @@ def average_precision_score(y_true, y_score, average="macro",
             Do not interpolate the average precision. Instead, compute
             sum(p[i] * (r[i] - r[i-1])) for all precision, recall pairs
             p[i], r[i] for i ≥ 1. This is the primary definition used in
-            the `Wikipedia entry for the Average precision
-            <http://en.wikipedia.org/wiki/Average_precision>`
+            the Wikipedia entry for Average precision. See References.
         ``'eleven_point'``:
             For each of the recall values, r in {0, 0.1, 0.2, ..., 1.0},
             compute the arithmetic mean of the first precision value with a
-            corresponding recall >= r. See the `Stanford Information Retrieval
-            book <http://nlp.stanford.edu/IR-book/html/htmledition/
-            evaluation-of-ranked-retrieval-results-1.html>`
+            corresponding recall >= r. This is the metric used in the Pascal
+            Visual Objects Classes (VOC) Challenge and is as described in the
+            Stanford Information Retrieval book. See References.
 
     Returns
     -------
@@ -167,6 +166,9 @@ def average_precision_score(y_true, y_score, average="macro",
     .. [2] `Stanford Information Retrieval book
             <http://nlp.stanford.edu/IR-book/html/htmledition/
             evaluation-of-ranked-retrieval-results-1.html>`_
+    .. [3] `The PASCAL Visual Object Classes (VOC) Challenge
+            <http://citeseerx.ist.psu.edu/viewdoc/
+            download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_
 
     See also
     --------
