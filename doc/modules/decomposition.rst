@@ -416,10 +416,10 @@ Generic dictionary learning
 
 Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
 problem that amounts to finding a (usually overcomplete) dictionary that will
-perform good at sparsely encoding the fitted data.
+perform well at sparsely encoding the fitted data.
 
 Representing data as sparse combinations of atoms from an overcomplete
-dictionary is suggested to be the way the mammal primary visual cortex works.
+dictionary is suggested to be the way the mammalian primary visual cortex works.
 Consequently, dictionary learning applied on image patches has been shown to
 give good results in image processing tasks such as image completion,
 inpainting and denoising, as well as for supervised recognition tasks.
@@ -577,7 +577,7 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`PCA` is that
+The main advantage for Factor Analysis over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
