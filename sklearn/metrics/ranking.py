@@ -141,7 +141,7 @@ def average_precision_score(y_true, y_score, average="macro",
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    interpolation : None (default), or string ['eleven_point']
+    interpolation : None (default), or string 'eleven_point'
 
         ``None``:
             Do not interpolate the average precision. Instead, compute
