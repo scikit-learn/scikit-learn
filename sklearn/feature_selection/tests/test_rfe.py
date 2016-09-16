@@ -2,7 +2,8 @@
 Testing Recursive feature elimination
 """
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_raises)
 from nose.tools import assert_equal, assert_true
 from scipy import sparse
 
@@ -86,25 +87,32 @@ def test_rfe_sample_weights():
     sample_weight_test = 2
     class_test = 2
 
-    # Case 1 - double the weight of the class's features
+    # Case 1 - original dataset
+    rfe.fit(X, y)
+    ranking_original = rfe.ranking_.copy()
+
+    # Case 2 - double the weight of one class's samples
     w = np.ones(y.shape[0])
     w[y == class_test] = sample_weight_test
 
     rfe.fit(X, y, sample_weight=w)
-    ranking_1 = rfe.ranking_.copy()
+    ranking_weights = rfe.ranking_.copy()
 
-    # Case 2 - duplicate the features of one class
+    # Case 3 - duplicate the samples of one class
     extra_X = np.tile(X[y == class_test], (sample_weight_test - 1, 1))
-    X2 = np.concatenate((X, extra_X), axis=0)
+    X_duplicate = np.concatenate((X, extra_X), axis=0)
 
     n_extra = (y == class_test).sum() * (sample_weight_test - 1)
     extra_Y = np.ones(n_extra, dtype=int) * class_test
-    y2 = np.concatenate((y, extra_Y), axis=0)
+    y_duplicate = np.concatenate((y, extra_Y), axis=0)
 
-    rfe.fit(X2, y2)
-    ranking_2 = rfe.ranking_.copy()
+    rfe.fit(X_duplicate, y_duplicate)
+    ranking_duplicate = rfe.ranking_.copy()
 
-    assert_array_equal(ranking_1, ranking_2)
+    with assert_raises(AssertionError):
+        assert_array_equal(ranking_original, ranking_weights)
+    assert_array_equal(ranking_weights, ranking_duplicate)
+
 
 def test_rfe():
     generator = check_random_state(0)
