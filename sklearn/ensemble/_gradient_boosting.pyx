@@ -210,7 +210,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     else:
         if not isinstance(X, np.ndarray):
             raise ValueError("X should be in np.ndarray or csr_matrix format,"
-              "got %s" % type(X))
+                             "got %s" % type(X))
 
         for i in range(n_estimators):
             for k in range(K):

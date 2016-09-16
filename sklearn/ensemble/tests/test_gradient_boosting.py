@@ -1065,9 +1065,9 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                                   auto.predict_log_proba(X))
 
         assert_array_almost_equal(sparse.decision_function(X_sparse),
-                           sparse.decision_function(X))
+                                  sparse.decision_function(X))
         assert_array_almost_equal(dense.decision_function(X_sparse),
-                           sparse.decision_function(X))
+                                  sparse.decision_function(X))
 
         assert_array_almost_equal(
             np.array(sparse.staged_decision_function(X_sparse)),
