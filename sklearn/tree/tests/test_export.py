@@ -43,7 +43,7 @@ def test_graphviz_toy():
                 '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -61,7 +61,7 @@ def test_graphviz_toy():
                 '2 [label="gini = 0.0\\nsamples = 3\\nvalue = [0, 3]"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -81,7 +81,7 @@ def test_graphviz_toy():
                 'class = no"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -104,7 +104,7 @@ def test_graphviz_toy():
                 'fillcolor="#399de5ff"] ;\n' \
                 '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
                 'headlabel="False"] ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -120,7 +120,7 @@ def test_graphviz_toy():
                 '0 -> 1 ;\n' \
                 '2 [label="(...)"] ;\n' \
                 '0 -> 2 ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -137,7 +137,7 @@ def test_graphviz_toy():
                 '0 -> 1 ;\n' \
                 '2 [label="(...)", fillcolor="#C0C0C0"] ;\n' \
                 '0 -> 2 ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -171,7 +171,7 @@ def test_graphviz_toy():
                 '4 [label="samples = 1\\nvalue = [[0.0, 0.5, 0.0]\\n' \
                 '[0.0, 0.0, 0.5]]", fillcolor="#e58139ff"] ;\n' \
                 '2 -> 4 ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -204,7 +204,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '{rank=same ; 0} ;\n' \
                 '{rank=same ; 1; 2} ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
@@ -218,7 +218,7 @@ def test_graphviz_toy():
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", fillcolor="#e5813900"] ;\n' \
-                '}'
+                '}\n'
 
     assert_equal(contents1, contents2)
 
