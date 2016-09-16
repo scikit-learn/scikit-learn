@@ -146,7 +146,7 @@ def average_precision_score(y_true, y_score, average="macro",
         ``None``:
             Do not interpolate the average precision. Instead, compute
             sum(p[i] * (r[i] - r[i-1])) for all precision, recall pairs
-            p[i], r[i] for i ≥ 1. This is the primary definition used in
+            p[i], r[i] for i >= 1. This is the primary definition used in
             the Wikipedia entry for Average precision. See References.
         ``'eleven_point'``:
             For each of the recall values, r in {0, 0.1, 0.2, ..., 1.0},
