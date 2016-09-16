@@ -109,8 +109,8 @@ def test_rfe_sample_weights():
     rfe.fit(X_duplicate, y_duplicate)
     ranking_duplicate = rfe.ranking_.copy()
 
-    with assert_raises(AssertionError):
-        assert_array_equal(ranking_original, ranking_weights)
+    assert_raises(AssertionError, assert_array_equal, ranking_original,
+                  ranking_weights)
     assert_array_equal(ranking_weights, ranking_duplicate)
 
 
