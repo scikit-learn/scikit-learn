@@ -10,7 +10,7 @@ from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from .utils import deprecated
 from .utils.fixes import astype
-from ._isotonic import _isotonic_regression, _make_unique
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
 
@@ -120,28 +120,22 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    y = np.asarray(y, dtype=np.float64)
+    order = np.s_[:] if increasing else np.s_[::-1]
+    y = np.array(y[order], dtype=np.float64)
     if sample_weight is None:
-        sample_weight = np.ones(len(y), dtype=y.dtype)
+        sample_weight = np.ones(len(y), dtype=np.float64)
     else:
-        sample_weight = np.asarray(sample_weight, dtype=np.float64)
-    if not increasing:
-        y = y[::-1]
-        sample_weight = sample_weight[::-1]
+        sample_weight = np.array(sample_weight[order], dtype=np.float64)
 
-    solution = np.empty(len(y))
-    y_ = _isotonic_regression(y, sample_weight, solution)
-    if not increasing:
-        y_ = y_[::-1]
-
+    _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
         # Older versions of np.clip don't accept None as a bound, so use np.inf
         if y_min is None:
             y_min = -np.inf
         if y_max is None:
             y_max = np.inf
-        np.clip(y_, y_min, y_max, y_)
-    return y_
+        np.clip(y, y_min, y_max, y)
+    return y[order]
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
