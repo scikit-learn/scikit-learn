@@ -410,7 +410,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             for rank in sorted(ranks):
                 out_file.write("{rank=same ; " +
                                "; ".join(r for r in ranks[rank]) + "} ;\n")
-        out_file.write("}")
+        out_file.write("}\n")
 
     finally:
         if own_file:
