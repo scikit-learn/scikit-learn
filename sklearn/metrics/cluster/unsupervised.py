@@ -9,6 +9,7 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
+from ...utils.fixes import bincount
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -171,6 +172,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
+    n_samples_per_label = bincount(labels, minlength=len(unique_labels))
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]
@@ -180,7 +182,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     # cluster in inter_clust_dists[i]
     inter_clust_dists = np.inf * intra_clust_dists
 
-    for curr_label in unique_labels:
+    for curr_label in range(len(unique_labels)):
 
         # Find inter_clust_dist for all samples belonging to the same
         # label.
@@ -188,14 +190,16 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         current_distances = distances[mask]
 
         # Leave out current sample.
-        n_samples_curr_lab = np.sum(mask) - 1
+        n_samples_curr_lab = n_samples_per_label[curr_label] - 1
         if n_samples_curr_lab != 0:
             intra_clust_dists[mask] = np.sum(
                 current_distances[:, mask], axis=1) / n_samples_curr_lab
+        else:
+            intra_clust_dists[mask] = 0
 
         # Now iterate over all other labels, finding the mean
         # cluster distance that is closest to every sample.
-        for other_label in unique_labels:
+        for other_label in range(len(unique_labels)):
             if other_label != curr_label:
                 other_mask = labels == other_label
                 other_distances = np.mean(
@@ -204,10 +208,10 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
                     inter_clust_dists[mask], other_distances)
 
     sil_samples = inter_clust_dists - intra_clust_dists
-    with np.errstate(divide="ignore", invalid="ignore"):
-        sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
-    # nan values are for clusters of size 1, and should be 0
-    return np.nan_to_num(sil_samples)
+    sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
+    # score 0 for clusters of size 1, according to the paper
+    sil_samples[n_samples_per_label.take(labels) == 1] = 0
+    return sil_samples
 
 
 def calinski_harabaz_score(X, labels):
