@@ -668,16 +668,6 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
-    Perform a one-hot encoding for y labels
-
-    >>> import numpy as np
-    >>> y = np.array([0, 1, 1, 0])
-    >>> mlb.fit_transform(y.reshape(-1, 1))
-    array([[1, 0],
-           [0, 1],
-           [0, 1],
-           [1, 0]])
-
     See also
     --------
     sklearn.preprocessing.OneHotEncoder : encode categorical integer features
