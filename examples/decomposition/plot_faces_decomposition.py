@@ -66,8 +66,9 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('Eigenfaces - RandomizedPCA',
-     decomposition.RandomizedPCA(n_components=n_components, whiten=True),
+    ('Eigenfaces - PCA with randomized SVD',
+     decomposition.PCA(n_components=n_components, svd_solver='randomized',
+                       whiten=True),
      True),
 
     ('Non-negative components - NMF',
