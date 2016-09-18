@@ -764,6 +764,7 @@ Kernels:
 
     manifold.locally_linear_embedding
     manifold.spectral_embedding
+    manifold.smacof
 
 
 .. _metrics_ref:
