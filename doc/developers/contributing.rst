@@ -14,6 +14,26 @@ adding new algorithms, and the best way to contribute and to help the project
 is to start working on known issues.
 See :ref:`easy_issues` to get started.
 
+.. topic:: **Our community, our values**
+
+    We are a community based on openness and friendly, didactic,
+    discussions.
+
+    We aspire to treat everybody equally, and value their contributions.
+
+    Decisions are made based on technical merit and consensus.
+
+    Code is not the only way to help the project. Reviewing pull
+    requests, answering questions to help others on mailing lists or
+    issues, organizing and teaching tutorials, working on the website,
+    improving the documentation, are all priceless contributions.
+
+    We abide by the principles of openness, respect, and consideration of
+    others of the Python Software Foundation:
+    https://www.python.org/psf/codeofconduct/
+
+|
+
 Submitting a bug report
 =======================
 
@@ -137,7 +157,10 @@ Contributing pull requests
 It is recommended to check that your contribution complies with the following
 rules before submitting a pull request:
 
-    * Follow the `coding-guidelines`_ (see below).
+    * Follow the `coding-guidelines`_ (see below). To make sure that
+      your PR does not add PEP8 violations you can run
+      `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+      Unix-like system.
 
     * When applicable, use the validation tools and other code in the
       ``sklearn.utils`` submodule.  A list of utility routines available
@@ -853,9 +876,9 @@ an integer called ``n_iter``.
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
-whether it is just for you or for contributing it to sklearn, there are several
-internals of scikit-learn that you should be aware of in addition to the
-sklearn API outlined above. You can check whether your estimator
+whether it is just for you or for contributing it to scikit-learn, there are
+several internals of scikit-learn that you should be aware of in addition to
+the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
 :func:`utils.estimator_checks.check_estimator` on the class::
 
@@ -911,7 +934,7 @@ E.g., below is a custom classifier. For more information on this example, see
 
 get_params and set_params
 -------------------------
-All sklearn estimator have ``get_params`` and ``set_params`` functions.
+All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
 It must take one keyword argument, ``deep``,

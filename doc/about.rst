@@ -5,6 +5,10 @@ About us
 
 .. include:: ../AUTHORS.rst
 
+.. seealso::
+
+   :ref:`How you can contribute to the project <contributing>`
+
 .. _citing-scikit-learn:
 
 Citing scikit-learn
@@ -13,31 +17,31 @@ Citing scikit-learn
 If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
- `Scikit-learn: Machine Learning in Python
- <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
- *et al.*, JMLR 12, pp. 2825-2830, 2011.
+  `Scikit-learn: Machine Learning in Python
+  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+  *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
- Bibtex entry::
+  Bibtex entry::
 
-   @article{scikit-learn,
-    title={Scikit-learn: Machine Learning in {P}ython},
-    author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
-            and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
-            and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
-            Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
-    journal={Journal of Machine Learning Research},
-    volume={12},
-    pages={2825--2830},
-    year={2011}
-   }
+    @article{scikit-learn,
+     title={Scikit-learn: Machine Learning in {P}ython},
+     author={Pedregosa, F. and Varoquaux, G. and Gramfort, A. and Michel, V.
+             and Thirion, B. and Grisel, O. and Blondel, M. and Prettenhofer, P.
+             and Weiss, R. and Dubourg, V. and Vanderplas, J. and Passos, A. and
+             Cournapeau, D. and Brucher, M. and Perrot, M. and Duchesnay, E.},
+     journal={Journal of Machine Learning Research},
+     volume={12},
+     pages={2825--2830},
+     year={2011}
+    }
 
 If you want to cite scikit-learn for its API or design, you may also want to consider the
 following paper:
 
-`API design for machine learning software: experiences from the scikit-learn
-project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  `API design for machine learning software: experiences from the scikit-learn
+  project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
 
-Bibtex entry::
+  Bibtex entry::
 
     @inproceedings{sklearn_api,
       author    = {Lars Buitinck and Gilles Louppe and Mathieu Blondel and
@@ -96,13 +100,15 @@ program.
 - 2007 - David Cournapeau
 - 2011 - `Vlad Niculae`_
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
-- 2013 - `Kemal Eren`_, Nicolas Trésegnie
+- 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
+- 2015 - `Raghav R V <https://github.com/raghavrv>`_, Wei Xue
+- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <http://yclin.me>`_
 
 It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
-<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
+<https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_.
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <http://www.debian.org>`_ packaging and contributions is supported by

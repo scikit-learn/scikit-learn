@@ -16,10 +16,10 @@ extends single output estimators to multioutput estimators.
 
 import numpy as np
 
-from abc import ABCMeta, abstractmethod
-from .base import BaseEstimator, clone, MetaEstimatorMixin
+from abc import ABCMeta
+from .base import BaseEstimator, clone
 from .base import RegressorMixin, ClassifierMixin
-from .utils import check_array, check_random_state, check_X_y
+from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .externals.joblib import Parallel, delayed
@@ -60,9 +60,11 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
+
         Returns
         -------
-        self
+        self : object
+            Returns self.
         """
 
         if not hasattr(self.estimator, "fit"):
@@ -145,8 +147,8 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         predicts the expected value of y, disregarding the input features,
         would get a R^2 score of 0.0.
 
-        Note
-        ----
+        Notes
+        -----
         R^2 is calculated by weighting all the targets equally using
         `multioutput='uniform_average'`.
 

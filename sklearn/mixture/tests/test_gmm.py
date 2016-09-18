@@ -1,9 +1,12 @@
-# These tests are those of the deprecated GMM class
-
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
 import unittest
 import copy
 import sys
-import warnings
 
 from nose.tools import assert_true
 import numpy as np
@@ -309,7 +312,7 @@ class GMMTester():
         with ignore_warnings(category=DeprecationWarning):
             g.fit(X)
             trainll = g.score(X)
-            if isinstance(g, mixture.DPGMM):
+            if isinstance(g, mixture.dpgmm._DPGMMBase):
                 self.assertTrue(np.sum(np.abs(trainll / 100)) < 5)
             else:
                 self.assertTrue(np.sum(np.abs(trainll / 100)) < 2)

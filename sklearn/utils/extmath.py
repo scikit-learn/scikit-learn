@@ -267,7 +267,7 @@ def randomized_range_finder(A, size, n_iter,
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
+def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
@@ -287,11 +287,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values.
 
-    n_iter: int (default is 4)
+    n_iter: int or 'auto' (default is 'auto')
         Number of power iterations. It can be used to deal with very noisy
-        problems. When `n_components` is small (< .1 * min(X.shape)) `n_iter`
-        is set to 7, unless the user specifies a higher number. This improves
-        precision with few components.
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
 
         .. versionchanged:: 0.18
 
@@ -349,25 +349,16 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=None,
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if n_iter is None:
+    if n_iter == 'auto':
         # Checks if the number of iterations is explicitely specified
-        n_iter = 4
-        n_iter_specified = False
-    else:
-        n_iter_specified = True
+        # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
+        n_iter = 7 if n_components < .1 * min(M.shape) else 4
 
     if transpose == 'auto':
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
-
-    # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
-    if n_components < .1 * min(M.shape) and n_iter < 7:
-        if n_iter_specified:
-            warnings.warn("The number of power iterations is increased to "
-                          "7 to achieve higher precision.")
-        n_iter = 7
 
     Q = randomized_range_finder(M, n_random, n_iter,
                                 power_iteration_normalizer, random_state)
@@ -851,3 +842,23 @@ def _deterministic_vector_sign_flip(u):
     signs = np.sign(u[range(u.shape[0]), max_abs_rows])
     u *= signs[:, np.newaxis]
     return u
+
+
+def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
+    """Use high precision for cumsum and check that final value matches sum
+
+    Parameters
+    ----------
+    arr : array-like
+        To be cumulatively summed as flat
+    rtol : float
+        Relative tolerance, see ``np.allclose``
+    atol : float
+        Absolute tolerance, see ``np.allclose``
+    """
+    out = np.cumsum(arr, dtype=np.float64)
+    expected = np.sum(arr, dtype=np.float64)
+    if not np.allclose(out[-1], expected, rtol=rtol, atol=atol):
+        raise RuntimeError('cumsum was found to be unstable: '
+                           'its last element does not correspond to sum')
+    return out

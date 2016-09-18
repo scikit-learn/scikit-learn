@@ -75,6 +75,12 @@ DEPRECATED_TRANSFORM = [
     "GradientBoostingClassifier", "GradientBoostingRegressor"]
 
 
+def _set_test_name(function, name):
+    function.description = ("sklearn.tests.test_common.{0}({1})".format(
+        function.__name__, name))
+    return function
+
+
 def _yield_non_meta_checks(name, Estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
@@ -220,7 +226,7 @@ def _yield_all_checks(name, Estimator):
 
 
 def check_estimator(Estimator):
-    """Check if estimator adheres to sklearn conventions.
+    """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
     shapes, etc.
@@ -829,6 +835,8 @@ def check_estimators_pickle(name, Estimator):
 
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
+    if Estimator.__module__.startswith('sklearn.'):
+        assert_true(b"version" in pickled_estimator)
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     for method in result:
@@ -886,7 +894,7 @@ def check_clustering(name, Alg):
     pred = alg.labels_
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
-    if name is 'SpectralClustering':
+    if name == 'SpectralClustering':
         # there is no way to make Spectral clustering deterministic :(
         return
     set_random_state(alg)
@@ -1528,6 +1536,9 @@ def check_get_params_invariance(name, estimator):
 
         def fit(self, X, y):
             return self
+
+        def transform(self, X):
+            return X
 
     if name in ('FeatureUnion', 'Pipeline'):
         e = estimator([('clf', T())])

@@ -31,7 +31,7 @@ needs to be preprocessed in order to be used by scikit-learn.
 
 .. topic:: An example of reshaping data would be the digits dataset
 
-    .. image:: ../../auto_examples/datasets/images/plot_digits_last_image_001.png
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
         :target: ../../auto_examples/datasets/plot_digits_last_image.html
         :align: right
         :scale: 60

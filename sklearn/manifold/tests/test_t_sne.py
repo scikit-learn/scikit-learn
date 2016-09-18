@@ -7,6 +7,7 @@ from sklearn.neighbors import BallTree
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
@@ -196,10 +197,13 @@ def test_gradient():
 
     P = _joint_probabilities(distances, desired_perplexity=25.0,
                              verbose=0)
-    fun = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                        n_components)[0]
-    grad = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                         n_components)[1]
+
+    def fun(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[0]
+
+    def grad(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
+
     assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0,
                         decimal=5)
 
@@ -305,9 +309,23 @@ def test_non_square_precomputed_distances():
 
 
 def test_init_not_available():
-    # 'init' must be 'pca' or 'random'.
-    m = "'init' must be 'pca', 'random' or a NumPy array"
+    # 'init' must be 'pca', 'random', or numpy array.
+    m = "'init' must be 'pca', 'random', or a numpy array"
     assert_raises_regexp(ValueError, m, TSNE, init="not available")
+
+
+def test_init_ndarray():
+    # Initialize TSNE with ndarray and test fit
+    tsne = TSNE(init=np.zeros((100, 2)))
+    X_embedded = tsne.fit_transform(np.ones((100, 5)))
+    assert_array_equal(np.zeros((100, 2)), X_embedded)
+
+
+def test_init_ndarray_precomputed():
+    # Initialize TSNE with ndarray and metric 'precomputed'
+    # Make sure no FutureWarning is thrown from _fit
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne.fit(np.zeros((100, 100)))
 
 
 def test_distance_not_available():

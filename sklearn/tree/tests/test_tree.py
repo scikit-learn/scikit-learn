@@ -4,7 +4,7 @@ Testing for the tree module (sklearn.tree).
 import pickle
 from functools import partial
 from itertools import product
-import platform
+import struct
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -41,7 +41,6 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree.tree import SPARSE_SPLITTERS
 from sklearn.tree._tree import TREE_LEAF
 from sklearn import datasets
 
@@ -1122,7 +1121,7 @@ def test_realloc():
 
 
 def test_huge_allocations():
-    n_bits = int(platform.architecture()[0].rstrip('bit'))
+    n_bits = 8 * struct.calcsize("P")
 
     X = np.random.randn(10, 2)
     y = np.random.randint(0, 2, 10)

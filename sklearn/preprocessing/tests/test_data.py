@@ -202,7 +202,7 @@ def test_scale_1d():
 
 @skip_if_32bit
 def test_standard_scaler_numerical_stability():
-    """Test numerical stability of scaling"""
+    # Test numerical stability of scaling
     # np.log(1e-5) is taken because of its floating point representation
     # was empirically found to cause numerical problems with np.mean & np.std.
 
@@ -802,7 +802,7 @@ def test_scale_input_finiteness_validation():
 
 
 def test_robust_scaler_2d_arrays():
-    """Test robust scaling of 2d array along first axis"""
+    # Test robust scaling of 2d array along first axis
     rng = np.random.RandomState(0)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
@@ -838,6 +838,32 @@ def test_robust_scaler_iris():
     q = np.percentile(X_trans, q=(25, 75), axis=0)
     iqr = q[1] - q[0]
     assert_array_almost_equal(iqr, 1)
+
+
+def test_robust_scaler_iris_quantiles():
+    X = iris.data
+    scaler = RobustScaler(quantile_range=(10, 90))
+    X_trans = scaler.fit_transform(X)
+    assert_array_almost_equal(np.median(X_trans, axis=0), 0)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    q = np.percentile(X_trans, q=(10, 90), axis=0)
+    q_range = q[1] - q[0]
+    assert_array_almost_equal(q_range, 1)
+
+
+def test_robust_scaler_invalid_range():
+    for range_ in [
+        (-1, 90),
+        (-2, -3),
+        (10, 101),
+        (100.5, 101),
+        (90, 50),
+    ]:
+        scaler = RobustScaler(quantile_range=range_)
+
+        assert_raises_regex(ValueError, 'Invalid quantile range: \(',
+                            scaler.fit, iris.data)
 
 
 def test_scale_function_without_centering():
@@ -884,7 +910,7 @@ def test_robust_scale_axis1():
 
 
 def test_robust_scaler_zero_variance_features():
-    """Check RobustScaler on toy data with zero variance features"""
+    # Check RobustScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.1],
          [0., 1., +1.1]]
@@ -917,7 +943,7 @@ def test_robust_scaler_zero_variance_features():
 
 
 def test_maxabs_scaler_zero_variance_features():
-    """Check MaxAbsScaler on toy data with zero variance features"""
+    # Check MaxAbsScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
          [0., 1., -0.3],
          [0., 1., +1.5],
@@ -1374,9 +1400,9 @@ def test_center_kernel():
 
 
 def test_cv_pipeline_precomputed():
-    """Cross-validate a regression on four coplanar points with the same
-    value. Use precomputed kernel to ensure Pipeline with KernelCenterer
-    is treated as a _pairwise operation."""
+    # Cross-validate a regression on four coplanar points with the same
+    # value. Use precomputed kernel to ensure Pipeline with KernelCenterer
+    # is treated as a _pairwise operation.
     X = np.array([[3, 0, 0], [0, 3, 0], [0, 0, 3], [1, 1, 1]])
     y_true = np.ones((4,))
     K = X.dot(X.T)
@@ -1533,6 +1559,23 @@ def test_transform_selected():
 
     _check_transform_selected(X, X, [])
     _check_transform_selected(X, X, [False, False, False])
+
+
+def test_transform_selected_copy_arg():
+    # transformer that alters X
+    def _mutating_transformer(X):
+        X[0, 0] = X[0, 0] + 1
+        return X
+
+    original_X = np.asarray([[1, 2], [3, 4]])
+    expected_Xtr = [[2, 2], [3, 4]]
+
+    X = original_X.copy()
+    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
+                              selected='all')
+
+    assert_array_equal(toarray(X), toarray(original_X))
+    assert_array_equal(toarray(Xtr), expected_Xtr)
 
 
 def _run_one_hot(X, X2, cat):

@@ -54,6 +54,11 @@ from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_raises
 from nose.tools import raises
+try:
+    from nose.tools import assert_dict_equal
+except ImportError:
+    # Not in old versions of nose, but is only for formatting anyway
+    assert_dict_equal = assert_equal
 from nose import SkipTest
 from nose import with_setup
 
@@ -276,8 +281,9 @@ def assert_no_warnings(func, *args, **kw):
                  if e.category is not np.VisibleDeprecationWarning]
 
         if len(w) > 0:
-            raise AssertionError("Got warnings when calling %s: %s"
-                                 % (func.__name__, w))
+            raise AssertionError("Got warnings when calling %s: [%s]"
+                                 % (func.__name__,
+                                    ', '.join(str(warning) for warning in w)))
     return result
 
 
