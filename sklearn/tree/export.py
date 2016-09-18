@@ -62,8 +62,10 @@ def _color_brew(n):
 
 
 class Sentinel:
-    __repr__ = lambda x: '"tree.dot"'
+    def __repr__():
+        return '"tree.dot"'
 SENTINEL = Sentinel()
+
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
