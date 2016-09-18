@@ -4,6 +4,7 @@ import nose
 import numpy as np
 
 from sklearn.semi_supervised import label_propagation
+from scipy.sparse import dok_matrix
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
@@ -18,6 +19,13 @@ ESTIMATORS = [
 
 def test_fit_transduction():
     samples = [[1., 0.], [0., 2.], [1., 3.]]
+    labels = [0, 1, -1]
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(**parameters).fit(samples, labels)
+        nose.tools.assert_equal(clf.transduction_[2], 1)
+
+def test_fit_transduction_sparse():
+    samples = dok_matrix([[1., 0.], [0., 2.], [1., 3.]])
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)

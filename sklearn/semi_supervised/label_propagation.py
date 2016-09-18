@@ -66,6 +66,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.graph import graph_laplacian
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..preprocessing import normalize
 
 
 # Helper functions
@@ -81,9 +82,10 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'precomputed'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported.
+        If 'precomputed' is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
         Parameter for rbf kernel
@@ -139,6 +141,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                                                     mode='connectivity')
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
+        elif self.kernel == 'precomputed':
+            return X
         else:
             raise ValueError("%s is not a valid kernel. Only rbf and knn"
                              " are supported at this time" % self.kernel)
@@ -191,9 +195,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
                 probabilities.append(ine)
             probabilities = np.array(probabilities)
-        else:
+        elif self.kernel == 'rbf':
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
+        elif self.kernel == 'precomputed':
+            raise NotImplementedError("Currently not implemented for kernel='precomputed' scheme")
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -218,7 +224,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, accept_sparse='csr')
         self.X_ = X
         check_classification_targets(y)
 
@@ -263,12 +269,19 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 clamp_weights, self.label_distributions_) + y_static
             remaining_iter -= 1
 
+        # Normalise label distributions and replace NaN with 0
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
-        # set the transduction item
-        transduction = self.classes_[np.argmax(self.label_distributions_,
-                                               axis=1)]
-        self.transduction_ = transduction.ravel()
+        self.label_distributions_[np.isnan(self.label_distributions_)] = 0
+
+        # Obtain predictions and probability
+        label_max_arg = np.argmax(self.label_distributions_, axis=1)
+        self.transduction_ = self.classes_[label_max_arg].ravel()
+        self.transduction_prob_ = np.choose(label_max_arg, self.label_distributions_.T)
+
+        # Samples with 0 probability remain unclassified
+        self.transduction_[self.transduction_prob_ == 0] = -1
+
         self.n_iter_ = self.max_iter - remaining_iter
         return self
 
@@ -280,9 +293,10 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'precomputed'}
         String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+        Only 'rbf' and 'knn' kernels are currently supported.
+        If 'precomputed' is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
         Parameter for rbf kernel
@@ -313,6 +327,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    transduction_prob_ : array, shape = [n_samples]
+        Probability of label assigned to each item via the transduction.
 
     n_iter_ : int
         Number of iterations run.
@@ -351,11 +368,7 @@ class LabelPropagation(BaseLabelPropagation):
         if self.kernel == 'knn':
             self.nn_fit = None
         affinity_matrix = self._get_kernel(self.X_)
-        normalizer = affinity_matrix.sum(axis=0)
-        if sparse.isspmatrix(affinity_matrix):
-            affinity_matrix.data /= np.diag(np.array(normalizer))
-        else:
-            affinity_matrix /= normalizer[:, np.newaxis]
+        affinity_matrix = normalize(affinity_matrix, norm='l1', axis=1)
         return affinity_matrix
 
 
@@ -370,9 +383,10 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
+    kernel : {'knn', 'rbf', 'precomputed'}
         String identifier for kernel function to use.
         Only 'rbf' and 'knn' kernels are currently supported.
+        If 'precomputed' is specified no kernel function is used and X is assumed to be an affinity/adjacent matrix of a Graph
 
     gamma : float
       parameter for rbf kernel
@@ -407,6 +421,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     transduction_ : array, shape = [n_samples]
         Label assigned to each item via the transduction.
+
+    transduction_prob_ : array, shape = [n_samples]
+        Probability of label assigned to each item via the transduction.
 
     n_iter_ : int
         Number of iterations run.
