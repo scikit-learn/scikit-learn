@@ -244,7 +244,7 @@ with::
 .. note::
 
     ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
-    instead of filenames, more information on persistence in Joblib is
+    instead of filenames. More information on data persistence with Joblib is
     available `here <https://pythonhosted.org/joblib/persistence.html>`_.
 
 Note that pickle has some security and maintainability issues. Please refer to
