@@ -70,7 +70,7 @@ titles = ['SVC with linear kernel',
 
 for i, clf in enumerate((svc, lin_svc, rbf_svc, poly_svc)):
     # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
     plt.subplot(2, 2, i + 1)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)
 

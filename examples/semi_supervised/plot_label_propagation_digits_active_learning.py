@@ -18,7 +18,7 @@ model with their true labels.
 print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt

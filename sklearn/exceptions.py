@@ -47,7 +47,7 @@ class DataConversionWarning(UserWarning):
     This warning occurs when some input data needs to be converted or
     interpreted in a way that may not match the user's expectations.
 
-    For example, this warning may occur when the the user
+    For example, this warning may occur when the user
         - passes an integer array to a function which expects float input and
           will convert the input
         - requests a non-copying operation, but a copy is required to meet the
@@ -60,7 +60,7 @@ class DataDimensionalityWarning(UserWarning):
     """Custom warning to notify potential issues with data dimensionality.
 
     For example, in random projection, this warning is raised when the
-    number of components, which quantifes the dimensionality of the target
+    number of components, which quantifies the dimensionality of the target
     projection space, is higher than the number of features, which quantifies
     the dimensionality of the original source space, to imply that the
     dimensionality of the problem will not be reduced.

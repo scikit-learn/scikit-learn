@@ -47,13 +47,13 @@ def test_linkage_misc():
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
 
-    # test hiearchical clustering on a precomputed distances matrix
+    # test hierarchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
 
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
-    # test hiearchical clustering on a precomputed distances matrix
+    # test hierarchical clustering on a precomputed distances matrix
     res = linkage_tree(X, affinity=manhattan_distances)
     assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
 

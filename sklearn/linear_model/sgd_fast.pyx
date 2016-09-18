@@ -7,7 +7,7 @@
 #         Rob Zinkov (passive-aggressive)
 #         Lars Buitinck
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 
 import numpy as np
@@ -167,7 +167,7 @@ cdef class Hinge(Classification):
         return Hinge, (self.threshold,)
 
 
-cdef class SquaredHinge(LossFunction):
+cdef class SquaredHinge(Classification):
     """Squared Hinge loss for binary classification tasks with y in {-1,1}
 
     Parameters
@@ -242,7 +242,7 @@ cdef class Huber(Regression):
     Variant of the SquaredLoss that is robust to outliers (quadratic near zero,
     linear in for large errors).
 
-    http://en.wikipedia.org/wiki/Huber_Loss_Function
+    https://en.wikipedia.org/wiki/Huber_Loss_Function
     """
 
     cdef double c
@@ -319,7 +319,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
         z = y - p
         if z > self.epsilon:
             return -2 * (z - self.epsilon)
-        elif z < self.epsilon:
+        elif z < -self.epsilon:
             return 2 * (-z - self.epsilon)
         else:
             return 0
@@ -482,8 +482,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         (1) constant, eta = eta0
         (2) optimal, eta = 1.0/(alpha * t).
         (3) inverse scaling, eta = eta0 / pow(t, power_t)
-        (4) Passive Agressive-I, eta = min(alpha, loss/norm(x))
-        (5) Passive Agressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
+        (4) Passive Aggressive-I, eta = min(alpha, loss/norm(x))
+        (5) Passive Aggressive-II, eta = 1.0 / (norm(x) + 0.5*alpha)
     eta0 : double
         The initial learning rate.
     power_t : double
@@ -503,9 +503,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     intercept : float
         The fitted intercept term.
     average_weights : array shape=[n_features]
-        The averaged weights accross iterations
+        The averaged weights across iterations
     average_intercept : float
-        The averaged intercept accross iterations
+        The averaged intercept across iterations
     """
     return _plain_sgd(weights,
                       intercept,
@@ -603,11 +603,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if shuffle:
                 dataset.shuffle(seed)
             for i in range(n_samples):
-                dataset.next(&x_data_ptr,
-                             &x_ind_ptr,
-                             &xnnz,
-                             &y,
-                             &sample_weight)
+                dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
+                             &y, &sample_weight)
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:

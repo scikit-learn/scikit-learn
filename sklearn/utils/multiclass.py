@@ -330,7 +330,7 @@ def class_distribution(y, sample_weight=None):
     classes : list of size n_outputs of arrays of size (n_classes,)
         List of classes for each column.
 
-    n_classes : list of integrs of size n_outputs
+    n_classes : list of integers of size n_outputs
         Number of classes in each column
 
     class_prior : list of size n_outputs of arrays of size (n_classes,)
@@ -362,12 +362,12 @@ def class_distribution(y, sample_weight=None):
                                        return_inverse=True)
             class_prior_k = bincount(y_k, weights=nz_samp_weight)
 
-            # An explicit zero was found, combine its wieght with the wieght
+            # An explicit zero was found, combine its weight with the weight
             # of the implicit zeros
             if 0 in classes_k:
                 class_prior_k[classes_k == 0] += zeros_samp_weight_sum
 
-            # If an there is an implict zero and it is not in classes and
+            # If an there is an implicit zero and it is not in classes and
             # class_prior, make an entry for it
             if 0 not in classes_k and y_nnz[k] < y.shape[0]:
                 classes_k = np.insert(classes_k, 0, 0)

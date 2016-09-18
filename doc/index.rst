@@ -205,11 +205,13 @@
                     <h4>News</h4>
                     <ul>
                     <li><em>On-going development:</em>
-                    <a href="whats_new.html"><em>What's new</em> (changelog)</a>
+                    <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
-                    <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html#version-0-17">Changelog</a>).
                     </li>
-                    <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html#version-0-16">Changelog</a>).
+                    </li>
+                    <li><em>July 2014.</em> scikit-learn 0.15.0 is available for download (<a href="whats_new.html#version-0-15">Changelog</a>).
                     </li>
                     <li><em>July 14-20th, 2014: international sprint.</em>
                     During this week-long sprint, we gathered 18 of the core
@@ -223,7 +225,7 @@
                     <a href="http://www.inria.fr/">Inria</a>,
                     and <a href="http://www.tinyclues.com/">tinyclues</a>.
                     </li>
-                    <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
+                    <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html#version-0-14">Changelog</a>).
                     </li>
                     </ul>
                 </div>
@@ -232,10 +234,10 @@
                 <div class="span4">
                     <h4>Community</h4>
                     <ul>
-                    <li><em>About us</em> See <a href="about.html#people">authors</a></li>
+                    <li><em>About us</em> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
                     <li><em>More Machine Learning</em> Find <a href="related_projects.html">related projects</a></li>
-                    <li><em>Questions?</em> See <a href="faq/">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
-                    <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
+                    <li><em>Questions?</em> See <a href="faq.html">FAQ</a> and <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
+                    <li><em>Mailing list:</em> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
                     <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
                     </ul>
 
@@ -315,19 +317,20 @@
         <div class="container index-upper" >
         <div class="row-fluid">
           <div class="footer">
-              <div class="span4">
-                Generous funding provided by INRIA, Google and others.
+              <div class="span3">
+                Funding provided by INRIA and others.
               </div>
-              <div class="span4">
+              <div class="span6">
                  <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
                        <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
                    <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
                    <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
                    <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
+                   <img id="index-funding-logo-small" src="_static/img/nyu_short_color.png" title="NYU CDS">
                  </a>
              </div>
-             <div class="span4">
+             <div class="span3">
                 <a class="reference internal" href="about.html#funding">
                    More information on our contributors
                 </a>

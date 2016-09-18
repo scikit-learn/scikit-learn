@@ -12,7 +12,7 @@ the lower the better
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
 #          Jochen Wersdorfer <jochen@wersdoerfer.de>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
@@ -390,11 +390,12 @@ def r2_score(y_true, y_pred,
     sample_weight : array-like of shape = (n_samples), optional
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average',
-                'variance_weighted'] or None or array-like of shape (n_outputs)
+    multioutput : string in ['raw_values', 'uniform_average', \
+'variance_weighted'] or None or array-like of shape (n_outputs)
+
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
-        Default value correponds to 'variance_weighted', this behaviour is
+        Default value corresponds to 'variance_weighted', this behaviour is
         deprecated since version 0.17 and will be changed to 'uniform_average'
         starting from 0.19.
 
@@ -424,7 +425,7 @@ def r2_score(y_true, y_pred,
     References
     ----------
     .. [1] `Wikipedia entry on the Coefficient of determination
-            <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
+            <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_
 
     Examples
     --------

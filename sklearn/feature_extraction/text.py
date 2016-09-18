@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Roman Sinayev <roman.sinayev@gmail.com>
@@ -55,8 +55,11 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    return ''.join([c for c in unicodedata.normalize('NFKD', s)
-                    if not unicodedata.combining(c)])
+    normalized = unicodedata.normalize('NFKD', s)
+    if normalized == s:
+        return s
+    else:
+        return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
 def strip_accents_ascii(s):
@@ -276,12 +279,6 @@ class VectorizerMixin(object):
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
-
-    @property
-    @deprecated("The `fixed_vocabulary` attribute is deprecated and will be "
-                "removed in 0.18.  Please use `fixed_vocabulary_` instead.")
-    def fixed_vocabulary(self):
-        return self.fixed_vocabulary_
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
@@ -550,7 +547,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
-        Only applies if ``analyzer == 'word'``.
 
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
@@ -668,7 +664,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_df = max_df
         self.min_df = min_df
         if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df of min_df")
+            raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
@@ -689,9 +685,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         sorted_features = sorted(six.iteritems(vocabulary))
         map_index = np.empty(len(sorted_features), dtype=np.int32)
         for new_val, (term, old_val) in enumerate(sorted_features):
-            map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return X[:, map_index]
+            map_index[old_val] = new_val
+
+        X.indices = map_index.take(X.indices, mode='clip')
+        return X
 
     def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
@@ -745,16 +743,25 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
+        j_indices = []
         indptr = _make_int_array()
+        values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
+            feature_counter = {}
             for feature in analyze(doc):
                 try:
-                    j_indices.append(vocabulary[feature])
+                    feature_idx = vocabulary[feature]
+                    if feature_idx not in feature_counter:
+                        feature_counter[feature_idx] = 1
+                    else:
+                        feature_counter[feature_idx] += 1
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
+
+            j_indices.extend(feature_counter.keys())
+            values.extend(feature_counter.values())
             indptr.append(len(j_indices))
 
         if not fixed_vocab:
@@ -764,14 +771,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = frombuffer_empty(j_indices, dtype=np.intc)
+        j_indices = np.asarray(j_indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+        values = frombuffer_empty(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
-        X.sum_duplicates()
+        X.sort_indices()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
@@ -924,15 +931,32 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    The actual formula used for tf-idf is tf * (idf + 1) = tf + tf * idf,
-    instead of tf * idf. The effect of this is that terms with zero idf, i.e.
-    that occur in all documents of a training set, will not be entirely
-    ignored. The formulas used to compute tf and idf depend on parameter
-    settings that correspond to the SMART notation used in IR, as follows:
+    The formula that is used to compute the tf-idf of term t is
+    tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
+    idf(d, t) = log [ n / df(d, t) ] + 1 (if ``smooth_idf=False``),
+    where n is the total number of documents and df(d, t) is the
+    document frequency; the document frequency is the number of documents d
+    that contain term t. The effect of adding "1" to the idf in the equation
+    above is that terms with zero idf, i.e., terms  that occur in all documents
+    in a training set, will not be entirely ignored.
+    (Note that the idf formula above differs from the standard
+    textbook notation that defines the idf as
+    idf(d, t) = log [ n / (df(d, t) + 1) ]).
 
-    Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
+    If ``smooth_idf=True`` (the default), the constant "1" is added to the
+    numerator and denominator of the idf as if an extra document was seen
+    containing every term in the collection exactly once, which prevents
+    zero divisions: idf(d, t) = log [ (1 + n) / 1 + df(d, t) ] + 1.
+
+    Furthermore, the formulas used to compute tf and idf depend
+    on parameter settings that correspond to the SMART notation used in IR
+    as follows:
+
+    Tf is "n" (natural) by default, "l" (logarithmic) when
+    ``sublinear_tf=True``.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
-    Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
+    Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
+    when ``norm=None``.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -958,7 +982,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.`
     """
@@ -991,8 +1015,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf,
-                                        diags=0, m=n_features, n=n_features)
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+                                        n=n_features, format='csr')
 
         return self
 
@@ -1179,6 +1203,9 @@ class TfidfVectorizer(CountVectorizer):
 
     Attributes
     ----------
+    vocabulary_ : dict
+        A mapping of terms to feature indices.
+
     idf_ : array, shape = [n_features], or None
         The learned idf vector (global term weights)
         when ``use_idf`` is set to True, None otherwise.

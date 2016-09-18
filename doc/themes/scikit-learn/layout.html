@@ -12,7 +12,6 @@
     :license: BSD
 #}
 {% extends "basic/layout.html" %}
-{% set css_files = css_files + ["_static/gallery.css"] %}
 
 {% block htmltitle %}
   {{ super() }}
@@ -38,6 +37,14 @@
            $(this).css('background-color', '#A7D6E2');
        }
     );
+    function showMenu() {
+      var topNav = document.getElementById("scikit-navbar");
+      if (topNav.className === "navbar") {
+          topNav.className += " responsive";
+      } else {
+          topNav.className = "navbar";
+      }
+    };
   </script>
 {% endblock %}
 
@@ -61,7 +68,7 @@
         {%- endif %}
 
         {%- block navbar -%}
-        <div class="navbar">
+        <div class="navbar" id="scikit-navbar">
             <ul>
                 <li><a href="{{pathto('index')}}">Home</a></li>
                 <li><a href="{{pathto('install')}}">Installation</a></li>
@@ -71,14 +78,15 @@
                  <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-            <li class="link-title">Scikit-learn 0.17 (development)</li>
+            <li class="link-title">Scikit-learn 0.18 (development)</li>
             <li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
             <li><a href="{{ pathto('user_guide') }}">User guide</a></li>
             <li><a href="{{ pathto('modules/classes') }}">API</a></li>
             <li><a href="{{ pathto('faq') }}">FAQ</a></li>
-            <li><a href="{{ pathto('developers') }}">Contributing</a></li>
+            <li><a href="{{ pathto('developers/contributing') }}">Contributing</a></li>
             <li class="divider"></li>
-                <li><a href="http://scikit-learn.org/stable/documentation.html">Scikit-learn 0.16.1 (stable)</a></li>
+                <li><a href="http://scikit-learn.org/stable/documentation.html">Scikit-learn 0.17 (stable)</a></li>
+                <li><a href="http://scikit-learn.org/0.16/documentation.html">Scikit-learn 0.16</a></li>
                 <li><a href="http://scikit-learn.org/0.15/documentation.html">Scikit-learn 0.15</a></li>
 				<li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
               </ul>
@@ -86,7 +94,13 @@
         </li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             </ul>
-
+            <a href="javascript:void(0);" onclick="showMenu()">
+                <div class="nav-icon">
+                    <div class="hamburger-line"></div>
+                    <div class="hamburger-line"></div>
+                    <div class="hamburger-line"></div>
+                </div>
+            </a>
             <div class="search_form">
                 <div id="cse" style="width: 100%;"></div>
             </div>
@@ -122,46 +136,46 @@
 		<!-- Carousel items -->
 		<div class="carousel-inner">
 		  <div class="active item">
-		    <a href="{{ pathto('auto_examples/classification/plot_classifier_comparison') }}">
+		    <a href="{{pathto('auto_examples/classification/plot_classifier_comparison') }}">
 		      <div class="crop-wrapper" style="width: 380px; height: 190px; overflow: hidden">
-			<img src="_images/plot_classifier_comparison_carousel.png"
+			<img src="_images/sphx_glr_plot_classifier_comparison_001_carousel.png"
 			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
 		  </div>
 		  <div class="item">
-		    <a href="auto_examples/covariance/plot_outlier_detection.html">
-		      <img src="_images/plot_outlier_detection_carousel.png"></a>
+		    <a href="{{pathto('auto_examples/covariance/plot_outlier_detection.html') }}">
+		      <img src="_images/sphx_glr_plot_outlier_detection_003_carousel.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{pathto('auto_examples/neighbors/plot_species_kde') }}">
-		      <img src="_images/plot_species_kde.png"></a>
+		      <img src="_images/sphx_glr_plot_species_kde_thumb.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{pathto('auto_examples/linear_model/plot_lasso_lars') }}">
-		      <img src="_images/plot_lasso_lars.png"></a>
+		      <img src="_images/sphx_glr_plot_lasso_lars_thumb.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
-		      <img src="_images/plot_cluster_comparison.png"></a>
+		      <img src="_images/sphx_glr_plot_cluster_comparison_thumb.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/ensemble/plot_adaboost_twoclass') }}">
-		      <img src="_images/plot_adaboost_twoclass_carousel.png"></a>
+		      <img src="_images/sphx_glr_plot_adaboost_twoclass_001_carousel.png"></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{pathto('auto_examples/gaussian_process/plot_gp_regression') }}">
-		      <img src="_images/plot_gp_regression_carousel.png"></a>
+		    <a href="{{pathto('auto_examples/gaussian_process/plot_gpr_co2') }}">
+		      <img src="_images/sphx_glr_plot_gpr_co2_001_carousel.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/manifold/plot_compare_methods') }}">
-		      <img src="_images/plot_compare_methods_carousel.png"></a>
+		      <img src="_images/sphx_glr_plot_compare_methods_001_carousel.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/mixture/plot_gmm_pdf') }}">
-		      <img src="_images/plot_gmm_pdf.png"></a>
+		      <img src="_images/sphx_glr_plot_gmm_pdf_thumb.png"></a>
 		  </div>
 		  <div class="item">
-		    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
-		      <img src="_images/plot_lena_ward_segmentation.png"></a>
+		    <a href="{{ pathto('auto_examples/cluster/plot_face_ward_segmentation') }}">
+		      <img src="_images/sphx_glr_plot_face_ward_segmentation_thumb.png"></a>
 		  </div>
 		</div>
 		<!-- Carousel nav -->

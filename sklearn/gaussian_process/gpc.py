@@ -708,7 +708,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         else:
             if eval_gradient:
                 raise NotImplementedError(
-                    "Gradient of log-marginal-likelhood not implemented for "
+                    "Gradient of log-marginal-likelihood not implemented for "
                     "multi-class GPC.")
             estimators = self.base_estimator_.estimators_
             n_dims = estimators[0].kernel_.n_dims

@@ -117,11 +117,9 @@ datasets = ['low rank matrix', 'lfw_people', 'olivetti_faces', '20newsgroups',
 big_sparse_datasets = ['big sparse matrix', 'rcv1']
 
 
-def unpickle(file):
-    fo = open(file, 'rb')
-    dict = pickle.load(fo, encoding='latin1')
-    fo.close()
-    return dict['data']
+def unpickle(file_name):
+    with open(file_name, 'rb') as fo:
+        return pickle.load(fo, encoding='latin1')["data"]
 
 
 def handle_missing_dataset(file_folder):
@@ -375,7 +373,7 @@ def bench_b(power_list):
     if enable_spectral_norm:
         title = "%s: spectral norm diff vs n power iteration" % (dataset_name)
         plot_power_iter_vs_s(power_iter, all_spectral, title)
-    title = "%s: frobenius norm diff vs n power iteration" % (dataset_name)
+    title = "%s: Frobenius norm diff vs n power iteration" % (dataset_name)
     plot_power_iter_vs_s(power_iter, all_frobenius, title)
 
 

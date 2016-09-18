@@ -1,7 +1,7 @@
 """Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
 """
 
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
@@ -82,9 +82,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     >>> from sklearn.decomposition import TruncatedSVD
     >>> from sklearn.random_projection import sparse_random_matrix
     >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
-    >>> svd = TruncatedSVD(n_components=5, random_state=42)
+    >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=5,
+    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
     >>> print(svd.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.0782... 0.0552... 0.0544... 0.0499... 0.0413...]
@@ -176,7 +176,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         self.components_ = VT
 
         # Calculate explained variance & explained variance ratio
-        X_transformed = np.dot(U, np.diag(Sigma))
+        X_transformed = U * Sigma
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
             _, full_var = mean_variance_axis(X, axis=0)

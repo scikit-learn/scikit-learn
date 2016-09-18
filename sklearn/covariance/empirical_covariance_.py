@@ -251,7 +251,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented")
-        # optionaly scale the error norm
+        # optionally scale the error norm
         if scaling:
             squared_norm = squared_norm / error.shape[0]
         # finally get either the squared norm or the norm

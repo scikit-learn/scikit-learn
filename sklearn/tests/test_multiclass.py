@@ -14,6 +14,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
@@ -70,6 +71,33 @@ def test_ovr_fit_predict():
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_partial_fit():
+    # Test if partial_fit is working as intented
+    X, y = shuffle(iris.data, iris.target, random_state=0)
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:100], y[:100], np.unique(y))
+    ovr.partial_fit(X[100:], y[100:])
+    pred = ovr.predict(X)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(X, y).predict(X)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred), 0.65)
+
+    # Test when mini batches doesn't have all classes
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
+    ovr.partial_fit(iris.data[60:], iris.target[60:])
+    pred = ovr.predict(iris.data)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
@@ -409,8 +437,9 @@ def test_ovo_fit_on_list():
     # same output as predict from an array
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
-    prediction_from_list = ovo.fit(iris.data,
-                                   list(iris.target)).predict(iris.data)
+    iris_data_list = [list(a) for a in iris.data]
+    prediction_from_list = ovo.fit(iris_data_list,
+                                   list(iris.target)).predict(iris_data_list)
     assert_array_equal(prediction_from_array, prediction_from_list)
 
 
@@ -424,6 +453,33 @@ def test_ovo_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
+
+
+def test_ovo_partial_fit_predict():
+    X, y = shuffle(iris.data, iris.target)
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(X[:100], y[:100], np.unique(y))
+    ovo1.partial_fit(X[100:], y[100:])
+    pred1 = ovo1.predict(X)
+
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    ovo2.fit(X, y)
+    pred2 = ovo2.predict(X)
+    assert_equal(len(ovo1.estimators_), n_classes * (n_classes - 1) / 2)
+    assert_greater(np.mean(y == pred1), 0.65)
+    assert_almost_equal(pred1, pred2)
+
+    # Test when mini-batches don't have all target classes
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
+    ovo1.partial_fit(iris.data[60:], iris.target[60:])
+    pred1 = ovo1.predict(iris.data)
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    pred2 = ovo2.fit(iris.data, iris.target).predict(iris.data)
+
+    assert_almost_equal(pred1, pred2)
+    assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
+    assert_greater(np.mean(iris.target == pred1), 0.65)
 
 
 def test_ovo_decision_function():

@@ -1,13 +1,22 @@
-""" Unsupervised evaluation metrics. """
+"""Unsupervised evaluation metrics."""
 
 # Authors: Robert Layton <robertlayton@gmail.com>
-#
+#          Arnaud Fouchet <foucheta@gmail.com>
+#          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
 
 from ...utils import check_random_state
+from ...utils import check_X_y
 from ..pairwise import pairwise_distances
+from ...preprocessing import LabelEncoder
+
+
+def check_number_of_labels(n_labels, n_samples):
+    if not 1 < n_labels < n_samples:
+        raise ValueError("Number of labels is %d. Valid values are 2 "
+                         "to n_samples - 1 (inclusive)" % n_labels)
 
 
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
@@ -48,12 +57,12 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         array itself, use ``metric="precomputed"``.
 
     sample_size : int or None
-        The size of the sample to use when computing the Silhouette Coefficient 
-        on a random subset of the data. 
+        The size of the sample to use when computing the Silhouette Coefficient
+        on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
     random_state : integer or numpy.RandomState, optional
-        The generator used to randomly select a subset of samples if 
+        The generator used to randomly select a subset of samples if
         ``sample_size is not None``. If an integer is given, it fixes the seed.
         Defaults to the global numpy random number generator.
 
@@ -76,14 +85,16 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
        <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
-           <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+           <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    n_labels = len(np.unique(labels))
+    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+    n_labels = len(le.classes_)
     n_samples = X.shape[0]
-    if not 1 < n_labels < n_samples:
-        raise ValueError("Number of labels is %d. Valid values are 2 "
-                         "to n_samples - 1 (inclusive)" % n_labels)
+
+    check_number_of_labels(n_labels, n_samples)
 
     if sample_size is not None:
         random_state = check_random_state(random_state)
@@ -152,69 +163,96 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
-       <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
+       <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+
     distances = pairwise_distances(X, metric=metric, **kwds)
-    n = labels.shape[0]
-    A = np.array([_intra_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    sil_samples = (B - A) / np.maximum(A, B)
+    unique_labels = le.classes_
+
+    # For sample i, store the mean distance of the cluster to which
+    # it belongs in intra_clust_dists[i]
+    intra_clust_dists = np.ones(distances.shape[0], dtype=distances.dtype)
+
+    # For sample i, store the mean distance of the second closest
+    # cluster in inter_clust_dists[i]
+    inter_clust_dists = np.inf * intra_clust_dists
+
+    for curr_label in unique_labels:
+
+        # Find inter_clust_dist for all samples belonging to the same
+        # label.
+        mask = labels == curr_label
+        current_distances = distances[mask]
+
+        # Leave out current sample.
+        n_samples_curr_lab = np.sum(mask) - 1
+        if n_samples_curr_lab != 0:
+            intra_clust_dists[mask] = np.sum(
+                current_distances[:, mask], axis=1) / n_samples_curr_lab
+
+        # Now iterate over all other labels, finding the mean
+        # cluster distance that is closest to every sample.
+        for other_label in unique_labels:
+            if other_label != curr_label:
+                other_mask = labels == other_label
+                other_distances = np.mean(
+                    current_distances[:, other_mask], axis=1)
+                inter_clust_dists[mask] = np.minimum(
+                    inter_clust_dists[mask], other_distances)
+
+    sil_samples = inter_clust_dists - intra_clust_dists
+    sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
     return sil_samples
 
 
-def _intra_cluster_distance(distances_row, labels, i):
-    """Calculate the mean intra-cluster distance for sample i.
+def calinski_harabaz_score(X, labels):
+    """Compute the Calinski and Harabaz score.
+
+    The score is defined as ratio between the within-cluster dispersion and
+    the between-cluster dispersion.
+
+    Read more in the :ref:`User Guide <calinski_harabaz_index>`.
 
     Parameters
     ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
+    X : array-like, shape (``n_samples``, ``n_features``)
+        List of ``n_features``-dimensional data points. Each row corresponds
+        to a single data point.
 
-    labels : array, shape = [n_samples]
-        label values for each sample
-
-    i : int
-        Sample index being calculated. It is excluded from calculation and
-        used to determine the current label
+    labels : array-like, shape (``n_samples``,)
+        Predicted labels for each sample.
 
     Returns
     -------
-    a : float
-        Mean intra-cluster distance for sample i
-    """
-    mask = labels == labels[i]
-    mask[i] = False
-    if not np.any(mask):
-        # cluster of size 1
-        return 0
-    a = np.mean(distances_row[mask])
-    return a
+    score: float
+        The resulting Calinski-Harabaz score.
 
-
-def _nearest_cluster_distance(distances_row, labels, i):
-    """Calculate the mean nearest-cluster distance for sample i.
-
-    Parameters
+    References
     ----------
-    distances_row : array, shape = [n_samples]
-        Pairwise distance matrix between sample i and each sample.
-
-    labels : array, shape = [n_samples]
-        label values for each sample
-
-    i : int
-        Sample index being calculated. It is used to determine the current
-        label.
-
-    Returns
-    -------
-    b : float
-        Mean nearest-cluster distance for sample i
+    .. [1] `T. Calinski and J. Harabasz, 1974. "A dendrite method for cluster
+       analysis". Communications in Statistics
+       <http://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
     """
-    label = labels[i]
-    b = np.min([np.mean(distances_row[labels == cur_label])
-               for cur_label in set(labels) if not cur_label == label])
-    return b
+    X, labels = check_X_y(X, labels)
+    le = LabelEncoder()
+    labels = le.fit_transform(labels)
+
+    n_samples, _ = X.shape
+    n_labels = len(le.classes_)
+
+    check_number_of_labels(n_labels, n_samples)
+
+    extra_disp, intra_disp = 0., 0.
+    mean = np.mean(X, axis=0)
+    for k in range(n_labels):
+        cluster_k = X[labels == k]
+        mean_k = np.mean(cluster_k, axis=0)
+        extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
+        intra_disp += np.sum((cluster_k - mean_k) ** 2)
+
+    return (1. if intra_disp == 0. else
+            extra_disp * (n_samples - n_labels) /
+            (intra_disp * (n_labels - 1.)))

@@ -36,13 +36,13 @@ class NotAnArray(object):
     def __init__(self, data):
         self.data = data
 
-    def __array__(self):
+    def __array__(self, dtype=None):
         return self.data
 
 
 EXAMPLES = {
     'multilabel-indicator': [
-        # valid when the data is formated as sparse or dense, identified
+        # valid when the data is formatted as sparse or dense, identified
         # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
         csr_matrix(np.array([[0, 1], [1, 0]])),
@@ -121,7 +121,7 @@ EXAMPLES = {
     'unknown': [
         [[]],
         [()],
-        # sequence of sequences that were'nt supported even before deprecation
+        # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
         [set([1, 2, 3]), set([1, 2])],

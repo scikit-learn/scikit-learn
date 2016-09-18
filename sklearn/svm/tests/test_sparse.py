@@ -10,7 +10,8 @@ from sklearn.datasets import make_classification, load_digits, make_blobs
 from sklearn.svm.tests import test_svm
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.testing import assert_warns, assert_raise_message
+from sklearn.utils.testing import (assert_warns, assert_raise_message,
+                                   ignore_warnings)
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -280,7 +281,7 @@ def test_sparse_oneclasssvm():
 
 def test_sparse_realdata():
     # Test on a subset from the 20newsgroups dataset.
-    # This catchs some bugs if input is not correctly converted into
+    # This catches some bugs if input is not correctly converted into
     # sparse format or weights are not correctly initialized.
 
     data = np.array([0.03771744, 0.1003567, 0.01174647, 0.027069])
@@ -334,7 +335,9 @@ def test_timeout():
 
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
-    proba_1 = a.fit(X, Y).predict_proba(X)
+    with ignore_warnings(category=ConvergenceWarning):
+        proba_1 = a.fit(X, Y).predict_proba(X)
     a = svm.SVC(probability=True, max_iter=1, random_state=0)
-    proba_2 = a.fit(X, Y).predict_proba(X)
+    with ignore_warnings(category=ConvergenceWarning):
+        proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)

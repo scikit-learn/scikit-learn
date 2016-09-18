@@ -21,7 +21,7 @@ The module structure is the following:
 #          Hamzeh Alsalhi <ha258@cornell.edu>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 
@@ -166,7 +166,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost.
 
-        Warning: This method needs to be overriden by subclasses.
+        Warning: This method needs to be overridden by subclasses.
 
         Parameters
         ----------

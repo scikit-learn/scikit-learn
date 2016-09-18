@@ -2,16 +2,16 @@
 
 # Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
+from ..utils.extmath import row_norms
 from .base import make_dataset
-from .sgd_fast import Log, SquaredLoss
-from .sag_fast import sag, get_max_squared_sum
+from .sag_fast import sag
 
 
 def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
@@ -41,8 +41,13 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept):
     step_size : float
         Step size used in SAG solver.
 
+    References
+    ----------
+    Schmidt, M., Roux, N. L., & Bach, F. (2013).
+    Minimizing finite sums with the stochastic average gradient
+    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
     """
-    if loss == 'log':
+    if loss in ('log', 'multinomial'):
         # inverse Lipschitz constant for log loss
         return 4.0 / (max_squared_sum + int(fit_intercept)
                       + 4.0 * alpha_scaled)
@@ -84,25 +89,31 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         Training data
 
     y : numpy array, shape (n_samples,)
-        Target values
+        Target values. With loss='multinomial', y must be label encoded
+        (see preprocessing.LabelEncoder).
 
     sample_weight : array-like, shape (n_samples,), optional
         Weights applied to individual samples (1. for unweighted).
 
-    loss : 'log' | 'squared'
-        Loss function that will be optimized.
-        'log' is used for classification, like in LogisticRegression.
-        'squared' is used for regression, like in Ridge.
+    loss : 'log' | 'squared' | 'multinomial'
+        Loss function that will be optimized:
+        -'log' is the binary logistic loss, as used in LogisticRegression.
+        -'squared' is the squared loss, as used in Ridge.
+        -'multinomial' is the multinomial logistic loss, as used in
+         LogisticRegression.
+
+        .. versionadded:: 0.18
+           *loss='multinomial'*
 
     alpha : float, optional
         Constant that multiplies the regularization term. Defaults to 1.
 
     max_iter: int, optional
         The max number of passes over the training data if the stopping
-        criterea is not reached. Defaults to 1000.
+        criteria is not reached. Defaults to 1000.
 
     tol: double, optional
-        The stopping criterea for the weights. The iterations will stop when
+        The stopping criteria for the weights. The iterations will stop when
         max(change in weights) / max(weights) < tol. Defaults to .001
 
     verbose: integer, optional
@@ -121,8 +132,18 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         to speed up cross validation.
 
     warm_start_mem: dict, optional
-        The initialization parameters used for warm starting. It is currently
-        not used in Ridge.
+        The initialization parameters used for warm starting. Warm starting is
+        currently used in LogisticRegression but not in Ridge.
+        It contains:
+            - 'coef': the weight vector, with the intercept in last line
+                if the intercept is fitted.
+            - 'gradient_memory': the scalar gradient for all seen samples.
+            - 'sum_gradient': the sum of gradient over all seen samples,
+                for each feature.
+            - 'intercept_sum_gradient': the sum of gradient over all seen
+                samples, for the intercept.
+            - 'seen': array of boolean describing the seen samples.
+            - 'num_seen': the number of seen samples.
 
     Returns
     -------
@@ -133,7 +154,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         The number of full pass on all samples.
 
     warm_start_mem : dict
-        Contains a 'coef' key with the fitted result, and eventually the
+        Contains a 'coef' key with the fitted result, and possibly the
         fitted intercept at the end of the array. Contains also other keys
         used for warm starting.
 
@@ -186,6 +207,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     # As in SGD, the alpha is scaled by n_samples.
     alpha_scaled = float(alpha) / n_samples
 
+    # if loss == 'multinomial', y should be label encoded.
+    n_classes = int(y.max()) + 1 if loss == 'multinomial' else 1
+
     # initialization
     if sample_weight is None:
         sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
@@ -193,31 +217,34 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     if 'coef' in warm_start_mem.keys():
         coef_init = warm_start_mem['coef']
     else:
-        coef_init = np.zeros(n_features, dtype=np.float64, order='C')
+        # assume fit_intercept is False
+        coef_init = np.zeros((n_features, n_classes), dtype=np.float64,
+                             order='C')
 
     # coef_init contains possibly the intercept_init at the end.
     # Note that Ridge centers the data before fitting, so fit_intercept=False.
-    fit_intercept = coef_init.size == (n_features + 1)
+    fit_intercept = coef_init.shape[0] == (n_features + 1)
     if fit_intercept:
-        intercept_init = coef_init[-1]
-        coef_init = coef_init[:-1]
+        intercept_init = coef_init[-1, :]
+        coef_init = coef_init[:-1, :]
     else:
-        intercept_init = 0.0
+        intercept_init = np.zeros(n_classes, dtype=np.float64)
 
     if 'intercept_sum_gradient' in warm_start_mem.keys():
-        intercept_sum_gradient_init = warm_start_mem['intercept_sum_gradient']
+        intercept_sum_gradient = warm_start_mem['intercept_sum_gradient']
     else:
-        intercept_sum_gradient_init = 0.0
+        intercept_sum_gradient = np.zeros(n_classes, dtype=np.float64)
 
     if 'gradient_memory' in warm_start_mem.keys():
         gradient_memory_init = warm_start_mem['gradient_memory']
     else:
-        gradient_memory_init = np.zeros(n_samples, dtype=np.float64,
-                                        order='C')
+        gradient_memory_init = np.zeros((n_samples, n_classes),
+                                        dtype=np.float64, order='C')
     if 'sum_gradient' in warm_start_mem.keys():
         sum_gradient_init = warm_start_mem['sum_gradient']
     else:
-        sum_gradient_init = np.zeros(n_features, dtype=np.float64, order='C')
+        sum_gradient_init = np.zeros((n_features, n_classes),
+                                     dtype=np.float64, order='C')
 
     if 'seen' in warm_start_mem.keys():
         seen_init = warm_start_mem['seen']
@@ -232,7 +259,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
     if max_squared_sum is None:
-        max_squared_sum = get_max_squared_sum(X)
+        max_squared_sum = row_norms(X, squared=True).max()
     step_size = get_auto_step_size(max_squared_sum, alpha_scaled, loss,
                                    fit_intercept)
 
@@ -240,41 +267,35 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1.,
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha_scaled == 1")
 
-    if loss == 'log':
-        class_loss = Log()
-    elif loss == 'squared':
-        class_loss = SquaredLoss()
-    else:
-        raise ValueError("Invalid loss parameter: got %r instead of "
-                         "one of ('log', 'squared')" % loss)
-
-    intercept_, num_seen, n_iter_, intercept_sum_gradient = \
-        sag(dataset, coef_init.ravel(),
-            intercept_init, n_samples,
-            n_features, tol,
-            max_iter,
-            class_loss,
-            step_size, alpha_scaled,
-            sum_gradient_init.ravel(),
-            gradient_memory_init.ravel(),
-            seen_init.ravel(),
-            num_seen_init,
-            fit_intercept,
-            intercept_sum_gradient_init,
-            intercept_decay,
-            verbose)
-
+    num_seen, n_iter_ = sag(dataset, coef_init,
+                            intercept_init, n_samples,
+                            n_features, n_classes, tol,
+                            max_iter,
+                            loss,
+                            step_size, alpha_scaled,
+                            sum_gradient_init,
+                            gradient_memory_init,
+                            seen_init,
+                            num_seen_init,
+                            fit_intercept,
+                            intercept_sum_gradient,
+                            intercept_decay,
+                            verbose)
     if n_iter_ == max_iter:
         warnings.warn("The max_iter was reached which means "
                       "the coef_ did not converge", ConvergenceWarning)
 
-    coef_ = coef_init
     if fit_intercept:
-        coef_ = np.append(coef_, intercept_)
+        coef_init = np.vstack((coef_init, intercept_init))
 
-    warm_start_mem = {'coef': coef_, 'sum_gradient': sum_gradient_init,
+    warm_start_mem = {'coef': coef_init, 'sum_gradient': sum_gradient_init,
                       'intercept_sum_gradient': intercept_sum_gradient,
                       'gradient_memory': gradient_memory_init,
                       'seen': seen_init, 'num_seen': num_seen}
+
+    if loss == 'multinomial':
+        coef_ = coef_init.T
+    else:
+        coef_ = coef_init[:, 0]
 
     return coef_, n_iter_, warm_start_mem

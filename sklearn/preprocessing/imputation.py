@@ -281,7 +281,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # Most frequent
         elif strategy == "most_frequent":
             # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if it's frequency
+            # properly if the first element is masked and if its frequency
             # is equal to the frequency of the most frequent valid element
             # See https://github.com/scipy/scipy/issues/2636
 
@@ -309,11 +309,17 @@ class Imputer(BaseEstimator, TransformerMixin):
         """
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite=False, copy=self.copy)
+            statistics = self.statistics_
+            if X.shape[1] != statistics.shape[0]:
+                raise ValueError("X has %d features per sample, expected %d"
+                                 % (X.shape[1], self.statistics_.shape[0]))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
-        if self.axis == 1:
+        else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
 
@@ -328,10 +334,6 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.strategy,
                                              self.missing_values,
                                              self.axis)
-        else:
-            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
-            statistics = self.statistics_
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)

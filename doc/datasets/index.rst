@@ -82,7 +82,7 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/plot_color_quantization_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
    :target: ../auto_examples/cluster/plot_color_quantization.html
    :scale: 30
    :align: right
@@ -93,12 +93,12 @@ and pipeline on 2D data.
   The default coding of images is based on the ``uint8`` dtype to
   spare memory.  Often machine learning algorithms work best if the
   input is converted to a floating point representation first.  Also,
-  if you plan to use ``pylab.imshow`` don't forget to scale to the range
+  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
   0 - 1 as done in the following example.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_color_quantization.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 
 .. _sample_generators:
@@ -130,7 +130,7 @@ per class; and linear transformations of the feature space.
 near-equal-size classes separated by concentric hyperspheres.
 :func:`make_hastie_10_2` generates a similar binary, 10-dimensional problem.
 
-.. image:: ../auto_examples/datasets/images/plot_random_dataset_001.png
+.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_dataset.html
    :scale: 50
    :align: center
@@ -159,7 +159,7 @@ respect to true bag-of-words mixtures include:
 * Documents without labels words at random, rather than from a base
   distribution.
 
-.. image:: ../auto_examples/datasets/images/plot_random_multilabel_dataset_001.png
+.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_multilabel_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_multilabel_dataset.html
    :scale: 50
    :align: center
@@ -253,6 +253,20 @@ features::
  _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
 
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
+
+
+.. make sure everything is in a toc tree
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    olivetti_faces
+    twenty_newsgroups
+    mldata
+    labeled_faces
+    covtype
+    rcv1
 
 
 .. include:: olivetti_faces.rst

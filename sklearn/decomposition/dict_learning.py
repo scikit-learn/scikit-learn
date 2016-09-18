@@ -204,7 +204,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     alpha: float, 1. by default
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
-        If `algorithm='threhold'`, `alpha` is the absolute value of the
+        If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides

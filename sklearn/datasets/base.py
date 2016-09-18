@@ -51,14 +51,25 @@ class Bunch(dict):
     def __setattr__(self, key, value):
         self[key] = value
 
+    def __dir__(self):
+        return self.keys()
+
     def __getattr__(self, key):
         try:
             return self[key]
         except KeyError:
             raise AttributeError(key)
 
-    def __getstate__(self):
-        return self.__dict__
+    def __setstate__(self, state):
+        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # empty __dict__. This causes a surprising behaviour when
+        # loading these pickles scikit-learn 0.17: reading bunch.key
+        # uses __dict__ but assigning to bunch.key use __setattr__ and
+        # only changes bunch['key']. More details can be found at:
+        # https://github.com/scikit-learn/scikit-learn/issues/6196.
+        # Overriding __setstate__ to be a noop has the effect of
+        # ignoring the pickled __dict__
+        pass
 
 
 def get_data_home(data_home=None):
@@ -231,7 +242,7 @@ def load_files(container_path, description=None, categories=None,
                  DESCR=description)
 
 
-def load_iris():
+def load_iris(return_X_y=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -247,6 +258,14 @@ def load_iris():
 
     Read more in the :ref:`User Guide <datasets>`.
 
+    Parameters
+    ----------
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
+
     Returns
     -------
     data : Bunch
@@ -255,6 +274,10 @@ def load_iris():
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
         full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -285,6 +308,9 @@ def load_iris():
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
@@ -292,7 +318,7 @@ def load_iris():
                                 'petal length (cm)', 'petal width (cm)'])
 
 
-def load_breast_cancer():
+def load_breast_cancer(return_X_y=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -306,6 +332,14 @@ def load_breast_cancer():
     Features            real, positive
     =================   ==============
 
+    Parameters
+    ----------
+    return_X_y : boolean, default=False
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
+
     Returns
     -------
     data : Bunch
@@ -314,6 +348,10 @@ def load_breast_cancer():
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
         full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18
 
     The copy of UCI ML Breast Cancer Wisconsin (Diagnostic) dataset is
     downloaded from:
@@ -364,13 +402,16 @@ def load_breast_cancer():
                               'worst concavity', 'worst concave points',
                               'worst symmetry', 'worst fractal dimension'])
 
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
                  feature_names=feature_names)
 
 
-def load_digits(n_class=10):
+def load_digits(n_class=10, return_X_y=False):
     """Load and return the digits dataset (classification).
 
     Each datapoint is a 8x8 image of a digit.
@@ -390,6 +431,12 @@ def load_digits(n_class=10):
     n_class : integer, between 0 and 10, optional (default=10)
         The number of classes to return.
 
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
+
     Returns
     -------
     data : Bunch
@@ -399,6 +446,10 @@ def load_digits(n_class=10):
         sample, 'target_names', the meaning of the labels, and 'DESCR',
         the full description of the dataset.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18
+
     Examples
     --------
     To load the data and visualize the images::
@@ -407,17 +458,17 @@ def load_digits(n_class=10):
         >>> digits = load_digits()
         >>> print(digits.data.shape)
         (1797, 64)
-        >>> import pylab as pl #doctest: +SKIP
-        >>> pl.gray() #doctest: +SKIP
-        >>> pl.matshow(digits.images[0]) #doctest: +SKIP
-        >>> pl.show() #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt #doctest: +SKIP
+        >>> plt.gray() #doctest: +SKIP
+        >>> plt.matshow(digits.images[0]) #doctest: +SKIP
+        >>> plt.show() #doctest: +SKIP
     """
     module_path = dirname(__file__)
     data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1]
+    target = data[:, -1].astype(np.int)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -427,14 +478,17 @@ def load_digits(n_class=10):
         flat_data, target = flat_data[idx], target[idx]
         images = images[idx]
 
+    if return_X_y:
+        return flat_data, target
+
     return Bunch(data=flat_data,
-                 target=target.astype(np.int),
+                 target=target,
                  target_names=np.arange(10),
                  images=images,
                  DESCR=descr)
 
 
-def load_diabetes():
+def load_diabetes(return_X_y=False):
     """Load and return the diabetes dataset (regression).
 
     ==============      ==================
@@ -446,26 +500,50 @@ def load_diabetes():
 
     Read more in the :ref:`User Guide <datasets>`.
 
+    Parameters
+    ----------
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
+
     Returns
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn and 'target', the regression target for each
         sample.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18    
     """
     base_dir = join(dirname(__file__), 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data, target=target)
 
 
-def load_linnerud():
+def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
     Samples total: 20
     Dimensionality: 3 for both data and targets
     Features: integer
     Targets: integer
+
+    Parameters
+    ----------
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -474,6 +552,10 @@ def load_linnerud():
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
+    
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data/')
     # Read data
@@ -488,13 +570,16 @@ def load_linnerud():
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
+    if return_X_y:
+        return data_exercise, data_physiological
+
     return Bunch(data=data_exercise, feature_names=header_exercise,
                  target=data_physiological,
                  target_names=header_physiological,
                  DESCR=descr)
 
 
-def load_boston():
+def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============     ==============
@@ -504,12 +589,24 @@ def load_boston():
     Targets             real 5. - 50.
     ==============     ==============
 
+    Parameters
+    ----------
+    return_X_y : boolean, default=False.
+        If True, returns ``(data, target)`` instead of a Bunch object.
+        See below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.18
+
     Returns
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
         and 'DESCR', the full description of the dataset.
+
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.18    
 
     Examples
     --------
@@ -538,6 +635,9 @@ def load_boston():
         for i, d in enumerate(data_file):
             data[i] = np.asarray(d[:-1], dtype=np.float64)
             target[i] = np.asarray(d[-1], dtype=np.float64)
+
+    if return_X_y:
+        return data, target
 
     return Bunch(data=data,
                  target=target,
@@ -639,7 +739,7 @@ def _pkl_filepath(*args, **kwargs):
     """Ensure different filenames for Python 2 and Python 3 pickles
 
     An object pickled under Python 3 cannot be loaded under Python 2.
-    An object pickled under Python 2 can sometimes not be loaded loaded
+    An object pickled under Python 2 can sometimes not be loaded
     correctly under Python 3 because some Python 2 strings are decoded as
     Python 3 strings which can be problematic for objects that use Python 2
     strings as byte buffers for numerical data instead of "real" strings.

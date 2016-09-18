@@ -17,7 +17,7 @@ is performed in order to stay on the same order of magnitude.
 print(__doc__)
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 
 from sklearn.decomposition import SparseCoder
 
@@ -75,7 +75,7 @@ for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
     for title, algo, alpha, n_nonzero, color in estimators:
         coder = SparseCoder(dictionary=D, transform_n_nonzero_coefs=n_nonzero,
                             transform_alpha=alpha, transform_algorithm=algo)
-        x = coder.transform(y)
+        x = coder.transform(y.reshape(1, -1))
         density = len(np.flatnonzero(x))
         x = np.ravel(np.dot(x, D))
         squared_error = np.sum((y - x) ** 2)
@@ -86,7 +86,7 @@ for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
     # Soft thresholding debiasing
     coder = SparseCoder(dictionary=D, transform_algorithm='threshold',
                         transform_alpha=20)
-    x = coder.transform(y)
+    x = coder.transform(y.reshape(1, -1))
     _, idx = np.where(x != 0)
     x[0, idx], _, _, _ = np.linalg.lstsq(D[idx, :].T, y)
     x = np.ravel(np.dot(x, D))

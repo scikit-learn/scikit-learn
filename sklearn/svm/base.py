@@ -232,6 +232,15 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         libsvm.set_verbosity_wrap(self.verbose)
 
+        if six.PY2:
+            # In python2 ensure kernel is ascii bytes to prevent a TypeError
+            if isinstance(kernel, six.types.UnicodeType):
+                kernel = str(kernel)
+        if six.PY3:
+            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
+            if isinstance(kernel, bytes):
+                kernel = str(kernel, 'utf8')
+
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
@@ -538,7 +547,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         dec = self._decision_function(X)
         if self.decision_function_shape is None and len(self.classes_) > 2:
             warnings.warn("The decision_function_shape default value will "
-                          "change from 'ovo' to 'ovr' in 0.18. This will change "
+                          "change from 'ovo' to 'ovr' in 0.19. This will change "
                           "the shape of the decision function returned by "
                           "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
@@ -716,7 +725,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     which solver to use.
     """
     # nested dicts containing level 1: available loss functions,
-    # level2: available penalties for the given loss functin,
+    # level2: available penalties for the given loss function,
     # level3: wether the dual solver is available for the specified
     # combination of loss function and penalty
     _solver_type_dict = {
@@ -848,7 +857,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     Returns
     -------
     coef_ : ndarray, shape (n_features, n_features + 1)
-        The coefficent vector got by minimizing the objective function.
+        The coefficient vector got by minimizing the objective function.
 
     intercept_ : float
         The intercept term added to the vector.

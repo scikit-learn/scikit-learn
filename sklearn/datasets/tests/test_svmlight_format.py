@@ -2,6 +2,7 @@ from bz2 import BZ2File
 import gzip
 from io import BytesIO
 import numpy as np
+import scipy.sparse as sp
 import os
 import shutil
 from tempfile import NamedTemporaryFile
@@ -200,67 +201,84 @@ def test_invalid_filename():
 
 
 def test_dump():
-    Xs, y = load_svmlight_file(datafile)
-    Xd = Xs.toarray()
+    X_sparse, y_dense = load_svmlight_file(datafile)
+    X_dense = X_sparse.toarray()
+    y_sparse = sp.csr_matrix(y_dense)
 
     # slicing a csr_matrix can unsort its .indices, so test that we sort
     # those correctly
-    Xsliced = Xs[np.arange(Xs.shape[0])]
+    X_sliced = X_sparse[np.arange(X_sparse.shape[0])]
+    y_sliced = y_sparse[np.arange(y_sparse.shape[0])]
 
-    for X in (Xs, Xd, Xsliced):
-        for zero_based in (True, False):
-            for dtype in [np.float32, np.float64, np.int32]:
-                f = BytesIO()
-                # we need to pass a comment to get the version info in;
-                # LibSVM doesn't grok comments so they're not put in by
-                # default anymore.
-                dump_svmlight_file(X.astype(dtype), y, f, comment="test",
-                                   zero_based=zero_based)
-                f.seek(0)
+    for X in (X_sparse, X_dense, X_sliced):
+        for y in (y_sparse, y_dense, y_sliced):
+            for zero_based in (True, False):
+                for dtype in [np.float32, np.float64, np.int32]:
+                    f = BytesIO()
+                    # we need to pass a comment to get the version info in;
+                    # LibSVM doesn't grok comments so they're not put in by
+                    # default anymore.
 
-                comment = f.readline()
-                try:
-                    comment = str(comment, "utf-8")
-                except TypeError:  # fails in Python 2.x
-                    pass
+                    if (sp.issparse(y) and y.shape[0] == 1):
+                        # make sure y's shape is: (n_samples, n_labels)
+                        # when it is sparse
+                        y = y.T
 
-                assert_in("scikit-learn %s" % sklearn.__version__, comment)
+                    dump_svmlight_file(X.astype(dtype), y, f, comment="test",
+                                       zero_based=zero_based)
+                    f.seek(0)
 
-                comment = f.readline()
-                try:
-                    comment = str(comment, "utf-8")
-                except TypeError:  # fails in Python 2.x
-                    pass
+                    comment = f.readline()
+                    try:
+                        comment = str(comment, "utf-8")
+                    except TypeError:  # fails in Python 2.x
+                        pass
 
-                assert_in(["one", "zero"][zero_based] + "-based", comment)
+                    assert_in("scikit-learn %s" % sklearn.__version__, comment)
 
-                X2, y2 = load_svmlight_file(f, dtype=dtype,
-                                            zero_based=zero_based)
-                assert_equal(X2.dtype, dtype)
-                assert_array_equal(X2.sorted_indices().indices, X2.indices)
-                if dtype == np.float32:
-                    assert_array_almost_equal(
+                    comment = f.readline()
+                    try:
+                        comment = str(comment, "utf-8")
+                    except TypeError:  # fails in Python 2.x
+                        pass
+
+                    assert_in(["one", "zero"][zero_based] + "-based", comment)
+
+                    X2, y2 = load_svmlight_file(f, dtype=dtype,
+                                                zero_based=zero_based)
+                    assert_equal(X2.dtype, dtype)
+                    assert_array_equal(X2.sorted_indices().indices, X2.indices)
+
+                    X2_dense = X2.toarray()
+
+                    if dtype == np.float32:
                         # allow a rounding error at the last decimal place
-                        Xd.astype(dtype), X2.toarray(), 4)
-                else:
-                    assert_array_almost_equal(
+                        assert_array_almost_equal(
+                            X_dense.astype(dtype), X2_dense, 4)
+                        assert_array_almost_equal(
+                            y_dense.astype(dtype), y2, 4)
+                    else:
                         # allow a rounding error at the last decimal place
-                        Xd.astype(dtype), X2.toarray(), 15)
-                assert_array_equal(y, y2)
+                        assert_array_almost_equal(
+                            X_dense.astype(dtype), X2_dense, 15)
+                        assert_array_almost_equal(
+                            y_dense.astype(dtype), y2, 15)
 
 
 def test_dump_multilabel():
     X = [[1, 0, 3, 0, 5],
          [0, 0, 0, 0, 0],
          [0, 5, 0, 1, 0]]
-    y = [[0, 1, 0], [1, 0, 1], [1, 1, 0]]
-    f = BytesIO()
-    dump_svmlight_file(X, y, f, multilabel=True)
-    f.seek(0)
-    # make sure it dumps multilabel correctly
-    assert_equal(f.readline(), b("1 0:1 2:3 4:5\n"))
-    assert_equal(f.readline(), b("0,2 \n"))
-    assert_equal(f.readline(), b("0,1 1:5 3:1\n"))
+    y_dense = [[0, 1, 0], [1, 0, 1], [1, 1, 0]]
+    y_sparse = sp.csr_matrix(y_dense)
+    for y in [y_dense, y_sparse]:
+        f = BytesIO()
+        dump_svmlight_file(X, y, f, multilabel=True)
+        f.seek(0)
+        # make sure it dumps multilabel correctly
+        assert_equal(f.readline(), b("1 0:1 2:3 4:5\n"))
+        assert_equal(f.readline(), b("0,2 \n"))
+        assert_equal(f.readline(), b("0,1 1:5 3:1\n"))
 
 
 def test_dump_concise():
@@ -350,3 +368,37 @@ def test_dump_query_id():
     assert_array_almost_equal(X, X1.toarray())
     assert_array_almost_equal(y, y1)
     assert_array_almost_equal(query_id, query_id1)
+
+
+def test_load_with_long_qid():
+    # load svmfile with longint qid attribute
+    data = b("""
+    1 qid:0 0:1 1:2 2:3
+    0 qid:72048431380967004 0:1440446648 1:72048431380967004 2:236784985
+    0 qid:-9223372036854775807 0:1440446648 1:72048431380967004 2:236784985
+    3 qid:9223372036854775807  0:1440446648 1:72048431380967004 2:236784985""")
+    X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
+
+    true_X = [[1,          2,                 3],
+             [1440446648, 72048431380967004, 236784985],
+             [1440446648, 72048431380967004, 236784985],
+             [1440446648, 72048431380967004, 236784985]]
+
+    true_y = [1, 0, 0, 3]
+    trueQID = [0, 72048431380967004, -9223372036854775807, 9223372036854775807]
+    assert_array_equal(y, true_y)
+    assert_array_equal(X.toarray(), true_X)
+    assert_array_equal(qid, trueQID)
+
+    f = BytesIO()
+    dump_svmlight_file(X, y, f, query_id=qid, zero_based=True)
+    f.seek(0)
+    X, y, qid = load_svmlight_file(f, query_id=True, zero_based=True)
+    assert_array_equal(y, true_y)
+    assert_array_equal(X.toarray(), true_X)
+    assert_array_equal(qid, trueQID)
+
+    f.seek(0)
+    X, y = load_svmlight_file(f, query_id=False, zero_based=True)
+    assert_array_equal(y, true_y)
+    assert_array_equal(X.toarray(), true_X)

@@ -3,8 +3,8 @@
 SVM-Anova: SVM with univariate feature selection
 =================================================
 
-This example shows how to perform univariate feature before running a SVC
-(support vector classifier) to improve the classification scores.
+This example shows how to perform univariate feature selection before running a
+SVC (support vector classifier) to improve the classification scores.
 """
 print(__doc__)
 
@@ -42,7 +42,7 @@ percentiles = (1, 3, 6, 10, 15, 20, 30, 40, 60, 80, 100)
 
 for percentile in percentiles:
     clf.set_params(anova__percentile=percentile)
-    # Compute cross-validation score using all CPUs
+    # Compute cross-validation score using 1 CPU
     this_scores = cross_val_score(clf, X, y, n_jobs=1)
     score_means.append(this_scores.mean())
     score_stds.append(this_scores.std())

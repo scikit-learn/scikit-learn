@@ -128,10 +128,10 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
         # To get nice curve, we need a large number of iterations to
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
-                            cv=ShuffleSplit(train_size=train_size, n_iter=250,
-                                            random_state=1))
+                            cv=ShuffleSplit(train_size=train_size,
+                                            n_splits=250, random_state=1))
         grid.fit(X, y)
-        scores = [x[1] for x in grid.grid_scores_]
+        scores = grid.cv_results_['mean_test_score']
 
         scales = [(1, 'No scaling'),
                   ((n_samples * train_size), '1/n_samples'),

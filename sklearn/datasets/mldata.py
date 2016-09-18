@@ -103,7 +103,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     (150, 4)
 
     Load the 'leukemia' dataset from mldata.org, which needs to be transposed
-    to respects the sklearn axes convention:
+    to respects the scikit-learn axes convention:
 
     >>> leuk = fetch_mldata('leukemia', transpose_data=True,
     ...                     data_home=test_data_home)
@@ -205,7 +205,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
             del dataset[col_names[1]]
             dataset['data'] = matlab_dict[col_names[1]]
 
-    # set axes to sklearn conventions
+    # set axes to scikit-learn conventions
     if transpose_data:
         dataset['data'] = dataset['data'].T
     if 'target' in dataset:

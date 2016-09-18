@@ -10,7 +10,7 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-Expected results for the top 5 most represented people in the dataset::
+Expected results for the top 5 most represented people in the dataset:
 
 ================== ============ ======= ========== =======
                    precision    recall  f1-score   support
