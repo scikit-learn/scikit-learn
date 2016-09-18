@@ -775,6 +775,8 @@ The reason for postponing the validation is that the same validation
 would have to be performed in ``set_params``,
 which is used in algorithms like ``GridSearchCV``.
 
+.. _fitting:
+
 Fitting
 ^^^^^^^
 
@@ -954,7 +956,8 @@ like translating string arguments into functions, should be done in ``fit``.
 
 While it is possible to pass parameters into the ``fit`` method, these
 should be restricted to variables that need to be sliced during
-cross-validation. These variables need to be arrays with shape[0]==n_samples. An example of
+cross-validation. These variables need to be arrays with shape[0]==n_samples (see
+:ref:`fitting` above). An example of
 this type of variable would be
 ``sample_weight``. This interface allows all data-dependent
 parameters to be sliced cleanly during cross-validation, and allows
