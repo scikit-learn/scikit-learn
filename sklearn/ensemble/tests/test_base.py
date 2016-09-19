@@ -32,7 +32,7 @@ def test_base():
 
     assert_true(isinstance(ensemble[0], Perceptron))
 
-    np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(), 
+    np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                         n_estimators=np.int32(3))
     np_int_e.fit(iris.data, iris.target)
 
@@ -40,7 +40,8 @@ def test_base():
 def test_base_zero_n_estimators():
     # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
     # a ValueError.
-    ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=0)
+    ensemble = BaggingClassifier(base_estimator=Perceptron(),
+                                 n_estimators=0)
     iris = load_iris()
     assert_raise_message(ValueError,
                          "n_estimators must be greater than zero, got 0.",
@@ -48,14 +49,16 @@ def test_base_zero_n_estimators():
 
 
 def test_base_not_int_n_estimators():
-    # Check that instantiating a BaseEnsemble with a string as n_estimators raises
-    # a ValueError requesting n_estimators to be supplied as an integer.
-    string_ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators='3')
+    # Check that instantiating a BaseEnsemble with a string as n_estimators
+    # raises a ValueError demanding n_estimators to be supplied as an integer.
+    string_ensemble = BaggingClassifier(base_estimator=Perceptron(),
+                                        n_estimators='3')
     iris = load_iris()
     assert_raise_message(ValueError,
                          "n_estimators must be an integer",
                          string_ensemble.fit, iris.data, iris.target)
-    float_ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=3.0)
+    float_ensemble = BaggingClassifier(base_estimator=Perceptron(),
+                                       n_estimators=3.0)
     assert_raise_message(ValueError,
                          "n_estimators must be an integer",
                          float_ensemble.fit, iris.data, iris.target)
