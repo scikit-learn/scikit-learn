@@ -618,8 +618,10 @@ def test_pairwise_indices():
     n_estimators = len(ovr_false.estimators_)
     precomputed_indices = ovr_false.pairwise_indices_
 
-    for idx in precomputed_indices :
-        assert_equal( idx.shape[0]*n_estimators / (n_estimators - 1), linear_kernel.shape[0])
+    for idx in precomputed_indices:
+        assert_equal(idx.shape[0] * n_estimators / (n_estimators - 1),
+                     linear_kernel.shape[0])
+
 
 def test_pairwise_attribute():
     clf_precomputed = svm.SVC(kernel='precomputed')
