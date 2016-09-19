@@ -943,6 +943,18 @@ def test_shufflesplit_reproducible():
                        list(a for a, b in ss.split(X)))
 
 
+def test_shufflesplit_train_test_size():
+    # check that same sequence of train-test is given
+    # when setting train_size to be the complement of test_size
+    # and vice-versa
+    ss_default = ShuffleSplit(random_state=0)
+    ss_train = ShuffleSplit(random_state=0, train_size=.9)
+    ss_test = ShuffleSplit(random_state=0, test_size=.1)
+    assert_array_equal(list(a for a, b in ss_default.split(X)),
+                       list(a for a, b in ss_train.split(X)),
+                       list(a for a, b in ss_test.split(X)))
+
+
 def test_stratifiedshufflesplit_list_input():
     # Check that when y is a list / list of string labels, it works.
     sss = StratifiedShuffleSplit(test_size=2, random_state=42)

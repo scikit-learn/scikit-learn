@@ -24,10 +24,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
-    from sklearn import cross_validation as cval
-
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_digits
@@ -47,6 +43,10 @@ from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn import cross_validation as cval
 
 
 class MockClassifier(object):
@@ -493,10 +493,9 @@ def test_stratified_shuffle_split_iter():
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
             p_train = (np.bincount(np.unique(y[train],
-                                   return_inverse=True)[1]) /
+                                             return_inverse=True)[1]) /
                        float(len(y[train])))
-            p_test = (np.bincount(np.unique(y[test],
-                                  return_inverse=True)[1]) /
+            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1]) /
                       float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(len(train) + len(test), y.size)
@@ -868,6 +867,7 @@ def train_test_split_pandas():
         assert_true(isinstance(X_train, InputFeatureType))
         assert_true(isinstance(X_test, InputFeatureType))
 
+
 def train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
@@ -954,8 +954,8 @@ def test_permutation_score():
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):
-        return (((y_true == y_pred).sum() - (y_true != y_pred).sum())
-                / y_true.shape[0])
+        return (((y_true == y_pred).sum() - (y_true != y_pred).sum()) /
+                y_true.shape[0])
 
     scorer = make_scorer(custom_score)
     score, _, pvalue = cval.permutation_test_score(
@@ -1024,8 +1024,6 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8, train_size=3)
     assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
-    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=None,
-                  train_size=None)
 
 
 def test_shufflesplit_reproducible():
@@ -1033,6 +1031,18 @@ def test_shufflesplit_reproducible():
     # sequence of train-test when the random_state is given
     ss = cval.ShuffleSplit(10, random_state=21)
     assert_array_equal(list(a for a, b in ss), list(a for a, b in ss))
+
+
+def test_shufflesplit_train_test_size():
+    # check that same sequence of train-test is given
+    # when setting train_size to be the complement of test_size
+    # and vice-versa
+    ss_default = cval.ShuffleSplit(10, random_state=0)
+    ss_train = cval.ShuffleSplit(10, random_state=0, train_size=.9)
+    ss_test = cval.ShuffleSplit(10, random_state=0, test_size=.1)
+    assert_array_equal(list(a for a, b in ss_default),
+                       list(a for a, b in ss_train),
+                       list(a for a, b in ss_test))
 
 
 def test_safe_split_with_precomputed_kernel():
