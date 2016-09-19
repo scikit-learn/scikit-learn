@@ -19,6 +19,7 @@ from sklearn.decomposition.nmf import NMF
 from sklearn.decomposition.nmf import _initialize_nmf
 from sklearn.decomposition.nmf import _safe_compute_error
 from sklearn.externals.joblib import Memory
+from sklearn.exceptions import ConvergenceWarning
 
 mem = Memory(cachedir='.', verbose=0)
 
@@ -90,7 +91,6 @@ def multiplicative_nmf(X, W, H, n_iter=100, alpha=0., l1_ratio=0.):
     return W, H
 
 
-@ignore_warnings
 def plot_results(results_df, plot_name):
     if results_df is None:
         return None
@@ -102,9 +102,9 @@ def plot_results(results_df, plot_name):
     for i, init in enumerate(np.unique(results_df['init'])):
         plt.subplot(1, 3, i + 1, sharex=ax, sharey=ax)
         for j, method in enumerate(np.unique(results_df['method'])):
-            selected_items = (results_df
-                              [results_df['init'] == init]
-                              [results_df['method'] == method])
+            mask = np.logical_and(results_df['init'] == init,
+                                  results_df['method'] == method)
+            selected_items = results_df[mask]
 
             plt.plot(selected_items['time'], selected_items['loss'],
                      color=colors[j % len(colors)], ls='-',
@@ -118,9 +118,12 @@ def plot_results(results_df, plot_name):
     plt.suptitle(plot_name, fontsize=16)
 
 
-# use joblib to cache results.
+# The deprecated projected-gradient solver raises a UserWarning as convergence
+# is not reached; the coordinate-descent solver raises a ConvergenceWarning.
+@ignore_warnings(category=(ConvergenceWarning, UserWarning,
+                           DeprecationWarning))
+# use joblib to cache the results.
 # X_shape is specified in arguments for avoiding hashing X
-@ignore_warnings
 @mem.cache(ignore=['X', 'W0', 'H0'])
 def bench_one(name, X, W0, H0, X_shape, clf_type, clf_params, init,
               n_components, random_state):
