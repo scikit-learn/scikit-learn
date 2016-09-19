@@ -4561,3 +4561,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Robert McGibbon: https://github.com/rmcgibbo
 
 .. _Gregory Stupp: https://github.com/stuppie
+
+.. _Russell Smith: https://github.com/rsmith54
