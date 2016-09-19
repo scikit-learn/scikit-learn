@@ -158,9 +158,9 @@ def test_cross_validator_with_default_params():
     lpo_repr = "LeavePOut(p=2)"
     kf_repr = "KFold(n_splits=2, random_state=None, shuffle=False)"
     skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
-    lolo_repr = "LeaveOneGroupOut()"
-    lopo_repr = "LeavePGroupsOut(n_groups=2)"
-    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
+    lolo_repr = "LeaveOneLabelOut()"
+    lopo_repr = "LeavePLabelOut(n_labels=2)"
+    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=None, "
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
@@ -922,7 +922,6 @@ def train_test_split_list_input():
 
 def test_shufflesplit_errors():
     # When the {test|train}_size is a float/invalid, error is raised at init
-    assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
     assert_raises(ValueError, ShuffleSplit, test_size=2.0)
     assert_raises(ValueError, ShuffleSplit, test_size=1.0)
     assert_raises(ValueError, ShuffleSplit, test_size=0.1, train_size=0.95)
