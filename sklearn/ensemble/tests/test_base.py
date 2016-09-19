@@ -41,3 +41,13 @@ def test_base_zero_n_estimators():
     assert_raise_message(ValueError,
                          "n_estimators must be greater than zero, got 0.",
                          ensemble.fit, iris.data, iris.target)
+
+
+def test_base_not_int_n_estimators():
+    # Check that instantiating a BaseEnsemble with a string as n_estimators raises
+    # a ValueError requesting n_estimators to be supplied as an integer.
+    ensemble_string = BaggingClassifier(base_estimator=Perceptron(), n_estimators='3')
+    iris = load_iris()
+    assert_raise_message(ValueError,
+                         "n_estmators must be an integer",
+                         ensemble_string.fit, iris.data, iris.target)
