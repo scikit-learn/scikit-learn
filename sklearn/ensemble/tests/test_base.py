@@ -34,7 +34,7 @@ def test_base():
 
     np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                         n_estimators=np.int32(3))
-    np_int_e.fit(iris.data, iris.target)
+    np_int_ensemble.fit(iris.data, iris.target)
 
 
 def test_base_zero_n_estimators():
