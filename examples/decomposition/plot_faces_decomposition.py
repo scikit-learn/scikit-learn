@@ -123,8 +123,14 @@ for name, estimator, center in estimators:
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
+
+    # Plot an image representing the pixelwise variance provided by the
+    # estimator e.g its noise_variance_ attribute. The Eigenfaces estimator,
+    # via the PCA decomposition, also provides a scalar noise_variance_
+    # (the mean of pixelwise variance) that cannot be displayed as an image
+    # so we skip it.
     if (hasattr(estimator, 'noise_variance_') and
-            estimator.noise_variance_.shape != ()):
+            estimator.noise_variance_.ndim > 0):  # Skip the Eigenfaces case
         plot_gallery("Pixelwise variance",
                      estimator.noise_variance_.reshape(1, -1), n_col=1,
                      n_row=1)
