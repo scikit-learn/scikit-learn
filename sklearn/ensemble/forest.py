@@ -1080,7 +1080,7 @@ class RandomForestRegressor(ForestRegressor):
     >>> boston = load_boston()
     >>> X, y = boston.data, boston.target
     >>> cross_val_score(forest, X, y, cv=5).mean()        # doctest: +ELLIPSIS
-    0.7...
+    0.53...
 
 
     References
@@ -1288,7 +1288,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     >>> clf = ExtraTreesClassifier(n_estimators=5, max_depth=None,
     ...                            min_samples_split=1, random_state=0)
-    >>> scores = cross_val_score(clf, X, y).mean()        # doctest: +ELLIPSIS
+    >>> cross_val_score(clf, X, y).mean()        # doctest: +ELLIPSIS
     0.99...
 
     References
@@ -1625,7 +1625,7 @@ class RandomTreesEmbedding(BaseForest):
     The dimensionality before transforming: 4
     >>> X_transformed = rte.fit_transform(X, y)
     >>> type(X_transformed)
-    scipy.sparse.csr.csr_matrix
+    <class 'scipy.sparse.csr.csr_matrix'>
     >>> print("The dimensionality after transforming: %d"
     ...       % X_transformed.shape[1])
     The dimensionality after transforming: 235

@@ -543,7 +543,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     >>> bagging = BaggingClassifier(LinearSVC(random_state=0),
     ...                             max_samples=0.5, max_features=0.5,
     ...                             oob_score=True)
-    >>> cross_val_score(bagging, X, y).mean()              # doctest +ELLIPSIS
+    >>> cross_val_score(bagging, X, y).mean()             # doctest: +ELLIPSIS
     0.8...
 
     References
