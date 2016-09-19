@@ -52,8 +52,8 @@ print("n_digits: %d, \t n_samples %d, \t n_features %d"
       % (n_digits, n_samples, n_features))
 
 
-print(79 * '_')
-print('%9s' % 'init\t\ttime\tinertia\thomo\tcompl\tv-meas\tARI\tAMI\tsilhouette')
+print(82 * '_')
+print('init\t\ttime\tinertia\thomo\tcompl\tv-meas\tARI\tAMI\tsilhouette')
 
 
 def bench_k_means(estimator, name, data):
@@ -82,7 +82,7 @@ pca = PCA(n_components=n_digits).fit(data)
 bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               name="PCA-based",
               data=data)
-print(79 * '_')
+print(82 * '_')
 
 ###############################################################################
 # Visualize the results on PCA-reduced data
