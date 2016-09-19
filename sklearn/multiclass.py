@@ -463,7 +463,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.pairwise_indices_ = None
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -484,14 +483,15 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.classes_ = np.unique(y)
         n_classes = self.classes_.shape[0]
-        estimators_indices = Parallel(n_jobs=self.n_jobs)(
+        estimators_indices = list(zip(*(Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_ovo_binary)
             (self.estimator, X, y, self.classes_[i], self.classes_[j])
-            for i in range(n_classes) for j in range(i + 1, n_classes))
+            for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
-        self.estimators_, self.pairwise_indices_ = zip(*estimators_indices)
-
-        if not self._pairwise:
+        self.estimators_ = estimators_indices[0]
+        try :
+            self.pairwise_indices_ = estimators_indices[1] if self._pairwise else None
+        except AttributeError :
             self.pairwise_indices_ = None
 
         return self
@@ -537,6 +537,9 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in izip(
                         self.estimators_, (combinations)))
+
+        self.pairwise_indices_ = None
+
         return self
 
     def predict(self, X):
@@ -556,7 +559,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
-
         Y = self.decision_function(X)
         return self.classes_[Y.argmax(axis=1)]
 
