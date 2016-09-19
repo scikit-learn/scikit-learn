@@ -458,7 +458,7 @@ Bug fixes
 
     - Cross-validation of :class:`OneVsOneClassifier` and
       :class:`OneVsRestClassifier` now works with precomputed kernels.
-    (`#7350 <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
+      (`#7350 <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
       by `Russell Smith <https://github.com/rsmith54>`_.
 
 
