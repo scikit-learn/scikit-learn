@@ -897,7 +897,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size=None, train_size=None,
                  random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
@@ -1304,9 +1304,6 @@ def _validate_shuffle_split_init(test_size, train_size):
     NOTE This does not take into account the number of samples which is known
     only at split
     """
-    if test_size is None and train_size is None:
-        raise ValueError('test_size and train_size can not both be None')
-
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
             if test_size >= 1.:
@@ -1338,7 +1335,11 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
-    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i' and
+    if test_size is None and train_size is None:
+        train_size = 0.9
+        test_size = 0.1
+
+    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i'and
             test_size >= n_samples):
         raise ValueError('test_size=%d should be smaller than the number of '
                          'samples %d' % (test_size, n_samples))
@@ -1348,20 +1349,37 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
 
-    if np.asarray(test_size).dtype.kind == 'f':
-        n_test = ceil(test_size * n_samples)
-    elif np.asarray(test_size).dtype.kind == 'i':
-        n_test = float(test_size)
-
-    if train_size is None:
-        n_train = n_samples - n_test
-    elif np.asarray(train_size).dtype.kind == 'f':
-        n_train = floor(train_size * n_samples)
-    else:
-        n_train = float(train_size)
-
     if test_size is None:
+        # only train_size set, so set test_size as
+        # n - n_train
+        if np.asarray(train_size).dtype.kind == 'f':
+            n_train = floor(train_size * n_samples)
+        elif np.asarray(train_size).dtype.kind == 'i':
+            n_train = float(train_size)
+
+        # set n_test to be the complement of n_train
         n_test = n_samples - n_train
+
+    elif train_size is None:
+        # only test_size was set, so set train_size as
+        # n - n_test
+        if np.asarray(test_size).dtype.kind == 'f':
+            n_test = ceil(test_size * n_samples)
+        elif np.asarray(test_size).dtype.kind == 'i':
+            n_test = float(test_size)
+
+        n_train = n_samples - n_test
+    else:
+        # both train_size and test_size set, so subsample
+        if np.asarray(train_size).dtype.kind == 'f':
+            n_train = floor(train_size * n_samples)
+        else:
+            n_train = float(train_size)
+
+        if np.asarray(test_size).dtype.kind == 'f':
+            n_test = ceil(test_size * n_samples)
+        else:
+            n_test = float(test_size)
 
     if n_train + n_test > n_samples:
         raise ValueError('The sum of train_size and test_size = %d, '
