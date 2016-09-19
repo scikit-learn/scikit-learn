@@ -108,24 +108,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
+        self._hashtable = {c: i for i, c in enumerate(self.classes_)}
         return self
-
-    def fit_transform(self, y):
-        """Fit label encoder and return encoded labels
-
-        Parameters
-        ----------
-        y : array-like of shape [n_samples]
-            Target values.
-
-        Returns
-        -------
-        y : array-like of shape [n_samples]
-        """
-        y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        return y
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -147,7 +131,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+        return np.fromiter((self._hashtable[v] for v in y), dtype=np.int64)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
