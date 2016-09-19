@@ -36,7 +36,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray, shape (n_samples, n_components), optional
+    init : ndarray, shape (n_samples, n_components), optional, default: None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
@@ -168,7 +168,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray, shape (n_samples, n_components), optional
+    init : ndarray, shape (n_samples, n_components), optional, default: None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
@@ -198,10 +198,10 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : integer or numpy.RandomState, optional, default: None
+        The generator used to initialize the centers. If an integer is given,
+        it fixes the seed. Defaults to the global numpy random number
+        generator.
 
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
@@ -314,10 +314,10 @@ class MDS(BaseEstimator):
         (``n_cpus + 1 + n_jobs``) are used. Thus for ``n_jobs = -2``, all CPUs
         but one are used.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : integer or numpy.RandomState, optional, default: None
+        The generator used to initialize the centers. If an integer is given,
+        it fixes the seed. Defaults to the global numpy random number
+        generator.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
         Dissimilarity measure to use:
@@ -378,7 +378,7 @@ class MDS(BaseEstimator):
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
-        init : ndarray, shape (n_samples,), optional
+        init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
@@ -396,7 +396,7 @@ class MDS(BaseEstimator):
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
-        init : ndarray, shape (n_samples,), optional
+        init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
