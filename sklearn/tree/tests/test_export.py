@@ -9,7 +9,7 @@ from nose.tools import assert_raises
 
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz
+from sklearn.tree import get_graphviz_source, export_graphviz
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import assert_in
 
@@ -22,7 +22,7 @@ y_degraded = [1, 1, 1, 1, 1, 1]
 
 
 def test_graphviz_toy():
-    # Check correctness of export_graphviz
+    # Check correctness of get_graphviz_source
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
                                  criterion="gini",
@@ -30,9 +30,7 @@ def test_graphviz_toy():
     clf.fit(X, y)
 
     # Test export code
-    out = StringIO()
-    export_graphviz(clf, out_file=out)
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -48,9 +46,7 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test with feature_names
-    out = StringIO()
-    export_graphviz(clf, out_file=out, feature_names=["feature0", "feature1"])
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, feature_names=["feature0", "feature1"])
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="feature0 <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -66,9 +62,7 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test with class_names
-    out = StringIO()
-    export_graphviz(clf, out_file=out, class_names=["yes", "no"])
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, class_names=["yes", "no"])
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -86,10 +80,8 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test plot_options
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, impurity=False,
+    contents1 = get_graphviz_source(clf, filled=True, impurity=False,
                     proportion=True, special_characters=True, rounded=True)
-    contents1 = out.getvalue()
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -109,9 +101,7 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test max_depth
-    out = StringIO()
-    export_graphviz(clf, out_file=out, max_depth=0, class_names=True)
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, max_depth=0, class_names=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -125,10 +115,7 @@ def test_graphviz_toy():
     assert_equal(contents1, contents2)
 
     # Test max_depth with plot_options
-    out = StringIO()
-    export_graphviz(clf, out_file=out, max_depth=0, filled=True,
-                    node_ids=True)
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, max_depth=0, filled=True, node_ids=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
@@ -148,9 +135,7 @@ def test_graphviz_toy():
                                  random_state=2)
     clf = clf.fit(X, y2, sample_weight=w)
 
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, impurity=False)
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, filled=True, impurity=False)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
@@ -182,10 +167,8 @@ def test_graphviz_toy():
                                 random_state=2)
     clf.fit(X, y)
 
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True, leaves_parallel=True,
-                    rotate=True, rounded=True)
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, filled=True, leaves_parallel=True,
+                                    rotate=True, rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -212,9 +195,7 @@ def test_graphviz_toy():
     clf = DecisionTreeClassifier(max_depth=3)
     clf.fit(X, y_degraded)
 
-    out = StringIO()
-    export_graphviz(clf, out_file=out, filled=True)
-    contents1 = out.getvalue()
+    contents1 = get_graphviz_source(clf, filled=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="gini = 0.0\\nsamples = 6\\nvalue = 6.0", fillcolor="#e5813900"] ;\n' \
@@ -229,12 +210,10 @@ def test_graphviz_errors():
     clf.fit(X, y)
 
     # Check feature_names error
-    out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, feature_names=[])
+    assert_raises(IndexError, get_graphviz_source, clf, feature_names=[])
 
     # Check class_names error
-    out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+    assert_raises(IndexError, get_graphviz_source, clf, class_names=[])
 
 
 def test_friedman_mse_in_graphviz():
