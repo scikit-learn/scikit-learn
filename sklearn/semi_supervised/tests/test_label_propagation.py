@@ -11,10 +11,14 @@ from numpy.testing import assert_array_equal
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
     (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
-    (label_propagation.LabelPropagation, {'kernel': lambda x, y : rbf_kernel(x, y, gamma=20)}),
+    (label_propagation.LabelPropagation, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }),
     (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
     (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2}),
-    (label_propagation.LabelSpreading, {'kernel': lambda x, y : rbf_kernel(x, y, gamma=20)}),
+    (label_propagation.LabelSpreading, {
+        'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
+    }),
 ]
 
 
