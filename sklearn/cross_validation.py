@@ -231,8 +231,8 @@ class LeavePOut(_PartitionIterator):
         )
 
     def __len__(self):
-        return int(factorial(self.n) / factorial(self.n - self.p) /
-                   factorial(self.p))
+        return int(factorial(self.n) / factorial(self.n - self.p)
+                   / factorial(self.p))
 
 
 class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
@@ -739,7 +739,7 @@ class LeavePLabelOut(_PartitionIterator):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n, n_iter=10, test_size=None, train_size=None,
+    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
                  random_state=None):
         self.n = n
         self.n_iter = n_iter
@@ -846,8 +846,9 @@ class ShuffleSplit(BaseShuffleSplit):
 
 def _validate_shuffle_split(n, test_size, train_size):
     if test_size is None and train_size is None:
-        train_size = 0.9
-        test_size = 0.1
+        raise ValueError(
+            'test_size and train_size can not both be None')
+
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
             if test_size >= 1.:
@@ -881,37 +882,21 @@ def _validate_shuffle_split(n, test_size, train_size):
         else:
             raise ValueError("Invalid value for train_size: %r" % train_size)
 
-    if test_size is None:
-        # only train_size set, so set test_size as
-        # n - n_train
-        if np.asarray(train_size).dtype.kind == 'f':
-            n_train = floor(train_size * n)
-        elif np.asarray(train_size).dtype.kind == 'i':
-            n_train = float(train_size)
+    if np.asarray(test_size).dtype.kind == 'f':
+        n_test = ceil(test_size * n)
+    elif np.asarray(test_size).dtype.kind == 'i':
+        n_test = float(test_size)
 
-        # set n_test to be the complement of n_train
-        n_test = n - n_train
-
-    elif train_size is None:
-        # only test_size was set, so set train_size as
-        # n - n_test
-        if np.asarray(test_size).dtype.kind == 'f':
-            n_test = ceil(test_size * n)
-        elif np.asarray(test_size).dtype.kind == 'i':
-            n_test = float(test_size)
-
+    if train_size is None:
         n_train = n - n_test
     else:
-        # both train_size and test_size set, so subsample
         if np.asarray(train_size).dtype.kind == 'f':
             n_train = floor(train_size * n)
         else:
             n_train = float(train_size)
 
-        if np.asarray(test_size).dtype.kind == 'f':
-            n_test = ceil(test_size * n)
-        else:
-            n_test = float(test_size)
+    if test_size is None:
+        n_test = n - n_train
 
     if n_train + n_test > n:
         raise ValueError('The sum of train_size and test_size = %d, '
