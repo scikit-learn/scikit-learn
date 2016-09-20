@@ -54,11 +54,20 @@ unchanged, while the precision fluctuates.
 The relationship between recall and precision can be observed in the
 stairstep area of the plot - at the edges of these steps a small change
 in the threshold considerably reduces precision, with only a minor gain in
-recall. See the corner at recall = .59, precision = .8 for an example of this
-phenomenon.
+recall.
+
+A second way to compute an average precision is to average the precisions that
+correspond to the first operating points with recall values greater than or
+equal to some fixed set of desired recall values. The most common choice is
+'eleven point' interpolated precision, where the desired recall values are
+[0, 0.1, 0.2, ..., 1.0]. This is the metric used in `The PASCAL Visual Object
+Classes (VOC) Challenge <http://citeseerx.ist.psu.edu/viewdoc/
+download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_. In the example below,
+the eleven precision values are circled. Note that it's possible that the same
+operating point might correspond to multiple desired recall values.
 
 Precision-recall curves are typically used in binary classification to study
-the output of a classifier. In order to extend Precision-recall curve and
+the output of a classifier. In order to extend the Precision-recall curve and
 average precision to multi-class or multi-label classification, it is necessary
 to binarize the output. One curve can be drawn per label, but one can also draw
 a precision-recall curve by considering each element of the label indicator
@@ -75,12 +84,10 @@ print(__doc__)
 
 import matplotlib.pyplot as plt
 import numpy as np
-from itertools import cycle
-
 from sklearn import svm, datasets
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
-from sklearn.model_selection import train_test_split
+from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
 
@@ -88,10 +95,6 @@ from sklearn.multiclass import OneVsRestClassifier
 iris = datasets.load_iris()
 X = iris.data
 y = iris.target
-
-# setup plot details
-colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
-lw = 2
 
 # Binarize the output
 y = label_binarize(y, classes=[0, 1, 2])
@@ -111,44 +114,89 @@ classifier = OneVsRestClassifier(svm.SVC(kernel='linear', probability=True,
                                  random_state=random_state))
 y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 
-# Compute Precision-Recall and plot curve
+
+def reversed_precision_recall_curve(y_true, y_score):
+    """Helper function to return precision, recall and thresholds
+    in reverse order"""
+    p, r, t = precision_recall_curve(y_true, y_score)
+    return p[::-1], r[::-1], t[::-1]
+
+
+def get_circle_coords(p, r):
+    """Get coordinates of operating points chosen for 11-point interpolated
+    average precision"""
+    recall_circles = list()
+    precision_circles = list()
+    for threshold in np.arange(0, 1.1, 0.1):
+        i = sum(r >= threshold)
+        recall_circles.append(r[-i])
+        precision_circles.append(p[-i])
+    return recall_circles, precision_circles
+
+
+def fill_beneath_step(x, y, color, alpha=0.2):
+    """Fill an area underneath a step function"""
+    x_long = [v for v in x for _ in (0, 1)][:-1]
+    y_long = [v for v in y for _ in (0, 1)][1:]
+    plt.fill_between(x_long, 0, y_long, alpha=alpha, color=color)
+
+
+# Compute Precision-Recall, average precision and eleven-point interpolated
+# average precision
 precision = dict()
 recall = dict()
 average_precision = dict()
+interpolated_average_precision = dict()
 for i in range(n_classes):
-    precision[i], recall[i], _ = precision_recall_curve(y_test[:, i],
+    precision[i], recall[i], _ = reversed_precision_recall_curve(y_test[:, i],
                                                         y_score[:, i])
     average_precision[i] = average_precision_score(y_test[:, i], y_score[:, i])
+    interpolated_average_precision[i] = average_precision_score(
+        y_test[:, i], y_score[:, i], interpolation='eleven_point')
 
-# Compute micro-average ROC curve and ROC area
-precision["micro"], recall["micro"], _ = precision_recall_curve(y_test.ravel(),
-    y_score.ravel())
+# Compute micro-average Precision-Recall curve and average precision
+precision["micro"], recall["micro"], thresholds = \
+    reversed_precision_recall_curve(y_test.ravel(), y_score.ravel())
 average_precision["micro"] = average_precision_score(y_test, y_score,
                                                      average="micro")
 
 
-# Plot Precision-Recall curve
+# Plot micro-average Precision-Recall curve
 plt.clf()
-plt.plot(recall[0], precision[0], lw=lw, color='navy',
-         label='Precision-Recall curve')
+plt.step(recall["micro"], precision["micro"], label='Precision-Recall curve')
+fill_beneath_step(recall["micro"], precision["micro"], color='b')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
-plt.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[0]))
+plt.title('Precision-Recall example: AUC={0:0.2f}'.format(
+        average_precision["micro"]))
 plt.legend(loc="lower left")
 plt.show()
 
-# Plot Precision-Recall curve for each class
+# Plot Precision-Recall curves for each class
+plt.figure(figsize=(12, 10))
 plt.clf()
-plt.plot(recall["micro"], precision["micro"], color='gold', lw=lw,
-         label='micro-average Precision-recall curve (area = {0:0.2f})'
-               ''.format(average_precision["micro"]))
-for i, color in zip(range(n_classes), colors):
-    plt.plot(recall[i], precision[i], color=color, lw=lw,
+colors = ['r', 'b', 'g']
+eleven_point_precisions = dict()
+for i in range(n_classes):
+    plt.step(recall[i], precision[i], color=colors[i],
              label='Precision-recall curve of class {0} (area = {1:0.2f})'
                    ''.format(i, average_precision[i]))
+    p_long = [v for v in precision[i] for _ in (0, 1)][1:]
+    r_long = [v for v in recall[i] for _ in (0, 1)][:-1]
+    c_r, c_p = get_circle_coords(precision[i], recall[i])
+    eleven_point_precisions[i] = c_p
+    for this_r, this_p in zip(c_r, c_p):
+        t = plt.text(this_r + 0.0075, this_p + 0.01, "{:3.3f}".format(this_p),
+                     color=colors[i])
 
+    plt.scatter(c_r, c_p, marker='o', s=100, facecolor='none',
+                edgecolor=colors[i],
+                label='Eleven point interpolated precisions of class {0} '
+                      '(mean = {1:0.2f})'.format(
+                        i, interpolated_average_precision[i]))
+    fill_beneath_step(recall[i], precision[i], colors[i])
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
 plt.xlabel('Recall')
