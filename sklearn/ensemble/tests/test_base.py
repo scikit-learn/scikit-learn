@@ -42,6 +42,7 @@ def test_base():
     assert_true(isinstance(ensemble[0], Perceptron))
     assert_equal(ensemble[0].random_state, None)
     assert_true(isinstance(ensemble[1].random_state, int))
+    assert_true(isinstance(ensemble[2].random_state, int))
     assert_not_equal(ensemble[1].random_state, ensemble[2].random_state)
 
 
