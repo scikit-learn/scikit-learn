@@ -151,8 +151,8 @@ def test_cross_validator_with_default_params():
     lpo_repr = "LeavePOut(p=2)"
     kf_repr = "KFold(n_splits=2, random_state=None, shuffle=False)"
     skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
-    lolo_repr = "LeaveOneLabelOut()"
-    lopo_repr = "LeavePLabelOut(n_labels=2)"
+    lolo_repr = "LeaveOneGroupOut()"
+    lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=None, "
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
