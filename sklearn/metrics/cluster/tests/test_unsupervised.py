@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
@@ -59,17 +60,26 @@ def test_silhouette():
 
 
 def test_cluster_size_1():
-    # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-    # The original silhouette paper suggests that while arbitrary,
-    # single-sample clusters should receive a score of 0.
-    labels = np.array([1, 0, 1, 1, 1])
-    # The distance matrix doesn't actually matter.
-    D = np.random.RandomState(0).rand(len(labels), len(labels))
-    silhouette = silhouette_score(D, labels, metric='precomputed')
+    # Assert Silhouette Coefficient == 0 when there is 1 sample in a cluster
+    # (cluster 0). We also test the case where there are identical samples
+    # as the only members of a cluster (cluster 2). To our knowledge, this case
+    # is not discussed in reference material, and we choose for it a sample
+    # score of 1.
+    X = [[0.], [1.], [1.], [2.], [3.], [3.]]
+    labels = np.array([0, 1, 1, 1, 2, 2])
+
+    # Cluster 1: 1 sample -> score of 0 by Rousseeuw's convention
+    # Cluster 2: intra-cluster = [.5, .5, 1]
+    #            inter-cluster = [1, 1, 1]
+    #            silhouette    = [.5, .5, 0]
+    # Cluster 3: intra-cluster = [0, 0]
+    #            inter-cluster = [arbitrary, arbitrary]
+    #            silhouette    = [1., 1.]
+
+    silhouette = silhouette_score(X, labels)
     assert_false(np.isnan(silhouette))
-    ss = silhouette_samples(D, labels, metric='precomputed')
-    assert_false(np.isnan(ss).any())
-    assert_equal(ss[1], 0.)
+    ss = silhouette_samples(X, labels)
+    assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
 
 
 def test_correct_labelsize():
