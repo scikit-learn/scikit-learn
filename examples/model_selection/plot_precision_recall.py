@@ -128,7 +128,7 @@ def get_circle_coords(p, r):
     recall_circles = list()
     precision_circles = list()
     for threshold in np.arange(0, 1.1, 0.1):
-        i = sum(r >= threshold)
+        i = sum(r[1:] >= threshold)
         recall_circles.append(r[-i])
         precision_circles.append(p[-i])
     return recall_circles, precision_circles
