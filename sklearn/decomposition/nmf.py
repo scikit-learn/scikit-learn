@@ -200,7 +200,7 @@ def _compute_regularization(alpha, l1_ratio, regularization, n_samples,
     return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
 
-def _check_string_param(sparseness, solver, regularization, beta_loss):
+def _check_string_param(sparseness, solver, regularization, beta_loss, init):
     allowed_sparseness = (None, 'data', 'components')
     if sparseness not in allowed_sparseness:
         raise ValueError(
@@ -224,6 +224,13 @@ def _check_string_param(sparseness, solver, regularization, beta_loss):
         raise ValueError(
             'Invalid beta_loss parameter: solver %r does not handle beta_loss'
             ' = %r' % (solver, beta_loss))
+
+    if solver == 'mu' and init == 'nndsvd':
+        warnings.warn("The multiplicative update ('mu') solver cannot update "
+                      "zeros present in the initialization, and so leads to "
+                      "poorer results when used jointly with init='nndsvd'. "
+                      "You may try init='nndsvda' or init='nndsvdar' instead.",
+                      UserWarning)
 
     beta_loss = _beta_loss_to_float(beta_loss)
     return beta_loss
@@ -1159,7 +1166,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     X = check_array(X, accept_sparse=('csr', 'csc'))
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(sparseness, solver, regularization,
-                                    beta_loss)
+                                    beta_loss, init)
 
     n_samples, n_features = X.shape
     if n_components is None:

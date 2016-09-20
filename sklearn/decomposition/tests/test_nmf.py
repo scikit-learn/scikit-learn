@@ -85,7 +85,8 @@ def test_initialize_variants():
         assert_true(np.allclose(evl[ref != 0], ref[ref != 0]))
 
 
-@ignore_warnings(category=DeprecationWarning)
+# ignore UserWarning raised when both solver='mu' and init='nndsvd'
+@ignore_warnings(category=(DeprecationWarning, UserWarning))
 def test_nmf_fit_nn_output():
     # Test that the decomposition does not contain negative values
     A = np.c_[5 * np.ones(5) - np.arange(1, 6),
@@ -498,7 +499,7 @@ def test_nmf_decreasing():
                 # not implemented
                 continue
             previous_loss = None
-            for n_iter in range(1, 10):
+            for n_iter in range(1, 5):
                 W, H, n_iter = non_negative_factorization(
                     X, W, H, beta_loss=beta_loss, n_components=n_components,
                     max_iter=n_iter, alpha=alpha, solver=solver, tol=tol,

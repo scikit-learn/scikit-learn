@@ -684,8 +684,8 @@ faces dataset, in comparison with the PCA eigenfaces.
 
 
 The :attr:`init` attribute determines the initialization method applied, which
-has a great impact on the performance of the method. :class:`NMF` implements
-the method Nonnegative Double Singular Value Decomposition. NNDSVD [4]_ is based on
+has a great impact on the performance of the method. :class:`NMF` implements the
+method Nonnegative Double Singular Value Decomposition. NNDSVD [4]_ is based on
 two SVD processes, one approximating the data matrix, the other approximating
 positive sections of the resulting partial SVD factors utilizing an algebraic
 property of unit rank matrices. The basic NNDSVD algorithm is better fit for
@@ -693,6 +693,11 @@ sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to
 the mean of all elements of the data), and NNDSVDar (in which the zeros are set
 to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
+
+Note that the Multiplicative Update ('mu') solver cannot update zeros present in
+the initialization, so it leads to poorer results when used jointly with the
+basic NNDSVD algorithm which introduces a lot of zeros; in this case, NNDSVDa or
+NNDSVDar should be preferred.
 
 :class:`NMF` can also be initialized with correctly scaled random non-negative
 matrices by setting :attr:`init="random"`. An integer seed or a
@@ -751,8 +756,8 @@ defined by :
 .. math::
     d_{\beta}(X, Y) = \sum_{i,j} \frac{1}{\beta(\beta - 1)}(X_{ij}^\beta + (\beta-1)Y_{ij}^\beta - \beta X_{ij} Y_{ij}^{\beta - 1})
 
-Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can be
-continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
+Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
+be continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
 :class:`NMF` implements three solvers, using Projected Gradient ('pg') [3]_
