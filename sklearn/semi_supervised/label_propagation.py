@@ -81,9 +81,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
-        String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported.
+    kernel : {'knn', 'rbf', callable}
+        String identifier for kernel function to use or the kernel function
+        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+        passed should take two inputs, each of shape [n_samples, n_features],
+        and return a [n_samples, n_samples] shaped weight matrix
 
     gamma : float
         Parameter for rbf kernel
@@ -104,7 +106,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
@@ -286,11 +287,11 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf', function}
+    kernel : {'knn', 'rbf', callable}
         String identifier for kernel function to use or the kernel function
         itself. Only 'rbf' and 'knn' strings are valid inputs. The function
-        passed should take two inputs, each of size [n_samples, n_features],
-        and return a [n_samples, n_samples] sized weight matrix.
+        passed should take two inputs, each of shape [n_samples, n_features],
+        and return a [n_samples, n_samples] shaped weight matrix.
 
     gamma : float
         Parameter for rbf kernel
@@ -370,7 +371,7 @@ class LabelPropagation(BaseLabelPropagation):
 class LabelSpreading(BaseLabelPropagation):
     """LabelSpreading model for semi-supervised learning
 
-    This model is similar to the basic Label Propgation algorithm,
+    This model is similar to the basic Label Propagation algorithm,
     but uses affinity matrix based on the normalized graph Laplacian
     and soft clamping across the labels.
 
@@ -378,9 +379,11 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
-        String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported.
+    kernel : {'knn', 'rbf', callable}
+        String identifier for kernel function to use or the kernel function
+        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+        passed should take two inputs, each of shape [n_samples, n_features],
+        and return a [n_samples, n_samples] shaped weight matrix
 
     gamma : float
       parameter for rbf kernel
