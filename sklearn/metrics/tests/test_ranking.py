@@ -148,6 +148,21 @@ def _average_precision_slow(y_true, y_score):
     return average_precision
 
 
+def _interpolated_average_precision_slow(y_true, y_score):
+    """A second implementation for the eleven-point interpolated average
+    precision used by Pascal VOC. This should produce identical results to
+    average_precision_score with `interpolation='eleven_point'`.
+    """
+    precision, recall, _ = precision_recall_curve(y_true, y_score)
+    precision = list(reversed(precision))
+    recall = list(reversed(recall))
+    eleven_precisions = list()
+    for threshold in np.arange(0, 1.1, 0.1):
+        i = sum(recall[1:] >= threshold)
+        eleven_precisions.append(precision[-i])
+    return np.mean(eleven_precisions)
+
+
 def test_roc_curve():
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -520,9 +535,14 @@ def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
     precision_recall_auc = _average_precision_slow(y_true, probas_pred)
+    interpolated_average_precision = _interpolated_average_precision_slow(
+        y_true, probas_pred)
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_equal(interpolated_average_precision,
+                 average_precision_score(y_true, probas_pred,
+                                         interpolation='eleven_point'))
     assert_almost_equal(_average_precision(y_true, probas_pred),
                         precision_recall_auc, 1)
     assert_equal(p.size, r.size)
