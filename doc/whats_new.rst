@@ -462,6 +462,11 @@ Bug fixes
       <https://github.com/scikit-learn/scikit-learn/pull/7159>`_)
       by `Yichuan Liu <https://github.com/yl565>`_.
 
+    - Cross-validation of :class:`OneVsOneClassifier` and
+      :class:`OneVsRestClassifier` now works with precomputed kernels.
+      (`#7350 <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
+      By `Russell Smith`_.
+
 
 API changes summary
 -------------------
@@ -4638,3 +4643,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Robert McGibbon: https://github.com/rmcgibbo
 
 .. _Gregory Stupp: https://github.com/stuppie
+
+.. _Russell Smith: https://github.com/rsmith54

@@ -45,13 +45,11 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.linear_model import Ridge
 
-from sklearn.model_selection._split import _safe_split
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
 
 from sklearn.datasets import load_digits
-from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
 
 from sklearn.externals import six
@@ -62,7 +60,6 @@ from sklearn.svm import SVC
 X = np.ones(10)
 y = np.arange(10) // 2
 P_sparse = coo_matrix(np.eye(5))
-iris = load_iris()
 digits = load_digits()
 
 
@@ -844,25 +841,6 @@ def test_shufflesplit_reproducible():
     ss = ShuffleSplit(random_state=21)
     assert_array_equal(list(a for a, b in ss.split(X)),
                        list(a for a, b in ss.split(X)))
-
-
-def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
-    clfp = SVC(kernel="precomputed")
-
-    X, y = iris.data, iris.target
-    K = np.dot(X, X.T)
-
-    cv = ShuffleSplit(test_size=0.25, random_state=0)
-    tr, te = list(cv.split(X))[0]
-
-    X_tr, y_tr = _safe_split(clf, X, y, tr)
-    K_tr, y_tr2 = _safe_split(clfp, K, y, tr)
-    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
-
-    X_te, y_te = _safe_split(clf, X, y, te, tr)
-    K_te, y_te2 = _safe_split(clfp, K, y, te, tr)
-    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
 
 
 def test_train_test_split_allow_nans():
