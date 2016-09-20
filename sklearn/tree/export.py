@@ -61,7 +61,7 @@ def _color_brew(n):
     return color_list
 
 
-class Sentinel:
+class Sentinel(object):
     def __repr__():
         return '"tree.dot"'
 SENTINEL = Sentinel()
