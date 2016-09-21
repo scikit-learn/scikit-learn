@@ -1362,6 +1362,13 @@ def check_no_fit_attributes_set_in_init(name, Estimator, allowed_properties):
             assert_true(isinstance(getattr(Estimator, attr), property),
                         "attribute %s on %s not a property" % (attr, name))
             assert_in(attr, allowed_properties)
+            allowed_properties.remove(attr)
+
+    # This make sure that _KNOWN_PROPERTIES is the minimal set of
+    # required properties. If this assert fails that means you can
+    # remove some properties from _KNOWN_PROPERTIES in
+    # sklearn/tests/test_common.py
+    assert_equal(allowed_properties, [])
 
 
 def check_sparsify_coefficients(name, Estimator):
