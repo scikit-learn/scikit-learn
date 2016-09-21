@@ -89,15 +89,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
-    le = LabelEncoder()
-    labels = le.fit_transform(labels)
-    n_labels = len(le.classes_)
-    n_samples = X.shape[0]
-
-    check_number_of_labels(n_labels, n_samples)
-
     if sample_size is not None:
+        X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
@@ -167,8 +160,10 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
     le = LabelEncoder()
     labels = le.fit_transform(labels)
+    check_number_of_labels(len(le.classes_), X.shape[0])
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
@@ -176,11 +171,11 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]
-    intra_clust_dists = np.ones(distances.shape[0], dtype=distances.dtype)
+    intra_clust_dists = np.zeros(distances.shape[0], dtype=distances.dtype)
 
     # For sample i, store the mean distance of the second closest
     # cluster in inter_clust_dists[i]
-    inter_clust_dists = np.inf * intra_clust_dists
+    inter_clust_dists = np.inf + intra_clust_dists
 
     for curr_label in range(len(unique_labels)):
 
@@ -194,8 +189,6 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         if n_samples_curr_lab != 0:
             intra_clust_dists[mask] = np.sum(
                 current_distances[:, mask], axis=1) / n_samples_curr_lab
-        else:
-            intra_clust_dists[mask] = 0
 
         # Now iterate over all other labels, finding the mean
         # cluster distance that is closest to every sample.

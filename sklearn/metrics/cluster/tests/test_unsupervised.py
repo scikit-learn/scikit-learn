@@ -14,7 +14,6 @@ from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabaz_score
-from sklearn.metrics import pairwise_distances
 
 
 def test_silhouette():
@@ -68,11 +67,11 @@ def test_cluster_size_1():
     X = [[0.], [1.], [1.], [2.], [3.], [3.]]
     labels = np.array([0, 1, 1, 1, 2, 2])
 
-    # Cluster 1: 1 sample -> score of 0 by Rousseeuw's convention
-    # Cluster 2: intra-cluster = [.5, .5, 1]
+    # Cluster 0: 1 sample -> score of 0 by Rousseeuw's convention
+    # Cluster 1: intra-cluster = [.5, .5, 1]
     #            inter-cluster = [1, 1, 1]
     #            silhouette    = [.5, .5, 0]
-    # Cluster 3: intra-cluster = [0, 0]
+    # Cluster 2: intra-cluster = [0, 0]
     #            inter-cluster = [arbitrary, arbitrary]
     #            silhouette    = [1., 1.]
 
@@ -107,7 +106,9 @@ def test_non_encoded_labels():
     X = dataset.data
     labels = dataset.target
     assert_equal(
-        silhouette_score(X, labels + 10), silhouette_score(X, labels))
+        silhouette_score(X, labels * 2 + 10), silhouette_score(X, labels))
+    assert_array_equal(
+        silhouette_samples(X, labels * 2 + 10), silhouette_samples(X, labels))
 
 
 def test_non_numpy_labels():
