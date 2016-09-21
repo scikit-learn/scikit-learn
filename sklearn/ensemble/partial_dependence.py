@@ -14,6 +14,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import map, range, zip
 from ..utils import check_array
+from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 
 from ._gradient_boosting import _partial_dependence_tree
@@ -241,9 +242,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependence' %
-                         gbrt.__class__.__name__)
+    check_is_fitted(gbrt, 'estimators_')
 
     # set label_idx for multi-class GBRT
     if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:

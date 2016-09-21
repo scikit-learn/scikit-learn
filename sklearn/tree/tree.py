@@ -34,6 +34,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 
 from ._criterion import Criterion
@@ -419,7 +420,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -472,6 +473,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -729,6 +731,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 
