@@ -772,6 +772,20 @@ The 'cd' and 'pg' solvers can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
 different minima, even when optimizing the same distance function.
 
+NMF is best used with the ``fit_transform`` method, which returns the matrix W.
+The matrix H is stored into the fitted model in the ``components_`` attribute;
+the method ``transform`` will decompose a new matrix X_new based on these
+stored components::
+
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import NMF
+    >>> model = NMF(n_components=2, init='random', random_state=0)
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
+    >>> X_new = np.array([[1, 0], [1, 6.1], [1, 0], [1, 4], [3.2, 1], [0, 4]])
+    >>> W_new = model.transform(X_new)
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_faces_decomposition.py`

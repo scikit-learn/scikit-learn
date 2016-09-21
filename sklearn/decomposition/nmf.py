@@ -1148,6 +1148,14 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     n_iter : int
         Actual number of iterations.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import non_negative_factorization
+    >>> W, H, n_iter = non_negative_factorization(
+        X, n_components=2, init='random', random_state=0)
+
     References
     ----------
     C.-J. Lin. Projected gradient methods for non-negative matrix
@@ -1403,18 +1411,11 @@ class NMF(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import NMF
     >>> model = NMF(n_components=2, init='random', random_state=0)
-    >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    NMF(alpha=0.0, beta=1, beta_loss='frobenius', eta=0.1, init='random',
-      l1_ratio=0.0, max_iter=200, n_components=2, nls_max_iter=2000,
-      random_state=0, shuffle=False, solver='cd', sparseness=None, tol=0.0001,
-      verbose=0)
-
-    >>> model.components_
-    array([[ 2.09783018,  0.30560234],
-           [ 2.13443044,  2.13171694]])
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
 
     References
     ----------
@@ -1734,18 +1735,11 @@ class ProjectedGradientNMF(NMF):
     Examples
     --------
     >>> import numpy as np
-    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import NMF
     >>> model = NMF(n_components=2, init='random', random_state=0)
-    >>> model.fit(X) #doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    NMF(alpha=0.0, beta=1, beta_loss='frobenius', eta=0.1, init='random',
-      l1_ratio=0.0, max_iter=200, n_components=2, nls_max_iter=2000,
-      random_state=0, shuffle=False, solver='cd', sparseness=None, tol=0.0001,
-      verbose=0)
-
-    >>> model.components_
-    array([[ 2.09783018,  0.30560234],
-           [ 2.13443044,  2.13171694]])
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
 
     References
     ----------
