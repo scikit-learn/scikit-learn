@@ -131,6 +131,8 @@ def test_class_weight_balanced_linear_classifiers():
 _KNOWN_PROPERTIES = {
     'AdaBoostClassifier': ['feature_importances_'],
     'AdaBoostRegressor': ['feature_importances_'],
+    'BaggingClassifier': ['estimators_samples_'],
+    'BaggingRegressor': ['estimators_samples_'],
     'BernoulliNB': ['coef_', 'intercept_'],
     'DecisionTreeClassifier': ['feature_importances_'],
     'DecisionTreeRegressor': ['feature_importances_'],
@@ -139,9 +141,13 @@ _KNOWN_PROPERTIES = {
     'ExtraTreeRegressor': ['feature_importances_'],
     'ExtraTreesClassifier': ['feature_importances_'],
     'ExtraTreesRegressor': ['feature_importances_'],
+    'GaussianProcessClassifier': ['kernel_'],
     'GradientBoostingClassifier': ['feature_importances_'],
     'GradientBoostingRegressor': ['feature_importances_'],
+    'IsolationForest': ['estimators_samples_'],
     'Lasso': ['sparse_coef_'],
+    # residues_ is deprecated and will be removed in 0.19
+    'LinearRegression': ['residues_'],
     'MultinomialNB': ['coef_', 'intercept_'],
     'MultiTaskLasso': ['sparse_coef_'],
     'MultiTaskElasticNet': ['sparse_coef_'],
@@ -154,6 +160,8 @@ _KNOWN_PROPERTIES = {
     'RidgeClassifierCV': ['classes_'],
     'SpectralBiclustering': ['biclusters_'],
     'SpectralCoclustering': ['biclusters_'],
+    # std_ is deprecated and will be removed in 0.19
+    'StandardScaler': ['std_'],
     'SVC': ['coef_'],
     'SVR': ['coef_'],
     'TfidfVectorizer': ['idf_'],
