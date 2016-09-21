@@ -1193,7 +1193,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     dim : integer, optional (default=1)
         The size of the random matrix to generate.
 
-    alpha: float between 0 and 1, optional (default=0.95)
+    alpha : float between 0 and 1, optional (default=0.95)
         The probability that a coefficient is zero (see notes). Larger values
         enforce more sparsity.
 
