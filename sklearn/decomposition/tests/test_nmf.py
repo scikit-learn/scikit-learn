@@ -333,8 +333,7 @@ def test_beta_divergence():
     # initialization
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    np.abs(X, X)
-    X[0, :] = 0
+    X[X < 0] = 0.
     X_csr = sp.csr_matrix(X)
     W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
 
@@ -353,13 +352,12 @@ def test_special_sparse_dot():
     n_features = 5
     n_components = 3
     rng = np.random.mtrand.RandomState(42)
-    X = np.abs(rng.randn(n_samples, n_features))
+    X = rng.randn(n_samples, n_features)
+    X[X < 0] = 0.
+    X_csr = sp.csr_matrix(X)
+
     W = np.abs(rng.randn(n_samples, n_components))
     H = np.abs(rng.randn(n_components, n_features))
-
-    X[0, :] = 0
-    X[2, 2] = 0
-    X_csr = sp.csr_matrix(X)
 
     WH_safe = nmf._special_sparse_dot(W, H, X_csr)
     WH = nmf._special_sparse_dot(W, H, X)
@@ -386,10 +384,9 @@ def test_nmf_multiplicative_update_sparse():
     n_iter = 5
 
     # initialization
-    rng = np.random.mtrand.RandomState(42)
+    rng = np.random.mtrand.RandomState(1337)
     X = rng.randn(n_samples, n_features)
-    np.abs(X, X)
-    X[0, 1] = 0
+    X[X < 0] = 0.
     X_csr = sp.csr_matrix(X)
     W0, H0 = nmf._initialize_nmf(X, n_components, init='random',
                                  random_state=42)

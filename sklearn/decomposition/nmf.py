@@ -90,9 +90,9 @@ def beta_divergence(X, W, H, beta):
     ----------
     X : float or array-like, shape (n_samples, n_features)
 
-    W : float or array-like, shape (n_samples, n_components)
+    W : float or dense array-like, shape (n_samples, n_components)
 
-    H : float or array-like, shape (n_components, n_features)
+    H : float or dense array-like, shape (n_components, n_features)
 
     beta : float, string in {'frobenius', 'kullback-leibler', 'itakura-saito'}
         Parameter of the beta-divergence.
@@ -104,10 +104,10 @@ def beta_divergence(X, W, H, beta):
     beta = _beta_loss_to_float(beta)
 
     # The method can be called with scalars
-    if isinstance(X, numbers.Number):
-        W = np.array([[W]])
-        H = np.array([[H]])
-        X = np.array([[X]])
+    if not sp.issparse(X):
+        X = np.atleast_2d(X)
+    W = np.atleast_2d(W)
+    H = np.atleast_2d(H)
 
     # Frobenius norm
     if beta == 2:
@@ -751,7 +751,6 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
         if update_H:
             # avoid a copy of XHt, which will be re-computed (update_H=True)
             numerator = XHt
-            XHt = None
         else:
             # preserve the XHt, which is not re-computed (update_H=False)
             numerator = XHt.copy()
@@ -1081,7 +1080,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         .. versionchanged:: 0.17
            Deprecated Projected Gradient solver.
 
-        .. versionadded:: 0.18
+        .. versionadded:: 0.19
            Multiplicative Update solver.
 
     beta_loss : float or string, default 'frobenius'
@@ -1318,7 +1317,7 @@ class NMF(BaseEstimator, TransformerMixin):
         .. versionchanged:: 0.17
            Deprecated Projected Gradient solver.
 
-        .. versionadded:: 0.18
+        .. versionadded:: 0.19
            Multiplicative Update solver.
 
 
@@ -1643,16 +1642,20 @@ class ProjectedGradientNMF(NMF):
 
         - 'custom': use custom matrices W and H
 
-    solver : 'pg' | 'cd'
+    solver : 'pg' | 'cd' | 'mu'
         Numerical solver to use:
         'pg' is a Projected Gradient solver (deprecated).
         'cd' is a Coordinate Descent solver (recommended).
+        'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
 
         .. versionchanged:: 0.17
            Deprecated Projected Gradient solver.
+
+        .. versionadded:: 0.19
+           Multiplicative Update solver.
 
     tol : double, default: 1e-4
         Tolerance value used in stopping conditions.
