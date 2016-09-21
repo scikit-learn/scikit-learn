@@ -1417,22 +1417,6 @@ def check_estimators_overwrite_params(name, Estimator):
     # Fit the model
     estimator.fit(X, y)
 
-
-def check_no_fit_attributes_set_in_init(name, Estimator, allowed_properties):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes.
-
-    allowed_properties is a set of attribute names that are allowed to be
-    on the Estimator class as properties.
-    """
-    estimator = Estimator()
-    for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("_"):
-            assert_true(hasattr(Estimator, attr),
-                        "%s set by __init__ in %s" % (attr, name))
-            assert_true(isinstance(getattr(Estimator, attr), property),
-                        "attribute %s on %s not a property" % (attr, name))
-            assert_in(attr, allowed_properties)
-
     # Compare the state of the model parameters with the original parameters
     new_params = estimator.get_params()
     for param_name, original_value in original_params.items():
@@ -1448,6 +1432,22 @@ def check_no_fit_attributes_set_in_init(name, Estimator, allowed_properties):
                      "Estimator %s should not change or mutate "
                      " the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
+
+
+def check_no_fit_attributes_set_in_init(name, Estimator, allowed_properties):
+    """Check that Estimator.__init__ doesn't set trailing-_ attributes.
+
+    allowed_properties is a set of attribute names that are allowed to be
+    on the Estimator class as properties.
+    """
+    estimator = Estimator()
+    for attr in dir(estimator):
+        if attr.endswith("_") and not attr.startswith("_"):
+            assert_true(hasattr(Estimator, attr),
+                        "%s set by __init__ in %s" % (attr, name))
+            assert_true(isinstance(getattr(Estimator, attr), property),
+                        "attribute %s on %s not a property" % (attr, name))
+            assert_in(attr, allowed_properties)
 
 
 def check_sparsify_coefficients(name, Estimator):
