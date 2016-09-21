@@ -345,6 +345,10 @@ Enhancements
      (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
      By `Antony Lee`_.
 
+   - :class:`semi_supervised.LabelPropagation` and :class:`semi_supervised.LabelSpreading`
+     now accept arbitrary kernel functions in addition to strings ``knn`` and ``rbf``.
+     (`#5762 <https://github.com/scikit-learn/scikit-learn/pull/5762>`_) By `Utkarsh Upadhyay`_.
+
 
 Bug fixes
 .........
@@ -4645,3 +4649,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Gregory Stupp: https://github.com/stuppie
 
 .. _Russell Smith: https://github.com/rsmith54
+
+.. _Utkarsh Upadhyay: https://github.com/musically-ut
