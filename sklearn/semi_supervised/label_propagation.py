@@ -119,6 +119,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_neighbors = n_neighbors
 
         # clamping factor
+        # alpha should be between 0 and 1
         self.alpha = alpha
 
         self.n_jobs = n_jobs
@@ -235,8 +236,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         y = np.asarray(y)
         unlabeled = y == -1
+        labeled = y != -1
         clamp_weights = np.ones((n_samples, 1))
-        clamp_weights[unlabeled, 0] = self.alpha
+        clamp_weights[labeled, 0] = 1 - self.alpha
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
@@ -244,10 +246,10 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
-        if self.alpha > 0.:
-            y_static *= 1 - self.alpha
-        y_static[unlabeled] = 0
+        if self.alpha >= 0.:
+            y_static *= self.alpha
 
+        y_static[unlabeled] = 0
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
         remaining_iter = self.max_iter
@@ -258,6 +260,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
+
+            normalizer = np.sum(self.label_distributions_, axis=1)
+            normalizer = normalizer[:, np.newaxis]
+            normalizer[normalizer == 0] = 1
+            self.label_distributions_ /= normalizer
+
             # clamp
             self.label_distributions_ = np.multiply(
                 clamp_weights, self.label_distributions_) + y_static
@@ -453,8 +461,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = graph_laplacian(affinity_matrix, normed=True)
-        laplacian = -laplacian
+        laplacian = -graph_laplacian(affinity_matrix, normed=True)
         if sparse.isspmatrix(laplacian):
             diag_mask = (laplacian.row == laplacian.col)
             laplacian.data[diag_mask] = 0.0

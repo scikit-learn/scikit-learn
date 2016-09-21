@@ -9,10 +9,10 @@ from numpy.testing import assert_array_equal
 
 
 ESTIMATORS = [
-    (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
-    (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
-    (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
-    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2})
+    (label_propagation.LabelPropagation, {'kernel': 'rbf', 'alpha': 1.0}),
+    (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2, 'alpha': 1.0}),
+    (label_propagation.LabelSpreading, {'kernel': 'rbf', 'alpha': 1.0}),
+    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2, 'alpha': 1.0})
 ]
 
 
@@ -53,3 +53,12 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                                   np.array([[0.5, 0.5]]))
+
+
+def test_hard_clamping():
+    samples = [[1.,1.],[1.,0.],[0.,1.]]
+    labels = [1.,0.,-1.]
+    for estimator, parameters in ESTIMATORS:
+        clf = estimator(**parameters).fit(samples, labels)
+        assert_array_equal(clf.transduction_[0], np.array([1.]))
+        assert_array_equal(clf.transduction_[1], np.array([0.]))
