@@ -924,9 +924,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, call `fit`"
-                                 " before making predictions`.")
+        check_is_fitted(self, 'estimators_')
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.

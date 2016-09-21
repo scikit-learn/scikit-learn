@@ -64,6 +64,7 @@ from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import bincount, parallel_helper
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -363,10 +364,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if (getattr(self, "estimators_", None) is None
-                or len(self.estimators_) == 0):
-            raise NotFittedError("Estimator not fitted, "
-                                 "call `fit` before `feature_importances_`.")
+        check_is_fitted(self, 'estimators_')
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    backend="threading")(
@@ -570,6 +568,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'estimators_')
         # Check data
         X = self._validate_X_predict(X)
 
@@ -682,6 +681,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
+        check_is_fitted(self, 'estimators_')
         # Check data
         X = self._validate_X_predict(X)
 

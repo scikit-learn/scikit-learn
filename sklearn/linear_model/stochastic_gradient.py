@@ -353,7 +353,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "data %d." % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
-        if getattr(self, "t_", None) is None:
+        if not hasattr(self, "t_"):
             self.t_ = 1.0
 
         # delegate to concrete training procedure
@@ -373,7 +373,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        if getattr(self, "classes_", None) is not None:
+        if hasattr(self, "classes_"):
             self.classes_ = None
 
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
@@ -383,7 +383,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # np.unique sorts in asc order; largest class id is positive class
         classes = np.unique(y)
 
-        if self.warm_start and getattr(self, "coef_", None) is not None:
+        if self.warm_start and hasattr(self, "coef_"):
             if coef_init is None:
                 coef_init = self.coef_
             if intercept_init is None:
@@ -1019,7 +1019,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         penalty_type = self._get_penalty_type(self.penalty)
         learning_rate_type = self._get_learning_rate_type(learning_rate)
 
-        if getattr(self, "t_", None) is None:
+        if not hasattr(self, "t_"):
             self.t_ = 1.0
 
         random_state = check_random_state(self.random_state)

@@ -19,7 +19,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -235,6 +235,7 @@ def _yield_all_checks(name, Estimator):
     yield check_fit1d_1sample
     yield check_get_params_invariance
     yield check_dict_unchanged
+    yield check_no_fit_attributes_set_in_init
 
 
 def check_estimator(Estimator):
@@ -1434,20 +1435,20 @@ def check_estimators_overwrite_params(name, Estimator):
                      % (name, param_name, original_value, new_value))
 
 
-def check_no_fit_attributes_set_in_init(name, Estimator, allowed_properties):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes.
-
-    allowed_properties is a set of attribute names that are allowed to be
-    on the Estimator class as properties.
-    """
+def check_no_fit_attributes_set_in_init(name, Estimator):
+    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     estimator = Estimator()
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("_"):
-            assert_true(hasattr(Estimator, attr),
-                        "%s set by __init__ in %s" % (attr, name))
-            assert_true(isinstance(getattr(Estimator, attr), property),
-                        "attribute %s on %s not a property" % (attr, name))
-            assert_in(attr, allowed_properties)
+            # This check is for properties, they can be listed in dir
+            # while at the same time have hasattr return False as long
+            # as the property getter raises an AttributeError
+            assert_false(
+                hasattr(estimator, attr),
+                "Fitted attributes ending with '_' should not be initialized "
+                'in the constructor of an estimator but instead in the '
+                'fit method itself. Attribute {0!r} was found'
+                ' in estimator {1}'.format(estimator, attr))
 
 
 def check_sparsify_coefficients(name, Estimator):
