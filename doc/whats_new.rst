@@ -471,6 +471,10 @@ Bug fixes
       size 1 were incorrectly scored. They should get a score of 0.
       By `Joel Nothman`_.
 
+    - Fix bug in :func:`metrics.silhouette_samples` so that it now works with
+      arbitrary labels, not just those ranging from 0 to n_clusters - 1.
+      By `Joel Nothman`_.
+
 
 API changes summary
 -------------------
