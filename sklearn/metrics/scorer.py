@@ -248,7 +248,20 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
+    if isinstance(scoring, six.string_types):
+        return get_scorer(scoring)
     elif has_scoring:
+        # Heuristic to ensure user has not passed a metric
+        module = getattr(scoring, '__module__', None)
+        if hasattr(module, 'startswith') and \
+           module.startswith('sklearn.metrics.') and \
+           not module.startswith('sklearn.metrics.scorer') and \
+           not module.startswith('sklearn.metrics.tests.'):
+            raise ValueError('scoring value %r looks like it is a metric '
+                             'function rather than a scorer. A scorer should '
+                             'require an estimator as its first parameter. '
+                             'Please use `make_scorer` to convert a metric '
+                             'to a scorer.' % scoring)
         return get_scorer(scoring)
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
