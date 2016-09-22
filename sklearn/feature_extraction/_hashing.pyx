@@ -43,7 +43,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
-            if isinstance(v, basestring):
+            if isinstance(v, (str, unicode)):
                 f = "%s%s%s" % (f, '=', v)
                 value = 1
             else:
