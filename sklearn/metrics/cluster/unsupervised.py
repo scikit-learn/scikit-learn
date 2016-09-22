@@ -9,6 +9,7 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
+from ...utils.fixes import bincount
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -88,15 +89,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
-    le = LabelEncoder()
-    labels = le.fit_transform(labels)
-    n_labels = len(le.classes_)
-    n_samples = X.shape[0]
-
-    check_number_of_labels(n_labels, n_samples)
-
     if sample_size is not None:
+        X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
@@ -166,21 +160,24 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
     le = LabelEncoder()
     labels = le.fit_transform(labels)
+    check_number_of_labels(len(le.classes_), X.shape[0])
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
+    n_samples_per_label = bincount(labels, minlength=len(unique_labels))
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]
-    intra_clust_dists = np.ones(distances.shape[0], dtype=distances.dtype)
+    intra_clust_dists = np.zeros(distances.shape[0], dtype=distances.dtype)
 
     # For sample i, store the mean distance of the second closest
     # cluster in inter_clust_dists[i]
-    inter_clust_dists = np.inf * intra_clust_dists
+    inter_clust_dists = np.inf + intra_clust_dists
 
-    for curr_label in unique_labels:
+    for curr_label in range(len(unique_labels)):
 
         # Find inter_clust_dist for all samples belonging to the same
         # label.
@@ -188,14 +185,14 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         current_distances = distances[mask]
 
         # Leave out current sample.
-        n_samples_curr_lab = np.sum(mask) - 1
+        n_samples_curr_lab = n_samples_per_label[curr_label] - 1
         if n_samples_curr_lab != 0:
             intra_clust_dists[mask] = np.sum(
                 current_distances[:, mask], axis=1) / n_samples_curr_lab
 
         # Now iterate over all other labels, finding the mean
         # cluster distance that is closest to every sample.
-        for other_label in unique_labels:
+        for other_label in range(len(unique_labels)):
             if other_label != curr_label:
                 other_mask = labels == other_label
                 other_distances = np.mean(
@@ -205,6 +202,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     sil_samples = inter_clust_dists - intra_clust_dists
     sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
+    # score 0 for clusters of size 1, according to the paper
+    sil_samples[n_samples_per_label.take(labels) == 1] = 0
     return sil_samples
 
 
