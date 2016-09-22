@@ -8,8 +8,6 @@ from libc.stdlib cimport abs
 cimport numpy as np
 import numpy as np
 
-from ..externals.six import string_types
-
 from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
 
 np.import_array()
@@ -45,7 +43,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
-            if isinstance(v, string_types):
+            if isinstance(v, basestring):
                 f = "%s%s%s" % (f, '=', v)
                 value = 1
             else:
@@ -55,13 +53,13 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
                 continue
 
             if isinstance(f, unicode):
-                f = f.encode("utf-8")
+                f = (<unicode>f).encode("utf-8")
             # Need explicit type check because Murmurhash does not propagate
             # all exceptions. Add "except *" there?
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
 
-            h = murmurhash3_bytes_s32(f, 0)
+            h = murmurhash3_bytes_s32(<bytes>f, 0)
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
