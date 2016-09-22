@@ -172,9 +172,8 @@ def test_no_fit_attributes_set_in_init():
     # Assert that estimators do not set fit attributes (ending in "_")
     # at initialization time.
     for name, Estimator in all_estimators():
-        if name not in ['_BaseHMM', "GaussianHMM", "GMMHMM", 'MultinomialHMM']:
-            yield (check_no_fit_attributes_set_in_init,
-                   name, Estimator, _KNOWN_PROPERTIES.get(name, []))
+        yield (check_no_fit_attributes_set_in_init,
+               name, Estimator, _KNOWN_PROPERTIES.get(name, []))
 
 
 @ignore_warnings
