@@ -9,15 +9,10 @@ from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..externals import six
 
 
-def _parallel_predict(estimator, method, cv, X, y, verbose, fit_params):
+def _parallel_predict(estimator, method, X, y, fit_params):
     """Private function used to fit an estimator within a job."""
-    if cv == 1:
-        estimator.fit(X, y, **fit_params)
-        return estimator, getattr(estimator, method)(X)
-    else:
-        predictions = cross_val_predict(estimator, X, y, cv=cv, method=method,
-                                        fit_params=fit_params, verbose=verbose)
-        return estimator.fit(X, y, **fit_params), predictions
+    estimator.fit(X, y, **fit_params)
+    return estimator, getattr(estimator, method)(X)
 
 
 class StackingClassifier(BaseEstimator, ClassifierMixin):
@@ -157,12 +152,21 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
         self.classes_ = self.le_.classes_
 
         transformed_y = self.le_.transform(y)
-
-        prediction_blocks = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_predict)(clone(clf), self.method, self.cv, X,
-                                           transformed_y, self.verbose,
-                                           kwargs)
-                for _, clf in self.estimators)
+        if self.cv == 1:  # Do not cross-validation
+            # Parallel fit each estimator
+            prediction_blocks = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_parallel_predict)(clone(clf), self.method,
+                                               X, transformed_y, kwargs)
+                    for _, clf in self.estimators)
+        else:
+            # Use the n_jobs of cross_val_predict
+            prediction_blocks = [(clf.fit(X, y, **kwargs),
+                                  cross_val_predict(clf, X, y, cv=self.cv,
+                                                    method=self.method,
+                                                    fit_params=kwargs,
+                                                    verbose=self.verbose,
+                                                    n_jobs=self.n_jobs))
+                                 for _, clf in self.estimators]
 
         scores = self._form_meta_inputs([p for _, p in prediction_blocks])
         self.estimators_ = [est for est, _ in prediction_blocks]

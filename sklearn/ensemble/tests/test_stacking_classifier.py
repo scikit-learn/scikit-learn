@@ -75,6 +75,8 @@ def test_cv():
                               meta_estimator=clfm).fit(X, y)
     s = clf1.fit(X, y).predict_proba(X)[:, 1:]
     assert_array_equal(clfm.fit(s, y).predict(s), eclf.predict(X))
+    assert_array_equal(clfm.fit(s, y).predict_proba(s),
+                       eclf.predict_proba(X))
 
 
 def test_gridsearch():
@@ -111,7 +113,18 @@ def test_parallel_predict():
         estimators=[('lr', clf1), ('rf', clf2), ('nb', clf3)],
         meta_estimator=clfm,
         n_jobs=2).fit(X, y)
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
+    # cv=1 option
+    eclf1 = StackingClassifier(
+        estimators=[('lr', clf1), ('rf', clf2), ('nb', clf3)],
+        meta_estimator=clfm,
+        n_jobs=1, cv=1).fit(X, y)
+    eclf2 = StackingClassifier(
+        estimators=[('lr', clf1), ('rf', clf2), ('nb', clf3)],
+        meta_estimator=clfm,
+        n_jobs=2, cv=1).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
