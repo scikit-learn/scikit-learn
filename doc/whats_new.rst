@@ -552,8 +552,8 @@ API changes summary
      (`#6660 <https://github.com/scikit-learn/scikit-learn/pull/6660>`_)
      by `Raghav RV`_.
 
-Contributors
-------------
+Code Contributors
+-----------------
 Aditya Joshi, Alejandro, Alexander Fabisch, Alexander Loginov, Alexander
 Minyushkin, Alexander Rudy, Alexandre Abadie, Alexandre Abraham, Alexandre
 Gramfort, Alexandre Saint, alexfields, Alvaro Ulloa, alyssaq, Amlan Kar,
@@ -1085,8 +1085,8 @@ API changes summary
       gamma to ``1. / n_features`` is deprecated and will be removed in 0.19.
       Use ``gamma="auto"`` instead.
 
-Contributors
-------
+Code Contributors
+-----------------
 Aaron Schumacher, Adithya Ganesh, akitty, Alexandre Gramfort, Alexey Grigorev,
 Ali Baharev, Allen Riddell, Ando Saabas, Andreas Mueller, Andrew Lamb, Anish
 Shah, Ankur Ankan, Anthony Erlinger, Ari Rouvinen, Arnaud Joly, Arnaud Rachez,
@@ -1623,8 +1623,8 @@ API changes summary
     - :class:`cluster.DBSCAN` now uses a deterministic initialization. The
       `random_state` parameter is deprecated. By `Erich Schubert`_.
 
-Contributors
-------------
+Code Contributors
+-----------------
 A. Flaxman, Aaron Schumacher, Aaron Staple, abhishek thakur, Akshay, akshayah3,
 Aldrian Obaja, Alexander Fabisch, Alexandre Gramfort, Alexis Mignon, Anders
 Aagaard, Andreas Mueller, Andreas van Cranenburgh, Andrew Tulloch, Andrew
