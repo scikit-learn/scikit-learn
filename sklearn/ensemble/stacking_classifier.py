@@ -1,7 +1,7 @@
 import numpy as np
 from ..base import BaseEstimator, ClassifierMixin
 from ..base import clone, is_classifier
-from ..model_selection import cross_val_predict
+from ..model_selection._validation import cross_val_predict
 from ..preprocessing import LabelEncoder
 from ..externals.joblib import Parallel, delayed
 from ..utils.metaestimators import if_delegate_has_method
@@ -9,18 +9,11 @@ from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..externals import six
 
 
-def _fit_and_predict(estimator, method, cv, X, y, sample_weight):
+def _parallel_predict(estimator, method, cv, X, y, verbose, fit_params):
     """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
-        estimator.fit(X, y, sample_weight)
-        scores = cross_val_predict(
-            estimator, X, y, method=method, cv=cv,
-            fit_params={'sample_weight': sample_weight})
-    else:
-        estimator.fit(X, y)
-        scores = cross_val_predict(
-            estimator, X, y, method=method, cv=cv)
-    return estimator, scores
+    predictions = cross_val_predict(estimator, X, y, cv=cv, method=method,
+                                    fit_params=fit_params, verbose=verbose)
+    return estimator.fit(X, y, **fit_params), predictions
 
 
 class StackingClassifier(BaseEstimator, ClassifierMixin):
@@ -77,15 +70,16 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimators, meta_estimator, method='predict_proba',
-                 cv=None, n_jobs=1):
+                 cv=None, n_jobs=1, verbose=0):
         self.estimators = estimators
         self.named_estimators = dict(estimators)
         self.meta_estimator = meta_estimator
         self.cv = cv
         self.method = method
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **kwargs):
         """ Fit the estimators.
 
         Parameters
@@ -97,10 +91,8 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
+        **kwargs: optional fit parameters
+
 
         Returns
         -------
@@ -124,11 +116,15 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
                 raise ValueError('Underlying estimator {0} does not support '
                                  '{1}.'.format(name, self.method))
 
-        if sample_weight is not None:
+        for param in kwargs:
+            if not has_fit_parameter(self.meta_estimator, param):
+                raise ValueError('Underlying meta estimator {0} '
+                                 'does not support `{1}`.'.format(
+                                     type(self.meta_estimator), param))
             for name, step in self.estimators:
-                if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator {0} does not'
-                                     'support sample weights.'.format(name))
+                if not has_fit_parameter(step, param):
+                    raise ValueError('Underlying estimator `{0}` does not '
+                                     'support `{1}`.'.format(name, param))
 
         self.le_ = LabelEncoder()
         self.le_.fit(y)
@@ -137,28 +133,28 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
         transformed_y = self.le_.transform(y)
 
         prediction_blocks = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_and_predict)(clone(clf), self.method, self.cv, X,
-                                          transformed_y, sample_weight)
+                delayed(_parallel_predict)(clone(clf), self.method, self.cv, X,
+                                           transformed_y, self.verbose,
+                                           kwargs)
                 for _, clf in self.estimators)
 
         scores = self._form_meta_inputs([p for _, p in prediction_blocks])
         self.estimators_ = [est for est, _ in prediction_blocks]
         self.meta_estimator_ = clone(self.meta_estimator)
-        self.meta_estimator_.fit(scores, transformed_y,
-                                 sample_weight=sample_weight)
+        self.meta_estimator_.fit(scores, transformed_y, **kwargs)
         return self
 
     def _form_meta_inputs(self, predicted):
         """ Concatenate estimator predictions to form input to meta-estimator
         """
-        if self.method == 'predict_log_proba':
-            # Replace inf
-            predicted = [np.nan_to_num(s) for s in predicted]
-
-        if self.method == 'predict_proba':
+        if self.method in ['predict_proba', 'predict_log_proba']:
             # Remove first column to avoid multicollinearity since sum of
             # probabilities equals 1
             predicted = [s[:, 1:] for s in predicted]
+
+        if self.method == 'predict_log_proba':
+            # Replace inf
+            predicted = [np.clip(s, -1e30, 1e30) for s in predicted]
 
         return np.concatenate([s.reshape(-1, 1) if s.ndim == 1 else s
                                for s in predicted], axis=1)
