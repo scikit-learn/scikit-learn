@@ -205,22 +205,13 @@ def average_precision_score(y_true, y_score, average="macro",
         precision, recall, thresholds = precision_recall_curve(
             y_true, y_score)
 
-        # We need the recall values in ascending order
-        precision = list(reversed(precision))
-        recall = list(reversed(recall))
+        # We need the recall values in ascending order, and to ignore the first
+        # (precision, recall) pair with precision = 1.
+        precision = precision[-2::-1]
+        recall = recall[-2::-1]
 
-        eleven_precisions = list()
-        # Don't use the first (precision, recall) pair with precision = 1.
-        start = 1
-        for target_recall in np.arange(0, 1.1, 0.1):
-            for i in range(start, len(precision) + 1):
-                if recall[i] >= target_recall:
-                    eleven_precisions.append(precision[i])
-                    start = i
-                    break  # Go to next target_recall
-        assert len(eleven_precisions) == 11, \
-            "Ended up with the wrong number of precision values. Should be 11."
-        return np.mean(eleven_precisions)
+        return np.mean(precision[np.searchsorted(
+                recall, np.arange(0, 1.1, 0.1))])
 
     if interpolation is None:
         return _average_binary_score(_binary_uninterpolated_average_precision,
