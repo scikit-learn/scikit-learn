@@ -1,15 +1,31 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_18:
 
 ===============
 Release history
 ===============
 
-Version 0.18
+Version 0.19
 ============
 
 **In Development**
+
+
+New features
+............
+
+
+Enhancements
+............
+
+
+Bug fixes
+.........
+
+.. _changes_0_18:
+
+Version 0.18
+============
 
 .. _model_selection_changes:
 
