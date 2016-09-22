@@ -252,9 +252,6 @@ Enhancements
    - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
      through the parameter ``priors``. By `Guillaume Lemaitre`_.
 
-   - Add option to show ``indicator features`` in the output of Imputer.
-     By `Mani Teja`_.
-
    - Reduce the memory usage for 32-bit float input arrays of
      :func:`utils.sparse_func.mean_variance_axis` and
      :func:`utils.sparse_func.incr_mean_variance_axis` by supporting cython
@@ -4613,8 +4610,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Guillaume Lemaitre: https://github.com/glemaitre
 
 .. _JPFrancoia: https://github.com/JPFrancoia
-
-.. _Mani Teja: https://github.com/maniteja123
 
 .. _Thierry Guillemot: https://github.com/tguillemot
 
