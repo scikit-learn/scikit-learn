@@ -31,21 +31,14 @@ scikit-learn
 scikit-learn is a Python module for machine learning built on top of
 SciPy and distributed under the 3-Clause BSD license.
 
-<<<<<<< 154635e629fd5585ff5bb4ad782315e2c5610177
-<<<<<<< 18852978821063655c852f46eff0eff4765e8182
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
 the `AUTHORS.rst <AUTHORS.rst>`_ file for a complete list of contributors.
 
 It is currently maintained by a team of volunteers.
 
-
-=======
->>>>>>> Update install
-=======
 Website: http://scikit-learn.org
 
->>>>>>> Fix changes re: @amuller
 Installation
 ------------
 
@@ -78,13 +71,6 @@ or ``conda``::
     conda install scikit-learn
 
 The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
-
-
-Documentation
--------------
-
-- HTML documentation (stable release): http://scikit-learn.org
-- HTML documentation (development version): http://scikit-learn.org/dev/
 
 
 Development
@@ -156,9 +142,20 @@ The project is currently maintained by a team of volunteers.
 **Note** `scikit-learn` was previously referred to as `scikits.learn`.
 
 
+Help and Support
+----------------
+
+Documentation
+~~~~~~~~~~~~~
+
+- HTML documentation (stable release): http://scikit-learn.org
+- HTML documentation (development version): http://scikit-learn.org/dev/
+- FAQ: http://scikit-learn.org/stable/faq.html
+
 Communication
--------------
+~~~~~~~~~~~~~
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
-
+- Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
+- Website: http://scikit-learn.org
