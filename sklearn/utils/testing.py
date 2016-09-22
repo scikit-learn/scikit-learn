@@ -531,10 +531,10 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "StackingClassifier"]
+                   "RFE", "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel"]
+         "SelectFromModel", "StackingClassifier"]
 
 # some trange ones
 DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
