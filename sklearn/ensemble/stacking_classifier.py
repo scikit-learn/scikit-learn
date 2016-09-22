@@ -11,9 +11,13 @@ from ..externals import six
 
 def _parallel_predict(estimator, method, cv, X, y, verbose, fit_params):
     """Private function used to fit an estimator within a job."""
-    predictions = cross_val_predict(estimator, X, y, cv=cv, method=method,
-                                    fit_params=fit_params, verbose=verbose)
-    return estimator.fit(X, y, **fit_params), predictions
+    if cv == 1:
+        estimator.fit(X, y, **fit_params)
+        return estimator, getattr(estimator, method)(X)
+    else:
+        predictions = cross_val_predict(estimator, X, y, cv=cv, method=method,
+                                        fit_params=fit_params, verbose=verbose)
+        return estimator.fit(X, y, **fit_params), predictions
 
 
 class StackingClassifier(BaseEstimator, ClassifierMixin):
@@ -42,7 +46,8 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
         to the meta_estimator
         Possible inputs for cv are:
           - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
+          - 1, do not perform cross-validation,
+          - integer>1, to specify the number of folds in a `(Stratified)KFold`,
           - An object to be used as a cross-validation generator.
           - An iterable yielding train, test splits.
 
@@ -52,6 +57,9 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
 
     n_jobs : int, optional (default=1)
         The number of jobs to run in parallel for ``fit``.
@@ -67,6 +75,24 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
 
     classes_ : array-like, shape = [n_predictions]
         The classes labels.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> from sklearn.ensemble import RandomForestClassifier, StackingClassifier
+    >>> clf1 = LogisticRegression(random_state=1)
+    >>> clf2 = RandomForestClassifier(random_state=1)
+    >>> clfm = GaussianNB()
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> y = np.array([1, 1, 1, 2, 2, 2])
+    >>> eclf1 = StackingClassifier(estimators=[
+    ...         ('lr', clf1), ('rf', clf2)], meta_estimator=clfm, cv=2)
+    >>> eclf1 = eclf1.fit(X, y)
+    >>> print(eclf1.predict(X))
+    [1 1 1 2 2 2]
+    >>>
     """
 
     def __init__(self, estimators, meta_estimator, method='predict_proba',

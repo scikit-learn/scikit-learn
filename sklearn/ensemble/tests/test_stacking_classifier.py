@@ -67,6 +67,16 @@ def test_multilabel():
         return
 
 
+def test_cv():
+    """Test cross-validation option cv=1"""
+    clf1 = LogisticRegression(random_state=1)
+    clfm = GaussianNB()
+    eclf = StackingClassifier(estimators=[('lr', clf1)], cv=1,
+                              meta_estimator=clfm).fit(X, y)
+    s = clf1.fit(X, y).predict_proba(X)[:, 1:]
+    assert_array_equal(clfm.fit(s, y).predict(s), eclf.predict(X))
+
+
 def test_gridsearch():
     """Check GridSearch support."""
     clf1 = LogisticRegression(random_state=1)
