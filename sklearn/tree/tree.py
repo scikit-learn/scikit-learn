@@ -513,9 +513,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if getattr(self, "tree_", None) is None:
-            raise NotFittedError("Estimator not fitted, call `fit` before"
-                                 " `feature_importances_`.")
+        check_is_fitted(self, 'tree_')
 
         return self.tree_.compute_feature_importances()
 

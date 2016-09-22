@@ -41,9 +41,8 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array
+from .utils.validation import check_array, check_is_fitted
 from .exceptions import DataDimensionalityWarning
-from .exceptions import NotFittedError
 
 
 __all__ = ["SparseRandomProjection",
@@ -405,8 +404,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        if getattr(self, "components_", None) is None:
-            raise NotFittedError('No random projection matrix had been fit.')
+        check_is_fitted(self, 'components_')
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
