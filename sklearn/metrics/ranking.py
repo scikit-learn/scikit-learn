@@ -198,7 +198,7 @@ def average_precision_score(y_true, y_score, average="macro",
             y_true, y_score, sample_weight=None):
         precision, recall, thresholds = precision_recall_curve(
             y_true, y_score, sample_weight=sample_weight)
-        return -sum(np.diff(recall) * np.array(precision)[:-1])
+        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     def _binary_eleven_point_average_precision(
             y_true, y_score, sample_weight=None):
