@@ -400,6 +400,12 @@ class RFECV(RFE, MetaEstimatorMixin):
                   n_features_to_select=n_features_to_select,
                   step=self.step, verbose=self.verbose - 1)
 
+        if 0.0 < self.step < 1.0:
+            step = int(max(1, self.step * n_features))
+        else:
+            step = int(self.step)
+        if step <= 0:
+            raise ValueError("Step must be >0")
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -424,7 +430,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         scores = np.sum(scores, axis=0)
         n_features_to_select = max(
-            n_features - (np.argmax(scores) * self.step),
+            n_features - (np.argmax(scores) * step),
             n_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set
