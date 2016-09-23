@@ -304,8 +304,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
             trees = []
             for i in range(n_more_estimators):
-                tree = self._make_estimator(append=False)
-                tree.set_params(random_state=random_state.randint(MAX_INT))
+                tree = self._make_estimator(append=False,
+                                            random_state=random_state)
                 trees.append(tree)
 
             # Parallel loop: we use the threading backend as the Cython code
