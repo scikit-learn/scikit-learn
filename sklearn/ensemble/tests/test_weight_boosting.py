@@ -116,8 +116,8 @@ def test_iris():
         # Check we used multiple estimators
         assert_greater(len(clf.estimators_), 1)
         # Check for distinct random states (see issue #7408)
-        assert_greater(len(set(est.random_state
-                               for est in clf.estimators_)), 1)
+        assert_equal(len(set(est.random_state for est in clf.estimators_)),
+                     len(clf.estimators_))
 
     # Somewhat hacky regression test: prior to
     # ae7adc880d624615a34bafdb1d75ef67051b8200,
@@ -137,7 +137,8 @@ def test_boston():
     # Check we used multiple estimators
     assert_true(len(reg.estimators_) > 1)
     # Check for distinct random states (see issue #7408)
-    assert_greater(len(set(est.random_state for est in reg.estimators_)), 1)
+    assert_equal(len(set(est.random_state for est in reg.estimators_)),
+                 len(reg.estimators_))
 
 
 def test_staged_predict():
