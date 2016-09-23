@@ -1,5 +1,4 @@
-import unittest
-from nose.tools import assert_true
+from sklearn.utils.testing import assert_true
 import numpy as np
 import scipy.sparse as sp
 
