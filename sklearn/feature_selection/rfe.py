@@ -396,9 +396,6 @@ class RFECV(RFE, MetaEstimatorMixin):
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
-        rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select,
-                  step=self.step, verbose=self.verbose - 1)
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
@@ -406,6 +403,10 @@ class RFECV(RFE, MetaEstimatorMixin):
             step = int(self.step)
         if step <= 0:
             raise ValueError("Step must be >0")
+
+        rfe = RFE(estimator=self.estimator,
+                  n_features_to_select=n_features_to_select,
+                  step=self.step, verbose=self.verbose - 1)
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
