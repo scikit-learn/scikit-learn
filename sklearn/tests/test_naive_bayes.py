@@ -480,7 +480,7 @@ def test_feature_log_prob_bnb():
     denom = np.tile(np.log(clf.class_count_ + 2.0), (X.shape[1], 1)).T
 
     # Check manual estimate matches
-    assert_array_equal(clf.feature_log_prob_, (num - denom))
+    assert_array_almost_equal(clf.feature_log_prob_, (num - denom))
 
 
 def test_bnb():
@@ -536,3 +536,18 @@ def test_naive_bayes_scale_invariance():
               for f in [1E-10, 1, 1E10]]
     assert_array_equal(labels[0], labels[1])
     assert_array_equal(labels[1], labels[2])
+
+
+def test_alpha_zero():
+    # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
+    X = np.array([[1, 0], [1, 1]])
+    y = np.array([0, 1])
+    nb = MultinomialNB(alpha=0.)
+    nb.fit(X, y)
+    prob = np.array([[2/3, 1/3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = BernoulliNB(alpha=0.)
+    nb.fit(X, y)
+    prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
