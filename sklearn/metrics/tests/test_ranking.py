@@ -603,7 +603,7 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1, 0.])
-        assert_almost_equal(auc_prc, .75)
+        assert_almost_equal(auc_prc, .5)
 
         y_true = [0, 0]
         y_score = [0.25, 0.75]
@@ -636,31 +636,31 @@ def test_precision_recall_curve_toydata():
         assert_raises(Exception, average_precision_score, y_true, y_score,
                       average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.625)
+                            average="samples"), 0.75)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.625)
+                            average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.25)
+                            average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.25)
+                            average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.25)
+                            average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.25)
+                            average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.75)
+                            average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.75)
+                            average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.75)
+                            average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.75)
+                            average="micro"), 0.5)
 
 
 def test_score_scale_invariance():
