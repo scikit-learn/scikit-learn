@@ -662,7 +662,7 @@ Here are some small examples in binary classification::
   >>> threshold
   array([ 0.35,  0.4 ,  0.8 ])
   >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-  0.79...
+  0.83...
 
 
 
