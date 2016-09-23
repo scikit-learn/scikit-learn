@@ -187,6 +187,7 @@ def test_rfecv():
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
 
 
 def test_rfecv_mockclassifier():
