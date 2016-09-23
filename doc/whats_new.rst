@@ -568,13 +568,13 @@ Thaler, David Warshaw, Davide Lasagna, Deborah, definitelyuncertain, Didi
 Bar-Zev, djipey, dsquareindia, edwinENSAE, Elias Kuthe, Elvis DOHMATOB, Ethan
 White, Fabian Pedregosa, Fabio Ticconi, fisache, Florian Wilhelm, Francis,
 Francis O'Donovan, Gael Varoquaux, Ganiev Ibraim, ghg, Gilles Louppe, Giorgio
-Patrini, giorgiop, Giovanni Cherubin, Giovanni Lanzani, Glenn Qian, Gordon
+Patrini, Giovanni Cherubin, Giovanni Lanzani, Glenn Qian, Gordon
 Mohr, govin-vatsan, Graham Clenaghan, Greg Reda, Greg Stupp, Guillaume
 Lemaitre, Gustav Mörtberg, halwai, Harizo Rajaona, Harry Mavroforakis,
-hashcode55, hdmetor, Henry Lin, Hobson Lane, Hugo Bowne-Anderson, hugobowne,
-Igor Andriushchenko, Imaculate, imaculate, Inki Hwang, Isaac Sijaranamual,
+hashcode55, hdmetor, Henry Lin, Hobson Lane, Hugo Bowne-Anderson,
+Igor Andriushchenko, Imaculate, Inki Hwang, Isaac Sijaranamual,
 Ishank Gulati, Issam Laradji, Iver Jordal, jackmartin, Jacob Schreiber, Jake
-VanderPlas, James Fiedler, James Routley, Jan, Janna Brettingen, jarfa, Jason
+VanderPlas, James Fiedler, James Routley, Jan Zikes, Janna Brettingen, jarfa, Jason
 Laska, jblackburne, jeff levesque, Jeffrey Blackburne, Jeffrey04, Jeremy Hintz,
 jeremynixon, Jeroen, Jessica Yung, Jill-Jênn Vie, Jimmy Jia, Jiyuan Qian, Joel
 Nothman, johannah, John, John Boersma, John Kirkham, John Moeller,
@@ -588,13 +588,13 @@ Manoj Kumar, Manvendra Singh, Marco, Mario Krell, Mark Bao, Mark Szepieniec,
 Martin Madsen, MartinBpr, MaryanMorel, Massil, Matheus, Mathieu Blondel,
 Mathieu Dubois, Matteo, Matthias Ekman, Max Moroz, Michael Scherer, michiaki
 ariga, Mikhail Korobov, Moussa Taifi, mrandrewandrade, Mridul Seth, nadya-p,
-Naoya Kanai, Nate George, Nelle Varoquaux, Nelson Liu, ngoix, Nick James,
+Naoya Kanai, Nate George, Nelle Varoquaux, Nelson Liu, Nick James,
 NickleDave, Nico, Nicolas Goix, Nikolay Mayorov, ningchi, nlathia,
 okbalefthanded, Okhlopkov, Olivier Grisel, Panos Louridas, Paul Strickland,
 Perrine Letellier, pestrickland, Peter Fischer, Pieter, Ping-Yao, Chang,
-practicalswift, Preston Parry, Qimu Zheng, Rachit Kansal, Raghav, Raghav RV,
-Ralf Gommers, Ramana.S, Rammig, Randy Olson, rasbt, Rob Alexander, Robert Lutz,
-Robin Schucker, Rohan Jain, root, Ruifeng Zheng, Ryan Yu, Rémy Léone, saihttam,
+practicalswift, Preston Parry, Qimu Zheng, Rachit Kansal, Raghav RV,
+Ralf Gommers, Ramana.S, Rammig, Randy Olson, Rob Alexander, Robert Lutz,
+Robin Schucker, Rohan Jain, Ruifeng Zheng, Ryan Yu, Rémy Léone, saihttam,
 Saiwing Yeung, Sam Shleifer, Samuel St-Jean, Sartaj Singh, Sasank Chilamkurthy,
 saurabh.bansod, Scott Andrews, Scott Lowe, seales, Sebastian Raschka, Sebastian
 Saeger, Sebastián Vanrell, Sergei Lebedev, shagun Sodhani, shanmuga cv,
@@ -605,8 +605,7 @@ tKammy, toastedcornflakes, Tom, TomDLT, Toshihiro Kamishima, tracer0tong, Trent
 Hauck, trevorstephens, Tue Vo, Varun, Varun Jewalikar, Viacheslav, Vighnesh
 Birodkar, Vikram, Villu Ruusmann, Vinayak Mehta, walter, waterponey, Wenhua
 Yang, Wenjian Huang, Will Welch, wyseguy7, xyguo, yanlend, Yaroslav Halchenko,
-yelite, Yen, YenChenLin, Yichuan Liu, Yoav Ram, Yoshiki, Zheng RuiFeng, Zikes,
-Jan, zivori, Óscar Nájera
+yelite, Yen, YenChenLin, Yichuan Liu, Yoav Ram, Yoshiki, Zheng RuiFeng, zivori, Óscar Nájera
 
 
 .. currentmodule:: sklearn
@@ -1101,7 +1100,7 @@ Schubert, Fernando Carrillo, Frank C. Eckert, Frank Zalkow, Gael Varoquaux,
 Ganiev Ibraim, Gilles Louppe, Giorgio Patrini, giorgiop, Graham Clenaghan,
 Gryllos Prokopis, gwulfs, Henry Lin, Hsuan-Tien Lin, Immanuel Bayer, Ishank
 Gulati, Jack Martin, Jacob Schreiber, Jaidev Deshpande, Jake VanderPlas, Jan
-Hendrik Metzen, Jean Kossaifi, Jeffrey04, Jeremy, jfraj, Jiali Mei, jnothman,
+Hendrik Metzen, Jean Kossaifi, Jeffrey04, Jeremy, jfraj, Jiali Mei,
 Joe Jevnik, Joel Nothman, John Kirkham, John Wittenauer, Joseph, Joshua Loyal,
 Jungkook Park, KamalakerDadi, Kashif Rasul, Keith Goodman, Kian Ho, Konstantin
 Shmelkov, Kyler Brown, Lars Buitinck, Lilian Besson, Loic Esteve, Louis Tiao,
@@ -1111,15 +1110,14 @@ Mathieu Blondel, Matt Krump, Matti Lyra, Maxim Kolganov, mbillinger, mhg,
 Michael Heilman, Michael Patterson, Miroslav Batchkarov, Nelle Varoquaux,
 Nicolas, Nikolay Mayorov, Olivier Grisel, Omer Katz, Óscar Nájera, Pauli
 Virtanen, Peter Fischer, Peter Prettenhofer, Phil Roth, pianomania, Preston
-Parry, Raghav, Raghav R V, rasbt, Rob Zinkov, Robert Layton, Rohan Ramanath,
-Saket Choudhary, Sam Zhang, santi, saurabh.bansod, scls19fr, Sebastian Saeger,
-Shivan Sornarajah, SimonPL, sinhrks, Skipper Seabold, Sonny Hu, sseg, Stephen
-Hoover, Steven De Gryze, Steven Seguin, Theodore Vasiloudis, Thomas
+Parry, Raghav R V, Rob Zinkov, Robert Layton, Rohan Ramanath, Saket Choudhary,
+Sam Zhang, santi, saurabh.bansod, scls19fr, Sebastian Raschka, Sebastian
+Saeger, Shivan Sornarajah, SimonPL, sinhrks, Skipper Seabold, Sonny Hu, sseg,
+Stephen Hoover, Steven De Gryze, Steven Seguin, Theodore Vasiloudis, Thomas
 Unterthiner, Tiago Freitas Pereira, Tian Wang, Tim Head, Timothy Hopper,
-tokoroten, Tom DLT, Tom Dupré la Tour, TomDLT, trevorstephens, unknown,
-Valentin Stolbunov, Vighnesh Birodkar, Vinayak Mehta, Vincent, Vincent Michel,
-vstolbunov, wangz10, Wei Xue, Yucheng Low, Yury Zhauniarovich, Zac Stewart,
-zhai_pro, Zichen Wang
+tokoroten, Tom Dupré la Tour, Trevor Stephens, Valentin Stolbunov, Vighnesh
+Birodkar, Vinayak Mehta, Vincent, Vincent Michel, vstolbunov, wangz10, Wei Xue,
+Yucheng Low, Yury Zhauniarovich, Zac Stewart, zhai_pro, Zichen Wang
 
 .. _changes_0_1_16:
 
