@@ -207,7 +207,7 @@ Enhancements
      method ``decision_path`` which returns the decision path of samples in
      the tree. By `Arnaud Joly`_.
 
-   - A new example has been added unveling the decision tree structure.
+   - A new example has been added unveiling the decision tree structure.
      By `Arnaud Joly`_.
 
    - Random forest, extra trees, decision trees and gradient boosting estimator
