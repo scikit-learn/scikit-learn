@@ -132,12 +132,15 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
+        random_state = check_random_state(self.random_state)
+
         for iboost in range(self.n_estimators):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
                 X, y,
-                sample_weight)
+                sample_weight,
+                random_state)
 
             # Early termination
             if sample_weight is None:
@@ -163,7 +166,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return self
 
     @abstractmethod
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
 
         Warning: This method needs to be overridden by subclasses.
@@ -182,6 +185,9 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
+
+        random_state : numpy.RandomState
+            The current random number generator
 
         Returns
         -------
@@ -422,7 +428,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             raise ValueError("%s doesn't support sample_weight."
                              % self.base_estimator_.__class__.__name__)
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
 
         Perform a single boost according to the real multi-class SAMME.R
@@ -444,6 +450,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
+        random_state : numpy.RandomState
+            The current random number generator
+
         Returns
         -------
         sample_weight : array-like of shape = [n_samples] or None
@@ -459,19 +468,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             If None then boosting has terminated early.
         """
         if self.algorithm == 'SAMME.R':
-            return self._boost_real(iboost, X, y, sample_weight)
+            return self._boost_real(iboost, X, y, sample_weight, random_state)
 
         else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight)
+            return self._boost_discrete(iboost, X, y, sample_weight,
+                                        random_state)
 
-    def _boost_real(self, iboost, X, y, sample_weight):
+    def _boost_real(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost using the SAMME.R real algorithm."""
-        estimator = self._make_estimator()
-
-        try:
-            estimator.set_params(random_state=self.random_state)
-        except ValueError:
-            pass
+        estimator = self._make_estimator(random_state=random_state)
 
         estimator.fit(X, y, sample_weight=sample_weight)
 
@@ -527,14 +532,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return sample_weight, 1., estimator_error
 
-    def _boost_discrete(self, iboost, X, y, sample_weight):
+    def _boost_discrete(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost using the SAMME discrete algorithm."""
-        estimator = self._make_estimator()
-
-        try:
-            estimator.set_params(random_state=self.random_state)
-        except ValueError:
-            pass
+        estimator = self._make_estimator(random_state=random_state)
 
         estimator.fit(X, y, sample_weight=sample_weight)
 
@@ -959,7 +959,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         super(AdaBoostRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost for regression
 
         Perform a single boost according to the AdaBoost.R2 algorithm and
@@ -981,6 +981,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
+        random_state : numpy.RandomState
+            The current random number generator
+
         Returns
         -------
         sample_weight : array-like of shape = [n_samples] or None
@@ -995,20 +998,13 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The regression error for the current boost.
             If None then boosting has terminated early.
         """
-        estimator = self._make_estimator()
-
-        try:
-            estimator.set_params(random_state=self.random_state)
-        except ValueError:
-            pass
-
-        generator = check_random_state(self.random_state)
+        estimator = self._make_estimator(random_state=random_state)
 
         # Weighted sampling of the training set with replacement
         # For NumPy >= 1.7.0 use np.random.choice
         cdf = sample_weight.cumsum()
         cdf /= cdf[-1]
-        uniform_samples = generator.random_sample(X.shape[0])
+        uniform_samples = random_state.random_sample(X.shape[0])
         bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
         # searchsorted returns a scalar
         bootstrap_idx = np.array(bootstrap_idx, copy=False)

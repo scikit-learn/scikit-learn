@@ -490,7 +490,20 @@ Bug fixes
 
     - Fix bug in :func:`metrics.silhouette_samples` so that it now works with
       arbitrary labels, not just those ranging from 0 to n_clusters - 1.
+
+    - Fix bug where :class:`ensemble.AdaBoostClassifier` and
+      :class:`ensemble.AdaBoostRegressor` would perform poorly if the
+      ``random_state`` was fixed
+      (`#7411 <https://github.com/scikit-learn/scikit-learn/pull/7411>`_).
       By `Joel Nothman`_.
+
+    - Fix bug in ensembles with randomization where the ensemble would not
+      set ``random_state`` on base estimators in a pipeline or similar nesting.
+      (`#7411 <https://github.com/scikit-learn/scikit-learn/pull/7411>`_).
+      Note, results for :class:`ensemble.BaggingClassifier`
+      :class:`ensemble.BaggingRegressor`, :class:`ensemble.AdaBoostClassifier`
+      and :class:`ensemble.AdaBoostRegressor` will now differ from previous
+      versions. By `Joel Nothman`_.
 
 
 API changes summary
