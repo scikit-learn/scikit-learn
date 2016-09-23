@@ -62,6 +62,7 @@ def auc(x, y, reorder=False):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
+
     See also
     --------
     roc_auc_score : Computes the area under the ROC curve
@@ -185,6 +186,7 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
     0.83...
+
     >>> import numpy as np
     >>> from sklearn.metrics import average_precision_score
     >>> yt = np.array([0, 0, 1, 1])
