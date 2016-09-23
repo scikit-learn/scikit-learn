@@ -297,7 +297,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
-        return auc(fpr, tpr, reorder=True, interpolation='linear')
+        return auc(fpr, tpr, reorder=True)
 
     return _average_binary_score(
         _binary_roc_auc_score, y_true, y_score, average,
