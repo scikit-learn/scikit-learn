@@ -542,12 +542,24 @@ def test_alpha_zero():
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
+    nb = BernoulliNB(alpha=0.)
+    nb.fit(X, y)
+    prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
     nb = MultinomialNB(alpha=0.)
     nb.fit(X, y)
     prob = np.array([[2/3, 1/3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
+    # Test sparse X
+    X = scipy.sparse.csr_matrix(X)
     nb = BernoulliNB(alpha=0.)
     nb.fit(X, y)
     prob = np.array([[1, 0], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = MultinomialNB(alpha=0.)
+    nb.fit(X, y)
+    prob = np.array([[2/3, 1/3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
