@@ -35,12 +35,19 @@ from .externals import six
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
 
-def _inf_replace(x):
-    return np.clip(x, np.nan_to_num(-np.inf), np.nan_to_num(np.inf))
-
-
 def _safe_log(x):
-    return _inf_replace(np.log(x))
+    """
+    Setting log(0) = -inf as -th where `th` is a very larger number.
+
+    This is for avoid summation errors, e.g. np.log(0) - np.log(0) = nan, which
+    may happen while calculating dot product of log probability matrices for
+    joint likelihood estimation
+
+    Note a too large `th` will cause overflow during dot product, which will
+    also result in wrong estimation of join likelihood
+    """
+    th = 1e30
+    return np.clip(np.log(x), -th, th)
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -824,9 +831,10 @@ class BernoulliNB(BaseDiscreteNB):
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
                              % (n_features, n_features_X))
-        p = np.exp(self.feature_log_prob_).T
-        jll = (safe_sparse_dot(X, _safe_log(p)) +
-               safe_sparse_dot(1 - X, _safe_log(1 - p)))
-        jll += self.class_log_prior_
 
-        return jll
+        # Compute X*logp + (1-X)*log(1-p) as X*[logp - log(1-p)] + ∑log(1-p)
+        # for sparse array support
+        logp = self.feature_log_prob_.T
+        log1_p = _safe_log(1 - np.exp(logp))
+        return (safe_sparse_dot(X, logp - log1_p) + log1_p.sum(axis=0) +
+                self.class_log_prior_)
