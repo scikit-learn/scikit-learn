@@ -587,7 +587,7 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1., 0])
-        assert_almost_equal(auc_prc, .75)
+        assert_almost_equal(auc_prc, .5)
 
         y_true = [1, 0]
         y_score = [1, 0]
