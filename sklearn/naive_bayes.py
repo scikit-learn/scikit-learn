@@ -713,7 +713,7 @@ class MultinomialNB(BaseDiscreteNB):
 
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
-                            self.class_log_prior_)
+                self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -806,8 +806,8 @@ class BernoulliNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = self.class_count_ + self.alpha * 2
 
-        self.feature_log_prob_ = _safe_log(smoothed_fc /
-                                           smoothed_cc.reshape(-1, 1))
+        self.feature_log_prob_ = (_safe_log(smoothed_fc) -
+                                  _safe_log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
