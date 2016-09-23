@@ -87,7 +87,7 @@ import numpy as np
 from sklearn import svm, datasets
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import average_precision_score
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
 
