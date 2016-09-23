@@ -284,16 +284,17 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             return out
 
     def set_params(self, **params):
-        estimators = {key: value for key, value in six.iteritems(params)
-                      if key in self.named_estimators.keys()}
+        estimators = dict((key, value) for key, value in six.iteritems(params)
+                          if key in self.named_estimators.keys())
         for name, clf in six.iteritems(estimators):
             if clf is not None:
                 if not hasattr(clf, 'fit') or not hasattr(clf, 'predict'):
                     raise TypeError("All estimators should implement fit and "
                                     "predict. '%s' (type %s) doesn't" %
                                     (clf, type(clf)))
-        non_estimators = {key: value for key, value in six.iteritems(params)
-                          if key not in self.named_estimators.keys()}
+        non_estimators = dict((key, value)
+                              for key, value in six.iteritems(params)
+                              if key not in self.named_estimators.keys())
         if estimators:
             self.estimators = [(name, estimators[name])
                                if name in estimators.keys() else (name, clf)
