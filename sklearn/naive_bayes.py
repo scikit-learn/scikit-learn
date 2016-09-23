@@ -35,6 +35,14 @@ from .externals import six
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
 
+def _inf_replace(x):
+    return np.clip(x, np.nan_to_num(-np.inf), np.nan_to_num(np.inf))
+
+
+def _safe_log(x):
+    return _inf_replace(np.log(x))
+
+
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
     """Abstract base class for naive Bayes estimators"""
 
@@ -424,8 +432,8 @@ class GaussianNB(BaseNB):
         X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
-            jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
+            jointi = _safe_log(self.class_prior_[i])
+            n_ij = - 0.5 * np.sum(_safe_log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
@@ -449,13 +457,13 @@ class BaseDiscreteNB(BaseNB):
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
-            self.class_log_prior_ = np.log(class_prior)
+            self.class_log_prior_ = _safe_log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_) -
-                                     np.log(self.class_count_.sum()))
+            self.class_log_prior_ = (_safe_log(self.class_count_) -
+                                     _safe_log(self.class_count_.sum()))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.class_log_prior_ = np.zeros(n_classes) - _safe_log(n_classes)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -696,8 +704,8 @@ class MultinomialNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = (_safe_log(smoothed_fc) -
+                                  _safe_log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -705,7 +713,7 @@ class MultinomialNB(BaseDiscreteNB):
 
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
-                self.class_log_prior_)
+                            self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -798,8 +806,8 @@ class BernoulliNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = self.class_count_ + self.alpha * 2
 
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = _safe_log(smoothed_fc /
+                                           smoothed_cc.reshape(-1, 1))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -816,10 +824,9 @@ class BernoulliNB(BaseDiscreteNB):
         if n_features_X != n_features:
             raise ValueError("Expected input with %d features, got %d instead"
                              % (n_features, n_features_X))
-
-        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
-        # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        jll = safe_sparse_dot(X, (self.feature_log_prob_ - neg_prob).T)
-        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
+        p = np.exp(self.feature_log_prob_).T
+        jll = (safe_sparse_dot(X, _safe_log(p)) +
+               safe_sparse_dot(1 - X, _safe_log(1 - p)))
+        jll += self.class_log_prior_
 
         return jll
