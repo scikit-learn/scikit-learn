@@ -72,7 +72,7 @@ git log -2 --pretty=short
 if [[ -z "$COMMIT_RANGE" ]]; then
     REMOTE_MASTER_REF="$REMOTE/master"
     # Make sure that $REMOTE_MASTER_REF is a valid reference
-    git fetch $REMOTE master:refs/$REMOTE_MASTER_REF
+    git fetch $REMOTE master:refs/remotes/$REMOTE_MASTER_REF
 
     COMMIT=$(git merge-base @ $REMOTE_MASTER_REF) || \
         echo "No common ancestor found for $(git show @ -q) and $(git show $REMOTE_MASTER_REF -q)"
