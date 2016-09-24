@@ -31,7 +31,7 @@ env:
     - OPENBLAS_NUM_THREADS=4
   matrix:
     # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy,pandas with ATLAS that comes with Ubuntu Precise 12.04
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
     - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
       CACHED_BUILD_DIR="$HOME/sklearn_build_ubuntu" COVERAGE=true
     # This environment tests the oldest supported anaconda env
