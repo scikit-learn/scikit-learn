@@ -35,11 +35,16 @@ from .externals import six
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
 
-def _safe_log(x):
+def _safe_logprob(p):
     """
     Setting log(0) = -inf as -th where `th` is a very larger number.
 
-    This is for avoid summation errors, e.g. np.log(0) - np.log(0) = nan, which
+    Parameters
+    ----------
+    p : numpy.array
+        Probabilities values. Must be within [0, 1] range.
+
+    This avoids summation errors, e.g. np.log(0) - np.log(0) = nan, which
     may happen while calculating dot product of log probability matrices for
     joint likelihood estimation
 
@@ -47,7 +52,11 @@ def _safe_log(x):
     also result in wrong estimation of join likelihood
     """
     th = 1e30
-    return np.clip(np.log(x), -th, th)
+    p = np.asarray(p)
+    if (p > 1).any() or (p < 0).any():
+        raise ValueError('Input `p` must be within [0, 1] range!')
+
+    return np.clip(np.log(p), -th, 0)
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -439,8 +448,8 @@ class GaussianNB(BaseNB):
         X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
-            jointi = _safe_log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(_safe_log(2. * np.pi * self.sigma_[i, :]))
+            jointi = _safe_logprob(self.class_prior_[i])
+            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
@@ -464,13 +473,13 @@ class BaseDiscreteNB(BaseNB):
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
-            self.class_log_prior_ = _safe_log(class_prior)
+            self.class_log_prior_ = _safe_logprob(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (_safe_log(self.class_count_) -
-                                     _safe_log(self.class_count_.sum()))
+            self.class_log_prior_ = _safe_logprob(self.class_count_ /
+                                                  self.class_count_.sum())
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - _safe_log(n_classes)
+            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -711,8 +720,8 @@ class MultinomialNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = (_safe_log(smoothed_fc) -
-                                  _safe_log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = _safe_logprob(smoothed_fc /
+                                               smoothed_cc.reshape(-1, 1))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -813,8 +822,8 @@ class BernoulliNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = self.class_count_ + self.alpha * 2
 
-        self.feature_log_prob_ = (_safe_log(smoothed_fc) -
-                                  _safe_log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = _safe_logprob(smoothed_fc /
+                                               smoothed_cc.reshape(-1, 1))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -835,6 +844,6 @@ class BernoulliNB(BaseDiscreteNB):
         # Compute X*logp + (1-X)*log(1-p) as X*[logp - log(1-p)] + ∑log(1-p)
         # for sparse array support
         logp = self.feature_log_prob_.T
-        log1_p = _safe_log(1 - np.exp(logp))
+        log1_p = _safe_logprob(1 - np.exp(logp))
         return (safe_sparse_dot(X, logp - log1_p) + log1_p.sum(axis=0) +
                 self.class_log_prior_)
