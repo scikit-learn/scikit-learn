@@ -1,6 +1,6 @@
 # make it explicit that we favor the new container-based travis workers
 sudo: false
-
+# Add pandas to one of the CI jobs for better compatibility testing
 language: python
 
 # Pre-install packages for the ubuntu distribution
@@ -47,7 +47,11 @@ env:
       DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
       NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
       CACHED_BUILD_DIR="$HOME/dummy"
-
+    # CI job for PANDAS    
+    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0" CYTHON_VERSION="0.23.4"
+      CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+    
 
 matrix:
   allow_failures:
