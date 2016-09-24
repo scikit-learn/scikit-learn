@@ -53,11 +53,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
-            cython=$CYTHON_VERSION libgfortran mkl flake8
+            cython=$CYTHON_VERSION libgfortran mkl flake8 \
+            pandas=$PANDAS_VERSION
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
-            libgfortran nomkl
+            libgfortran nomkl \
+            pandas=$PANDAS_VERSION
     fi
     source activate testenv
 
@@ -112,6 +114,7 @@ else
     python --version
     python -c "import numpy; print('numpy %s' % numpy.__version__)"
     python -c "import scipy; print('scipy %s' % scipy.__version__)"
+    python -c "import pandas; print('pandas %s' % pandas.__version__)" 
     python setup.py develop
 fi
 
