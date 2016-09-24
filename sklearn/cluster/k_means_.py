@@ -279,7 +279,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
-    best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
 
@@ -883,7 +882,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
                 X, n_clusters=self.n_clusters, init=self.init,
-                n_init=self.n_init, max_iter=self.max_iter, verbose=self.verbose,
+                n_init=self.n_init, max_iter=self.max_iter,
+                verbose=self.verbose,
                 precompute_distances=self.precompute_distances,
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs, algorithm=self.algorithm,
@@ -1165,8 +1165,8 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     else:
         no_improvement += 1
 
-    if (model.max_no_improvement is not None
-            and no_improvement >= model.max_no_improvement):
+    if (model.max_no_improvement is not None and
+            no_improvement >= model.max_no_improvement):
         if verbose:
             print('Converged (lack of improvement in inertia)'
                   ' at iteration %d/%d'
@@ -1487,8 +1487,8 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
-        if (not hasattr(self, 'counts_')
-                or not hasattr(self, 'cluster_centers_')):
+        if (not hasattr(self, 'counts_') or
+                not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
