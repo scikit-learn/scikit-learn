@@ -41,15 +41,15 @@ def _safe_logprob(p):
 
     Parameters
     ----------
-    p : numpy.array
+    p : array-like or scalar
         Probabilities values. Must be within [0, 1] range.
 
     This avoids summation errors, e.g. np.log(0) - np.log(0) = nan, which
     may happen while calculating dot product of log probability matrices for
     joint likelihood estimation
 
-    Note a too large `th` will cause overflow during dot product, which will
-    also result in wrong estimation of join likelihood
+    Note that `th` too large will cause overflow during dot product and wrongly
+    estimate the joint likelihood
     """
     th = 1e30
     p = np.asarray(p)
