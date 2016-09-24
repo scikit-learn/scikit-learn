@@ -549,7 +549,7 @@ def test_alpha_zero():
 
     nb = MultinomialNB(alpha=0.)
     nb.fit(X, y)
-    prob = np.array([[2/3, 1/3], [0, 1]])
+    prob = np.array([[2./3, 1./3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
     # Test sparse X
@@ -561,5 +561,5 @@ def test_alpha_zero():
 
     nb = MultinomialNB(alpha=0.)
     nb.fit(X, y)
-    prob = np.array([[2/3, 1/3], [0, 1]])
+    prob = np.array([[2./3, 1./3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
