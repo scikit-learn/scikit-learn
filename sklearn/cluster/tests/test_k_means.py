@@ -27,7 +27,6 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -648,7 +647,8 @@ def test_int_input():
             # mini batch kmeans is very unstable on such a small dataset hence
             # we use many inits
             MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
-            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
+            MiniBatchKMeans(n_clusters=2, n_init=10,
+                            batch_size=2).fit(X_int_csr),
             MiniBatchKMeans(n_clusters=2, batch_size=2,
                             init=init_int, n_init=1).fit(X_int),
             MiniBatchKMeans(n_clusters=2, batch_size=2,
@@ -823,4 +823,5 @@ def test_KMeans_init_centers():
         assert_array_equal(init_centers, init_centers_test)
         km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
         km.fit(X_test)
-        assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
+        assert_equal(False, np.may_share_memory(km.cluster_centers_,
+                                                init_centers))
