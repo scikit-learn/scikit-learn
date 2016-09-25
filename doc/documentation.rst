@@ -18,10 +18,9 @@ Documentation of scikit-learn 0.18.dev0
                     </blockquote>
                 </div>
                 <div class="span4 box">
-                    <h2><a href="user_guide.html">User Guide</a></h2>
-                    <blockquote>The main documentation. This contains an
-                        in-depth description of all algorithms and how
-                        to apply them.
+                    <h2><a href="install.html">Installation</a></h2>
+                    <blockquote>Steps to install the latest release
+                      of scikit-learn.
                     </blockquote>
                 </div>
                 <div class="span4 box">
@@ -39,7 +38,15 @@ Documentation of scikit-learn 0.18.dev0
             </div>
 
           <!-- row -->
-            <div class="row-fluid">
+          <div class="row-fluid">
+          <div class="span4 box">
+              <h2><a href="user_guide.html">User Guide</a></h2>
+              <blockquote>The main documentation. This contains an
+                  in-depth description of all algorithms and how
+                  to apply them.
+              </blockquote>
+          </div>
+          <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="tutorial/index.html">Tutorials</a></h2>
                     <blockquote>Useful tutorials for developing a feel
@@ -47,6 +54,7 @@ Documentation of scikit-learn 0.18.dev0
                     machine learning field.
                     </blockquote>
                 </div>
+                <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="modules/classes.html">API</a></h2>
                             <blockquote>The exact API of all functions and classes, as given by the docstrings.
@@ -55,11 +63,7 @@ Documentation of scikit-learn 0.18.dev0
                             </blockquote>
                 </div>
 
-                <div class="span4 box">
-                    <h2><a href="presentations.html">Additional Resources</a></h2>
-                                <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
-                                </blockquote>
-                </div>
+
             </div>
           <!-- row -->
             <div class="row-fluid">
@@ -78,13 +82,14 @@ Documentation of scikit-learn 0.18.dev0
                         to use in a given situation.
                     </blockquote>
                 </div>
+                <div class="row-fluid">
                 <div class="span4 box">
-                    <h2><a href="faq.html">FAQ</a></h2>
-                    <blockquote>Frequently asked questions about the project and contributing.
-                    </blockquote>
+                    <h2><a href="presentations.html">Additional Resources</a></h2>
+                                <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
+                                </blockquote>
                 </div>
-            </div>
 
+            <!-- row -->
             <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="related_projects.html">Related packages</a></h2>
@@ -93,12 +98,10 @@ Documentation of scikit-learn 0.18.dev0
                     scope or not well established enough for scikit-learn.
                     </blockquote>
                 </div>
-                <div class="span4 box">
-                    <h2><a href="install.html">Installation</a></h2>
-                    <blockquote>Steps to install the latest release 
-                    of scikit-learn 
-                    </blockquote>
+                <div class="row-fluid">
+                  <div class="span4 box">
+                      <h2><a href="faq.html">FAQ</a></h2>
+                      <blockquote>Frequently asked questions about the project and contributing.
+                    < /blockquote>
                 </div>
-
-
             </div>
