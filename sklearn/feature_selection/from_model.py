@@ -14,17 +14,16 @@ from ..exceptions import NotFittedError
 
 def _get_feature_importances(estimator):
     """Retrieve or aggregate feature importances from estimator"""
-    if hasattr(estimator, "feature_importances_"):
-        importances = estimator.feature_importances_
+    importances = getattr(estimator, "feature_importances_", None)
 
-    elif hasattr(estimator, "coef_"):
+    if importances is None and hasattr(estimator, "coef_"):
         if estimator.coef_.ndim == 1:
             importances = np.abs(estimator.coef_)
 
         else:
             importances = np.sum(np.abs(estimator.coef_), axis=0)
 
-    else:
+    elif importances is None:
         raise ValueError(
             "The underlying estimator %s has no `coef_` or "
             "`feature_importances_` attribute. Either pass a fitted estimator"
