@@ -201,7 +201,8 @@ section.
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
-    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`.
+    * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
 Cross validation iterators
 ==========================
