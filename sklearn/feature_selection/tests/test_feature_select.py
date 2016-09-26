@@ -404,7 +404,7 @@ def test_select_fdr_regression():
             # FDR = E(FP / (TP + FP)) <= alpha
             false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
                                                        random_state) for
-                                            random_state in range(30)])
+                                            random_state in range(100)])
             assert_greater_equal(alpha, false_discovery_rate)
 
             # Make sure that the empirical false discovery rate increases
