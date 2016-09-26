@@ -70,10 +70,10 @@ evaluated and the best combination is retained.
 
 .. topic:: Examples:
 
-    - See :ref:`example_model_selection_grid_search_digits.py` for an example of
+    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`example_model_selection_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
@@ -100,8 +100,8 @@ iterations, is specified using the ``n_iter`` parameter.
 For each parameter, either a distribution over possible values or a list of
 discrete choices (which will be sampled uniformly) can be specified::
 
-  [{'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
-    'kernel': ['rbf'], 'class_weight':['auto', None]}]
+  {'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
+    'kernel': ['rbf'], 'class_weight':['balanced', None]}
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
@@ -123,7 +123,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`example_model_selection_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
@@ -201,7 +201,7 @@ Model specific cross-validation
 -------------------------------
 
 
-Some models can fit data for a range of value of some parameter almost
+Some models can fit data for a range of values of some parameter almost
 as efficiently as fitting the estimator for a single value of the
 parameter. This feature can be leveraged to perform a more efficient
 cross-validation used for model selection of this parameter.

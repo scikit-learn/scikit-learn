@@ -112,6 +112,7 @@ def test_ledoit_wolf():
     lw = LedoitWolf(assume_centered=True)
     lw.fit(X_centered)
     shrinkage_ = lw.shrinkage_
+
     score_ = lw.score(X_centered)
     assert_almost_equal(ledoit_wolf_shrinkage(X_centered,
                                               assume_centered=True),
@@ -184,6 +185,38 @@ def test_ledoit_wolf():
     lw.fit(X)
     assert_almost_equal(lw.score(X), score_, 4)
     assert(lw.precision_ is None)
+
+
+def _naive_ledoit_wolf_shrinkage(X):
+    # A simple implementation of the formulas from Ledoit & Wolf
+
+    # The computation below achieves the following computations of the
+    # "O. Ledoit and M. Wolf, A Well-Conditioned Estimator for
+    # Large-Dimensional Covariance Matrices"
+    # beta and delta are given in the beginning of section 3.2
+    n_samples, n_features = X.shape
+    emp_cov = empirical_covariance(X, assume_centered=False)
+    mu = np.trace(emp_cov) / n_features
+    delta_ = emp_cov.copy()
+    delta_.flat[::n_features + 1] -= mu
+    delta = (delta_ ** 2).sum() / n_features
+    X2 = X ** 2
+    beta_ = 1. / (n_features * n_samples) \
+        * np.sum(np.dot(X2.T, X2) / n_samples - emp_cov ** 2)
+
+    beta = min(beta_, delta)
+    shrinkage = beta / delta
+    return shrinkage
+
+
+def test_ledoit_wolf_small():
+    # Compare our blocked implementation to the naive implementation
+    X_small = X[:, :4]
+    lw = LedoitWolf()
+    lw.fit(X_small)
+    shrinkage_ = lw.shrinkage_
+
+    assert_almost_equal(shrinkage_, _naive_ledoit_wolf_shrinkage(X_small))
 
 
 def test_ledoit_wolf_large():

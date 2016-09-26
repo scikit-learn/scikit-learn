@@ -32,14 +32,14 @@ np.random.seed(0)
 n_samples, n_features = 100, 100
 # Create Gaussian data
 X = np.random.randn(n_samples, n_features)
-# Create weigts with a precision lambda_ of 4.
+# Create weights with a precision lambda_ of 4.
 lambda_ = 4.
 w = np.zeros(n_features)
 # Only keep 10 weights of interest
 relevant_features = np.random.randint(0, n_features, 10)
 for i in relevant_features:
     w[i] = stats.norm.rvs(loc=0, scale=1. / np.sqrt(lambda_))
-# Create noite with a precision alpha of 50.
+# Create noise with a precision alpha of 50.
 alpha_ = 50.
 noise = stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
 # Create the target

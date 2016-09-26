@@ -13,11 +13,22 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
+from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
 from ..model_selection._validation import _safe_split, _score
 from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
+
+def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
+    """
+    Return the score for a fit across one fold.
+    """
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    return rfe._fit(
+        X_train, y_train, lambda estimator, features:
+        _score(estimator, X_test[:, features], y_test, scorer)).scores_
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
@@ -275,14 +286,16 @@ class RFECV(RFE, MetaEstimatorMixin):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If the 
+        estimator is a classifier or if ``y`` is neither binary nor multiclass, 
+        :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -294,6 +307,11 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     verbose : int, default=0
         Controls verbosity of output.
+
+    n_jobs : int, default 1
+        Number of cores to run in parallel while fitting across folds.
+        Defaults to 1 core. If `n_jobs=-1`, then number of jobs is set
+        to number of cores.
 
     Attributes
     ----------
@@ -348,12 +366,14 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0):
+    def __init__(self, estimator, step=1, cv=None, scoring=None, verbose=0,
+                 n_jobs=1):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit the RFE model and automatically tune the number of selected
@@ -376,30 +396,37 @@ class RFECV(RFE, MetaEstimatorMixin):
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
         n_features_to_select = 1
+        rfe = RFE(estimator=self.estimator,
+                  n_features_to_select=n_features_to_select,
+                  step=self.step, verbose=self.verbose - 1)
 
-        # Determine the number of subsets of features
-        scores = []
 
-        # Cross-validation
-        for n, (train, test) in enumerate(cv.split(X, y)):
-            X_train, y_train = _safe_split(self.estimator, X, y, train)
-            X_test, y_test = _safe_split(self.estimator, X, y, test, train)
+        # Determine the number of subsets of features by fitting across
+        # the train folds and choosing the "features_to_select" parameter
+        # that gives the least averaged error across all folds.
 
-            rfe = RFE(estimator=self.estimator,
-                      n_features_to_select=n_features_to_select,
-                      step=self.step, verbose=self.verbose - 1)
+        # Note that joblib raises a non-picklable error for bound methods
+        # even if n_jobs is set to 1 with the default multiprocessing
+        # backend.
+        # This branching is done so that to
+        # make sure that user code that sets n_jobs to 1
+        # and provides bound methods as scorers is not broken with the
+        # addition of n_jobs parameter in version 0.18.
 
-            rfe._fit(X_train, y_train, lambda estimator, features:
-                     _score(estimator, X_test[:, features], y_test, scorer))
-            scores.append(np.array(rfe.scores_[::-1]).reshape(1, -1))
-        scores = np.sum(np.concatenate(scores, 0), 0)
-        # The index in 'scores' when 'n_features' features are selected
-        n_feature_index = np.ceil((n_features - n_features_to_select) /
-                                  float(self.step))
-        n_features_to_select = max(n_features_to_select,
-                                   n_features - ((n_feature_index -
-                                                 np.argmax(scores)) *
-                                                 self.step))
+        if self.n_jobs == 1:
+            parallel, func = list, _rfe_single_fit
+        else:
+            parallel, func, = Parallel(n_jobs=self.n_jobs), delayed(_rfe_single_fit)
+
+        scores = parallel(
+            func(rfe, self.estimator, X, y, train, test, scorer)
+            for train, test in cv.split(X, y))
+
+        scores = np.sum(scores, axis=0)
+        n_features_to_select = max(
+            n_features - (np.argmax(scores) * self.step),
+            n_features_to_select)
+
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select, step=self.step)
@@ -415,5 +442,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores / cv.get_n_splits(X, y)
+        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y)
         return self

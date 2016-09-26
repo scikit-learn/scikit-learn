@@ -37,6 +37,11 @@ def test_compute_class_weight_not_present():
     y = np.asarray([0, 0, 0, 1, 1, 2])
     assert_raises(ValueError, compute_class_weight, "auto", classes, y)
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    # Raise error when y has items not in classes
+    classes = np.arange(2)
+    assert_raises(ValueError, compute_class_weight, "auto", classes, y)
+    assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    assert_raises(ValueError, compute_class_weight, {0: 1., 1: 2.}, classes, y)
 
 
 def test_compute_class_weight_dict():
@@ -78,7 +83,7 @@ def test_compute_class_weight_invariance():
     # create dataset where class 0 is duplicated twice
     X_0 = np.vstack([X] + [X[y == 0]] * 2)
     y_0 = np.hstack([y] + [y[y == 0]] * 2)
-    # cuplicate everything
+    # duplicate everything
     X_ = np.vstack([X] * 2)
     y_ = np.hstack([y] * 2)
     # results should be identical

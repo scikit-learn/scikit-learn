@@ -1,25 +1,32 @@
 # Authors: Danny Sullivan <dbsullivan23@gmail.com>
 #          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import math
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.linear_model.sag import get_auto_step_size
-from sklearn.linear_model.sag_fast import get_max_squared_sum
+from sklearn.linear_model.sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.linear_model.base import make_dataset
+from sklearn.linear_model.logistic import _multinomial_loss_grad
 
+from sklearn.utils.extmath import logsumexp
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import compute_class_weight
-from sklearn.preprocessing import LabelEncoder
-from sklearn.datasets import make_blobs
+from sklearn.utils import check_random_state
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer
+from sklearn.datasets import make_blobs, load_iris
 from sklearn.base import clone
+
+iris = load_iris()
 
 
 # this is used for sag classification
@@ -378,7 +385,7 @@ def test_get_auto_step_size():
     fit_intercept = False
     # sum the squares of the second sample because that's the largest
     max_squared_sum = 4 + 9 + 16
-    max_squared_sum_ = get_max_squared_sum(X)
+    max_squared_sum_ = row_norms(X, squared=True).max()
     assert_almost_equal(max_squared_sum, max_squared_sum_, decimal=4)
 
     for fit_intercept in (True, False):
@@ -397,24 +404,6 @@ def test_get_auto_step_size():
     msg = 'Unknown loss function for SAG solver, got wrong instead of'
     assert_raise_message(ValueError, msg, get_auto_step_size,
                          max_squared_sum_, alpha, "wrong", fit_intercept)
-
-
-def test_get_max_squared_sum():
-    n_samples = 100
-    n_features = 10
-    rng = np.random.RandomState(42)
-    X = rng.randn(n_samples, n_features).astype(np.float64)
-
-    mask = rng.randn(n_samples, n_features)
-    X[mask > 0] = 0.
-    X_csr = sp.csr_matrix(X)
-
-    X[0, 3] = 0.
-    X_csr[0, 3] = 0.
-
-    sum_X = get_max_squared_sum(X)
-    sum_X_csr = get_max_squared_sum(X_csr)
-    assert_almost_equal(sum_X, sum_X_csr)
 
 
 @ignore_warnings
@@ -722,3 +711,70 @@ def test_step_size_alpha_error():
 
     clf2 = Ridge(fit_intercept=fit_intercept, solver='sag', alpha=alpha)
     assert_raise_message(ZeroDivisionError, msg, clf2.fit, X, y)
+
+
+def test_multinomial_loss():
+    # test if the multinomial loss and gradient computations are consistent
+    X, y = iris.data, iris.target.astype(np.float64)
+    n_samples, n_features = X.shape
+    n_classes = len(np.unique(y))
+
+    rng = check_random_state(42)
+    weights = rng.randn(n_features, n_classes)
+    intercept = rng.randn(n_classes)
+    sample_weights = rng.randn(n_samples)
+    np.abs(sample_weights, sample_weights)
+
+    # compute loss and gradient like in multinomial SAG
+    dataset, _ = make_dataset(X, y, sample_weights, random_state=42)
+    loss_1, grad_1 = _multinomial_grad_loss_all_samples(dataset, weights,
+                                                        intercept, n_samples,
+                                                        n_features, n_classes)
+    # compute loss and gradient like in multinomial LogisticRegression
+    lbin = LabelBinarizer()
+    Y_bin = lbin.fit_transform(y)
+    weights_intercept = np.vstack((weights, intercept)).T.ravel()
+    loss_2, grad_2, _ = _multinomial_loss_grad(weights_intercept, X, Y_bin,
+                                               0.0, sample_weights)
+    grad_2 = grad_2.reshape(n_classes, -1)
+    grad_2 = grad_2[:, :-1].T
+
+    # comparison
+    assert_array_almost_equal(grad_1, grad_2)
+    assert_almost_equal(loss_1, loss_2)
+
+
+def test_multinomial_loss_ground_truth():
+    # n_samples, n_features, n_classes = 4, 2, 3
+    n_classes = 3
+    X = np.array([[1.1, 2.2], [2.2, -4.4], [3.3, -2.2], [1.1, 1.1]])
+    y = np.array([0, 1, 2, 0])
+    lbin = LabelBinarizer()
+    Y_bin = lbin.fit_transform(y)
+
+    weights = np.array([[0.1, 0.2, 0.3], [1.1, 1.2, -1.3]])
+    intercept = np.array([1., 0, -.2])
+    sample_weights = np.array([0.8, 1, 1, 0.8])
+
+    prediction = np.dot(X, weights) + intercept
+    logsumexp_prediction = logsumexp(prediction, axis=1)
+    p = prediction - logsumexp_prediction[:, np.newaxis]
+    loss_1 = -(sample_weights[:, np.newaxis] * p * Y_bin).sum()
+    diff = sample_weights[:, np.newaxis] * (np.exp(p) - Y_bin)
+    grad_1 = np.dot(X.T, diff)
+
+    weights_intercept = np.vstack((weights, intercept)).T.ravel()
+    loss_2, grad_2, _ = _multinomial_loss_grad(weights_intercept, X, Y_bin,
+                                               0.0, sample_weights)
+    grad_2 = grad_2.reshape(n_classes, -1)
+    grad_2 = grad_2[:, :-1].T
+
+    assert_almost_equal(loss_1, loss_2)
+    assert_array_almost_equal(grad_1, grad_2)
+
+    # ground truth
+    loss_gt = 11.680360354325961
+    grad_gt = np.array([[-0.557487, -1.619151, +2.176638],
+                        [-0.903942, +5.258745, -4.354803]])
+    assert_almost_equal(loss_1, loss_gt)
+    assert_array_almost_equal(grad_1, grad_gt)

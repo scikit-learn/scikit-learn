@@ -19,8 +19,10 @@ from sklearn.utils import shuffle as sh
 
 np.random.seed(1)
 
+datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
-datasets = ['http']#, 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
+
 
 for dat in datasets:
     # loading and vectorization
@@ -34,7 +36,7 @@ for dat in datasets:
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
-        sh(X, y)
+        X, y = sh(X, y)
         # we remove data with label 4
         # normal data are then those of class 1
         s = (y != 4)
@@ -76,9 +78,8 @@ for dat in datasets:
     if dat == 'http' or dat == 'smtp':
         y = (y != 'normal.').astype(int)
 
-    n_samples, n_features = np.shape(X)
+    n_samples, n_features = X.shape
     n_samples_train = n_samples // 2
-    n_samples_test = n_samples - n_samples_train
 
     X = X.astype(float)
     X_train = X[:n_samples_train, :]
@@ -87,22 +88,41 @@ for dat in datasets:
     y_test = y[n_samples_train:]
 
     print('IsolationForest processing...')
-    model = IsolationForest(bootstrap=True, n_jobs=-1)
+    model = IsolationForest(n_jobs=-1)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = model.predict(X_test)  # the lower, the more normal
+    scoring = - model.decision_function(X_test)  # the lower, the more normal
+
+    # Show score histograms
+    fig, ax = plt.subplots(3, sharex=True, sharey=True)
+    bins = np.linspace(-0.5, 0.5, 200)
+    ax[0].hist(scoring, bins, color='black')
+    ax[0].set_title('decision function for %s dataset' % dat)
+    ax[0].legend(loc="lower right")
+    ax[1].hist(scoring[y_test == 0], bins, color='b',
+               label='normal data')
+    ax[1].legend(loc="lower right")
+    ax[2].hist(scoring[y_test == 1], bins, color='r',
+               label='outliers')
+    ax[2].legend(loc="lower right")
+
+    # Show ROC Curves
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     AUC = auc(fpr, tpr)
-    plt.plot(fpr, tpr, lw=1, label='ROC for %s (area = %0.3f, train-time: %0.2fs, test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
+    label = ('%s (area: %0.3f, train-time: %0.2fs, '
+             'test-time: %0.2fs)' % (dat, AUC, fit_time, predict_time))
+    ax_roc.plot(fpr, tpr, lw=1, label=label)
 
-plt.xlim([-0.05, 1.05])
-plt.ylim([-0.05, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic')
-plt.legend(loc="lower right")
+
+ax_roc.set_xlim([-0.05, 1.05])
+ax_roc.set_ylim([-0.05, 1.05])
+ax_roc.set_xlabel('False Positive Rate')
+ax_roc.set_ylabel('True Positive Rate')
+ax_roc.set_title('Receiver operating characteristic (ROC) curves')
+ax_roc.legend(loc="lower right")
+fig_roc.tight_layout()
 plt.show()

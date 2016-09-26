@@ -2,8 +2,9 @@
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 # See _utils.pyx for details.
 
@@ -33,6 +34,8 @@ ctypedef fused realloc_ptr:
     (DTYPE_t*)
     (SIZE_t*)
     (unsigned char*)
+    (WeightedPQueueRecord*)
+    (DOUBLE_t*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
@@ -104,3 +107,53 @@ cdef class PriorityHeap:
                   double impurity, double impurity_left,
                   double impurity_right) nogil
     cdef int pop(self, PriorityHeapRecord* res) nogil
+
+# =============================================================================
+# WeightedPQueue data structure
+# =============================================================================
+
+# A record stored in the WeightedPQueue
+cdef struct WeightedPQueueRecord:
+    DOUBLE_t data
+    DOUBLE_t weight
+
+cdef class WeightedPQueue:
+    cdef SIZE_t capacity
+    cdef SIZE_t array_ptr
+    cdef WeightedPQueueRecord* array_
+
+    cdef bint is_empty(self) nogil
+    cdef void reset(self) nogil
+    cdef SIZE_t size(self) nogil
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef DOUBLE_t get_weight_from_index(self, SIZE_t index) nogil
+    cdef DOUBLE_t get_value_from_index(self, SIZE_t index) nogil
+
+
+# =============================================================================
+# WeightedMedianCalculator data structure
+# =============================================================================
+
+cdef class WeightedMedianCalculator:
+    cdef SIZE_t initial_capacity
+    cdef WeightedPQueue samples
+    cdef DOUBLE_t total_weight
+    cdef SIZE_t k
+    cdef DOUBLE_t sum_w_0_k            # represents sum(weights[0:k])
+                                       # = w[0] + w[1] + ... + w[k-1]
+
+    cdef SIZE_t size(self) nogil
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef void reset(self) nogil
+    cdef int update_median_parameters_post_push(self, DOUBLE_t data,
+                                                DOUBLE_t weight,
+                                                DOUBLE_t original_median) nogil
+    cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
+    cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
+                                                  DOUBLE_t weight,
+                                                  DOUBLE_t original_median) nogil
+    cdef DOUBLE_t get_median(self) nogil

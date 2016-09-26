@@ -130,7 +130,7 @@ cdef class DistanceMetric:
     --------------  --------------------  --------  -------------------------------
     "euclidean"     EuclideanDistance     -         ``sqrt(sum((x - y)^2))``
     "manhattan"     ManhattanDistance     -         ``sum(|x - y|)``
-    "chebyshev"     ChebyshevDistance     -         ``sum(max(|x - y|))``
+    "chebyshev"     ChebyshevDistance     -         ``max(|x - y|)``
     "minkowski"     MinkowskiDistance     p         ``sum(|x - y|^p)^(1/p)``
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
@@ -177,7 +177,7 @@ cdef class DistanceMetric:
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "maching"          MatchingDistance         NNEQ / N
+    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
@@ -242,7 +242,7 @@ cdef class DistanceMetric:
             self.kwargs = state[4]
         self.vec_ptr = get_vec_ptr(self.vec)
         self.mat_ptr = get_mat_ptr(self.mat)
-        self.size = 1
+        self.size = self.vec.shape[0]
 
     @classmethod
     def get_metric(cls, metric, **kwargs):
@@ -499,7 +499,7 @@ cdef class ManhattanDistance(DistanceMetric):
 
 #------------------------------------------------------------
 # Chebyshev Distance
-#  d = max_i(abs(x_i), abs(y_i))
+#  d = max_i(abs(x_i - y_i))
 cdef class ChebyshevDistance(DistanceMetric):
     """Chebyshev/Infinity Distance
 
@@ -644,6 +644,9 @@ cdef class MahalanobisDistance(DistanceMetric):
     """
     def __init__(self, V=None, VI=None):
         if VI is None:
+            if V is None:
+                raise ValueError("Must provide either V or VI "
+                                 "for Mahalanobis distance")
             VI = np.linalg.inv(V)
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")

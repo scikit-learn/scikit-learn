@@ -14,7 +14,7 @@ Persistence example
 -------------------
 
 It is possible to save a model in the scikit by using Python's built-in
-persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_::
+persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
@@ -51,11 +51,11 @@ with::
 
 .. note::
 
-   joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the ``clf`` object is serialized as a separate file on the
-   filesystem. All files are required in the same folder when reloading the
-   model with joblib.load.
+   ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+   instead of filenames. More information on data persistence with Joblib is
+   available `here <https://pythonhosted.org/joblib/persistence.html>`_.
 
+.. _persistence_limitations:
 
 Security & maintainability limitations
 --------------------------------------
@@ -63,9 +63,12 @@ Security & maintainability limitations
 pickle (and joblib by extension), has some issues regarding maintainability
 and security. Because of this,
 
-* Never unpickle untrusted data
-* Models saved in one version of scikit-learn might not load in another
-  version.
+* Never unpickle untrusted data as it could lead to malicious code being 
+  executed upon loading.
+* While models saved using one version of scikit-learn might load in 
+  other versions, this is entirely unsupported and inadvisable. It should 
+  also be kept in mind that operations performed on such data could give
+  different and unexpected results.
 
 In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:

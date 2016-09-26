@@ -6,11 +6,9 @@
 
 import warnings
 import numpy as np
-
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import lobpcg
-
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
@@ -42,23 +40,27 @@ def _graph_connected_component(graph, node_id):
         belonging to the largest connected components of the given query
         node
     """
-    connected_components_matrix = np.zeros(
-        shape=(graph.shape[0]), dtype=np.bool)
-    nodes_to_explore = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
-    nodes_to_explore[node_id] = True
     n_node = graph.shape[0]
-    nodes_to_add = np.zeros(shape=(graph.shape[0]), dtype=np.bool)
-    for i in range(n_node):
-        nodes_to_add.fill(False)
-        for i in np.where(nodes_to_explore)[0]:
-            nodes_to_add = np.logical_or(nodes_to_add, graph[i] != 0)
-        connected_components_matrix = np.logical_or(
-            connected_components_matrix, nodes_to_explore)
-        if not nodes_to_add.any():
+    if sparse.issparse(graph):
+        # speed up row-wise access to boolean connection mask
+        graph = graph.tocsr()
+    connected_nodes = np.zeros(n_node, dtype=np.bool)
+    nodes_to_explore = np.zeros(n_node, dtype=np.bool)
+    nodes_to_explore[node_id] = True
+    for _ in range(n_node):
+        last_num_component = connected_nodes.sum()
+        np.logical_or(connected_nodes, nodes_to_explore, out=connected_nodes)
+        if last_num_component >= connected_nodes.sum():
             break
-        # Swap arrays
-        nodes_to_explore, nodes_to_add = nodes_to_add, nodes_to_explore
-    return connected_components_matrix
+        indices = np.where(nodes_to_explore)[0]
+        nodes_to_explore.fill(False)
+        for i in indices:
+            if sparse.issparse(graph):
+                neighbors = graph[i].toarray().ravel()
+            else:
+                neighbors = graph[i]
+            np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
+    return connected_nodes
 
 
 def _graph_is_connected(graph):
@@ -193,7 +195,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     References
     ----------
-    * http://en.wikipedia.org/wiki/LOBPCG
+    * https://en.wikipedia.org/wiki/LOBPCG
 
     * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method
@@ -229,10 +231,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
-    if (eigen_solver == 'arpack'
-        or eigen_solver != 'lobpcg' and
-            (not sparse.isspmatrix(laplacian)
-             or n_nodes < 5 * n_components)):
+    if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
+       (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
@@ -360,6 +360,10 @@ class SpectralEmbedding(BaseEstimator):
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
 
@@ -387,13 +391,14 @@ class SpectralEmbedding(BaseEstimator):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None):
+                 n_neighbors=None, n_jobs=1):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
         self.random_state = random_state
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
+        self.n_jobs = n_jobs
 
     @property
     def _pairwise(self):
@@ -430,7 +435,8 @@ class SpectralEmbedding(BaseEstimator):
                                      if self.n_neighbors is not None
                                      else max(int(X.shape[0] / 10), 1))
                 self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_,
-                                                         include_self=True)
+                                                         include_self=True,
+                                                         n_jobs=self.n_jobs)
                 # currently only symmetric affinity_matrix supported
                 self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
                                                self.affinity_matrix_.T)
@@ -473,7 +479,7 @@ class SpectralEmbedding(BaseEstimator):
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
         elif not callable(self.affinity):
-            raise ValueError(("'affinity' is expected to be an an affinity "
+            raise ValueError(("'affinity' is expected to be an affinity "
                               "name or a callable. Got: %s") % self.affinity)
 
         affinity_matrix = self._get_affinity_matrix(X)
