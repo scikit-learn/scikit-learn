@@ -279,5 +279,5 @@ def test_validation_curve_clone_estimator():
     param_range = np.linspace(1, 0, 10)
     _, _ = validation_curve(
             MockEstimatorWithSingleFitCallAllowed(), X, y,
-            param_name="param",param_range=param_range, cv=2
+            param_name="param", param_range=param_range, cv=2
     )
