@@ -16,7 +16,7 @@ Version 0.18
 Model Selection Enhancements and API Changes
 --------------------------------------------
 
-  - **The ``model_selection`` module**
+  - **The model_selection module**
 
     The new module :mod:`sklearn.model_selection`, which groups together the
     functionalities of formerly :mod:`sklearn.cross_validation`,
@@ -40,9 +40,9 @@ Model Selection Enhancements and API Changes
     :class:`model_selection.GridSearchCV` and
     :class:`model_selection.RandomizedSearchCV` utilities.
 
-  - **The enhanced ``cv_results_`` attribute**
+  - **The enhanced cv_results_ attribute**
 
-    The new ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`
+    The new `cv_results_`` attribute (of :class:`model_selection.GridSearchCV`
     and :class:`model_selection.RandomizedSearchCV`) introduced in lieu of the
     ``grid_scores_`` attribute is a dict of 1D arrays with elements in each
     array corresponding to the parameter settings (i.e. search candidates).
@@ -62,7 +62,7 @@ Model Selection Enhancements and API Changes
     the corresponding parameter is not applicable. Additionally a list of all
     the parameter dicts are stored at ``cv_results_['params']``.
 
-  - **Parameters ``n_folds`` and ``n_iter`` renamed to ``n_splits``**
+  - **Parameters n_folds and n_iter renamed to n_splits**
 
     Some parameter names have changed:
     The ``n_folds`` parameter in new :class:`model_selection.KFold`,
@@ -86,7 +86,7 @@ Model Selection Enhancements and API Changes
     NOTE the change from singular to plural form in
     :class:`model_selection.LeavePGroupsOut`.
 
-  - **Fit parameter ``labels`` renamed to ``groups``**
+  - **Fit parameter labels renamed to groups**
 
     The ``labels`` parameter in the :func:`split` method of the newly renamed
     splitters :class:`model_selection.GroupKFold`,
@@ -95,7 +95,7 @@ Model Selection Enhancements and API Changes
     :class:`model_selection.GroupShuffleSplit` is renamed to ``groups``
     following the new nomenclature of their class names.
 
-  - **Parameter ``n_labels`` renamed to ``n_groups``**
+  - **Parameter n_labels renamed to ``n_groups``**
 
     The parameter ``n_labels`` in the newly renamed
     :class:`model_selection.LeavePGroupsOut` is changed to ``n_groups``.
