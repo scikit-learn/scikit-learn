@@ -89,7 +89,9 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
     """Dummy classifier that disallows repeated calls of fit method"""
 
     def fit(self, X_subset, y_subset):
-        assert_false(hasattr(self, 'fit_called_'), 'fit is called the second time')
+        assert_false(
+                hasattr(self, 'fit_called_'),
+                'fit is called the second time')
         self.fit_called_ = True
         return super(type(self), self).fit(X_subset, y_subset)
 
@@ -275,8 +277,7 @@ def test_validation_curve_clone_estimator():
                                n_clusters_per_class=1, random_state=0)
 
     param_range = np.linspace(1, 0, 10)
-    with warnings.catch_warnings(record=True) as w:
-        _, _ = validation_curve(
-                MockEstimatorWithSingleFitCallAllowed(), X, y, param_name="param",
-                param_range=param_range, cv=2
-        )
+    _, _ = validation_curve(
+            MockEstimatorWithSingleFitCallAllowed(), X, y,
+            param_name="param",param_range=param_range, cv=2
+    )
