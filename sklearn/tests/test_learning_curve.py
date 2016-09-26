@@ -6,6 +6,7 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import warnings
+import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -291,15 +292,9 @@ def test_validation_curve_clone_estimator():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
 
-
     param_range = np.linspace(1, 0, 10)
     with warnings.catch_warnings(record=True) as w:
-        train_scores, test_scores = validation_curve(
-                MockImprovingEstimatorWithParameter(), X, y, param_name="param",
+        _, _ = validation_curve(
+                MockEstimatorWithSingleFitCallAllowed(), X, y, param_name="param",
                 param_range=param_range, cv=2
         )
-    if len(w) > 0:
-        raise RuntimeError("Unexpected warning: %r" % w[0].message)
-
-    assert_array_equal(test_scores[:, 0], test_scores[:, 1])
-    assert_array_equal(train_scores[:, 0], train_scores[:, 1])
