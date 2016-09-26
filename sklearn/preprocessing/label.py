@@ -108,7 +108,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
-        self._classes_lookup = {c: i for i, c in enumerate(self.classes_)}
+        self._classes_lookup = {}
+        for i, c in enumerate(self.classes_):
+            self._classes_lookup[c] = i
         return self
 
     def transform(self, y):
