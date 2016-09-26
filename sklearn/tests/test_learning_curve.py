@@ -6,13 +6,13 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import warnings
-import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_false
 from sklearn.datasets import make_classification
 
 with warnings.catch_warnings():
@@ -85,28 +85,13 @@ class MockEstimatorWithParameter(BaseEstimator):
         return X is self.X_subset
 
 
-class MockImprovingEstimatorWithParameter(BaseEstimator):
-    """Dummy classifier that improves with the size of a training set"""
-    def __init__(self, param=0.5):
-        self.X_subset = None
-        self.param = param
-        self.error_decay = 0.9
-        self.error = 0.5
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
 
     def fit(self, X_subset, y_subset):
-        self.error *= math.pow(self.error_decay, len(X_subset)) * self.param
-        self.X_subset = X_subset
-        self.train_sizes = X_subset.shape[0]
-        return self
-
-    def predict(self, X):
-        raise NotImplementedError
-
-    def score(self, X=None, y=None):
-        return self.error if self._is_training_data(X) else 1 - self.error
-
-    def _is_training_data(self, X):
-        return X is self.X_subset
+        assert_false(hasattr(self, 'fit_called_'), 'fit is called the second time')
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
 
 
 def test_learning_curve():
@@ -289,15 +274,9 @@ def test_validation_curve_clone_estimator():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
 
-
     param_range = np.linspace(1, 0, 10)
     with warnings.catch_warnings(record=True) as w:
-        train_scores, test_scores = validation_curve(
-                MockImprovingEstimatorWithParameter(), X, y, param_name="param",
+        _, _ = validation_curve(
+                MockEstimatorWithSingleFitCallAllowed(), X, y, param_name="param",
                 param_range=param_range, cv=2
         )
-    if len(w) > 0:
-        raise RuntimeError("Unexpected warning: %r" % w[0].message)
-
-    assert_array_equal(test_scores[:, 0], test_scores[:, 1])
-    assert_array_equal(train_scores[:, 0], train_scores[:, 1])
