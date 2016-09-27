@@ -212,7 +212,7 @@ dictionary of features and transform documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consequective characters.
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive characters.
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
@@ -458,9 +458,9 @@ mean score and the parameters setting corresponding to that score::
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-A more detailed summary of the search is available at ``gs_clf.results_``.
+A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 
-The ``results_`` parameter can be easily imported into pandas as a
+The ``cv_results_`` parameter can be easily imported into pandas as a
 ``DataFrame`` for further inspection.
 
 .. note:
@@ -547,7 +547,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`
 
 * If you don't have labels, try using
-  :ref:`Clustering <example_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look
@@ -558,7 +558,7 @@ upon the completion of this tutorial:
 
 * Have a look at using
   :ref:`Out-of-core Classification
-  <example_applications_plot_out_of_core_classification.py>` to
+  <sphx_glr_auto_examples_applications_plot_out_of_core_classification.py>` to
   learn from data that would not fit into the computer main memory.
 
 * Have a look at the :ref:`Hashing Vectorizer <hashing_vectorizer>`

@@ -279,7 +279,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
-    best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
 
@@ -792,6 +791,31 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     inertia_ : float
         Sum of distances of samples to their closest cluster center.
 
+    Examples
+    --------
+
+    >>> from sklearn.cluster import KMeans
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
+    >>> kmeans.labels_
+    array([0, 0, 0, 1, 1, 1], dtype=int32)
+    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([0, 1], dtype=int32)
+    >>> kmeans.cluster_centers_
+    array([[ 1.,  2.],
+           [ 4.,  2.]])
+
+    See also
+    --------
+
+    MiniBatchKMeans
+        Alternative online implementation that does incremental updates
+        of the centers positions using mini-batches.
+        For large scale learning (say n_samples > 10k) MiniBatchKMeans is
+        probably much faster than the default batch implementation.
+
     Notes
     ------
     The k-means problem is solved using Lloyd's algorithm.
@@ -806,15 +830,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
     it can be useful to restart it several times.
-
-    See also
-    --------
-
-    MiniBatchKMeans:
-        Alternative online implementation that does incremental updates
-        of the centers positions using mini-batches.
-        For large scale learning (say n_samples > 10k) MiniBatchKMeans is
-        probably much faster to than the default batch implementation.
 
     """
 
@@ -844,8 +859,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return X
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                        warn_on_dtype=True)
+        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -1169,6 +1183,8 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
 class MiniBatchKMeans(KMeans):
     """Mini-Batch K-Means clustering
 
+    Read more in the :ref:`User Guide <mini_batch_kmeans>`.
+
     Parameters
     ----------
 
@@ -1259,9 +1275,18 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
+    See also
+    --------
+
+    KMeans
+        The classic implementation of the clustering method based on the
+        Lloyd's algorithm. It consumes the whole set of input data at each
+        iteration.
+
     Notes
     -----
     See http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+
     """
 
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,

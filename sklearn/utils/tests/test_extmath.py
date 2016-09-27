@@ -17,7 +17,10 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -32,6 +35,7 @@ from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
+from sklearn.utils.extmath import stable_cumsum
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -643,3 +647,14 @@ def test_softmax():
     exp_X = np.exp(X)
     sum_exp_X = np.sum(exp_X, axis=1).reshape((-1, 1))
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
+
+
+def test_stable_cumsum():
+    if np_version < (1, 9):
+        raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
+    assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
+    r = np.random.RandomState(0).rand(100000)
+    assert_raise_message(RuntimeError,
+                         'cumsum was found to be unstable: its last element '
+                         'does not correspond to sum',
+                         stable_cumsum, r, rtol=0, atol=0)

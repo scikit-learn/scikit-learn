@@ -47,7 +47,6 @@ def test_multioutput_regression():
     assert_almost_equal(error, -.875)
 
 
-
 def test_regression_metrics_at_limits():
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)

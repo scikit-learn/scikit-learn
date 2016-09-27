@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.grid_search import ParameterGrid
+from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris
@@ -193,3 +193,10 @@ def test_iforest_works():
     # assert detect outliers:
     assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
     assert_array_equal(pred, 6 * [1] + 2 * [-1])
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples in iforest and BaseBagging are identical
+    X = iris.data
+    clf = IsolationForest().fit(X)
+    assert_equal(clf.max_samples_, clf._max_samples)

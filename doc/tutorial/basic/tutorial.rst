@@ -133,7 +133,7 @@ learn::
              [  0.,   0.,   6.,  13.,  10.,   0.,   0.,   0.]])
 
     The :ref:`simple example on this dataset
-    <example_classification_plot_digits_classification.py>` illustrates how starting
+    <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
 
@@ -190,7 +190,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../auto_examples/datasets/images/plot_digits_last_image_001.png
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
     :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
@@ -200,7 +200,7 @@ resolution. Do you agree with the classifier?
 
 A complete example of this classification problem is available as an
 example that you can run and study:
-:ref:`example_classification_plot_digits_classification.py`.
+:ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
 
 
 Model persistence
@@ -243,10 +243,9 @@ with::
 
 .. note::
 
-   joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the ``clf`` object is serialized as a separate file on the
-   filesystem. All files are required in the same folder when reloading the
-   model with joblib.load.
+    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+    instead of filenames. More information on data persistence with Joblib is
+    available `here <https://pythonhosted.org/joblib/persistence.html>`_.
 
 Note that pickle has some security and maintainability issues. Please refer to
 section :ref:`model_persistence` for more detailed information about model

@@ -2,7 +2,6 @@
 import numpy as np
 from scipy import sparse
 
-from sklearn.base import clone
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -359,50 +358,3 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
-
-
-def check_indicator(X, expected_imputed_features, axis):
-    n_samples, n_features = X.shape
-    imputer = Imputer(missing_values=-1, strategy='mean', axis=axis)
-    imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
-    Xt = imputer.fit_transform(X)
-    Xt_with_in = imputer_with_in.fit_transform(X)
-    imputed_features_mask = X[:, expected_imputed_features] == -1
-    n_features_new = Xt.shape[1]
-    n_imputed_features = len(imputer_with_in.imputed_features_)
-    assert_array_equal(imputer.imputed_features_, expected_imputed_features)
-    assert_array_equal(imputer_with_in.imputed_features_,
-                       expected_imputed_features)
-    assert_equal(Xt_with_in.shape,
-                 (n_samples, n_features_new + n_imputed_features))
-    assert_array_equal(Xt_with_in, np.hstack((Xt, imputed_features_mask)))
-    imputer_with_in = clone(imputer).set_params(add_indicator_features=True)
-    assert_array_equal(Xt_with_in,
-                       imputer_with_in.fit_transform(sparse.csc_matrix(X)).A)
-    assert_array_equal(Xt_with_in,
-                       imputer_with_in.fit_transform(sparse.csr_matrix(X)).A)
-
-
-def test_indicator_features():
-    # one feature with all missng values
-    X = np.array([
-       [-1,  -1,   2,   3],
-       [4,  -1,   6,  -1],
-       [8,  -1,  10,  11],
-       [12,  -1,  -1,  15],
-       [16,  -1,  18,  19]
-    ])
-    check_indicator(X, np.array([0, 2, 3]), axis=0)
-    check_indicator(X, np.array([0, 1, 2, 3]), axis=1)
-
-    # one feature with all missing values and one with no missing value
-    # when axis=0 the feature gets discarded
-    X = np.array([
-       [-1,  -1,   1,   3],
-       [4,  -1,   0,  -1],
-       [8,  -1,   1,  0],
-       [0,  -1,   0,  15],
-       [16,  -1,   1,  19]
-    ])
-    check_indicator(X, np.array([0, 3]), axis=0)
-    check_indicator(X, np.array([0, 1, 3]), axis=1)

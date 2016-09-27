@@ -108,7 +108,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     .. warning::
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
-       neighbors, neighbor `k+1` and `k`, have identical distances but
+       neighbors, neighbor `k+1` and `k`, have identical distances
        but different labels, the results will depend on the ordering of the
        training data.
 
@@ -374,7 +374,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             else:
                 mode = np.array([weighted_mode(pl, w)[0]
                                  for (pl, w)
-                                 in zip(pred_labels[inliers], weights)],
+                                 in zip(pred_labels[inliers], weights[inliers])],
                                 dtype=np.int)
 
             mode = mode.ravel()

@@ -19,8 +19,17 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..externals import six
-from ..exceptions import NotFittedError
-from ..utils.validation import check_is_fitted
+from ..externals.joblib import Parallel, delayed
+from ..utils.validation import has_fit_parameter, check_is_fitted
+
+
+def _parallel_fit_estimator(estimator, X, y, sample_weight):
+    """Private function used to fit an estimator within a job."""
+    if sample_weight is not None:
+        estimator.fit(X, y, sample_weight)
+    else:
+        estimator.fit(X, y)
+    return estimator
 
 
 class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
@@ -47,6 +56,10 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
+
+    n_jobs : int, optional (default=1)
+        The number of jobs to run in parallel for ``fit``.
+        If -1, then the number of jobs is set to the number of cores.
 
     Attributes
     ----------
@@ -87,14 +100,14 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', weights=None):
-
+    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
         self.estimators = estimators
         self.named_estimators = dict(estimators)
         self.voting = voting
         self.weights = weights
+        self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
 
         Parameters
@@ -105,6 +118,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         y : array-like, shape = [n_samples]
             Target values.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
 
         Returns
         -------
@@ -128,14 +146,23 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
 
+        if sample_weight is not None:
+            for name, step in self.estimators:
+                if not has_fit_parameter(step, 'sample_weight'):
+                    raise ValueError('Underlying estimator \'%s\' does not support'
+                                     ' sample weights.' % name)
+
         self.le_ = LabelEncoder()
         self.le_.fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
 
-        for name, clf in self.estimators:
-            fitted_clf = clone(clf).fit(X, self.le_.transform(y))
-            self.estimators_.append(fitted_clf)
+        transformed_y = self.le_.transform(y)
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                    sample_weight)
+                    for _, clf in self.estimators)
 
         return self
 
@@ -215,7 +242,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
           array-like = [n_classifiers, n_samples, n_classes]
             Class probabilities calculated by each classifier.
         If `voting='hard'`:
-          array-like = [n_classifiers, n_samples]
+          array-like = [n_samples, n_classifiers]
             Class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')

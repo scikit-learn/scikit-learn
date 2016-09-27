@@ -54,6 +54,11 @@ from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_raises
 from nose.tools import raises
+try:
+    from nose.tools import assert_dict_equal
+except ImportError:
+    # Not in old versions of nose, but is only for formatting anyway
+    assert_dict_equal = assert_equal
 from nose import SkipTest
 from nose import with_setup
 
@@ -276,8 +281,9 @@ def assert_no_warnings(func, *args, **kw):
                  if e.category is not np.VisibleDeprecationWarning]
 
         if len(w) > 0:
-            raise AssertionError("Got warnings when calling %s: %s"
-                                 % (func.__name__, w))
+            raise AssertionError("Got warnings when calling %s: [%s]"
+                                 % (func.__name__,
+                                    ', '.join(str(warning) for warning in w)))
     return result
 
 
@@ -797,3 +803,24 @@ class TempMemmap(object):
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)
+
+
+class _named_check(object):
+    """Wraps a check to show a useful description
+
+    Parameters
+    ----------
+    check : function
+        Must have ``__name__`` and ``__call__``
+    arg_text : str
+        A summary of arguments to the check
+    """
+    # Setting the description on the function itself can give incorrect results
+    # in failing tests
+    def __init__(self, check, arg_text):
+        self.check = check
+        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
+            inspect.stack()[1], check, arg_text))
+
+    def __call__(self, *args, **kwargs):
+        return self.check(*args, **kwargs)

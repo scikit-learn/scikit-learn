@@ -9,7 +9,13 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
-import warnings
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy import linalg
 from time import time
@@ -66,6 +72,9 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
         X, means, covars)
 
 
+@deprecated("The function sample_gaussian is deprecated in 0.18"
+            " and will be removed in 0.20."
+            " Use numpy.random.multivariate_normal instead.")
 def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
                     random_state=None):
     """Generate random samples from a Gaussian distribution.
@@ -683,7 +692,7 @@ def _log_multivariate_normal_density_spherical(X, means, covars):
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    if covars.shape[1] == 1:
+    if cv.shape[1] == 1:
         cv = np.tile(cv, (1, X.shape[-1]))
     return _log_multivariate_normal_density_diag(X, means, cv)
 

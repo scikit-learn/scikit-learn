@@ -553,6 +553,8 @@ def test_bagging_with_pipeline():
                                                 DecisionTreeClassifier()),
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
+    assert_true(isinstance(estimator[0].steps[-1][1].random_state,
+                           int))
 
 
 class DummyZeroEstimator(BaseEstimator):
@@ -663,3 +665,61 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     assert_raises(AttributeError, getattr, clf, "oob_score_")
+
+
+def test_oob_score_consistency():
+    # Make sure OOB scores are identical when random_state, estimator, and 
+    # training data are fixed and fitting is done twice
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,
+                                max_features=0.5, oob_score=True,
+                                random_state=1)
+    assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
+
+
+def test_estimators_samples():
+    # Check that format of estimators_samples_ is correct and that results
+    # generated at fit time can be identically reproduced at a later time
+    # using data saved in object attributes.
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(LogisticRegression(), max_samples=0.5,
+                                max_features=0.5, random_state=1,
+                                bootstrap=False)
+    bagging.fit(X, y)
+
+    # Get relevant attributes
+    estimators_samples = bagging.estimators_samples_
+    estimators_features = bagging.estimators_features_
+    estimators = bagging.estimators_
+
+    # Test for correct formatting
+    assert_equal(len(estimators_samples), len(estimators))
+    assert_equal(len(estimators_samples[0]), len(X))
+    assert_equal(estimators_samples[0].dtype.kind, 'b')
+
+    # Re-fit single estimator to test for consistent sampling
+    estimator_index = 0
+    estimator_samples = estimators_samples[estimator_index]
+    estimator_features = estimators_features[estimator_index]
+    estimator = estimators[estimator_index]
+
+    X_train = (X[estimator_samples])[:, estimator_features]
+    y_train = y[estimator_samples]
+
+    orig_coefs = estimator.coef_
+    estimator.fit(X_train, y_train)
+    new_coefs = estimator.coef_
+
+    assert_array_almost_equal(orig_coefs, new_coefs)
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples and original max_samples are identical
+    # when valid integer max_samples supplied by user
+    max_samples = 100
+    X, y = make_hastie_10_2(n_samples=2*max_samples, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(),
+                                max_samples=max_samples,
+                                max_features=0.5, random_state=1)
+    bagging.fit(X, y)
+    assert_equal(bagging._max_samples, max_samples)

@@ -9,8 +9,7 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
                                    assert_raises,
-                                   ignore_warnings,
-                                   assert_warns_message)
+                                   ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor

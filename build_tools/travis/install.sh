@@ -53,7 +53,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
-            cython=$CYTHON_VERSION libgfortran mkl
+            cython=$CYTHON_VERSION libgfortran mkl flake8
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
@@ -95,18 +95,26 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage coveralls
 fi
 
-if [ ! -d "$CACHED_BUILD_DIR" ]; then
-    mkdir -p $CACHED_BUILD_DIR
+if [[ "$SKIP_TESTS" == "true" ]]; then
+    echo "No need to build scikit-learn when not running the tests"
+else
+    if [ ! -d "$CACHED_BUILD_DIR" ]; then
+        mkdir -p $CACHED_BUILD_DIR
+    fi
+
+    rsync -av --exclude '.git/' --exclude='testvenv/' \
+          $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
+
+    cd $CACHED_BUILD_DIR/scikit-learn
+
+    # Build scikit-learn in the install.sh script to collapse the verbose
+    # build output in the travis output when it succeeds.
+    python --version
+    python -c "import numpy; print('numpy %s' % numpy.__version__)"
+    python -c "import scipy; print('scipy %s' % scipy.__version__)"
+    python setup.py develop
 fi
 
-rsync -av --exclude '.git/' --exclude='testvenv/' \
-      $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
-
-cd $CACHED_BUILD_DIR/scikit-learn
-
-# Build scikit-learn in the install.sh script to collapse the verbose
-# build output in the travis output when it succeeds.
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python setup.py develop
+if [[ "$RUN_FLAKE8" == "true" ]]; then
+    conda install flake8
+fi

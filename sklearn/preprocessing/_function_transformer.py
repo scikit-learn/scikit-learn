@@ -23,6 +23,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     .. versionadded:: 0.17
 
+    Read more in the :ref:`User Guide <function_transformer>`.
+
     Parameters
     ----------
     func : callable, optional default=None

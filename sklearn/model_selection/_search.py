@@ -12,7 +12,7 @@ from __future__ import division
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, Sized, defaultdict
+from collections import Mapping, namedtuple, Sized, defaultdict, Sequence
 from functools import partial, reduce
 from itertools import product
 import operator
@@ -24,6 +24,7 @@ from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
+from ..exceptions import NotFittedError
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..utils import check_random_state
@@ -327,17 +328,19 @@ def _check_param_grid(param_grid):
         param_grid = [param_grid]
 
     for p in param_grid:
-        for v in p.values():
+        for name, v in p.items():
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
-            check = [isinstance(v, k) for k in (list, tuple, np.ndarray)]
-            if True not in check:
-                raise ValueError("Parameter values should be a list.")
+            if (isinstance(v, six.string_types) or
+                    not isinstance(v, (np.ndarray, Sequence))):
+                raise ValueError("Parameter values for parameter ({0}) need "
+                                 "to be a sequence(but not a string) or"
+                                 " np.ndarray.".format(name))
 
             if len(v) == 0:
-                raise ValueError("Parameter values should be a non-empty "
-                                 "list.")
+                raise ValueError("Parameter values for parameter ({0}) need "
+                                 "to be a non-empty sequence.".format(name))
 
 
 # XXX Remove in 0.20
@@ -414,7 +417,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              % self.best_estimator_)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @if_delegate_has_method(delegate='estimator')
+    def _check_is_fitted(self, method_name):
+        if not self.refit:
+            raise NotFittedError(('This GridSearchCV instance was initialized '
+                                  'with refit=False. %s is '
+                                  'available only after refitting on the best '
+                                  'parameters. ') % method_name)
+        else:
+            check_is_fitted(self, 'best_estimator_')
+
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -428,9 +440,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('predict')
         return self.best_estimator_.predict(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -444,9 +457,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('predict_proba')
         return self.best_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -460,9 +474,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('predict_log_proba')
         return self.best_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -476,9 +491,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('decision_function')
         return self.best_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -492,11 +508,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('transform')
         return self.best_estimator_.transform(X)
 
-    @if_delegate_has_method(delegate='estimator')
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def inverse_transform(self, Xt):
-        """Call inverse_transform on the estimator with the best found parameters.
+        """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
         ``inverse_transform`` and ``refit=True``.
@@ -508,17 +525,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
+        self._check_is_fitted('inverse_transform')
         return self.best_estimator_.transform(Xt)
 
-    def _fit(self, X, y, labels, parameter_iterable):
+    def _fit(self, X, y, groups, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
 
-        X, y, labels = indexable(X, y, labels)
-        n_splits = cv.get_n_splits(X, y, labels)
+        X, y, groups = indexable(X, y, groups)
+        n_splits = cv.get_n_splits(X, y, groups)
         if self.verbose > 0 and isinstance(parameter_iterable, Sized):
             n_candidates = len(parameter_iterable)
             print("Fitting {0} folds for each of {1} candidates, totalling"
@@ -536,7 +554,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   self.fit_params, return_parameters=True,
                                   error_score=self.error_score)
           for parameters in parameter_iterable
-          for train, test in cv.split(X, y, labels))
+          for train, test in cv.split(X, y, groups))
 
         test_scores, test_sample_counts, _, parameters = zip(*out)
 
@@ -556,17 +574,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         stds = np.sqrt(np.average((test_scores - means[:, np.newaxis]) ** 2,
                                   axis=1, weights=weights))
 
-        results = dict()
+        cv_results = dict()
         for split_i in range(n_splits):
-            results["test_split%d_score" % split_i] = test_scores[:, split_i]
-        results["test_mean_score"] = means
-        results["test_std_score"] = stds
+            cv_results["split%d_test_score" % split_i] = test_scores[:,
+                                                                     split_i]
+        cv_results["mean_test_score"] = means
+        cv_results["std_test_score"] = stds
 
         ranks = np.asarray(rankdata(-means, method='min'), dtype=np.int32)
 
         best_index = np.flatnonzero(ranks == 1)[0]
         best_parameters = candidate_params[best_index]
-        results["test_rank_score"] = ranks
+        cv_results["rank_test_score"] = ranks
 
         # Use one np.MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
@@ -580,12 +599,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 # Setting the value at an index also unmasks that index
                 param_results["param_%s" % name][cand_i] = value
 
-        results.update(param_results)
+        cv_results.update(param_results)
 
         # Store a list of param dicts at the key 'params'
-        results['params'] = candidate_params
+        cv_results['params'] = candidate_params
 
-        self.results_ = results
+        self.cv_results_ = cv_results
         self.best_index_ = best_index
         self.n_splits_ = n_splits
 
@@ -603,30 +622,31 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @property
     def best_params_(self):
-        check_is_fitted(self, 'results_')
-        return self.results_['params'][self.best_index_]
+        check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['params'][self.best_index_]
 
     @property
     def best_score_(self):
-        check_is_fitted(self, 'results_')
-        return self.results_['test_mean_score'][self.best_index_]
+        check_is_fitted(self, 'cv_results_')
+        return self.cv_results_['mean_test_score'][self.best_index_]
 
     @property
     def grid_scores_(self):
         warnings.warn(
-            "The grid_scores_ attribute is deprecated in favor of the"
-            " more elaborate results_ attribute."
+            "The grid_scores_ attribute was deprecated in version 0.18"
+            " in favor of the more elaborate cv_results_ attribute."
             " The grid_scores_ attribute will not be available from 0.20",
             DeprecationWarning)
 
-        check_is_fitted(self, 'results_')
+        check_is_fitted(self, 'cv_results_')
         grid_scores = list()
 
         for i, (params, mean, std) in enumerate(zip(
-                self.results_['params'],
-                self.results_['test_mean_score'],
-                self.results_['test_std_score'])):
-            scores = np.array(list(self.results_['test_split%d_score' % s][i]
+                self.cv_results_['params'],
+                self.cv_results_['mean_test_score'],
+                self.cv_results_['std_test_score'])):
+            scores = np.array(list(self.cv_results_['split%d_test_score'
+                                                    % s][i]
                                    for s in range(self.n_splits_)),
                               dtype=np.float64)
             grid_scores.append(_CVScoreTuple(params, mean, scores))
@@ -746,22 +766,22 @@ class GridSearchCV(BaseSearchCV):
            fit_params={}, iid=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=...,
            scoring=..., verbose=...)
-    >>> sorted(clf.results_.keys())
+    >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ['param_C', 'param_kernel', 'params', 'test_mean_score',...
-     'test_rank_score', 'test_split0_score', 'test_split1_score',...
-     'test_split2_score', 'test_std_score']
+    ['mean_test_score', 'param_C', 'param_kernel', 'params',...
+     'rank_test_score', 'split0_test_score', 'split1_test_score',...
+     'split2_test_score', 'std_test_score']
 
     Attributes
     ----------
-    results_ : dict of numpy (masked) ndarrays
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
         For instance the below given table
 
         +------------+-----------+------------+-----------------+---+---------+
-        |param_kernel|param_gamma|param_degree|test_split0_score|...|...rank..|
+        |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_....|
         +============+===========+============+=================+===+=========+
         |  'poly'    |     --    |      2     |        0.8      |...|    2    |
         +------------+-----------+------------+-----------------+---+---------+
@@ -772,7 +792,7 @@ class GridSearchCV(BaseSearchCV):
         |  'rbf'     |     0.2   |     --     |        0.9      |...|    1    |
         +------------+-----------+------------+-----------------+---+---------+
 
-        will be represented by a ``results_`` dict of::
+        will be represented by a ``cv_results_`` dict of::
 
             {
             'param_kernel': masked_array(data = ['poly', 'poly', 'rbf', 'rbf'],
@@ -781,11 +801,11 @@ class GridSearchCV(BaseSearchCV):
                                         mask = [ True  True False False]...),
             'param_degree': masked_array(data = [2.0 3.0 -- --],
                                          mask = [False False  True  True]...),
-            'test_split0_score' : [0.8, 0.7, 0.8, 0.9],
-            'test_split1_score' : [0.82, 0.5, 0.7, 0.78],
-            'test_mean_score'   : [0.81, 0.60, 0.75, 0.82],
-            'test_std_score'    : [0.02, 0.01, 0.03, 0.03],
-            'test_rank_score'   : [2, 4, 3, 1],
+            'split0_test_score' : [0.8, 0.7, 0.8, 0.9],
+            'split1_test_score' : [0.82, 0.5, 0.7, 0.78],
+            'mean_test_score'   : [0.81, 0.60, 0.75, 0.82],
+            'std_test_score'    : [0.02, 0.01, 0.03, 0.03],
+            'rank_test_score'   : [2, 4, 3, 1],
             'params'            : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
@@ -804,10 +824,10 @@ class GridSearchCV(BaseSearchCV):
         Parameter setting that gave the best results on the hold out data.
 
     best_index_ : int
-        The index (of the ``results_`` arrays) which corresponds to the best
+        The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.results_['params'][search.best_index_]`` gives
+        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
@@ -856,7 +876,7 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None, labels=None):
+    def fit(self, X, y=None, groups=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -870,11 +890,11 @@ class GridSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-        return self._fit(X, y, labels, ParameterGrid(self.param_grid))
+        return self._fit(X, y, groups, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -988,14 +1008,14 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    results_ : dict of numpy (masked) ndarrays
+    cv_results_ : dict of numpy (masked) ndarrays
         A dict with keys as column headers and values as columns, that can be
         imported into a pandas ``DataFrame``.
 
         For instance the below given table
 
         +--------------+-------------+-------------------+---+---------------+
-        | param_kernel | param_gamma | test_split0_score |...|test_rank_score|
+        | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
         +==============+=============+===================+===+===============+
         |    'rbf'     |     0.1     |        0.8        |...|       2       |
         +--------------+-------------+-------------------+---+---------------+
@@ -1004,17 +1024,17 @@ class RandomizedSearchCV(BaseSearchCV):
         |    'rbf'     |     0.3     |        0.7        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
 
-        will be represented by a ``results_`` dict of::
+        will be represented by a ``cv_results_`` dict of::
 
             {
             'param_kernel' : masked_array(data = ['rbf', rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'test_split0_score' : [0.8, 0.9, 0.7],
-            'test_split1_score' : [0.82, 0.5, 0.7],
-            'test_mean_score'   : [0.81, 0.7, 0.7],
-            'test_std_score'    : [0.02, 0.2, 0.],
-            'test_rank_score'   : [3, 1, 1],
+            'split0_test_score' : [0.8, 0.9, 0.7],
+            'split1_test_score' : [0.82, 0.5, 0.7],
+            'mean_test_score'   : [0.81, 0.7, 0.7],
+            'std_test_score'    : [0.02, 0.2, 0.],
+            'rank_test_score'   : [3, 1, 1],
             'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
@@ -1033,10 +1053,10 @@ class RandomizedSearchCV(BaseSearchCV):
         Parameter setting that gave the best results on the hold out data.
 
     best_index_ : int
-        The index (of the ``results_`` arrays) which corresponds to the best
+        The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.results_['params'][search.best_index_]`` gives
+        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
@@ -1084,7 +1104,7 @@ class RandomizedSearchCV(BaseSearchCV):
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score)
 
-    def fit(self, X, y=None, labels=None):
+    def fit(self, X, y=None, groups=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
@@ -1097,11 +1117,11 @@ class RandomizedSearchCV(BaseSearchCV):
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        labels : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, labels, sampled_params)
+        return self._fit(X, y, groups, sampled_params)

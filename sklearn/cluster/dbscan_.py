@@ -13,7 +13,6 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics import pairwise_distances
 from ..utils import check_array, check_consistent_length
 from ..utils.fixes import astype
 from ..neighbors import NearestNeighbors

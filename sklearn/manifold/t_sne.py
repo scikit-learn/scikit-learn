@@ -23,6 +23,7 @@ from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
 from ..utils.fixes import astype
+from ..externals.six import string_types
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -567,8 +568,9 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string, optional (default: "random")
-        Initialization of embedding. Possible options are 'random' and 'pca'.
+    init : string or numpy array, optional (default: "random")
+        Initialization of embedding. Possible options are 'random', 'pca',
+        and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
         usually more globally stable than random initialization.
 
@@ -643,8 +645,10 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
-        if init not in ["pca", "random"] or isinstance(init, np.ndarray):
-            msg = "'init' must be 'pca', 'random' or a NumPy array"
+        if not ((isinstance(init, string_types) and
+                init in ["pca", "random"]) or
+                isinstance(init, np.ndarray)):
+            msg = "'init' must be 'pca', 'random', or a numpy array"
             raise ValueError(msg)
         self.n_components = n_components
         self.perplexity = perplexity
@@ -707,7 +711,7 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 200")
 
         if self.metric == "precomputed":
-            if self.init == 'pca':
+            if isinstance(self.init, string_types) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be used "
                                  "with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -763,12 +767,12 @@ class TSNE(BaseEstimator):
         assert np.all(P <= 1), ("All probabilities should be less "
                                 "or then equal to one")
 
-        if self.init == 'pca':
+        if isinstance(self.init, np.ndarray):
+            X_embedded = self.init
+        elif self.init == 'pca':
             pca = PCA(n_components=self.n_components, svd_solver='randomized',
                       random_state=random_state)
             X_embedded = pca.fit_transform(X)
-        elif isinstance(self.init, np.ndarray):
-            X_embedded = self.init
         elif self.init == 'random':
             X_embedded = None
         else:

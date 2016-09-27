@@ -141,7 +141,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
 
     .. [3] `Wikipedia entry on the Lasso
-           <https://en.wikipedia.org/wiki/Lasso_(statistics)#Lasso_method>`_
+           <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
 
@@ -736,7 +736,7 @@ class LassoLars(Lars):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients will not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
@@ -1187,7 +1187,7 @@ class LassoLarsCV(LarsCV):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
@@ -1322,7 +1322,7 @@ class LassoLarsIC(LassoLars):
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
         to the ordinary-least-squares solution for small values of alpha.
-        Only coeffiencts up to the smallest alpha value (``alphas_[alphas_ >
+        Only coefficients up to the smallest alpha value (``alphas_[alphas_ >
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.

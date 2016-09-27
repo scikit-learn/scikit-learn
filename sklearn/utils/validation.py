@@ -174,10 +174,11 @@ def check_consistent_length(*arrays):
         Objects that will be checked for consistent length.
     """
 
-    uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
+    lengths = [_num_samples(X) for X in arrays if X is not None]
+    uniques = np.unique(lengths)
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: "
-                         "%s" % str(uniques))
+        raise ValueError("Found input variables with inconsistent numbers of"
+                         " samples: %r" % [int(l) for l in lengths])
 
 
 def indexable(*iterables):

@@ -1,3 +1,9 @@
+# Important note for the deprecation cleaning of 0.20 :
+# All the function and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_gmm.py'
 import unittest
 import sys
 
@@ -143,10 +149,12 @@ def test_wishart_logz():
 
 @ignore_warnings(category=DeprecationWarning)
 def test_DPGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The DPGMM class is"
-                         " not working correctly and it's better "
-                         "to not use it. DPGMM is deprecated in 0.18 "
-                         "and will be removed in 0.20.", DPGMM)
+    assert_warns_message(
+      DeprecationWarning, "The `DPGMM` class is not working correctly and "
+      "it's better to use `sklearn.mixture.BayesianGaussianMixture` class "
+      "with parameter `weight_concentration_prior_type='dirichlet_process'` "
+      "instead. DPGMM is deprecated in 0.18 and will be removed in 0.20.",
+      DPGMM)
 
 
 def do_model(self, **kwds):
@@ -182,12 +190,13 @@ class TestDPGMMWithFullCovars(unittest.TestCase, DPGMMTester):
     setUp = GMMTester._setUp
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_VBGMM_deprecation():
-    assert_warns_message(DeprecationWarning, "The VBGMM class is"
-                         " not working correctly and it's better"
-                         " to not use it. VBGMM is deprecated in 0.18"
-                         " and will be removed in 0.20.", VBGMM)
+    assert_warns_message(
+        DeprecationWarning, "The `VBGMM` class is not working correctly and "
+        "it's better to use `sklearn.mixture.BayesianGaussianMixture` class "
+        "with parameter `weight_concentration_prior_type="
+        "'dirichlet_distribution'` instead. VBGMM is deprecated "
+        "in 0.18 and will be removed in 0.20.", VBGMM)
 
 
 class VBGMMTester(GMMTester):
@@ -217,3 +226,12 @@ class TestVBGMMWithTiedCovars(unittest.TestCase, VBGMMTester):
 class TestVBGMMWithFullCovars(unittest.TestCase, VBGMMTester):
     covariance_type = 'full'
     setUp = GMMTester._setUp
+
+
+def test_vbgmm_no_modify_alpha():
+    alpha = 2.
+    n_components = 3
+    X, y = make_blobs(random_state=1)
+    vbgmm = VBGMM(n_components=n_components, alpha=alpha, n_iter=1)
+    assert_equal(vbgmm.alpha, alpha)
+    assert_equal(vbgmm.fit(X).alpha_, float(alpha) / n_components)
