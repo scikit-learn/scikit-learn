@@ -176,7 +176,7 @@ def test_gradient():
 
         for activation in ACTIVATION_TYPES:
             mlp = MLPClassifier(activation=activation, hidden_layer_sizes=10,
-                                solver='lbgfs', alpha=1e-5,
+                                solver='lbfgs', alpha=1e-5,
                                 learning_rate_init=0.2, max_iter=1,
                                 random_state=1)
             mlp.fit(X, y)
@@ -235,7 +235,7 @@ def test_lbfgs_classification():
         expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
 
         for activation in ACTIVATION_TYPES:
-            mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=50,
+            mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
                                 max_iter=150, shuffle=True, random_state=1,
                                 activation=activation)
             mlp.fit(X_train, y_train)
@@ -250,7 +250,7 @@ def test_lbfgs_regression():
     X = Xboston
     y = yboston
     for activation in ACTIVATION_TYPES:
-        mlp = MLPRegressor(solver='lbgfs', hidden_layer_sizes=50,
+        mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
                            max_iter=150, shuffle=True, random_state=1,
                            activation=activation)
         mlp.fit(X, y)
@@ -287,7 +287,7 @@ def test_multilabel_classification():
     # test fit method
     X, y = make_multilabel_classification(n_samples=50, random_state=0,
                                           return_indicator=True)
-    mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=50, alpha=1e-5,
+    mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50, alpha=1e-5,
                         max_iter=150, random_state=0, activation='logistic',
                         learning_rate_init=0.2)
     mlp.fit(X, y)
@@ -305,7 +305,7 @@ def test_multilabel_classification():
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
-    mlp = MLPRegressor(solver='lbgfs', hidden_layer_sizes=50, max_iter=200,
+    mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50, max_iter=200,
                        random_state=1)
     mlp.fit(X, y)
     assert_greater(mlp.score(X, y), 0.9)
@@ -388,8 +388,8 @@ def test_partial_fit_errors():
     assert_raises(ValueError,
                   MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
-    # lbgfs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbgfs'), 'partial_fit'))
+    # lbfgs doesn't support partial_fit
+    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
 
 
 def test_params_errors():
@@ -471,7 +471,7 @@ def test_predict_proba_multilabel():
                                           return_indicator=True)
     n_samples, n_classes = Y.shape
 
-    clf = MLPClassifier(solver='lbgfs', hidden_layer_sizes=30,
+    clf = MLPClassifier(solver='lbfgs', hidden_layer_sizes=30,
                         random_state=0)
     clf.fit(X, Y)
     y_proba = clf.predict_proba(X)
@@ -493,7 +493,7 @@ def test_sparse_matrices():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
-    mlp = MLPClassifier(solver='lbgfs', hidden_layer_sizes=15,
+    mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=15,
                         random_state=1)
     mlp.fit(X, y)
     pred1 = mlp.predict(X)
