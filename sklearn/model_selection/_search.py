@@ -850,6 +850,9 @@ class GridSearchCV(BaseSearchCV):
         NOTE that the key ``'params'`` is used to store a list of parameter
         settings dict for all the parameter candidates.
 
+        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
+        ``std_score_time`` are all in seconds.
+
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
@@ -1092,6 +1095,9 @@ class RandomizedSearchCV(BaseSearchCV):
 
         NOTE that the key ``'params'`` is used to store a list of parameter
         settings dict for all the parameter candidates.
+
+        The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
+        ``std_score_time`` are all in seconds.
 
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
