@@ -1459,6 +1459,8 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+        .. versionadded:: 0.18
+
     classes : array, shape = [n_labels], optional
         (deprecated) Integer array of labels. This parameter has been
          renamed to ``labels`` in version 0.18 and will be removed in 0.20.

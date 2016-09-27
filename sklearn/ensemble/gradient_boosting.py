@@ -1315,6 +1315,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -1323,6 +1326,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
@@ -1678,6 +1683,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -1685,6 +1693,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         - If float, then `min_samples_leaf` is a percentage and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
 
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the input samples required to be at a
