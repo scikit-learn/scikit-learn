@@ -100,6 +100,20 @@ Model Selection Enhancements and API Changes
     The parameter ``n_labels`` in the newly renamed
     :class:`model_selection.LeavePGroupsOut` is changed to ``n_groups``.
 
+  - Training scores and Timing information
+
+    ``cv_results_`` also includes the training scores for each
+    cross-validation split (with keys such as ``'split0_train_score'``), as
+    well as their mean (``'mean_train_score'``) and standard deviation
+    (``'std_train_score'``). To avoid the cost of evaluating training score,
+    set ``return_train_score=False``.
+
+    Additionally the mean and standard deviation of the times taken to split,
+    train and score the model across all the cross-validation splits is
+    available at the key ``'mean_time'`` and ``'std_time'`` respectively.
+
+Changelog
+---------
 
 New features
 ............
@@ -341,6 +355,13 @@ Enhancements
      `O(n^2)` behavior in pathological cases, and is also generally faster
      (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
      By `Antony Lee`_.
+
+
+   - The training scores and time taken for training followed by scoring for
+     each search candidate are now available at the ``cv_results_`` dict.
+     See :ref:`model_selection_changes` for more information.
+     (`#7324 <https://github.com/scikit-learn/scikit-learn/pull/7325>`)
+     By `Eugene Chen`_ and `Raghav RV`_.
 
 
 Bug fixes
@@ -4709,3 +4730,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Gregory Stupp: https://github.com/stuppie
 
 .. _Russell Smith: https://github.com/rsmith54
+
+.. _Utkarsh Upadhyay: https://github.com/musically-ut
+
+.. _Eugene Chen: https://github.com/eyc88
