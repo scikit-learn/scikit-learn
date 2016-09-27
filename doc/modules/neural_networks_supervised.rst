@@ -86,7 +86,7 @@ training samples::
     >>> from sklearn.neural_network import MLPClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = MLPClassifier(solver='lbgfs', alpha=1e-5,
+    >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
     ...                     hidden_layer_sizes=(5, 2), random_state=1)
     ...
     >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
@@ -95,7 +95,7 @@ training samples::
            epsilon=1e-08, hidden_layer_sizes=(5, 2), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           solver='lbgfs', tol=0.0001, validation_fraction=0.1, verbose=False,
+           solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
@@ -134,7 +134,7 @@ indices where the value is `1` represents the assigned classes of that sample::
 
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [[0, 1], [1, 1]]
-    >>> clf = MLPClassifier(solver='lbgfs', alpha=1e-5,
+    >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
     ...                     hidden_layer_sizes=(15,), random_state=1)
     ...
     >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
@@ -143,7 +143,7 @@ indices where the value is `1` represents the assigned classes of that sample::
            epsilon=1e-08, hidden_layer_sizes=(15,), learning_rate='constant',
            learning_rate_init=0.001, max_iter=200, momentum=0.9,
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           solver='lbgfs', tol=0.0001, validation_fraction=0.1, verbose=False,
+           solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
     >>> clf.predict([1., 2.])
     array([[1, 1]])
