@@ -42,7 +42,7 @@ Model Selection Enhancements and API Changes
 
   - **The enhanced cv_results_ attribute**
 
-    The new `cv_results_`` attribute (of :class:`model_selection.GridSearchCV`
+    The new ``cv_results_`` attribute (of :class:`model_selection.GridSearchCV`
     and :class:`model_selection.RandomizedSearchCV`) introduced in lieu of the
     ``grid_scores_`` attribute is a dict of 1D arrays with elements in each
     array corresponding to the parameter settings (i.e. search candidates).
@@ -83,7 +83,7 @@ Model Selection Enhancements and API Changes
     :class:`model_selection.LeaveOneGroupOut` and
     :class:`model_selection.LeavePGroupsOut` respectively.
 
-    NOTE the change from singular to plural form in
+    Note the change from singular to plural form in
     :class:`model_selection.LeavePGroupsOut`.
 
   - **Fit parameter labels renamed to groups**
@@ -95,7 +95,7 @@ Model Selection Enhancements and API Changes
     :class:`model_selection.GroupShuffleSplit` is renamed to ``groups``
     following the new nomenclature of their class names.
 
-  - **Parameter n_labels renamed to ``n_groups``**
+  - **Parameter n_labels renamed to n_groups**
 
     The parameter ``n_labels`` in the newly renamed
     :class:`model_selection.LeavePGroupsOut` is changed to ``n_groups``.
@@ -252,12 +252,12 @@ Linear, kernelized and related models
      error on the samples for every trial. By `Manoj Kumar`_.
 
    - Prediction of out-of-sample events with Isotonic Regression
-     (:mod:`isotonic`) is now much faster (over 1000x in tests with synthetic
+     (:class:`isotonic.IsotonicRegression`) is now much faster (over 1000x in tests with synthetic
      data). By `Jonathan Arfa`_.
 
-   - Isotonic regression (:mod:`isotonic`) now uses a better algorithm to avoid
+   - Isotonic regression (:class:`isotonic.IsotonicRegression`) now uses a better algorithm to avoid
      `O(n^2)` behavior in pathological cases, and is also generally faster
-     (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
+     (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`_).
      By `Antony Lee`_.
 
    - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
@@ -329,8 +329,8 @@ Model evaluation and meta-estimators
    - The training scores and time taken for training followed by scoring for
      each search candidate are now available at the ``cv_results_`` dict.
      See :ref:`model_selection_changes` for more information.
-     (`#7324 <https://github.com/scikit-learn/scikit-learn/pull/7325>`)
-     By `Eugene Chen`_ and `Raghav RV`_.
+     (`#7324 <https://github.com/scikit-learn/scikit-learn/pull/7325>`_)
+     By `Eugene Chen`_ and `Raghav R V`_.
 
 Metrics
 
@@ -342,7 +342,7 @@ Metrics
    - Support sparse contingency matrices in cluster evaluation
      (:mod:`metrics.cluster.supervised`) to scale to a large number of
      clusters.
-     (`#7419 <https://github.com/scikit-learn/scikit-learn/pull/7419>_`)
+     (`#7419 <https://github.com/scikit-learn/scikit-learn/pull/7419>`_)
      By `Gregory Stupp`_ and `Joel Nothman`_.
 
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
@@ -394,13 +394,6 @@ Miscellaneous
      for more details.
      (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>`_)
      By `Andreas Müller`_.
-
-   - Isotonic regression (:mod:`isotonic`) now uses a better algorithm to avoid
-     `O(n^2)` behavior in pathological cases, and is also generally faster
-     (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
-     By `Antony Lee`_.
-
-
 
 Bug fixes
 .........
@@ -457,7 +450,7 @@ Decomposition, manifold learning and clustering
     - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
       In practice this is enough for obtaining a good approximation of the
       true eigenvalues/vectors in the presence of noise. When `n_components` is
-      small (< .1 * min(X.shape)) `n_iter` is set to 7, unless the user specifies
+      small (``< .1 * min(X.shape)``) `n_iter` is set to 7, unless the user specifies
       a higher number. This improves precision with few components.
       (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
 
@@ -481,7 +474,7 @@ Decomposition, manifold learning and clustering
 Preprocessing and feature selection
 
     - :func:`preprocessing.data._transform_selected` now always passes a copy
-      of `X` to transform function when `copy=True` (`#7194
+      of ``X`` to transform function when ``copy=True`` (`#7194
       <https://github.com/scikit-learn/scikit-learn/issues/7194>`_). By `Caio
       Oliveira <https://github.com/caioaao>`_.
 
@@ -542,12 +535,12 @@ Miscellaneous
     - :func:`model_selection.tests._search._check_param_grid` now works correctly with all types
       that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
       (Python 2.x).
-      (`#7323 <https://github.com/scikit-learn/scikit-learn/pull/7323>`_) by `Viacheslav Kovalevskyi`_.
+      (`#7323 <https://github.com/scikit-learn/scikit-learn/pull/7323>`_) by Viacheslav Kovalevskyi.
 
     - :func:`utils.extmath.randomized_range_finder` is more numerically stable when many
       power iterations are requested, since it applies LU normalization by default.
-      If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
-      Other normalization options are available: 'none', 'LU' and 'QR'.
+      If ``n_iter<2`` numerical issues are unlikely, thus no normalization is applied.
+      Other normalization options are available: ``'none', 'LU'`` and ``'QR'``.
       (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
 
     - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
@@ -619,7 +612,7 @@ Model evaluation and meta-estimators
      by `YenChen Lin`_.
 
    - ``classes`` parameter was renamed to ``labels`` in
-     :func:`metrics.classification.hamming_loss`.
+     :func:`metrics.hamming_loss`.
      (`#7260 <https://github.com/scikit-learn/scikit-learn/pull/7260>`_) by
      `Sebastián Vanrell`_.
 
@@ -633,9 +626,9 @@ Model evaluation and meta-estimators
      renamed splitters :class:`model_selection.LeaveOneGroupOut` and
      :class:`model_selection.LeavePGroupsOut` is renamed to
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
-     the parameter ``n_labels``is renamed to ``n_groups``.
+     the parameter ``n_labels`` is renamed to ``n_groups``.
      (`#6660 <https://github.com/scikit-learn/scikit-learn/pull/6660>`_)
-     by `Raghav RV`_.
+     by `Raghav R V`_.
 
 Code Contributors
 -----------------
