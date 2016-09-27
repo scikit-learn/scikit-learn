@@ -395,23 +395,11 @@ Miscellaneous
      (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>`_)
      By `Andreas Müller`_.
 
-   - Support sparse contingency matrices in cluster evaluation
-     (:mod:`metrics.cluster.supervised`) to scale to a large number of
-     clusters.
-     (`#7419 <https://github.com/scikit-learn/scikit-learn/pull/7419>_`)
-     By `Gregory Stupp`_ and `Joel Nothman`_.
-
    - Isotonic regression (:mod:`isotonic`) now uses a better algorithm to avoid
      `O(n^2)` behavior in pathological cases, and is also generally faster
      (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
      By `Antony Lee`_.
 
-
-   - The training scores and time taken for training followed by scoring for
-     each search candidate are now available at the ``cv_results_`` dict.
-     See :ref:`model_selection_changes` for more information.
-     (`#7324 <https://github.com/scikit-learn/scikit-learn/pull/7325>`)
-     By `Eugene Chen`_ and `Raghav RV`_.
 
 
 Bug fixes
