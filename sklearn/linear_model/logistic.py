@@ -1,4 +1,3 @@
-
 """
 Logistic Regression
 """
@@ -925,9 +924,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         y_test = np.ones(y_test.shape, dtype=np.float64)
         y_test[~mask] = -1.
 
-    # To deal with object dtypes, we need to convert into an array of floats.
-    y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
-
     scores = list()
 
     if isinstance(scoring, six.string_types):
@@ -1200,6 +1196,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             max_squared_sum = None
 
         n_classes = len(self.classes_)
+        # Use the label encoded class labels
         classes_ = self.classes_
         if n_classes < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
@@ -1557,32 +1554,34 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
-
+        check_classification_targets(y)
+        self.classes_ = np.unique(y)
         if self.solver == 'sag':
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
 
-        check_classification_targets(y)
-
-        if y.ndim == 2 and y.shape[1] == 1:
-            warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
-                DataConversionWarning)
-            y = np.ravel(y)
-
-        check_consistent_length(X, y)
+        if y.dtype.kind in ('S', 'U'):
+            # Encode for string labels
+            self._label_encoder = LabelEncoder().fit(y)
+            y = self._label_encoder.transform(y)
+            self.classes_enc_ = np.arange(len(self._label_encoder.classes_))
+            if isinstance(self.class_weight, dict):
+                old_keys = self.class_weight.keys()
+                new_keys = self._label_encoder.transform(old_keys)
+                # Don't modify the original class_weight dict.
+                self.class_weight = dict()
+                for new_key, old_key in zip(new_keys, old_keys):
+                    self.class_weight[new_key] = self.class_weight[old_key]
+        else:
+            self.classes_enc_ = self.classes_
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         folds = list(cv.split(X, y))
 
-        self._enc = LabelEncoder()
-        self._enc.fit(y)
-
-        labels = self.classes_ = np.unique(y)
+        # Use the label encoded classes
+        labels = self.classes_enc_
         n_classes = len(labels)
 
         if n_classes < 2:
@@ -1610,7 +1609,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # compute the class weights for the entire dataset y
         if self.class_weight in ("auto", "balanced"):
-            classes = np.unique(y)
+            classes = self.classes_enc_
             class_weight = compute_class_weight(self.class_weight, classes, y)
             class_weight = dict(zip(classes, class_weight))
         else:
