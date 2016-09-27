@@ -31,7 +31,7 @@ inplace:
 test-code: in
 	$(NOSETESTS) -s -v sklearn
 test-sphinxext:
-	$(NOSETESTS) -s -v doc/sphinxext/
+	$(NOSETESTS) -s -v doc/sphinxext/ -e numpy_ext
 test-doc:
 ifeq ($(BITS),64)
 	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
