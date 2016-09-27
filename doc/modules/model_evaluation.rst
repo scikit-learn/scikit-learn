@@ -1101,7 +1101,7 @@ Here is a small example of usage of this function:::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_calibration_plot_calibration.py`
+  * See :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
     for an example of Brier score loss usage to perform probability
     calibration of classifiers.
 
