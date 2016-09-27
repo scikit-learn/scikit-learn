@@ -10,6 +10,8 @@ Version 0.19
 
 **In Development**
 
+Changelog
+---------
 
 New features
 ............
