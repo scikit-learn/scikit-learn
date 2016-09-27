@@ -148,7 +148,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
-        X.eliminate_zeros() # remove zeros caused by a hash collisions (#3637)
+        X.eliminate_zeros()  # remove zeros caused by hash collisions (#3637)
         if self.non_negative:
             np.abs(X.data, X.data)
         return X

@@ -944,6 +944,15 @@ def test_hashingvectorizer_nan_in_docs():
     assert_raise_message(exception, message, func)
 
 
+def test_hashingvectorizer_hash_collision():
+    # Ensure that hash collision does not produce zero elements
+    # in the output sparse array (issue #3637)
+    text = 'investigation need records'
+    hv = HashingVectorizer(ngram_range=(1, 2), non_negative=True)
+    X = hv.transform([text])
+    assert_equal((X.data == 0.).sum(), 0)
+
+
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
