@@ -70,7 +70,7 @@ class MyPassiveAggressive(ClassifierMixin):
 def test_classifier_accuracy():
     for data in (X, X_csr):
         for fit_intercept in (True, False):
-            for average in (False,True):
+            for average in (False, True):
                 clf = PassiveAggressiveClassifier(C=1.0, n_iter=30,
                                                   fit_intercept=fit_intercept,
                                                   random_state=0,
@@ -88,7 +88,7 @@ def test_classifier_accuracy():
 def test_classifier_partial_fit():
     classes = np.unique(y)
     for data in (X, X_csr):
-        for average in (False,True):
+        for average in (False, True):
             clf = PassiveAggressiveClassifier(C=1.0,
                                               fit_intercept=True,
                                               random_state=0,
@@ -218,7 +218,7 @@ def test_regressor_mse():
 
     for data in (X, X_csr):
         for fit_intercept in (True, False):
-            for average in (False,True):
+            for average in (False, True):
                 reg = PassiveAggressiveRegressor(C=1.0, n_iter=50,
                                                  fit_intercept=fit_intercept,
                                                  random_state=0,
@@ -238,7 +238,7 @@ def test_regressor_partial_fit():
     y_bin[y != 1] = -1
 
     for data in (X, X_csr):
-        for average in (False,True):
+        for average in (False, True):
             reg = PassiveAggressiveRegressor(C=1.0,
                                              fit_intercept=True,
                                              random_state=0,
