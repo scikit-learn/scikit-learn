@@ -161,8 +161,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         if shuffle:
             train_test_proportions = [(random.sample(train, n_train_samples), test)
                 for train, test in cv for n_train_samples in train_sizes_abs]
-	else:
-	    train_test_proportions = [(train[:n_train_samples], test)
+        else:
+            train_test_proportions = [(train[:n_train_samples], test)
                 for train, test in cv for n_train_samples in train_sizes_abs]
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test,
