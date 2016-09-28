@@ -473,9 +473,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
 
         """
-        if isinstance(X, str):
+        if isinstance(X, six.string_types):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received.")
+                "Iterable over raw text documents expected, " 
+                "string object received.")
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -797,9 +798,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
-        if isinstance(raw_documents, str):
+        if isinstance(raw_documents, six.string_types):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received.")
+                "Iterable over raw text documents expected, "
+                "string object received.")
 
         self.fit_transform(raw_documents)
         return self
@@ -823,9 +825,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        if isinstance(raw_documents, str):
+        if isinstance(raw_documents, six.string_types):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received.")
+                "Iterable over raw text documents expected, "
+                "string object received.")
 
         self._validate_vocabulary()
         max_df = self.max_df
@@ -876,9 +879,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
-        if isinstance(raw_documents, str):
+        if isinstance(raw_documents, six.string_types):
             raise ValueError(
-                "Iterable over raw text documents expected, string object received.")
+                "Iterable over raw text documents expected, "
+                "string object received.")
         
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
@@ -1345,6 +1349,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
+
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so
