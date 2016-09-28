@@ -891,18 +891,18 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         unpickled_cv.fit(ALL_FOOD_DOCS)
         assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
 
-def test_hashingvectorizer_string_object_as_input():
+def test_countvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
     message = ("Iterable over raw text documents expected, "
         "string object received.")
     exception = ValueError
 
     def func():
-        hv = HashingVectorizer()
-        hv.fit_transform('hello world!')
+        cv = CountVectorizer()
+        cv.fit_transform('hello world!')
 
     assert_raise_message(exception, message, func)        
-    
+
 
 def test_stop_words_removal():
     # Ensure that deleting the stop_words_ attribute doesn't affect transform
@@ -978,6 +978,19 @@ def test_tfidfvectorizer_binary():
     assert_array_equal(X.ravel(), [1, 1, 1, 0])
     X2 = v.transform(['hello world', 'hello hello']).toarray()
     assert_array_equal(X2.ravel(), [1, 1, 1, 0])
+
+
+def test_tfidvectorizer_string_object_as_input():
+    # Ensure that string object is not given as input.
+    message = ("Iterable over raw text documents expected, "
+        "string object received.")
+    exception = ValueError
+
+    def func():
+        tv = TfidfVectorizer()
+        tv.fit_transform('hello world!')
+
+    assert_raise_message(exception, message, func)
 
 
 def test_tfidfvectorizer_export_idf():

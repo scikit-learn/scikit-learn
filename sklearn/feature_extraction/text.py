@@ -1329,6 +1329,11 @@ class TfidfVectorizer(CountVectorizer):
         -------
         self : TfidfVectorizer
         """
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+            
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -1349,6 +1354,10 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
 
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
@@ -1376,6 +1385,11 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
 
         X = super(TfidfVectorizer, self).transform(raw_documents)
