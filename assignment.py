@@ -22,7 +22,19 @@ def score(C,answ):
     return sum([C[n,answ[n]] for n in range(len(answ))])
 
 def hungarian(C):
-    """ Calculates the hungarian of C, remembering all values to avoid recalculation. """
+    """ Calculates the hungarian of C, remembering all values to avoid recalculation.
+        
+        
+        Parameters
+        ----------
+        C : ndarray, shape (N, N)
+            A square cost matrix to be minimized.
+            
+        Returns
+        ----------
+        out : ndarray, shape (N, )
+            A list where each cell represents each row, and contains the index of the matching column index.
+        """
     global hungmem            # Use module memory
     #print(C)
     C = np.matrix(C)          # Use a matrix
@@ -37,7 +49,21 @@ def hungarian(C):
 def murty(P0):
     """ Non-optimized Murty's. Generator.
         Ref: Optimizing Murty's Ranked Assignment Method, Fig. 4
-        by Matt L. Miller, Harold S. Stone, & Ingemar J. Cox """
+        by Matt L. Miller, Harold S. Stone, & Ingemar J. Cox
+        
+                
+        Parameters
+        ----------
+        P0 : ndarray, shape (N, N)
+            A square cost matrix to be minimized.
+            
+        Returns
+        ----------
+        generator, yields:
+        out : ndarray, shape (N, )
+            A list where each cell represents each row, and contains the index of the matching column index.
+            Lists are generated in order by the sum of their total cost, ascending.
+        """
     try:
         INF = np.iinfo(P0.dtype).max                   # A value used to remove (y,z,l) from a problem
     except:
