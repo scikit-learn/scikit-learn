@@ -152,7 +152,7 @@ class PCA(_BasePCA):
             the solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
-            dimension of the data, then then more efficient 'randomized'
+            dimension of the data, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full SVD is computed and
             optionally truncated afterwards.
         full :
