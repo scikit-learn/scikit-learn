@@ -892,7 +892,7 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
 
 
-def test_countvectorizer_string_object_as_input():
+def test_countvectorizer_error():
     # Ensure that string object is not given as input.
     cv = CountVectorizer()
     exception = ValueError
@@ -955,7 +955,7 @@ def test_hashingvectorizer_nan_in_docs():
     assert_raise_message(exception, message, func)
 
 
-def test_hashingvectorizer_string_object_as_input():
+def test_hashingvectorizer_error():
     # Ensure that string object is not given as input.
     hv = HashingVectorizer()
     exception = ValueError
@@ -976,7 +976,7 @@ def test_tfidfvectorizer_binary():
     assert_array_equal(X2.ravel(), [1, 1, 1, 0])
 
 
-def test_tfidvectorizer_string_object_as_input():
+def test_tfidvectorizer_error():
     # Ensure that string object is not given as input.
     tv = TfidfVectorizer()
     exception = ValueError
