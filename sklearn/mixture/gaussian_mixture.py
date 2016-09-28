@@ -450,13 +450,14 @@ class GaussianMixture(BaseMixture):
         The number of mixture components.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'},
-        defaults to 'full'.
+            defaults to 'full'.
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix),
-        'tied' (all components share the same general covariance matrix),
-        'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance).
+
+            'full' (each component has its own general covariance matrix),
+            'tied' (all components share the same general covariance matrix),
+            'diag' (each component has its own diagonal covariance matrix),
+            'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
@@ -476,8 +477,9 @@ class GaussianMixture(BaseMixture):
         The method used to initialize the weights, the means and the
         precisions.
         Must be one of::
-        'kmeans' : responsibilities are initialized using kmeans.
-        'random' : responsibilities are initialized randomly.
+
+            'kmeans' : responsibilities are initialized using kmeans.
+            'random' : responsibilities are initialized randomly.
 
     weights_init : array-like, shape (n_components, ), optional
         The user-provided initial weights, defaults to None.
@@ -492,6 +494,7 @@ class GaussianMixture(BaseMixture):
         matrices), defaults to None.
         If it None, precisions are initialized using the 'init_params' method.
         The shape depends on 'covariance_type'::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -525,6 +528,7 @@ class GaussianMixture(BaseMixture):
     covariances_ : array-like
         The covariance of each mixture component.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -538,6 +542,7 @@ class GaussianMixture(BaseMixture):
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -551,6 +556,7 @@ class GaussianMixture(BaseMixture):
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
         time. The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',

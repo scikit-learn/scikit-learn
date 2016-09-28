@@ -90,13 +90,14 @@ class BayesianGaussianMixture(BaseMixture):
         close to zero. The number of effective components is therefore smaller
         than n_components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}, defaults to 'full'.
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}, defaults to 'full'
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix),
-        'tied' (all components share the same general covariance matrix),
-        'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance).
+
+            'full' (each component has its own general covariance matrix),
+            'tied' (all components share the same general covariance matrix),
+            'diag' (each component has its own diagonal covariance matrix),
+            'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
@@ -118,14 +119,16 @@ class BayesianGaussianMixture(BaseMixture):
         The method used to initialize the weights, the means and the
         covariances.
         Must be one of::
-        'kmeans' : responsibilities are initialized using kmeans.
-        'random' : responsibilities are initialized randomly.
+
+            'kmeans' : responsibilities are initialized using kmeans.
+            'random' : responsibilities are initialized randomly.
 
     weight_concentration_prior_type : str, defaults to 'dirichlet_process'.
         String describing the type of the weight concentration prior.
         Must be one of::
-        'dirichlet_process' (using the Stick-breaking representation),
-        'dirichlet_distribution' (can favor more uniform weights).
+
+            'dirichlet_process' (using the Stick-breaking representation),
+            'dirichlet_distribution' (can favor more uniform weights).
 
     weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
@@ -133,7 +136,7 @@ class BayesianGaussianMixture(BaseMixture):
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         mixture weights simplex. The value of the parameter must be greater
-        than 0. If it is None, it's set to `1. / n_components`.
+        than 0. If it is None, it's set to ``1. / n_components``.
 
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
@@ -142,7 +145,7 @@ class BayesianGaussianMixture(BaseMixture):
         The value of the parameter must be greater than 0.
         If it is None, it's set to 1.
 
-    mean_prior : array-like, shape (`n_features`,), optional
+    mean_prior : array-like, shape (n_features,), optional
         The prior on the mean distribution (Gaussian).
         If it is None, it's set to the mean of X.
 
@@ -154,10 +157,11 @@ class BayesianGaussianMixture(BaseMixture):
         The prior on the covariance distribution (Wishart).
         If it is None, the emiprical covariance prior is initialized using the
         covariance of X. The shape depends on `covariance_type`::
-            (`n_features`, `n_features`) if 'full',
-            (`n_features`, `n_features`) if 'tied',
-            (`n_features`)               if 'diag',
-            float                        if 'spherical'
+
+                (n_features, n_features) if 'full',
+                (n_features, n_features) if 'tied',
+                (n_features)             if 'diag',
+                float                    if 'spherical'
 
     random_state: RandomState or an int seed, defaults to None.
         A random number generator instance.
@@ -178,15 +182,16 @@ class BayesianGaussianMixture(BaseMixture):
 
     Attributes
     ----------
-    weights_ : array-like, shape (`n_components`,)
+    weights_ : array-like, shape (n_components,)
         The weights of each mixture components.
 
-    means_ : array-like, shape (`n_components`, `n_features`)
+    means_ : array-like, shape (n_components, n_features)
         The mean of each mixture component.
 
     covariances_ : array-like
         The covariance of each mixture component.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -199,7 +204,8 @@ class BayesianGaussianMixture(BaseMixture):
         equivalently parameterized by the precision matrices. Storing the
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
-        The shape depends on `covariance_type`::
+        The shape depends on ``covariance_type``::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -212,7 +218,8 @@ class BayesianGaussianMixture(BaseMixture):
         Gaussian can be equivalently parameterized by the precision matrices.
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
-        time. The shape depends on `covariance_type`::
+        time. The shape depends on ``covariance_type``::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -232,15 +239,17 @@ class BayesianGaussianMixture(BaseMixture):
     weight_concentration_prior_ : tuple or float
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). The type depends on
-        `weight_concentration_prior_type`::
+        ``weight_concentration_prior_type``::
+
             (float, float) if 'dirichlet_process' (Beta parameters),
             float          if 'dirichlet_distribution' (Dirichlet parameters).
+
         The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         simplex.
 
-    weight_concentration_ : array-like, shape (`n_components`, )
+    weight_concentration_ : array-like, shape (n_components,)
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet).
 
@@ -250,26 +259,27 @@ class BayesianGaussianMixture(BaseMixture):
         Smaller values concentrate the means of each clusters around
         `mean_prior`.
 
-    mean_precision_ : array-like, shape (`n_components`, )
+    mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).
 
-    means_prior_ : array-like, shape (`n_features`,)
+    means_prior_ : array-like, shape (n_features,)
         The prior on the mean distribution (Gaussian).
 
     degrees_of_freedom_prior_ : float
         The prior of the number of degrees of freedom on the covariance
         distributions (Wishart).
 
-    degrees_of_freedom_ : array-like, shape (`n_components`,)
+    degrees_of_freedom_ : array-like, shape (n_components,)
         The number of degrees of freedom of each components in the model.
 
     covariance_prior_ : float or array-like
         The prior on the covariance distribution (Wishart).
         The shape depends on `covariance_type`::
-            (`n_features`, `n_features`) if 'full',
-            (`n_features`, `n_features`) if 'tied',
-            (`n_features`)               if 'diag',
-            float                        if 'spherical'
+
+            (n_features, n_features) if 'full',
+            (n_features, n_features) if 'tied',
+            (n_features)             if 'diag',
+            float                    if 'spherical'
 
     See Also
     --------
