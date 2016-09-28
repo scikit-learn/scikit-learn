@@ -19,14 +19,17 @@ New features
 
 Enhancements
 ............
-   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
-     regressors now assumes uniform sample weights by default if the
-     ``sample_weight`` parameter is not passed to the ``fit`` function. (`#7301
-     <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
-     Liu`_.
+
 
 Bug fixes
 .........
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. (`#7301
+     <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
+     Liu`_.
 
 .. _changes_0_18:
 
