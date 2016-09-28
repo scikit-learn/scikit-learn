@@ -368,7 +368,7 @@ Miscellaneous
      :func:`utils.sparse_func.incr_mean_variance_axis` by supporting cython
      fused types. By `YenChen Lin`_.
 
-   - The :func: `ignore_warnings` now accept a category argument to ignore only
+   - The :func:`ignore_warnings` now accept a category argument to ignore only
      the warnings of a specified type. By `Thierry Guillemot`_.
 
    - Added parameter ``return_X_y`` and return type ``(data, target) : tuple`` option to
