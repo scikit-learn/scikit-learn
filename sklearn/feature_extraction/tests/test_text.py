@@ -868,7 +868,7 @@ def test_countvectorizer_vocab_sets_when_pickling():
                             'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
         vocab_set = set(choice(vocab_words, size=5, replace=False,
-                        random_state=rng))
+                               random_state=rng))
         cv = CountVectorizer(vocabulary=vocab_set)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
@@ -891,17 +891,18 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         unpickled_cv.fit(ALL_FOOD_DOCS)
         assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
 
+
 def test_countvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
     message = ("Iterable over raw text documents expected, "
-        "string object received.")
+               "string object received.")
     exception = ValueError
 
     def func():
         cv = CountVectorizer()
         cv.fit_transform('hello world!')
 
-    assert_raise_message(exception, message, func)        
+    assert_raise_message(exception, message, func)
 
 
 def test_stop_words_removal():
@@ -959,14 +960,14 @@ def test_hashingvectorizer_nan_in_docs():
 def test_hashingvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
     message = ("Iterable over raw text documents expected, "
-        "string object received.")
+               "string object received.")
     exception = ValueError
 
     def func():
         hv = HashingVectorizer()
         hv.fit_transform('hello world!')
 
-    assert_raise_message(exception, message, func)        
+    assert_raise_message(exception, message, func)
 
 
 def test_tfidfvectorizer_binary():
@@ -983,7 +984,7 @@ def test_tfidfvectorizer_binary():
 def test_tfidvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
     message = ("Iterable over raw text documents expected, "
-        "string object received.")
+               "string object received.")
     exception = ValueError
 
     def func():
