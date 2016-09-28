@@ -962,7 +962,6 @@ def test_hashingvectorizer_string_object_as_input():
     test_str = "hello world!"
 
     assert_raises(exception, hv.fit_transform, test_str)
-    assert_raises(exception, hv.fit, test_str)
     assert_raises(exception, hv.transform, test_str)
 
 
