@@ -894,15 +894,13 @@ def test_countvectorizer_vocab_dicts_when_pickling():
 
 def test_countvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
-    message = ("Iterable over raw text documents expected, "
-               "string object received.")
+    cv = CountVectorizer()
     exception = ValueError
+    test_str = "hello world!"
 
-    def func():
-        cv = CountVectorizer()
-        cv.fit_transform('hello world!')
-
-    assert_raise_message(exception, message, func)
+    assert_raises(exception, cv.fit_transform, test_str)
+    assert_raises(exception, cv.fit, test_str)
+    assert_raises(exception, cv.transform, test_str)
 
 
 def test_stop_words_removal():
@@ -959,15 +957,13 @@ def test_hashingvectorizer_nan_in_docs():
 
 def test_hashingvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
-    message = ("Iterable over raw text documents expected, "
-               "string object received.")
+    hv = HashingVectorizer()
     exception = ValueError
+    test_str = "hello world!"
 
-    def func():
-        hv = HashingVectorizer()
-        hv.fit_transform('hello world!')
-
-    assert_raise_message(exception, message, func)
+    assert_raises(exception, hv.fit_transform, test_str)
+    assert_raises(exception, hv.fit, test_str)
+    assert_raises(exception, hv.transform, test_str)
 
 
 def test_tfidfvectorizer_binary():
@@ -983,15 +979,13 @@ def test_tfidfvectorizer_binary():
 
 def test_tfidvectorizer_string_object_as_input():
     # Ensure that string object is not given as input.
-    message = ("Iterable over raw text documents expected, "
-               "string object received.")
+    tv = TfidfVectorizer()
     exception = ValueError
+    test_str = "hello world!"
 
-    def func():
-        tv = TfidfVectorizer()
-        tv.fit_transform('hello world!')
-
-    assert_raise_message(exception, message, func)
+    assert_raises(exception, tv.fit_transform, test_str)
+    assert_raises(exception, tv.fit, test_str)
+    assert_raises(exception, tv.transform, test_str)
 
 
 def test_tfidfvectorizer_export_idf():
