@@ -107,3 +107,13 @@ def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
+
+
+def test_hash_collision():
+    # Ensure that hash collision does not produce zero elements
+    # in the output sparse array (issue #3637)
+    raw_X = ["ab", "ac", "ad", "ae"]
+    fh = FeatureHasher(non_negative=False, input_type="string", n_features=1)
+    X = fh.transform(raw_X)
+    assert_true(len(X.data) <= 2*len(raw_X))  # we have feature collisions
+    assert_equal((X.data == 0.).sum(), 0)
