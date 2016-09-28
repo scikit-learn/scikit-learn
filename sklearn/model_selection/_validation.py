@@ -3,11 +3,11 @@ The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>,
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
-
 
 from __future__ import print_function
 from __future__ import division
@@ -58,9 +58,17 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         train/test set.
 
     scoring : string, callable or None, optional, default: None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A single string (see :ref:`_scoring_parameter`) or a callable
+        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Single scorers returning a list/array of values may be wrapped
+        into multiple scorers that return one value each.
+
+        If None the estimator's default scorer, if available is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -117,8 +125,38 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
-    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
-    [ 0.33150734  0.08022311  0.03531764]
+
+    >>> print(cross_val_score(lasso, X, y))               # doctest: +ELLIPSIS
+    [ 0.33...  0.08...  0.03...]
+
+    >>> scores = cross_val_score(lasso, X, y,
+    ...                          scoring=('r2', 'neg_mean_squared_error'))
+    >>> print(scores['neg_mean_squared_error'])           # doctest: +ELLIPSIS
+    [-3635.5... -3573.3... -6114.7...]
+    >>> print(scores['r2'])                               # doctest: +ELLIPSIS
+    [ 0.33...  0.08...  0.03...]
+
+    >>> svm = LinearSVC(random_state=0)
+    >>> # A sample toy binary classification dataset
+    >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
+
+    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
+    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
+    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
+    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
+
+    >>> # scoring can also be a dict mapping the scorer name to scorer callable
+    >>> scoring = {'tp' : make_scorer(tp),
+    ...            'tn' : make_scorer(tn),
+    ...            'fp' : make_scorer(fp),
+    ...            'fn' : make_scorer(fn)}
+
+    >>> scores = cross_val_score(svm.fit(X, y), X, y, scoring=scoring)
+
+    >>> print(scores['tp'])
+    [12 13 15]
+    >>> print(scores['fn'])
+    [1 3 7]
 
     See Also
     ---------
@@ -129,19 +167,54 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
+    scorers = {}
+    if (isinstance(scoring, dict) and
+            np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U') and
+            all(map(callable, scoring.values()))):
+        for name, scorer in scoring.items():
+            # Validate for each scorer
+            scorers[name] = check_scoring(estimator, scoring=scorer)
+    elif isinstance(scoring, (list, tuple)):
+        if (np.asarray(scoring).dtype.kind not in ("S", "U") or
+                np.unique(scoring).shape[0] != len(scoring)):
+            raise ValueError("The list/tuple elements must be unique strings"
+                             " of predefined scorers. Got %s.\nHint: To"
+                             " evaluate on multiple custom score functions"
+                             ", use a dict mapping the score name to the"
+                             " callable scorers." % repr(scoring))
+        for scorer in scoring:
+            scorers[scorer] = check_scoring(estimator, scoring=scorer)
+    elif callable(scoring) or scoring is None:
+        scorers = {"score": check_scoring(estimator, scoring=scoring)}
+        # For returing a list instead of a dict
+        scoring = "score"
+    elif isinstance(scoring, str):
+        scorers = {scoring: check_scoring(estimator, scoring=scoring)}
+    else:
+        raise ValueError("scoring should either be a single string or callable"
+                         " for single metric evaluation or a list/tuple of"
+                         " strings or a dict of scorer name mapped to the"
+                         " callable for multiple metric evaluation. Got %s of"
+                         " type %s"% (repr(scoring), type(scoring)))
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
                                               train, test, verbose, None,
                                               fit_params)
                       for train, test in cv.split(X, y, groups))
-    return np.array(scores)[:, 0]
+    scores = list(zip(*scores))[0]
+    scores = [[score[key] for score in scores] for key in scores[0].keys()]
+    keys = scorers.keys()
+    scores = dict(zip(keys, np.array(scores)))
+    if isinstance(scoring, str):
+        scores = scores[scoring]
+    return scores
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
+def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, error_score='raise'):
@@ -159,9 +232,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scorer : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scorers : string, callable or None, optional, default: None
+        A single string (see :ref:`_scoring_parameter`) or a callable
+        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        If None the estimator's default scorer, if available is used.
 
     train : array-like, shape (n_train_samples,)
         Indices of training samples.
@@ -192,11 +270,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     Returns
     -------
-    train_score : float, optional
-        Score on training set, returned only if `return_train_score` is `True`.
+    train_scores : dict of scorer name -> float, optional
+        Score on training set (for all the scorers),
+        returned only if `return_train_score` is `True`.
 
-    test_score : float
-        Score on test set.
+    test_scores : dict of scorer name -> float, optional
+        Score on testing set (for all the scorers).
 
     n_test_samples : int
         Number of test samples.
@@ -223,6 +302,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params = dict([(k, _index_param_value(X, v, train))
                       for k, v in fit_params.items()])
 
+    test_scores = {}
+    train_scores = {}
     if parameters is not None:
         estimator.set_params(**parameters)
 
@@ -230,6 +311,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    n_scorers = len(scorers.keys())
+    test_scores = dict(zip(scorers.keys(), [error_score,] * n_scorers))
+    train_scores = dict(zip(scorers.keys(), [error_score,] * n_scorers))
 
     try:
         if y_train is None:
@@ -244,9 +329,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
-            test_score = error_score
-            if return_train_score:
-                train_score = error_score
             warnings.warn("Classifier fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%r" % (error_score, e), FitFailedWarning)
@@ -257,10 +339,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_score = _score(estimator, X_test, y_test, scorer)
+        test_scores = _score(estimator, X_test, y_test, scorers)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_score = _score(estimator, X_train, y_train, scorer)
+            train_scores = _score(estimator, X_train, y_train, scorers)
 
     if verbose > 2:
         msg += ", score=%f" % test_score
@@ -269,7 +351,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    ret = [train_score, test_score] if return_train_score else [test_score]
+    ret = [train_scores, test_scores] if return_train_score else [test_scores]
 
     if return_n_test_samples:
         ret.append(_num_samples(X_test))
@@ -280,23 +362,30 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorers):
     """Compute the score of an estimator on a given test set."""
-    if y_test is None:
-        score = scorer(estimator, X_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-    if hasattr(score, 'item'):
-        try:
-            # e.g. unwrap memmapped scalars
-            score = score.item()
-        except ValueError:
-            # non-scalar?
-            pass
-    if not isinstance(score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s) instead."
-                         % (str(score), type(score)))
-    return score
+    scores = {}
+
+    for name, scorer in scorers.items():
+        if y_test is None:
+            score = scorer(estimator, X_test)
+        else:
+            score = scorer(estimator, X_test, y_test)
+
+        if hasattr(score, 'item'):
+            try:
+                # e.g. unwrap memmapped scalars
+                score = score.item()
+            except ValueError:
+                # non-scalar?
+                pass
+        scores[name] = score
+
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s) "
+                             "instead. (scorer=%s)"
+                             % (str(score), type(score), name))
+    return scores
 
 
 def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
@@ -554,7 +643,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
-        A string (see model evaluation documentation) or
+        A single string (see :ref:`_scoring_parameter`) or a callablemodel evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 

@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
@@ -245,6 +246,92 @@ def test_cross_val_score():
 
     clf = MockClassifier(allow_nd=False)
     assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
+
+
+def test_cross_val_score_multiple_metric_invalid_scoring_param():
+    X, y = make_classification(random_state=0)
+    estimator = LinearSVC(random_state=0)
+    estimator.fit(X, y)
+
+    # Test the errors
+    # List/tuple of callables should raise a message advising users to use
+    # dict of names to callables mapping
+    assert_raises_regex(ValueError, ".*must be unique strings.*use a dict.*",
+                        cross_val_score, estimator, X, y,
+                        scoring=(make_scorer()))
+
+    # So should empty lists/tuples
+    assert_raises_regex(ValueError, ".*must be unique strings.*use a dict.*",
+                        cross_val_score, estimator, X, y, scoring=())
+
+    # So should duplicated entries
+    assert_raises_regex(ValueError, ".*must be unique strings.*use a dict.*",
+                        cross_val_score, estimator, X, y,
+                        scoring=('f1_micro', 'f1_micro'))
+
+    error_message_regexp = (".*should be.*string or callable.*for single.*"
+                            ".*dict.*for multi.*")
+
+    # Empty dict should raise invalid scoring error
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_val_score, estimator, X, y, scoring=(dict()))
+
+    # And so should any other invalid entry
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_val_score, estimator, X, y, scoring=5)
+
+    multivalued_scorer = make_scorer(precision_recall_fscore_support)
+
+    # Scorers that return multiple values are not supported yet
+    assert_raises_regexp(ValueError, "scoring must return a number, got",
+                         cross_val_score, clf, X, y, cv=5,
+                         scoring=multivalued_scorer)
+
+    # Scorers that return multiple values are not supported yet
+    assert_raises_regexp(ValueError, "scoring must return a number, got.*foo",
+                         cross_val_score, clf, X, y, cv=5,
+                         scoring={"foo": multivalued_scorer})
+
+def test_cross_val_score_multiple_metric():
+    # Regression
+    X, y = make_regression(n_samples=30, n_features=20, n_informative=5,
+                           random_state=0)
+    reg = Ridge()
+
+    # List scoring
+    scores = cross_val_score(reg, X, y, cv=5,
+                             scoring=('r2', 'neg_mean_squared_error'))
+    expected_r2_scores = np.array([0.94, 0.97, 0.97, 0.99, 0.92])
+    assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
+    expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
+    assert_array_almost_equal(scores['neg_median_absolute_error'],
+                              expected_neg_mse, 2)
+
+    # Dict scoring
+    scores = cross_val_score(reg, X, y, cv=5,
+                             scoring={
+                                'r2': make_scorer(r2_score),
+                                'ev': make_scorer(explained_variance_score)})
+    assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
+    expected_ev_scores = np.array([0.94, 0.97, 0.97, 0.99, 0.92])
+    assert_array_almost_equal(scores['ev'], expected_ev_scores, 2)
+
+    # Classification
+    precision = make_scorer(precision_score)
+    accuracy = make_scorer(accuracy_score)
+
+    expected_acc = np.array([0.75,  0.9 ,  0.8 ,  0.65,  0.9 ])
+    expected_pre = np.array([0.66666667, 0.9, 0.8, 0.63636364, 1.])
+    scores = cross_val_score(clf, X, y, cv=5,
+                             scoring={'pre': precision, 'acc': accuracy})
+
+    assert_almost_equal(scores['acc'], expected_acc)
+    assert_almost_equal(scores['pre'], expected_pre)
+
+    scores = cross_val_score(clf, X, y, cv=5,
+                             scoring=('precision', 'accuracy'))
+    assert_almost_equal(scores['accuracy'], expected_acc)
+    assert_almost_equal(scores['precision'], expected_pre)
 
 
 def test_cross_val_score_predict_groups():
