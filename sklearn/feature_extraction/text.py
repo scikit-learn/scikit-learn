@@ -475,7 +475,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         """
         if isinstance(X, str):
             raise ValueError(
-                "iterable over raw text documents expected, string object received")
+                "Iterable over raw text documents expected, string object received.")
 
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
@@ -799,7 +799,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if isinstance(raw_documents, str):
             raise ValueError(
-                "iterable over raw text documents expected, string object received")
+                "Iterable over raw text documents expected, string object received.")
 
         self.fit_transform(raw_documents)
         return self
@@ -825,7 +825,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # TfidfVectorizer.
         if isinstance(raw_documents, str):
             raise ValueError(
-                "iterable over raw text documents expected, string object received")
+                "Iterable over raw text documents expected, string object received.")
 
         self._validate_vocabulary()
         max_df = self.max_df
@@ -878,7 +878,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if isinstance(raw_documents, str):
             raise ValueError(
-                "iterable over raw text documents expected, string object given")
+                "Iterable over raw text documents expected, string object received.")
         
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
