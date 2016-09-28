@@ -117,7 +117,7 @@ else
     python -c "import scipy; print('scipy %s' % scipy.__version__)"
     python -c "\
 try:
-    import pygame
+    import pandas
     print('pandas %s' % pandas.__version__)
 except ImportError:
     pass
