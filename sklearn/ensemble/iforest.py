@@ -66,6 +66,7 @@ class IsolationForest(BaseBagging):
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
+
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
