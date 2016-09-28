@@ -7,6 +7,7 @@
 import warnings
 
 import numpy as np
+import random
 
 from .base import is_classifier, clone
 from .cross_validation import check_cv
@@ -158,7 +159,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
             scorer, verbose) for train, test in cv)
     else:
         if shuffle:
-            train_test_proportions = [(np.random.choice(train, n_train_samples, replace = False), test)
+            train_test_proportions = [(random.sample(train, n_train_samples), test)
                 for train, test in cv for n_train_samples in train_sizes_abs]
 	else:
 	    train_test_proportions = [(train[:n_train_samples], test)
