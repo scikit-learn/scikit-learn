@@ -198,6 +198,27 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
     assert_array_almost_equal(test_scores_inc.mean(axis=1),
                               test_scores_batch.mean(axis=1))
 
+def test_learning_curve_batch_shuffled():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    train_sizes = np.linspace(0.5, 1.0, 3)
+    estimator = MockImprovingEstimator(20)
+
+    train_sizes_batch_shuffled, train_scores_batch_shuffled, test_scores_batch_shuffled = \
+        learning_curve(
+            estimator, X, y, cv=3, train_sizes=train_sizes, shuffle=True)
+
+    train_sizes_batch, train_scores_batch, test_scores_batch = \
+        learning_curve(
+            estimator, X, y, cv=3, train_sizes=train_sizes, shuffle=False)
+
+    assert_array_equal(train_sizes_batch_shuffled, train_sizes_batch)
+    assert_array_almost_equal(train_scores_batch_shuffled.mean(axis=1)[-1],
+                              train_scores_batch.mean(axis=1)[-1])
+    assert_array_almost_equal(test_scores_batch_shuffled.mean(axis=1)[-1],
+                              test_scores_batch.mean(axis=1)[-1])
+
 
 def test_learning_curve_n_sample_range_out_of_bounds():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,

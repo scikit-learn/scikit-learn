@@ -16,7 +16,6 @@ from .metrics.scorer import check_scoring
 from .utils import indexable
 from .utils.fixes import astype
 
-
 warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the functions are moved."
               " This module will be removed in 0.20",
@@ -28,7 +27,7 @@ __all__ = ['learning_curve', 'validation_curve']
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
-                   n_jobs=1, pre_dispatch="all", verbose=0):
+                   n_jobs=1, pre_dispatch="all", verbose=0, shuffle=False):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -102,6 +101,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
+    shuffle : boolean, optional, default: False
+        Indicates whether training data has to be shuffled before partitioning
+        into training sizes
     Returns
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
@@ -154,10 +156,16 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
+        if shuffle:
+            train_test_proportions = [(np.random.choice(train, n_train_samples, replace = False), test)
+                for train, test in cv for n_train_samples in train_sizes_abs]
+	else:
+	    train_test_proportions = [(train[:n_train_samples], test)
+                for train, test in cv for n_train_samples in train_sizes_abs]
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator), X, y, scorer, train, test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
-            for train, test in cv for n_train_samples in train_sizes_abs)
+            for train, test in train_test_proportions)
         out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
