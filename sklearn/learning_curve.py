@@ -103,8 +103,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         Controls the verbosity: the higher, the more messages.
 
     shuffle : boolean, optional, default: False
-        Indicates whether training data has to be shuffled before partitioning
-        into training sizes
+        Indicates whether to choose random indices when using different
+        training sizes
     Returns
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
