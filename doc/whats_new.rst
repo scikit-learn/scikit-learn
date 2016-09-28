@@ -143,21 +143,7 @@ Changelog
 New features
 ............
 
-   - Added two functions for mutual information estimation:
-     :func:`feature_selection.mutual_info_classif` and
-     :func:`feature_selection.mutual_info_regression`. These functions can be
-     used in :class:`feature_selection.SelectKBest` and
-     :class:`feature_selection.SelectPercentile` as score functions.
-     By `Andrea Bravi`_ and `Nikolay Mayorov`_.
-
-   - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
-     and it is available calling with parameter ``svd_solver='randomized'``.
-     The default number of ``n_iter`` for ``'randomized'`` has changed to 4. The old
-     behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
-     calls ``arpack`` and performs truncated (non-randomized) SVD. By default,
-     the best solver is selected depending on the size of the input and the
-     number of components requested.
-     (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
+Classifiers and Regressors
 
    - The Gaussian Process module has been reimplemented and now offers classification
      and regression estimators through :class:`gaussian_process.GaussianProcessClassifier`
@@ -165,9 +151,6 @@ New features
      implementation supports kernel engineering, gradient-based hyperparameter optimization or
      sampling of functions from GP prior and GP posterior. Extensive documentation and
      examples are provided. By `Jan Hendrik Metzen`_.
-
-   - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on
-     random forests. By `Nicolas Goix`_.
 
    - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
      (`#3204 <https://github.com/scikit-learn/scikit-learn/pull/3204>`_) by `Issam H. Laradji`_
@@ -179,12 +162,37 @@ New features
      converts single output regressors to multi-ouput regressors by fitting
      one regressor per output. By `Tim Head`_.
 
+Other estimators
+
+   - New :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
+     replace former mixture models, employing faster inference
+     for sounder results.
+     (`#7295 <https://github.com/scikit-learn/scikit-learn/pull/7295>`_) by
+     `Wei Xue`_ and `Thierry Guillemot`_.
+
+   - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
+     and it is available calling with parameter ``svd_solver='randomized'``.
+     The default number of ``n_iter`` for ``'randomized'`` has changed to 4. The old
+     behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
+     calls ``arpack`` and performs truncated (non-randomized) SVD. By default,
+     the best solver is selected depending on the size of the input and the
+     number of components requested.
+     (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
+
+   - Added two functions for mutual information estimation:
+     :func:`feature_selection.mutual_info_classif` and
+     :func:`feature_selection.mutual_info_regression`. These functions can be
+     used in :class:`feature_selection.SelectKBest` and
+     :class:`feature_selection.SelectPercentile` as score functions.
+     By `Andrea Bravi`_ and `Nikolay Mayorov`_.
+
+   - Added the :class:`ensemble.IsolationForest` class for anomaly detection based on
+     random forests. By `Nicolas Goix`_.
+
    - Added ``algorithm="elkan"`` to :class:`cluster.KMeans` implementing
      Elkan's fast K-Means algorithm. By `Andreas Müller`_.
 
-   - Generalization of :func:`model_selection.cross_val_predict`.
-     One can pass method names such as `predict_proba` to be used in the cross
-     validation framework instead of the default `predict`. By `Ori Ziv`_ and `Sears Merritt`_.
+Model selection and evaluation
 
    - Added :func:`metrics.cluster.fowlkes_mallows_score`, the Fowlkes Mallows
      Index which measures the similarity of two clusterings of a set of points
@@ -193,6 +201,24 @@ New features
    - Added :func:`metrics.calinski_harabaz_score`, which computes the Calinski
      and Harabaz score to evaluate the resulting clustering of a set of points.
      By `Arnaud Fouchet`_ and `Thierry Guillemot`_.
+
+   - Added new cross-validation splitter
+     :class:`model_selection.TimeSeriesSplit` to handle time series data.
+     (`#6586
+     <https://github.com/scikit-learn/scikit-learn/pull/6586>`_) by `YenChen
+     Lin`_
+
+   - The cross-validation iterators are replaced by cross-validation splitters
+     available from :mod:`sklearn.model_selection`, allowing for nested
+     cross-validation.
+     See :ref:`model_selection_changes` for more information.
+     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
+     `Raghav R V`_.
+
+Enhancements
+............
+
+Trees and ensembles
 
    - Added a new splitting criterion for :class:`tree.DecisionTreeRegressor`,
      the mean absolute error. This criterion can also be used in
@@ -206,25 +232,6 @@ New features
      growth. (`#6954
      <https://github.com/scikit-learn/scikit-learn/pull/6954>`_) by `Nelson
      Liu`_
-
-   - Added new cross-validation splitter
-     :class:`model_selection.TimeSeriesSplit` to handle time series data.
-     (`#6586
-     <https://github.com/scikit-learn/scikit-learn/pull/6586>`_) by `YenChen
-     Lin`_
-
-Enhancements
-............
-
-   - :class:`feature_extraction.FeatureHasher` now accepts string values.
-     (`#6173 <https://github.com/scikit-learn/scikit-learn/pull/6173>`_) By `Ryad Zenine`_
-     and `Devashish Deshpande`_.
-
-   - The cross-validation iterators are replaced by cross-validation splitters
-     available from :mod:`sklearn.model_selection`.
-     Ref :ref:`model_selection_changes` for more information.
-     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
-     `Raghav R V`_.
 
    - The random forest, extra tree and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
@@ -243,27 +250,24 @@ Enhancements
      <https://github.com/scikit-learn/scikit-learn/pull/6667>`_) by `Nelson
      Liu`_.
 
-   - Codebase does not contain C/C++ cython generated files: they are
-     generated during build. Distribution packages will still contain generated
-     C/C++ files. By `Arthur Mensch`_.
+   - The memory footprint is reduced (sometimes greatly) for
+     :class:`ensemble.bagging.BaseBagging` and classes that inherit from it,
+     i.e, :class:`ensemble.BaggingClassifier`,
+     :class:`ensemble.BaggingRegressor`, and :class:`ensemble.IsolationForest`,
+     by dynamically generating attribute ``estimators_samples_`` only when it is
+     needed. By `David Staub`_.
+
+   - Added ``n_jobs`` and ``sample_weights`` parameters for
+     :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
+     (`#5805 <https://github.com/scikit-learn/scikit-learn/pull/5805>`_)
+     By `Ibraim Ganiev`_.
+
+Linear, kernelized and related models
 
    - In :class:`linear_model.LogisticRegression`, the SAG solver is now
      available in the multinomial case.
      (`#5251 <https://github.com/scikit-learn/scikit-learn/pull/5251>`_)
      By `Tom Dupre la Tour`_.
-
-   - Added ``n_jobs`` parameter to :class:`feature_selection.RFECV` to compute
-     the score on the test folds in parallel. By `Manoj Kumar`_
-
-   - Keyword arguments can now be supplied to ``func`` in
-     :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
-     parameter. By `Brian McFee`_.
-
-   - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
-     now support ``partial_fit``. By `Asish Panda`_ and `Philipp Dowling`_.
-
-   - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
-     By `Jatin Shah`_ and `Raghav R V`_.
 
    - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
      :class:`svm.LinearSVR` now support ``sample_weights``.
@@ -272,32 +276,68 @@ Enhancements
    - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
      error on the samples for every trial. By `Manoj Kumar`_.
 
-   - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
-     By `Manoj Kumar`_.
+   - Prediction of out-of-sample events with Isotonic Regression
+     (:mod:`isotonic`) is now much faster (over 1000x in tests with synthetic
+     data). By `Jonathan Arfa`_.
 
-   - Add ``sample_weight`` parameter to :func:`metrics.confusion_matrix`.
-     By `Bernardo Stein`_.
+   - Isotonic regression (:mod:`isotonic`) now uses a better algorithm to avoid
+     `O(n^2)` behavior in pathological cases, and is also generally faster
+     (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
+     By `Antony Lee`_.
+
+   - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
+     through the parameter ``priors``. By `Guillaume Lemaitre`_.
+
+   - :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
+     now works with ``np.float32`` input data without converting it
+     into ``np.float64``. This allows to reduce the memory
+     consumption.
+     (`#6913 <https://github.com/scikit-learn/scikit-learn/pull/6913>`_)
+     By `YenChen Lin`_.
+
+   - :class:`semi_supervised.LabelPropagation` and :class:`semi_supervised.LabelSpreading`
+     now accept arbitrary kernel functions in addition to strings ``knn`` and ``rbf``.
+     (`#5762 <https://github.com/scikit-learn/scikit-learn/pull/5762>`_) By `Utkarsh Upadhyay`_.
+
+Decomposition, manifold learning and clustering
+
+   - Added ``inverse_transform`` function to :class:`decomposition.NMF` to compute
+     data matrix of original shape. By `Anish Shah`_.
+
+   - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
+     with ``np.float32`` and ``np.float64`` input data without converting it.
+     This allows to reduce the memory consumption by using ``np.float32``.
+     (`#6846 <https://github.com/scikit-learn/scikit-learn/pull/6846>`_)
+     By `Sebastian Säger`_ and `YenChen Lin`_.
+
+Preprocessing and feature selection
+
+   - :class:`preprocessing.RobustScaler` now accepts ``quantile_range`` parameter.
+     (`#5929 <https://github.com/scikit-learn/scikit-learn/pull/5929>`_)
+     By `Konstantin Podshumok`_.
+
+   - :class:`feature_extraction.FeatureHasher` now accepts string values.
+     (`#6173 <https://github.com/scikit-learn/scikit-learn/pull/6173>`_) By `Ryad Zenine`_
+     and `Devashish Deshpande`_.
+
+   - Keyword arguments can now be supplied to ``func`` in
+     :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
+     parameter. By `Brian McFee`_.
 
    - :class:`feature_selection.SelectKBest` and :class:`feature_selection.SelectPercentile`
      now accept score functions that take X, y as input and return only the scores.
      By `Nikolay Mayorov`_.
 
-   - Prediction of out-of-sample events with Isotonic Regression is now much
-     faster (over 1000x in tests with synthetic data). By `Jonathan Arfa`_.
+Model evaluation and meta-estimators
 
-   - Added ``inverse_transform`` function to :class:`decomposition.NMF` to compute
-     data matrix of original shape. By `Anish Shah`_.
+   - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
+     now support ``partial_fit``. By `Asish Panda`_ and `Philipp Dowling`_.
 
-   - :class:`naive_bayes.GaussianNB` now accepts data-independent class-priors
-     through the parameter ``priors``. By `Guillaume Lemaitre`_.
-
-   - Reduce the memory usage for 32-bit float input arrays of
-     :func:`utils.sparse_func.mean_variance_axis` and
-     :func:`utils.sparse_func.incr_mean_variance_axis` by supporting cython
-     fused types. By `YenChen Lin`_.
-
-   - The :func:`ignore_warnings` now accept a category argument to ignore only
-     the warnings of a specified type. By `Thierry Guillemot`_.
+   - Added support for substituting or disabling :class:`pipeline.Pipeline`
+     and :class:`pipeline.FeatureUnion` components using the ``set_params``
+     interface that powers :mod:`sklearn.grid_search`.
+     See :ref:`sphx_glr_plot_compare_reduction.py`. By `Joel Nothman`_ and
+     `Robert McGibbon`_.
 
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
@@ -306,11 +346,55 @@ Enhancements
      (`#6697 <https://github.com/scikit-learn/scikit-learn/pull/6697>`_) by
      `Raghav R V`_.
 
-   - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
-     with ``np.float32`` and ``np.float64`` input data without converting it.
-     This allows to reduce the memory consumption by using ``np.float32``.
-     (`#6846 <https://github.com/scikit-learn/scikit-learn/pull/6846>`_)
-     By `Sebastian Säger`_ and `YenChen Lin`_.
+   - Generalization of :func:`model_selection.cross_val_predict`.
+     One can pass method names such as `predict_proba` to be used in the cross
+     validation framework instead of the default `predict`.
+     By `Ori Ziv`_ and `Sears Merritt`_.
+
+   - The training scores and time taken for training followed by scoring for
+     each search candidate are now available at the ``cv_results_`` dict.
+     See :ref:`model_selection_changes` for more information.
+     (`#7324 <https://github.com/scikit-learn/scikit-learn/pull/7325>`)
+     By `Eugene Chen`_ and `Raghav RV`_.
+
+Metrics
+
+   - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
+     the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
+     (`#7239 <https://github.com/scikit-learn/scikit-learn/pull/7239/>`_)
+     by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
+
+   - Support sparse contingency matrices in cluster evaluation
+     (:mod:`metrics.cluster.supervised`) to scale to a large number of
+     clusters.
+     (`#7419 <https://github.com/scikit-learn/scikit-learn/pull/7419>_`)
+     By `Gregory Stupp`_ and `Joel Nothman`_.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
+     By `Jatin Shah`_ and `Raghav R V`_.
+
+   - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
+     By `Manoj Kumar`_.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.confusion_matrix`.
+     By `Bernardo Stein`_.
+
+Miscellaneous
+
+   - Added ``n_jobs`` parameter to :class:`feature_selection.RFECV` to compute
+     the score on the test folds in parallel. By `Manoj Kumar`_
+
+   - Codebase does not contain C/C++ cython generated files: they are
+     generated during build. Distribution packages will still contain generated
+     C/C++ files. By `Arthur Mensch`_.
+
+   - Reduce the memory usage for 32-bit float input arrays of
+     :func:`utils.sparse_func.mean_variance_axis` and
+     :func:`utils.sparse_func.incr_mean_variance_axis` by supporting cython
+     fused types. By `YenChen Lin`_.
+
+   - The :func:`ignore_warnings` now accept a category argument to ignore only
+     the warnings of a specified type. By `Thierry Guillemot`_.
 
    - Added parameter ``return_X_y`` and return type ``(data, target) : tuple`` option to
      :func:`load_iris` dataset
@@ -324,40 +408,6 @@ Enhancements
      `#7154 <https://github.com/scikit-learn/scikit-learn/pull/7154>`_ by
      `Manvendra Singh`_.
 
-   - :class:`preprocessing.RobustScaler` now accepts ``quantile_range`` parameter.
-     (`#5929 <https://github.com/scikit-learn/scikit-learn/pull/5929>`_)
-     By `Konstantin Podshumok`_.
-
-   - The memory footprint is reduced (sometimes greatly) for
-     :class:`ensemble.bagging.BaseBagging` and classes that inherit from it,
-     i.e, :class:`ensemble.BaggingClassifier`,
-     :class:`ensemble.BaggingRegressor`, and :class:`ensemble.IsolationForest`,
-     by dynamically generating attribute ``estimators_samples_`` only when it is
-     needed. By `David Staub`_.
-
-   - :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
-     now works with ``np.float32`` input data without converting it
-     into ``np.float64``. This allows to reduce the memory
-     consumption.
-     (`#6913 <https://github.com/scikit-learn/scikit-learn/pull/6913>`_)
-     By `YenChen Lin`_.
-
-   - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
-     the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
-     (`#7239 <https://github.com/scikit-learn/scikit-learn/pull/7239/>`_)
-     by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
-
-   - Added ``n_jobs`` and ``sample_weights`` parameters for
-     :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
-     (`#5805 <https://github.com/scikit-learn/scikit-learn/pull/5805>`_)
-     By `Ibraim Ganiev`_.
-
-   - Added support for substituting or disabling :class:`pipeline.Pipeline`
-     and :class:`pipeline.FeatureUnion` components using the ``set_params``
-     interface that powers :mod:`sklearn.grid_search`.
-     See :ref:`sphx_glr_plot_compare_reduction.py`. By `Joel Nothman`_ and
-     `Robert McGibbon`_.
-
    - Simplification of the ``clone`` function, deprecate support for estimators
      that modify parameters in ``__init__``.
      (`#5540 <https://github.com/scikit-learn/scikit-learn/pull/5540>`_)
@@ -370,68 +420,11 @@ Enhancements
      (`#7248 <https://github.com/scikit-learn/scikit-learn/pull/7248>`_)
      By `Andreas Müller`_.
 
-   - Support sparse contingency matrices in cluster evaluation
-     (:mod:`metrics.cluster.supervised`) to scale to a large number of
-     clusters.
-     (`#7419 <https://github.com/scikit-learn/scikit-learn/pull/7419>_`)
-     By `Gregory Stupp`_ and `Joel Nothman`_.
-
-   - Isotonic regression (:mod:`isotonic`) now uses a better algorithm to avoid
-     `O(n^2)` behavior in pathological cases, and is also generally faster
-     (`#6601 <https://github.com/scikit-learn/scikit-learn/pull/6691>`).
-     By `Antony Lee`_.
-
-   - :class:`semi_supervised.LabelPropagation` and :class:`semi_supervised.LabelSpreading`
-     now accept arbitrary kernel functions in addition to strings ``knn`` and ``rbf``.
-     (`#5762 <https://github.com/scikit-learn/scikit-learn/pull/5762>`_) By `Utkarsh Upadhyay`_.
-
-   - The training scores and time taken for training followed by scoring for
-     each search candidate are now available at the ``cv_results_`` dict.
-     See :ref:`model_selection_changes` for more information.
-     (`#7324 <https://github.com/scikit-learn/scikit-learn/pull/7325>`)
-     By `Eugene Chen`_ and `Raghav RV`_.
-
 
 Bug fixes
 .........
 
-    - :func:`model_selection.tests._search._check_param_grid` now works correctly with all types
-      that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
-      (Python 2.x).
-      (`#7323 <https://github.com/scikit-learn/scikit-learn/pull/7323>`_) by `Viacheslav Kovalevskyi`_.
-
-    - :class:`model_selection.StratifiedKFold` now raises error if all n_labels
-      for individual classes is less than n_folds.
-      (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
-
-    - :class:`decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
-      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
-
-    - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
-      In practice this is enough for obtaining a good approximation of the
-      true eigenvalues/vectors in the presence of noise. When `n_components` is
-      small (< .1 * min(X.shape)) `n_iter` is set to 7, unless the user specifies
-      a higher number. This improves precision with few components.
-      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
-
-    - :func:`utils.extmath.randomized_range_finder` is more numerically stable when many
-      power iterations are requested, since it applies LU normalization by default.
-      If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
-      Other normalization options are available: 'none', 'LU' and 'QR'.
-      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
-
-    - Whiten/non-whiten inconsistency between components of :class:`decomposition.PCA`
-      and :class:`decomposition.RandomizedPCA` (now factored into PCA, see the
-      New features) is fixed. `components_` are stored with no whitening.
-      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
-
-    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
-      Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
-
-    - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
-      occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
-      :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
+Trees and ensembles
 
     - Random forest, extra trees, decision trees and gradient boosting
       won't accept anymore ``min_samples_split=1`` as at least 2 samples
@@ -440,85 +433,6 @@ Bug fixes
     - :class:`ensemble.VotingClassifier` now raises ``NotFittedError`` if ``predict``,
       ``transform`` or ``predict_proba`` are called on the non-fitted estimator.
       by `Sebastian Raschka`_.
-
-    - Fixed bug in :class:`model_selection.StratifiedShuffleSplit`
-      where train and test sample could overlap in some edge cases,
-      see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
-      more details. By `Loic Esteve`_.
-
-    - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
-      :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
-      correct results. By `JPFrancoia`_
-
-    - Fixed incorrect gradient computation for ``loss='squared_epsilon_insensitive'`` in
-      :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor`
-      (`#6764 <https://github.com/scikit-learn/scikit-learn/pull/6764>`_). By `Wenhua Yang`_.
-
-    - Fix bug where expected and adjusted mutual information were incorrect if
-      cluster contingency cells exceeded ``2**16``. By `Joel Nothman`_.
-
-    - Fix bug in :class:`linear_model.LogisticRegressionCV` where
-      ``solver='liblinear'`` did not accept ``class_weights='balanced``.
-      (`#6817 <https://github.com/scikit-learn/scikit-learn/pull/6817>`_).
-      By `Tom Dupre la Tour`_.
-
-    - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
-      with them as parameters, could not be passed to :func:`base.clone`.
-      By `Loic Esteve`_.
-
-    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
-      occurred when there were outliers being labelled and a weight function
-      specified (`#6902
-      <https://github.com/scikit-learn/scikit-learn/issues/6902>`_).  By
-      `LeonieBorne <https://github.com/LeonieBorne>`_.
-
-    - :func:`metrics.pairwise.pairwise_distances` now converts arrays to
-      boolean arrays when required in scipy.spatial.distance.
-      (`#5460 <https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
-      By `Tom Dupre la Tour`_.
-
-    - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
-      (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
-      By `Ibraim Ganiev`_.
-
-    - Fix sparse input support in :func:`metrics.silhouette_score` as well as
-      example examples/text/document_clustering.py. By `YenChen Lin`_.
-
-    - :func:`preprocessing.data._transform_selected` now always passes a copy
-      of `X` to transform function when `copy=True` (`#7194
-      <https://github.com/scikit-learn/scikit-learn/issues/7194>`_). By `Caio
-      Oliveira <https://github.com/caioaao>`_.
-
-    - Fix :class:`linear_model.ElasticNet` sparse decision function to match
-      output with dense in the multioutput case.
-
-    - Fix in :class:`sklearn.model_selection.StratifiedShuffleSplit` to
-      return splits of size ``train_size`` and ``test_size`` in all cases
-      (`#6472 <https://github.com/scikit-learn/scikit-learn/pull/6472>`_).
-      By `Andreas Müller`_.
-
-    - :func:`metrics.roc_curve` and :func:`metrics.precision_recall_curve` no
-      longer round ``y_score`` values when creating ROC curves; this was causing
-      problems for users with very small differences in scores (`#7353
-      <https://github.com/scikit-learn/scikit-learn/pull/7353>`_).
-
-    - Fix incomplete ``predict_proba`` method delegation from
-      :class:`model_selection.GridSearchCV` to
-      :class:`linear_model.SGDClassifier` (`#7159
-      <https://github.com/scikit-learn/scikit-learn/pull/7159>`_)
-      by `Yichuan Liu <https://github.com/yl565>`_.
-
-    - Cross-validation of :class:`OneVsOneClassifier` and
-      :class:`OneVsRestClassifier` now works with precomputed kernels.
-      (`#7350 <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
-      By `Russell Smith`_.
-
-    - Fix bug in :func:`metrics.silhouette_score` in which clusters of
-      size 1 were incorrectly scored. They should get a score of 0.
-      By `Joel Nothman`_.
-
-    - Fix bug in :func:`metrics.silhouette_samples` so that it now works with
-      arbitrary labels, not just those ranging from 0 to n_clusters - 1.
 
     - Fix bug where :class:`ensemble.AdaBoostClassifier` and
       :class:`ensemble.AdaBoostRegressor` would perform poorly if the
@@ -534,22 +448,148 @@ Bug fixes
       and :class:`ensemble.AdaBoostRegressor` will now differ from previous
       versions. By `Joel Nothman`_.
 
+Linear, kernelized and related models
+
+    - Fixed incorrect gradient computation for ``loss='squared_epsilon_insensitive'`` in
+      :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor`
+      (`#6764 <https://github.com/scikit-learn/scikit-learn/pull/6764>`_). By `Wenhua Yang`_.
+
+    - Fix bug in :class:`linear_model.LogisticRegressionCV` where
+      ``solver='liblinear'`` did not accept ``class_weights='balanced``.
+      (`#6817 <https://github.com/scikit-learn/scikit-learn/pull/6817>`_).
+      By `Tom Dupre la Tour`_.
+
+    - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
+      occurred when there were outliers being labelled and a weight function
+      specified (`#6902
+      <https://github.com/scikit-learn/scikit-learn/issues/6902>`_).  By
+      `LeonieBorne <https://github.com/LeonieBorne>`_.
+
+    - Fix :class:`linear_model.ElasticNet` sparse decision function to match
+      output with dense in the multioutput case.
+
+Decomposition, manifold learning and clustering
+
+    - :class:`decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
+      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+
+    - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
+      In practice this is enough for obtaining a good approximation of the
+      true eigenvalues/vectors in the presence of noise. When `n_components` is
+      small (< .1 * min(X.shape)) `n_iter` is set to 7, unless the user specifies
+      a higher number. This improves precision with few components.
+      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
+
+    - Whiten/non-whiten inconsistency between components of :class:`decomposition.PCA`
+      and :class:`decomposition.RandomizedPCA` (now factored into PCA, see the
+      New features) is fixed. `components_` are stored with no whitening.
+      (`#5299 <https://github.com/scikit-learn/scikit-learn/pull/5299>`_) by `Giorgio Patrini`_.
+
+    - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
+      Laplacian matrix was incorrectly set to 1. (`#4995 <https://github.com/scikit-learn/scikit-learn/pull/4995>`_) By `Peter Fischer`_.
+
+    - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
+      occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
+      :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
+      and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
+
+    - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
+      :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
+      correct results. By `JPFrancoia`_
+
+Preprocessing and feature selection
+
+    - :func:`preprocessing.data._transform_selected` now always passes a copy
+      of `X` to transform function when `copy=True` (`#7194
+      <https://github.com/scikit-learn/scikit-learn/issues/7194>`_). By `Caio
+      Oliveira <https://github.com/caioaao>`_.
+
+Model evaluation and meta-estimators
+
+    - :class:`model_selection.StratifiedKFold` now raises error if all n_labels
+      for individual classes is less than n_folds.
+      (`#6182 <https://github.com/scikit-learn/scikit-learn/pull/6182>`_) by `Devashish Deshpande`_.
+
+    - Fixed bug in :class:`model_selection.StratifiedShuffleSplit`
+      where train and test sample could overlap in some edge cases,
+      see `#6121 <https://github.com/scikit-learn/scikit-learn/issues/6121>`_ for
+      more details. By `Loic Esteve`_.
+
+    - Fix in :class:`sklearn.model_selection.StratifiedShuffleSplit` to
+      return splits of size ``train_size`` and ``test_size`` in all cases
+      (`#6472 <https://github.com/scikit-learn/scikit-learn/pull/6472>`_).
+      By `Andreas Müller`_.
+
+    - Cross-validation of :class:`OneVsOneClassifier` and
+      :class:`OneVsRestClassifier` now works with precomputed kernels.
+      (`#7350 <https://github.com/scikit-learn/scikit-learn/pull/7350/>`_)
+      By `Russell Smith`_.
+
+    - Fix incomplete ``predict_proba`` method delegation from
+      :class:`model_selection.GridSearchCV` to
+      :class:`linear_model.SGDClassifier` (`#7159
+      <https://github.com/scikit-learn/scikit-learn/pull/7159>`_)
+      by `Yichuan Liu <https://github.com/yl565>`_.
+
+Metrics
+
+    - Fix bug in :func:`metrics.silhouette_score` in which clusters of
+      size 1 were incorrectly scored. They should get a score of 0.
+      By `Joel Nothman`_.
+
+    - Fix bug in :func:`metrics.silhouette_samples` so that it now works with
+      arbitrary labels, not just those ranging from 0 to n_clusters - 1.
+
+    - Fix bug where expected and adjusted mutual information were incorrect if
+      cluster contingency cells exceeded ``2**16``. By `Joel Nothman`_.
+
+    - :func:`metrics.pairwise.pairwise_distances` now converts arrays to
+      boolean arrays when required in ``scipy.spatial.distance``.
+      (`#5460 <https://github.com/scikit-learn/scikit-learn/pull/5460>`_)
+      By `Tom Dupre la Tour`_.
+
+    - Fix sparse input support in :func:`metrics.silhouette_score` as well as
+      example examples/text/document_clustering.py. By `YenChen Lin`_.
+
+    - :func:`metrics.roc_curve` and :func:`metrics.precision_recall_curve` no
+      longer round ``y_score`` values when creating ROC curves; this was causing
+      problems for users with very small differences in scores (`#7353
+      <https://github.com/scikit-learn/scikit-learn/pull/7353>`_).
+
+Miscellaneous
+
+    - :func:`model_selection.tests._search._check_param_grid` now works correctly with all types
+      that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
+      (Python 2.x).
+      (`#7323 <https://github.com/scikit-learn/scikit-learn/pull/7323>`_) by `Viacheslav Kovalevskyi`_.
+
+    - :func:`utils.extmath.randomized_range_finder` is more numerically stable when many
+      power iterations are requested, since it applies LU normalization by default.
+      If `n_iter<2` numerical issues are unlikely, thus no normalization is applied.
+      Other normalization options are available: 'none', 'LU' and 'QR'.
+      (`#5141 <https://github.com/scikit-learn/scikit-learn/pull/5141>`_) by `Giorgio Patrini`_.
+
+    - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
+      with them as parameters, could not be passed to :func:`base.clone`.
+      By `Loic Esteve`_.
+
+    - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
+      (`#7101 <https://github.com/scikit-learn/scikit-learn/pull/7101>`_)
+      By `Ibraim Ganiev`_.
+
 
 API changes summary
 -------------------
 
-   - The :mod:`sklearn.cross_validation`, :mod:`sklearn.grid_search` and
-     :mod:`sklearn.learning_curve` have been deprecated and the classes and
-     functions have been reorganized into the :mod:`sklearn.model_selection`
-     module. Ref :ref:`model_selection_changes` for more information.
-     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
-     `Raghav R V`_.
+Linear, kernelized and related models
 
    - ``residual_metric`` has been deprecated in :class:`linear_model.RANSACRegressor`.
      Use ``loss`` instead. By `Manoj Kumar`_.
 
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
+
+Decomposition, manifold learning and clustering
 
    - The old :class:`mixture.DPGMM` is deprecated in favor of the new
      :class:`mixture.BayesianGaussianMixture` (with the parameter
@@ -574,6 +614,15 @@ API changes summary
      faster than before and some of computational problems have been solved.
      (`#6666 <https://github.com/scikit-learn/scikit-learn/pull/6666>`_) by
      `Wei Xue`_ and `Thierry Guillemot`_.
+
+Model evaluation and meta-estimators
+
+   - The :mod:`sklearn.cross_validation`, :mod:`sklearn.grid_search` and
+     :mod:`sklearn.learning_curve` have been deprecated and the classes and
+     functions have been reorganized into the :mod:`sklearn.model_selection`
+     module. Ref :ref:`model_selection_changes` for more information.
+     (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
+     `Raghav R V`_.
 
    - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
      and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
