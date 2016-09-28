@@ -136,6 +136,19 @@ learn::
     <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
+    
+.. topic:: Loading from external datasets
+
+    scikit-learn works on any numeric data stored as a numpy array or a pandas DataFrame, 
+    and there are many different ways to load your data into a usable format depending on
+    the file type and the format of the file.
+    
+    Here are some recommended ways to load your data into a format usable by scikit-learn
+    You may want to read the `pandas IO documentation <http://pandas.pydata.org/pandas-docs/stable/io.html>` for loading data into a pandas DataFrame,
+    the `scipy IO documentation <http://docs.scipy.org/doc/scipy/reference/io.html>` for loading more computational data (such as matlab .mat) into 
+    a numpy array, or the general `numpy IO documentation <http://docs.scipy.org/doc/numpy/reference/routines.io.html>` for loading data into a numpy array.
+
+
 
 
 Learning and predicting
