@@ -232,14 +232,9 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scorers : string, callable or None, optional, default: None
-        A single string (see :ref:`_scoring_parameter`) or a callable
-        (see :ref:`_scoring`) to evaluate the predictions on the test set.
-
-        For evaluating multiple metrics, either give a list of (unique) strings
-        or a dict with names as keys and callables as values.
-
-        If None the estimator's default scorer, if available is used.
+    scorers : dict mapping scorer name to the callable
+        A dict mapping the scorer name to the scorer callable object / function
+        with signature ``scorer(estimator, X, y)``.
 
     train : array-like, shape (n_train_samples,)
         Indices of training samples.
@@ -643,9 +638,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
-        A single string (see :ref:`_scoring_parameter`) or a callablemodel evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        A single string (see :ref:`_scoring_parameter`) or a callable
+        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+
+        If None the estimator's default scorer, if available is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
