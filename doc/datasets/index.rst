@@ -254,6 +254,28 @@ features::
 
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
+.. _external_datasets:
+
+Loading from external datasets
+==============================
+
+scikit-learn works on any numeric data stored as a numpy array or a pandas DataFrame, 
+and there are many different ways to load your data into a usable format depending on
+the file type and the format of the file.
+    
+Here are some recommended ways to load your data into a format usable by scikit-learn
+You may want to read the `pandas IO documentation 
+<http://pandas.pydata.org/pandas-docs/stable/io.html>`_ 
+for loading data into a pandas DataFrame,
+the `scipy IO documentation <http://docs.scipy.org/doc/scipy/reference/io.html>`_ 
+for loading more computational data (such as matlab .mat) into a numpy array, or the
+general `numpy IO documentation <http://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
+for loading data into a numpy array.
+In addition, there are also the `load_svmlight_file 
+<http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_svmlight_file.html>`_ 
+and the `load_files 
+<http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_files.html>`_ 
+from scikit-learn.
 
 .. make sure everything is in a toc tree
 
