@@ -139,8 +139,7 @@ learn::
     
 .. topic:: Loading from external datasets
 
-    To load from an external dataset, please refer to 
-    `loading external datasets </doc/datasets/index.rst#loading-from-external-datasets>`_.
+    To load from an external dataset, please refer to :ref:`external_datasets <datasets>`
 
 Learning and predicting
 ------------------------
