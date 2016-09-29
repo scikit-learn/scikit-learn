@@ -452,6 +452,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def fit(self, X, y=None):
         """Does nothing: this transformer is stateless."""
         # triggers a parameter validation
+        if isinstance(X, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -798,11 +803,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
-        if isinstance(raw_documents, six.string_types):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
-
         self.fit_transform(raw_documents)
         return self
 
@@ -1329,11 +1329,6 @@ class TfidfVectorizer(CountVectorizer):
         -------
         self : TfidfVectorizer
         """
-        if isinstance(raw_documents, six.string_types):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
-
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -1354,11 +1349,6 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        if isinstance(raw_documents, six.string_types):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
-
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
         # X is already a transformed view of raw_documents so
@@ -1385,11 +1375,6 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        if isinstance(raw_documents, six.string_types):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
-
         check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
 
         X = super(TfidfVectorizer, self).transform(raw_documents)

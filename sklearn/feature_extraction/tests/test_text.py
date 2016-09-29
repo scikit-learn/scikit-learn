@@ -892,17 +892,6 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
 
 
-def test_countvectorizer_error():
-    # Ensure that string object is not given as input.
-    cv = CountVectorizer()
-    exception = ValueError
-    test_str = "hello world!"
-
-    assert_raises(exception, cv.fit_transform, test_str)
-    assert_raises(exception, cv.fit, test_str)
-    assert_raises(exception, cv.transform, test_str)
-
-
 def test_stop_words_removal():
     # Ensure that deleting the stop_words_ attribute doesn't affect transform
 
@@ -955,16 +944,6 @@ def test_hashingvectorizer_nan_in_docs():
     assert_raise_message(exception, message, func)
 
 
-def test_hashingvectorizer_error():
-    # Ensure that string object is not given as input.
-    hv = HashingVectorizer()
-    exception = ValueError
-    test_str = "hello world!"
-
-    assert_raises(exception, hv.fit_transform, test_str)
-    assert_raises(exception, hv.transform, test_str)
-
-
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
@@ -974,17 +953,6 @@ def test_tfidfvectorizer_binary():
     assert_array_equal(X.ravel(), [1, 1, 1, 0])
     X2 = v.transform(['hello world', 'hello hello']).toarray()
     assert_array_equal(X2.ravel(), [1, 1, 1, 0])
-
-
-def test_tfidvectorizer_error():
-    # Ensure that string object is not given as input.
-    tv = TfidfVectorizer()
-    exception = ValueError
-    test_str = "hello world!"
-
-    assert_raises(exception, tv.fit_transform, test_str)
-    assert_raises(exception, tv.fit, test_str)
-    assert_raises(exception, tv.transform, test_str)
 
 
 def test_tfidfvectorizer_export_idf():
@@ -999,3 +967,15 @@ def test_vectorizer_vocab_clone():
     vect_vocab.fit(ALL_FOOD_DOCS)
     vect_vocab_clone.fit(ALL_FOOD_DOCS)
     assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
+
+
+def test_vectorizer_string_object_as_input():
+    message = ("Iterable over raw text documents expected, "
+               "string object received.")
+    for vec in [CountVectorizer(), TfidfVectorizer(), HashingVectorizer()]:
+        assert_raise_message(
+            ValueError, message, vec.fit_transform, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.fit, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.transform, "hello world!")
