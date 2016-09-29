@@ -23,7 +23,7 @@ scikit_learn.egg-info/
 .coverage
 coverage
 *.py,cover
-.tags
+.tags*
 tags
 covtype.data.gz
 20news-18828/
