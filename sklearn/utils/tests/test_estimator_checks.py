@@ -1,10 +1,12 @@
 import scipy.sparse as sp
 import numpy as np
 import sys
+import inspect
 from sklearn.externals.six.moves import cStringIO as StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_raises_regex, assert_true
+from sklearn.utils.testing import (assert_raises_regex, assert_true,
+                                   SkipTest, all_estimators)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.ensemble import AdaBoostClassifier
@@ -107,3 +109,25 @@ def test_check_estimators_unfitted():
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
+
+
+def test_common():
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("Pandas not found")
+    X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+    y = pd.Series([1, 1, 1, 2, 2, 2])
+    weights = pd.Series([1,1,1,1,1,1])
+    for name, Estimator in all_estimators():
+        estimator = Estimator()
+        if 'sample_weight' in inspect.getargspec(estimator.fit)[0]:
+            try:
+                # default solver liblinear doesnt support sample_weight
+                if name == "LogisticRegression":
+                    Estimator(solver='lbfgs').fit(X,y, sample_weight=weights)
+                else:
+                    estimator.fit(X,y, sample_weight=weights)
+            except:
+                raise ValueError("%s estimator raises error if sample_weight "
+                                 "parameter is pandas Series type" %(name))

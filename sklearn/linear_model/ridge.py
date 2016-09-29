@@ -940,6 +940,9 @@ class _RidgeGCV(LinearModel):
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        ensure_min_samples=0)
 
         n_samples, n_features = X.shape
 
