@@ -12,22 +12,30 @@ fi
 
 DOC_REPO="scikit-learn.github.io"
 
-MSG="Pushing the docs for revision for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
+if [ "$CIRCLE_BRANCH" = "master" ]
+then
+	dir=dev
+else
+	# Strip off .X
+	dir="${CIRCLE_BRANCH::-2}"
+fi
+
+MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
 
 cd $HOME
 if [ ! -d $DOC_REPO ];
 then git clone "git@github.com:scikit-learn/"$DOC_REPO".git";
 fi
 cd $DOC_REPO
-git checkout master
-git reset --hard origin/master
-git rm -rf dev/ && rm -rf dev/
-cp -R $HOME/scikit-learn/doc/_build/html/stable dev
+git checkout $CIRCLE_BRANCH
+git reset --hard origin/$CIRCLE_BRANCH
+git rm -rf $dir/ && rm -rf $dir/
+cp -R $HOME/scikit-learn/doc/_build/html/stable $dir
 git config --global user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config --global user.name $USERNAME
 git config --global push.default matching
-git add -f dev/
-git commit -m "$MSG" dev
+git add -f $dir/
+git commit -m "$MSG" $dir
 git push
 
 echo $MSG 
