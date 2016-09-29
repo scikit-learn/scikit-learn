@@ -310,6 +310,33 @@ Here, the first ``predict()`` returns an integer array, since ``iris.target``
 (an integer array) was used in ``fit``. The second ``predict()`` returns a string
 array, since ``iris.target_names`` was for fitting.
 
+Similarly, when using `multiclass classifiers <http://scikit-learn.org/stable/modules/multiclass.html>`_,
+the format of the target data used for fitting determines whether multiclass or multilabel predictions will be returned::
+
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.multiclass import OneVsRestClassifier
+    >>> from sklearn.preprocessing import LabelBinarizer
+
+    >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
+    >>> y = [0, 0, 1, 1, 2]
+
+    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
+    >>> classif.fit(X, y).predict(X)
+    array([0, 0, 1, 1, 2])
+
+    >>> y = LabelBinarizer().fit_transform(y)
+    >>> classif.fit(X, y).predict(X)
+    array([[1, 0, 0],
+           [1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0],
+           [0, 0, 0]])
+
+In the first case, the target is fit on the multiclass labels provided by ``iris.target``.
+The ``predict()`` method therefore provides multiclass predictions. In the second case, the
+classification target is provided to the ``fit`` method as binary indicators via the
+:class:`LabelBinarizer <sklearn.preprocessing.LabelBinarizer>` . In this case ``predict()``
+returns a 2d array representing the corresponding multi-label predictions.
 
 Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
