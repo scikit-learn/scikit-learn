@@ -25,7 +25,7 @@ from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
-from ..metrics.scorer import check_scoring
+from ..metrics.scorer import check_scoring, check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -167,35 +167,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers = {}
-    if (isinstance(scoring, dict) and
-            np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U') and
-            all(map(callable, scoring.values()))):
-        for name, scorer in scoring.items():
-            # Validate for each scorer
-            scorers[name] = check_scoring(estimator, scoring=scorer)
-    elif isinstance(scoring, (list, tuple)):
-        if (np.asarray(scoring).dtype.kind not in ("S", "U") or
-                np.unique(scoring).shape[0] != len(scoring)):
-            raise ValueError("The list/tuple elements must be unique strings"
-                             " of predefined scorers. Got %s.\nHint: To"
-                             " evaluate on multiple custom score functions"
-                             ", use a dict mapping the score name to the"
-                             " callable scorers." % repr(scoring))
-        for scorer in scoring:
-            scorers[scorer] = check_scoring(estimator, scoring=scorer)
-    elif callable(scoring) or scoring is None:
-        scorers = {"score": check_scoring(estimator, scoring=scoring)}
-        # For returing a list instead of a dict
-        scoring = "score"
-    elif isinstance(scoring, str):
-        scorers = {scoring: check_scoring(estimator, scoring=scoring)}
-    else:
-        raise ValueError("scoring should either be a single string or callable"
-                         " for single metric evaluation or a list/tuple of"
-                         " strings or a dict of scorer name mapped to the"
-                         " callable for multiple metric evaluation. Got %s of"
-                         " type %s"% (repr(scoring), type(scoring)))
+    scorers = check_multimetric_scoring(estimator, scoring=scoring)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
