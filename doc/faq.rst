@@ -333,5 +333,5 @@ instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
 
 How can I load external datasets in python to use by sklearn?
-----------------------------------------------------
+-------------------------------------------------------------
 For loading external datasets, please refer to :ref:`loading external datasets <external_datasets>`
