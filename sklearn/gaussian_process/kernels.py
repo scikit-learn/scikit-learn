@@ -49,6 +49,8 @@ class Hyperparameter(namedtuple('Hyperparameter',
                                  'n_elements', 'fixed'))):
     """A kernel hyperparameter's specification in form of a namedtuple.
 
+    .. versionadded:: 0.18
+
     Attributes
     ----------
     name : string
@@ -76,6 +78,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
         Whether the value of this hyperparameter is fixed, i.e., cannot be
         changed during hyperparameter tuning. If None is passed, the "fixed" is
         derived based on the given bounds.
+
     """
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
@@ -114,7 +117,10 @@ class Hyperparameter(namedtuple('Hyperparameter',
 
 
 class Kernel(six.with_metaclass(ABCMeta)):
-    """Base class for all kernels."""
+    """Base class for all kernels.
+
+    .. versionadded:: 0.18
+    """
 
     def get_params(self, deep=True):
         """Get parameters of this kernel.
@@ -349,7 +355,10 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
 
 class NormalizedKernelMixin(object):
-    """Mixin for kernels which are normalized: k(X, X)=1."""
+    """Mixin for kernels which are normalized: k(X, X)=1.
+
+    .. versionadded:: 0.18
+    """
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -372,7 +381,10 @@ class NormalizedKernelMixin(object):
 
 
 class StationaryKernelMixin(object):
-    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y)."""
+    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
+
+    .. versionadded:: 0.18
+    """
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
@@ -380,7 +392,10 @@ class StationaryKernelMixin(object):
 
 
 class CompoundKernel(Kernel):
-    """Kernel which is composed of a set of other kernels."""
+    """Kernel which is composed of a set of other kernels.
+
+    .. versionadded:: 0.18
+    """
 
     def __init__(self, kernels):
         self.kernels = kernels
@@ -513,7 +528,10 @@ class CompoundKernel(Kernel):
 
 
 class KernelOperator(Kernel):
-    """Base class for all kernel operators. """
+    """Base class for all kernel operators.
+
+    .. versionadded:: 0.18
+    """
 
     def __init__(self, k1, k2):
         self.k1 = k1
@@ -619,6 +637,8 @@ class Sum(KernelOperator):
     The resulting kernel is defined as
     k_sum(X, Y) = k1(X, Y) + k2(X, Y)
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     k1 : Kernel object
@@ -626,6 +646,7 @@ class Sum(KernelOperator):
 
     k2 : Kernel object
         The second base-kernel of the sum-kernel
+
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -690,6 +711,8 @@ class Product(KernelOperator):
     The resulting kernel is defined as
     k_prod(X, Y) = k1(X, Y) * k2(X, Y)
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     k1 : Kernel object
@@ -697,6 +720,7 @@ class Product(KernelOperator):
 
     k2 : Kernel object
         The second base-kernel of the product-kernel
+
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -761,6 +785,8 @@ class Exponentiation(Kernel):
 
     The resulting kernel is defined as
     k_exp(X, Y) = k(X, Y) ** exponent
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -920,6 +946,8 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
     k(x_1, x_2) = constant_value for all x_1, x_2
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     constant_value : float, default: 1.0
@@ -928,6 +956,7 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
     constant_value_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on constant_value
+
     """
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
@@ -1012,6 +1041,8 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
     k(x_1, x_2) = noise_level if x_1 == x_2 else 0
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     noise_level : float, default: 1.0
@@ -1019,6 +1050,7 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
     noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on noise_level
+
     """
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
@@ -1111,6 +1143,8 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     kernel as covariance function have mean square derivatives of all orders,
     and are thus very smooth.
 
+    .. versionadded:: 0.18
+
     Parameters
     -----------
     length_scale : float or array with shape (n_features,), default: 1.0
@@ -1120,6 +1154,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on length_scale
+
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1221,6 +1256,8 @@ class Matern(RBF):
     See Rasmussen and Williams 2006, pp84 for details regarding the
     different variants of the Matern kernel.
 
+    .. versionadded:: 0.18
+
     Parameters
     -----------
     length_scale : float or array with shape (n_features,), default: 1.0
@@ -1242,6 +1279,7 @@ class Matern(RBF):
         (appr. 10 times higher) since they require to evaluate the modified
         Bessel function. Furthermore, in contrast to l, nu is kept fixed to
         its initial value and not optimized.
+
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
@@ -1365,6 +1403,8 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha * length_scale^2))^-alpha
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     length_scale : float > 0, default: 1.0
@@ -1378,6 +1418,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     alpha_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on alpha
+
     """
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
@@ -1473,6 +1514,8 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     k(x_i, x_j) = exp(-2 sin(\pi / periodicity * d(x_i, x_j)) / length_scale)^2
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     length_scale : float > 0, default: 1.0
@@ -1486,6 +1529,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     periodicity_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on periodicity
+
     """
     def __init__(self, length_scale=1.0, periodicity=1.0,
                  length_scale_bounds=(1e-5, 1e5),
@@ -1587,6 +1631,8 @@ class DotProduct(Kernel):
 
     The DotProduct kernel is commonly combined with exponentiation.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     sigma_0 : float >= 0, default: 1.0
@@ -1595,6 +1641,7 @@ class DotProduct(Kernel):
 
     sigma_0_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on l
+
     """
 
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
@@ -1703,6 +1750,8 @@ class PairwiseKernel(Kernel):
           kernel parameters are set directly at initialization and are kept
           fixed.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     gamma: float >= 0, default: 1.0
@@ -1724,6 +1773,7 @@ class PairwiseKernel(Kernel):
     pairwise_kernels_kwargs : dict, default: None
         All entries of this dict (if any) are passed as keyword arguments to
         the pairwise kernel function.
+
     """
 
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",

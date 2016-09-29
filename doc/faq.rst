@@ -127,6 +127,7 @@ together with scikit-learn tools. You can implement your favorite algorithm in
 a scikit-learn compatible way, upload it to github and let us know. We will
 list it under :ref:`related_projects`.
 
+.. _selectiveness:
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
@@ -313,7 +314,7 @@ not close your pull request or discontinue your work solely because of
 this reason.
 
 How do I set a ``random_state`` for an entire execution?
-----------------------------------------------------
+---------------------------------------------------------
 
 For testing and replicability, it is often important to have the entire execution
 controlled by a single seed for the pseudo-random number generator used in
