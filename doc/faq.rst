@@ -331,3 +331,7 @@ However, a global random state is prone to modification by other code during
 execution. Thus, the only way to ensure replicability is to pass ``RandomState``
 instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
+
+How can I load external datasets in python to use by sklearn?
+----------------------------------------------------
+For loading external datasets, please refer to :ref:`loading external datasets <external_datasets>`
