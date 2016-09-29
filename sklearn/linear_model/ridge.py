@@ -938,8 +938,9 @@ class _RidgeGCV(LinearModel):
         -------
         self : Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
-                         multi_output=True, y_numeric=True)
+        X, y, sample_weight = check_X_y(X, y, ['csr', 'csc', 'coo'], 
+                            dtype=np.float64, multi_output=True, y_numeric=True, 
+                            sample_weight=sample_weight)
 
         n_samples, n_features = X.shape
 

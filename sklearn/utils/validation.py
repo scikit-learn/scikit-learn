@@ -21,6 +21,8 @@ from ..exceptions import DataConversionWarning as _DataConversionWarning
 from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
 from ..exceptions import NotFittedError as _NotFittedError
 
+NOT_SPECIFIED = object()
+
 
 @deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
             " module. It will not be available here from version 0.19")
@@ -434,7 +436,7 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
               copy=False, force_all_finite=True, ensure_2d=True,
               allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None):
+              warn_on_dtype=False, estimator=None, sample_weight=NOT_SPECIFIED):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
@@ -508,6 +510,10 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
+    sample_weight : nd-array, list
+        Ensures sample_weight is 1-d.
+        
+
     Returns
     -------
     X_converted : object
@@ -530,7 +536,16 @@ def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
 
     check_consistent_length(X, y)
 
-    return X, y
+    if sample_weight is NOT_SPECIFIED:
+        return X, y
+
+    elif sample_weight is None:
+        return X, y, sample_weight
+
+    else:
+        sample_weight = check_array(sample_weight, ensure_2d=False)
+        check_consistent_length(y, sample_weight)
+        return X, y, sample_weight
 
 
 def column_or_1d(y, warn=False):
