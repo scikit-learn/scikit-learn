@@ -789,7 +789,7 @@ entropy loss.
 
     .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
 
-    .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <http://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf>`_
+    .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
 Stochastic Gradient Descent - SGD
 =================================
