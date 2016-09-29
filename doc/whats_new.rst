@@ -16,7 +16,6 @@ Changelog
 New features
 ............
 
-
 Enhancements
 ............
 
@@ -27,6 +26,11 @@ Enhancements
      will be grown differently. (`#7441
      <https://github.com/scikit-learn/scikit-learn/pull/7441>`_) by `Nelson
      Liu`_.
+
+   - Added ``average`` parameter to perform weights averaging in
+     :class:`linear_model.PassiveAggressiveClassifier`. (`#4939
+     <https://github.com/scikit-learn/scikit-learn/pull/4939>`_) by `Andrea
+     Esuli`_.
 
 Bug fixes
 .........
