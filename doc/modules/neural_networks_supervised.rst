@@ -145,9 +145,9 @@ indices where the value is `1` represents the assigned classes of that sample::
            nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
            solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
            warm_start=False)
-    >>> clf.predict([1., 2.])
+    >>> clf.predict([[1., 2.]])
     array([[1, 1]])
-    >>> clf.predict([0., 0.])
+    >>> clf.predict([[0., 0.]])
     array([[0, 1]])
 
 See the examples below and the doc string of
