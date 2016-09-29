@@ -616,6 +616,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     -----
     See examples/linear_model/plot_sparse_recovery.py for an example.
     """
+    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     rng = check_random_state(random_state)
 
     if not (0 < scaling < 1):
