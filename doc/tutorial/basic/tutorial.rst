@@ -139,7 +139,7 @@ learn::
     
 .. topic:: Loading from external datasets
 
-    To load from an external dataset, please refer to :ref:`external_datasets <datasets>`
+    To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`
 
 Learning and predicting
 ------------------------
