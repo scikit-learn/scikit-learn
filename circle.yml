@@ -13,7 +13,7 @@ test:
     - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
 deployment:
  push:
-   branch: master
+   branch: /^master$|^[0-9]+\.[0-9]+\.X$/
    commands:
      - bash build_tools/circle/push_doc.sh
 general:
