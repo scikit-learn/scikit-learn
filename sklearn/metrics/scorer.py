@@ -282,6 +282,79 @@ def check_scoring(estimator, scoring=None, allow_none=False):
             "have a 'score' method. The estimator %r does not." % estimator)
 
 
+def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
+    """Check the scoring parameter in cases when multiple metric is allowed
+
+    Parameters
+    ----------
+
+    estimator : sklearn estimator instance
+        The estimator for which the scoring will be applied.
+
+    scoring : string, callable or None, optional, default: None
+        A single string (see :ref:`_scoring_parameter`) or a callable
+        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Single scorers returning a list/array of values may be wrapped
+        into multiple scorers that return one value each.
+
+        If ``None``, the estimator's default scorer, is used.
+        The return value in that case will be ``{'score': <default_scorer>}``.
+        If the estimator's default scorer is not available, a ``TypeError``
+        is raised.
+
+    allow_none : boolean, default: False
+        Whether to allow None even if estimator does not have a score method.
+
+    Returns
+    -------
+
+    scorers_dict : dict
+        A dict mapping all the scorer names to it's validated scorer.
+
+        The validated scorer could be None if ``allow_none`` is ``True``
+        (``{'score': None}``).
+
+        The scorer_name is set to ``'score'`` if the default scorer is
+        used.
+    """
+    scorers = {}
+    if (isinstance(scoring, dict) and
+            np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U') and
+            all(map(callable, scoring.values()))):
+        for name, scorer in scoring.items():
+            # Validate for each scorer
+            scorers[name] = check_scoring(estimator, scoring=scorer)
+    elif isinstance(scoring, (list, tuple)):
+        if (np.asarray(scoring).dtype.kind not in ("S", "U") or
+                np.unique(scoring).shape[0] != len(scoring)):
+            raise ValueError("The list/tuple elements must be unique strings"
+                             " of predefined scorers. Got %s.\nHint: To"
+                             " evaluate on multiple custom score functions"
+                             ", use a dict mapping the score name to the"
+                             " callable scorers." % repr(scoring))
+        for scorer in scoring:
+            scorers[scorer] = check_scoring(estimator, scoring=scorer)
+    elif callable(scoring) or scoring is None:
+        scorers = {"score": check_scoring(estimator, scoring=scoring,
+                                          allow_none=allow_none)}
+        # For returing a list instead of a dict
+        scoring = "score"
+    elif isinstance(scoring, str):
+        scorers = {scoring: check_scoring(estimator, scoring=scoring)}
+    else:
+        raise ValueError("scoring should either be a single string or callable"
+                         " for single metric evaluation or a list/tuple of"
+                         " strings or a dict of scorer name mapped to the"
+                         " callable for multiple metric evaluation. Got %s of"
+                         " type %s"% (repr(scoring), type(scoring)))
+    return scorers
+
+
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):
     """Make a scorer from a performance metric or loss function.
