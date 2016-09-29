@@ -273,7 +273,7 @@ general `numpy IO documentation <http://docs.scipy.org/doc/numpy/reference/routi
 for loading data into a numpy array.
 In addition, there are also the `load_svmlight_file 
 <http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_svmlight_file.html>`_ 
-and the `load_files 
+(as described above) and the `load_files 
 <http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_files.html>`_ 
 from scikit-learn.
 
