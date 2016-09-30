@@ -321,8 +321,13 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
 
         The scorer_name is set to ``'score'`` if the default scorer is
         used.
+
+    is_multimetric : bool
+        True if scorer is a list/tuple or dict of callbles
+        False if scorer is None/str/callable
     """
     scorers = {}
+    is_multimetric = True
     if (isinstance(scoring, dict) and
             np.asarray(list(scoring.keys())).dtype.kind in ('S', 'U') and
             all(map(callable, scoring.values()))):
@@ -340,11 +345,13 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
         for scorer in scoring:
             scorers[scorer] = check_scoring(estimator, scoring=scorer)
     elif callable(scoring) or scoring is None:
+        is_multimetric = False
         scorers = {"score": check_scoring(estimator, scoring=scoring,
                                           allow_none=allow_none)}
         # For returing a list instead of a dict
         scoring = "score"
     elif isinstance(scoring, str):
+        is_multimetric = False
         scorers = {scoring: check_scoring(estimator, scoring=scoring)}
     else:
         raise ValueError("scoring should either be a single string or callable"
@@ -352,7 +359,7 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
                          " strings or a dict of scorer name mapped to the"
                          " callable for multiple metric evaluation. Got %s of"
                          " type %s"% (repr(scoring), type(scoring)))
-    return scorers
+    return scorers, is_multimetric
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
