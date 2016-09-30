@@ -266,7 +266,7 @@ the file type and the format of the file.
 Here are some recommended ways to load standard columnar data into a 
 format usable by scikit-learn 
 
-* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ for loading into a pandas DataFrame
+* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ to load heterogeneously typed data from various file formats and database protocols that can slice and dice before conversion to numerical features in a numpy array.
 * `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common binary formats often used in scientific computing context such as .mat
 * `numpy/routines.io <http://docs.scipy.org/doc/numpy/reference/routines.io.html>`_ for standard loading of columnar data into numpy arrays
 * scikit-learn's load_svmlight_file: :ref:`load_svmlight_file`
