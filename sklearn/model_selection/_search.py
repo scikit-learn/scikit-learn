@@ -35,7 +35,7 @@ from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
-from ..metrics.scorer import check_scoring
+from ..metrics.scorer import check_multimetric_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -296,9 +296,11 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     test : ndarray, dtype int or bool
         Boolean mask or indices for test set.
 
-    scorer : callable or None.
-        If provided must be a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scorers : dict
+        dict which maps the scorer name to the scorer callable.
+
+        If provided, the scorer callable object / function must be with
+        signature ``scorer(estimator, X, y)``.
 
     verbose : int
         Verbosity level.
@@ -314,8 +316,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
 
     Returns
     -------
-    score : float
-        Score of this parameter setting on given training / test split.
+    scores : dict
+        A dict mapping the scorer name to it's score value for the given
+        parameter setting on given training / test split.
 
     parameters : dict
         The parameters that have been evaluated.
@@ -323,12 +326,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
-                                              test, verbose, parameters,
-                                              fit_params=fit_params,
-                                              return_n_test_samples=True,
-                                              error_score=error_score)
-    return score, parameters, n_samples_test
+    scores, n_samples_test, _ = _fit_and_score(estimator, X, y, scorers, train,
+                                               test, verbose, parameters,
+                                               fit_params=fit_params,
+                                               return_n_test_samples=True,
+                                               error_score=error_score)
+    return scores, parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
@@ -576,7 +579,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 fit_params = self.fit_params
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
-        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
+
+        self.scorer_ = check_multimetric_scoring(self.estimator,
+                                                  scoring=self.scoring)
+        multimetric = False if len(list(self.scorer_.keys())) == 1 else True
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
@@ -606,10 +612,30 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_scores, test_scores, test_sample_counts, fit_time,
-             score_time) = zip(*out)
+            (train_score_dicts, test_score_dicts, test_sample_counts,
+             fit_time, score_time) = zip(*out)
         else:
-            (test_scores, test_sample_counts, fit_time, score_time) = zip(*out)
+            (test_score_dicts, test_sample_counts,
+             fit_time, score_time) = zip(*out)
+
+        candidate_params = parameters[::n_splits]
+        n_candidates = len(candidate_params)
+
+        # The train_scores and test_scores will be a list of dict
+        # of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
+        # Convert that to a dict of array {'prec': np.array([0.1 ...]), ...}
+        def _to_dict_of_scores_array(scores):
+            # It will be reshaped into (n_candidates, n_splits) in _store()
+            np_empty = partial(np.empty, shape=((n_candidates * n_splits,)))
+            scores_arr = defaultdict(np_empty)
+            for i, score_dict_i in enumerate(scores):
+                for key in self.scorer_.keys():
+                    scores_arr[key][i] = score_dict_i[key]
+            return dict(scores_arr)
+
+        test_scores = _to_dict_of_scores_array(test_score_dicts)
+        if self.return_train_score:
+            train_scores = _to_dict_of_scores_array(train_score_dicts)
 
         results = dict()
 
@@ -620,6 +646,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                                               n_candidates).T
             if splits:
                 for split_i in range(n_splits):
+                    # Uses closure to reference the results
                     results["split%d_%s"
                             % (split_i, key_name)] = array[:, split_i]
 
@@ -635,21 +662,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
 
-        # Computed the (weighted) mean and std for test scores alone
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[::n_candidates],
-                                      dtype=np.int)
-
-        _store('test_score', test_scores, splits=True, rank=True,
-               weights=test_sample_counts if self.iid else None)
-        if self.return_train_score:
-            _store('train_score', train_scores, splits=True)
         _store('fit_time', fit_time)
         _store('score_time', score_time)
-
-        best_index = np.flatnonzero(results["rank_test_score"] == 1)[0]
-        best_parameters = candidate_params[best_index]
-
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
@@ -665,34 +679,62 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 param_results["param_%s" % name][cand_i] = value
 
         results.update(param_results)
-
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
 
+        self.best_index_ = dict()
+        if self.refit:
+            self.best_estimator_ = dict()
+
+        for scorer_name in self.scorer_.keys():
+            # Computed the (weighted) mean and std for test scores alone
+            # NOTE test_sample counts (weights) remain the same for all
+            # candidates
+            test_sample_counts = np.array(test_sample_counts[:n_candidates],
+                                          dtype=np.int)
+            _store('test_%s' % scorer_name, test_scores[scorer_name],
+                   splits=True, rank=True,
+                   weights=test_sample_counts if self.iid else None)
+            if self.return_train_score:
+                _store('train_%s' % scorer_name, train_scores[scorer_name],
+                       splits=True)
+
+            self.best_index_[scorer_name] = np.flatnonzero(
+                results["rank_test_%s" % scorer_name] == 1)[0]
+            # best_parameters for this scorer
+            best_parameters = candidate_params[self.best_index_[scorer_name]]
+
+            if self.refit:
+                # fit the best estimator using the entire dataset
+                # clone first to work around broken estimators
+                best_estimator = clone(base_estimator).set_params(
+                    **best_parameters)
+                if y is not None:
+                    best_estimator.fit(X, y, **self.fit_params)
+                else:
+                    best_estimator.fit(X, **self.fit_params)
+                self.best_estimator_[scorer_name] = best_estimator
+
         self.cv_results_ = results
-        self.best_index_ = best_index
         self.n_splits_ = n_splits
 
-        if self.refit:
-            # fit the best estimator using the entire dataset
-            # clone first to work around broken estimators
-            best_estimator = clone(base_estimator).set_params(
-                **best_parameters)
-            if y is not None:
-                best_estimator.fit(X, y, **fit_params)
-            else:
-                best_estimator.fit(X, **fit_params)
-            self.best_estimator_ = best_estimator
         return self
 
     @property
     def best_params_(self):
         check_is_fitted(self, 'cv_results_')
+        if isinstance(self.scorer_, dict):
+            return {key: self.cv_results_['params'][self.best_index_[key]]
+                    for key in self.scorer_.keys()}
         return self.cv_results_['params'][self.best_index_]
 
     @property
     def best_score_(self):
         check_is_fitted(self, 'cv_results_')
+        if isinstance(self.scorer_, dict):
+            return {key: self.cv_results_['mean_test_%s'
+                                          % key][self.best_index_[key]]
+                    for key in self.scorer_.keys()}
         return self.cv_results_['mean_test_score'][self.best_index_]
 
     @property
@@ -748,11 +790,18 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string, callable or None, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        If ``None``, the ``score`` method of the estimator is used.
+    scoring : string, callable or None, optional, default: None
+        A single string (see :ref:`_scoring_parameter`) or a callable
+        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Single scorers returning a list/array of values may be wrapped
+        into multiple scorers that return one value each.
+
+        If None the estimator's default scorer, if available is used.
 
     n_jobs : int, default=1
         Number of jobs to run in parallel.
@@ -886,24 +935,44 @@ class GridSearchCV(BaseSearchCV):
             'params'             : [{'kernel': 'poly', 'degree': 2}, ...],
             }
 
-        NOTE that the key ``'params'`` is used to store a list of parameter
+        NOTE
+
+        The key ``'params'`` is used to store a list of parameter
         settings dict for all the parameter candidates.
 
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-    best_estimator_ : estimator
+        For multiple metric evaluation, the scores for all the scorers are
+        available in the ``cv_results_`` dict at the keys ending with that
+        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` as shown
+        above. ('split0_test_precision', 'mean_train_precision' etc.)
+
+    best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
 
-    best_score_ : float
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict mapping scorer names to the estimator
+        that gave the best score for that scorer.
+
+    best_score_ : float or dict
         Score of best_estimator on the left out data.
 
-    best_params_ : dict
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict mapping scorer names to the best score
+        for that scorer.
+
+    best_params_ : dict or dict of dict
         Parameter setting that gave the best results on the hold out data.
 
-    best_index_ : int
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict of dict mapping scorer names to the
+        dict of the parameter setting that gave the best scores for that
+        scorer.
+
+    best_index_ : int or dict
         The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
@@ -911,9 +980,17 @@ class GridSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-    scorer_ : function
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict mapping scorer names to the
+        index which corresponds to the parameter setting that gave the best
+        scores for that scorer.
+
+    scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
+
+        For multimetric evaluation this parameter is a dict mapping scorer
+        names to the corresponding scorer functions.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
@@ -1117,24 +1194,44 @@ class RandomizedSearchCV(BaseSearchCV):
             'params' : [{'kernel' : 'rbf', 'gamma' : 0.1}, ...],
             }
 
-        NOTE that the key ``'params'`` is used to store a list of parameter
+        NOTE
+
+        The key ``'params'`` is used to store a list of parameter
         settings dict for all the parameter candidates.
 
         The ``mean_fit_time``, ``std_fit_time``, ``mean_score_time`` and
         ``std_score_time`` are all in seconds.
 
-    best_estimator_ : estimator
+        For multiple metric evaluation, the scores for all the scorers are
+        available in the ``cv_results_`` dict at the keys ending with that
+        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` as shown
+        above.
+
+    best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data. Not available if refit=False.
 
-    best_score_ : float
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict mapping scorer names to the estimator
+        that gave the best score for that scorer.
+
+    best_score_ : float or dict
         Score of best_estimator on the left out data.
 
-    best_params_ : dict
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict mapping scorer names to the best score
+        for that scorer.
+
+    best_params_ : dict or dict of dict
         Parameter setting that gave the best results on the hold out data.
 
-    best_index_ : int
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict of dict mapping scorer names to the
+        dict of the parameter setting that gave the best scores for that
+        scorer.
+
+    best_index_ : int or dict
         The index (of the ``cv_results_`` arrays) which corresponds to the best
         candidate parameter setting.
 
@@ -1142,9 +1239,17 @@ class RandomizedSearchCV(BaseSearchCV):
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
 
-    scorer_ : function
+        For multimetric evaluation (when the ``scoring`` parameter is a dict/
+        list), this parameter is a dict mapping scorer names to the
+        index which corresponds to the parameter setting that gave the best
+        scores for that scorer.
+
+    scorer_ : function or a dict
         Scorer function used on the held out data to choose the best
         parameters for the model.
+
+        For multimetric evaluation this parameter is a dict mapping scorer
+        names to the corresponding scorer functions.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
