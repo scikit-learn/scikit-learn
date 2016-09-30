@@ -35,12 +35,11 @@ regression is also supported.
     certain location.
 
   - **Multioutput-multiclass classification** and **multi-task classification**
-    means that a single estimator has to handle
-    several joint classification tasks. This is both a generalization
-    of the multi-label classification task, where the set of classification
-    problems is restricted to binary classification, 
-    as well as a generalization of the multi-class classification task. 
-    *The output format is a 2d numpy array or sparse matrix.*
+    means that a single estimator has to handle several joint classification
+    tasks. This is both a generalization of the multi-label classification
+    task, which only considers binary classification, as well as a
+    generalization of the multi-class classification task.  *The output format
+    is a 2d numpy array or sparse matrix.*
 
     The set of labels can be different for each output variable.
     For instance, a sample could be assigned "pear" for an output variable that
