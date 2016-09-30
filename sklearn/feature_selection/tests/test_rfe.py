@@ -182,6 +182,13 @@ def test_rfecv():
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
+    # Verifying that steps < 1 don't blow up.
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=.2, cv=5)
+    X_sparse = sparse.csr_matrix(X)
+    rfecv_sparse.fit(X_sparse, y)
+    X_r_sparse = rfecv_sparse.transform(X_sparse)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
+
 
 def test_rfecv_mockclassifier():
     generator = check_random_state(0)
