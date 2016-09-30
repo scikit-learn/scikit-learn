@@ -9,6 +9,13 @@ Release history
 Version 0.18
 ============
 
+**September 28, 2016**
+
+.. topic:: Last release with Python 2.6 support
+
+    Scikit-learn 0.18 will be the last version of scikit-learn to support Python 2.6.
+    Later versions of scikit-learn will require Python 2.7 or above.
+
 .. _model_selection_changes:
 
 Model Selection Enhancements and API Changes
