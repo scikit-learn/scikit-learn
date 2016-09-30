@@ -1140,3 +1140,13 @@ def test_stochastic_gradient_loss_param():
     assert_false(hasattr(clf, "predict_proba"))
     clf.fit(X, y)
     assert_false(hasattr(clf, "predict_proba"))
+
+
+def test_search_train_scores_set_to_false():
+    X = np.arange(6).reshape(6, -1)
+    y = [0, 0, 0, 1, 1, 1]
+    clf = LinearSVC(random_state=0)
+
+    gs = GridSearchCV(clf, param_grid={'C': [0.1, 0.2]},
+                      return_train_score=False)
+    gs.fit(X, y)
