@@ -20,13 +20,12 @@ New features
 Enhancements
 ............
 
-   - Edited criterion for leaf nodes in decision tree criterion by declaring a
-     node as a leaf if the weighted number of samples at the node is less than
-     2 * the minimum weight specified to be at a node. This makes growth more
-     efficient, but trees using parameters that modify the weight at each leaf
-     will be grown differently. (`#7441
-     <https://github.com/scikit-learn/scikit-learn/pull/7441>`_) by `Nelson
-     Liu`_.
+   - The ``min_weight_fraction_leaf`` constraint in tree construction is now
+     more efficient, taking a fast path to declare a node a leaf if its weight
+     is less than 2 * the minimum. Note that the constructed tree will be
+     different from previous versions where ``min_weight_fraction_leaf`` is
+     used. (`#7441 <https://github.com/scikit-learn/scikit-learn/pull/7441>`_)
+     by `Nelson Liu`_.
 
 Bug fixes
 .........
