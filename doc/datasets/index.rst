@@ -266,17 +266,20 @@ the file type and the format of the file.
 Here are some recommended ways to load standard columnar data into a 
 format usable by scikit-learn 
 
-* The pandas IO documentation: http://pandas.pydata.org/pandas-docs/stable/io.html
-* The scipy IO documentation: http://docs.scipy.org/doc/scipy/reference/io.html
-* The numpy IO documentation: http://docs.scipy.org/doc/numpy/reference/routines.io.html
+* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ for loading into a pandas DataFrame
+* `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common binary formats often used in scientific computing context such as .mat
+* `numpy/routines.io <http://docs.scipy.org/doc/numpy/reference/routines.io.html>`_ for standard loading of columnar data into numpy arrays
 * scikit-learn's load_svmlight_file: :ref:`load_svmlight_file`
 * scikit-learn's load_files: :ref:`load_files`
 
 For some miscellaneous data such as images, videos, and audio, you may wish to refer to
 
-* The Imageio API (video and images): http://imageio.readthedocs.io/en/latest/userapi.html
-* The scipy.io.wavfile.read: http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html
-
+* `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.
+  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
+  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
+  data from various image file formats
+* `Imageio <http://imageio.readthedocs.io/en/latest/userapi.html>`_ for loading images and videos into numpy arrays
+* `scipy.io.wavfile.read <http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ for reading WAV files into a numpy array
 
 Do note that sometimes, some :ref:`pre-processing <preprocessing>` 
 may be necessary before inputting the data to scikit-learn functions. 
