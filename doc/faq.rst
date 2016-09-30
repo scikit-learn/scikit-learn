@@ -77,24 +77,8 @@ integer values to encode the class membership of each sample in ``X``.
 
 To load data as numpy arrays you can use different libraries depending on the
 original data format:
-
-* `numpy.loadtxt
-  <http://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ to
-  load text files (such as CSV) assuming that all the columns have an
-  homogeneous data type (e.g. all numeric values).
-
-* `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common
-  binary formats often used in scientific computing context.
-
-* `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.
-  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
-  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
-  data from various image file formats.
-
-* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ to load
-  heterogeneously typed data from various file formats and database protocols
-  that can slice and dice before conversion to numerical features in a numpy
-  array.
+  
+For loading external datasets, please refer to :ref:`loading external datasets <external_datasets>`
 
 Note: if you manage your own numerical data it is recommended to use an
 optimized file format such as HDF5 to reduce data load times. Various libraries
@@ -331,7 +315,3 @@ However, a global random state is prone to modification by other code during
 execution. Thus, the only way to ensure replicability is to pass ``RandomState``
 instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
-
-How can I load external datasets in python to use by sklearn?
--------------------------------------------------------------
-For loading external datasets, please refer to :ref:`loading external datasets <external_datasets>`
