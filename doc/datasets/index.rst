@@ -262,20 +262,29 @@ Loading from external datasets
 scikit-learn works on any numeric data stored as a numpy array or a pandas DataFrame, 
 and there are many different ways to load your data into a usable format depending on
 the file type and the format of the file.
-    
-Here are some recommended ways to load your data into a format usable by scikit-learn
-You may want to read the `pandas IO documentation 
-<http://pandas.pydata.org/pandas-docs/stable/io.html>`_ 
-for loading data into a pandas DataFrame,
-the `scipy IO documentation <http://docs.scipy.org/doc/scipy/reference/io.html>`_ 
-for loading more computational data (such as matlab .mat) into a numpy array, or the
-general `numpy IO documentation <http://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
-for loading data into a numpy array.
-In addition, there are also the `load_svmlight_file 
-<http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_svmlight_file.html>`_ 
-(as described above) and the `load_files 
-<http://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_files.html>`_ 
-from scikit-learn.
+ 
+Here are some recommended ways to load standard columnar data into a 
+format usable by scikit-learn 
+
+* The pandas IO documentation: http://pandas.pydata.org/pandas-docs/stable/io.html
+* The scipy IO documentation: http://docs.scipy.org/doc/scipy/reference/io.html
+* The numpy IO documentation: http://docs.scipy.org/doc/numpy/reference/routines.io.html
+* scikit-learn's load_svmlight_file: :ref:`load_svmlight_file`
+* scikit-learn's load_files: :ref:`load_files`
+
+For some miscellaneous data such as images, videos, and audio, you may wish to refer to
+
+* The Imageio API (video and images): http://imageio.readthedocs.io/en/latest/userapi.html
+* The scipy.io.wavfile.read: http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html
+
+
+Do note that sometimes, some :ref:`pre-processing <preprocessing>` 
+may be necessary before inputting the data to scikit-learn functions. 
+In general, it is good practice to be familiar with what kinds of data and data formats 
+the function you wish to use will accept. For instance, the pandas DataFrame may contain
+information that must be converted before using it with scikit-learn. For instance, 
+it is generally true that categorical values such as strings must be one-hot encoded
+(:class:`OneHotEncoder`).
 
 .. make sure everything is in a toc tree
 
