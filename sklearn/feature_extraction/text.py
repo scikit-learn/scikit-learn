@@ -452,6 +452,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def fit(self, X, y=None):
         """Does nothing: this transformer is stateless."""
         # triggers a parameter validation
+        if isinstance(X, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -473,6 +478,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
             Document-term matrix.
 
         """
+        if isinstance(X, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         analyzer = self.build_analyzer()
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
@@ -815,6 +825,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         self._validate_vocabulary()
         max_df = self.max_df
         min_df = self.min_df
@@ -864,6 +879,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X : sparse matrix, [n_samples, n_features]
             Document-term matrix.
         """
+        if isinstance(raw_documents, six.string_types):
+            raise ValueError(
+                "Iterable over raw text documents expected, "
+                "string object received.")
+
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
 
