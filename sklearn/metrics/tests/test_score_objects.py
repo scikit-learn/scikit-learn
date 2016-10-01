@@ -221,6 +221,11 @@ def test_check_scoring_and_check_multimetric_scoring():
     # dict of names to callables mapping
     assert_raises_regexp(ValueError, error_message_regexp,
                          check_multimetric_scoring, estimator,
+                         scoring=(make_scorer(precision_score),
+                                  make_scorer(accuracy_score)))
+
+    assert_raises_regexp(ValueError, error_message_regexp,
+                         check_multimetric_scoring, estimator,
                          scoring=(make_scorer(precision_score),))
 
     # So should empty lists/tuples

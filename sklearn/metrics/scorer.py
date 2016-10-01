@@ -344,15 +344,10 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
                              " callable scorers." % repr(scoring))
         for scorer in scoring:
             scorers[scorer] = check_scoring(estimator, scoring=scorer)
-    elif callable(scoring) or scoring is None:
+    elif callable(scoring) or (scoring is None) or isinstance(scoring, str):
         is_multimetric = False
         scorers = {"score": check_scoring(estimator, scoring=scoring,
                                           allow_none=allow_none)}
-        # For returing a list instead of a dict
-        scoring = "score"
-    elif isinstance(scoring, str):
-        is_multimetric = False
-        scorers = {scoring: check_scoring(estimator, scoring=scoring)}
     else:
         raise ValueError("scoring should either be a single string or callable"
                          " for single metric evaluation or a list/tuple of"
