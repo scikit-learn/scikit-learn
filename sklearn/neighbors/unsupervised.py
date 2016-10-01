@@ -18,7 +18,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         Number of neighbors to use by default for :meth:`k_neighbors` queries.
 
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
