@@ -43,7 +43,12 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import f1_score
+from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
+from sklearn.metrics import r2_score
 
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -250,27 +255,33 @@ def test_cross_val_score():
 
 def test_cross_val_score_multiple_metric_invalid_scoring_param():
     X, y = make_classification(random_state=0)
-    estimator = LinearSVC(random_state=0)
-    estimator.fit(X, y)
+    estimator = MockClassifier()
 
     # Test the errors
+
+    error_message_regexp = ".*must be unique strings.*\n.*use a dict.*"
+
     # List/tuple of callables should raise a message advising users to use
     # dict of names to callables mapping
-    assert_raises_regex(ValueError, ".*must be unique strings.*use a dict.*",
+    assert_raises_regex(ValueError, error_message_regexp,
                         cross_val_score, estimator, X, y,
-                        scoring=(make_scorer()))
+                        scoring=(make_scorer(precision_score),
+                                 make_scorer(accuracy_score)))
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_val_score, estimator, X, y,
+                        scoring=(make_scorer(precision_score),))
 
     # So should empty lists/tuples
-    assert_raises_regex(ValueError, ".*must be unique strings.*use a dict.*",
+    assert_raises_regex(ValueError, error_message_regexp,
                         cross_val_score, estimator, X, y, scoring=())
 
     # So should duplicated entries
-    assert_raises_regex(ValueError, ".*must be unique strings.*use a dict.*",
+    assert_raises_regex(ValueError, error_message_regexp,
                         cross_val_score, estimator, X, y,
                         scoring=('f1_micro', 'f1_micro'))
 
-    error_message_regexp = (".*should be.*string or callable.*for single.*"
-                            ".*dict.*for multi.*")
+    error_message_regexp = (".*should either be.*string or callable.*for "
+                            "single.*.*dict.*for multi.*")
 
     # Empty dict should raise invalid scoring error
     assert_raises_regex(ValueError, error_message_regexp,
@@ -280,31 +291,44 @@ def test_cross_val_score_multiple_metric_invalid_scoring_param():
     assert_raises_regex(ValueError, error_message_regexp,
                         cross_val_score, estimator, X, y, scoring=5)
 
-    multivalued_scorer = make_scorer(precision_recall_fscore_support)
+    multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
-    # Scorers that return multiple values are not supported yet
-    assert_raises_regexp(ValueError, "scoring must return a number, got",
-                         cross_val_score, clf, X, y, cv=5,
-                         scoring=multivalued_scorer)
+    # Multiclass Scorers that return multiple values are not supported yet
+    assert_raises_regex(ValueError,
+                        "Can't handle mix of binary and continuous",
+                        cross_val_score, estimator, X, y,
+                        scoring=multiclass_scorer)
+    assert_raises_regex(ValueError,
+                        "Can't handle mix of binary and continuous",
+                        cross_val_score, estimator, X, y,
+                        scoring={"foo": multiclass_scorer})
 
-    # Scorers that return multiple values are not supported yet
-    assert_raises_regexp(ValueError, "scoring must return a number, got.*foo",
-                         cross_val_score, clf, X, y, cv=5,
-                         scoring={"foo": multivalued_scorer})
+    multivalued_scorer = make_scorer(confusion_matrix)
+
+    # Multiclass Scorers that return multiple values are not supported yet
+    assert_raises_regex(ValueError,
+                        "scoring must return a number, got",
+                        cross_val_score, SVC(), X, y,
+                        scoring=multivalued_scorer)
+    assert_raises_regex(ValueError,
+                        "scoring must return a number, got",
+                        cross_val_score, SVC(), X, y,
+                        scoring={"foo": multivalued_scorer})
+
 
 def test_cross_val_score_multiple_metric():
     # Regression
-    X, y = make_regression(n_samples=30, n_features=20, n_informative=5,
-                           random_state=0)
-    reg = Ridge()
+    X, y = make_regression(n_samples=30, random_state=0)
+    reg = Ridge(random_state=0)
 
     # List scoring
     scores = cross_val_score(reg, X, y, cv=5,
                              scoring=('r2', 'neg_mean_squared_error'))
-    expected_r2_scores = np.array([0.94, 0.97, 0.97, 0.99, 0.92])
+    expected_r2_scores = np.array([0.42, -0.45,  0.02,  0.3 , -0.07])
     assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
-    expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
-    assert_array_almost_equal(scores['neg_median_absolute_error'],
+    expected_neg_mse = np.array([-19998.7 , -18317.25, -28975.93,
+                                 -32681.15, -73933.1 ])
+    assert_array_almost_equal(scores['neg_mean_squared_error'],
                               expected_neg_mse, 2)
 
     # Dict scoring
@@ -313,15 +337,18 @@ def test_cross_val_score_multiple_metric():
                                 'r2': make_scorer(r2_score),
                                 'ev': make_scorer(explained_variance_score)})
     assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
-    expected_ev_scores = np.array([0.94, 0.97, 0.97, 0.99, 0.92])
+    expected_ev_scores = np.array([0.57,  0.66,  0.21,  0.35,  0.08])
     assert_array_almost_equal(scores['ev'], expected_ev_scores, 2)
 
     # Classification
+    X, y = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel='linear', random_state=0)
+
     precision = make_scorer(precision_score)
     accuracy = make_scorer(accuracy_score)
 
-    expected_acc = np.array([0.75,  0.9 ,  0.8 ,  0.65,  0.9 ])
-    expected_pre = np.array([0.66666667, 0.9, 0.8, 0.63636364, 1.])
+    expected_acc = np.array([1., 0.8333333, 0.8333333, 1., 1.])
+    expected_pre = np.array([ 1., 0.75, 0.75, 1., 1.])
     scores = cross_val_score(clf, X, y, cv=5,
                              scoring={'pre': precision, 'acc': accuracy})
 
