@@ -868,7 +868,7 @@ def test_countvectorizer_vocab_sets_when_pickling():
                             'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
         vocab_set = set(choice(vocab_words, size=5, replace=False,
-                        random_state=rng))
+                               random_state=rng))
         cv = CountVectorizer(vocabulary=vocab_set)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
@@ -967,3 +967,15 @@ def test_vectorizer_vocab_clone():
     vect_vocab.fit(ALL_FOOD_DOCS)
     vect_vocab_clone.fit(ALL_FOOD_DOCS)
     assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
+
+
+def test_vectorizer_string_object_as_input():
+    message = ("Iterable over raw text documents expected, "
+               "string object received.")
+    for vec in [CountVectorizer(), TfidfVectorizer(), HashingVectorizer()]:
+        assert_raise_message(
+            ValueError, message, vec.fit_transform, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.fit, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.transform, "hello world!")
