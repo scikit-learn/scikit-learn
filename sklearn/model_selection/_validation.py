@@ -182,9 +182,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                                               train, test, verbose, None,
                                               fit_params)
                       for train, test in cv.split(X, y, groups))
-    print(scores)
     scores = list(zip(*scores))[0]
-    print(scores)
 
     test_scores = _aggregate_score_dicts(scores)
 
