@@ -133,7 +133,12 @@ class VectorizerMixin(object):
         min_n, max_n = self.ngram_range
         if max_n != 1:
             original_tokens = tokens
-            tokens = []
+            if min_n == 1:
+                tokens = list(original_tokens)
+                min_n += 1
+            else:
+                tokens = []
+
             n_original_tokens = len(original_tokens)
 
             # bind method outside of loop to reduce overhead
@@ -153,8 +158,12 @@ class VectorizerMixin(object):
         text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
-        ngrams = []
         min_n, max_n = self.ngram_range
+        if min_n == 1:
+            ngrams = list(text_document)
+            min_n += 1
+        else:
+            ngrams = []
 
         # bind method outside of loop to reduce overhead
         ngrams_append = ngrams.append
