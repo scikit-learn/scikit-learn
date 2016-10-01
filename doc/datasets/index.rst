@@ -274,11 +274,12 @@ format usable by scikit-learn
 
 For some miscellaneous data such as images, videos, and audio, you may wish to refer to
 
+* `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ for loading images and videos to numpy arrays
 * `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.
   misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
   <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
   data from various image file formats
-* `Imageio <http://imageio.readthedocs.io/en/latest/userapi.html>`_ for loading images and videos into numpy arrays
+* `Imageio <http://imageio.readthedocs.io/en/latest/userapi.html>`_ for loading images and videos to numpy arrays
 * `scipy.io.wavfile.read <http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ for reading WAV files into a numpy array
 
 Do note that sometimes, some :ref:`pre-processing <preprocessing>` 
@@ -287,7 +288,7 @@ In general, it is good practice to be familiar with what kinds of data and data 
 the function you wish to use will accept. For instance, the pandas DataFrame may contain
 information that must be converted before using it with scikit-learn. For instance, 
 it is generally true that categorical values such as strings must be one-hot encoded
-(:class:`OneHotEncoder`).
+(:class:`sklearn.preprocessing.OneHotEncoder`).
 
 .. make sure everything is in a toc tree
 
