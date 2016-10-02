@@ -270,7 +270,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
+def fit_grid_point(X, y, estimator, parameters, train, test, scorers,
                    verbose, error_score='raise', **fit_params):
     """Run fit on one set of parameters.
 

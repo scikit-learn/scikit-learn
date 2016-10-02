@@ -29,7 +29,6 @@ from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..metrics.scorer import check_scoring, check_multimetric_scoring
-from ..metrics import precision_recall_fscore_support
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -289,8 +288,8 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose,
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     n_scorers = len(scorers.keys())
-    test_scores = dict(zip(scorers.keys(), [error_score,] * n_scorers))
-    train_scores = dict(zip(scorers.keys(), [error_score,] * n_scorers))
+    test_scores = dict(zip(scorers.keys(), [error_score, ] * n_scorers))
+    train_scores = dict(zip(scorers.keys(), [error_score, ] * n_scorers))
 
     try:
         if y_train is None:
@@ -1125,7 +1124,7 @@ def _aggregate_score_dicts(scores, shape=None, transpose=False):
     This is useful if the the scores are not ordered first by cv splits.
     """
     if shape is None:
-        shape=(len(scores),)
+        shape = (len(scores), )
     else:
         if np.product(shape) != len(scores):
             raise ValueError("Shape must conform to the size of the scores")

@@ -45,7 +45,6 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import f1_score
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -324,10 +323,10 @@ def test_cross_val_score_multiple_metric():
     # List scoring
     scores = cross_val_score(reg, X, y, cv=5,
                              scoring=('r2', 'neg_mean_squared_error'))
-    expected_r2_scores = np.array([0.42, -0.45,  0.02,  0.3 , -0.07])
+    expected_r2_scores = np.array([0.42, -0.45,  0.02,  0.3, -0.07])
     assert_array_almost_equal(scores['r2'], expected_r2_scores, 2)
-    expected_neg_mse = np.array([-19998.7 , -18317.25, -28975.93,
-                                 -32681.15, -73933.1 ])
+    expected_neg_mse = np.array([-19998.7, -18317.25, -28975.93,
+                                 -32681.15, -73933.1])
     assert_array_almost_equal(scores['neg_mean_squared_error'],
                               expected_neg_mse, 2)
 
@@ -348,7 +347,7 @@ def test_cross_val_score_multiple_metric():
     accuracy = make_scorer(accuracy_score)
 
     expected_acc = np.array([1., 0.8333333, 0.8333333, 1., 1.])
-    expected_pre = np.array([ 1., 0.75, 0.75, 1., 1.])
+    expected_pre = np.array([1., 0.75, 0.75, 1., 1.])
     scores = cross_val_score(clf, X, y, cv=5,
                              scoring={'pre': precision, 'acc': accuracy})
 

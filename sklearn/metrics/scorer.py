@@ -353,7 +353,7 @@ def check_multimetric_scoring(estimator, scoring=None, allow_none=False):
                          " for single metric evaluation or a list/tuple of"
                          " strings or a dict of scorer name mapped to the"
                          " callable for multiple metric evaluation. Got %s of"
-                         " type %s"% (repr(scoring), type(scoring)))
+                         " type %s" % (repr(scoring), type(scoring)))
     return scorers, is_multimetric
 
 
