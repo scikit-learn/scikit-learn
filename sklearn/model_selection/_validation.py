@@ -125,6 +125,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import confusion_matrix
+    >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
     >>> X = diabetes.data[:150]
     >>> y = diabetes.target[:150]
@@ -157,10 +160,10 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     >>> scores = cross_val_score(svm.fit(X, y), X, y, scoring=scoring)
 
-    >>> print(scores['tp'])
-    [12 13 15]
-    >>> print(scores['fn'])
-    [1 3 7]
+    >>> print(scores['tp'])                   # doctest: +NORMALIZE_WHITESPACE
+    [ 12. 13. 15.]
+    >>> print(scores['fn'])                   # doctest: +NORMALIZE_WHITESPACE
+    [ 5. 4. 1.]
 
     See Also
     ---------
