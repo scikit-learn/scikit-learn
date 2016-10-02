@@ -181,7 +181,9 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    scorers, _ = check_multimetric_scoring(*args, **kwargs)
+    scorers, is_multi = check_multimetric_scoring(*args, **kwargs)
+    # For all single metric use cases, it should register as not multimetric
+    assert_false(is_multi)
     if scorers is not None:
         scorers = list(scorers.values())
         assert_equal(len(scorers), 1)
