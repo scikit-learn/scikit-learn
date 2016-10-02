@@ -1135,6 +1135,9 @@ def _aggregate_score_dicts(scores, shape=None, transpose=False):
         for key in scores[0].keys():
             scores_arr[key][i] = score_dict_i[key]
 
-    return {scorer_name: (array.reshape(shape)
-                          if not transpose else array.reshape(shape).T)
-            for scorer_name, array in scores_arr.items()}
+    scores_arr_reshaped = dict()
+    for scorer_name, array in scores_arr.items():
+        scores_arr_reshaped[scorer_name] = (array.reshape(shape)
+                                            if not transpose
+                                            else array.reshape(shape).T)
+    return scores_arr_reshaped

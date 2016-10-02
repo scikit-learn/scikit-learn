@@ -738,18 +738,22 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @property
     def best_params_(self):
         check_is_fitted(self, 'cv_results_')
-        if isinstance(self.scorer_, dict):
-            return {key: self.cv_results_['params'][self.best_index_[key]]
-                    for key in self.scorer_.keys()}
+        if self.multimetric_:
+            ret = dict()
+            for key in self.scorer_.keys():
+                ret[key] = self.cv_results_['params'][self.best_index_[key]]
+            return ret
         return self.cv_results_['params'][self.best_index_]
 
     @property
     def best_score_(self):
         check_is_fitted(self, 'cv_results_')
-        if isinstance(self.scorer_, dict):
-            return {key: self.cv_results_['mean_test_%s'
-                                          % key][self.best_index_[key]]
-                    for key in self.scorer_.keys()}
+        if self.multimetric_:
+            ret = dict()
+            for key in self.scorer_.keys():
+                ret[key] = self.cv_results_['mean_test_%s'
+                                            % key][self.best_index_[key]]
+            return ret
         return self.cv_results_['mean_test_score'][self.best_index_]
 
     @property
