@@ -68,6 +68,19 @@ To benchmark different estimators for your case you can simply change the
 :ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
 
+.. topic:: Configuring Scikit-learn for reduced validation overhead
+
+    Scikit-learn does some validation on data that increases the overhead per
+    call to ``predict`` and similar functions. In particular, checking that
+    features are finite (not NaN or infinite) involves a full pass over the
+    data. If you ensure that your data is acceptable, you may suppress some
+    validation by setting the environment variable
+    ``SKLEARN_SUPPRESS_VALIDATION`` to a non-empty string before importing
+    scikit-learn, or configure it in Python with::
+
+      >>> import sklearn
+      >>> sklearn.SUPPRESS_VALIDATION = True
+
 Influence of the Number of Features
 -----------------------------------
 

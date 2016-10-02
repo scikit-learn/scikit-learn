@@ -29,13 +29,14 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
+    assert_all_finite,
 )
+import sklearn
 
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
-
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -469,3 +470,12 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def check_suppress_validation():
+    X = np.array([0, np.inf])
+    assert_raises(ValueError, assert_all_finite, X)
+    sklearn.SUPPRESS_VALIDATION = True
+    assert_all_finite(X)
+    sklearn.SUPPRESS_VALIDATION = False
+    assert_raises(ValueError, assert_all_finite, X)
