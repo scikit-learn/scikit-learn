@@ -79,7 +79,7 @@ you an estimate of the order of magnitude of the prediction latency.
     scikit-learn, or configure it in Python with::
 
       >>> import sklearn
-      >>> sklearn.SUPPRESS_VALIDATION = True
+      >>> sklearn.SUPPRESS_VALIDATION = True                 # doctest: +SKIP
 
 Influence of the Number of Features
 -----------------------------------
