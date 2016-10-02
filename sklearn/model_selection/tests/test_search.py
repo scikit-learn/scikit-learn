@@ -717,21 +717,26 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
 
 def check_cv_results_grid_scores_consistency(search):
     # TODO Remove in 0.20
-    cv_results = search.cv_results_
-    res_scores = np.vstack(list([cv_results["split%d_test_score" % i]
-                                 for i in range(search.n_splits_)])).T
-    res_means = cv_results["mean_test_score"]
-    res_params = cv_results["params"]
-    n_cand = len(res_params)
-    grid_scores = assert_warns(DeprecationWarning, getattr,
-                               search, 'grid_scores_')
-    assert_equal(len(grid_scores), n_cand)
-    # Check consistency of the structure of grid_scores
-    for i in range(n_cand):
-        assert_equal(grid_scores[i].parameters, res_params[i])
-        assert_array_equal(grid_scores[i].cv_validation_scores,
-                           res_scores[i, :])
-        assert_array_equal(grid_scores[i].mean_validation_score, res_means[i])
+    if search.multimetric_:
+        assert_raise_message(ValueError, "not available for multimetric",
+                             getattr, search, 'grid_scores_')
+    else:
+        cv_results = search.cv_results_
+        res_scores = np.vstack(list([cv_results["split%d_test_score" % i]
+                                     for i in range(search.n_splits_)])).T
+        res_means = cv_results["mean_test_score"]
+        res_params = cv_results["params"]
+        n_cand = len(res_params)
+        grid_scores = assert_warns(DeprecationWarning, getattr,
+                                   search, 'grid_scores_')
+        assert_equal(len(grid_scores), n_cand)
+        # Check consistency of the structure of grid_scores
+        for i in range(n_cand):
+            assert_equal(grid_scores[i].parameters, res_params[i])
+            assert_array_equal(grid_scores[i].cv_validation_scores,
+                               res_scores[i, :])
+            assert_array_equal(grid_scores[i].mean_validation_score,
+                               res_means[i])
 
 
 def test_grid_search_cv_results():

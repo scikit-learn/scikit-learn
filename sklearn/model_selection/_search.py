@@ -758,13 +758,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @property
     def grid_scores_(self):
+        check_is_fitted(self, 'cv_results_')
+        if self.multimetric_:
+            raise AttributeError("grid_scores_ attribute is not available for"
+                                 " multimetric evaluation.")
         warnings.warn(
             "The grid_scores_ attribute was deprecated in version 0.18"
             " in favor of the more elaborate cv_results_ attribute."
             " The grid_scores_ attribute will not be available from 0.20",
             DeprecationWarning)
 
-        check_is_fitted(self, 'cv_results_')
         grid_scores = list()
 
         for i, (params, mean, std) in enumerate(zip(
