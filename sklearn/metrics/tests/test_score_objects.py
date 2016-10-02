@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
@@ -22,6 +23,7 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
+from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
@@ -179,7 +181,7 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    scorers = check_multimetric_scoring(*args, **kwargs)
+    scorers, _ = check_multimetric_scoring(*args, **kwargs)
     if scorers is not None:
         scorers = list(scorers.values())
         assert_equal(len(scorers), 1)
@@ -194,24 +196,31 @@ def test_check_scoring_and_check_multimetric_scoring():
     check_scoring_validator_for_single_metric_usecases(
         check_multimetric_scoring_single_metric_wrapper)
 
-    estimator = EstimatorWithFit()
-
     # For multiple metric use cases
 
     # Make sure it works for the valid cases
 
-    scorers = check_multimetric_scoring(estimator, ["accuracy", "precision"])
-    assert_true(isinstance(scorers, dict))
-    assert_equal(sorted(scorers.keys()), ['accuracy', 'precision'])
-    assert_true(all([isinstance(scorer, _PredictScorer)
-                     for scorer in list(scorers.values())]))
+    for scoring in (('accuracy', 'precision'), ['precision', 'accuracy'],
+                    {'accuracy': make_scorer(accuracy_score),
+                     'precision': make_scorer(precision_score)}):
+        estimator = EstimatorWithFitAndPredict()
+        estimator.fit([[1]], [1])
+
+        scorers, is_multi = check_multimetric_scoring(estimator, scoring)
+        assert_true(is_multi)
+        assert_true(isinstance(scorers, dict))
+        assert_equal(sorted(scorers.keys()), ['accuracy', 'precision'])
+        assert_true(all([isinstance(scorer, _PredictScorer)
+                         for scorer in list(scorers.values())]))
+
+        assert_almost_equal(scorers['accuracy'](estimator, [[1]], [1]), 1.0)
+        assert_almost_equal(scorers['precision'](estimator, [[1]], [0]), 0.0)
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
-    assert_almost_equal(scorers['accuracy'](estimator, [[1]], [1]), 1.0)
-    assert_almost_equal(scorers['precision'](estimator, [[1]], [0]), 0.0)
-    scorer = check_multimetric_scoring(estimator, allow_none=True)
-    assert_equal(scorer, {'score': None})
+    scorers, is_multi = check_multimetric_scoring(estimator, allow_none=True)
+    assert_equal(scorers, {'score': None})
+    assert_false(is_multi)
 
     # Make sure it raises errors when scoring parameter is not valid.
 
