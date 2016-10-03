@@ -895,7 +895,8 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     return delta_H
 
 
-def _fit_multiplicative_update(X, W, H, beta_loss='frobenius', n_iter=200,
+def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
+                               max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
                                update_H=True, verbose=0):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
@@ -922,8 +923,11 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius', n_iter=200,
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits.
 
-    n_iter : integer, default: 200
+    max_iter : integer, default: 200
         Number of iterations.
+
+    tol : float, default: 1e-4
+        Tolerance of the stopping condition.
 
     l1_reg_W : double, default: 0.
         L1 regularization parameter for W.
@@ -952,6 +956,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius', n_iter=200,
     H : array, shape (n_components, n_features)
         Solution to the non-negative least squares problem.
 
+    n_iter : int
+        The number of iterations done by the algorithm.
+
     References
     ----------
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
@@ -967,9 +974,12 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius', n_iter=200,
     else:
         gamma = 1.
 
+    # used for the convergence criterion
+    previous_error = beta_divergence(X, W, H, beta_loss)
+
     start_time = time.time()
     H_sum, HHt, XHt = None, None, None
-    for epoch in range(n_iter):
+    for epoch in range(max_iter):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -986,12 +996,19 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius', n_iter=200,
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None
 
+        # convergence criterion
+        error = beta_divergence(X, W, H, beta_loss)
+        if previous_error - error < tol:
+            break
+        previous_error = error
+
     if verbose:
         end_time = time.time()
         print("Epoch %02d reached after %.3f seconds." %
               (epoch + 1, end_time - start_time))
 
-    return W, H
+    n_iter = epoch + 1
+    return W, H, n_iter
 
 
 def non_negative_factorization(X, W=None, H=None, n_components=None,
@@ -1090,7 +1107,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         fits. Used only in 'mu' solver.
 
     tol : float, default: 1e-4
-        Tolerance of the stopping condition. Not used in 'mu' solver.
+        Tolerance of the stopping condition.
 
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
@@ -1233,11 +1250,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                                shuffle=shuffle,
                                                random_state=random_state)
     elif solver == 'mu':
-        W, H = _fit_multiplicative_update(X, W, H, beta_loss, max_iter,
-                                          l1_reg_W, l1_reg_H, l2_reg_W,
-                                          l2_reg_H, update_H, verbose)
-        # 'mu' solver always does the maximum number of iteration
-        n_iter = max_iter
+        W, H, n_iter = _fit_multiplicative_update(X, W, H, beta_loss, max_iter,
+                                                  tol, l1_reg_W, l1_reg_H,
+                                                  l2_reg_W, l2_reg_H, update_H,
+                                                  verbose)
 
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
@@ -1328,7 +1344,7 @@ class NMF(BaseEstimator, TransformerMixin):
         fits. Used only in 'mu' solver.
 
     tol : float, default: 1e-4
-        Tolerance of the stopping condition. Not used in 'mu' solver.
+        Tolerance of the stopping condition.
 
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
