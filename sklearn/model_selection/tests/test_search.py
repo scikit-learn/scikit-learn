@@ -949,12 +949,12 @@ def test_grid_search_cv_results_multimetric():
     n_grid_points = 6
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
-    scoring=('precision', 'recall')
+    scoring = ('precision', 'recall')
     grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
                                param_grid=params, scoring=scoring)
     grid_search.fit(X, y)
-    scoring={'precision': make_scorer(precision_score),
-             'recall': make_scorer(recall_score)}
+    scoring = {'precision': make_scorer(precision_score),
+               'recall': make_scorer(recall_score)}
     grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
                                    param_grid=params, scoring=scoring)
     grid_search_iid.fit(X, y)
@@ -981,8 +981,8 @@ def test_grid_search_cv_results_multimetric():
     for search, iid in zip((grid_search, grid_search_iid), (False, True)):
         assert_equal(iid, search.iid)
         assert_true(search.multimetric_)
-        checked_scoring={'precision': make_scorer(precision_score),
-                         'recall': make_scorer(recall_score)}
+        checked_scoring = {'precision': make_scorer(precision_score),
+                           'recall': make_scorer(recall_score)}
         assert_equal(search.scorer_.keys(), checked_scoring.keys())
 
         # search.predict will not work when multimetric_ is True
@@ -1031,15 +1031,15 @@ def test_random_search_cv_results_multimetric():
     # random_search alone should not depend on randomization.
     n_splits = 3
     n_search_iter = 30
-    scoring=('precision', 'recall')
+    scoring = ('precision', 'recall')
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
     random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                        cv=n_splits, iid=False,
                                        param_distributions=params,
                                        scoring=scoring)
     random_search.fit(X, y)
-    scoring={'precision': make_scorer(precision_score),
-             'recall': make_scorer(recall_score)}
+    scoring = {'precision': make_scorer(precision_score),
+               'recall': make_scorer(recall_score)}
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
                                            cv=n_splits, iid=True,
                                            param_distributions=params,
@@ -1102,12 +1102,12 @@ def test_search_delegated_methods_in_mulimetric_setting():
     X, y = make_classification(random_state=0)
     params = {'C': [0.1, 0.2]}
 
-    scoring=('precision', 'recall')
+    scoring = ('precision', 'recall')
     grid_search = GridSearchCV(SVC(), iid=False,
                                param_grid=params, scoring=scoring)
     grid_search.fit(X, y)
-    scoring={'precision': make_scorer(precision_score),
-             'recall': make_scorer(recall_score)}
+    scoring = {'precision': make_scorer(precision_score),
+               'recall': make_scorer(recall_score)}
     random_search_iid = RandomizedSearchCV(SVC(), n_iter=2, iid=True,
                                            param_distributions=params,
                                            scoring=scoring)
