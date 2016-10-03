@@ -42,7 +42,6 @@ ul.horizontal, ul.horizontal li {
 div.header {
     /* for the logo to correctly expand when showing results
        but remain cut when not */
-       height: 60px;
 }
 
 
@@ -107,6 +106,9 @@ div.navbar div.nav-icon {
 }
 /* Nav bar collapses for mobile phones and shows the hamburger */
 @media screen and (max-width: 680px) {
+    div.header {
+      height: 60px;
+    }
     div.navbar div.nav-icon {
         position: absolute;
         display: inline-block;
