@@ -405,11 +405,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    non_negative : boolean or 'total', default=False
-        Whether output matrices should contain non-negative values only;
-        effectively calls abs on the matrix prior to returning it.
-        When True, output values can be interpreted as frequencies.
-        When False, output values will have expected value zero.
+    non_negative : boolean or 'total', optional, default=False
+        When True or False, an alternating sign is added to the counts as to
+        approximately conserve the inner product in the hashed space.
+        When True, an absolute value is additionally applied to the result
+        prior to returning it.
+        When 'total' all counts are positive which disables collision handling.
 
     See also
     --------

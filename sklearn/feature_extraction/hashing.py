@@ -53,11 +53,12 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-    non_negative : boolean, optional, default False
-        Whether output matrices should contain non-negative values only;
-        effectively calls abs on the matrix prior to returning it.
-        When True, output values can be interpreted as frequencies.
-        When False, output values will have expected value zero.
+    non_negative : boolean or 'total', optional, default False
+        When True or False, an alternating sign is added to the counts as to
+        approximately conserve the inner product in the hashed space.
+        When True, an absolute value is additionally applied to the result
+        prior to returning it.
+        When 'total' all counts are positive which disables collision handling.
 
     Examples
     --------
@@ -151,6 +152,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
-        if self.non_negative is True: # if non_negative == 'total', X > 0 anyway
+        if self.non_negative is True:  # if non_negative == 'total', X>0 anyway
             np.abs(X.data, X.data)
         return X
