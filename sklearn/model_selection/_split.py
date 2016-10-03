@@ -432,6 +432,12 @@ class GroupKFold(_BaseKFold):
     ----------
     n_splits : int, default=3
         Number of folds. Must be at least 2.
+    shuffle : boolean, optional
+        Whether to shuffle the data before splitting into batches.
+
+    random_state : None, int or RandomState
+        When shuffle=True, pseudo-random number generator state used for
+        shuffling. If None, use default numpy RNG for shuffling.
 
     Examples
     --------
@@ -443,7 +449,7 @@ class GroupKFold(_BaseKFold):
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
-    GroupKFold(n_splits=2)
+    GroupKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in group_kfold.split(X, y, groups):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
@@ -465,9 +471,8 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits=3):
-        super(GroupKFold, self).__init__(n_splits, shuffle=False,
-                                         random_state=None)
+    def __init__(self, n_splits=3, shuffle=False, random_state=None):
+        super(GroupKFold, self).__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
@@ -484,8 +489,13 @@ class GroupKFold(_BaseKFold):
         # Weight groups by their number of occurrences
         n_samples_per_group = np.bincount(groups)
 
-        # Distribute the most frequent groups first
-        indices = np.argsort(n_samples_per_group)[::-1]
+        if self.shuffle:
+            indices = np.arange(len(n_samples_per_group))
+            check_random_state(self.random_state).shuffle(indices)
+        else:
+            # Distribute the most frequent groups first
+            indices = np.argsort(n_samples_per_group)[::-1]
+
         n_samples_per_group = n_samples_per_group[indices]
 
         # Total weight of each fold

@@ -975,6 +975,16 @@ def test_group_kfold():
         assert_greater_equal(tolerance,
                              abs(sum(folds == i) - ideal_n_groups_per_fold))
 
+    # Tests GroupKFold with shuffle
+    lkf_shuffle = GroupKFold(n_splits=n_splits, shuffle=True, random_state=1)
+    folds = np.zeros(n_samples)
+    for i, (_, test) in enumerate(lkf_shuffle.split(X, y, groups)):
+        folds[test] = i
+
+    for i in np.unique(folds):
+        assert_greater_equal(tolerance,
+                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
@@ -991,7 +1001,6 @@ def test_group_kfold():
     X = y = np.ones(len(groups))
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          next, GroupKFold(n_splits=3).split(X, y, groups))
-
 
 def test_time_series_cv():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
