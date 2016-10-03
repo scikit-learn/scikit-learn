@@ -55,6 +55,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
 from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
+from sklearn.metrics import recall_score
+from sklearn.metrics import precision_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
@@ -695,8 +697,9 @@ def test_param_sampler():
         assert_equal([x for x in sampler], [x for x in sampler])
 
 
-def check_cv_results_array_types(cv_results, param_keys, score_keys):
+def check_cv_results_array_types(search, param_keys, score_keys):
     # Check if the search `cv_results`'s array are of correct types
+    cv_results = search.cv_results_
     assert_true(all(isinstance(cv_results[param], np.ma.MaskedArray)
                     for param in param_keys))
     assert_true(all(cv_results[key].dtype == object for key in param_keys))
@@ -704,7 +707,11 @@ def check_cv_results_array_types(cv_results, param_keys, score_keys):
                      for key in score_keys))
     assert_true(all(cv_results[key].dtype == np.float64
                     for key in score_keys if not key.startswith('rank')))
-    assert_true(cv_results['rank_test_score'].dtype == np.int32)
+
+    score_keys = search.scorer_.keys() if search.multimetric_ else ('score',)
+
+    for key in score_keys:
+            assert_true(cv_results['rank_test_%s' % key].dtype == np.int32)
 
 
 def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
@@ -718,7 +725,7 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
 def check_cv_results_grid_scores_consistency(search):
     # TODO Remove in 0.20
     if search.multimetric_:
-        assert_raise_message(ValueError, "not available for multimetric",
+        assert_raise_message(AttributeError, "not available for multimetric",
                              getattr, search, 'grid_scores_')
     else:
         cv_results = search.cv_results_
@@ -777,7 +784,7 @@ def test_grid_search_cv_results():
                     if 'time' not in k and
                     k is not 'rank_test_score')
         # Check cv_results structure
-        check_cv_results_array_types(cv_results, param_keys, score_keys)
+        check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
         # Check masking
         cv_results = grid_search.cv_results_
@@ -832,7 +839,7 @@ def test_random_search_cv_results():
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
         # Check results structure
-        check_cv_results_array_types(cv_results, param_keys, score_keys)
+        check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
         # For random_search, all the param array vals should be unmasked
         assert_false(any(cv_results['param_C'].mask) or
@@ -932,6 +939,186 @@ def test_search_iid_param():
         # i.i.d. or not
         assert_almost_equal(train_mean, 1)
         assert_almost_equal(train_std, 0)
+
+
+def test_grid_search_cv_results_multimetric():
+    X, y = make_classification(n_samples=50, n_features=4,
+                               random_state=42)
+
+    n_splits = 3
+    n_grid_points = 6
+    params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
+              dict(kernel=['poly', ], degree=[1, 2])]
+    scoring=('precision', 'recall')
+    grid_search = GridSearchCV(SVC(), cv=n_splits, iid=False,
+                               param_grid=params, scoring=scoring)
+    grid_search.fit(X, y)
+    scoring={'precision': make_scorer(precision_score),
+             'recall': make_scorer(recall_score)}
+    grid_search_iid = GridSearchCV(SVC(), cv=n_splits, iid=True,
+                                   param_grid=params, scoring=scoring)
+    grid_search_iid.fit(X, y)
+
+    param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
+    score_keys = ('mean_test_precision', 'mean_train_precision',
+                  'rank_test_precision',
+                  'split0_test_precision', 'split1_test_precision',
+                  'split2_test_precision',
+                  'split0_train_precision', 'split1_train_precision',
+                  'split2_train_precision',
+                  'mean_test_recall', 'mean_train_recall',
+                  'rank_test_recall',
+                  'split0_test_recall', 'split1_test_recall',
+                  'split2_test_recall',
+                  'split0_train_recall', 'split1_train_recall',
+                  'split2_train_recall',
+                  'std_test_precision', 'std_train_precision',
+                  'std_test_recall', 'std_train_recall',
+                  'mean_fit_time', 'std_fit_time',
+                  'mean_score_time', 'std_score_time')
+    n_candidates = n_grid_points
+
+    for search, iid in zip((grid_search, grid_search_iid), (False, True)):
+        assert_equal(iid, search.iid)
+        assert_true(search.multimetric_)
+        checked_scoring={'precision': make_scorer(precision_score),
+                         'recall': make_scorer(recall_score)}
+        assert_equal(search.scorer_.keys(), checked_scoring.keys())
+
+        # search.predict will not work when multimetric_ is True
+        # (More than one best_estimator_ to predict using)
+        est = LinearSVC(random_state=0).fit(X, y)
+        assert_almost_equal(search.scorer_['precision'](est, X, y),
+                            checked_scoring['precision'](est, X, y))
+        assert_almost_equal(search.scorer_['recall'](est, X, y),
+                            checked_scoring['recall'](est, X, y))
+        cv_results = search.cv_results_
+
+        # Check if score and timing are reasonable
+        assert_true(all(cv_results['rank_test_recall'] >= 1))
+        assert_true(all(cv_results['rank_test_precision'] >= 1))
+        assert_true(all(cv_results[k] >= 0) for k in score_keys
+                    if 'rank' not in k)
+        assert_true(all(cv_results[k] <= 1) for k in score_keys
+                    if ('time' not in k) and ('rank' not in k))
+        # Check cv_results structure
+        check_cv_results_array_types(search, param_keys, score_keys)
+        check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
+        # Check masking
+        cv_results = grid_search.cv_results_
+        n_candidates = len(grid_search.cv_results_['params'])
+        assert_true(all((cv_results['param_C'].mask[i] and
+                         cv_results['param_gamma'].mask[i] and
+                         not cv_results['param_degree'].mask[i])
+                        for i in range(n_candidates)
+                        if cv_results['param_kernel'][i] == 'linear'))
+        assert_true(all((not cv_results['param_C'].mask[i] and
+                         not cv_results['param_gamma'].mask[i] and
+                         cv_results['param_degree'].mask[i])
+                        for i in range(n_candidates)
+                        if cv_results['param_kernel'][i] == 'rbf'))
+        check_cv_results_grid_scores_consistency(search)
+
+
+def test_random_search_cv_results_multimetric():
+    # Make a dataset with a lot of noise to get various kind of prediction
+    # errors across CV folds and parameter settings
+    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
+                               random_state=0)
+
+    # scipy.stats dists now supports `seed` but we still support scipy 0.12
+    # which doesn't support the seed. Hence the assertions in the test for
+    # random_search alone should not depend on randomization.
+    n_splits = 3
+    n_search_iter = 30
+    scoring=('precision', 'recall')
+    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
+    random_search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                       cv=n_splits, iid=False,
+                                       param_distributions=params,
+                                       scoring=scoring)
+    random_search.fit(X, y)
+    scoring={'precision': make_scorer(precision_score),
+             'recall': make_scorer(recall_score)}
+    random_search_iid = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                           cv=n_splits, iid=True,
+                                           param_distributions=params,
+                                           scoring=scoring)
+    random_search_iid.fit(X, y)
+
+    param_keys = ('param_C', 'param_gamma')
+    score_keys = ('mean_test_precision', 'mean_train_precision',
+                  'rank_test_precision',
+                  'split0_test_precision', 'split1_test_precision',
+                  'split2_test_precision',
+                  'split0_train_precision', 'split1_train_precision',
+                  'split2_train_precision',
+                  'mean_test_recall', 'mean_train_recall',
+                  'rank_test_recall',
+                  'split0_test_recall', 'split1_test_recall',
+                  'split2_test_recall',
+                  'split0_train_recall', 'split1_train_recall',
+                  'split2_train_recall',
+                  'std_test_precision', 'std_train_precision',
+                  'std_test_recall', 'std_train_recall',
+                  'mean_fit_time', 'std_fit_time',
+                  'mean_score_time', 'std_score_time')
+    n_cand = n_search_iter
+
+    for search, iid in zip((random_search, random_search_iid), (False, True)):
+        assert_equal(iid, search.iid)
+        checked_scoring = {'precision': make_scorer(precision_score),
+                           'recall': make_scorer(recall_score)}
+        assert_equal(search.scorer_.keys(), checked_scoring.keys())
+
+        # search.predict will not work when multimetric_ is True
+        # (More than one best_estimator_ to predict using)
+        est = LinearSVC(random_state=0).fit(X, y)
+        assert_almost_equal(search.scorer_['precision'](est, X, y),
+                            checked_scoring['precision'](est, X, y))
+        assert_almost_equal(search.scorer_['recall'](est, X, y),
+                            checked_scoring['recall'](est, X, y))
+        assert_true(search.multimetric_)
+        cv_results = search.cv_results_
+
+        # Check if score and timing are reasonable
+        assert_true(all(cv_results['rank_test_recall'] >= 1))
+        assert_true(all(cv_results['rank_test_precision'] >= 1))
+        assert_true(all(cv_results[k] >= 0) for k in score_keys
+                    if 'rank' not in k)
+        assert_true(all(cv_results[k] <= 1) for k in score_keys
+                    if ('time' not in k) and ('rank' not in k))
+        cv_results = search.cv_results_
+        # Check results structure
+        check_cv_results_array_types(search, param_keys, score_keys)
+        check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
+        # For random_search, all the param array vals should be unmasked
+        assert_false(any(cv_results['param_C'].mask) or
+                     any(cv_results['param_gamma'].mask))
+        check_cv_results_grid_scores_consistency(search)
+
+
+def test_search_delegated_methods_in_mulimetric_setting():
+    X, y = make_classification(random_state=0)
+    params = {'C': [0.1, 0.2]}
+
+    scoring=('precision', 'recall')
+    grid_search = GridSearchCV(SVC(), iid=False,
+                               param_grid=params, scoring=scoring)
+    grid_search.fit(X, y)
+    scoring={'precision': make_scorer(precision_score),
+             'recall': make_scorer(recall_score)}
+    random_search_iid = RandomizedSearchCV(SVC(), n_iter=2, iid=True,
+                                           param_distributions=params,
+                                           scoring=scoring)
+    random_search_iid.fit(X, y)
+
+    for search in (grid_search, random_search_iid):
+        msg = "%s method is not available for multimetric evaluation"
+        for method in ('predict', 'transform', 'inverse_transform'):
+            assert_raise_message(AttributeError, msg % method,
+                                 getattr, search, method)
+        assert_raise_message(AttributeError, msg % 'score', search.score, X, y)
 
 
 def test_search_cv_results_rank_tie_breaking():

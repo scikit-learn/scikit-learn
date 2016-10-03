@@ -424,13 +424,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         score : float
         """
+        if self.multimetric_:
+            raise AttributeError("score method is not available for "
+                                 "multimetric evaluation.")
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        elif self.multimetric_:
-            raise ValueError("score function is not be available for"
-                             " multimetric scoring.")
         return self.scorer_(self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
@@ -442,7 +442,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             check_is_fitted(self, 'best_estimator_')
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'),
+                            disable_on_multimetric=True)
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -457,12 +458,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('predict')
-        if self.multimetric_:
-            raise ValueError("predict is not be available for"
-                             " multimetric scoring.")
         return self.best_estimator_.predict(X)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'),
+                            disable_on_multimetric=True)
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -477,12 +476,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('predict_proba')
-        if self.multimetric_:
-            raise ValueError("predict_proba is not be available for"
-                             " multimetric scoring.")
         return self.best_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'),
+                            disable_on_multimetric=True)
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -502,7 +499,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              " multimetric scoring.")
         return self.best_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'),
+                            disable_on_multimetric=True)
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -517,12 +515,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('decision_function')
-        if self.multimetric_:
-            raise ValueError("decision_function is not be available for"
-                             " multimetric scoring.")
         return self.best_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'),
+                            disable_on_multimetric=True)
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -537,12 +533,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('transform')
-        if self.multimetric_:
-            raise ValueError("transform is not be available for"
-                             " multimetric scoring.")
         return self.best_estimator_.transform(X)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'),
+                            disable_on_multimetric=True)
     def inverse_transform(self, Xt):
         """Call inverse_transform on the estimator with the best found params.
 
@@ -557,9 +551,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         self._check_is_fitted('inverse_transform')
-        if self.multimetric_:
-            raise ValueError("inverse_transform is not be available for"
-                             " multimetric scoring.")
         return self.best_estimator_.transform(Xt)
 
     @property
