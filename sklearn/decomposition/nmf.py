@@ -1106,7 +1106,6 @@ class NMF(BaseEstimator, TransformerMixin):
             nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
             beta=self.beta, eta=self.eta)
 
-        self.n_iter_ = n_iter_
         return W
 
     def inverse_transform(self, W):
