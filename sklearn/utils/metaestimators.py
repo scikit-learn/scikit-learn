@@ -12,7 +12,7 @@ from ..utils import safe_indexing
 from ..externals import six
 from ..base import BaseEstimator
 
-__all__ = ['if_delegate_has_method', 'if_not_multimetric_scoring']
+__all__ = ['if_delegate_has_method']
 
 
 class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
