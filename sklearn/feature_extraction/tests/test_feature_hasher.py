@@ -106,3 +106,21 @@ def test_hasher_zeros():
     # Assert that no zeros are materialized in the output.
     X = FeatureHasher().transform([{'foo': 0}])
     assert_equal(X.data.shape, (0,))
+
+
+def test_hasher_non_negative():
+    raw_X = [["foo", "bar", "baz"]]
+
+    def it():  # iterable
+        return (x for x in raw_X)
+
+    X = FeatureHasher(non_negative=False,
+                      input_type='string').fit_transform(it())
+    assert_true((X.data > 0).any() and (X.data < 0).any())
+    X = FeatureHasher(non_negative=True,
+                      input_type='string').fit_transform(it())
+    assert_true((X.data >= 0).all())  # zeros are acceptable
+    X = FeatureHasher(non_negative='total',
+                      input_type='string').fit_transform(it())
+    assert_true((X.data > 0).all())  # strictly positive counts
+    assert_raises(ValueError, FeatureHasher, non_negative=None)

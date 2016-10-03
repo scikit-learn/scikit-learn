@@ -82,7 +82,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(n_features, input_type)
         if non_negative not in [True, False, 'total']:
             raise ValueError("Invalid value for non_negative must be one of"
-                             " True, False, 'total' ")
+                             " True, False, 'total'.")
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
