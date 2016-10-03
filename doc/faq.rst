@@ -75,10 +75,7 @@ input variables and a 1D array ``y`` for the target variables. The array ``X``
 holds the features as columns and samples as rows . The array ``y`` contains
 integer values to encode the class membership of each sample in ``X``.
 
-To load data as numpy arrays you can use different libraries depending on the
-original data format:
-  
-For loading external datasets, please refer to :ref:`loading external datasets <external_datasets>`
+For loading your own datasets please refer to :ref:`loading external datasets <external_datasets>`.
 
 Note: if you manage your own numerical data it is recommended to use an
 optimized file format such as HDF5 to reduce data load times. Various libraries
