@@ -1075,7 +1075,7 @@ class RandomizedSearchCV(BaseSearchCV):
         will be represented by a ``cv_results_`` dict of::
 
             {
-            'param_kernel' : masked_array(data = ['rbf', rbf', 'rbf'],
+            'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
             'split0_test_score'  : [0.8, 0.9, 0.7],
