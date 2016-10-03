@@ -757,6 +757,11 @@ defined by :
 .. math::
     d_{\beta}(X, Y) = \sum_{i,j} \frac{1}{\beta(\beta - 1)}(X_{ij}^\beta + (\beta-1)Y_{ij}^\beta - \beta X_{ij} Y_{ij}^{\beta - 1})
 
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_beta_divergence_001.png
+    :target: ../auto_examples/decomposition/plot_beta_divergence.html
+    :align: center
+    :scale: 75%
+
 Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
 be continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.

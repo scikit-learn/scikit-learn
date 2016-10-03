@@ -29,7 +29,7 @@ from ..utils import deprecated
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
 
-EPSILSON = 1e-9
+EPSILSON = np.finfo(np.float32).eps
 
 
 INTEGER_TYPES = (numbers.Integral, np.integer)
@@ -183,8 +183,7 @@ def _special_sparse_dot(W, H, X):
         return fast_dot(W, H)
 
 
-def _compute_regularization(alpha, l1_ratio, regularization, n_samples,
-                            n_features):
+def _compute_regularization(alpha, l1_ratio, regularization):
     """Compute L1 and L2 regularization coefficients for W and H"""
     alpha_H = 0.
     alpha_W = 0.
@@ -773,7 +772,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             # copy used in the Denominator
             WH = WH_safe_X.copy()
 
-        # to avoid division by zero
+        # to avoid taking a negative power of zero
         if beta_loss - 2. < 0:
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILSON
 
@@ -1206,7 +1205,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                random_state=random_state)
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
-        alpha, l1_ratio, regularization, n_samples, n_features)
+        alpha, l1_ratio, regularization)
 
     if solver == 'pg':
         warnings.warn("'pg' solver will be removed in release 0.19."
