@@ -281,13 +281,7 @@ For some miscellaneous data such as images, videos, and audio, you may wish to r
   data from various image file formats
 * `scipy.io.wavfile.read <http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ for reading WAV files into a numpy array
 
-Do note that sometimes, some :ref:`pre-processing <preprocessing>` 
-may be necessary before inputting the data to scikit-learn functions. 
-In general, it is good practice to be familiar with what kinds of data and data formats 
-the function you wish to use will accept. For instance, the pandas DataFrame may contain
-information that must be converted before using it with scikit-learn. For instance, 
-it is generally true that categorical values such as strings must be one-hot encoded
-(:class:`sklearn.preprocessing.OneHotEncoder`).
+Categorical (or nominal) features stored as strings (as is common in pandas DataFrames) will need converting to integers, and integer categorical variables may be best exploited when encoded as one-hot variables (:class:`sklearn.preprocessing.OneHotEncoder`) or similar. See :`ref:preprocessing`.
 
 .. make sure everything is in a toc tree
 
