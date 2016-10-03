@@ -12,7 +12,7 @@ from ..utils import safe_indexing
 from ..externals import six
 from ..base import BaseEstimator
 
-__all__ = ['if_delegate_has_method']
+__all__ = ['if_delegate_has_method', 'if_not_multimetric_scoring']
 
 
 class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -80,6 +80,8 @@ class _IffHasAttrDescriptor(object):
     of the base object or the first found delegate does not have an attribute
     ``attribute_name``.
 
+    If ``disable_on_multimetric`` is set to ``True``
+
     This allows ducktyping of the decorated method based on
     ``delegate.attribute_name``. Here ``delegate`` is the first item in
     ``delegate_names`` for which ``hasattr(object, delegate) is True``.
@@ -87,10 +89,12 @@ class _IffHasAttrDescriptor(object):
     See https://docs.python.org/3/howto/descriptor.html for an explanation of
     descriptors.
     """
-    def __init__(self, fn, delegate_names, attribute_name):
+    def __init__(self, fn, delegate_names, attribute_name,
+                 disable_on_multimetric):
         self.fn = fn
         self.delegate_names = delegate_names
         self.attribute_name = attribute_name
+        self.disable_on_multimetric = disable_on_multimetric
 
         # update the docstring of the descriptor
         update_wrapper(self, fn)
@@ -98,6 +102,13 @@ class _IffHasAttrDescriptor(object):
     def __get__(self, obj, type=None):
         # raise an AttributeError if the attribute is not present on the object
         if obj is not None:
+            # If disable on multimetric is set to True, this raises
+            # AttributeError if multimetric_ flag exists and is set to True
+            if self.disable_on_multimetric and getattr(obj, 'multimetric_',
+                                                       False):
+                raise AttributeError("%s method is not available for "
+                                     "multimetric evaluation."
+                                     % self.attribute_name)
             # delegate only on instances, not the classes.
             # this is to allow access to the docstrings.
             for delegate_name in self.delegate_names:
@@ -118,7 +129,7 @@ class _IffHasAttrDescriptor(object):
         return out
 
 
-def if_delegate_has_method(delegate):
+def if_delegate_has_method(delegate, disable_on_multimetric=False):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
@@ -137,8 +148,9 @@ def if_delegate_has_method(delegate):
     if not isinstance(delegate, tuple):
         delegate = (delegate,)
 
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate,
-                                            attribute_name=fn.__name__)
+    return lambda fn: _IffHasAttrDescriptor(
+        fn, delegate, attribute_name=fn.__name__,
+        disable_on_multimetric=disable_on_multimetric)
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
