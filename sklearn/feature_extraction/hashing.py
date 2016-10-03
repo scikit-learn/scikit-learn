@@ -79,7 +79,9 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     def __init__(self, n_features=(2 ** 20), input_type="dict",
                  dtype=np.float64, non_negative=False):
         self._validate_params(n_features, input_type)
-
+        if non_negative not in [True, False, 'total']:
+            raise ValueError("Invalid value for non_negative must be one of"
+                             " True, False, 'total' ")
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
@@ -139,7 +141,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
-            _hashing.transform(raw_X, self.n_features, self.dtype)
+            _hashing.transform(raw_X, self.n_features, self.dtype,
+                               self.non_negative != 'total')
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
@@ -148,6 +151,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
-        if self.non_negative:
+        if self.non_negative is True: # if non_negative == 'total', X > 0 anyway
             np.abs(X.data, X.data)
         return X
