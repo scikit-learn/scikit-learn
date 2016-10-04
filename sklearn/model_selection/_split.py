@@ -1087,14 +1087,14 @@ class GroupShuffleSplit(ShuffleSplit):
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, and `train_size` is None,
-        the value is set to 0.1. If None and `train_size` is not None, the
+        the value is set to 0.2. If None and `train_size` is not None, the
         value is automatically set to the complement of the train size.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None, and
-        `test_size` is None, the value is set to 0.9. If None and
+        `test_size` is None, the value is set to 0.8. If None and
         `test_size` is not None, the value is automatically set to the
         complement of the test size.
 
@@ -1104,6 +1104,13 @@ class GroupShuffleSplit(ShuffleSplit):
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
                  random_state=None):
+        if test_size is None and train_size is None:
+            warnings.warn("The default value of the test_size parameter"
+                          "will change from 0.1 to 0.2 in version 0.21.",
+                          DeprecationWarning)
+            test_size = 0.2
+            train_size = 0.8
+
         super(GroupShuffleSplit, self).__init__(
             n_splits=n_splits,
             test_size=test_size,
@@ -1639,18 +1646,20 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
-        If train size is also None, test size is set to 0.25.
+    test_size : float, int, or None, default None
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, and `train_size` is None,
+        the value is set to 0.25. If None and `train_size` is not None, the
+        value is automatically set to the complement of the train size.
 
-    train_size : float, int, or None (default is None)
+    train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test size.
+        int, represents the absolute number of train samples. If None, and
+        `test_size` is None, the value is set to 0.75. If None and
+        `test_size` is not None, the value is automatically set to the
+        complement of the test size.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1711,6 +1720,9 @@ def train_test_split(*arrays, **options):
         raise TypeError("Invalid parameters passed: %s" % str(options))
 
     if test_size is None and train_size is None:
+        warnings.warn("The default value of the test_size parameter"
+                      "will change from 0.25 to 0.1 in version 0.21.",
+                      DeprecationWarning)
         test_size = 0.25
 
     arrays = indexable(*arrays)
