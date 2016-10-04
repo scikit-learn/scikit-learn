@@ -502,11 +502,13 @@ def test_nmf_decreasing():
             if solver != 'mu' and beta_loss != 2:
                 # not implemented
                 continue
+            W, H = W0.copy(), H0.copy()
             previous_loss = None
-            for n_iter in range(1, 5):
-                W, H, n_iter = non_negative_factorization(
-                    X, W0.copy(), H0.copy(), beta_loss=beta_loss,
-                    n_components=n_components, max_iter=n_iter, alpha=alpha,
+            for _ in range(1, 5):
+                # one more iteration starting from the previous results
+                W, H, _ = non_negative_factorization(
+                    X, W, H, beta_loss=beta_loss, init='custom',
+                    n_components=n_components, max_iter=1, alpha=alpha,
                     solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
                     regularization='both', random_state=0, update_H=True)
 
