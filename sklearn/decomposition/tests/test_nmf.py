@@ -494,7 +494,8 @@ def test_nmf_decreasing():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.abs(X, X)
-    W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
+    W0, H0 = nmf._initialize_nmf(X, n_components, init='random',
+                                 random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
         for solver in ('pg', 'cd', 'mu'):
@@ -504,10 +505,10 @@ def test_nmf_decreasing():
             previous_loss = None
             for n_iter in range(1, 5):
                 W, H, n_iter = non_negative_factorization(
-                    X, W, H, beta_loss=beta_loss, n_components=n_components,
-                    max_iter=n_iter, alpha=alpha, solver=solver, tol=tol,
-                    l1_ratio=l1_ratio, verbose=0, regularization='both',
-                    random_state=0, update_H=True)
+                    X, W0.copy(), H0.copy(), beta_loss=beta_loss,
+                    n_components=n_components, max_iter=n_iter, alpha=alpha,
+                    solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
+                    regularization='both', random_state=0, update_H=True)
 
                 loss = nmf.beta_divergence(X, W, H, beta_loss)
                 if previous_loss is not None:
