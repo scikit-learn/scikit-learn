@@ -67,6 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
+# Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
@@ -107,7 +108,7 @@ except TypeError:
 try:
     np.array(5).astype(float, copy=False)
 except TypeError:
-    # Compat where astype accepted no copy argument
+    # Compat where astype accepted no copy argument (numpy < 1.7.0)
     def astype(array, dtype, copy=True):
         if not copy and array.dtype == dtype:
             return array
