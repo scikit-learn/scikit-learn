@@ -964,6 +964,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
+    start_time = time.time()
+
     beta_loss = _beta_loss_to_float(beta_loss)
 
     # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
@@ -975,11 +977,10 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         gamma = 1.
 
     # used for the convergence criterion
-    previous_error = None
+    error_at_init = previous_error = beta_divergence(X, W, H, beta_loss)
 
-    start_time = time.time()
     H_sum, HHt, XHt = None, None, None
-    for epoch in range(max_iter):
+    for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
@@ -997,24 +998,23 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             H_sum, HHt, XHt = None, None, None
 
         # test convergence criterion every 100 iterations
-        if tol > 0 and epoch % 100 == 0:
+        if tol > 0 and n_iter % 100 == 0:
             error = beta_divergence(X, W, H, beta_loss)
-            if (previous_error is not None and
-                    (previous_error - error) / previous_error < tol):
+
+            if verbose:
+                iter_time = time.time()
+                print("Epoch %02d reached after %.3f seconds, error: %f" %
+                      (n_iter, iter_time - start_time, error))
+
+            if (previous_error - error) / error_at_init < tol:
                 break
             previous_error = error
 
-            if verbose:
-                epoch_time = time.time()
-                print("Epoch %02d reached after %.3f seconds." %
-                      (epoch + 1, epoch_time - start_time))
-
-    if verbose:
+    if verbose and n_iter % 100 != 0:
         end_time = time.time()
         print("Epoch %02d reached after %.3f seconds." %
-              (epoch + 1, end_time - start_time))
+              (n_iter, end_time - start_time))
 
-    n_iter = epoch + 1
     return W, H, n_iter
 
 

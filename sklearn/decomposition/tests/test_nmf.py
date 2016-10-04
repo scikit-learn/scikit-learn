@@ -132,8 +132,8 @@ def test_nmf_transform():
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
     for solver in ['pg', 'cd', 'mu']:
-        m = NMF(solver=solver, n_components=4, init='random',
-                random_state=0, max_iter=1000, tol=1e-3)
+        m = NMF(solver=solver, n_components=3, init='random',
+                random_state=0, max_iter=400)
         ft = m.fit_transform(A)
         t = m.transform(A)
         assert_array_almost_equal(ft, t, decimal=2)
