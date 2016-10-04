@@ -975,7 +975,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         gamma = 1.
 
     # used for the convergence criterion
-    previous_error = beta_divergence(X, W, H, beta_loss)
+    previous_error = None
 
     start_time = time.time()
     H_sum, HHt, XHt = None, None, None
@@ -996,11 +996,18 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None
 
-        # convergence criterion
-        error = beta_divergence(X, W, H, beta_loss)
-        if previous_error - error < tol:
-            break
-        previous_error = error
+        # test convergence criterion every 100 iterations
+        if tol > 0 and epoch % 100 == 0:
+            error = beta_divergence(X, W, H, beta_loss)
+            if (previous_error is not None and
+                    (previous_error - error) / previous_error < tol):
+                break
+            previous_error = error
+
+            if verbose:
+                epoch_time = time.time()
+                print("Epoch %02d reached after %.3f seconds." %
+                      (epoch + 1, epoch_time - start_time))
 
     if verbose:
         end_time = time.time()
@@ -1258,7 +1265,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
-    if n_iter == max_iter and solver != 'mu':
+    if n_iter == max_iter:
         warnings.warn("Maximum number of iteration %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 

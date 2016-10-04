@@ -105,7 +105,8 @@ def test_nmf_fit_close():
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
     for solver in ('pg', 'cd', 'mu'):
-        pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0)
+        pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
+                   max_iter=900, tol=1e-1)
         X = np.abs(rng.randn(6, 5))
         assert_less(pnmf.fit(X).reconstruction_err_, 0.1)
 
@@ -132,7 +133,7 @@ def test_nmf_transform():
     A = np.abs(rng.randn(6, 5))
     for solver in ['pg', 'cd', 'mu']:
         m = NMF(solver=solver, n_components=4, init='random',
-                random_state=0, max_iter=1000)
+                random_state=0, max_iter=1000, tol=1e-3)
         ft = m.fit_transform(A)
         t = m.transform(A)
         assert_array_almost_equal(ft, t, decimal=2)
@@ -206,7 +207,7 @@ def test_nmf_sparse_input():
 
     for solver in ('pg', 'cd', 'mu'):
         est1 = NMF(solver=solver, n_components=5, init='random',
-                   random_state=0, tol=1e-2)
+                   random_state=0, tol=1e-2, max_iter=700)
         est2 = clone(est1)
 
         W1 = est1.fit_transform(A)
@@ -218,7 +219,7 @@ def test_nmf_sparse_input():
         assert_array_almost_equal(H1, H2)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, ConvergenceWarning))
 def test_nmf_sparse_transform():
     # Test that transform works on sparse data.  Issue #2124
     rng = np.random.mtrand.RandomState(42)
@@ -227,7 +228,7 @@ def test_nmf_sparse_transform():
     A = csc_matrix(A)
 
     for solver in ('pg', 'cd', 'mu'):
-        model = NMF(solver=solver, random_state=0, tol=1e-4, n_components=2)
+        model = NMF(solver=solver, random_state=0, tol=1e-2, n_components=2)
         A_fit_tr = model.fit_transform(A)
         A_tr = model.transform(A)
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
@@ -243,11 +244,13 @@ def test_non_negative_factorization_consistency():
 
     for solver in ('pg', 'cd', 'mu'):
         W_nmf, H, _ = non_negative_factorization(
-            A, solver=solver, random_state=1, tol=1e-2)
+            A, solver=solver, random_state=1, tol=1e-2, max_iter=4200)
         W_nmf_2, _, _ = non_negative_factorization(
-            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
+            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2,
+            max_iter=4200)
 
-        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
+        model_class = NMF(solver=solver, random_state=1, tol=1e-2,
+                          max_iter=4200)
         W_cls = model_class.fit_transform(A)
         W_cls_2 = model_class.transform(A)
         assert_array_almost_equal(W_nmf, W_cls, decimal=10)
@@ -375,6 +378,7 @@ def test_special_sparse_dot():
     assert_array_equal(WH_safe.shape, X_csr.shape)
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def test_nmf_multiplicative_update_sparse():
     # Compare sparse and dense input in multiplicative update NMF
     # Also test continuity of the results with respect to beta_loss parameter
@@ -437,9 +441,9 @@ def test_nmf_regularization():
     l1_ratio = 1.
     for solver in ['pg', 'cd', 'mu']:
         regul = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0.5, l1_ratio=l1_ratio)
+                        alpha=0.5, l1_ratio=l1_ratio, max_iter=300)
         model = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0., l1_ratio=l1_ratio)
+                        alpha=0., l1_ratio=l1_ratio, max_iter=300)
 
         W_regul = regul.fit_transform(X)
         W_model = model.fit_transform(X)
@@ -459,9 +463,9 @@ def test_nmf_regularization():
     l1_ratio = 0.
     for solver in ['pg', 'cd', 'mu']:
         regul = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0.5, l1_ratio=l1_ratio)
+                        alpha=0.5, l1_ratio=l1_ratio, max_iter=300)
         model = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0., l1_ratio=l1_ratio)
+                        alpha=0., l1_ratio=l1_ratio, max_iter=300)
 
         W_regul = regul.fit_transform(X)
         W_model = model.fit_transform(X)
