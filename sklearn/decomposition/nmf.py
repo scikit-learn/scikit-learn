@@ -267,7 +267,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar'
         Method used to initialize the procedure.
-        Default: 'nndsvdar' if n_components < n_features, otherwise 'random'.
+        Default: 'nndsvd' if n_components < n_features, otherwise 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -1311,7 +1311,7 @@ class NMF(BaseEstimator, TransformerMixin):
 
     init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvdar' if n_components < n_features, otherwise random.
+        Default: 'nndsvd' if n_components < n_features, otherwise random.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
@@ -1645,7 +1645,7 @@ class ProjectedGradientNMF(NMF):
 
     init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvdar' if n_components < n_features, otherwise random.
+        Default: 'nndsvd' if n_components < n_features, otherwise random.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
