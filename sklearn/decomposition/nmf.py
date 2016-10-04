@@ -977,7 +977,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         gamma = 1.
 
     # used for the convergence criterion
-    error_at_init = previous_error = beta_divergence(X, W, H, beta_loss)
+    error_at_init = np.sqrt(beta_divergence(X, W, H, beta_loss) * 2)
+    previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
     for n_iter in range(1, max_iter + 1):
@@ -999,7 +1000,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
-            error = beta_divergence(X, W, H, beta_loss)
+            error = np.sqrt(beta_divergence(X, W, H, beta_loss) * 2)
 
             if verbose:
                 iter_time = time.time()
@@ -1420,12 +1421,12 @@ class NMF(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_ : array, [n_components, n_features]
-        Non-negative components of the data.
+        Factorization matrix, sometimes called 'dictionary'.
 
     reconstruction_err_ : number
-        Frobenius norm of the matrix difference between
-        the training data and the reconstructed data from
-        the fit produced by the model. ``|| X - WH ||_2``
+        Frobenius norm of the matrix difference, or beta-divergence, between
+        the training data ``X`` and the reconstructed data ``WH`` from
+        the fitted model.
 
     n_iter_ : int
         Actual number of iterations.
@@ -1526,11 +1527,8 @@ class NMF(BaseEstimator, TransformerMixin):
             self.comp_sparseness_ = _sparseness(H.ravel())
             self.data_sparseness_ = _sparseness(W.ravel())
 
-        if self.solver == 'mu':
-            self.reconstruction_err_ = beta_divergence(X, W, H,
-                                                       self.beta_loss)
-        else:
-            self.reconstruction_err_ = beta_divergence(X, W, H, 2.)
+        self.reconstruction_err_ = np.sqrt(beta_divergence(X, W, H,
+                                                           self.beta_loss) * 2)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
@@ -1748,7 +1746,7 @@ class ProjectedGradientNMF(NMF):
     Attributes
     ----------
     components_ : array, [n_components, n_features]
-        Non-negative components of the data.
+        Factorization matrix, sometimes called 'dictionary'.
 
     reconstruction_err_ : number
         Frobenius norm of the matrix difference between
