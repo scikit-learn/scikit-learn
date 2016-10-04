@@ -277,14 +277,16 @@ def test_fit_predict_on_pipeline():
     # transform and clustering steps separately
     iris = load_iris()
     scaler = StandardScaler()
+    scaler_for_pipeline = StandardScaler()
     km = KMeans(random_state=0)
+    km_for_pipeline = KMeans(random_state=0)
 
     # first compute the transform and clustering step separately
     scaled = scaler.fit_transform(iris.data)
     separate_pred = km.fit_predict(scaled)
 
     # use a pipeline to do the transform and clustering in one step
-    pipe = Pipeline([('scaler', scaler), ('Kmeans', km)])
+    pipe = Pipeline([('scaler', scaler_for_pipeline), ('Kmeans', km_for_pipeline)])
     pipeline_pred = pipe.fit_predict(iris.data)
 
     assert_array_almost_equal(pipeline_pred, separate_pred)
