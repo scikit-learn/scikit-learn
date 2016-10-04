@@ -134,6 +134,8 @@ class VectorizerMixin(object):
         if max_n != 1:
             original_tokens = tokens
             if min_n == 1:
+                # no need to do any slicing for unigrams
+                # just iterate through the original tokens
                 tokens = list(original_tokens)
                 min_n += 1
             else:
@@ -160,6 +162,8 @@ class VectorizerMixin(object):
         text_len = len(text_document)
         min_n, max_n = self.ngram_range
         if min_n == 1:
+            # no need to do any slicing for unigrams
+            # iterate through the string
             ngrams = list(text_document)
             min_n += 1
         else:
