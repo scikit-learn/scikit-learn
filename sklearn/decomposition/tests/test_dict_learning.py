@@ -52,6 +52,19 @@ def test_dict_learning_reconstruction():
     # nonzero atoms is right.
 
 
+def test_dict_learning_elastic_net_reconstruction():
+    n_components = 12
+    dico = DictionaryLearning(n_components, transform_algorithm='omp',
+                              transform_alpha=0.001, random_state=0)
+    code = dico.fit(X).transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X)
+
+    dico.set_params(transform_algorithm='elastic_net_cd',
+                    transform_l1_ratio=1.0)
+    code = dico.transform(X)
+    assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
+
+
 def test_dict_learning_reconstruction_parallel():
     # regression test that parallel reconstruction works with n_jobs=-1
     n_components = 12
@@ -192,7 +205,8 @@ def test_sparse_encode_shapes():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
+    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold',
+                 'elastic_net_cd'):
         code = sparse_encode(X, V, algorithm=algo)
         assert_equal(code.shape, (n_samples, n_components))
 
@@ -203,7 +217,8 @@ def test_sparse_encode_input():
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     Xf = check_array(X, order='F')
-    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
+    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold',
+                 'elastic_net_cd'):
         a = sparse_encode(X, V, algorithm=algo)
         b = sparse_encode(Xf, V, algorithm=algo)
         assert_array_almost_equal(a, b)
@@ -242,5 +257,17 @@ def test_sparse_coder_estimator():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
                        transform_alpha=0.001).transform(X)
+    assert_true(not np.all(code == 0))
+    assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
+
+
+def test_sparse_coder_elastic_net_cd_estimator():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    code = SparseCoder(dictionary=V, transform_algorithm='elastic_net_cd',
+                       transform_alpha=0.001,
+                       transform_l1_ratio=1.0).transform(X)
     assert_true(not np.all(code == 0))
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
