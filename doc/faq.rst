@@ -77,11 +77,6 @@ integer values to encode the class membership of each sample in ``X``.
 
 For loading your own datasets please refer to :ref:`loading external datasets <external_datasets>`.
 
-Note: if you manage your own numerical data it is recommended to use an
-optimized file format such as HDF5 to reduce data load times. Various libraries
-such as H5Py, PyTables and pandas provides a Python interface for reading and
-writing data in that format.
-
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
 
