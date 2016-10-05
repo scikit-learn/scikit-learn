@@ -96,7 +96,7 @@ print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
       "tf-idf features, n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 t0 = time()
-nmf = NMF(n_components=n_topics, random_state=1, beta_loss='kullback_leibler',
+nmf = NMF(n_components=n_topics, random_state=1, beta_loss='kullback-leibler',
           solver='mu', max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 

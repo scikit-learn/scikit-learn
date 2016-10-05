@@ -502,13 +502,14 @@ def test_nmf_decreasing():
                 continue
             W, H = W0.copy(), H0.copy()
             previous_loss = None
-            for _ in range(1, 5):
+            for _ in range(30):
                 # one more iteration starting from the previous results
                 W, H, _ = non_negative_factorization(
                     X, W, H, beta_loss=beta_loss, init='custom',
                     n_components=n_components, max_iter=1, alpha=alpha,
                     solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
-                    regularization='both', random_state=0, update_H=True)
+                    regularization='both', random_state=0, update_H=True,
+                    nls_max_iter=20)
 
                 loss = nmf.beta_divergence(X, W, H, beta_loss)
                 if previous_loss is not None:
