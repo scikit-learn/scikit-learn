@@ -17,8 +17,7 @@ import re
 import warnings
 import os
 
-SUPPRESS_VALIDATION = bool(os.environ.get('SKLEARN_SUPPRESS_VALIDATION',
-                                          False))
+PRESUME_FINITE = bool(os.environ.get('SKLEARN_PRESUME_FINITE', False))
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,
