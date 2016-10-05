@@ -283,6 +283,8 @@ For some miscellaneous data such as images, videos, and audio, you may wish to r
 
 Categorical (or nominal) features stored as strings (as is common in pandas DataFrames) will need converting to integers, and integer categorical variables may be best exploited when encoded as one-hot variables (:class:`sklearn.preprocessing.OneHotEncoder`) or similar. See :`ref:preprocessing`.
 
+Note: if you manage your own numerical data it is recommended to use an optimized file format such as HDF5 to reduce data load times. Various libraries such as H5Py, PyTables and pandas provides a Python interface for reading and writing data in that format.
+
 .. make sure everything is in a toc tree
 
 .. toctree::
