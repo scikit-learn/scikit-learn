@@ -71,18 +71,6 @@ def _check_init(A, shape, whom):
         raise ValueError('Array passed to %s is full of zeros.' % whom)
 
 
-def _safe_compute_error(X, W, H):
-    """Frobenius norm between X and WH, safe for sparse array"""
-    if not sp.issparse(X):
-        error = norm(X - np.dot(W, H))
-    else:
-        norm_X = np.dot(X.data, X.data)
-        norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
-        cross_prod = trace_dot((X * H.T), W)
-        error = sqrt(norm_X + norm_WH - 2. * cross_prod)
-    return error
-
-
 def beta_divergence(X, W, H, beta):
     """Compute the beta-divergence of X and dot(W, H).
 
@@ -96,7 +84,7 @@ def beta_divergence(X, W, H, beta):
 
     beta : float, string in {'frobenius', 'kullback-leibler', 'itakura-saito'}
         Parameter of the beta-divergence.
-        If beta == 2, this is the Frobenius squared norm.
+        If beta == 2, this is half the Frobenius *squared* norm.
         If beta == 1, this is the generalized Kullback-Leibler divergence.
         If beta == 0, this is the Itakura-Saito divergence.
         Else, this is the general beta-divergence.

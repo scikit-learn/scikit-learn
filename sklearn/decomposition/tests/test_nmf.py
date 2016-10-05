@@ -277,20 +277,6 @@ def test_non_negative_factorization_checking():
                          'cd', 2., 1e-4, 200, 0., 0., 'spam')
 
 
-def test_safe_compute_error():
-    rng = np.random.mtrand.RandomState(42)
-    A = np.abs(rng.randn(10, 10))
-    A[:, 2 * np.arange(5)] = 0
-    A_sparse = csc_matrix(A)
-
-    W, H = nmf._initialize_nmf(A, 5, init='random', random_state=0)
-
-    error = nmf._safe_compute_error(A, W, H)
-    error_sparse = nmf._safe_compute_error(A_sparse, W, H)
-
-    assert_almost_equal(error, error_sparse)
-
-
 def _beta_divergence_dense(X, W, H, beta):
     """Compute the beta-divergence of X and W.H for dense array only.
 
