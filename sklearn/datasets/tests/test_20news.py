@@ -57,7 +57,6 @@ def test_20news_length_consistency():
 
 
 def test_20news_vectorized():
-    # This test is slow.
     try:
         data = datasets.fetch_20newsgroups(subset='all',
                                            download_if_missing=False)
