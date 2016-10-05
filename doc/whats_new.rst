@@ -9,6 +9,8 @@ Release history
 Version 0.18
 ============
 
+**September 28, 2016**
+
 .. _model_selection_changes:
 
 Model Selection Enhancements and API Changes
