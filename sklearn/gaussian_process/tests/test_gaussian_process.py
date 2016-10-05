@@ -131,6 +131,8 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X, batch_size=1)
     assert_true(np.allclose(y_pred, y))
+    y_pred = gp.predict(X, batch_size=1, eval_MSE=True)
+    assert_true(np.allclose(y_pred, y))
 
 
 def test_random_starts():
