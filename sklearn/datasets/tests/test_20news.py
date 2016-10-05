@@ -83,4 +83,3 @@ def test_20news_vectorized():
     assert_equal(bunch.data.shape, (11314 + 7532, 130107))
     assert_equal(bunch.target.shape[0], 11314 + 7532)
     assert_equal(bunch.data.dtype, np.float64)
-
