@@ -58,7 +58,11 @@ def test_20news_length_consistency():
 
 def test_20news_vectorized():
     # This test is slow.
-    raise SkipTest("Test too slow.")
+    try:
+        data = datasets.fetch_20newsgroups(
+            subset='all', download_if_missing=False, shuffle=False)
+    except IOError:
+        raise SkipTest("Download 20 newsgroups to run this test")
 
     bunch = datasets.fetch_20newsgroups_vectorized(subset="train")
     assert_true(sp.isspmatrix_csr(bunch.data))
