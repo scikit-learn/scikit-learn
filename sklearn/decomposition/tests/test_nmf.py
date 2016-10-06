@@ -3,8 +3,7 @@ import scipy.sparse as sp
 import numbers
 
 from scipy import linalg
-from sklearn.decomposition import (NMF, ProjectedGradientNMF,
-                                   non_negative_factorization)
+from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.decomposition import nmf   # For testing internals
 from scipy.sparse import csc_matrix
 
@@ -31,8 +30,6 @@ def test_initialize_nn_output():
         assert_false((W < 0).any() or (H < 0).any())
 
 
-# ignore DeprecationWarning for testing sparseness parameter checking.
-@ignore_warnings(category=DeprecationWarning)
 def test_parameter_checking():
     A = np.ones((2, 2))
     name = 'spam'
@@ -40,8 +37,6 @@ def test_parameter_checking():
     assert_raise_message(ValueError, msg, NMF(solver=name).fit, A)
     msg = "Invalid init parameter: got 'spam' instead of one of"
     assert_raise_message(ValueError, msg, NMF(init=name).fit, A)
-    msg = "Invalid sparseness parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, NMF(sparseness=name).fit, A)
     msg = "Invalid beta_loss parameter: got 'spam' instead of one"
     assert_raise_message(ValueError, msg, NMF(solver='mu',
                                               beta_loss=name).fit, A)
@@ -86,12 +81,12 @@ def test_initialize_variants():
 
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
-@ignore_warnings(category=(DeprecationWarning, UserWarning))
+@ignore_warnings(category=UserWarning)
 def test_nmf_fit_nn_output():
     # Test that the decomposition does not contain negative values
     A = np.c_[5 * np.ones(5) - np.arange(1, 6),
               5 * np.ones(5) + np.arange(1, 6)]
-    for solver in ('pg', 'cd', 'mu'):
+    for solver in ('cd', 'mu'):
         for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'):
             model = NMF(n_components=2, solver=solver, init=init,
                         random_state=0)
@@ -100,38 +95,21 @@ def test_nmf_fit_nn_output():
                          (transf < 0).any())
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_nmf_fit_close():
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
-    for solver in ('pg', 'cd', 'mu'):
+    for solver in ('cd', 'mu'):
         pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
                    max_iter=600)
         X = np.abs(rng.randn(6, 5))
         assert_less(pnmf.fit(X).reconstruction_err_, 0.1)
 
 
-def test_nls_nn_output():
-    # Test that NLS solver doesn't return negative values
-    A = np.arange(1, 5).reshape(1, -1)
-    Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, -A), A.T, A, 0.001, 100)
-    assert_false((Ap < 0).any())
-
-
-def test_nls_close():
-    # Test that the NLS results should be close
-    A = np.arange(1, 5).reshape(1, -1)
-    Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, A), A.T, np.zeros_like(A),
-                                   0.001, 100)
-    assert_true((np.abs(Ap - A) < 0.01).all())
-
-
-@ignore_warnings(category=DeprecationWarning)
 def test_nmf_transform():
     # Test that NMF.transform returns close values
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    for solver in ['pg', 'cd', 'mu']:
+    for solver in ['cd', 'mu']:
         m = NMF(solver=solver, n_components=3, init='random',
                 random_state=0, tol=1e-5)
         ft = m.fit_transform(A)
@@ -154,15 +132,13 @@ def test_nmf_transform_custom_init():
     m.transform(A)
 
 
-# remove all warnings after removing 'pg' solver
-@ignore_warnings(category=(DeprecationWarning, UserWarning))
 def test_nmf_inverse_transform():
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
-    for solver in ('pg', 'cd'):
+    for solver in ('cd', 'mu'):
         m = NMF(solver=solver, n_components=4, init='random', random_state=0,
-                nls_max_iter=20)
+                max_iter=1000)
         ft = m.fit_transform(A)
         A_new = m.inverse_transform(ft)
         assert_array_almost_equal(A, A_new, decimal=2)
@@ -175,27 +151,6 @@ def test_n_components_greater_n_features():
     NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
 
 
-# ignore DeprecationWarning for using 'pg' solver
-@ignore_warnings(category=DeprecationWarning)
-def test_projgrad_nmf_sparseness():
-    # Test sparseness
-    # Test that sparsity constraints actually increase sparseness in the
-    # part where they are applied.
-    tol = 1e-2
-    rng = np.random.mtrand.RandomState(42)
-    A = np.abs(rng.randn(10, 10))
-    m = ProjectedGradientNMF(n_components=5, random_state=0, tol=tol).fit(A)
-    data_sp = ProjectedGradientNMF(n_components=5, sparseness='data',
-                                   random_state=0,
-                                   tol=tol).fit(A).data_sparseness_
-    comp_sp = ProjectedGradientNMF(n_components=5, sparseness='components',
-                                   random_state=0,
-                                   tol=tol).fit(A).comp_sparseness_
-    assert_greater(data_sp, m.data_sparseness_)
-    assert_greater(comp_sp, m.comp_sparseness_)
-
-
-@ignore_warnings(category=DeprecationWarning)
 def test_nmf_sparse_input():
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
@@ -205,7 +160,7 @@ def test_nmf_sparse_input():
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    for solver in ('pg', 'cd', 'mu'):
+    for solver in ('cd', 'mu'):
         est1 = NMF(solver=solver, n_components=5, init='random',
                    random_state=0, tol=1e-2)
         est2 = clone(est1)
@@ -219,7 +174,6 @@ def test_nmf_sparse_input():
         assert_array_almost_equal(H1, H2)
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_nmf_sparse_transform():
     # Test that transform works on sparse data.  Issue #2124
     rng = np.random.mtrand.RandomState(42)
@@ -227,14 +181,13 @@ def test_nmf_sparse_transform():
     A[1, 1] = 0
     A = csc_matrix(A)
 
-    for solver in ('pg', 'cd', 'mu'):
+    for solver in ('cd', 'mu'):
         model = NMF(solver=solver, random_state=0, tol=1e-4, n_components=2)
         A_fit_tr = model.fit_transform(A)
         A_tr = model.transform(A)
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_non_negative_factorization_consistency():
     # Test that the function is called in the same way, either directly
     # or through the NMF class
@@ -242,7 +195,7 @@ def test_non_negative_factorization_consistency():
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for solver in ('pg', 'cd', 'mu'):
+    for solver in ('cd', 'mu'):
         W_nmf, H, _ = non_negative_factorization(
             A, solver=solver, random_state=1, tol=1e-2)
         W_nmf_2, _, _ = non_negative_factorization(
@@ -387,14 +340,14 @@ def test_nmf_multiplicative_update_sparse():
         W1, H1, _ = non_negative_factorization(
             X, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
-            l1_ratio=l1_ratio, regularization='both')
+            l1_ratio=l1_ratio, regularization='both', random_state=42)
 
         # Compare with sparse X
         W, H = W0.copy(), H0.copy()
         W2, H2, _ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
-            l1_ratio=l1_ratio, regularization='both')
+            l1_ratio=l1_ratio, regularization='both', random_state=42)
 
         assert_array_almost_equal(W1, W2, decimal=7)
         assert_array_almost_equal(H1, H2, decimal=7)
@@ -406,13 +359,12 @@ def test_nmf_multiplicative_update_sparse():
         W3, H3, _ = non_negative_factorization(
             X_csr, W, H, n_components, init='custom', update_H=True,
             solver='mu', beta_loss=beta_loss, max_iter=n_iter, alpha=alpha,
-            l1_ratio=l1_ratio, regularization='both')
+            l1_ratio=l1_ratio, regularization='both', random_state=42)
 
         assert_array_almost_equal(W1, W3, decimal=4)
         assert_array_almost_equal(H1, H3, decimal=4)
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_nmf_regularization():
     # Test the effect of L1 and L2 regularizations
     n_samples = 6
@@ -423,11 +375,11 @@ def test_nmf_regularization():
 
     # L1 regularization should increase the number of zeros
     l1_ratio = 1.
-    for solver in ['pg', 'cd', 'mu']:
+    for solver in ['cd', 'mu']:
         regul = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0.5, l1_ratio=l1_ratio)
+                        alpha=0.5, l1_ratio=l1_ratio, random_state=42)
         model = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0., l1_ratio=l1_ratio)
+                        alpha=0., l1_ratio=l1_ratio, random_state=42)
 
         W_regul = regul.fit_transform(X)
         W_model = model.fit_transform(X)
@@ -445,11 +397,11 @@ def test_nmf_regularization():
 
     # L2 regularization should decrease the mean of the coefficients
     l1_ratio = 0.
-    for solver in ['pg', 'cd', 'mu']:
+    for solver in ['cd', 'mu']:
         regul = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0.5, l1_ratio=l1_ratio)
+                        alpha=0.5, l1_ratio=l1_ratio, random_state=42)
         model = nmf.NMF(n_components=n_components, solver=solver,
-                        alpha=0., l1_ratio=l1_ratio)
+                        alpha=0., l1_ratio=l1_ratio, random_state=42)
 
         W_regul = regul.fit_transform(X)
         W_model = model.fit_transform(X)
@@ -461,10 +413,7 @@ def test_nmf_regularization():
         assert_greater(H_model.mean(), H_regul.mean())
 
 
-# remove DeprecationWarning and UserWarning after removing 'pg' solver
-@ignore_warnings(category=(DeprecationWarning,
-                           ConvergenceWarning,
-                           UserWarning))
+@ignore_warnings(category=ConvergenceWarning)
 def test_nmf_decreasing():
     # test that the objective function is decreasing at each iteration
     n_samples = 20
@@ -482,7 +431,7 @@ def test_nmf_decreasing():
                                  random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
-        for solver in ('pg', 'cd', 'mu'):
+        for solver in ('cd', 'mu'):
             if solver != 'mu' and beta_loss != 2:
                 # not implemented
                 continue
@@ -494,8 +443,7 @@ def test_nmf_decreasing():
                     X, W, H, beta_loss=beta_loss, init='custom',
                     n_components=n_components, max_iter=1, alpha=alpha,
                     solver=solver, tol=tol, l1_ratio=l1_ratio, verbose=0,
-                    regularization='both', random_state=0, update_H=True,
-                    nls_max_iter=20)
+                    regularization='both', random_state=0, update_H=True)
 
                 loss = nmf._beta_divergence(X, W, H, beta_loss)
                 if previous_loss is not None:

@@ -766,15 +766,14 @@ Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
 be continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
-:class:`NMF` implements three solvers, using Projected Gradient ('pg') [3]_
-(deprecated, it will be removed in 0.19), Coordinate Descent ('cd') [5]_, and
+:class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and
 Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
 beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
 (generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
 Itakura-Saito divergence (:math:`\beta=0`). Note that for
 :math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster.
 
-The 'cd' and 'pg' solvers can only optimize the Frobenius norm. Due to the
+The 'cd' solver can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
 different minima, even when optimizing the same distance function.
 
@@ -807,10 +806,6 @@ stored components::
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
       <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
-
-    .. [3] `"Projected gradient methods for non-negative matrix factorization"
-      <http://www.csie.ntu.edu.tw/~cjlin/nmf/>`_
-      C.-J. Lin, 2007
 
     .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
