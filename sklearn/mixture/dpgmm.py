@@ -262,7 +262,7 @@ class _DPGMMBase(_GMMBase):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -787,7 +787,7 @@ class VBGMM(_DPGMMBase):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """

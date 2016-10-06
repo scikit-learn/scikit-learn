@@ -500,7 +500,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state: RandomState or an int seed, defaults to None.
+    random_state : RandomState or an int seed, defaults to None.
         A random number generator instance.
 
     warm_start : bool, default to False.

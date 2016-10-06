@@ -397,12 +397,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    binary: boolean, default=False.
+    binary : boolean, default=False.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
         counts.
 
-    dtype: type, optional
+    dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
     non_negative : boolean, default=False

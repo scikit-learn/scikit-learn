@@ -631,7 +631,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     """Make two interleaving half circles
 
     A simple toy dataset to visualize clustering and classification
-    algorithms.
+    algorithms. Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
@@ -643,8 +643,6 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
-
-    Read more in the :ref:`User Guide <sample_generators>`.
 
     Returns
     -------
@@ -697,10 +695,10 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
         (default=3)
         The number of centers to generate, or the fixed center locations.
 
-    cluster_std: float or sequence of floats, optional (default=1.0)
+    cluster_std : float or sequence of floats, optional (default=1.0)
         The standard deviation of the clusters.
 
-    center_box: pair of floats (min, max), optional (default=(-10.0, 10.0))
+    center_box : pair of floats (min, max), optional (default=(-10.0, 10.0))
         The bounding box for each cluster center when centers are
         generated at random.
 
@@ -1061,18 +1059,18 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state: int or RandomState instance, optional (default=None)
+    random_state : int or RandomState instance, optional (default=None)
         seed used by the pseudo random number generator
 
     Returns
     -------
-    data: array of shape [n_features, n_samples]
+    data : array of shape [n_features, n_samples]
         The encoded signal (Y).
 
-    dictionary: array of shape [n_features, n_components]
+    dictionary : array of shape [n_features, n_components]
         The dictionary with normalized components (D).
 
-    code: array of shape [n_components, n_samples]
+    code : array of shape [n_components, n_samples]
         The sparse code such that each column of this matrix has exactly
         n_nonzero_coefs non-zero items (X).
 
@@ -1192,10 +1190,10 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
 
     Parameters
     ----------
-    dim: integer, optional (default=1)
+    dim : integer, optional (default=1)
         The size of the random matrix to generate.
 
-    alpha: float between 0 and 1, optional (default=0.95)
+    alpha : float between 0 and 1, optional (default=0.95)
         The probability that a coefficient is zero (see notes). Larger values 
         enforce more sparsity.
 

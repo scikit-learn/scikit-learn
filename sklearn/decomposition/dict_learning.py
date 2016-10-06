@@ -394,44 +394,44 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     Parameters
     ----------
-    X: array of shape (n_samples, n_features)
+    X : array of shape (n_samples, n_features)
         Data matrix.
 
-    n_components: int,
+    n_components : int,
         Number of dictionary atoms to extract.
 
-    alpha: int,
+    alpha : int,
         Sparsity controlling parameter.
 
-    max_iter: int,
+    max_iter : int,
         Maximum number of iterations to perform.
 
-    tol: float,
+    tol : float,
         Tolerance for the stopping condition.
 
-    method: {'lars', 'cd'}
+    method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    n_jobs: int,
+    n_jobs : int,
         Number of parallel jobs to run, or -1 to autodetect.
 
-    dict_init: array of shape (n_components, n_features),
+    dict_init : array of shape (n_components, n_features),
         Initial value for the dictionary for warm restart scenarios.
 
-    code_init: array of shape (n_samples, n_components),
+    code_init : array of shape (n_samples, n_components),
         Initial value for the sparse code for warm restart scenarios.
 
-    callback:
+    callback :
         Callable that gets invoked every five iterations.
 
-    verbose:
+    verbose :
         Degree of output the procedure will print.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     return_n_iter : bool
@@ -439,13 +439,13 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
     Returns
     -------
-    code: array of shape (n_samples, n_components)
+    code : array of shape (n_samples, n_components)
         The sparse code factor in the matrix factorization.
 
-    dictionary: array of shape (n_components, n_features),
+    dictionary : array of shape (n_components, n_features),
         The dictionary factor in the matrix factorization.
 
-    errors: array
+    errors : array
         Vector of errors at each iteration.
 
     n_iter : int

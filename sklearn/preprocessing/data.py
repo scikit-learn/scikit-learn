@@ -204,7 +204,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     copy : boolean, optional, default True
@@ -403,7 +403,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     axis : int (0 by default)
@@ -1754,7 +1754,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                   ``X[:, i]``. Each feature value should be
                   in ``range(n_values[i])``
 
-    categorical_features: "all" or array of indices or mask
+    categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
 
         - 'all' (default): All features are treated as categorical.

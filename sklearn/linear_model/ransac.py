@@ -138,7 +138,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         NOTE: residual_metric is deprecated from 0.18 and will be removed in 0.20
         Use ``loss`` instead.
 
-    loss: string, callable, optional, default "absolute_loss"
+    loss : string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which
         find the absolute loss and squared loss per sample
         respectively.
@@ -206,7 +206,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values.
 
-        sample_weight: array-like, shape = [n_samples]
+        sample_weight : array-like, shape = [n_samples]
             Individual weights for each sample
             raises error if sample_weight is passed and base_estimator
             fit method does not support it.
