@@ -61,21 +61,21 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     Parameters
     ----------
 
-    dataname:
+    dataname :
         Name of the data set on mldata.org,
         e.g.: "leukemia", "Whistler Daily Snowfall", etc.
         The raw name is automatically converted to a mldata.org URL .
 
-    target_name: optional, default: 'label'
+    target_name : optional, default: 'label'
         Name or index of the column containing the target values.
 
-    data_name: optional, default: 'data'
+    data_name : optional, default: 'data'
         Name or index of the column containing the data.
 
-    transpose_data: optional, default: True
+    transpose_data : optional, default: True
         If True, transpose the downloaded data array.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the data sets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
