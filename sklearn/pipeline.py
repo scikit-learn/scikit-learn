@@ -356,7 +356,7 @@ class Pipeline(_BasePipeline):
         Xt = X
         for name, transform in self.steps[:-1]:
             if transform is not None:
-                Xt = transform.transform(Xt)
+                Xt = transform.fit_transform(Xt)
         return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
