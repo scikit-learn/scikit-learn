@@ -84,8 +84,6 @@ except AttributeError:
     # Python <= 2.6, we stil need nose here
     from nose import SkipTest
 
-# raises?
-
 
 try:
     assert_dict_equal = _dummy.assertDictEqual
