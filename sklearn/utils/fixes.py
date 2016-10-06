@@ -415,7 +415,7 @@ if np_version < (1, 12, 0):
             """
             cf = 'CF'[self.flags.fnc]
             data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
-            return data_state + (np.ma.getmaskarray(self).tobytes(cf),
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
                                  self._fill_value)
 else:
     from numpy.ma import MaskedArray
