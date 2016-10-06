@@ -771,7 +771,8 @@ Multiplicative Update ('mu') [6]_. The 'mu' solver can optimize every
 beta-divergence, including of course the Frobenius norm (:math:`\beta=2`), the
 (generalized) Kullback-Leibler divergence (:math:`\beta=1`) and the
 Itakura-Saito divergence (:math:`\beta=0`). Note that for
-:math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster.
+:math:`\beta \in (1; 2)`, the 'mu' solver is significantly faster than for other
+values of :math:`\beta`.
 
 The 'cd' solver can only optimize the Frobenius norm. Due to the
 underlying non-convexity of NMF, the different solvers may converge to
