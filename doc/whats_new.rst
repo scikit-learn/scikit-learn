@@ -19,6 +19,12 @@ New features
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly detection based
      on nearest neighbors. By `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
+   - The new solver ``mu`` implements a Multiplicate Update in
+     :class:`decomposition.NMF`, allowing the optimization of all
+     beta-divergences, including the Frobenius norm, the generalized
+     Kullback-Leibler divergence and the Itakura-Saito divergence.
+     By `Tom Dupre la Tour`_.
+
 Enhancements
 ............
 
@@ -57,7 +63,7 @@ Enhancements
 Bug fixes
 .........
 
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
      (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
@@ -97,7 +103,7 @@ Bug fixes
      <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
      By `JPFrancoia`_
 
-   - Fixes issue in :ref:`univariate_feature_selection` where score 
+   - Fixes issue in :ref:`univariate_feature_selection` where score
      functions were not accepting multi-label targets.(`#7676
      <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
      by `Mohammed Affan`_
