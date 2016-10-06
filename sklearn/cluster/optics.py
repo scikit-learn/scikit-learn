@@ -521,12 +521,12 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
             return
 
     # remove clusters that are too small
-    if (len(Node1.points) < min_cluster_size
-            and Nodelist.count((Node1, LocalMax1)) > 0):
+    if (len(Node1.points) < min_cluster_size and
+            Nodelist.count((Node1, LocalMax1)) > 0):
         # cluster 1 is too small
         Nodelist.remove((Node1, LocalMax1))
-    if (len(Node2.points) < min_cluster_size
-            and Nodelist.count((Node2, LocalMax1)) > 0):
+    if (len(Node2.points) < min_cluster_size and
+            Nodelist.count((Node2, LocalMax1)) > 0):
         # cluster 2 is too small
         Nodelist.remove((Node2, LocalMax2))
     if len(Nodelist) == 0:

@@ -29,7 +29,6 @@ def test_filter():
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
-    print np.array(X).shape
     # Parameters chosen specifically for this task.
     clust = OPTICS(eps=6.0, min_samples=4, metric='euclidean')
     # Run filter (before computing OPTICS)
@@ -56,7 +55,6 @@ def test_optics2():
 
     # Compute OPTICS
     X = [[1, 1]]
-    print np.array(X).shape
     clust = OPTICS(eps=0.3, min_samples=10)
 
     # Run the fit
@@ -102,7 +100,6 @@ def test_close_extract():
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
-    print np.array(X).shape
 
     # Compute OPTICS
 
@@ -125,7 +122,6 @@ def test_auto_extract_hier():
     X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
     X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
     X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
-    print np.array(X).shape
 
     # Compute OPTICS
 
