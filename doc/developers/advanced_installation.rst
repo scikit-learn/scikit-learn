@@ -378,7 +378,6 @@ Testing scikit-learn once installed
 
 Testing requires having the `nose
 <https://nose.readthedocs.io/en/latest/>`_ library. After
-
 installation, the package can be tested by executing *from outside* the
 source directory::
 
