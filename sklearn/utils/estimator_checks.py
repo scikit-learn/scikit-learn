@@ -41,7 +41,6 @@ from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import NMF, ProjectedGradientNMF
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.model_selection import train_test_split
@@ -319,10 +318,6 @@ def set_testing_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
-
-    if isinstance(estimator, NMF):
-        if not isinstance(estimator, ProjectedGradientNMF):
-            estimator.set_params(solver='cd')
 
 
 class NotAnArray(object):

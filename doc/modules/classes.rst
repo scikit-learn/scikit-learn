@@ -314,7 +314,6 @@ Samples generator
 
    decomposition.PCA
    decomposition.IncrementalPCA
-   decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FactorAnalysis
