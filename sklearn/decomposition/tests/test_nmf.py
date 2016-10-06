@@ -280,7 +280,7 @@ def test_non_negative_factorization_checking():
 def _beta_divergence_dense(X, W, H, beta):
     """Compute the beta-divergence of X and W.H for dense array only.
 
-    Used as a reference for testing nmf.beta_divergence.
+    Used as a reference for testing nmf._beta_divergence.
     """
     if isinstance(X, numbers.Number):
         W = np.array([[W]])
@@ -313,7 +313,7 @@ def _beta_divergence_dense(X, W, H, beta):
 
 
 def test_beta_divergence():
-    # Compare beta_divergence with the reference _beta_divergence_dense
+    # Compare _beta_divergence with the reference _beta_divergence_dense
     n_samples = 20
     n_features = 10
     n_components = 5
@@ -328,8 +328,8 @@ def test_beta_divergence():
 
     for beta in beta_losses:
         ref = _beta_divergence_dense(X, W, H, beta)
-        loss = nmf.beta_divergence(X, W, H, beta)
-        loss_csr = nmf.beta_divergence(X_csr, W, H, beta)
+        loss = nmf._beta_divergence(X, W, H, beta)
+        loss_csr = nmf._beta_divergence(X_csr, W, H, beta)
 
         assert_almost_equal(ref, loss, decimal=7)
         assert_almost_equal(ref, loss_csr, decimal=7)
@@ -497,7 +497,7 @@ def test_nmf_decreasing():
                     regularization='both', random_state=0, update_H=True,
                     nls_max_iter=20)
 
-                loss = nmf.beta_divergence(X, W, H, beta_loss)
+                loss = nmf._beta_divergence(X, W, H, beta_loss)
                 if previous_loss is not None:
                     assert_greater(previous_loss, loss)
                 previous_loss = loss

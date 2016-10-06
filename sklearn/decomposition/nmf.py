@@ -71,7 +71,7 @@ def _check_init(A, shape, whom):
         raise ValueError('Array passed to %s is full of zeros.' % whom)
 
 
-def beta_divergence(X, W, H, beta):
+def _beta_divergence(X, W, H, beta):
     """Compute the beta-divergence of X and dot(W, H).
 
     Parameters
@@ -889,7 +889,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
                                update_H=True, verbose=0):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
 
-    The objective function is beta_divergence(X, WH) and is minimized with an
+    The objective function is _beta_divergence(X, WH) and is minimized with an
     alternating minimization of W and H. Each minimization is done with a
     Multiplicative Update.
 
@@ -965,7 +965,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         gamma = 1.
 
     # used for the convergence criterion
-    error_at_init = np.sqrt(beta_divergence(X, W, H, beta_loss) * 2)
+    error_at_init = np.sqrt(_beta_divergence(X, W, H, beta_loss) * 2)
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
@@ -988,7 +988,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
-            error = np.sqrt(beta_divergence(X, W, H, beta_loss) * 2)
+            error = np.sqrt(_beta_divergence(X, W, H, beta_loss) * 2)
 
             if verbose:
                 iter_time = time.time()
@@ -1515,8 +1515,8 @@ class NMF(BaseEstimator, TransformerMixin):
             self.comp_sparseness_ = _sparseness(H.ravel())
             self.data_sparseness_ = _sparseness(W.ravel())
 
-        self.reconstruction_err_ = np.sqrt(beta_divergence(X, W, H,
-                                                           self.beta_loss) * 2)
+        self.reconstruction_err_ = np.sqrt(
+            _beta_divergence(X, W, H, self.beta_loss) * 2)
 
         self.n_components_ = H.shape[0]
         self.components_ = H

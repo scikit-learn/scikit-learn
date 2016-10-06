@@ -8,7 +8,7 @@ the Multiplicative-Update ('mu') solver in :class:`sklearn.decomposition.NMF`.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.decomposition.nmf import beta_divergence
+from sklearn.decomposition.nmf import _beta_divergence
 
 print(__doc__)
 
@@ -18,7 +18,7 @@ y = np.zeros(x.shape)
 colors = 'mbgyr'
 for j, beta in enumerate((0., 0.5, 1., 1.5, 2.)):
     for i, xi in enumerate(x):
-        y[i] = beta_divergence(1, xi, 1, beta)
+        y[i] = _beta_divergence(1, xi, 1, beta)
     name = "beta = %1.1f" % beta
     plt.plot(x, y, label=name, color=colors[j])
 
