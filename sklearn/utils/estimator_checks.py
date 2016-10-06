@@ -312,6 +312,11 @@ def set_testing_parameters(estimator):
         if not isinstance(estimator, ProjectedGradientNMF):
             estimator.set_params(solver='cd')
 
+    if "KNeighbors" in estimator.__class__.__name__ :
+        # Override the default 'auto' for sparse dense equivalence
+        # since only 'brute' algo is used for sparse see #1572
+        estimator.set_params(algorithm='brute')
+
 
 class NotAnArray(object):
     " An object that is convertable to an array"
@@ -1575,12 +1580,14 @@ def check_estimator_sparse_dense(name, Estimator):
                 estimator_sp = Estimator()
         set_testing_parameters(estimator)
         set_testing_parameters(estimator_sp)
+        set_random_state(estimator)
+        set_random_state(estimator_sp)
         #print(np.where(X!=X_sp.toarray()))
         # fit and predict
         try:
             with ignore_warnings(category=DeprecationWarning):
-                estimator.fit(X, y)
                 estimator_sp.fit(X_sp, y)
+                estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 pred_sp = estimator_sp.predict(X_sp)
