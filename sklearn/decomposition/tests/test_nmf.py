@@ -182,7 +182,8 @@ def test_nmf_sparse_transform():
     A = csc_matrix(A)
 
     for solver in ('cd', 'mu'):
-        model = NMF(solver=solver, random_state=0, tol=1e-4, n_components=2)
+        model = NMF(solver=solver, random_state=0, n_components=2,
+                    max_iter=400)
         A_fit_tr = model.fit_transform(A)
         A_tr = model.transform(A)
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
