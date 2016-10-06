@@ -350,7 +350,8 @@ Multiclass vs. multilabel fitting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When using :class:`multiclass classifiers <sklearn.multiclass>`,
-the learning and prediction task that is performed is dependent on the format of the target data fit upon::
+the learning and prediction task that is performed is dependent on the format of
+the target data fit upon::
 
     >>> from sklearn.svm import SVC
     >>> from sklearn.multiclass import OneVsRestClassifier
@@ -363,8 +364,8 @@ the learning and prediction task that is performed is dependent on the format of
     >>> classif.fit(X, y).predict(X)
     array([0, 0, 1, 1, 2])
 
-In the above case, the classifier is fit on a 1d array of multiclass labels and the ``predict()``
-method therefore provides corresponding multiclass predictions.
+In the above case, the classifier is fit on a 1d array of multiclass labels and
+the ``predict()`` method therefore provides corresponding multiclass predictions.
 It is also possible to fit upon a 2d array of binary label indicators::
 
     >>> y = LabelBinarizer().fit_transform(y)
@@ -377,11 +378,12 @@ It is also possible to fit upon a 2d array of binary label indicators::
 
 Here, the classifier is ``fit()``  on a 2d binary label representation of ``y``,
 using the :class:`LabelBinarizer <sklearn.preprocessing.LabelBinarizer>`.
-In this case ``predict()`` returns a 2d array representing the corresponding multilabel predictions.
+In this case ``predict()`` returns a 2d array representing the corresponding
+multilabel predictions.
 
-Note that the fourth and fifth instances returned all zeroes, indicating that they
-matched none of the three labels ``fit`` upon. With multilabel outputs, it is similarly possible for on instance to
-be assigned multiple labels::
+Note that the fourth and fifth instances returned all zeroes, indicating that
+they matched none of the three labels ``fit`` upon. With multilabel outputs, it
+is similarly possible for an instance to be assigned multiple labels::
 
   >> from sklearn.preprocessing import MultiLabelBinarizer
   >> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
@@ -394,6 +396,6 @@ be assigned multiple labels::
          [0, 0, 1, 0, 1]])
 
 In this case, the classifier is fit upon instances each assigned multiple labels.
-The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is used
-to binarize the 2d array of multilabels to ``fit`` upon. As a result, ``predict()`` returns
-a 2d array with multiple predicted labels for each instance.
+The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is
+used to binarize the 2d array of multilabels to ``fit`` upon. As a result,
+``predict()`` returns a 2d array with multiple predicted labels for each instance.
