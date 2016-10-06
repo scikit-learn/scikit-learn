@@ -25,7 +25,7 @@ from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
 
-EPSILSON = np.finfo(np.float32).eps
+EPSILON = np.finfo(np.float32).eps
 
 INTEGER_TYPES = (numbers.Integral, np.integer)
 
@@ -118,7 +118,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     X_data = X_data[X_data != 0]
 
     # used to avoid division by zero
-    WH_data[WH_data == 0] = EPSILSON
+    WH_data[WH_data == 0] = EPSILON
 
     # generalized Kullback-Leibler divergence
     if beta == 1:
@@ -533,11 +533,11 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1. < 0:
-                WH[WH == 0] = EPSILSON
+                WH[WH == 0] = EPSILON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2. < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILSON
+            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -564,7 +564,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                 for i in range(X.shape[0]):
                     WHi = fast_dot(W[i, :], H)
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILSON
+                        WHi[WHi == 0] = EPSILON
                     WHi **= beta_loss - 1
                     WHHt[i, :] = fast_dot(WHi, H.T)
             else:
@@ -577,7 +577,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
         denominator += l1_reg_W
     if l2_reg_W > 0:
         denominator = denominator + l2_reg_W * W
-    denominator[denominator == 0] = EPSILSON
+    denominator[denominator == 0] = EPSILON
 
     numerator /= denominator
     delta_W = numerator
@@ -607,11 +607,11 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
             # copy used in the Denominator
             WH = WH_safe_X.copy()
             if beta_loss - 1. < 0:
-                WH[WH == 0] = EPSILSON
+                WH[WH == 0] = EPSILON
 
         # to avoid division by zero
         if beta_loss - 2. < 0:
-            WH_safe_X_data[WH_safe_X_data == 0] = EPSILSON
+            WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
 
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
@@ -639,7 +639,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
                 for i in range(X.shape[1]):
                     WHi = fast_dot(W, H[:, i])
                     if beta_loss - 1 < 0:
-                        WHi[WHi == 0] = EPSILSON
+                        WHi[WHi == 0] = EPSILON
                     WHi **= beta_loss - 1
                     WtWH[:, i] = fast_dot(W.T, WHi)
             else:
@@ -652,7 +652,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
         denominator += l1_reg_H
     if l2_reg_H > 0:
         denominator = denominator + l2_reg_H * H
-    denominator[denominator == 0] = EPSILSON
+    denominator[denominator == 0] = EPSILON
 
     numerator /= denominator
     delta_H = numerator
