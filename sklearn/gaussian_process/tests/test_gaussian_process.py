@@ -129,12 +129,17 @@ def test_ordinary_kriging():
 
 def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
-    y_pred = gp.predict(X, batch_size=1)
+    y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
-    y_pred = gp.predict(X, eval_MSE=True)
-    y_pred2 = gp.predict(X, batch_size=1, eval_MSE=True)
-    assert_true(np.allclose(y_pred, y_pred2))
 
+def test_batch_size():                                                                                                                
+    # TypeError when using batch_size on Python 3, see                                                                                
+    # https://github.com/scikit-learn/scikit-learn/issues/7329 for more            
+    # details                                                                                                                         
+    gp = GaussianProcess()                                                                                                            
+    gp.fit(X, y)                                                                                                                      
+    gp.predict(X, batch_size=1)                                                                                                       
+    gp.predict(X, batch_size=1, eval_MSE=True) 
 
 def test_random_starts():
     # Test that an increasing number of random-starts of GP fitting only
