@@ -483,7 +483,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 0)
+    n_restarts_optimizer : int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -492,7 +492,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         must be finite. Note that n_restarts_optimizer=0 implies that one
         run is performed.
 
-    max_iter_predict: int, optional (default: 100)
+    max_iter_predict : int, optional (default: 100)
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
         time at the cost of worse results.
@@ -515,7 +515,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    multi_class: string, default: "one_vs_rest"
+    multi_class: string, default : "one_vs_rest"
         Specifies how multi-class classification problems are handled.
         Supported are "one_vs_rest" and "one_vs_one". In "one_vs_rest",
         one binary Gaussian process classifier is fitted for each class, which
@@ -541,7 +541,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         classification, a CompoundKernel is returned which consists of the
         different kernels used in the one-versus-rest classifiers.
 
-    log_marginal_likelihood_value_: float
+    log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     classes_ : array-like, shape = (n_classes,)
