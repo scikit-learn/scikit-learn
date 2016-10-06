@@ -133,6 +133,16 @@ def test_no_normalize():
     assert_true(np.allclose(y_pred, y))
 
 
+def test_batch_size():
+    # TypeError when using batch_size on Python 3, see
+    # https://github.com/scikit-learn/scikit-learn/issues/7329 for more
+    # details
+    gp = GaussianProcess()
+    gp.fit(X, y)
+    gp.predict(X, batch_size=1)
+    gp.predict(X, batch_size=1, eval_MSE=True)
+
+
 def test_random_starts():
     # Test that an increasing number of random-starts of GP fitting only
     # increases the reduced likelihood function of the optimal theta.
