@@ -78,8 +78,12 @@ integer values to encode the class membership of each sample in ``X``.
 How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
 
-For loading your own datasets please refer to 
-:ref:`loading external datasets <external_datasets>`.
+Generally, scikit-learn works on any numeric data stored as numpy arrays
+or scipy sparse matrices. Other types that are convertible to numeric 
+arrays such as pandas DataFrame are also acceptable.
+
+For more information on loading your data files into these usable data 
+structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
