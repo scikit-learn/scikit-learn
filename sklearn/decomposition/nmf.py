@@ -53,7 +53,7 @@ def _check_init(A, shape, whom):
         raise ValueError('Array passed to %s is full of zeros.' % whom)
 
 
-def _beta_divergence(X, W, H, beta):
+def _beta_divergence(X, W, H, beta, square_root=False):
     """Compute the beta-divergence of X and dot(W, H).
 
     Parameters
@@ -70,6 +70,15 @@ def _beta_divergence(X, W, H, beta):
         If beta == 1, this is the generalized Kullback-Leibler divergence.
         If beta == 0, this is the Itakura-Saito divergence.
         Else, this is the general beta-divergence.
+
+    square_root : boolean, default False
+        If True, return np.sqrt(2 * res)
+        For beta == 2, it corresponds to the Frobenius norm.
+
+    Returns
+    -------
+        res : float
+            Beta divergence of X and np.dot(X, H)
     """
     beta = _beta_loss_to_float(beta)
 
@@ -89,7 +98,11 @@ def _beta_divergence(X, W, H, beta):
             res = (norm_X + norm_WH - 2. * cross_prod) / 2.
         else:
             res = squared_norm(X - np.dot(W, H)) / 2.
-        return res
+
+        if square_root:
+            return np.sqrt(res * 2)
+        else:
+            return res
 
     if sp.issparse(X):
         # compute np.dot(W, H) only where X is nonzero
@@ -139,7 +152,11 @@ def _beta_divergence(X, W, H, beta):
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 
-    return res
+    # assert res >= 0
+    if square_root:
+        return np.sqrt(2 * res)
+    else:
+        return res
 
 
 def _special_sparse_dot(W, H, X):
@@ -515,6 +532,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             X_data = X
             # copy used in the Denominator
             WH = WH_safe_X.copy()
+            if beta_loss - 1. < 0:
+                WH[WH == 0] = EPSILSON
 
         # to avoid taking a negative power of zero
         if beta_loss - 2. < 0:
@@ -527,7 +546,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             # element-wise multiplication
             WH_safe_X_data *= X_data
 
-        # here numerator = dot(X * (dot(W, H) ** (beta_loss - 2), H.T)
+        # here numerator = dot(X * (dot(W, H) ** (beta_loss - 2)), H.T)
         numerator = safe_sparse_dot(WH_safe_X, H.T)
 
         # Denominator
@@ -544,6 +563,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                 WHHt = np.empty(W.shape)
                 for i in range(X.shape[0]):
                     WHi = fast_dot(W[i, :], H)
+                    if beta_loss - 1 < 0:
+                        WHi[WHi == 0] = EPSILSON
                     WHi **= beta_loss - 1
                     WHHt[i, :] = fast_dot(WHi, H.T)
             else:
@@ -585,6 +606,8 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
             X_data = X
             # copy used in the Denominator
             WH = WH_safe_X.copy()
+            if beta_loss - 1. < 0:
+                WH[WH == 0] = EPSILSON
 
         # to avoid division by zero
         if beta_loss - 2. < 0:
@@ -615,6 +638,8 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
                 WtWH = np.empty(H.shape)
                 for i in range(X.shape[1]):
                     WHi = fast_dot(W, H[:, i])
+                    if beta_loss - 1 < 0:
+                        WHi[WHi == 0] = EPSILSON
                     WHi **= beta_loss - 1
                     WtWH[:, i] = fast_dot(W.T, WHi)
             else:
@@ -665,7 +690,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits.
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros.
 
     max_iter : integer, default: 200
         Number of iterations.
@@ -721,7 +747,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         gamma = 1.
 
     # used for the convergence criterion
-    error_at_init = np.sqrt(_beta_divergence(X, W, H, beta_loss) * 2)
+    error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
@@ -733,6 +759,10 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             H_sum, HHt, XHt, update_H)
         W *= delta_W
 
+        # necessary for stability with beta_loss < 1
+        if beta_loss < 1:
+            W[W < 1e-15] = 0.
+
         # update H
         if update_H:
             delta_H = _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H,
@@ -742,9 +772,13 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None
 
+            # necessary for stability with beta_loss < 1
+            if beta_loss <= 1:
+                H[H < 1e-15] = 0.
+
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
-            error = np.sqrt(_beta_divergence(X, W, H, beta_loss) * 2)
+            error = _beta_divergence(X, W, H, beta_loss, square_root=True)
 
             if verbose:
                 iter_time = time.time()
@@ -852,7 +886,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits. Used only in 'mu' solver.
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros. Used only in 'mu' solver.
 
     tol : float, default: 1e-4
         Tolerance of the stopping condition.
@@ -918,6 +953,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
+    if X.min() == 0 and beta_loss <= 0:
+        raise ValueError("When beta_loss <= 0 and X contains zeros, "
+                         "the solver may diverge. Please add small values to "
+                         "X, or use a positive beta_loss.")
+
     n_samples, n_features = X.shape
     if n_components is None:
         n_components = n_features
@@ -968,7 +1008,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
-    if n_iter == max_iter:
+    if n_iter == max_iter and tol > 0:
         warnings.warn("Maximum number of iteration %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
@@ -1041,13 +1081,13 @@ class NMF(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-
     beta_loss : float or string, default 'frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits. Used only in 'mu' solver.
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros. Used only in 'mu' solver.
 
     tol : float, default: 1e-4
         Tolerance of the stopping condition.
@@ -1170,8 +1210,8 @@ class NMF(BaseEstimator, TransformerMixin):
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
-        self.reconstruction_err_ = np.sqrt(
-            _beta_divergence(X, W, H, self.beta_loss) * 2)
+        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+                                                    square_root=True)
 
         self.n_components_ = H.shape[0]
         self.components_ = H

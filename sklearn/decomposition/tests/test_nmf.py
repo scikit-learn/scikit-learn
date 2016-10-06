@@ -325,12 +325,12 @@ def test_nmf_multiplicative_update_sparse():
     n_components = 5
     alpha = 0.1
     l1_ratio = 0.5
-    n_iter = 5
+    n_iter = 20
 
     # initialization
     rng = np.random.mtrand.RandomState(1337)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0.
+    X = np.abs(X)
     X_csr = sp.csr_matrix(X)
     W0, H0 = nmf._initialize_nmf(X, n_components, init='random',
                                  random_state=42)
@@ -364,6 +364,35 @@ def test_nmf_multiplicative_update_sparse():
 
         assert_array_almost_equal(W1, W3, decimal=4)
         assert_array_almost_equal(H1, H3, decimal=4)
+
+
+def test_nmf_negative_beta_loss():
+    # Test that an error is raised if beta_loss < 0 and X contains zeros.
+    # Test that the output has not NaN values when the input contains zeros.
+    n_samples = 6
+    n_features = 5
+    n_components = 3
+
+    rng = np.random.mtrand.RandomState(42)
+    X = rng.randn(n_samples, n_features)
+    X[X < 0] = 0  # X = np.abs(X)
+    X_csr = sp.csr_matrix(X)
+
+    def _assert_nmf_no_nan(X, beta_loss):
+        W, H, _ = non_negative_factorization(
+            X, n_components=n_components, solver='mu', beta_loss=beta_loss,
+            random_state=0, max_iter=1000)
+        assert_false(np.any(np.isnan(W)))
+        assert_false(np.any(np.isnan(H)))
+
+    msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
+    for beta_loss in (-0.6, 0.):
+        assert_raise_message(ValueError, msg, _assert_nmf_no_nan, X, beta_loss)
+        _assert_nmf_no_nan(X + 1e-9, beta_loss)
+
+    for beta_loss in (0.2, 1., 1.2, 2., 2.5):
+        _assert_nmf_no_nan(X, beta_loss)
+        _assert_nmf_no_nan(X_csr, beta_loss)
 
 
 def test_nmf_regularization():
