@@ -52,13 +52,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     dtype : callable, optional
         The type of feature values. Passed to Numpy array/scipy.sparse matrix
         constructors as the dtype argument.
-    separator: string, optional
+    separator : string, optional
         Separator string used when constructing new features for one-hot
         coding.
-    sparse: boolean, optional.
+    sparse : boolean, optional.
         Whether transform should produce scipy.sparse matrices.
         True by default.
-    sort: boolean, optional.
+    sort : boolean, optional.
         Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
         True by default.
 
