@@ -152,7 +152,6 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 
-    # assert res >= 0
     if square_root:
         return np.sqrt(2 * res)
     else:
@@ -889,6 +888,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
 
+        .. versionadded:: 0.19
+
     tol : float, default: 1e-4
         Tolerance of the stopping condition.
 
@@ -1088,6 +1089,8 @@ class NMF(BaseEstimator, TransformerMixin):
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
+
+        .. versionadded:: 0.19
 
     tol : float, default: 1e-4
         Tolerance of the stopping condition.

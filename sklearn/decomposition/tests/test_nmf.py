@@ -375,7 +375,7 @@ def test_nmf_negative_beta_loss():
 
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0  # X = np.abs(X)
+    X[X < 0] = 0
     X_csr = sp.csr_matrix(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
