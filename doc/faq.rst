@@ -75,7 +75,11 @@ input variables and a 1D array ``y`` for the target variables. The array ``X``
 holds the features as columns and samples as rows . The array ``y`` contains
 integer values to encode the class membership of each sample in ``X``.
 
-For loading your own datasets please refer to :ref:`loading external datasets <external_datasets>`.
+How can I load my own datasets into a format usable by scikit-learn?
+--------------------------------------------------------------------
+
+For loading your own datasets please refer to 
+:ref:`loading external datasets <external_datasets>`.
 
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
