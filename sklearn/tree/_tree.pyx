@@ -599,6 +599,14 @@ cdef class Tree:
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
+        # Ensure cython and numpy node sizes match up
+        np_node_size = <SIZE_t> (<np.dtype> NODE_DTYPE).itemsize
+        node_size = <SIZE_t> sizeof(Node)
+        if (np_node_size != node_size):
+            raise TypeError('Size of numpy NODE_DTYPE ({} bytes) does not'
+                            ' match size of Node ({} bytes)'.format(
+                                np_node_size, node_size))
+
         # Inner structures
         self.max_depth = 0
         self.node_count = 0
