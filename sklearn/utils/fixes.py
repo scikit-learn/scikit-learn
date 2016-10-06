@@ -418,4 +418,4 @@ if np_version < (1, 12, 0):
             return data_state + (np.ma.getmaskarray(self).tobytes(cf),
                                  self._fill_value)
 else:
-    from np.ma import MaskedArray
+    from numpy.ma import MaskedArray
