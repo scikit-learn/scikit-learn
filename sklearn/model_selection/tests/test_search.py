@@ -940,12 +940,12 @@ def test_pickle():
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True)
     grid_search.fit(X, y)
-    gs_pickled = pickle.loads(pickle.dumps(grid_search))
+    pickle.loads(pickle.dumps(grid_search))
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]},
                                        refit=True, n_iter=3)
     random_search.fit(X, y)
-    rs_picked = pickle.loads(pickle.dumps(random_search))
+    pickle.loads(pickle.dumps(random_search))
 
 
 def test_grid_search_with_multioutput_data():
