@@ -64,7 +64,7 @@ def test_inverse_transform():
     for algo in ("arpack", "randomized"):
         # We need a lot of components for the reconstruction to be "almost
         # equal" in all positions. XXX Test means or sums instead?
-        tsvd = TruncatedSVD(n_components=52, random_state=42)
+        tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
         Xt = tsvd.fit_transform(X)
         Xinv = tsvd.inverse_transform(Xt)
         assert_array_almost_equal(Xinv, Xdense, decimal=1)

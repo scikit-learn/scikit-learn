@@ -477,7 +477,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # log and modified_huber losses can output probability estimates
         # binary case
         for loss in ["log", "modified_huber"]:
-            clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
+            clf = self.factory(loss=loss, alpha=0.01, n_iter=10)
             clf.fit(X, Y)
             p = clf.predict_proba([[3, 2]])
             assert_true(p[0, 1] > 0.5)
