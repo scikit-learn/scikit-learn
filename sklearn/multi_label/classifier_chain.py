@@ -64,7 +64,7 @@ class ClassifierChain(BaseEstimator):
             assert all([isinstance(i, int) for i in chain_order]), "chain_order must be a list of integers"
             self.chain_order = chain_order
         else:
-            self.chain_order = range(Y.shape[1])
+            self.chain_order = list(range(Y.shape[1]))
         if shuffle:
             random.shuffle(self.chain_order)
 

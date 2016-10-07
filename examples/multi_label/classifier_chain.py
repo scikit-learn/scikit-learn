@@ -15,20 +15,20 @@ Y_pred_ind = np.zeros(Y_test.shape)
 for idx, independent_model in enumerate(independent_models):
     independent_model.fit(X_train, Y_train[:, idx])
     Y_pred_ind[:, idx] = independent_model.predict(X_test)
-print "independent models average precision", average_precision_score(Y_test, Y_pred_ind, average='weighted')
+print("independent models average precision", average_precision_score(Y_test, Y_pred_ind, average='weighted'))
 
 # 2. fit a single chain of logistic regression models
 classifier_chain = ClassifierChain(LogisticRegression())
 classifier_chain.fit(X_train, Y_train)
 Y_pred = classifier_chain.predict(X_test)
-print "single chain average precision", average_precision_score(Y_test, Y_pred, average='weighted')
+print("single chain average precision", average_precision_score(Y_test, Y_pred, average='weighted'))
 
 # 3. fit an ensemble of classifier chains
 chains = [ClassifierChain(LogisticRegression()) for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)
 Y_pred_mean = np.array([chain.predict(X_test) for chain in chains]).mean(axis=0)
-print "chain ensemble average precision", average_precision_score(Y_test, Y_pred_mean, average='weighted')
+print("chain ensemble average precision", average_precision_score(Y_test, Y_pred_mean, average='weighted'))
 
 # The three above cases should have increasing average precision
 
