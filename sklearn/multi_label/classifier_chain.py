@@ -17,8 +17,9 @@ class ClassifierChain(BaseEstimator):
     Parameters
     ----------
     base_estimator : object
-        The base estimator used for fitting the model for each label. Defaults
-
+        The base estimator used for fitting the model for each label. Defaults to LogisticRegression
+    random_state : int
+        An integer used to seed the random number generator
 
     Attributes
     ----------
@@ -30,10 +31,9 @@ class ClassifierChain(BaseEstimator):
         means that the first model in the chain will make predictions for column 1 in the Y matrix, the second model
         will make predictions for column 3, etc.
         If chain_order is not None it must have a length equal to the number of columns in Y.
-        If chain_order is None a random sequence of integers will be generated.
-        To fit a ClassifierChain with the chain order corresponding to the order of classes in the Y matrix use
-            chain_order = range(Y.shape[1])
-
+        If chain_order is None an ordered list of integers will be used
+            chain_order = [0, 1, 2, ..., Y.shape[1]]
+        where Y is the label matrix passed to the fit method.
 
     References
     ----------
@@ -48,7 +48,15 @@ class ClassifierChain(BaseEstimator):
         self.classifiers = []
         self.chain_order = None
 
-    def fit(self, X, Y, chain_order = None):
+    def fit(self, X, Y, chain_order=None, shuffle=True):
+        """
+        Parameters
+        ----------
+        shuffle : bool
+            If true chain_order is shuffled
+        chain_order: list
+            A list of integers specifying the order of the classes in the chain.
+        """
         self.classifiers = [clone(self.base_estimator) for _ in range(Y.shape[1])]
 
         if chain_order is not None:
@@ -57,6 +65,7 @@ class ClassifierChain(BaseEstimator):
             self.chain_order = chain_order
         else:
             self.chain_order = range(Y.shape[1])
+        if shuffle:
             random.shuffle(self.chain_order)
 
         for chain_idx, classifier in enumerate(self.classifiers):
