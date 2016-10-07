@@ -134,3 +134,13 @@ def test_singular_matrix():
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
+
+
+# regression test for #6033
+def test_integer_input():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+
+    for method in ["standard", "hessian", "modified", "ltsa"]:
+        clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
+        clf.fit(X)  # this previously raised a TypeError
