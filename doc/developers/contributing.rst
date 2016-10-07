@@ -304,6 +304,10 @@ following rules before submitting:
 
 .. _easy_issues:
 
+
+New Contributors
+----------------
+
 Easy Issues
 -----------
 
@@ -314,6 +318,10 @@ in the issue tracker. Resolving these issues allow you to start contributing
 to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
 their time to concentrate on other issues.
+
+Contributors Needed
+-------------------
+
 
 .. _contribute_documentation:
 
