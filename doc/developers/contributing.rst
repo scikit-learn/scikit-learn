@@ -326,6 +326,7 @@ New contributors should look for the following tags when looking for issues.
     contributor left off. The list of issues with the Need Contributor tag can be found
     `here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
 
+    Note that not all issues which need contributors will have this tag.
 
 .. _contribute_documentation:
 
@@ -469,9 +470,10 @@ There are three other tags to help new contributors:
     but is still approachable for someone new to the project.
 
 :New Contributor:
-    This tag marks an issue which is currently lacking a contributor.
+    This tag marks an issue which currently lacks a contributor.
     These issues can range in difficulty, and may not be approachable
-    for new contributors.
+    for new contributors. Note that not all issues which need
+    contributors will have this tag.
 
 
 Other ways to contribute
