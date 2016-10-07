@@ -509,7 +509,7 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.0).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_weight_fraction_leaf=-1).fit,
                       X, y)
