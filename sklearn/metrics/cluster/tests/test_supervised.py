@@ -1,7 +1,4 @@
 import numpy as np
-from nose.tools import assert_almost_equal
-from nose.tools import assert_equal
-from numpy.testing import assert_array_almost_equal
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -15,7 +12,12 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.utils.testing import assert_raise_message
+
+from sklearn.utils.testing import (
+        assert_equal, assert_almost_equal, assert_raise_message,
+)
+from numpy.testing import assert_array_almost_equal
+
 
 score_funcs = [
     adjusted_rand_score,

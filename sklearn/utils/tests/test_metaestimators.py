@@ -1,4 +1,4 @@
-from nose.tools import assert_true, assert_false
+from sklearn.utils.testing import assert_true, assert_false
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 
