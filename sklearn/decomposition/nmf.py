@@ -758,9 +758,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             H_sum, HHt, XHt, update_H)
         W *= delta_W
 
-        # necessary for stability with beta_loss < 1
+        # necessary for stability with beta_loss < 1
         if beta_loss < 1:
-            W[W < 1e-15] = 0.
+            W[W < np.finfo(np.float64).eps] = 0.
 
         # update H
         if update_H:
@@ -771,9 +771,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
             # These values will be recomputed since H changed
             H_sum, HHt, XHt = None, None, None
 
-            # necessary for stability with beta_loss < 1
+            # necessary for stability with beta_loss < 1
             if beta_loss <= 1:
-                H[H < 1e-15] = 0.
+                H[H < np.finfo(np.float64).eps] = 0.
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
