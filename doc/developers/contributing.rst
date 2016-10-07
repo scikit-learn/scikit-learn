@@ -12,7 +12,7 @@ The project is hosted on https://github.com/scikit-learn/scikit-learn
 Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
 adding new algorithms, and the best way to contribute and to help the project
 is to start working on known issues.
-See :ref:`easy_issues` to get started.
+See :ref:`new_contributors` to get started.
 
 .. topic:: **Our community, our values**
 
@@ -302,13 +302,13 @@ following rules before submitting:
    or link to a `gist <https://gist.github.com>`_. If an exception is raised,
    please provide the traceback.
 
-.. _easy_issues:
+.. _new_contributors:
 
-
-New Contributors
+Issues for New Contributors
 ----------------
+New contributors should look for the following tags when looking for issues.
 
-Easy Issues
+Easy Tags
 -----------
 
 A great way to start contributing to scikit-learn is to pick an item from the
@@ -319,8 +319,14 @@ to the project without much prior knowledge. Your assistance in this area will
 be greatly appreciated by the more experienced developers as it helps free up
 their time to concentrate on other issues.
 
-Contributors Needed
--------------------
+Need Contributor Tags
+---------------------
+
+We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+we use the Need Contributor tag to mark Pull Requests which have been abandoned
+by their original contributor and are available for someone to pick up where the original
+contributor left off. The list of issues with the Need Contributor tag can be found
+`here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
 
 
 .. _contribute_documentation:
@@ -454,7 +460,7 @@ should have (at least) one of the following tags:
 :New Feature:
     Feature requests and pull requests implementing a new feature.
 
-There are two other tags to help new contributors:
+There are three other tags to help new contributors:
 
 :Easy:
     This issue can be tackled by anyone, no experience needed.
@@ -463,6 +469,11 @@ There are two other tags to help new contributors:
 :Moderate:
     Might need some knowledge of machine learning or the package,
     but is still approachable for someone new to the project.
+
+:New Contributor:
+    This tag marks an issue which is currently lacking a contributor.
+    These issues can range in difficulty, and may not be approachable
+    for new contributors.
 
 
 Other ways to contribute
