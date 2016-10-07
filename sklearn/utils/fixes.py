@@ -418,4 +418,4 @@ if np_version < (1, 12, 0):
             return data_state + (np.ma.getmaskarray(self).tostring(cf),
                                  self._fill_value)
 else:
-    from numpy.ma import MaskedArray
+    from numpy.ma import MaskedArray    # noqa
