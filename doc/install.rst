@@ -86,10 +86,10 @@ Anaconda offers scikit-learn as part of its free distribution.
     via ``pip install``.
 
 
-Python(x,y) for Windows
+WinPython for Windows
 -----------------------
 
-The `Python(x,y) <https://python-xy.github.io>`_ project distributes
+The `WinPython <https://winpython.github.io/>`_ project distributes
 scikit-learn as an additional plugin.
 
 
