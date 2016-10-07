@@ -372,8 +372,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
         See also
         --------
-        SelectKBest: Select features based on the k highest scores.
-        SelectFpr: Select features based on a false positive rate test.
+        SelectKBest : Select features based on the k highest scores.
+        SelectFpr : Select features based on a false positive rate test.
 
     * For unwritten formatting rules, try to follow existing good works:
 
