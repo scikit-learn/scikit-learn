@@ -405,9 +405,9 @@ else:
 
 if np_version < (1, 12, 0):
     class MaskedArray(np.ma.MaskedArray):
-        # Before numpy 1.12, np.ma.MaskedArray object is not pickle-able
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV
-        # pickle-able as the ``cv_results_`` param uses MaskedArray
+        # picklable as the ``cv_results_`` param uses MaskedArray
         def __getstate__(self):
             """Return the internal state of the masked array, for pickling
             purposes.
