@@ -81,7 +81,7 @@ assert_raises = _dummy.assertRaises
 try:
     SkipTest = unittest.case.SkipTest
 except AttributeError:
-    # Python <= 2.6, we stil need nose here
+    # Python <= 2.6, we still need nose here
     from nose import SkipTest
 
 
