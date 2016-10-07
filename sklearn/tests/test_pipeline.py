@@ -5,16 +5,19 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import (
+    assert_array_equal,
+    assert_array_almost_equal,
+    assert_dict_equal,
+    assert_equal,
+    assert_false,
+    assert_is,
+    assert_raises,
+    assert_raises_regex,
+    assert_raise_message,
+    assert_true,
+    assert_warns_message
+)
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -134,9 +137,13 @@ def test_pipeline_init():
     repr(pipe)
 
     # Test with two objects
-    clf = SVC()
     filter1 = SelectKBest(f_classif)
+    clf = SVC()
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
+
+    # Test that estimators are not cloned on pipeline construction
+    assert_is(pipe.named_steps['anova'], filter1)
+    assert_is(pipe.named_steps['svc'], clf)
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
