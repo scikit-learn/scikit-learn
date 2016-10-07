@@ -12,6 +12,7 @@ from sklearn.utils.testing import (
     assert_equal,
     assert_false,
     assert_is,
+    assert_is_not,
     assert_raises,
     assert_raises_regex,
     assert_raise_message,
@@ -22,8 +23,10 @@ from sklearn.utils.testing import (
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import (
+    LogisticRegression,
+    LinearRegression
+)
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -163,7 +166,7 @@ def test_pipeline_init():
 
     # Test clone
     pipe2 = clone(pipe)
-    assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
+    assert_is_not(pipe.named_steps['svc'], pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
@@ -206,8 +209,8 @@ def test_pipeline_fit_params():
     # classifier should return True
     assert_true(pipe.predict(None))
     # and transformer params should not be changed
-    assert_true(pipe.named_steps['transf'].a is None)
-    assert_true(pipe.named_steps['transf'].b is None)
+    assert_is(pipe.named_steps['transf'].a, None)
+    assert_is(pipe.named_steps['transf'].b, None)
 
 
 def test_pipeline_raise_set_params_error():
@@ -404,12 +407,12 @@ def test_set_pipeline_steps():
     transf1 = Transf()
     transf2 = Transf()
     pipeline = Pipeline([('mock', transf1)])
-    assert_true(pipeline.named_steps['mock'] is transf1)
+    assert_is(pipeline.named_steps['mock'], transf1)
 
     # Directly setting attr
     pipeline.steps = [('mock2', transf2)]
     assert_true('mock' not in pipeline.named_steps)
-    assert_true(pipeline.named_steps['mock2'] is transf2)
+    assert_is(pipeline.named_steps['mock2'], transf2)
     assert_equal([('mock2', transf2)], pipeline.steps)
 
     # Using set_params
