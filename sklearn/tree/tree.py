@@ -217,24 +217,30 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
             if not 1 <= self.min_samples_leaf:
-                raise ValueError("min_samples_leaf must at least 1 "
-                                 "or in (0, 0.5], got %s" % self.min_samples_leaf)
+                raise ValueError("min_samples_leaf must be "
+                                 "at least 1 "
+                                 "or in (0, 0.5], "
+                                 "got %s" % self.min_samples_leaf)
             min_samples_leaf = self.min_samples_leaf
         else:  # float
             if not 0. < self.min_samples_leaf <= 0.5:
-                raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got %s" % self.min_samples_leaf)
+                raise ValueError("min_samples_leaf must be "
+                                 "at least 1 "
+                                 "or in (0, 0.5], "
+                                 "got %s" % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
-                raise ValueError("min_samples_split must be at least 2"
-                                 " or in (0, 1], got %s" % self.min_samples_split)
+                raise ValueError("min_samples_split must be "
+                                 "at least 2 or in (0, 1], "
+                                 "got %s" % self.min_samples_split)
             min_samples_split = self.min_samples_split
         else:  # float
             if not 0. < self.min_samples_split <= 1.:
-                raise ValueError("min_samples_split must be at least 2"
-                                 " or in (0, 1], got %s" % self.min_samples_split)
+                raise ValueError("min_samples_split must be "
+                                 "at least 2 or in (0, 1], "
+                                 "got %s" % self.min_samples_split)
 
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
@@ -313,8 +319,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                np.sum(sample_weight))
 
         if self.min_impurity_split < 0.:
-            raise ValueError("min_impurity_split must be greater than or equal "
-                             "to 0")
+            raise ValueError("min_impurity_split must be greater than "
+                             "or equal to 0")
 
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
@@ -377,7 +383,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                            min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
-                                           max_leaf_nodes, self.min_impurity_split)
+                                           max_leaf_nodes,
+                                           self.min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
