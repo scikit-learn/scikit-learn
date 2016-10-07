@@ -17,7 +17,7 @@ import re
 import warnings
 import os
 
-PRESUME_FINITE = bool(os.environ.get('SKLEARN_PRESUME_FINITE', False))
+ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,

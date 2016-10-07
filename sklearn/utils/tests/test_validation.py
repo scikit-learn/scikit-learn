@@ -475,7 +475,7 @@ def test_check_consistent_length():
 def check_suppress_validation():
     X = np.array([0, np.inf])
     assert_raises(ValueError, assert_all_finite, X)
-    sklearn.PRESUME_FINITE = True
+    sklearn.ASSUME_FINITE = True
     assert_all_finite(X)
-    sklearn.PRESUME_FINITE = False
+    sklearn.ASSUME_FINITE = False
     assert_raises(ValueError, assert_all_finite, X)

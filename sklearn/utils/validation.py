@@ -48,8 +48,8 @@ warnings.simplefilter('ignore', _NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
-    from .. import PRESUME_FINITE
-    if PRESUME_FINITE:
+    from .. import ASSUME_FINITE
+    if ASSUME_FINITE:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that

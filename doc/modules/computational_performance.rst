@@ -75,11 +75,11 @@ you an estimate of the order of magnitude of the prediction latency.
     features are finite (not NaN or infinite) involves a full pass over the
     data. If you ensure that your data is acceptable, you may suppress
     checking for finiteness by setting the environment variable
-    ``SKLEARN_PRESUME_FINITE`` to a non-empty string before importing
+    ``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
     scikit-learn, or configure it in Python with::
 
       >>> import sklearn
-      >>> sklearn.PRESUME_FINITE = True                 # doctest: +SKIP
+      >>> sklearn.ASSUME_FINITE = True                 # doctest: +SKIP
 
 Influence of the Number of Features
 -----------------------------------
