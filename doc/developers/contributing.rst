@@ -308,25 +308,23 @@ Issues for New Contributors
 ----------------
 New contributors should look for the following tags when looking for issues.
 
-Easy Tags
------------
+.. topic:: Easy Tags
 
-A great way to start contributing to scikit-learn is to pick an item from the
-list of `Easy issues
-<https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
-in the issue tracker. Resolving these issues allow you to start contributing
-to the project without much prior knowledge. Your assistance in this area will
-be greatly appreciated by the more experienced developers as it helps free up
-their time to concentrate on other issues.
+    A great way to start contributing to scikit-learn is to pick an item from the
+    list of `Easy issues
+    <https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
+    in the issue tracker. Resolving these issues allow you to start contributing
+    to the project without much prior knowledge. Your assistance in this area will
+    be greatly appreciated by the more experienced developers as it helps free up
+    their time to concentrate on other issues.
 
-Need Contributor Tags
----------------------
+.. topic:: Need Contributor Tags
 
-We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
-we use the Need Contributor tag to mark Pull Requests which have been abandoned
-by their original contributor and are available for someone to pick up where the original
-contributor left off. The list of issues with the Need Contributor tag can be found
-`here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
+    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+    we use the Need Contributor tag to mark Pull Requests which have been abandoned
+    by their original contributor and are available for someone to pick up where the original
+    contributor left off. The list of issues with the Need Contributor tag can be found
+    `here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
 
 
 .. _contribute_documentation:
