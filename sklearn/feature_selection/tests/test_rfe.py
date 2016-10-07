@@ -3,7 +3,6 @@ Testing Recursive feature elimination
 """
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from nose.tools import assert_equal, assert_true
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
@@ -15,7 +14,7 @@ from sklearn.model_selection import cross_val_score
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater, assert_equal, assert_true
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer

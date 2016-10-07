@@ -5,16 +5,13 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # License: BSD 3 clause
 
-from nose.tools import raises
-from nose.tools import assert_true
-
 import numpy as np
 
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
 from sklearn.datasets import make_regression
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater, assert_true, raises
 
 
 f = lambda x: x * np.sin(x)

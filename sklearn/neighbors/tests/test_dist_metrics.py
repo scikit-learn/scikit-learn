@@ -7,7 +7,7 @@ from numpy.testing import assert_array_almost_equal
 import scipy
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
-from nose import SkipTest
+from sklearn.utils.testing import SkipTest
 
 
 def dist_func(x1, x2, p):

@@ -215,7 +215,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     return Bunch(**dataset)
 
 
-# The following is used by nosetests to setup the docstring tests fixture
+# The following is used by test runners to setup the docstring tests fixture
 
 def setup_module(module):
     # setup mock urllib2 module to avoid downloading from mldata.org

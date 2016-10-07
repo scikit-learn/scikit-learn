@@ -7,9 +7,8 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
-from nose.tools import assert_raises
-
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_raises
 from sklearn.ensemble.gradient_boosting import BinomialDeviance
 from sklearn.ensemble.gradient_boosting import LogOddsEstimator
 from sklearn.ensemble.gradient_boosting import LeastSquaresError
