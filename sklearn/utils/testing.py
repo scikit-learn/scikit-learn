@@ -101,6 +101,20 @@ except AttributeError:
         assert_false(x in container, msg="%r in %r" % (x, container))
 
 try:
+    assert_is = _dummy.assertIs
+except AttributeError:
+    # Python <= 2.6
+    def assert_is(a, b):
+        assert_true(a is b)
+
+try:
+    assert_is_not = _dummy.assertIsNot
+except AttributeError:
+    # Python <= 2.6
+    def assert_is_not(a, b):
+        assert_true(a is not b)
+
+try:
     assert_raises_regex = _dummy.assertRaisesRegex
 except AttributeError:
     # for Python 2.6
