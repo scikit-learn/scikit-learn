@@ -216,13 +216,26 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                           else self.max_leaf_nodes)
 
         if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
+            if not 1 <= self.min_samples_leaf:
+                raise ValueError("min_samples_leaf must at least 1 "
+                                 "or in (0, 0.5], got %s" % self.min_samples_leaf)
             min_samples_leaf = self.min_samples_leaf
         else:  # float
+            if not 0. < self.min_samples_leaf <= 0.5:
+                raise ValueError("min_samples_leaf must be at least 1 "
+                                 "or in (0, 0.5], got %s" % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
+            if not 2 <= self.min_samples_split:
+                raise ValueError("min_samples_split must be at least 2"
+                                 " or in (0, 1], got %s" % self.min_samples_split)
             min_samples_split = self.min_samples_split
         else:  # float
+            if not 0. < self.min_samples_split <= 1.:
+                raise ValueError("min_samples_split must be at least 2"
+                                 " or in (0, 1], got %s" % self.min_samples_split)
+
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
@@ -258,15 +271,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
-        if not (0. < self.min_samples_split <= 1. or
-                2 <= self.min_samples_split):
-            raise ValueError("min_samples_split must be in at least 2"
-                             " or in (0, 1], got %s" % min_samples_split)
-        if not (0. < self.min_samples_leaf <= 0.5 or
-                1 <= self.min_samples_leaf):
-            raise ValueError("min_samples_leaf must be at least than 1 "
-                             "or in (0, 0.5], got %s" % min_samples_leaf)
-
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
