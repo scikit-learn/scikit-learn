@@ -69,6 +69,13 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data).copy()
 
 
+cdef inline np.ndarray int32_ptr_to_ndarray(INT32_t* data, SIZE_t size):
+    """Encapsulate data into a 1D numpy array of int32's."""
+    cdef np.npy_intp shape[1]
+    shape[0] = <np.npy_intp> size
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT32, data)
+
+
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil:
     """Generate a random integer in [0; end)."""

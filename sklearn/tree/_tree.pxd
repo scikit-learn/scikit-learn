@@ -56,6 +56,8 @@ cdef class Tree:
     cdef Node* nodes                     # Array of nodes
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
+    cdef INT32_t *n_categories           # (n_features,) array giving number of
+                                         # categories (<0 for non-categorical)
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
@@ -103,5 +105,6 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*,
+                np.ndarray n_categories=*,
                 np.ndarray X_idx_sorted=*)
     cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

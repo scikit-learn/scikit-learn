@@ -303,6 +303,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                              ".shape = {})".format(X.shape,
                                                    X_idx_sorted.shape))
 
+        # Set n_categories (hard-code -1 for now)
+        n_categories = np.array([-1] * self.n_features_, dtype=np.int32)
+
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -324,7 +327,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                                 random_state,
                                                 self.presort)
 
-        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_,
+                          n_categories)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -340,7 +344,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                            max_leaf_nodes,
                                            self.min_impurity_split)
 
-        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+        builder.build(self.tree_, X, y, sample_weight, n_categories,
+                      X_idx_sorted)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
