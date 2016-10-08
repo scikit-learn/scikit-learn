@@ -45,6 +45,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     Currently, the implementation is restricted to using the logistic link
     function.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     kernel : kernel object
@@ -138,6 +140,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     log_marginal_likelihood_value_: float
         The log-marginal-likelihood of ``self.kernel_.theta``
+
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
@@ -546,6 +549,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
 
     n_classes_ : int
         The number of classes in the training data
+
+    .. versionadded:: 0.18
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
@@ -708,7 +713,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         else:
             if eval_gradient:
                 raise NotImplementedError(
-                    "Gradient of log-marginal-likelhood not implemented for "
+                    "Gradient of log-marginal-likelihood not implemented for "
                     "multi-class GPC.")
             estimators = self.base_estimator_.estimators_
             n_dims = estimators[0].kernel_.n_dims

@@ -163,7 +163,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     hash_functions_ : list of GaussianRandomProjectionHash objects
         Hash function g(p,x) for a tree is an array of 32 randomly generated
-        float arrays with the same dimenstion as the data set. This array is
+        float arrays with the same dimension as the data set. This array is
         stored in GaussianRandomProjectionHash object and can be obtained
         from ``components_`` attribute.
 
@@ -411,7 +411,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             Number of neighbors required. If not provided, this will
             return the number specified at the initialization.
 
-        return_distance : boolean, optional (default = False)
+        return_distance : boolean, optional (default = True)
             Returns the distances of neighbors if set to True.
 
         Returns

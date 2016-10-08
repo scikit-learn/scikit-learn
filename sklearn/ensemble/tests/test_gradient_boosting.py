@@ -954,7 +954,7 @@ def test_zero_estimator_clf():
 
 
 def test_max_leaf_nodes_max_depth():
-    # Test preceedence of max_leaf_nodes over max_depth.
+    # Test precedence of max_leaf_nodes over max_depth.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     all_estimators = [GradientBoostingRegressor,
                       GradientBoostingClassifier]

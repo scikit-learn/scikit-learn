@@ -208,10 +208,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ax : Matplotlib axis object, default None
         An axis object onto which the plots will be drawn.
     line_kw : dict
-        Dict with keywords passed to the ``pylab.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
     contour_kw : dict
-        Dict with keywords passed to the ``pylab.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
     fig_kw : dict
         Dict with keywords passed to the figure() call.

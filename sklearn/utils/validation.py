@@ -1,4 +1,5 @@
 """Utilities for input validation"""
+
 # Authors: Olivier Grisel
 #          Gael Varoquaux
 #          Andreas Mueller
@@ -6,6 +7,7 @@
 #          Alexandre Gramfort
 #          Nicolas Tresegnie
 # License: BSD 3 clause
+
 import warnings
 import numbers
 
@@ -15,42 +17,33 @@ import scipy.sparse as sp
 from ..externals import six
 from ..utils.fixes import signature
 from .deprecation import deprecated
-from ..exceptions import DataConversionWarning as DataConversionWarning_
-from ..exceptions import NonBLASDotWarning as NonBLASDotWarning_
-from ..exceptions import NotFittedError as NotFittedError_
+from ..exceptions import DataConversionWarning as _DataConversionWarning
+from ..exceptions import NonBLASDotWarning as _NonBLASDotWarning
+from ..exceptions import NotFittedError as _NotFittedError
 
 
-class DataConversionWarning(DataConversionWarning_):
+@deprecated("DataConversionWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class DataConversionWarning(_DataConversionWarning):
     pass
 
-DataConversionWarning = deprecated("DataConversionWarning has been moved "
-                                   "into the sklearn.exceptions module. "
-                                   "It will not be available here from "
-                                   "version 0.19")(DataConversionWarning)
 
-
-class NonBLASDotWarning(NonBLASDotWarning_):
+@deprecated("NonBLASDotWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class NonBLASDotWarning(_NonBLASDotWarning):
     pass
 
-NonBLASDotWarning = deprecated("NonBLASDotWarning has been moved "
-                               "into the sklearn.exceptions module. "
-                               "It will not be available here from "
-                               "version 0.19")(NonBLASDotWarning)
 
-
-class NotFittedError(NotFittedError_):
+@deprecated("NotFittedError has been moved into the sklearn.exceptions module."
+            " It will not be available here from version 0.19")
+class NotFittedError(_NotFittedError):
     pass
-
-NotFittedError = deprecated("NotFittedError has been moved into the "
-                            "sklearn.exceptions module. It will not be "
-                            "available here from version 0.19")(NotFittedError)
-
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning_)
+warnings.simplefilter('ignore', _NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -137,7 +130,7 @@ def _num_samples(x):
 
 
 def _shape_repr(shape):
-    """Return a platform independent reprensentation of an array shape
+    """Return a platform independent representation of an array shape
 
     Under Python 2, the `long` type introduces an 'L' suffix when using the
     default %r format for tuples of integers (typically used to store the shape
@@ -181,10 +174,11 @@ def check_consistent_length(*arrays):
         Objects that will be checked for consistent length.
     """
 
-    uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
+    lengths = [_num_samples(X) for X in arrays if X is not None]
+    uniques = np.unique(lengths)
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: "
-                         "%s" % str(uniques))
+        raise ValueError("Found input variables with inconsistent numbers of"
+                         " samples: %r" % [int(l) for l in lengths])
 
 
 def indexable(*iterables):
@@ -281,7 +275,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                 warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2nd numpy array.
+    By default, the input is converted to an at least 2D numpy array.
     If the dtype of the array is object, attempt converting to float,
     raising on failure.
 
@@ -304,6 +298,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
+        When order is None (default), then if copy=False, nothing is ensured
+        about the memory layout of the output array; otherwise (copy=True)
+        the memory layout of the returned array is kept as close as possible
+        to the original array.
 
     copy : boolean (default=False)
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -399,7 +397,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
-        # make sure we acually converted to numeric:
+        # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
             array = array.astype(np.float64)
         if not allow_nd and array.ndim >= 3:
@@ -428,13 +426,13 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning_)
+        warnings.warn(msg, _DataConversionWarning)
     return array
 
 
-def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None, copy=False,
-              force_all_finite=True, ensure_2d=True, allow_nd=False,
-              multi_output=False, ensure_min_samples=1,
+def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
+              copy=False, force_all_finite=True, ensure_2d=True,
+              allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
               warn_on_dtype=False, estimator=None):
     """Input validation for standard estimators.
@@ -558,7 +556,7 @@ def column_or_1d(y, warn=False):
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
                           "(n_samples, ), for example using ravel().",
-                          DataConversionWarning_, stacklevel=2)
+                          _DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
@@ -689,7 +687,7 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
         # FIXME NotFittedError_ --> NotFittedError in 0.19
-        raise NotFittedError_(msg % {'name': type(estimator).__name__})
+        raise _NotFittedError(msg % {'name': type(estimator).__name__})
 
 
 def check_non_negative(X, whom):

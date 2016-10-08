@@ -965,7 +965,7 @@ class ParserElement(object):
               (see L{I{parseWithTabs}<parseWithTabs>})
             - define your parse action using the full (s,loc,toks) signature, and
               reference the input string using the parse action's s argument
-            - explictly expand the tabs in your input string before calling
+            - explicitly expand the tabs in your input string before calling
               parseString
         """
         ParserElement.resetCache()

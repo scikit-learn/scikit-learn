@@ -33,9 +33,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     cross-validation generator and the test set is used for calibration.
     The probabilities for each of the folds are then averaged
     for prediction. In case that cv="prefit" is passed to __init__,
-    it is it is assumed that base_estimator has been
-    fitted already and all data is used for calibration. Note that
-    data for fitting the classifier and for calibrating it must be disjoint.
+    it is assumed that base_estimator has been fitted already and all
+    data is used for calibration. Note that data for fitting the
+    classifier and for calibrating it must be disjoint.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -49,7 +49,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach. It is not advised to use isotonic calibration
+        non-parametric approach. It is not advised to use isotonic calibration
         with too few calibration samples ``(<<1000)`` since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 
@@ -63,8 +63,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If ``y`` is neither binary nor
-        multiclass, :class:`KFold` is used.
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` 
+        is neither binary nor multiclass, :class:`sklearn.model_selection.KFold` 
+        is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -126,7 +127,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         lb = LabelBinarizer().fit(y)
         self.classes_ = lb.classes_
 
-        # Check that we each cross-validation fold can have at least one
+        # Check that each cross-validation fold can have at least one
         # example per class
         n_folds = self.cv if isinstance(self.cv, int) \
             else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
@@ -204,7 +205,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
-        # classfiers
+        # classifiers
         mean_proba = np.zeros((X.shape[0], len(self.classes_)))
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
@@ -250,7 +251,7 @@ class _CalibratedClassifier(object):
     method : 'sigmoid' | 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
-        non-parameteric approach based on isotonic regression.
+        non-parametric approach based on isotonic regression.
 
     References
     ----------

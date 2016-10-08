@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 from scipy import stats
 
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
@@ -19,6 +20,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
@@ -160,7 +162,7 @@ def test_kfold_valueerrors():
 
     # Check that a warning is raised if the least populated class has too few
     # members.
-    y = [3, 3, -1, -1, 2]
+    y = [3, 3, -1, -1, 3]
 
     cv = assert_warns_message(Warning, "The least populated class",
                               cval.StratifiedKFold, y, 3)
@@ -170,11 +172,21 @@ def test_kfold_valueerrors():
     # side of the split at each split
     check_cv_coverage(cv, expected_n_iter=3, n_samples=len(y))
 
+    # Check that errors are raised if all n_labels for individual
+    # classes are less than n_folds.
+    y = [3, 3, -1, -1, 2]
+
+    assert_raises(ValueError, cval.StratifiedKFold, y, 3)
+
     # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
     assert_raises(ValueError, cval.KFold, 2, 1)
-    assert_raises(ValueError, cval.StratifiedKFold, y, 0)
-    assert_raises(ValueError, cval.StratifiedKFold, y, 1)
+    error_string = ("k-fold cross validation requires at least one"
+                    " train / test split")
+    assert_raise_message(ValueError, error_string,
+                         cval.StratifiedKFold, y, 0)
+    assert_raise_message(ValueError, error_string,
+                         cval.StratifiedKFold, y, 1)
 
     # When n is not integer:
     assert_raises(ValueError, cval.KFold, 2.5, 2)
@@ -324,7 +336,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     # for this data. We can highlight this fact be computing k-fold cross-
     # validation with and without shuffling: we observe that the shuffling case
     # wrongly makes the IID assumption and is therefore too optimistic: it
-    # estimates a much higher accuracy (around 0.96) than than the non
+    # estimates a much higher accuracy (around 0.96) than the non
     # shuffling variant (around 0.86).
 
     digits = load_digits()
@@ -467,7 +479,7 @@ def test_stratified_shuffle_split_init():
 def test_stratified_shuffle_split_iter():
     ys = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
           np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+          np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2] * 2),
           np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
           np.array([-1] * 800 + [1] * 50)
           ]
@@ -475,16 +487,22 @@ def test_stratified_shuffle_split_iter():
     for y in ys:
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0)
+        test_size = np.ceil(0.33 * len(y))
+        train_size = len(y) - test_size
         for train, test in sss:
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = (np.bincount(np.unique(y[train], return_inverse=True)[1])
-                       / float(len(y[train])))
-            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1])
-                      / float(len(y[test])))
+            p_train = (np.bincount(np.unique(y[train],
+                                   return_inverse=True)[1]) /
+                       float(len(y[train])))
+            p_test = (np.bincount(np.unique(y[test],
+                                  return_inverse=True)[1]) /
+                      float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
-            assert_equal(y[train].size + y[test].size, y.size)
-            assert_array_equal(np.intersect1d(train, test), [])
+            assert_equal(len(train) + len(test), y.size)
+            assert_equal(len(train), train_size)
+            assert_equal(len(test), test_size)
+            assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
 def test_stratified_shuffle_split_even():
@@ -533,6 +551,18 @@ def test_stratified_shuffle_split_even():
 
         assert_counts_are_ok(train_counts, ex_train_p)
         assert_counts_are_ok(test_counts, ex_test_p)
+
+
+def test_stratified_shuffle_split_overlap_train_test_bug():
+    # See https://github.com/scikit-learn/scikit-learn/issues/6121 for
+    # the original bug report
+    labels = [0, 1, 2, 3] * 3 + [4, 5] * 5
+
+    splits = cval.StratifiedShuffleSplit(labels, n_iter=1,
+                                         test_size=0.5, random_state=0)
+    train, test = next(iter(splits))
+
+    assert_array_equal(np.intersect1d(train, test), [])
 
 
 def test_predefinedsplit_with_kfold_split():
@@ -882,10 +912,10 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
-    mse_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                      scoring="mean_squared_error")
-    expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
-    assert_array_almost_equal(mse_scores, expected_mse, 2)
+    neg_mse_scores = cval.cross_val_score(reg, X, y, cv=5,
+                                          scoring="neg_mean_squared_error")
+    expected_neg_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
+    assert_array_almost_equal(neg_mse_scores, expected_neg_mse, 2)
 
     # Explained variance
     scoring = make_scorer(explained_variance_score)
@@ -1144,14 +1174,16 @@ def test_cross_val_predict_input_types():
     assert_equal(predictions.shape, (10,))
 
     # test with multioutput y
-    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    with ignore_warnings(category=ConvergenceWarning):
+        predictions = cval.cross_val_predict(clf, X_sparse, X)
     assert_equal(predictions.shape, (10, 2))
 
     predictions = cval.cross_val_predict(clf, X_sparse, y)
     assert_array_equal(predictions.shape, (10,))
 
     # test with multioutput y
-    predictions = cval.cross_val_predict(clf, X_sparse, X)
+    with ignore_warnings(category=ConvergenceWarning):
+        predictions = cval.cross_val_predict(clf, X_sparse, X)
     assert_array_equal(predictions.shape, (10, 2))
 
     # test with X and y as list

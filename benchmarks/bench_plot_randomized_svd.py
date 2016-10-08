@@ -373,7 +373,7 @@ def bench_b(power_list):
     if enable_spectral_norm:
         title = "%s: spectral norm diff vs n power iteration" % (dataset_name)
         plot_power_iter_vs_s(power_iter, all_spectral, title)
-    title = "%s: frobenius norm diff vs n power iteration" % (dataset_name)
+    title = "%s: Frobenius norm diff vs n power iteration" % (dataset_name)
     plot_power_iter_vs_s(power_iter, all_frobenius, title)
 
 

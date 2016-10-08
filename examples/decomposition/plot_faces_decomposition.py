@@ -66,8 +66,9 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row):
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('Eigenfaces - RandomizedPCA',
-     decomposition.RandomizedPCA(n_components=n_components, whiten=True),
+    ('Eigenfaces - PCA using randomized SVD',
+     decomposition.PCA(n_components=n_components, svd_solver='randomized',
+                       whiten=True),
      True),
 
     ('Non-negative components - NMF',
@@ -122,7 +123,8 @@ for name, estimator, center in estimators:
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
-    if hasattr(estimator, 'noise_variance_'):
+    if (hasattr(estimator, 'noise_variance_') and
+            estimator.noise_variance_.shape != ()):
         plot_gallery("Pixelwise variance",
                      estimator.noise_variance_.reshape(1, -1), n_col=1,
                      n_row=1)

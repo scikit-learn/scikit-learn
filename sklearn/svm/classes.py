@@ -165,7 +165,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.penalty = penalty
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -177,22 +177,24 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
+
         Returns
         -------
         self : object
             Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
-        loss_l = self.loss.lower()
-
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
 
-        # FIXME change loss_l --> self.loss after 0.18
-        if loss_l in ('l1', 'l2'):
+        if self.loss in ('l1', 'l2'):
             old_loss = self.loss
-            self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(loss_l)
+            self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
@@ -210,7 +212,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss)
+            self.loss, sample_weight=sample_weight)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -329,7 +331,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.dual = dual
         self.loss = loss
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
         Parameters
@@ -341,24 +343,26 @@ class LinearSVR(LinearModel, RegressorMixin):
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Array of weights that are assigned to individual
+            samples. If not provided,
+            then each sample is given unit weight.
+
         Returns
         -------
         self : object
             Returns self.
         """
         # FIXME Remove l1/l2 support in 1.0 -----------------------------------
-        loss_l = self.loss.lower()
-
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
 
-        # FIXME change loss_l --> self.loss after 0.18
-        if loss_l in ('l1', 'l2'):
+        if self.loss in ('l1', 'l2'):
             old_loss = self.loss
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
-                         }.get(loss_l)
+                         }.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
@@ -374,7 +378,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, loss=self.loss,
-            epsilon=self.epsilon)
+            epsilon=self.epsilon, sample_weight=sample_weight)
         self.coef_ = self.coef_.ravel()
 
         return self
@@ -457,7 +461,7 @@ class SVC(BaseSVC):
         (n_samples, n_classes * (n_classes - 1) / 2).
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.18.
+        in 0.19.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -588,12 +592,12 @@ class NuSVC(BaseSVC):
     cache_size : float, optional
         Specify the size of the kernel cache (in MB).
 
-    class_weight : {dict, 'auto'}, optional
+    class_weight : {dict, 'balanced'}, optional
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
-        weight one. The 'auto' mode uses the values of y to
-        automatically adjust weights inversely proportional to
-        class frequencies.
+        weight one. The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies as
+        ``n_samples / (n_classes * np.bincount(y))``
 
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
@@ -610,7 +614,7 @@ class NuSVC(BaseSVC):
         (n_samples, n_classes * (n_classes - 1) / 2).
         The default of None will currently behave as 'ovo' for backward
         compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.18.
+        in 0.19.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -765,6 +769,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     intercept_ : array, shape = [1]
         Constants in decision function.
+
+    sample_weight : array-like, shape = [n_samples]
+            Individual weights for each sample
 
     Examples
     --------
@@ -1025,8 +1032,8 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight,
-                                     **params)
+        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
+                                     sample_weight=sample_weight, **params)
         return self
 
     def decision_function(self, X):

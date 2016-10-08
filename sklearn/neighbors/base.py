@@ -2,7 +2,7 @@
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
@@ -583,11 +583,12 @@ class RadiusNeighborsMixin(object):
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          squared=True)
+                                          n_jobs=self.n_jobs, squared=True)
                 radius *= radius
             else:
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
+                                          n_jobs=self.n_jobs,
                                           **self.effective_metric_params_)
 
             neigh_ind_list = [np.where(d <= radius)[0] for d in dist]

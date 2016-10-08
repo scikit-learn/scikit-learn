@@ -2,9 +2,12 @@ import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import scipy.sparse as sp
+
 from sklearn.neighbors import BallTree
+from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
@@ -18,6 +21,7 @@ from sklearn.manifold.t_sne import trustworthiness
 from sklearn.manifold.t_sne import TSNE
 from sklearn.manifold import _barnes_hut_tsne
 from sklearn.manifold._utils import _binary_search_perplexity
+from sklearn.datasets import make_blobs
 from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
@@ -193,10 +197,13 @@ def test_gradient():
 
     P = _joint_probabilities(distances, desired_perplexity=25.0,
                              verbose=0)
-    fun = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                        n_components)[0]
-    grad = lambda params: _kl_divergence(params, P, alpha, n_samples,
-                                         n_components)[1]
+
+    def fun(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[0]
+
+    def grad(params):
+        return _kl_divergence(params, P, alpha, n_samples, n_components)[1]
+
     assert_almost_equal(check_grad(fun, grad, X_embedded.ravel()), 0.0,
                         decimal=5)
 
@@ -225,7 +232,7 @@ def test_preserve_trustworthiness_approximately():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     # The Barnes-Hut approximation uses a different method to estimate
-    # P_ij using only a a number of nearest neighbors instead of all
+    # P_ij using only a number of nearest neighbors instead of all
     # points (so that k = 3 * perplexity). As a result we set the
     # perplexity=5, so that the number of neighbors is 5%.
     n_components = 2
@@ -239,6 +246,20 @@ def test_preserve_trustworthiness_approximately():
             X_embedded = tsne.fit_transform(X)
             T = trustworthiness(X, X_embedded, n_neighbors=1)
             assert_almost_equal(T, 1.0, decimal=1)
+
+
+def test_optimization_minimizes_kl_divergence():
+    """t-SNE should give a lower KL divergence with more iterations."""
+    random_state = check_random_state(0)
+    X, _ = make_blobs(n_features=3, random_state=random_state)
+    kl_divergences = []
+    for n_iter in [200, 250, 300]:
+        tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
+                    n_iter=n_iter, random_state=0)
+        tsne.fit_transform(X)
+        kl_divergences.append(tsne.kl_divergence_)
+    assert_less_equal(kl_divergences[1], kl_divergences[0])
+    assert_less_equal(kl_divergences[2], kl_divergences[1])
 
 
 def test_fit_csr_matrix():
@@ -288,9 +309,23 @@ def test_non_square_precomputed_distances():
 
 
 def test_init_not_available():
-    # 'init' must be 'pca' or 'random'.
-    m = "'init' must be 'pca', 'random' or a NumPy array"
+    # 'init' must be 'pca', 'random', or numpy array.
+    m = "'init' must be 'pca', 'random', or a numpy array"
     assert_raises_regexp(ValueError, m, TSNE, init="not available")
+
+
+def test_init_ndarray():
+    # Initialize TSNE with ndarray and test fit
+    tsne = TSNE(init=np.zeros((100, 2)))
+    X_embedded = tsne.fit_transform(np.ones((100, 5)))
+    assert_array_equal(np.zeros((100, 2)), X_embedded)
+
+
+def test_init_ndarray_precomputed():
+    # Initialize TSNE with ndarray and metric 'precomputed'
+    # Make sure no FutureWarning is thrown from _fit
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
+    tsne.fit(np.zeros((100, 100)))
 
 
 def test_distance_not_available():
@@ -498,16 +533,16 @@ def test_quadtree_similar_point():
     Xs.append(np.array([[1.0, 2.0], [3.0, 2.0]], dtype=np.float32))
     # check the case where points are arbitrarily close on Y axis
     Xs.append(np.array([[1.0, 2.00001], [3.0, 2.00002]], dtype=np.float32))
-    # check the case where points are arbitraryily close on both axes
+    # check the case where points are arbitrarily close on both axes
     Xs.append(np.array([[1.00001, 2.00001], [1.00002, 2.00002]],
               dtype=np.float32))
 
-    # check the case where points are arbitraryily close on both axes
+    # check the case where points are arbitrarily close on both axes
     # close to machine epsilon - x axis
     Xs.append(np.array([[1, 0.0003817754041], [2, 0.0003817753750]],
               dtype=np.float32))
 
-    # check the case where points are arbitraryily close on both axes
+    # check the case where points are arbitrarily close on both axes
     # close to machine epsilon - y axis
     Xs.append(np.array([[0.0003817754041, 1.0], [0.0003817753750, 2.0]],
               dtype=np.float32))

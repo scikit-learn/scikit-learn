@@ -177,7 +177,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
-    # Intialize X and y
+    # Initialize X and y
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=np.int)
 
@@ -1196,7 +1196,8 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         The size of the random matrix to generate.
 
     alpha: float between 0 and 1, optional (default=0.95)
-        The probability that a coefficient is non zero (see notes).
+        The probability that a coefficient is zero (see notes). Larger values 
+        enforce more sparsity.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1293,7 +1294,7 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     ----------
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
            Chapter 10, 2009.
-           http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
+           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
     """
     generator = check_random_state(random_state)
 

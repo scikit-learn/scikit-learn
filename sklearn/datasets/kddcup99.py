@@ -50,14 +50,14 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     different types of attack with normal activity in the background.
     As the initial goal was to produce a large training set for supervised
     learning algorithms, there is a large proportion (80.1%) of abnormal
-    data which is unrealistic in real world, and inapropriate for unsupervised
+    data which is unrealistic in real world, and inappropriate for unsupervised
     anomaly detection which aims at detecting 'abnormal' data, ie
 
     1) qualitatively different from normal data.
 
     2) in large minority among the observations.
 
-    We thus transform the KDD Data set into two differents data set: SA and SF.
+    We thus transform the KDD Data set into two different data sets: SA and SF.
 
     - SA is obtained by simply selecting all the normal data, and a small
       proportion of abnormal data to gives an anomaly proportion of 1%.
@@ -116,6 +116,8 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     Targets               str, 'normal.' or name of the anomaly type
     ================      ==========================================
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     subset : None, 'SA', 'SF', 'http', 'smtp'
@@ -156,6 +158,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     .. [2] A Geometric Framework for Unsupervised Anomaly Detection: Detecting
            Intrusions in Unlabeled Data (2002) by Eleazar Eskin, Andrew Arnold,
            Michael Prerau, Leonid Portnoy, Sal Stolfo
+
     """
     kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
                                      download_if_missing=download_if_missing)

@@ -17,7 +17,7 @@ is performed in order to stay on the same order of magnitude.
 print(__doc__)
 
 import numpy as np
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 
 from sklearn.decomposition import SparseCoder
 
