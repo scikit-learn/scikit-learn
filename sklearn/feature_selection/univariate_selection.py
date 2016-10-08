@@ -403,7 +403,7 @@ class SelectPercentile(_BaseFilter):
         mask = scores > treshold
         ties = np.where(scores == treshold)[0]
         if len(ties):
-            max_feats = len(scores) * self.percentile // 100
+            max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
