@@ -562,6 +562,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                   'converged yet.'
                                   % (), ConvergenceWarning)
         except KeyboardInterrupt:
+            print("Training interrupted by user.")
             pass
 
         if early_stopping:
