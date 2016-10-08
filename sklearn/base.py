@@ -15,6 +15,17 @@ from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
 from . import __version__
 
 
+_PRINTOPTIONS = {'parameters': 'all', 'info': False}
+
+
+def set_print(parameters=None, info=None):
+    """Set estimator print options."""
+    if parameters is not None:
+        _PRINTOPTIONS['parameters'] = parameters
+    if info is not None:
+        _PRINTOPTIONS['info'] = info
+
+
 @deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
             " module. It will not be available here from version 0.19")
 class ChangedBehaviorWarning(_ChangedBehaviorWarning):
@@ -294,8 +305,31 @@ class BaseEstimator(object):
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
+        params = self.get_params(deep=False)
+        # Consider the constructor parameters excluding 'self'
+        if _PRINTOPTIONS['parameters'] == 'changed':
+            filtered_params = {}
+            init_params = signature(self.__init__).parameters
+            for k, v in params.items():
+                if v != init_params[k].default:
+                    filtered_params[k] = v
+            params = filtered_params
+        return '%s(%s)' % (class_name, _pprint(params,
                                                offset=len(class_name),),)
+
+    def __str__(self):
+        my_repr = self.__repr__()
+        if _PRINTOPTIONS['info'] is True:
+            print_attributes = ['classes_', 'n_features_', 'n_outputs_']
+            for attr in print_attributes:
+                value = getattr(self, attr, None)
+                if value is not None:
+                    my_repr += "\n- {0}={1}".format(attr[:-1], value)
+        return my_repr
+
+    def _repr_pretty_(self, p, cycle):
+        # representation for ipython / jupyter
+        return p.text(self.__str__())
 
     def __getstate__(self):
         if type(self).__module__.startswith('sklearn.'):
