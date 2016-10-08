@@ -382,7 +382,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.fit_params = fit_params if fit_params is not None else {}
+        self.fit_params = fit_params
         self.iid = iid
         self.refit = refit
         self.cv = cv
@@ -534,7 +534,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _fit(self, X, y, groups, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
-
+        fit_params = self.fit_params if self.fit_params is not None else {}
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring)
@@ -555,7 +555,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             pre_dispatch=pre_dispatch
         )(delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
                                   train, test, self.verbose, parameters,
-                                  fit_params=self.fit_params,
+                                  fit_params=fit_params,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=True,
@@ -641,9 +641,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             best_estimator = clone(base_estimator).set_params(
                 **best_parameters)
             if y is not None:
-                best_estimator.fit(X, y, **self.fit_params)
+                best_estimator.fit(X, y, **fit_params)
             else:
-                best_estimator.fit(X, **self.fit_params)
+                best_estimator.fit(X, **fit_params)
             self.best_estimator_ = best_estimator
         return self
 
@@ -1161,10 +1161,10 @@ class RandomizedSearchCV(BaseSearchCV):
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
 
     def fit(self, X, y=None, groups=None):
         """Run fit on the estimator with randomly drawn parameters.
