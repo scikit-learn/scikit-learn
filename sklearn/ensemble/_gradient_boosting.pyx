@@ -93,7 +93,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
         node = root_node
         # While node not a leaf
         while node.left_child != TREE_LEAF:
-            if X[i * n_features + node.feature] <= node.threshold:
+            if X[i * n_features + node.feature] <= node.split_value.threshold:
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
@@ -174,7 +174,7 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    if feature_value <= node.split_value.threshold:
                         node = root_node + node.left_child
                     else:
                         node = root_node + node.right_child
@@ -322,7 +322,7 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                 if feature_index != -1:
                     # split feature in target set
                     # push left or right child on stack
-                    if X[i, feature_index] <= current_node.threshold:
+                    if X[i, feature_index] <= current_node.split_value.threshold:
                         # left
                         node_stack[stack_size] = (root_node +
                                                   current_node.left_child)

@@ -12,6 +12,8 @@
 import numpy as np
 cimport numpy as np
 
+from ._utils cimport SplitValue
+
 from ._criterion cimport Criterion
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
@@ -26,7 +28,8 @@ cdef struct SplitRecord:
     SIZE_t pos             # Split samples array at the given position,
                            # i.e. count of samples below threshold for feature.
                            # pos is >= end if the node is a leaf.
-    double threshold       # Threshold to split at.
+    SplitValue split_value # Generalized threshold for categorical and
+                           # non-categorical features
     double improvement     # Impurity improvement given parent node.
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.

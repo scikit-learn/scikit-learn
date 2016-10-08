@@ -19,6 +19,8 @@ ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
+from ._utils cimport SplitValue
+
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
 
@@ -28,7 +30,8 @@ cdef struct Node:
     SIZE_t left_child                    # id of the left child of the node
     SIZE_t right_child                   # id of the right child of the node
     SIZE_t feature                       # Feature used for splitting the node
-    DOUBLE_t threshold                   # Threshold value at the node
+    SplitValue split_value               # Generalized threshold for categorical and
+                                         # non-categorical features
     DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_node_samples                # Number of samples at the node
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
