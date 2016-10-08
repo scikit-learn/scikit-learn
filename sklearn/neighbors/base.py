@@ -263,7 +263,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         return self.metric == 'precomputed'
 
     def get_n_features(self):
-        if hasattr(self, '_fit_X'):
+        if getattr(self, '_fit_X', None) is not None:
             return self._fit_X.shape[1]
         return None
 
