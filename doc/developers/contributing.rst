@@ -305,7 +305,8 @@ following rules before submitting:
 .. _new_contributors:
 
 Issues for New Contributors
-----------------
+---------------------------
+
 New contributors should look for the following tags when looking for issues.
 
 .. topic:: Easy Tags
