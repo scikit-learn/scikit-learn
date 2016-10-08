@@ -306,7 +306,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                 l.append(feature_names[i])
             names.append(l)
     except IndexError:
-        raise ValueError('features[i] must be in [0, n_features) '
+        raise ValueError('feature_names[i] must be in [0, n_features) '
                          'but was %d' % i)
 
     # compute PD functions
