@@ -320,11 +320,15 @@ class BaseEstimator(object):
     def __str__(self):
         my_repr = self.__repr__()
         if _PRINTOPTIONS['info'] is True:
-            print_attributes = ['classes_', 'n_features_', 'n_outputs_']
+            print_attributes = ['classes_', 'n_outputs_']
             for attr in print_attributes:
                 value = getattr(self, attr, None)
                 if value is not None:
                     my_repr += "\n- {0}={1}".format(attr[:-1], value)
+            n_features = self.get_n_features()
+            if n_features is not None:
+                my_repr += "\n- {0}={1}".format('n_features', n_features)
+
         return my_repr
 
     def _repr_pretty_(self, p, cycle):
@@ -348,6 +352,21 @@ class BaseEstimator(object):
                         self.__class__.__name__, pickle_version, __version__),
                     UserWarning)
         self.__dict__.update(state)
+
+    def get_n_features(self):
+        """Return number of features of a fitted estimator."""
+        n_features = getattr(self, 'n_features', None)
+        if n_features is not None:
+            return n_features
+
+        components = getattr(self, 'components_', None)
+        if components is not None:
+            return components.shape[1]
+
+        coef = getattr(self, 'coef_', None)
+        if coef is not None:
+            return coef.shape[-1]
+        return None
 
 
 ###############################################################################
