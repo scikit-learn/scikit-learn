@@ -19,11 +19,30 @@ _PRINTOPTIONS = {'parameters': 'all', 'info': False}
 
 
 def set_print(parameters=None, info=None):
-    """Set estimator print options."""
+    """Set estimator print options.
+
+    Parameters
+    ----------
+    parameters : None, 'all' or 'changed', default=None
+        Which parameters to show when printing estimators.
+        If None, this setting is not changed, if 'all',
+        all parameters are shown, if 'changed', only the
+        parameters that are not at their default value are shown.
+
+    info : bool or None, default=None
+        Whether to show additional information about an estimator.
+        If None, this setting is not changed.
+
+    Returns
+    -------
+    printoptions : dict
+        Current print options.
+    """
     if parameters is not None:
         _PRINTOPTIONS['parameters'] = parameters
     if info is not None:
         _PRINTOPTIONS['info'] = info
+    return _PRINTOPTIONS
 
 
 @deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
