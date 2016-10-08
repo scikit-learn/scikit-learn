@@ -339,6 +339,11 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 
         return self
 
+    def get_n_features(self):
+        if hasattr(self, 'scores_'):
+            return self.scores_.shape[0]
+        return None
+
     def _check_params(self, X, y):
         pass
 

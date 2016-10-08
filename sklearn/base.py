@@ -355,7 +355,7 @@ class BaseEstimator(object):
 
     def get_n_features(self):
         """Return number of features of a fitted estimator."""
-        n_features = getattr(self, 'n_features', None)
+        n_features = getattr(self, 'n_features_', None)
         if n_features is not None:
             return n_features
 
@@ -366,6 +366,11 @@ class BaseEstimator(object):
         coef = getattr(self, 'coef_', None)
         if coef is not None:
             return coef.shape[-1]
+
+        scale = getattr(self, 'scale_', None)
+        if scale is not None:
+            return scale.shape[0]
+
         return None
 
 

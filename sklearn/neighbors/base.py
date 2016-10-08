@@ -262,6 +262,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         # For cross-validation routines to split data correctly
         return self.metric == 'precomputed'
 
+    def get_n_features(self):
+        if hasattr(self, '_fit_X'):
+            return self._fit_X.shape[1]
+        return None
+
 
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
