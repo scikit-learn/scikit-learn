@@ -307,7 +307,11 @@ following rules before submitting:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues.
+New contributors should look for the following tags when looking for issues. 
+We strongly recommend that new contributors tackle "easy" issues first: this 
+helps the contributor become familiar with the contribution workflow, and 
+for the core devs to become acquainted with the contributor; besides which, 
+we frequently underestimate how easy an issue is to solve!
 
 .. topic:: Easy Tags
 
@@ -470,9 +474,10 @@ There are three other tags to help new contributors:
     Might need some knowledge of machine learning or the package,
     but is still approachable for someone new to the project.
 
-:New Contributor:
-    This tag marks an issue which currently lacks a contributor.
-    These issues can range in difficulty, and may not be approachable
+:Needs Contributor:
+    This tag marks an issue which currently lacks a contributor or a 
+    PR that needs another contributor to take over the work. These 
+    issues can range in difficulty, and may not be approachable
     for new contributors. Note that not all issues which need
     contributors will have this tag.
 
