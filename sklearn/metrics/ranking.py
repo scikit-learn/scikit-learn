@@ -271,7 +271,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_score : array, shape = [n_samples]
         Estimated probabilities or decision function
 
-    pos_label : int, optional (default=None)
+    pos_label : int or str, default=None
         The label of the positive class
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -371,7 +371,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     probas_pred : array, shape = [n_samples]
         Estimated probabilities or decision function.
 
-    pos_label : int, optional (default=None)
+    pos_label : int or str, default=None
         The label of the positive class
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -441,7 +441,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    pos_label : int
+    pos_label : int or str, default=None
         Label considered as positive and others are considered negative.
 
     sample_weight : array-like of shape = [n_samples], optional
