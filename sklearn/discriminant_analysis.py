@@ -337,10 +337,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Sb = St - Sw  # between scatter
 
         # Get maximum length for explained_variance_ratio_
-        if n_classes < self.n_components:
-            max_length_exp = n_classes
-        else:
-            max_length_exp = self.n_components
+        max_length_exp = min(len(self.classes_), self.n_components)
 
         evals, evecs = linalg.eigh(Sb, Sw)
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
