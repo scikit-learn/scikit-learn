@@ -1075,12 +1075,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape (n_classes, n_features)
+
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-    intercept_ : array, shape (n_classes,)
+        `coef_` is of shape (1, n_features) when the given problem
+        is binary.
+
+    intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
+
         If `fit_intercept` is set to False, the intercept is set to zero.
+        `intercept_` is of shape(1,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
@@ -1109,6 +1115,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     LIBLINEAR -- A Library for Large Linear Classification
         http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+    SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
+        Minimizing Finite Sums with the Stochastic Average Gradient
+        https://hal.inria.fr/hal-00860051/document
 
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
@@ -1451,13 +1461,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         `coef_` is of shape (1, n_features) when the given problem
         is binary.
-        `coef_` is readonly property derived from `raw_coef_` that
-        follows the internal memory layout of liblinear.
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
-        It is available only when parameter intercept is set to True
-        and is of shape(1,) when the problem is binary.
+
+        If `fit_intercept` is set to False, the intercept is set to zero.
+        `intercept_` is of shape(1,) when the problem is binary.
 
     Cs_ : array
         Array of C i.e. inverse of regularization parameter values used
@@ -1650,15 +1659,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = np.tile(multi_scores, (n_classes, 1, 1))
             self.Cs_ = Cs[0]
             self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
-                                      len(self.Cs_)))
+                                                len(self.Cs_)))
 
         else:
             coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
             self.Cs_ = Cs[0]
             coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
-                                     len(self.Cs_), -1))
+                                                   len(self.Cs_), -1))
             self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
-                                      len(self.Cs_)))
+                                                len(self.Cs_)))
 
         self.coefs_paths_ = dict(zip(labels, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))

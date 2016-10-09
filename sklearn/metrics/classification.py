@@ -186,6 +186,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     is equal to the number of observations known to be in group :math:`i` but
     predicted to be in group :math:`j`.
 
+    Thus in binary classification, the count of true negatives is
+    :math:`C_{0,0}`, false negatives is :math:`C_{1,0}`, true positives is
+    :math:`C_{1,1}` and false positives is :math:`C_{0,1}`.
+
     Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
@@ -937,16 +941,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Returns
     -------
-    precision: float (if average is not None) or array of float, shape =\
+    precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    recall: float (if average is not None) or array of float, , shape =\
+    recall : float (if average is not None) or array of float, , shape =\
         [n_unique_labels]
 
-    fbeta_score: float (if average is not None) or array of float, shape =\
+    fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    support: int (if average is not None) or array of int, shape =\
+    support : int (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1454,6 +1458,8 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+        .. versionadded:: 0.18
 
     classes : array, shape = [n_labels], optional
         (deprecated) Integer array of labels. This parameter has been

@@ -148,8 +148,18 @@ visibility.
 
         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-(If any of the above seems like magic to you, then look up the
-`Git documentation <https://git-scm.com/documentation>`_ on the web.)
+If any of the above seems like magic to you, then look up the `Git documentation
+<https://git-scm.com/documentation>`_ and the `Git development workflow
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+web.
+
+In particular, if some conflicts arise between your branch and the master
+branch, you will need to `rebase your branch on master
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
+Please avoid merging master branch into yours. If you did it anyway, you can fix
+it following `this example
+<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
+
 
 Contributing pull requests
 --------------------------
@@ -362,8 +372,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
         See also
         --------
-        SelectKBest: Select features based on the k highest scores.
-        SelectFpr: Select features based on a false positive rate test.
+        SelectKBest : Select features based on the k highest scores.
+        SelectFpr : Select features based on a false positive rate test.
 
     * For unwritten formatting rules, try to follow existing good works:
 

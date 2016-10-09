@@ -29,7 +29,8 @@ __all__ = ['learning_curve', 'validation_curve']
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
-                   n_jobs=1, pre_dispatch="all", verbose=0, shuffle=False):
+                   n_jobs=1, pre_dispatch="all", verbose=0,
+                   error_score='raise'):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -76,7 +77,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, 
+        either binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. In all
         other cases, :class:`sklearn.model_selection.KFold` is used.
 
@@ -103,9 +104,12 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    shuffle : boolean, optional, default: False
-        Indicates whether to choose random indices when using different
-        training sizes
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
     Returns
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
@@ -158,16 +162,11 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
-        if shuffle:
-            train_test_proportions = [(random.sample(train, n_train_samples), test)
-                for train, test in cv for n_train_samples in train_sizes_abs]
-        else:
-            train_test_proportions = [(train[:n_train_samples], test)
-                for train, test in cv for n_train_samples in train_sizes_abs]
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train, test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
-            for train, test in train_test_proportions)
+            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            verbose, parameters=None, fit_params=None, return_train_score=True,
+            error_score=error_score)
+            for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
@@ -299,7 +298,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, 
+        either binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. In all
         other cases, :class:`sklearn.model_selection.KFold` is used.
 

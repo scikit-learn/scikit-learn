@@ -29,14 +29,14 @@ from sklearn.utils.mocking import MockDataFrame
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import LabelKFold
+from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneLabelOut
+from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.model_selection import LeavePOut
-from sklearn.model_selection import LeavePLabelOut
+from sklearn.model_selection import LeavePGroupsOut
 from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import LabelShuffleSplit
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
@@ -45,13 +45,11 @@ from sklearn.model_selection import GridSearchCV
 
 from sklearn.linear_model import Ridge
 
-from sklearn.model_selection._split import _safe_split
 from sklearn.model_selection._split import _validate_shuffle_split
 from sklearn.model_selection._split import _CVIterableWrapper
 from sklearn.model_selection._split import _build_repr
 
 from sklearn.datasets import load_digits
-from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
 
 from sklearn.externals import six
@@ -62,7 +60,6 @@ from sklearn.svm import SVC
 X = np.ones(10)
 y = np.arange(10) // 2
 P_sparse = coo_matrix(np.eye(5))
-iris = load_iris()
 digits = load_digits()
 
 
@@ -132,7 +129,7 @@ class MockClassifier(object):
 @ignore_warnings
 def test_cross_validator_with_default_params():
     n_samples = 4
-    n_unique_labels = 4
+    n_unique_groups = 4
     n_splits = 2
     p = 2
     n_shuffle_splits = 10  # (the default value)
@@ -140,13 +137,13 @@ def test_cross_validator_with_default_params():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     X_1d = np.array([1, 2, 3, 4])
     y = np.array([1, 1, 2, 2])
-    labels = np.array([1, 2, 3, 4])
+    groups = np.array([1, 2, 3, 4])
     loo = LeaveOneOut()
     lpo = LeavePOut(p)
     kf = KFold(n_splits)
     skf = StratifiedKFold(n_splits)
-    lolo = LeaveOneLabelOut()
-    lopo = LeavePLabelOut(p)
+    lolo = LeaveOneGroupOut()
+    lopo = LeavePGroupsOut(p)
     ss = ShuffleSplit(random_state=0)
     ps = PredefinedSplit([1, 1, 2, 2])  # n_splits = np of unique folds = 2
 
@@ -154,14 +151,14 @@ def test_cross_validator_with_default_params():
     lpo_repr = "LeavePOut(p=2)"
     kf_repr = "KFold(n_splits=2, random_state=None, shuffle=False)"
     skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
-    lolo_repr = "LeaveOneLabelOut()"
-    lopo_repr = "LeavePLabelOut(n_labels=2)"
+    lolo_repr = "LeaveOneGroupOut()"
+    lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
                "train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
-                         n_unique_labels, comb(n_unique_labels, p),
+                         n_unique_groups, comb(n_unique_groups, p),
                          n_shuffle_splits, 2]
 
     for i, (cv, cv_repr) in enumerate(zip(
@@ -169,14 +166,14 @@ def test_cross_validator_with_default_params():
             [loo_repr, lpo_repr, kf_repr, skf_repr, lolo_repr, lopo_repr,
              ss_repr, ps_repr])):
         # Test if get_n_splits works correctly
-        assert_equal(n_splits_expected[i], cv.get_n_splits(X, y, labels))
+        assert_equal(n_splits_expected[i], cv.get_n_splits(X, y, groups))
 
         # Test if the cross-validator works as expected even if
         # the data is 1d
-        np.testing.assert_equal(list(cv.split(X, y, labels)),
-                                list(cv.split(X_1d, y, labels)))
+        np.testing.assert_equal(list(cv.split(X, y, groups)),
+                                list(cv.split(X_1d, y, groups)))
         # Test that train, test indices returned are integers
-        for train, test in cv.split(X, y, labels):
+        for train, test in cv.split(X, y, groups):
             assert_equal(np.asarray(train).dtype.kind, 'i')
             assert_equal(np.asarray(train).dtype.kind, 'i')
 
@@ -196,17 +193,17 @@ def check_valid_split(train, test, n_samples=None):
         assert_equal(train.union(test), set(range(n_samples)))
 
 
-def check_cv_coverage(cv, X, y, labels, expected_n_splits=None):
+def check_cv_coverage(cv, X, y, groups, expected_n_splits=None):
     n_samples = _num_samples(X)
     # Check that a all the samples appear at least once in a test fold
     if expected_n_splits is not None:
-        assert_equal(cv.get_n_splits(X, y, labels), expected_n_splits)
+        assert_equal(cv.get_n_splits(X, y, groups), expected_n_splits)
     else:
-        expected_n_splits = cv.get_n_splits(X, y, labels)
+        expected_n_splits = cv.get_n_splits(X, y, groups)
 
     collected_test_samples = set()
     iterations = 0
-    for train, test in cv.split(X, y, labels):
+    for train, test in cv.split(X, y, groups):
         check_valid_split(train, test, n_samples=n_samples)
         iterations += 1
         collected_test_samples.update(test)
@@ -236,9 +233,9 @@ def test_kfold_valueerrors():
     # side of the split at each split
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        check_cv_coverage(skf_3, X2, y, labels=None, expected_n_splits=3)
+        check_cv_coverage(skf_3, X2, y, groups=None, expected_n_splits=3)
 
-    # Check that errors are raised if all n_labels for individual
+    # Check that errors are raised if all n_groups for individual
     # classes are less than n_splits.
     y = np.array([3, 3, -1, -1, 2])
 
@@ -268,13 +265,13 @@ def test_kfold_indices():
     # Check all indices are returned in the test folds
     X1 = np.ones(18)
     kf = KFold(3)
-    check_cv_coverage(kf, X1, y=None, labels=None, expected_n_splits=3)
+    check_cv_coverage(kf, X1, y=None, groups=None, expected_n_splits=3)
 
     # Check all indices are returned in the test folds even when equal-sized
     # folds are not possible
     X2 = np.ones(17)
     kf = KFold(3)
-    check_cv_coverage(kf, X2, y=None, labels=None, expected_n_splits=3)
+    check_cv_coverage(kf, X2, y=None, groups=None, expected_n_splits=3)
 
     # Check if get_n_splits returns the number of folds
     assert_equal(5, KFold(5).get_n_splits(X2))
@@ -443,7 +440,7 @@ def test_shuffle_stratifiedkfold():
     for (_, test0), (_, test1) in zip(kf0.split(X_40, y),
                                       kf1.split(X_40, y)):
         assert_not_equal(set(test0), set(test1))
-    check_cv_coverage(kf0, X_40, y, labels=None, expected_n_splits=5)
+    check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -596,7 +593,7 @@ def test_stratified_shuffle_split_even():
                         "to even draws")
 
     for n_samples in (6, 22):
-        labels = np.array((n_samples // 2) * [0, 1])
+        groups = np.array((n_samples // 2) * [0, 1])
         splits = StratifiedShuffleSplit(n_splits=n_splits,
                                         test_size=1. / n_folds,
                                         random_state=0)
@@ -604,7 +601,7 @@ def test_stratified_shuffle_split_even():
         train_counts = [0] * n_samples
         test_counts = [0] * n_samples
         n_splits_actual = 0
-        for train, test in splits.split(X=np.ones(n_samples), y=labels):
+        for train, test in splits.split(X=np.ones(n_samples), y=groups):
             n_splits_actual += 1
             for counter, ids in [(train_counts, train), (test_counts, test)]:
                 for id in ids:
@@ -618,10 +615,10 @@ def test_stratified_shuffle_split_even():
         assert_equal(len(test), n_test)
         assert_equal(len(set(train).intersection(test)), 0)
 
-        label_counts = np.unique(labels)
+        group_counts = np.unique(groups)
         assert_equal(splits.test_size, 1.0 / n_folds)
-        assert_equal(n_train + n_test, len(labels))
-        assert_equal(len(label_counts), 2)
+        assert_equal(n_train + n_test, len(groups))
+        assert_equal(len(group_counts), 2)
         ex_test_p = float(n_test) / n_samples
         ex_train_p = float(n_train) / n_samples
 
@@ -664,28 +661,28 @@ def test_predefinedsplit_with_kfold_split():
     assert_array_equal(ps_test, kf_test)
 
 
-def test_label_shuffle_split():
-    labels = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+def test_group_shuffle_split():
+    groups = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
               np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
               np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
               np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4])]
 
-    for l in labels:
+    for l in groups:
         X = y = np.ones(len(l))
         n_splits = 6
-        test_size = 1. / 3
-        slo = LabelShuffleSplit(n_splits, test_size=test_size, random_state=0)
+        test_size = 1./3
+        slo = GroupShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
         # Make sure the repr works
         repr(slo)
 
         # Test that the length is correct
-        assert_equal(slo.get_n_splits(X, y, labels=l), n_splits)
+        assert_equal(slo.get_n_splits(X, y, groups=l), n_splits)
 
         l_unique = np.unique(l)
 
-        for train, test in slo.split(X, y, labels=l):
-            # First test: no train label is in the test set and vice versa
+        for train, test in slo.split(X, y, groups=l):
+            # First test: no train group is in the test set and vice versa
             l_train_unique = np.unique(l[train])
             l_test_unique = np.unique(l[test])
             assert_false(np.any(np.in1d(l[train], l_test_unique)))
@@ -698,33 +695,33 @@ def test_label_shuffle_split():
             assert_array_equal(np.intersect1d(train, test), [])
 
             # Fourth test:
-            # unique train and test labels are correct, +- 1 for rounding error
+            # unique train and test groups are correct, +- 1 for rounding error
             assert_true(abs(len(l_test_unique) -
                             round(test_size * len(l_unique))) <= 1)
             assert_true(abs(len(l_train_unique) -
                             round((1.0 - test_size) * len(l_unique))) <= 1)
 
 
-def test_leave_label_out_changing_labels():
-    # Check that LeaveOneLabelOut and LeavePLabelOut work normally if
-    # the labels variable is changed before calling split
-    labels = np.array([0, 1, 2, 1, 1, 2, 0, 0])
-    X = np.ones(len(labels))
-    labels_changing = np.array(labels, copy=True)
-    lolo = LeaveOneLabelOut().split(X, labels=labels)
-    lolo_changing = LeaveOneLabelOut().split(X, labels=labels)
-    lplo = LeavePLabelOut(n_labels=2).split(X, labels=labels)
-    lplo_changing = LeavePLabelOut(n_labels=2).split(X, labels=labels)
-    labels_changing[:] = 0
+def test_leave_group_out_changing_groups():
+    # Check that LeaveOneGroupOut and LeavePGroupsOut work normally if
+    # the groups variable is changed before calling split
+    groups = np.array([0, 1, 2, 1, 1, 2, 0, 0])
+    X = np.ones(len(groups))
+    groups_changing = np.array(groups, copy=True)
+    lolo = LeaveOneGroupOut().split(X, groups=groups)
+    lolo_changing = LeaveOneGroupOut().split(X, groups=groups)
+    lplo = LeavePGroupsOut(n_groups=2).split(X, groups=groups)
+    lplo_changing = LeavePGroupsOut(n_groups=2).split(X, groups=groups)
+    groups_changing[:] = 0
     for llo, llo_changing in [(lolo, lolo_changing), (lplo, lplo_changing)]:
         for (train, test), (train_chan, test_chan) in zip(llo, llo_changing):
             assert_array_equal(train, train_chan)
             assert_array_equal(test, test_chan)
 
-    # n_splits = no of 2 (p) label combinations of the unique labels = 3C2 = 3
-    assert_equal(3, LeavePLabelOut(n_labels=2).get_n_splits(X, y, labels))
-    # n_splits = no of unique labels (C(uniq_lbls, 1) = n_unique_labels)
-    assert_equal(3, LeaveOneLabelOut().get_n_splits(X, y, labels))
+    # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
+    assert_equal(3, LeavePGroupsOut(n_groups=2).get_n_splits(X, y, groups))
+    # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
+    assert_equal(3, LeaveOneGroupOut().get_n_splits(X, y, groups))
 
 
 def test_train_test_split_errors():
@@ -846,25 +843,6 @@ def test_shufflesplit_reproducible():
                        list(a for a, b in ss.split(X)))
 
 
-def test_safe_split_with_precomputed_kernel():
-    clf = SVC()
-    clfp = SVC(kernel="precomputed")
-
-    X, y = iris.data, iris.target
-    K = np.dot(X, X.T)
-
-    cv = ShuffleSplit(test_size=0.25, random_state=0)
-    tr, te = list(cv.split(X))[0]
-
-    X_tr, y_tr = _safe_split(clf, X, y, tr)
-    K_tr, y_tr2 = _safe_split(clfp, K, y, tr)
-    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
-
-    X_te, y_te = _safe_split(clf, X, y, te, tr)
-    K_te, y_te2 = _safe_split(clfp, K, y, te, tr)
-    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
-
-
 def test_train_test_split_allow_nans():
     # Check that train_test_split allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
@@ -931,11 +909,11 @@ def test_cv_iterable_wrapper():
     assert_equal(len(cv), wrapped_old_skf.get_n_splits())
 
 
-def test_label_kfold():
+def test_group_kfold():
     rng = np.random.RandomState(0)
 
     # Parameters of the test
-    n_labels = 15
+    n_groups = 15
     n_samples = 1000
     n_splits = 5
 
@@ -943,34 +921,34 @@ def test_label_kfold():
 
     # Construct the test data
     tolerance = 0.05 * n_samples  # 5 percent error allowed
-    labels = rng.randint(0, n_labels, n_samples)
+    groups = rng.randint(0, n_groups, n_samples)
 
-    ideal_n_labels_per_fold = n_samples // n_splits
+    ideal_n_groups_per_fold = n_samples // n_splits
 
-    len(np.unique(labels))
+    len(np.unique(groups))
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    lkf = LabelKFold(n_splits=n_splits)
-    for i, (_, test) in enumerate(lkf.split(X, y, labels)):
+    lkf = GroupKFold(n_splits=n_splits)
+    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
     # Check that folds have approximately the same size
-    assert_equal(len(folds), len(labels))
+    assert_equal(len(folds), len(groups))
     for i in np.unique(folds):
         assert_greater_equal(tolerance,
-                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+                             abs(sum(folds == i) - ideal_n_groups_per_fold))
 
-    # Check that each label appears only in 1 fold
-    for label in np.unique(labels):
-        assert_equal(len(np.unique(folds[labels == label])), 1)
+    # Check that each group appears only in 1 fold
+    for group in np.unique(groups):
+        assert_equal(len(np.unique(folds[groups == group])), 1)
 
-    # Check that no label is on both sides of the split
-    labels = np.asarray(labels, dtype=object)
-    for train, test in lkf.split(X, y, labels):
-        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+    # Check that no group is on both sides of the split
+    groups = np.asarray(groups, dtype=object)
+    for train, test in lkf.split(X, y, groups):
+        assert_equal(len(np.intersect1d(groups[train], groups[test])), 0)
 
     # Construct the test data
-    labels = np.array(['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
+    groups = np.array(['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
                        'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',
                        'Michelle', 'Bernard', 'Marion', 'Laura', 'Jean',
                        'Rachel', 'Franck', 'John', 'Gael', 'Anna', 'Alix',
@@ -978,41 +956,41 @@ def test_label_kfold():
                        'Madmood', 'Cary', 'Mary', 'Alexandre', 'David',
                        'Francis', 'Barack', 'Abdoul', 'Rasha', 'Xi', 'Silvia'])
 
-    n_labels = len(np.unique(labels))
-    n_samples = len(labels)
+    n_groups = len(np.unique(groups))
+    n_samples = len(groups)
     n_splits = 5
     tolerance = 0.05 * n_samples  # 5 percent error allowed
-    ideal_n_labels_per_fold = n_samples // n_splits
+    ideal_n_groups_per_fold = n_samples // n_splits
 
     X = y = np.ones(n_samples)
 
     # Get the test fold indices from the test set indices of each fold
     folds = np.zeros(n_samples)
-    for i, (_, test) in enumerate(lkf.split(X, y, labels)):
+    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
         folds[test] = i
 
     # Check that folds have approximately the same size
-    assert_equal(len(folds), len(labels))
+    assert_equal(len(folds), len(groups))
     for i in np.unique(folds):
         assert_greater_equal(tolerance,
-                             abs(sum(folds == i) - ideal_n_labels_per_fold))
+                             abs(sum(folds == i) - ideal_n_groups_per_fold))
 
-    # Check that each label appears only in 1 fold
+    # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
-        for label in np.unique(labels):
-            assert_equal(len(np.unique(folds[labels == label])), 1)
+        for group in np.unique(groups):
+            assert_equal(len(np.unique(folds[groups == group])), 1)
 
-    # Check that no label is on both sides of the split
-    labels = np.asarray(labels, dtype=object)
-    for train, test in lkf.split(X, y, labels):
-        assert_equal(len(np.intersect1d(labels[train], labels[test])), 0)
+    # Check that no group is on both sides of the split
+    groups = np.asarray(groups, dtype=object)
+    for train, test in lkf.split(X, y, groups):
+        assert_equal(len(np.intersect1d(groups[train], groups[test])), 0)
 
-    # Should fail if there are more folds than labels
-    labels = np.array([1, 1, 1, 2, 2])
-    X = y = np.ones(len(labels))
+    # Should fail if there are more folds than groups
+    groups = np.array([1, 1, 1, 2, 2])
+    X = y = np.ones(len(groups))
     assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
-                         next, LabelKFold(n_splits=3).split(X, y, labels))
+                         next, GroupKFold(n_splits=3).split(X, y, groups))
 
 
 def test_time_series_cv():
@@ -1058,16 +1036,16 @@ def test_nested_cv():
     rng = np.random.RandomState(0)
 
     X, y = make_classification(n_samples=15, n_classes=2, random_state=0)
-    labels = rng.randint(0, 5, 15)
+    groups = rng.randint(0, 5, 15)
 
-    cvs = [LeaveOneLabelOut(), LeaveOneOut(), LabelKFold(), StratifiedKFold(),
+    cvs = [LeaveOneGroupOut(), LeaveOneOut(), GroupKFold(), StratifiedKFold(),
            StratifiedShuffleSplit(n_splits=3, random_state=0)]
 
     for inner_cv, outer_cv in combinations_with_replacement(cvs, 2):
         gs = GridSearchCV(Ridge(), param_grid={'alpha': [1, .1]},
                           cv=inner_cv)
-        cross_val_score(gs, X=X, y=y, labels=labels, cv=outer_cv,
-                        fit_params={'labels': labels})
+        cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
+                        fit_params={'groups': groups})
 
 
 def test_build_repr():

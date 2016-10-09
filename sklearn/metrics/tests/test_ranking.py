@@ -7,7 +7,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn import svm
-from sklearn import ensemble
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.random_projection import sparse_random_matrix
@@ -168,29 +167,6 @@ def test_roc_returns_consistency():
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
-
-
-def test_roc_nonrepeating_thresholds():
-    # Test to ensure that we don't return spurious repeating thresholds.
-    # Duplicated thresholds can arise due to machine precision issues.
-    dataset = datasets.load_digits()
-    X = dataset['data']
-    y = dataset['target']
-
-    # This random forest classifier can only return probabilities
-    # significant to two decimal places
-    clf = ensemble.RandomForestClassifier(n_estimators=100, random_state=0)
-
-    # How well can the classifier predict whether a digit is less than 5?
-    # This task contributes floating point roundoff errors to the probabilities
-    train, test = slice(None, None, 2), slice(1, None, 2)
-    probas_pred = clf.fit(X[train], y[train]).predict_proba(X[test])
-    y_score = probas_pred[:, :5].sum(axis=1)  # roundoff errors begin here
-    y_true = [yy < 5 for yy in y[test]]
-
-    # Check for repeating values in the thresholds
-    fpr, tpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=False)
-    assert_equal(thresholds.size, np.unique(np.round(thresholds, 2)).size)
 
 
 def test_roc_curve_multi():
@@ -621,18 +597,25 @@ def test_precision_recall_curve_toydata():
 def test_score_scale_invariance():
     # Test that average_precision_score and roc_auc_score are invariant by
     # the scaling or shifting of probabilities
+    # This test was expanded (added scaled_down) in response to github
+    # issue #3864 (and others), where overly aggressive rounding was causing
+    # problems for users with very small y_score values
     y_true, _, probas_pred = make_prediction(binary=True)
 
     roc_auc = roc_auc_score(y_true, probas_pred)
-    roc_auc_scaled = roc_auc_score(y_true, 100 * probas_pred)
+    roc_auc_scaled_up = roc_auc_score(y_true, 100 * probas_pred)
+    roc_auc_scaled_down = roc_auc_score(y_true, 1e-6 * probas_pred)
     roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
-    assert_equal(roc_auc, roc_auc_scaled)
+    assert_equal(roc_auc, roc_auc_scaled_up)
+    assert_equal(roc_auc, roc_auc_scaled_down)
     assert_equal(roc_auc, roc_auc_shifted)
 
     pr_auc = average_precision_score(y_true, probas_pred)
-    pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
+    pr_auc_scaled_up = average_precision_score(y_true, 100 * probas_pred)
+    pr_auc_scaled_down = average_precision_score(y_true, 1e-6 * probas_pred)
     pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
-    assert_equal(pr_auc, pr_auc_scaled)
+    assert_equal(pr_auc, pr_auc_scaled_up)
+    assert_equal(pr_auc, pr_auc_scaled_down)
     assert_equal(pr_auc, pr_auc_shifted)
 
 

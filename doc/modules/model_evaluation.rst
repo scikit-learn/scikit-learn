@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-==========================      =========================================     ==================================
+===========================     =========================================     ==================================
 Scoring                         Function                                      Comment
-==========================      =========================================     ==================================
+===========================     =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -232,6 +232,7 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   cohen_kappa_score
    confusion_matrix
    hinge_loss
 
@@ -360,7 +361,8 @@ In the multilabel case with binary label indicators: ::
 Cohen's kappa
 -------------
 
-The function :func:`cohen_kappa_score` computes Cohen's kappa statistic.
+The function :func:`cohen_kappa_score` computes `Cohen's kappa
+<https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_ statistic.
 This measure is intended to compare labelings by different human annotators,
 not a classifier versus a ground truth.
 
@@ -371,6 +373,12 @@ zero or lower means no agreement (practically random labels).
 Kappa scores can be computed for binary or multiclass problems,
 but not for multilabel problems (except by manually computing a per-label score)
 and not for more than two annotators.
+
+  >>> from sklearn.metrics import cohen_kappa_score
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> cohen_kappa_score(y_true, y_pred)
+  0.4285714285714286
 
 .. _confusion_matrix:
 
@@ -400,6 +408,15 @@ from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` 
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
+
+For binary problems, we can get counts of true negatives, false positives,
+false negatives and true positives as follows::
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+  >>> tn, fp, fn, tp
+  (2, 1, 2, 3)
 
 .. topic:: Example:
 
@@ -1084,7 +1101,7 @@ Here is a small example of usage of this function:::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_calibration_plot_calibration.py`
+  * See :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
     for an example of Brier score loss usage to perform probability
     calibration of classifiers.
 

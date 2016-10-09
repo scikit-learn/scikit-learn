@@ -98,8 +98,8 @@ number of samples to be processed in the dataset.
 
 .. _RandomizedPCA:
 
-Approximate PCA
----------------
+PCA using randomized SVD
+------------------------
 
 It is often interesting to project data to a lower-dimensional
 space that preserves most of the variance, by dropping the singular vector
@@ -116,10 +116,11 @@ dimension (say around 200 for instance). The PCA algorithm can be used
 to linearly transform the data while both reducing the dimensionality
 and preserve most of the explained variance at the same time.
 
-The class :class:`RandomizedPCA` is very useful in that case: since we
-are going to drop most of the singular vectors it is much more efficient
-to limit the computation to an approximated estimate of the singular
-vectors we will keep to actually perform the transform.
+The class :class:`PCA` used with the optional parameter
+``svd_solver='randomized'`` is very useful in that case: since we are going
+to drop most of the singular vectors it is much more efficient to limit the
+computation to an approximated estimate of the singular vectors we will keep
+to actually perform the transform.
 
 For instance, the following shows 16 sample portraits (centered around
 0.0) from the Olivetti dataset. On the right hand side are the first 16
@@ -138,23 +139,23 @@ less than 1s:
 
 .. centered:: |orig_img| |pca_img|
 
-:class:`RandomizedPCA` can hence be used as a drop in replacement for
-:class:`PCA` with the exception that we need to give it the size of
-the lower-dimensional space ``n_components`` as a mandatory input parameter.
+Note: with the optional parameter ``svd_solver='randomized'``, we also
+need to give :class:`PCA` the size of the lower-dimensional space
+``n_components`` as a mandatory input parameter.
 
 If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
 :math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
-of :class:`RandomizedPCA` is :math:`O(n_{max}^2 \cdot n_{components})`
+of the randomized :class:`PCA` is :math:`O(n_{max}^2 \cdot n_{components})`
 instead of :math:`O(n_{max}^2 \cdot n_{min})` for the exact method
 implemented in :class:`PCA`.
 
-The memory footprint of :class:`RandomizedPCA` is also proportional to
+The memory footprint of randomized :class:`PCA` is also proportional to
 :math:`2 \cdot n_{max} \cdot n_{components}` instead of :math:`n_{max}
 \cdot n_{min}` for the exact method.
 
-Note: the implementation of ``inverse_transform`` in :class:`RandomizedPCA`
-is not the exact inverse transform of ``transform`` even when
-``whiten=False`` (default).
+Note: the implementation of ``inverse_transform`` in :class:`PCA` with
+``svd_solver='randomized'`` is not the exact inverse transform of
+``transform`` even when ``whiten=False`` (default).
 
 
 .. topic:: Examples:
@@ -802,8 +803,7 @@ between :math:`q(z,\theta,\beta)` and the true posterior
 :class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
 both online and batch update method.
 While batch method updates variational variables after each full pass through the data,
-online method updates variational variables from mini-batch data points. Therefore,
-online method usually converges faster than batch method.
+online method updates variational variables from mini-batch data points.
 
 .. note::
 

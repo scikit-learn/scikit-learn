@@ -80,6 +80,10 @@ def test_isotonic_regression():
     y_ = np.array([3, 6, 6, 8, 8, 8, 10])
     assert_array_equal(y_, isotonic_regression(y))
 
+    y = np.array([10, 0, 2])
+    y_ = np.array([4, 4, 4])
+    assert_array_equal(y_, isotonic_regression(y))
+
     x = np.arange(len(y))
     ir = IsotonicRegression(y_min=0., y_max=1.)
     ir.fit(x, y)

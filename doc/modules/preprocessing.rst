@@ -415,8 +415,8 @@ Note that, if there is a possibilty that the training data might have missing ca
 features, one has to explicitly set ``n_values``. For example,
 
     >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
-    >>> # Note that for there are missing categorical values for the 2nd and 3rd
-    >>> # feature
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
            handle_unknown='error', n_values=[2, 3, 4], sparse=True)
@@ -520,6 +520,8 @@ The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(
 Note that polynomial features are used implicitily in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
 See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+
+.. _function_transformer:
 
 Custom transformers
 ===================

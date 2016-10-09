@@ -7,14 +7,13 @@ import warnings
 import numpy as np
 from scipy import stats
 
-from nose.tools import assert_raises
-
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation

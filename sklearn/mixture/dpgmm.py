@@ -10,6 +10,13 @@ from __future__ import print_function
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+# Important note for the deprecation cleaning of 0.20 :
+# All the function and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
@@ -255,7 +262,7 @@ class _DPGMMBase(_GMMBase):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -616,9 +623,11 @@ class _DPGMMBase(_GMMBase):
         return z
 
 
-@deprecated("The DPGMM class is not working correctly and it's better "
-            "to not use it. DPGMM is deprecated in 0.18 and "
-            "will be removed in 0.20.")
+@deprecated("The `DPGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type='dirichlet_process'` "
+            "instead. DPGMM is deprecated in 0.18 and will be "
+            "removed in 0.20.")
 class DPGMM(_DPGMMBase):
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, tol=1e-3, verbose=0, min_covar=None,
@@ -630,8 +639,10 @@ class DPGMM(_DPGMMBase):
             init_params=init_params)
 
 
-@deprecated("The VBGMM class is not working correctly and it's better "
-            "to use sklearn.mixture.BayesianGaussianMixture class instead. "
+@deprecated("The `VBGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type="
+            "'dirichlet_distribution'` instead. "
             "VBGMM is deprecated in 0.18 and will be removed in 0.20.")
 class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
@@ -776,7 +787,7 @@ class VBGMM(_DPGMMBase):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """

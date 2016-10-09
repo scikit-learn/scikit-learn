@@ -349,7 +349,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if n_iter is 'auto':
+    if n_iter == 'auto':
         # Checks if the number of iterations is explicitely specified
         # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
         n_iter = 7 if n_components < .1 * min(M.shape) else 4

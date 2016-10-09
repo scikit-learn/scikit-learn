@@ -164,14 +164,14 @@ Splitter Classes
    :template: class.rst
 
    model_selection.KFold
-   model_selection.LabelKFold
+   model_selection.GroupKFold
    model_selection.StratifiedKFold
-   model_selection.LeaveOneLabelOut
-   model_selection.LeavePLabelOut
+   model_selection.LeaveOneGroupOut
+   model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
    model_selection.ShuffleSplit
-   model_selection.LabelShuffleSplit
+   model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
    model_selection.PredefinedSplit
    model_selection.TimeSeriesSplit
@@ -259,6 +259,7 @@ Loaders
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
+   datasets.fetch_species_distributions
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.dump_svmlight_file
@@ -763,6 +764,7 @@ Kernels:
 
     manifold.locally_linear_embedding
     manifold.spectral_embedding
+    manifold.smacof
 
 
 .. _metrics_ref:

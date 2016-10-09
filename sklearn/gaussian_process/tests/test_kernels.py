@@ -3,7 +3,6 @@
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-from collections import Hashable
 from sklearn.externals.funcsigs import signature
 
 import numpy as np
@@ -50,7 +49,7 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
 
 
 def test_kernel_gradient():
-    """ Compare analytic and numeric gradient of kernels. """
+    # Compare analytic and numeric gradient of kernels.
     for kernel in kernels:
         K, K_gradient = kernel(X, eval_gradient=True)
 
@@ -70,7 +69,7 @@ def test_kernel_gradient():
 
 
 def test_kernel_theta():
-    """ Check that parameter vector theta of kernel is set correctly. """
+    # Check that parameter vector theta of kernel is set correctly.
     for kernel in kernels:
         if isinstance(kernel, KernelOperator) \
            or isinstance(kernel, Exponentiation):  # skip non-basic kernels
@@ -111,8 +110,8 @@ def test_kernel_theta():
                 assert_array_equal(K_gradient[..., :i],
                                    K_gradient_new[..., :i])
             if i + 1 < len(kernel.hyperparameters):
-                assert_equal(theta[i+1:], new_kernel.theta[i:])
-                assert_array_equal(K_gradient[..., i+1:],
+                assert_equal(theta[i + 1:], new_kernel.theta[i:])
+                assert_array_equal(K_gradient[..., i + 1:],
                                    K_gradient_new[..., i:])
 
         # Check that values of theta are modified correctly
@@ -126,7 +125,7 @@ def test_kernel_theta():
 
 
 def test_auto_vs_cross():
-    """ Auto-correlation and cross-correlation should be consistent. """
+    # Auto-correlation and cross-correlation should be consistent.
     for kernel in kernels:
         if kernel == kernel_white:
             continue  # Identity is not satisfied on diagonal
@@ -136,7 +135,7 @@ def test_auto_vs_cross():
 
 
 def test_kernel_diag():
-    """ Test that diag method of kernel returns consistent results. """
+    # Test that diag method of kernel returns consistent results.
     for kernel in kernels:
         K_call_diag = np.diag(kernel(X))
         K_diag = kernel.diag(X)
@@ -144,7 +143,7 @@ def test_kernel_diag():
 
 
 def test_kernel_operator_commutative():
-    """ Adding kernels and multiplying kernels should be commutative. """
+    # Adding kernels and multiplying kernels should be commutative.
     # Check addition
     assert_almost_equal((RBF(2.0) + 1.0)(X),
                         (1.0 + RBF(2.0))(X))
@@ -155,7 +154,7 @@ def test_kernel_operator_commutative():
 
 
 def test_kernel_anisotropic():
-    """ Anisotropic kernel should be consistent with isotropic kernels."""
+    # Anisotropic kernel should be consistent with isotropic kernels.
     kernel = 3.0 * RBF([0.5, 2.0])
 
     K = kernel(X)
@@ -176,7 +175,7 @@ def test_kernel_anisotropic():
 
 
 def test_kernel_stationary():
-    """ Test stationarity of kernels."""
+    # Test stationarity of kernels.
     for kernel in kernels:
         if not kernel.is_stationary():
             continue
@@ -185,7 +184,7 @@ def test_kernel_stationary():
 
 
 def check_hyperparameters_equal(kernel1, kernel2):
-    """Check that hyperparameters of two kernels are equal"""
+    # Check that hyperparameters of two kernels are equal
     for attr in set(dir(kernel1) + dir(kernel2)):
         if attr.startswith("hyperparameter_"):
             attr_value1 = getattr(kernel1, attr)
@@ -194,7 +193,7 @@ def check_hyperparameters_equal(kernel1, kernel2):
 
 
 def test_kernel_clone():
-    """ Test that sklearn's clone works correctly on kernels. """
+    # Test that sklearn's clone works correctly on kernels.
     bounds = (1e-5, 1e5)
     for kernel in kernels:
         kernel_cloned = clone(kernel)
@@ -219,7 +218,8 @@ def test_kernel_clone():
         params = kernel.get_params()
         # RationalQuadratic kernel is isotropic.
         isotropic_kernels = (ExpSineSquared, RationalQuadratic)
-        if 'length_scale' in params and not isinstance(kernel, isotropic_kernels):
+        if 'length_scale' in params and not isinstance(kernel,
+                                                       isotropic_kernels):
             length_scale = params['length_scale']
             if np.iterable(length_scale):
                 params['length_scale'] = length_scale[0]
@@ -232,11 +232,12 @@ def test_kernel_clone():
             assert_equal(kernel_cloned_clone.get_params(),
                          kernel_cloned.get_params())
             assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))
-            yield check_hyperparameters_equal, kernel_cloned, kernel_cloned_clone
+            yield (check_hyperparameters_equal, kernel_cloned,
+                   kernel_cloned_clone)
 
 
 def test_matern_kernel():
-    """ Test consistency of Matern kernel for special values of nu. """
+    # Test consistency of Matern kernel for special values of nu.
     K = Matern(nu=1.5, length_scale=1.0)(X)
     # the diagonal elements of a matern kernel are 1
     assert_array_almost_equal(np.diag(K), np.ones(X.shape[0]))
@@ -255,7 +256,7 @@ def test_matern_kernel():
 
 
 def test_kernel_versus_pairwise():
-    """Check that GP kernels can also be used as pairwise kernels."""
+    # Check that GP kernels can also be used as pairwise kernels.
     for kernel in kernels:
         # Test auto-kernel
         if kernel != kernel_white:
@@ -272,17 +273,17 @@ def test_kernel_versus_pairwise():
 
 
 def test_set_get_params():
-    """Check that set_params()/get_params() is consistent with kernel.theta."""
+    # Check that set_params()/get_params() is consistent with kernel.theta.
     for kernel in kernels:
         # Test get_params()
         index = 0
         params = kernel.get_params()
         for hyperparameter in kernel.hyperparameters:
-            if hyperparameter.bounds is "fixed":
+            if hyperparameter.bounds == "fixed":
                 continue
             size = hyperparameter.n_elements
             if size > 1:  # anisotropic kernels
-                assert_almost_equal(np.exp(kernel.theta[index:index+size]),
+                assert_almost_equal(np.exp(kernel.theta[index:index + size]),
                                     params[hyperparameter.name])
                 index += size
             else:
@@ -293,13 +294,13 @@ def test_set_get_params():
         index = 0
         value = 10  # arbitrary value
         for hyperparameter in kernel.hyperparameters:
-            if hyperparameter.bounds is "fixed":
+            if hyperparameter.bounds == "fixed":
                 continue
             size = hyperparameter.n_elements
             if size > 1:  # anisotropic kernels
-                kernel.set_params(**{hyperparameter.name: [value]*size})
-                assert_almost_equal(np.exp(kernel.theta[index:index+size]),
-                                    [value]*size)
+                kernel.set_params(**{hyperparameter.name: [value] * size})
+                assert_almost_equal(np.exp(kernel.theta[index:index + size]),
+                                    [value] * size)
                 index += size
             else:
                 kernel.set_params(**{hyperparameter.name: value})
@@ -308,7 +309,7 @@ def test_set_get_params():
 
 
 def test_repr_kernels():
-    """Smoke-test for repr in kernels."""
+    # Smoke-test for repr in kernels.
 
     for kernel in kernels:
         repr(kernel)

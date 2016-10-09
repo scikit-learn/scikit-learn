@@ -301,11 +301,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 sample_weight = expanded_class_weight
 
         # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+        if sample_weight is None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               n_samples)
+        else:
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
-        else:
-            min_weight_leaf = 0.
 
         if self.min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than or equal "
@@ -486,6 +487,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
     def decision_path(self, X, check_input=True):
         """Return the decision path in the tree
 
+        .. versionadded:: 0.18
+
         Parameters
         ----------
         X : array_like or sparse matrix, shape = [n_samples, n_features]
@@ -575,6 +578,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -583,9 +589,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -839,6 +849,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node:
 
@@ -847,9 +860,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
     min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
