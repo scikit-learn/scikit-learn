@@ -41,6 +41,11 @@ Bug fixes
      <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
      Liu`_.
 
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     `n_features > n_samples`. (`#6178
+     <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
+     Thirion`_
+
 .. _changes_0_18:
 
 Version 0.18

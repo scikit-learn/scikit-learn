@@ -1,6 +1,3 @@
-from nose.tools import assert_true
-from nose.tools import assert_equal
-
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
@@ -8,9 +5,6 @@ from scipy.linalg import eigh
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-
-from nose.tools import assert_raises
-from nose.plugins.skip import SkipTest
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
@@ -22,6 +16,8 @@ from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.graph import graph_laplacian
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.testing import assert_true, assert_equal, assert_raises
+from sklearn.utils.testing import SkipTest
 
 
 # non centered, sparse centers to check the

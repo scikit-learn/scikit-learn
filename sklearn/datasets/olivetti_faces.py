@@ -67,7 +67,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 

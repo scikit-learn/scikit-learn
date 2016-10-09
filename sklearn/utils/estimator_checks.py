@@ -1015,6 +1015,11 @@ def check_classifiers_train(name, Classifier):
             assert_raises(ValueError, classifier.predict_proba, X.T)
             # raises error on malformed input for predict_proba
             assert_raises(ValueError, classifier.predict_proba, X.T)
+            if hasattr(classifier, "predict_log_proba"):
+                # predict_log_proba is a transformation of predict_proba
+                y_log_prob = classifier.predict_log_proba(X)
+                assert_array_almost_equal(y_log_prob, np.log(y_prob), 8)
+                assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
 @ignore_warnings(category=DeprecationWarning)
