@@ -330,7 +330,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         self.means_ = _class_means(X, y)
         self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
-        n_classes = len(self.classes_)
 
         Sw = self.covariance_  # within scatter
         St = _cov(X, shrinkage)  # total scatter
