@@ -218,6 +218,7 @@ def _yield_all_checks(name, Estimator):
     yield check_fit2d_1feature
     yield check_fit1d_1feature
     yield check_fit1d_1sample
+    yield check_get_params_invariance
 
 
 def check_estimator(Estimator):
@@ -1516,7 +1517,9 @@ def check_transformer_n_iter(name, estimator):
         assert_greater_equal(estimator.n_iter_, 1)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def check_get_params_invariance(name, estimator):
+    # Checks if get_params(deep=False) is a subset of get_params(deep=True)
     class T(BaseEstimator):
         """Mock classifier
         """

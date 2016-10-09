@@ -212,22 +212,3 @@ def test_transformer_n_iter():
         if hasattr(estimator, "max_iter") and name not in external_solver:
             yield _named_check(
                 check_transformer_n_iter, name), name, estimator
-
-
-def test_get_params_invariance():
-    # Test for estimators that support get_params, that
-    # get_params(deep=False) is a subset of get_params(deep=True)
-    # Related to issue #4465
-
-    estimators = all_estimators(include_meta_estimators=False,
-                                include_other=True)
-    for name, Estimator in estimators:
-        if hasattr(Estimator, 'get_params'):
-            # If class is deprecated, ignore deprecated warnings
-            if hasattr(Estimator.__init__, "deprecated_original"):
-                with ignore_warnings():
-                    yield _named_check(
-                        check_get_params_invariance, name), name, Estimator
-            else:
-                yield _named_check(
-                    check_get_params_invariance, name), name, Estimator
