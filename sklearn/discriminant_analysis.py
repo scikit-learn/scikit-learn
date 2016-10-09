@@ -330,14 +330,21 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         self.means_ = _class_means(X, y)
         self.covariance_ = _class_cov(X, y, self.priors_, shrinkage)
+        n_classes = len(self.classes_)
 
         Sw = self.covariance_  # within scatter
         St = _cov(X, shrinkage)  # total scatter
         Sb = St - Sw  # between scatter
 
+        # Get maximum length for explained_variance_ratio_
+        if n_classes < self.n_components:
+            max_length_exp = n_classes
+        else:
+            max_length_exp = self.n_components
+
         evals, evecs = linalg.eigh(Sb, Sw)
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
-                                                 )[::-1][:self.n_components]
+                                                 )[::-1][:max_length_exp]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
         # evecs /= np.linalg.norm(evecs, axis=0)  # doesn't work with numpy 1.6
         evecs /= np.apply_along_axis(np.linalg.norm, 0, evecs)
