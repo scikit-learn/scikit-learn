@@ -1844,7 +1844,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    pos_label : int (default: None)
+    pos_label : int or str, default=None
         Label of the positive class. If None, the maximum label is used as
         positive class
 
