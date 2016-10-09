@@ -7,7 +7,6 @@
 import warnings
 
 import numpy as np
-import random
 
 from .base import is_classifier, clone
 from .cross_validation import check_cv
