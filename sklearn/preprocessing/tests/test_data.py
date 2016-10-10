@@ -52,7 +52,7 @@ from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.pipeline import Pipeline
-from sklearn.cross_validation import cross_val_predict
+from sklearn.model_selection import cross_val_predict
 from sklearn.svm import SVR
 
 from sklearn import datasets
@@ -1019,7 +1019,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
 
 
-@ignore_warnings
 def test_deprecation_minmax_scaler():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -1027,15 +1026,13 @@ def test_deprecation_minmax_scaler():
 
     depr_message = ("Attribute data_range will be removed in "
                     "0.19. Use ``data_range_`` instead")
-    data_range = assert_warns_message(DeprecationWarning, depr_message,
-                                      getattr, scaler, "data_range")
-    assert_array_equal(data_range, scaler.data_range)
+    assert_warns_message(DeprecationWarning, depr_message, getattr, scaler,
+                         "data_range")
 
     depr_message = ("Attribute data_min will be removed in "
                     "0.19. Use ``data_min_`` instead")
-    data_min = assert_warns_message(DeprecationWarning, depr_message,
-                                    getattr, scaler, "data_min")
-    assert_array_equal(data_min, scaler.data_min)
+    assert_warns_message(DeprecationWarning, depr_message, getattr, scaler,
+                         "data_min")
 
 
 def test_warning_scaling_integers():

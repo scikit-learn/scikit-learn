@@ -20,10 +20,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import _named_check
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.decomposition import ProjectedGradientNMF
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -33,8 +33,7 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance,
-    _set_test_name)
+    check_get_params_invariance)
 
 
 def test_all_estimator_no_base_class():
@@ -56,7 +55,7 @@ def test_all_estimators():
 
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
-        yield (_set_test_name(check_parameters_default_constructible, name),
+        yield (_named_check(check_parameters_default_constructible, name),
                name, Estimator)
 
 
@@ -69,12 +68,7 @@ def test_non_meta_estimators():
         if name.startswith("_"):
             continue
         for check in _yield_all_checks(name, Estimator):
-            if issubclass(Estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield _set_test_name(check, name), name, Estimator
-            else:
-                yield _set_test_name(check, name), name, Estimator
+            yield _named_check(check, name), name, Estimator
 
 
 def test_configure():
@@ -116,8 +110,8 @@ def test_class_weight_balanced_linear_classifiers():
                 issubclass(clazz, LinearClassifierMixin))]
 
     for name, Classifier in linear_classifiers:
-        yield _set_test_name(check_class_weight_balanced_linear_classifier,
-                             name), name, Classifier
+        yield _named_check(check_class_weight_balanced_linear_classifier,
+                           name), name, Classifier
 
 
 @ignore_warnings
@@ -182,7 +176,8 @@ def test_non_transformer_estimators_n_iter():
             if name == 'LassoLars':
                 estimator = Estimator(alpha=0.)
             else:
-                estimator = Estimator()
+                with ignore_warnings(category=DeprecationWarning):
+                    estimator = Estimator()
             if hasattr(estimator, "max_iter"):
                 # These models are dependent on external solvers like
                 # libsvm and accessing the iter parameter is non-trivial.
@@ -199,7 +194,7 @@ def test_non_transformer_estimators_n_iter():
                 else:
                     # Multitask models related to ENet cannot handle
                     # if y is mono-output.
-                    yield (_set_test_name(
+                    yield (_named_check(
                         check_non_transformer_estimators_n_iter, name),
                         name, estimator, 'Multi' in name)
 
@@ -207,11 +202,7 @@ def test_non_transformer_estimators_n_iter():
 def test_transformer_n_iter():
     transformers = all_estimators(type_filter='transformer')
     for name, Estimator in transformers:
-        if issubclass(Estimator, ProjectedGradientNMF):
-            # The ProjectedGradientNMF class is deprecated
-            with ignore_warnings():
-                estimator = Estimator()
-        else:
+        with ignore_warnings(category=DeprecationWarning):
             estimator = Estimator()
         # Dependent on external solvers and hence accessing the iter
         # param is non-trivial.
@@ -219,14 +210,8 @@ def test_transformer_n_iter():
                            'RandomizedLasso', 'LogisticRegressionCV']
 
         if hasattr(estimator, "max_iter") and name not in external_solver:
-            if isinstance(estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield _set_test_name(
-                        check_transformer_n_iter, name), name, estimator
-            else:
-                yield _set_test_name(
-                    check_transformer_n_iter, name), name, estimator
+            yield _named_check(
+                check_transformer_n_iter, name), name, estimator
 
 
 def test_get_params_invariance():
@@ -241,8 +226,8 @@ def test_get_params_invariance():
             # If class is deprecated, ignore deprecated warnings
             if hasattr(Estimator.__init__, "deprecated_original"):
                 with ignore_warnings():
-                    yield _set_test_name(
+                    yield _named_check(
                         check_get_params_invariance, name), name, Estimator
             else:
-                yield _set_test_name(
+                yield _named_check(
                     check_get_params_invariance, name), name, Estimator

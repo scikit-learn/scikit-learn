@@ -509,6 +509,7 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_weight_fraction_leaf=-1).fit,
                       X, y)
@@ -520,6 +521,8 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_split=1.1).fit,
+                      X, y)
+        assert_raises(ValueError, TreeEstimator(min_samples_split=2.5).fit,
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
@@ -670,6 +673,30 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
             "min_weight_fraction_leaf={1}".format(
                 name, est.min_weight_fraction_leaf))
 
+    # test case with no weights passed in
+    total_weight = X.shape[0]
+
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 6)):
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            total_weight * est.min_weight_fraction_leaf,
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf))
+
 
 def test_min_weight_fraction_leaf():
     # Check on dense input
@@ -679,6 +706,82 @@ def test_min_weight_fraction_leaf():
     # Check on sparse input
     for name in SPARSE_TREES:
         yield check_min_weight_fraction_leaf, name, "multilabel", True
+
+
+def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
+                                                         sparse=False):
+    """Test the interaction between min_weight_fraction_leaf and min_samples_leaf
+    when sample_weights is not provided in fit."""
+    if sparse:
+        X = DATASETS[datasets]["X_sparse"].astype(np.float32)
+    else:
+        X = DATASETS[datasets]["X"].astype(np.float32)
+    y = DATASETS[datasets]["y"]
+
+    total_weight = X.shape[0]
+    TreeEstimator = ALL_TREES[name]
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
+        # test integer min_samples_leaf
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            min_samples_leaf=5,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            max((total_weight *
+                 est.min_weight_fraction_leaf), 5),
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}, "
+            "min_samples_leaf={2}".format(name,
+                                          est.min_weight_fraction_leaf,
+                                          est.min_samples_leaf))
+    for max_leaf_nodes, frac in product((None, 1000), np.linspace(0, 0.5, 3)):
+        # test float min_samples_leaf
+        est = TreeEstimator(min_weight_fraction_leaf=frac,
+                            max_leaf_nodes=max_leaf_nodes,
+                            min_samples_leaf=.1,
+                            random_state=0)
+        est.fit(X, y)
+
+        if sparse:
+            out = est.tree_.apply(X.tocsr())
+        else:
+            out = est.tree_.apply(X)
+
+        node_weights = np.bincount(out)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            max((total_weight * est.min_weight_fraction_leaf),
+                (total_weight * est.min_samples_leaf)),
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}, "
+            "min_samples_leaf={2}".format(name,
+                                          est.min_weight_fraction_leaf,
+                                          est.min_samples_leaf))
+
+
+def test_min_weight_fraction_leaf_with_min_samples_leaf():
+    # Check on dense input
+    for name in ALL_TREES:
+        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
+               name, "iris")
+
+    # Check on sparse input
+    for name in SPARSE_TREES:
+        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
+               name, "multilabel", True)
 
 
 def test_min_impurity_split():

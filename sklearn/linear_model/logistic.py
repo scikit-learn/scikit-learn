@@ -1116,6 +1116,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     LIBLINEAR -- A Library for Large Linear Classification
         http://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
+    SAG -- Mark Schmidt, Nicolas Le Roux, and Francis Bach
+        Minimizing Finite Sums with the Stochastic Average Gradient
+        https://hal.inria.fr/hal-00860051/document
+
     Hsiang-Fu Yu, Fang-Lan Huang, Chih-Jen Lin (2011). Dual coordinate descent
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
@@ -1655,15 +1659,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = np.tile(multi_scores, (n_classes, 1, 1))
             self.Cs_ = Cs[0]
             self.n_iter_ = np.reshape(n_iter_, (1, len(folds),
-                                      len(self.Cs_)))
+                                                len(self.Cs_)))
 
         else:
             coefs_paths, Cs, scores, n_iter_ = zip(*fold_coefs_)
             self.Cs_ = Cs[0]
             coefs_paths = np.reshape(coefs_paths, (n_classes, len(folds),
-                                     len(self.Cs_), -1))
+                                                   len(self.Cs_), -1))
             self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
-                                      len(self.Cs_)))
+                                                len(self.Cs_)))
 
         self.coefs_paths_ = dict(zip(labels, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))

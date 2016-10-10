@@ -15,7 +15,7 @@ non-linear dimensionality reduction or non-linear classification.
 Points that are neighboring often share the same leaf of a tree and therefore
 share large parts of their hashed representation. This allows to
 separate two concentric circles simply based on the principal components of the
-transformed data.
+transformed data with truncated SVD.
 
 In high-dimensional spaces, linear classifiers often achieve
 excellent accuracy. For sparse binary data, BernoulliNB
@@ -39,9 +39,9 @@ X, y = make_circles(factor=0.5, random_state=0, noise=0.05)
 hasher = RandomTreesEmbedding(n_estimators=10, random_state=0, max_depth=3)
 X_transformed = hasher.fit_transform(X)
 
-# Visualize result using PCA
-pca = TruncatedSVD(n_components=2)
-X_reduced = pca.fit_transform(X_transformed)
+# Visualize result after dimensionality reduction using truncated SVD
+svd = TruncatedSVD(n_components=2)
+X_reduced = svd.fit_transform(X_transformed)
 
 # Learn a Naive Bayes classifier on the transformed data
 nb = BernoulliNB()
@@ -64,7 +64,7 @@ ax.set_yticks(())
 
 ax = plt.subplot(222)
 ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, s=50)
-ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
+ax.set_title("Truncated SVD reduction (2d) of transformed data (%dd)" %
              X_transformed.shape[1])
 ax.set_xticks(())
 ax.set_yticks(())

@@ -139,7 +139,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     max_iter : maximum number of iterations for 'arpack' method
         not used if eigen_solver=='dense'
 
-    random_state: numpy.RandomState or int, optional
+    random_state : numpy.RandomState or int, optional
         The generator or seed used to determine the starting vector for arpack
         iterations.  Defaults to numpy.random.
 
@@ -626,7 +626,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = check_array(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(

@@ -36,21 +36,21 @@ regression is also supported.
 
   - **Multioutput-multiclass classification** and **multi-task classification**
     means that a single estimator has to handle
-    several joint classification tasks. This is a generalization
+    several joint classification tasks. This is both a generalization
     of the multi-label classification task, where the set of classification
-    problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array or sparse
-    matrix.*
+    problems is restricted to binary classification, 
+    as well as a generalization of the multi-class classification task. 
+    *The output format is a 2d numpy array or sparse matrix.*
 
     The set of labels can be different for each output variable.
-    For instance a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear", "apple",
-    "orange" and "green" for a second output variable that takes possible values
-    in a finite set of colors such as "green", "red", "orange", "yellow"...
+    For instance, a sample could be assigned "pear" for an output variable that
+    takes possible values in a finite set of species such as "pear", "apple"; 
+    and "blue" or "green" for a second output variable that takes possible values
+    in a finite set of colors such as "green", "red", "blue", "yellow"...
 
     This means that any classifiers handling multi-output
-    multiclass or multi-task classification task
-    supports the multi-label classification task as a special case.
+    multiclass or multi-task classification tasks,
+    support the multi-label classification task as a special case.
     Multi-task classification is similar to the multi-output
     classification task with different model formulations. For
     more information, see the relevant estimator documentation.
@@ -63,7 +63,7 @@ because this may have an effect on classifier performance
 
 Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
-if you're using one of these unless you want custom multiclass behavior:
+if you're using one of these, unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
     :ref:`LDA and QDA <lda_qda>`,
@@ -119,8 +119,8 @@ This strategy, also known as **one-vs-all**, is implemented in
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
-interpretability. Since each class is represented by one and one classifier
-only, it is possible to gain knowledge about the class by inspecting its
+interpretability. Since each class is represented by one and only one classifier, 
+it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
 default choice.
 
@@ -212,7 +212,7 @@ Error-Correcting Output-Codes
 =============================
 
 Output-code based strategies are fairly different from one-vs-the-rest and
-one-vs-one. With these strategies, each class is represented in a euclidean
+one-vs-one. With these strategies, each class is represented in a Euclidean
 space, where each dimension can only be 0 or 1. Another way to put it is
 that each class is represented by a binary code (an array of 0 and 1). The
 matrix which keeps track of the location/code of each class is called the

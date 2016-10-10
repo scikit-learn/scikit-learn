@@ -79,6 +79,11 @@ evaluated and the best combination is retained.
       classifier (here a linear SVM trained with SGD with either elastic
       net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
 
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+      for an example of Grid Search within a cross validation loop on the iris
+      dataset. This is the best practice for evaluating the performance of a
+      model with grid search.
+
 .. _randomized_parameter_search:
 
 Randomized Parameter Optimization
@@ -113,9 +118,12 @@ consecutive calls.
 
     .. warning::
 
-        The distributions in ``scipy.stats`` do not allow specifying a random
-        state. Instead, they use the global numpy random state, that can be seeded
-        via ``np.random.seed`` or set using ``np.random.set_state``.
+        The distributions in ``scipy.stats`` prior to version scipy 0.16
+        do not allow specifying a random state. Instead, they use the global
+        numpy random state, that can be seeded via ``np.random.seed`` or set
+        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+        the :mod:`sklearn.model_selection` module sets the random state provided
+        by the user if scipy >= 0.16 is also available.
 
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
