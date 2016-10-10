@@ -48,7 +48,7 @@ class ClassifierChain(BaseEstimator):
     """
 
     def __init__(self,
-                 base_estimator=LogisticRegression(),
+                 base_estimator,
                  random_state=None):
 
         self.base_estimator = base_estimator
