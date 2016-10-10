@@ -1,6 +1,5 @@
 import numpy as np
 from ..base import BaseEstimator, clone
-from sklearn.linear_model import LogisticRegression
 import random
 
 
