@@ -24,11 +24,13 @@ X, y = iris.data[:, 1:3], iris.target
 def test_estimator_init():
     clf = LogisticRegression(random_state=1)
     eclf = StackingClassifier(estimators=[], meta_estimator=clf)
+    msg = ("Invalid `estimators` attribute %s, `estimators` "
+           "should be a list of (string, estimator) tuples.") % (type([]))
     assert_raises(AttributeError, eclf.fit, X, y)
 
     eclf = StackingClassifier(estimators=[('lr', clf)], meta_estimator=None)
-    msg = ("Invalid `meta_estimator` attribute <type 'NoneType'>, "
-           "`meta_estimator` should be a classifier.")
+    msg = ("Invalid `meta_estimator` attribute %s, "
+           "`meta_estimator` should be a classifier.") % (type(None))
     assert_raise_message(AttributeError, msg, eclf.fit, X, y)
 
     clf_no_proba = SVC()
