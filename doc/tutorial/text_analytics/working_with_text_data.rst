@@ -563,4 +563,3 @@ upon the completion of this tutorial:
 
 * Have a look at the :ref:`Hashing Vectorizer <hashing_vectorizer>`
   as a memory efficient alternative to :class:`CountVectorizer`.
-
