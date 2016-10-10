@@ -773,8 +773,8 @@ def learning_curve(estimator, X, y, groups=None,
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train if not shuffle else rng.permutation(train),
-            test, train_sizes_abs, scorer, verbose)
+            clone(estimator), X, y, classes, train if not shuffle else
+            rng.permutation(train), test, train_sizes_abs, scorer, verbose)
             for train, test in cv_iter)
     else:
         train_test_proportions = []
