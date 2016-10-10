@@ -74,17 +74,11 @@ class Transf(NoInvTransf):
         return X
 
 
-class TransfFitParams(NoInvTransf):
+class TransfFitParams(Transf):
 
     def fit(self, X, y, **fit_params):
         self.fit_params = fit_params
         return self
-
-    def transform(self, X, y=None):
-        return X
-
-    def inverse_transform(self, X):
-        return X
 
 
 class Mult(BaseEstimator):
