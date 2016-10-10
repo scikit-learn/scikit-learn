@@ -225,6 +225,7 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
     assert_array_almost_equal(test_scores_inc.mean(axis=1),
                               test_scores_batch.mean(axis=1))
 
+
 def test_learning_curve_n_sample_range_out_of_bounds():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,

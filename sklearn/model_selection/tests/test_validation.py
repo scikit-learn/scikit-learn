@@ -572,6 +572,17 @@ def test_learning_curve():
                               np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores.mean(axis=1),
                               np.linspace(0.1, 1.0, 10))
+    with warnings.catch_warnings(record=True) as w:
+        train_sizes, train_scores, test_scores = learning_curve(
+            estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10),
+            random_state=1, shuffle=True)
+    if len(w) > 0:
+        raise RuntimeError("Unexpected warning: %r" % w[0].message)
+    assert_array_almost_equal(train_scores.mean(axis=1),
+                              np.linspace(1.9, 1.0, 10))
+    assert_array_almost_equal(test_scores.mean(axis=1),
+                              np.linspace(0.1, 1.0, 10))
+
 
 
 def test_learning_curve_unsupervised():
