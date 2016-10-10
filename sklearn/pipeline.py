@@ -353,7 +353,7 @@ class Pipeline(_BasePipeline):
         -------
         y_pred : array-like
         """
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        Xt, fit_params = self._fit(X, y, **fit_params)
         return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
