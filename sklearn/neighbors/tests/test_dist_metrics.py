@@ -2,13 +2,13 @@ import itertools
 import pickle
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_raises_regex
+from numpy.testing import assert_array_almost_equal
 
 import scipy
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import SkipTest, assert_raises_regex
 
 
 def dist_func(x1, x2, p):
