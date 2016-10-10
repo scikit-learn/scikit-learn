@@ -1102,6 +1102,8 @@ cdef class PyFuncDistance(DistanceMetric):
             x2arr = _buffer_to_ndarray(x2, size)
             d = self.func(x1arr, x2arr, **self.kwargs)
             try:
+                # Cython generates code here that results in a TypeError
+                # if d is the wrong type.
                 return d
             except TypeError:
                 raise TypeError("Custom distance function must accept two "
