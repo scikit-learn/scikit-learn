@@ -24,19 +24,20 @@ X, y = iris.data[:, 1:3], iris.target
 def test_estimator_init():
     clf = LogisticRegression(random_state=1)
     eclf = StackingClassifier(estimators=[], meta_estimator=clf)
-    msg = ('Invalid `estimators` attribute, `estimators` should be'
-           ' a list of (string, estimator) tuples')
+    msg = ("Invalid `estimators` attribute <type 'list'>, `estimators` "
+           "should be a list of (string, estimator) tuples.")
     assert_raise_message(AttributeError, msg, eclf.fit, X, y)
 
     eclf = StackingClassifier(estimators=[('lr', clf)], meta_estimator=None)
-    msg = ('Invalid `meta_estimator` attribute, '
-           '`meta_estimator` should be a classifier')
+    msg = ("Invalid `meta_estimator` attribute <type 'NoneType'>, "
+           "`meta_estimator` should be a classifier.")
     assert_raise_message(AttributeError, msg, eclf.fit, X, y)
 
     clf_no_proba = SVC()
     eclf = StackingClassifier(estimators=[('SVC', clf_no_proba)],
                               meta_estimator=clf, method='predict_proba')
-    msg = 'Underlying estimator SVC does not support predict_proba'
+    msg = ("Underlying estimator SVC <class 'sklearn.svm.classes.SVC'> "
+           "does not support predict_proba.")
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
 
