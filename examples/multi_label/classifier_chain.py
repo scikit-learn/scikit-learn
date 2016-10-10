@@ -1,3 +1,15 @@
+"""
+============================
+Classifier Chain
+============================
+
+Demonstrate that a single classifier chain
+out performs 10 independent classifiers
+and that an ensemble of 10 randomly ordered
+classifier chains out performs a single classifier chain
+
+"""
+
 import numpy as np
 from sklearn.datasets import make_multilabel_classification
 from sklearn.multi_label import ClassifierChain
