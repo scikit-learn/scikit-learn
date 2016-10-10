@@ -712,3 +712,117 @@ def test_check_preserve_type():
                                                    XB.astype(np.float))
     assert_equal(XA_checked.dtype, np.float)
     assert_equal(XB_checked.dtype, np.float)
+
+
+def test_euclidean_no_check_inputs_with_bad_input():
+    # Ensure failure when check_inputs is False and the inputs are bad
+    X = [[0]]
+    Y = [[1], [2]]
+    assert_raises(AttributeError, euclidean_distances, X, Y, check_inputs=False)
+
+    # Integer types should not work if squared is False
+    X = np.array([[0]], dtype=np.uint8)
+    Y = np.array([[1], [2]], dtype=np.uint8)
+    assert_raises(TypeError, euclidean_distances, X, Y, check_inputs=False)
+
+    X = csr_matrix(X)
+    Y = csr_matrix(Y)
+    assert_raises(TypeError, euclidean_distances, X, Y, check_inputs=False)
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((20, 4))
+    X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
+
+    assert_raises(ValueError, euclidean_distances, X, Y,
+                  X_norm_squared=X_norm_sq, check_inputs=False)
+    assert_raises(ValueError, euclidean_distances, X, Y,
+                  Y_norm_squared=Y_norm_sq.T, check_inputs=False)
+    assert_raises(ValueError, euclidean_distances, X, Y,
+                  X_norm_squared=X_norm_sq, Y_norm_squared=Y_norm_sq,
+                  check_inputs=False)
+
+
+def test_euclidean_no_check_inputs_with_good_input():
+    # Ensure success when check_inputs is False and the inputs are good
+    X = np.array([[0]], dtype=np.float32)
+    Y = np.array([[1], [2]], dtype=np.float32)
+    D = euclidean_distances(X, Y, check_inputs=False)
+    assert_array_almost_equal(D, [[1., 2.]])
+
+    X = csr_matrix(X)
+    Y = csr_matrix(Y)
+    D = euclidean_distances(X, Y, check_inputs=False)
+    assert_array_almost_equal(D, [[1., 2.]])
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((20, 4))
+    X_norm_sq = (X ** 2).sum(axis=1).reshape(-1, 1)
+    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
+
+    # check that we still get the right answers with {X,Y}_norm_squared
+    D1 = euclidean_distances(X, Y, check_inputs=False)
+    D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq,
+                             check_inputs=False)
+    D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq,
+                             check_inputs=False)
+    D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq,
+                             Y_norm_squared=Y_norm_sq,
+                             check_inputs=False)
+    assert_array_almost_equal(D2, D1)
+    assert_array_almost_equal(D3, D1)
+    assert_array_almost_equal(D4, D1)
+
+    # Integer types should work if check_inputs is False and squared is True.
+    X = np.array([[1]], dtype=np.int32)
+    Y = np.array([[11], [11]], dtype=np.int32)
+    D = euclidean_distances(X, Y, check_inputs=False, squared=True)
+    assert_array_equal(D, [[100, 100]])
+    # make sure distance is not converted when check_inputs=False
+    assert_equal(D.dtype, np.int32)
+
+    # However, there is a possibility of overflow, but this possibility always
+    # exists with numeric datatypes.
+    X = np.array([[1]], dtype=np.int8)
+    Y = np.array([[101], [101]], dtype=np.int8)
+    D = euclidean_distances(X, Y, check_inputs=False, squared=True)
+    assert_raises(AssertionError, assert_array_equal, D, [[1000, 1000]])
+    assert_array_equal(D, [[16, 16]])
+
+
+def test_pairwise_no_check_inputs_with_good_input():
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((5, 4))
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((5, 4))
+    for metric, func in iteritems(PAIRED_DISTANCES):
+        S2 = func(X, Y, check_inputs=False)
+        S3 = func(csr_matrix(X), csr_matrix(Y), check_inputs=False)
+        assert_array_almost_equal(S2, S3)
+        if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            # Check the pairwise_distances implementation
+            # gives the same value
+            distances = PAIRWISE_DISTANCE_FUNCTIONS[metric](X, Y, check_inputs=False)
+            distances = np.diag(distances)
+            assert_array_almost_equal(distances, S2)
+
+
+def test_pairwise_no_check_inputs_with_bad_input():
+    # Test the pairwise_distance helper function.
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((5, 3)).tolist()
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((6, 4)).tolist()
+    for metric, func in iteritems(PAIRED_DISTANCES):
+        assert_raises((ValueError, TypeError), func, X, Y, check_inputs=False)
+        assert_raises(ValueError, func, csr_matrix(X), csr_matrix(Y), check_inputs=False)
+        if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            # Check the pairwise_distances implementation
+            # many different types of errors can happen here
+            assert_raises((ValueError, AttributeError),
+                          PAIRWISE_DISTANCE_FUNCTIONS[metric], X, Y, check_inputs=False)
