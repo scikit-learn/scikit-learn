@@ -90,6 +90,8 @@ class Pipeline(_BasePipeline):
     Intermediate steps of the pipeline must be 'transforms', that is, they
     must implement fit and transform methods.
     The final estimator only needs to implement fit.
+    Neither the transformers nor the final estimator are cloned
+    during pipeline's construction.
 
     The purpose of the pipeline is to assemble several steps that can be
     cross-validated together while setting different parameters.
