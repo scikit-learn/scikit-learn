@@ -9,6 +9,11 @@ Release history
 Version 0.18.1
 ==============
 
+   - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
+     integer inputs
+     (`#6282 <https://github.com/scikit-learn/scikit-learn/pull/6282>`_) by
+     `Jake Vanderplas`_.
+
    - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
      regressors now assumes uniform sample weights by default if the
      ``sample_weight`` argument is not passed to the ``fit`` function.
