@@ -499,7 +499,8 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1, sparse_output=Fals
 
     if y_type == "binary":
         if n_classes == 1:
-            y_matrix = np.full((len(y), 1), fill_value=pos_label, dtype=np.int)
+            y_matrix = np.empty((len(y), 1), dtype=np.int)
+            y_matrix.fill(pos_label)
             if sparse_output:
                 return sp.csr_matrix(y_matrix, dtype=int)
             return y_matrix
@@ -520,12 +521,13 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1, sparse_output=Fals
         indices = np.searchsorted(sorted_class, y_seen)
         indptr = np.hstack((0, np.cumsum(y_in_classes)))
 
-        data = np.full_like(indices, fill_value=pos_label)
+        data = np.empty_like(indices, dtype=np.int)
+        data.fill(pos_label)
         y_matrix = sp.csr_matrix((data, indices, indptr),
                           shape=(n_samples, n_classes))
     elif y_type == "multilabel-indicator":
         y_matrix = sp.csr_matrix(y)
-        y_matrix.data = np.full_like(y_matrix.data, fill_value=pos_label)
+        y_matrix.data.fill(pos_label)
     else:
         raise ValueError("%s target data is not supported with label "
                          "binarization" % y_type)
