@@ -379,8 +379,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return y_inv
 
 
-def label_binarize(y, classes=None, neg_label=0, pos_label=1, sparse_output=False,
-                   force_matrix=False):
+def label_binarize(y, classes=None, neg_label=0, pos_label=1,
+                   sparse_output=False, force_matrix=False):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -410,7 +410,7 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1, sparse_output=Fals
         Set to true if output binary array is desired in CSR sparse format
 
     force_matrix : boolean (default: False),
-        Set to true if even for binary case you require 2 column matrix on output
+        Set true if even for binary case you require 2 column matrix on output
 
     Returns
     -------
@@ -446,13 +446,15 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1, sparse_output=Fals
 
     Binary with example for positive and negative labels
 
-    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'], neg_label=-1, pos_label=2)
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'],
+    ...     neg_label=-1, pos_label=2)
     array([[ 2],
            [-1],
            [-1],
            [ 2]])
 
-    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'], pos_label=2, sparse_output=True).toarray()
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['no', 'yes'],
+    ...     pos_label=2, sparse_output=True).toarray()
     array([[2],
            [0],
            [0],
@@ -460,7 +462,8 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1, sparse_output=Fals
 
     Binary targets transform to a two-column matrix
 
-    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['yes', 'no'], force_matrix=True)
+    >>> label_binarize(['yes', 'no', 'no', 'yes'], classes=['yes', 'no'],
+    ...     force_matrix=True)
     array([[1, 0],
            [0, 1],
            [0, 1],
