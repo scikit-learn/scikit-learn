@@ -299,7 +299,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
-       <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>
+       <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
