@@ -177,16 +177,6 @@ def test_bad_pyfunc_metric():
         return "1"
 
     X = np.ones((5, 2))
-    assert_raises_regex(TypeError, "a float is required",
-                        BallTree, X, metric=wrong_distance)
-
-
-def test_bad_pyfunc_metric():
-    def wrong_distance(x, y):
-        return "1"
-
-    X = np.ones((5, 2))
-
     assert_raises_regex(TypeError,
                         "Custom distance function must accept two vectors",
                         BallTree, X, metric=wrong_distance)
