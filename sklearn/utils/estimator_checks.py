@@ -5,6 +5,7 @@ import warnings
 import sys
 import traceback
 import pickle
+import pandas
 from copy import deepcopy
 
 import numpy as np
@@ -1380,6 +1381,14 @@ def check_regressor_data_not_an_array(name, Estimator):
     X, y = _boston_subset(n_samples=50)
     y = multioutput_estimator_convert_y_2d(name, y)
     check_estimators_data_not_an_array(name, Estimator, X, y)
+
+
+def check_estimator_data_frame(name, Estimator):
+    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
+    X2 = pandas.DataFrame(X)
+    y = [1, 1, 1, 2, 2, 2]
+    y = multioutput_estimator_convert_y_2d(name, y)
+    check_estimators_data_not_an_array(name, Estimator, X2, y)
 
 
 @ignore_warnings(category=DeprecationWarning)
