@@ -774,7 +774,8 @@ def linear_kernel(X, Y=None, check_inputs=True):
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1, check_inputs=True):
+def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1,
+                      check_inputs=True):
     """
     Compute the polynomial kernel between X and Y::
 
