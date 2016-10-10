@@ -767,20 +767,21 @@ def learning_curve(estimator, X, y, groups=None,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
+    if shuffle:
+        rng = check_random_state(random_state)
+
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv.split(X, y, groups))
+            clone(estimator), X, y, classes, train if not shuffle else rng.permutation(train),
+            test, train_sizes_abs, scorer, verbose)
+            for train, test in cv_iter)
     else:
-        if shuffle:
-            rng = check_random_state(random_state)
-
         train_test_proportions = []
         for train, test in cv_iter:
+            if shuffle:
+                train = rng.permutation(train)
             for n_train_samples in train_sizes_abs:
-                if shuffle:
-                    train = rng.permutation(train)
                 train_test_proportions.append((train[:n_train_samples], test))
 
         out = parallel(delayed(_fit_and_score)(
