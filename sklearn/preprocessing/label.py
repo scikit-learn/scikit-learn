@@ -539,7 +539,7 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
             data = np.empty_like(indices, dtype=np.int)
             data.fill(pos_label)
             y_out = sp.csr_matrix((data, indices, indptr),
-                              shape=(n_samples, n_classes))
+                                  shape=(n_samples, n_classes))
         else:
             indptr = np.arange(len(y_in_classes))
             data = np.empty((n_samples, n_classes), dtype=np.int)
