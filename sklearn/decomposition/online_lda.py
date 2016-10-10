@@ -339,7 +339,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Returns
         -------
         (doc_topic_distr, suff_stats) :
-            `doc_topic_distr` is unnormailzed topic distribution for each
+            `doc_topic_distr` is unnormalized topic distribution for each
             document. In the literature, this is called `gamma`.
             `suff_stats` is expected sufficient statistics for the M-step.
             When `cal_sstats == False`, it will be None.
