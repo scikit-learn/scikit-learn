@@ -557,6 +557,12 @@ Miscellaneous
       By `Ibraim Ganiev`_.
 
 
+    - Attribute `explained_variance_ratio` calculated with the SVD solver of
+      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns correct results.
+      Attribute `explained_variance_ratio` calculated with SVD and Eigen solver are now of
+      the same length. By `JPFrancoia`_
+
+
 API changes summary
 -------------------
 
@@ -567,6 +573,9 @@ Linear, kernelized and related models
 
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
+
+   - Length of `explained_variance_ratio` of :clas:`discriminant_analysis.LinearDiscriminantAnalysis`
+     is now the same for Eigen and SVD solvers.
 
 Decomposition, manifold learning and clustering
 
