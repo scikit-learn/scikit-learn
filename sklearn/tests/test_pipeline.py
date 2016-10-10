@@ -330,7 +330,6 @@ def test_fit_predict_with_intermediate_fit_params():
     assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
     assert_true(pipe.named_steps['clf'].successful)
     assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
-    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
 
 
 def test_feature_union():
