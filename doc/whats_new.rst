@@ -84,6 +84,15 @@ Bug fixes
 API changes summary
 -------------------
 
+Trees and forests
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. (`#7301
+     <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
+     Liu`_.
+
 Linear, kernelized and related models
 
    - Length of `explained_variance_ratio` of
