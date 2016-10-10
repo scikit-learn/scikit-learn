@@ -1,7 +1,7 @@
 """Testing for the StackingClassifier"""
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raise_message, assert_raises
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
@@ -24,9 +24,7 @@ X, y = iris.data[:, 1:3], iris.target
 def test_estimator_init():
     clf = LogisticRegression(random_state=1)
     eclf = StackingClassifier(estimators=[], meta_estimator=clf)
-    msg = ("Invalid `estimators` attribute <type 'list'>, `estimators` "
-           "should be a list of (string, estimator) tuples.")
-    assert_raise_message(AttributeError, msg, eclf.fit, X, y)
+    assert_raises(AttributeError, eclf.fit, X, y)
 
     eclf = StackingClassifier(estimators=[('lr', clf)], meta_estimator=None)
     msg = ("Invalid `meta_estimator` attribute <type 'NoneType'>, "
