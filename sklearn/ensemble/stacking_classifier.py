@@ -159,7 +159,7 @@ class StackingClassifier(BaseEstimator, ClassifierMixin):
             if not has_fit_parameter(self.meta_estimator, param):
                 raise ValueError('Underlying meta estimator %s '
                                  'does not support `%s`.' % (
-                                     self.meta_estimator, param))
+                                     type(self.meta_estimator), param))
             for name, step in self.estimators:
                 if not has_fit_parameter(step, param):
                     raise ValueError('Underlying estimator %s of type %s does '

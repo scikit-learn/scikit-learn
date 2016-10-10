@@ -156,7 +156,9 @@ def test_sample_weight():
     eclf3 = StackingClassifier(
         estimators=[('lr', clf1), ('knn', clf4)],
         meta_estimator=clfm)
-    msg = ('Underlying estimator `knn` does not support `sample_weight`.')
+    msg = ("Underlying estimator knn of type "
+           "<class 'sklearn.neighbors.classification.KNeighborsClassifier'> "
+           "does not support `sample_weight`.")
     assert_raise_message(ValueError, msg, eclf3.fit, X, y,
                          sample_weight=sample_weight)
     eclf4 = StackingClassifier(
