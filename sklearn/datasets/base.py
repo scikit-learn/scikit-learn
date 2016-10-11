@@ -343,8 +343,9 @@ def load_iris(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        meaning of the features, 'DESCR', the
+        full description of the dataset, 'filename', the physical location of
+        iris csv dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -375,7 +376,8 @@ def load_iris(return_X_y=False):
                  target_names=target_names,
                  DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'])
+                                'petal length (cm)', 'petal width (cm)'],
+                 filename=iris_csv_filename)
 
 
 def load_breast_cancer(return_X_y=False):
