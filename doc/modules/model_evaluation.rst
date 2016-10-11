@@ -78,6 +78,7 @@ Scoring                         Function                                      Co
 'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
+'neg_rmse'                      :func:`metrics.root_mean_squared_error`
 'r2'                            :func:`metrics.r2_score`
 ===========================     =========================================     ==================================
 
