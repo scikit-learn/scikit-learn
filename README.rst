@@ -86,7 +86,7 @@ Important links
 ~~~~~~~~~~~~~~~
 
 - Official source code repo: https://github.com/scikit-learn/scikit-learn
-- Download releases: http://sourceforge.net/projects/scikit-learn/files/
+- Download releases: https://github.com/scikit-learn/scikit-learn/releases
 - Issue tracker: https://github.com/scikit-learn/scikit-learn/issues
 
 Source code
