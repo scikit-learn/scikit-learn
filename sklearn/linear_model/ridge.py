@@ -10,7 +10,7 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
-from itertools import combinations_with_replacement
+from itertools import product
 import warnings
 
 import numpy as np
@@ -1249,7 +1249,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
                                  " are incompatible")
             if self.alpha_per_target:
                 n_targets = y.shape[1] if y.ndim > 1 else 1
-                alphas = combinations_with_replacement(self.alphas, n_targets)
+                alphas = product(*([self.alphas] * n_targets))
                 parameters = {'alpha': list(alphas)}
             else:
                 parameters = {'alpha': self.alphas}
