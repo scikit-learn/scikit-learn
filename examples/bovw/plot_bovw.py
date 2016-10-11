@@ -1,3 +1,16 @@
+"""
+===================
+Bag of Visual Words
+===================
+
+An illustration of a Bag of Visual Words approach for image recognition
+
+"""
+print(__doc__)
+
+# Author: Guillaume Lemaitre <g.lemaitre58@gmail.com>
+# License: BSD
+
 import numpy as np
 from scipy.misc import imread
 
@@ -8,7 +21,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
 
-from joblib import Parallel, delayed
+from sklearn.externals.joblib import Parallel, delayed
 
 import time
 
@@ -48,9 +61,9 @@ patch_size = (9, 9)
 max_patches = 100
 n_jobs = -1
 n_components = 9
-max_patches_classify = 20000
+max_patches_classify = 2000
 nb_words = 50
-rng = np.random.RandomState(0)
+rng = 42
 
 # Load the data
 png_files, labels = fetch_tu_darmstadt()
@@ -63,15 +76,18 @@ patch_arr = Parallel(n_jobs=n_jobs)(delayed(proc_image)(path_im,
                                                         patch_size,
                                                         max_patches)
                                     for path_im in png_files)
-print 'Extracted patch to build dictionary'
+
+print('Extracted patch to build dictionary')
+
 # Create a plain matrix to apply the PCA decomposition
 patch_arr = np.array(patch_arr, copy=False)
 patch_arr = patch_arr.reshape((patch_arr.shape[0] * patch_arr.shape[1],
                                patch_arr.shape[2]))
 # Build a PCA dictionary
-dict_PCA = PCA(n_components=n_components)
+dict_PCA = PCA(n_components=n_components, random_state=rng)
 dict_PCA.fit(patch_arr)
-print 'Built the PCA dictionary'
+
+print('Built the PCA dictionary')
 
 # Extract the data and project them using the PCA codebook
 # Extract and project all the image feature
@@ -82,24 +98,27 @@ patch_arr = Parallel(n_jobs=n_jobs)(delayed(image_extraction_projection)
                                      patch_size,
                                      max_patches_classify)
                                     for path_im in png_files)
-print 'Extracted and projected patches for image classification'
+
+print('Extracted and projected patches for image classification')
+
 # Apply a stratified K-fold classification in which we will learn
 # a dictionary
-skf = StratifiedKFold(n_folds=5)
+skf = StratifiedKFold(n_splits=5, random_state=rng)
 
 # Get the training and testing index from the first fold
 train_idx, test_idx = skf.split(patch_arr, labels).next()
 
 # Build the codebook
 # Define the number of words to create the codebook
-vq = MiniBatchKMeans(n_clusters=nb_words, verbose=1, init='random',
+vq = MiniBatchKMeans(n_clusters=nb_words, verbose=False, init='random',
                      batch_size=10 * nb_words, compute_labels=False,
-                     reassignment_ratio=0.0, random_state=1, n_init=3)
+                     reassignment_ratio=0.0, random_state=rng, n_init=3)
 # Stack the training example
 stack_training = np.vstack([patch_arr[t] for t in train_idx])
 # Find the centroids
 vq.fit(stack_training)
-print 'Codebook learnt'
+
+print('Codebook learnt')
 
 # Build the training and testing data
 train_data = []
@@ -124,6 +143,6 @@ test_label = labels[test_idx]
 rf = RandomForestClassifier(n_estimators=10, random_state=rng)
 pred = rf.fit(train_data, train_label).predict(test_data)
 
-print 'Classification performed - the confusion matrix obtained is:'
-print confusion_matrix(test_label, pred)
-print 'It took', time.time()-start, 'seconds.'
+print('Classification performed - the confusion matrix obtained is:')
+print(confusion_matrix(test_label, pred))
+print('It took', time.time()-start, 'seconds.')
