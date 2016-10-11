@@ -430,6 +430,12 @@ def test_multinomial_logistic_regression_string_inputs():
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))),
                  ['bar', 'baz', 'foo'])
 
+    # Make sure class weights can be given with string labels
+    lr_cv_str = LogisticRegression(
+        solver='lbfgs', class_weight={'bar': 1, 'baz': 2, 'foo': 0},
+        multi_class='multinomial').fit(X_ref, y_str)
+    assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
+
 
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
