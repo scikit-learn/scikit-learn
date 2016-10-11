@@ -919,7 +919,7 @@ def test_cross_val_score_with_score_func_regression():
 
     # (negated) Root mean squared error; same as mean squared.
     rmse_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                      scoring="neg_rmse")
+                                       scoring="neg_rmse")
     expected_rmse = np.array([-27.62, -23.52, -16.56, -16.53, -41.01])
     assert_array_almost_equal(rmse_scores, expected_rmse, 2)
 

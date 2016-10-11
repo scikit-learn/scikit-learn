@@ -241,9 +241,10 @@ def mean_squared_error(y_true, y_pred,
 
     return np.average(output_errors, weights=multioutput)
 
+
 def root_mean_squared_error(y_true, y_pred,
-                       sample_weight=None,
-                       multioutput='uniform_average'):
+                            sample_weight=None,
+                            multioutput='uniform_average'):
     """Root mean squared error regression loss
 
     Read more in the :ref:`User Guide <root_mean_squared_error>`.
@@ -295,8 +296,8 @@ def root_mean_squared_error(y_true, y_pred,
     0.908...
 
     """
-    return mean_squared_error(y_true, y_pred, sample_weight, multioutput) ** 0.5
-
+    error = mean_squared_error(y_true, y_pred, sample_weight, multioutput)
+    return error ** 0.5
 
 
 def median_absolute_error(y_true, y_pred):

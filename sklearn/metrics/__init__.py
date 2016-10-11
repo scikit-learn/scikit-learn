@@ -91,6 +91,7 @@ __all__ = [
     'matthews_corrcoef',
     'mean_absolute_error',
     'mean_squared_error',
+    'root_mean_squared_error',
     'median_absolute_error',
     'mutual_info_score',
     'normalized_mutual_info_score',

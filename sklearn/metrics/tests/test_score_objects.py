@@ -39,8 +39,8 @@ from sklearn.externals import joblib
 
 
 REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
-                      'neg_mean_squared_error', 'neg_median_absolute_error', 'neg_rmse',
-                      'mean_absolute_error',
+                      'neg_mean_squared_error', 'neg_median_absolute_error',
+                      'neg_rmse', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error']
 
 CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
