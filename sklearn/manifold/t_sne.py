@@ -851,7 +851,8 @@ class TSNE(BaseEstimator):
         P /= self.early_exaggeration
         opt_args['n_iter'] = self.n_iter
         opt_args['it'] = it + 1
-        params, error, it = _gradient_descent(obj_func, params, **opt_args)
+        params, kl_divergence, it = _gradient_descent(obj_func, params,
+                                                      **opt_args)
 
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f"
