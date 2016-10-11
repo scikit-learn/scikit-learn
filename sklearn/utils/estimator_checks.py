@@ -186,6 +186,13 @@ def _yield_transformer_checks(name, Transformer):
         # basic tests
         yield check_transformer_general
         yield check_transformers_unfitted
+    # Dependent on external solvers and hence accessing the iter
+    # param is non-trivial.
+    external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
+                       'RandomizedLasso', 'LogisticRegressionCV']
+    if name not in external_solver:
+        yield check_transformer_n_iter
+
 
 
 def _yield_clustering_checks(name, Clusterer):
@@ -1496,25 +1503,29 @@ def check_non_transformer_estimators_n_iter(name, estimator,
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_transformer_n_iter(name, estimator):
-    if name in CROSS_DECOMPOSITION:
-        # Check using default data
-        X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [2., 5., 4.]]
-        y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
+def check_transformer_n_iter(name, Estimator):
+    # Test that transformers with an attribute max_iter, return the attribute
+    # of n_iter at least 1.
+    estimator = Estimator()
+    if hasattr(estimator, "max_iter"):
+        if name in CROSS_DECOMPOSITION:
+            # Check using default data
+            X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [2., 5., 4.]]
+            y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
 
-    else:
-        X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                           random_state=0, n_features=2, cluster_std=0.1)
-        X -= X.min() - 0.1
-    set_random_state(estimator, 0)
-    estimator.fit(X, y_)
+        else:
+            X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                               random_state=0, n_features=2, cluster_std=0.1)
+            X -= X.min() - 0.1
+        set_random_state(estimator, 0)
+        estimator.fit(X, y_)
 
-    # These return a n_iter per component.
-    if name in CROSS_DECOMPOSITION:
-        for iter_ in estimator.n_iter_:
-            assert_greater_equal(iter_, 1)
-    else:
-        assert_greater_equal(estimator.n_iter_, 1)
+        # These return a n_iter per component.
+        if name in CROSS_DECOMPOSITION:
+            for iter_ in estimator.n_iter_:
+                assert_greater_equal(iter_, 1)
+        else:
+            assert_greater_equal(estimator.n_iter_, 1)
 
 
 @ignore_warnings(category=DeprecationWarning)

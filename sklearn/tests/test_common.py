@@ -31,9 +31,7 @@ from sklearn.utils.estimator_checks import (
     CROSS_DECOMPOSITION,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
-    check_transformer_n_iter,
-    check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_non_transformer_estimators_n_iter)
 
 
 def test_all_estimator_no_base_class():
@@ -198,17 +196,3 @@ def test_non_transformer_estimators_n_iter():
                         check_non_transformer_estimators_n_iter, name),
                         name, estimator, 'Multi' in name)
 
-
-def test_transformer_n_iter():
-    transformers = all_estimators(type_filter='transformer')
-    for name, Estimator in transformers:
-        with ignore_warnings(category=DeprecationWarning):
-            estimator = Estimator()
-        # Dependent on external solvers and hence accessing the iter
-        # param is non-trivial.
-        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso', 'LogisticRegressionCV']
-
-        if hasattr(estimator, "max_iter") and name not in external_solver:
-            yield _named_check(
-                check_transformer_n_iter, name), name, estimator
