@@ -573,7 +573,6 @@ def load_diabetes(return_X_y=False):
 
         .. versionadded:: 0.18
     """
-
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
