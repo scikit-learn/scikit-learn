@@ -195,6 +195,7 @@ def test_load_linnerud():
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
 
+
 def test_load_iris():
     res = load_iris()
     assert_equal(res.data.shape, (150, 4))
@@ -239,6 +240,7 @@ def test_load_boston():
     assert_true(isinstance(X_y_tuple, tuple))
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
+
 
 def test_loads_dumps_bunch():
     bunch = Bunch(x="x")
