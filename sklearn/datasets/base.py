@@ -409,7 +409,8 @@ def load_breast_cancer(return_X_y=False):
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
         meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        full description of the dataset, 'filename', the physical location of
+        breast cancer csv dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -459,7 +460,8 @@ def load_breast_cancer(return_X_y=False):
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=feature_names)
+                 feature_names=feature_names,
+                 filename=csv_filename)
 
 
 def load_digits(n_class=10, return_X_y=False):
