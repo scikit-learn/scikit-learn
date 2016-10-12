@@ -25,6 +25,8 @@ import numpy as np
 from scipy.misc import comb
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
+from ..utils.validation import check_array
+from ..utils.validation import check_consistent_length
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
@@ -620,10 +622,10 @@ class StratifiedKFold(_BaseKFold):
 
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : object
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -633,6 +635,8 @@ class StratifiedKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
+        y = check_array(y, ensure_2d=False, dtype=None)
+        check_consistent_length(X, y)
         return super(StratifiedKFold, self).split(X, y, groups)
 
 
@@ -1097,6 +1101,8 @@ class GroupShuffleSplit(ShuffleSplit):
     def _iter_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
+        check_consistent_length(X, groups)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super(
                 GroupShuffleSplit, self)._iter_indices(X=classes):
@@ -1237,6 +1243,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
+        y = check_array(y, ensure_2d=False, dtype=None)
+        check_consistent_length(X, y)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
@@ -1292,10 +1300,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+        groups : object
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -1305,6 +1313,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         test : ndarray
             The testing set indices for that split.
         """
+        y = check_array(y, ensure_2d=False, dtype=None)
+        check_consistent_length(X, y)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
