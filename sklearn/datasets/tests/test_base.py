@@ -189,6 +189,8 @@ def test_load_linnerud():
     assert_equal(res.target.shape, (20, 3))
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
+    assert_true(res.data_filename)
+    assert_true(res.target_filename)
 
     # test return_X_y option
     X_y_tuple = load_linnerud(return_X_y=True)
