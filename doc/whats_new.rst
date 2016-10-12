@@ -23,18 +23,15 @@ Enhancements
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
      different from previous versions where ``min_weight_fraction_leaf`` is
-     used. (`#7441 <https://github.com/scikit-learn/scikit-learn/pull/7441>`_)
-     by `Nelson Liu`_.
+     used. :issue:`7441` by `Nelson Liu`_.
 
    - Added ``average`` parameter to perform weights averaging in
-     :class:`linear_model.PassiveAggressiveClassifier`. (`#4939
-     <https://github.com/scikit-learn/scikit-learn/pull/4939>`_) by `Andrea
-     Esuli`_.
+     :class:`linear_model.PassiveAggressiveClassifier`. :issue:`4939`
+     by :user:`Andrea Esuli <aesuli>`.
 
    - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
      fewer constraints: they must take two 1d-arrays and return a float.
-     (`#6288 <https://github.com/scikit-learn/scikit-learn/pull/6288>`_) by
-     `Jake VanderPlas`_.
+     :issue:`6288` by `Jake VanderPlas`_.
 
    - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
      now support sparse input for prediction.
@@ -45,21 +42,16 @@ Bug fixes
 .........
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
-     integer inputs
-     (`#6282 <https://github.com/scikit-learn/scikit-learn/pull/6282>`_) by
-     `Jake Vanderplas`_.
+     integer inputs. :issue:`6282` by `Jake Vanderplas`_.
 
    - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
      regressors now assumes uniform sample weights by default if the
      ``sample_weight`` argument is not passed to the ``fit`` function.
-     Previously, the parameter was silently ignored. (`#7301
-     <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
-     Liu`_.
+     Previously, the parameter was silently ignored. :issue:`7301`
+     by `Nelson Liu`_.
 
    - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
-     `n_features > n_samples`. (`#6178
-     <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
-     Thirion`_
+     `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
 
 .. _changes_0_18_1:
 
