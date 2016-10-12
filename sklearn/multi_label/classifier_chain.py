@@ -80,20 +80,17 @@ class ClassifierChain(BaseEstimator):
             random.shuffle(self.chain_order)
 
         for chain_idx, classifier in enumerate(self.classifiers):
-            X_augmented = np.hstack((X,
-                                     Y[:, self.chain_order[:chain_idx]]))
+            previous_labels = Y[:, self.chain_order[:chain_idx]]
+            X_aug = np.hstack((X, previous_labels))
             y = np.squeeze(Y[:, self.chain_order[chain_idx]])
-            classifier.fit(X_augmented, y)
+            classifier.fit(X_aug, y)
 
     def predict(self, X):
         Y_pred_chain = np.zeros((X.shape[0], len(self.classifiers)))
         for chain_idx, classifier in enumerate(self.classifiers):
-            previous_predictions = Y_pred_chain[:,
-                                                self.chain_order[:chain_idx]]
-            X_augmented = np.hstack((X, previous_predictions))
-            Y_pred_chain[:, chain_idx] = \
-                classifier.predict_proba(X_augmented)[:, 1]
-
+            previous_predictions = Y_pred_chain[:, :chain_idx]
+            X_aug = np.hstack((X, previous_predictions))
+            Y_pred_chain[:, chain_idx] = classifier.predict(X_aug)
         chain_key = [self.chain_order.index(i)
                      for i in range(len(self.chain_order))]
         Y_pred = Y_pred_chain[:, chain_key]
