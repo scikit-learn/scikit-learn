@@ -263,6 +263,14 @@ def test_stratified_kfold_no_shuffle():
     # Check if get_n_splits returns the number of folds
     assert_equal(5, StratifiedKFold(5).get_n_splits(X, y))
 
+    # Make sure string labels are also supported
+    X = np.ones(7)
+    y1 = ['1', '1', '1', '0', '0', '0', '0']
+    y2 = [1, 1, 1, 0, 0, 0, 0]
+    np.testing.assert_equal(
+        list(StratifiedKFold(2).split(X, y1)),
+        list(StratifiedKFold(2).split(X, y2)))
+
 
 def test_stratified_kfold_ratios():
     # Check that stratified kfold preserves class ratios in individual splits
@@ -485,12 +493,15 @@ def test_stratified_shuffle_split_iter():
           np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2] * 2),
           np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
           np.array([-1] * 800 + [1] * 50),
-          np.concatenate([[i] * (100 + i) for i in range(11)])
+          np.concatenate([[i] * (100 + i) for i in range(11)]),
+          [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
+          ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'],
           ]
 
     for y in ys:
         sss = StratifiedShuffleSplit(6, test_size=0.33,
                                      random_state=0).split(np.ones(len(y)), y)
+        y = np.asanyarray(y)  # To make it indexable for y[train]
         # this is how test-size is computed internally
         # in _validate_shuffle_split
         test_size = np.ceil(0.33 * len(y))
@@ -598,10 +609,12 @@ def test_predefinedsplit_with_kfold_split():
 
 
 def test_group_shuffle_split():
-    groups = [np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+    groups = (np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
               np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
               np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
-              np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4])]
+              np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+              [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
+              ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
 
     for l in groups:
         X = y = np.ones(len(l))
@@ -619,13 +632,14 @@ def test_group_shuffle_split():
 
         for train, test in slo.split(X, y, groups=l):
             # First test: no train group is in the test set and vice versa
-            l_train_unique = np.unique(l[train])
-            l_test_unique = np.unique(l[test])
-            assert_false(np.any(np.in1d(l[train], l_test_unique)))
-            assert_false(np.any(np.in1d(l[test], l_train_unique)))
+            l_arr = np.asarray(l)
+            l_train_unique = np.unique(l_arr[train])
+            l_test_unique = np.unique(l_arr[test])
+            assert_false(np.any(np.in1d(l_arr[train], l_test_unique)))
+            assert_false(np.any(np.in1d(l_arr[test], l_train_unique)))
 
             # Second test: train and test add up to all the data
-            assert_equal(l[train].size + l[test].size, l.size)
+            assert_equal(l_arr[train].size + l_arr[test].size, l_arr.size)
 
             # Third test: train and test are disjoint
             assert_array_equal(np.intersect1d(train, test), [])
@@ -780,6 +794,26 @@ def train_test_split_mock_pandas():
     X_train_arr, X_test_arr = train_test_split(X_df)
 
 
+def train_test_split_list_input():
+    # Check that when y is a list / list of string labels, it works.
+    X = np.ones(7)
+    y1 = ['1'] * 4 + ['0'] * 3
+    y2 = np.hstack((np.ones(4), np.zeros(3)))
+    y3 = y2.tolist()
+
+    X_train1, X_test1, y_train1, y_test1 = train_test_split(X, y1, stratify=y1,
+                                                            random_state=0)
+    X_train2, X_test2, y_train2, y_test2 = train_test_split(X, y2, stratify=y2,
+                                                            random_state=0)
+    X_train3, X_test3, y_train3, y_test3 = train_test_split(X, y3, stratify=y3,
+                                                            random_state=0)
+
+    np.testing.assert_equal(X_train1, X_train2)
+    np.testing.assert_equal(y_train2, y_train3)
+    np.testing.assert_equal(X_test1, X_test3)
+    np.testing.assert_equal(y_test3, y_test2)
+
+
 def test_shufflesplit_errors():
     # When the {test|train}_size is a float/invalid, error is raised at init
     assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
@@ -802,6 +836,20 @@ def test_shufflesplit_reproducible():
     ss = ShuffleSplit(random_state=21)
     assert_array_equal(list(a for a, b in ss.split(X)),
                        list(a for a, b in ss.split(X)))
+
+
+def test_shufflesplit_list_input():
+    # Check that when y is a list / list of string labels, it works.
+    ss = ShuffleSplit(random_state=42)
+    X = np.ones(7)
+    y1 = ['1'] * 4 + ['0'] * 3
+    y2 = np.hstack((np.ones(4), np.zeros(3)))
+    y3 = y2.tolist()
+
+    np.testing.assert_equal(list(ss.split(X, y1)),
+                            list(ss.split(X, y2)))
+    np.testing.assert_equal(list(ss.split(X, y3)),
+                            list(ss.split(X, y2)))
 
 
 def test_train_test_split_allow_nans():
@@ -962,6 +1010,13 @@ def test_group_kfold():
     groups = np.asarray(groups, dtype=object)
     for train, test in lkf.split(X, y, groups):
         assert_equal(len(np.intersect1d(groups[train], groups[test])), 0)
+
+    # groups can also be a list
+    cv_iter = list(lkf.split(X, y, groups.tolist()))
+    for (train1, test1), (train2, test2) in zip(lkf.split(X, y, groups),
+                                                cv_iter):
+        assert_array_equal(train1, train2)
+        assert_array_equal(test1, test2)
 
     # Should fail if there are more folds than groups
     groups = np.array([1, 1, 1, 2, 2])
