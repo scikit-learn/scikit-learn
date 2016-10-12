@@ -14,6 +14,7 @@ Common code for all metrics
 
 from __future__ import division
 
+import itertools
 import numpy as np
 
 from ..utils import check_array, check_consistent_length
@@ -131,3 +132,49 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         return np.average(score, weights=average_weight)
     else:
         return score
+
+def _average_multiclass_score(binary_metric, y_true, y_score,
+                              average, multiclass):
+    """TODO: DOCUMENTATION
+    """
+    average_options = (None, "macro", "weighted")
+    if average not in average_options:
+        raise ValueError("average has to be one of {0}"
+                         "".format(average_options))
+    multiclass_options = ("ovo", "ovr")
+    if multiclass not in multiclass_options:
+        raise ValueError("{0} is not supported for multiclass ROC AUC"
+                         "".format(multiclass))
+
+    check_consistent_length(y_true, y_score)
+    y_true = check_array(y_true)
+    y_score = check_array(y_score)
+
+    not_average_axis = 1
+    average_weight = None
+    if average == "weighted":
+        average_weight = np.sum(y_true, axis=0)
+        if average_weight.sum() == 0:
+            return 0
+
+    if y_true.ndim == 1:
+        y_true = y_true.reshape((-1, 1))
+
+    if y_score.ndim == 1:
+        y_score = y_score.reshape((-1, 1))
+
+    if multiclass == "ovo":
+        n_labels = len(np.unique(y_true))
+        pairwise = [p for p in itertools.combinations(xrange(n_labels), 2)]
+        auc_scores_sum = 0
+        for pair in pairwise:
+            ix = np.in1d(y_true.ravel(), [pair[0], pair[1]]).reshape(y_true.shape)
+            y_true_filtered = y_true[np.where(ix)]
+            y_score_filtered = y_score[np.where(ix)[1],:][:,[pair[0], pair[1]]]
+            y_true_filtered_01 = [1 if x == pair[0] else 0 for x in y_true_filtered]
+            y_true_filtered_10 = [1 if x == pair[1] else 0 for x in y_true_filtered]
+            auc_scores_sum += (binary_metric(y_true_filtered_01, y_score_filtered[:,0]) +
+                               binary_metric(y_true_filtered_10, y_score_filtered[:,1]))/2.0
+        return auc_scores_sum * (2.0 / (n_labels * (n_labels - 1.0)))
+    else:
+        raise ValueError("TODO")

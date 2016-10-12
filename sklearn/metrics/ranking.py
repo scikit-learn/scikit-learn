@@ -34,7 +34,7 @@ from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
-from .base import _average_binary_score
+from .base import _average_binary_score, _average_multiclass_score
 
 
 def auc(x, y, reorder=False):
@@ -184,7 +184,7 @@ def average_precision_score(y_true, y_score, average="macro",
                                  average, sample_weight=sample_weight)
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
+def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro", sample_weight=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task
@@ -246,6 +246,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     0.75
 
     """
+
     def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
         if len(np.unique(y_true)) != 2:
             raise ValueError("Only one class present in y_true. ROC AUC score "
@@ -255,10 +256,24 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
                                         sample_weight=sample_weight)
         return auc(fpr, tpr, reorder=True)
 
-    return _average_binary_score(
-        _binary_roc_auc_score, y_true, y_score, average,
-        sample_weight=sample_weight)
-
+    if type_of_target(y_true) != "multiclass":
+        return _average_binary_score(
+            _binary_roc_auc_score, y_true, y_score, average,
+            sample_weight=sample_weight)
+    else:
+        '''
+        average_options = (None, "macro", "weighted")
+        if average not in average_options:
+            raise ValueError("average has to be one of {0}"
+                             "".format(average_options))
+        multiclass_options = ("ovo", "ovr")
+        if multiclass not in multiclass_options:
+            raise ValueError("{0} is not supported for multiclass ROC AUC"
+                             "".format(multiclass))
+        '''
+        return _average_multiclass_score(
+            _binary_roc_auc_score, y_true, y_score,
+            average, multiclass)
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate true and false positives per binary classification threshold.

@@ -327,6 +327,19 @@ def test_roc_curve_toydata():
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
 
+def test_multi_roc_auc_toydata():
+    y_true = np.array([0, 1, 2])
+    y_scores = np.array([[0.714, 0.072, 0.214], [0.837, 0.143, 0.020], [0.714, 0.072, 0.214]])
+    assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.666666666663)
+
+    y_true = np.array([0, 0, 1, 1])
+    y_scores_binary = np.array([0.1, 0.4, 0.35, 0.8])
+    y_scores_multi = []
+    for y_score in y_scores_binary:
+        y_scores_multi.append([1 - y_score, y_score])
+    y_scores_multi = np.array(y_scores_multi)
+    assert_almost_equal(roc_auc_score(y_true, y_scores_multi, multiclass="ovo"),
+        roc_auc_score(y_true, y_scores_binary))
 
 def test_roc_curve_drop_intermediate():
     # Test that drop_intermediate drops the correct thresholds
