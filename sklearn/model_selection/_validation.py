@@ -795,11 +795,13 @@ def learning_curve(estimator, X, y, groups=None,
 
     return train_sizes_abs, out[0], out[1]
 
+
 def _get_train_indices(train, rng):
     """Shuffle training indices if random number generator is specified."""
     if rng is not None:
         train = rng.permutation(train)
     return train
+
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
     """Determine absolute sizes of training subsets and validate 'train_sizes'.
