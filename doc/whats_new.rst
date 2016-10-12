@@ -31,6 +31,11 @@ Enhancements
      <https://github.com/scikit-learn/scikit-learn/pull/4939>`_) by `Andrea
      Esuli`_.
 
+   - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
+     fewer constraints: they must take two 1d-arrays and return a float.
+     (`#6288 <https://github.com/scikit-learn/scikit-learn/pull/6288>`_) by
+     `Jake VanderPlas`_.
+
 Bug fixes
 .........
 
@@ -50,6 +55,20 @@ Bug fixes
      `n_features > n_samples`. (`#6178
      <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
      Thirion`_
+
+.. _changes_0_18_1:
+
+Version 0.18.1
+==============
+
+Bug fixes
+.........
+
+   - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
+     parameters were not being utilised by :class:`manifold.TSNE`.
+     `#6497 <https://github.com/scikit-learn/scikit-learn/pull/6497>`_
+     by `Sebastian Säger`_
+
 
 .. _changes_0_18:
 

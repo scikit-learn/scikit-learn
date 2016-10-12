@@ -185,11 +185,13 @@ rules before submitting a pull request:
 
     * Please prefix the title of your pull request with ``[MRG]`` if the
       contribution is complete and should be subjected to a detailed review.
-      Incomplete contributions should be prefixed ``[WIP]`` to indicate a work
-      in progress (and changed to ``[MRG]`` when it matures). WIPs may be useful
-      to: indicate you are working on something to avoid duplicated work,
-      request broad review of functionality or API, or seek collaborators.
-      WIPs often benefit from the inclusion of a
+      Two core developers will review your code and change the prefix of the pull
+      request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
+      for merging. Incomplete contributions should be prefixed ``[WIP]`` to
+      indicate a work in progress (and changed to ``[MRG]`` when it matures).
+      WIPs may be useful to: indicate you are working on something to avoid
+      duplicated work, request broad review of functionality or API, or seek
+      collaborators. WIPs often benefit from the inclusion of a
       `task list
       <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
       in the PR description.
