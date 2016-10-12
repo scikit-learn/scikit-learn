@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.utils.testing import (assert_allclose, assert_raises,
                                    assert_equal)
+from sklearn.utils.testing import does_yield
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
@@ -29,6 +30,7 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
+@does_yield
 def test_kernel_density(n_samples=100, n_features=3):
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features)

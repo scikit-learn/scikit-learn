@@ -68,7 +68,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "SkipTest"]
+           "assert_approx_equal", "SkipTest", "does_yield"]
 
 
 _dummy = unittest.TestCase('__init__')
@@ -674,6 +674,7 @@ def set_random_state(estimator, random_state=0):
 
 def if_matplotlib(func):
     """Test decorator that skips test if matplotlib not installed."""
+    assert not inspect.isgeneratorfunction(func)
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
@@ -691,14 +692,31 @@ def if_matplotlib(func):
 
 def skip_if_32bit(func):
     """Test decorator that skips tests on 32bit platforms."""
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        bits = 8 * struct.calcsize("P")
-        if bits == 32:
+    if inspect.isgeneratorfunction(func):
+        def _skip():
             raise SkipTest('Test skipped on 32bit platforms.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
+
+        @wraps(func)
+        def gen_test():
+            bits = 8 * struct.calcsize("P")
+            for tup in func():
+                # fn = tup[0]
+                # args = tup[1:]
+                if bits == 32:
+                    yield (_skip,)
+                else:
+                    yield tup
+                    # yield fn(*args)
+        return gen_test
+    else:
+        @wraps(func)
+        def run_test(*args, **kwargs):
+            bits = 8 * struct.calcsize("P")
+            if bits == 32:
+                raise SkipTest('Test skipped on 32bit platforms.')
+            else:
+                return func(*args, **kwargs)
+        return run_test
 
 
 def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
@@ -707,6 +725,7 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    assert not inspect.isgeneratorfunction(func)
     warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
                   " in 0.19: use the safer and more generic"
                   " if_safe_multiprocessing_with_blas instead",
@@ -742,6 +761,7 @@ def if_safe_multiprocessing_with_blas(func):
     errors on interactively defined functions. It therefore not enabled by
     default.
     """
+    assert not inspect.isgeneratorfunction(func)
     @wraps(func)
     def run_test(*args, **kwargs):
         if sys.platform == 'darwin':
@@ -828,3 +848,32 @@ class _named_check(object):
 
     def __call__(self, *args, **kwargs):
         return self.check(*args, **kwargs)
+
+
+def does_yield(generator):
+    """Wraps a "yield test" to ensure it runs with both nose and pytest """
+    # Hueristic to check if tests are running through nose or pytest
+    IN_PYTEST = 'pytest' in sys.modules.keys()
+
+    if IN_PYTEST:
+        # workaround pytest's deprication of yield tests by constructing a
+        # simple index based paramatarized test.
+        import pytest
+        collected_tests = list(generator())
+        num_tests = len(collected_tests)
+        test_indices = list(range(num_tests))
+        @pytest.mark.parametrize('test_num', test_indices)
+        @wraps(generator)
+        def run_test(test_num):
+            tup = collected_tests[test_num]
+            fn = tup[0]
+            args = tup[1:]
+            return fn(*args)
+        return run_test
+    else:
+        @wraps(generator)
+        def run_test():
+            for tup in generator():
+                yield tup
+            # raise SkipTest('Skipped yield test')
+        return run_test

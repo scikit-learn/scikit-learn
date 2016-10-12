@@ -30,6 +30,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.testing import does_yield
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -110,6 +111,7 @@ def check_classification_toy(name):
     assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
 
 
+@does_yield
 def test_classification_toy():
     for name in FOREST_CLASSIFIERS:
         yield check_classification_toy, name
@@ -134,6 +136,7 @@ def check_iris_criterion(name, criterion):
                                % (criterion, score))
 
 
+@does_yield
 def test_iris():
     for name, criterion in product(FOREST_CLASSIFIERS, ("gini", "entropy")):
         yield check_iris_criterion, name, criterion
@@ -158,6 +161,7 @@ def check_boston_criterion(name, criterion):
                                 "and score = %f" % (criterion, score))
 
 
+@does_yield
 def test_boston():
     for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
         yield check_boston_criterion, name, criterion
@@ -174,6 +178,7 @@ def check_regressor_attributes(name):
     assert_false(hasattr(r, "n_classes_"))
 
 
+@does_yield
 def test_regressor_attributes():
     for name in FOREST_REGRESSORS:
         yield check_regressor_attributes, name
@@ -192,6 +197,7 @@ def check_probability(name):
                                   np.exp(clf.predict_log_proba(iris.data)))
 
 
+@does_yield
 def test_probability():
     for name in FOREST_CLASSIFIERS:
         yield check_probability, name
@@ -206,6 +212,7 @@ def check_importances(name, criterion, X, y):
     importances = est.feature_importances_
     n_important = np.sum(importances > 0.1)
     assert_equal(importances.shape[0], 10)
+    print('n_important = %r' % (n_important,))
     assert_equal(n_important, 3)
 
     # XXX: Remove this test in 0.19 after transform support to estimators
@@ -234,6 +241,7 @@ def check_importances(name, criterion, X, y):
         assert_less(np.abs(importances - importances_bis).mean(), 0.001)
 
 
+@does_yield
 @skip_if_32bit
 def test_importances():
     X, y = datasets.make_classification(n_samples=500, n_features=10,
@@ -346,6 +354,7 @@ def check_unfitted_feature_importances(name):
                   "feature_importances_")
 
 
+@does_yield
 def test_unfitted_feature_importances():
     for name in FOREST_ESTIMATORS:
         yield check_unfitted_feature_importances, name
@@ -375,6 +384,7 @@ def check_oob_score(name, X, y, n_estimators=20):
         assert_warns(UserWarning, est.fit, X, y)
 
 
+@does_yield
 def test_oob_score():
     for name in FOREST_CLASSIFIERS:
         yield check_oob_score, name, iris.data, iris.target
@@ -415,6 +425,7 @@ def check_oob_score_raise_error(name):
                                                   bootstrap=False).fit, X, y)
 
 
+@does_yield
 def test_oob_score_raise_error():
     for name in FOREST_ESTIMATORS:
         yield check_oob_score_raise_error, name
@@ -426,6 +437,7 @@ def check_gridsearch(name):
     clf.fit(iris.data, iris.target)
 
 
+@does_yield
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     for name in FOREST_CLASSIFIERS:
@@ -447,6 +459,7 @@ def check_parallel(name, X, y):
     assert_array_almost_equal(y1, y2, 3)
 
 
+@does_yield
 def test_parallel():
     for name in FOREST_CLASSIFIERS:
         yield check_parallel, name, iris.data, iris.target
@@ -470,6 +483,7 @@ def check_pickle(name, X, y):
     assert_equal(score, score2)
 
 
+@does_yield
 def test_pickle():
     for name in FOREST_CLASSIFIERS:
         yield check_pickle, name, iris.data[::2], iris.target[::2]
@@ -505,6 +519,7 @@ def check_multioutput(name):
             assert_equal(log_proba[1].shape, (4, 4))
 
 
+@does_yield
 def test_multioutput():
     for name in FOREST_CLASSIFIERS:
         yield check_multioutput, name
@@ -531,6 +546,7 @@ def check_classes_shape(name):
     assert_array_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
 
+@does_yield
 def test_classes_shape():
     for name in FOREST_CLASSIFIERS:
         yield check_classes_shape, name
@@ -686,6 +702,7 @@ def check_max_leaf_nodes_max_depth(name):
     assert_equal(est.estimators_[0].tree_.max_depth, 1)
 
 
+@does_yield
 def test_max_leaf_nodes_max_depth():
     for name in FOREST_ESTIMATORS:
         yield check_max_leaf_nodes_max_depth, name
@@ -720,6 +737,7 @@ def check_min_samples_split(name):
                    "Failed with {0}".format(name))
 
 
+@does_yield
 def test_min_samples_split():
     for name in FOREST_ESTIMATORS:
         yield check_min_samples_split, name
@@ -757,6 +775,7 @@ def check_min_samples_leaf(name):
                    "Failed with {0}".format(name))
 
 
+@does_yield
 def test_min_samples_leaf():
     for name in FOREST_ESTIMATORS:
         yield check_min_samples_leaf, name
@@ -793,6 +812,7 @@ def check_min_weight_fraction_leaf(name):
                 name, est.min_weight_fraction_leaf))
 
 
+@does_yield
 def test_min_weight_fraction_leaf():
     for name in FOREST_ESTIMATORS:
         yield check_min_weight_fraction_leaf, name
@@ -824,6 +844,7 @@ def check_sparse_input(name, X, X_sparse, y):
                                   dense.fit_transform(X).toarray())
 
 
+@does_yield
 def test_sparse_input():
     X, y = datasets.make_multilabel_classification(random_state=0,
                                                    n_samples=50)
@@ -880,6 +901,7 @@ def check_memory_layout(name, dtype):
     assert_array_equal(est.fit(X, y).predict(X), y)
 
 
+@does_yield
 def test_memory_layout():
     for name, dtype in product(FOREST_CLASSIFIERS, [np.float64, np.float32]):
         yield check_memory_layout, name, dtype
@@ -901,6 +923,7 @@ def check_1d_input(name, X, X_2d, y):
         assert_raises(ValueError, est.predict, X)
 
 
+@does_yield
 @ignore_warnings
 def test_1d_input():
     X = iris.data[:, 0]
@@ -954,6 +977,7 @@ def check_class_weights(name):
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
+@does_yield
 def test_class_weights():
     for name in FOREST_CLASSIFIERS:
         yield check_class_weights, name
@@ -975,6 +999,7 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     ignore_warnings(clf.fit)(X, _y)
 
 
+@does_yield
 def test_class_weight_balanced_and_bootstrap_multi_output():
     for name in FOREST_CLASSIFIERS:
         yield check_class_weight_balanced_and_bootstrap_multi_output, name
@@ -1005,6 +1030,7 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
 
+@does_yield
 def test_class_weight_errors():
     for name in FOREST_CLASSIFIERS:
         yield check_class_weight_errors, name
@@ -1037,6 +1063,7 @@ def check_warm_start(name, random_state=42):
                        err_msg="Failed with {0}".format(name))
 
 
+@does_yield
 def test_warm_start():
     for name in FOREST_ESTIMATORS:
         yield check_warm_start, name
@@ -1059,6 +1086,7 @@ def check_warm_start_clear(name):
     assert_array_almost_equal(clf_2.apply(X), clf.apply(X))
 
 
+@does_yield
 def test_warm_start_clear():
     for name in FOREST_ESTIMATORS:
         yield check_warm_start_clear, name
@@ -1074,6 +1102,7 @@ def check_warm_start_smaller_n_estimators(name):
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@does_yield
 def test_warm_start_smaller_n_estimators():
     for name in FOREST_ESTIMATORS:
         yield check_warm_start_smaller_n_estimators, name
@@ -1100,6 +1129,7 @@ def check_warm_start_equal_n_estimators(name):
     assert_array_equal(clf.apply(X), clf_2.apply(X))
 
 
+@does_yield
 def test_warm_start_equal_n_estimators():
     for name in FOREST_ESTIMATORS:
         yield check_warm_start_equal_n_estimators, name
@@ -1137,6 +1167,7 @@ def check_warm_start_oob(name):
     assert_equal(clf.oob_score_, clf_3.oob_score_)
 
 
+@does_yield
 def test_warm_start_oob():
     for name in FOREST_CLASSIFIERS:
         yield check_warm_start_oob, name
@@ -1177,6 +1208,7 @@ def check_decision_path(name):
         assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
 
 
+@does_yield
 def test_decision_path():
     for name in FOREST_CLASSIFIERS:
         yield check_decision_path, name

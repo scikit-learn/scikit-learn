@@ -6,6 +6,7 @@ from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
                                          nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils.testing import SkipTest, assert_allclose
+from sklearn.utils.testing import does_yield
 
 rng = np.random.RandomState(10)
 V = rng.rand(3, 3)
@@ -41,6 +42,7 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
+@does_yield
 def test_ball_tree_query():
     np.random.seed(0)
     X = np.random.random((40, DIMENSION))
@@ -65,6 +67,7 @@ def test_ball_tree_query():
                            k, metric, kwargs)
 
 
+@does_yield
 def test_ball_tree_query_boolean_metrics():
     np.random.seed(0)
     X = np.random.random((40, 10)).round(0)
@@ -81,6 +84,7 @@ def test_ball_tree_query_boolean_metrics():
         yield check_neighbors, metric
 
 
+@does_yield
 def test_ball_tree_query_discrete_metrics():
     np.random.seed(0)
     X = (4 * np.random.random((40, 10))).round(0)
@@ -156,6 +160,7 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
+@does_yield
 def test_ball_tree_kde(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
@@ -202,6 +207,7 @@ def test_gaussian_kde(n_samples=1000):
         assert_array_almost_equal(dens_bt, dens_gkde, decimal=3)
 
 
+@does_yield
 def test_ball_tree_two_point(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
@@ -220,6 +226,7 @@ def test_ball_tree_two_point(n_samples=100, n_features=3):
         yield check_two_point, r, dualtree
 
 
+@does_yield
 def test_ball_tree_pickle():
     np.random.seed(0)
     X = np.random.random((10, 3))

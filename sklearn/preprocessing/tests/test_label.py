@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import does_yield
 
 from sklearn.preprocessing.label import LabelBinarizer
 from sklearn.preprocessing.label import MultiLabelBinarizer
@@ -446,6 +447,7 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
         assert_equal(issparse(inverse_output), issparse(y))
 
 
+@does_yield
 def test_label_binarize_binary():
     y = [0, 1, 0]
     classes = [0, 1]
@@ -465,6 +467,7 @@ def test_label_binarize_binary():
     yield check_binarized_results, y, classes, pos_label, neg_label, expected
 
 
+@does_yield
 def test_label_binarize_multiclass():
     y = [0, 1, 2]
     classes = [0, 1, 2]
@@ -478,6 +481,7 @@ def test_label_binarize_multiclass():
                   pos_label=pos_label, sparse_output=True)
 
 
+@does_yield
 def test_label_binarize_multilabel():
     y_ind = np.array([[0, 1, 0], [1, 1, 1], [0, 0, 0]])
     classes = [0, 1, 2]

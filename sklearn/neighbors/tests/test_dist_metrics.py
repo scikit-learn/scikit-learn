@@ -9,6 +9,7 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils.testing import SkipTest, assert_raises_regex
+from sklearn.utils.testing import does_yield
 
 
 def dist_func(x1, x2, p):

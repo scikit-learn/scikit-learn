@@ -5,6 +5,7 @@ from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils.testing import SkipTest, assert_allclose
+from sklearn.utils.testing import does_yield
 
 V = np.random.random((3, 3))
 V = np.dot(V, V.T)
@@ -24,6 +25,7 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
+@does_yield
 def test_kd_tree_query():
     np.random.seed(0)
     X = np.random.random((40, DIMENSION))
@@ -107,6 +109,7 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
+@does_yield
 def test_kd_tree_kde(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
@@ -152,6 +155,7 @@ def test_gaussian_kde(n_samples=1000):
         assert_array_almost_equal(dens_kdt, dens_gkde, decimal=3)
 
 
+@does_yield
 def test_kd_tree_two_point(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
@@ -170,6 +174,7 @@ def test_kd_tree_two_point(n_samples=100, n_features=3):
         yield check_two_point, r, dualtree
 
 
+@does_yield
 def test_kd_tree_pickle():
     import pickle
     np.random.seed(0)

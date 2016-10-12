@@ -27,6 +27,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.testing import does_yield
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 
@@ -70,6 +71,7 @@ def check_classification_toy(presort, loss):
     assert_equal(leaves.shape, (6, 10, 1))
 
 
+@does_yield
 def test_classification_toy():
     for presort, loss in product(('auto', True, False),
                                  ('deviance', 'exponential')):
@@ -177,6 +179,7 @@ def check_classification_synthetic(presort, loss):
     assert_less(error_rate, 0.08)
 
 
+@does_yield
 def test_classification_synthetic():
     for presort, loss in product(('auto', True, False), ('deviance', 'exponential')):
         yield check_classification_synthetic, presort, loss
@@ -212,6 +215,7 @@ def check_boston(presort, loss, subsample):
         last_y_pred = y_pred
 
 
+@does_yield
 def test_boston():
     for presort, loss, subsample in product(('auto', True, False),
                                             ('ls', 'lad', 'huber'),
@@ -234,6 +238,7 @@ def check_iris(presort, subsample, sample_weight):
     assert_equal(leaves.shape, (150, 100, 3))
 
 
+@does_yield
 def test_iris():
     ones = np.ones(len(iris.target))
     for presort, subsample, sample_weight in product(('auto', True, False),
@@ -1062,6 +1067,7 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
                                   auto.predict_log_proba(X))
 
 
+@does_yield
 @skip_if_32bit
 def test_sparse_input():
     ests = (GradientBoostingClassifier, GradientBoostingRegressor)

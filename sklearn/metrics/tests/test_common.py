@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import does_yield
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -661,6 +662,7 @@ def check_single_sample_multioutput(name):
         metric(np.array([[i, j]]), np.array([[k, l]]))
 
 
+@does_yield
 def test_single_sample():
     for name in ALL_METRICS:
         if (name in METRIC_UNDEFINED_BINARY_MULTICLASS or
@@ -880,6 +882,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
         raise ValueError("Metric is not recorded as having an average option")
 
 
+@does_yield
 def test_averaging_multiclass(n_samples=50, n_classes=3):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, n_classes, size=(n_samples, ))
@@ -895,6 +898,7 @@ def test_averaging_multiclass(n_samples=50, n_classes=3):
                y_pred_binarize, y_score)
 
 
+@does_yield
 def test_averaging_multilabel(n_classes=5, n_samples=40):
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
                                           random_state=5, n_samples=n_samples,
@@ -910,6 +914,7 @@ def test_averaging_multilabel(n_classes=5, n_samples=40):
                y_pred_binarize, y_score)
 
 
+@does_yield
 def test_averaging_multilabel_all_zeroes():
     y_true = np.zeros((20, 3))
     y_pred = np.zeros((20, 3))
@@ -929,6 +934,7 @@ def test_averaging_multilabel_all_zeroes():
                      y_pred_binarize, is_multilabel=True)
 
 
+@does_yield
 def test_averaging_multilabel_all_ones():
     y_true = np.ones((20, 3))
     y_pred = np.ones((20, 3))
@@ -1011,6 +1017,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                   sample_weight=np.hstack([sample_weight, sample_weight]))
 
 
+@does_yield
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
 

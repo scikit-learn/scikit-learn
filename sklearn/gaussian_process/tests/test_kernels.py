@@ -20,6 +20,7 @@ from sklearn.base import clone
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
                                    assert_array_almost_equal)
+from sklearn.utils.testing import does_yield
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
@@ -192,6 +193,7 @@ def check_hyperparameters_equal(kernel1, kernel2):
             assert_equal(attr_value1, attr_value2)
 
 
+@does_yield
 def test_kernel_clone():
     # Test that sklearn's clone works correctly on kernels.
     bounds = (1e-5, 1e5)

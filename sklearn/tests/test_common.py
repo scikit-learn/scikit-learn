@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
+from sklearn.utils.testing import does_yield
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -44,6 +45,7 @@ def test_all_estimator_no_base_class():
         assert_false(name.lower().startswith('base'), msg=msg)
 
 
+@does_yield
 def test_all_estimators():
     # Test that estimators are default-constructible, cloneable
     # and have working repr.
@@ -59,6 +61,7 @@ def test_all_estimators():
                name, Estimator)
 
 
+@does_yield
 def test_non_meta_estimators():
     # input validation etc for non-meta estimators
     estimators = all_estimators()
@@ -98,6 +101,7 @@ def test_configure():
         os.chdir(cwd)
 
 
+@does_yield
 def test_class_weight_balanced_linear_classifiers():
     classifiers = all_estimators(type_filter='classifier')
 
@@ -164,6 +168,7 @@ def test_all_tests_are_importable():
                  'setup.py'.format(missing_tests))
 
 
+@does_yield
 def test_non_transformer_estimators_n_iter():
     # Test that all estimators of type which are non-transformer
     # and which have an attribute of max_iter, return the attribute
@@ -199,6 +204,7 @@ def test_non_transformer_estimators_n_iter():
                         name, estimator, 'Multi' in name)
 
 
+@does_yield
 def test_transformer_n_iter():
     transformers = all_estimators(type_filter='transformer')
     for name, Estimator in transformers:
@@ -214,6 +220,7 @@ def test_transformer_n_iter():
                 check_transformer_n_iter, name), name, estimator
 
 
+@does_yield
 def test_get_params_invariance():
     # Test for estimators that support get_params, that
     # get_params(deep=False) is a subset of get_params(deep=True)

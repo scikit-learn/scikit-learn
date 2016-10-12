@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import does_yield
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -459,6 +460,7 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
+@does_yield
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,

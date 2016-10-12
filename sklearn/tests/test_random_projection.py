@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import does_yield
 from sklearn.exceptions import DataDimensionalityWarning
 
 all_sparse_random_matrix = [sparse_random_matrix]
@@ -113,6 +114,7 @@ def check_input_with_sparse_random_matrix(random_matrix):
                       random_matrix, n_components, n_features, density=density)
 
 
+@does_yield
 def test_basic_property_of_random_matrix():
     # Check basic properties of random matrix generation
     for random_matrix in all_random_matrix:

@@ -1,4 +1,5 @@
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import does_yield
 
 from sklearn.utils.stats import rankdata
 
@@ -13,6 +14,7 @@ _cases = (
 )
 
 
+@does_yield
 def test_cases():
 
     def check_case(values, method, expected):

@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import does_yield
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
@@ -223,6 +224,7 @@ def check_partial_fit(cls):
     assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
+@does_yield
 def test_discretenb_partial_fit():
     for cls in [MultinomialNB, BernoulliNB]:
         yield check_partial_fit, cls
@@ -378,12 +380,6 @@ def test_discretenb_provide_prior_with_partial_fit():
                                       clf_partial.class_log_prior_)
 
 
-def test_sample_weight_multiclass():
-    for cls in [BernoulliNB, MultinomialNB]:
-        # check shape consistency for number of samples at fit time
-        yield check_sample_weight_multiclass, cls
-
-
 def check_sample_weight_multiclass(cls):
     X = [
         [0, 0, 1],
@@ -404,6 +400,13 @@ def check_sample_weight_multiclass(cls):
     clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
     clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
+
+
+@does_yield
+def test_sample_weight_multiclass():
+    for cls in [BernoulliNB, MultinomialNB]:
+        # check shape consistency for number of samples at fit time
+        yield check_sample_weight_multiclass, cls
 
 
 def test_sample_weight_mnb():
