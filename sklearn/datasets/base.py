@@ -666,7 +666,8 @@ def load_boston(return_X_y=False):
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        and 'DESCR', the full description of the dataset.
+        and 'DESCR', the full description of the dataset,
+        'filename', the physical location of boston csv dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -707,7 +708,8 @@ def load_boston(return_X_y=False):
                  target=target,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 DESCR=descr_text)
+                 DESCR=descr_text,
+                 filename=data_file_name)
 
 
 def load_sample_images():
