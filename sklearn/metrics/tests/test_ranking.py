@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import does_yield
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -820,6 +821,7 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
     assert_almost_equal(score_lrap, score_my_lrap)
 
 
+@does_yield
 def test_label_ranking_avp():
     for fn in [label_ranking_average_precision_score, _my_lrap]:
         yield check_lrap_toy, fn

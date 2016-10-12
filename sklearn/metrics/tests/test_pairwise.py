@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import does_yield
 
 from sklearn.externals.six import iteritems
 
@@ -193,18 +194,6 @@ def check_pairwise_parallel(func, metric, kwds):
         assert_array_almost_equal(S, S2)
 
 
-def test_pairwise_parallel():
-    wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
-    metrics = [(pairwise_distances, 'euclidean', {}),
-               (pairwise_distances, wminkowski, wminkowski_kwds),
-               (pairwise_distances, 'wminkowski', wminkowski_kwds),
-               (pairwise_kernels, 'polynomial', {'degree': 1}),
-               (pairwise_kernels, callable_rbf_kernel, {'gamma': .1}),
-               ]
-    for func, metric, kwds in metrics:
-        yield check_pairwise_parallel, func, metric, kwds
-
-
 def test_pairwise_callable_nonstrict_metric():
     # paired_distances should allow callable metric where metric(x, x) != 0
     # Knowing that the callable is a strict metric would allow the diagonal to
@@ -216,6 +205,19 @@ def callable_rbf_kernel(x, y, **kwds):
     # Callable version of pairwise.rbf_kernel.
     K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
     return K
+
+
+@does_yield
+def test_pairwise_parallel():
+    wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
+    metrics = [(pairwise_distances, 'euclidean', {}),
+               (pairwise_distances, wminkowski, wminkowski_kwds),
+               (pairwise_distances, 'wminkowski', wminkowski_kwds),
+               (pairwise_kernels, 'polynomial', {'degree': 1}),
+               (pairwise_kernels, callable_rbf_kernel, {'gamma': .1}),
+               ]
+    for func, metric, kwds in metrics:
+        yield check_pairwise_parallel, func, metric, kwds
 
 
 def test_pairwise_kernels():    # Test the pairwise_kernels helper function.

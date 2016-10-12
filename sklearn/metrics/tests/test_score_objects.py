@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import does_yield
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -410,6 +411,7 @@ def check_scorer_memmap(scorer_name):
     assert isinstance(score, numbers.Number), scorer_name
 
 
+@does_yield
 def test_scorer_memmap_input():
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar

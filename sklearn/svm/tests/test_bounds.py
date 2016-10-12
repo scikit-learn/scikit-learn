@@ -9,6 +9,7 @@ from sklearn.linear_model.logistic import LogisticRegression
 
 from sklearn.utils.testing import assert_true, raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import does_yield
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
@@ -18,6 +19,7 @@ Y1 = [0, 1, 1, 1]
 Y2 = [2, 1, 0, 0]
 
 
+@does_yield
 def test_l1_min_c():
     losses = ['squared_hinge', 'log']
     Xs = {'sparse': sparse_X, 'dense': dense_X}

@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import does_yield
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 with warnings.catch_warnings():

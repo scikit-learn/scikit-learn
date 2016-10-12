@@ -30,6 +30,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import does_yield
 
 from sklearn.utils.validation import check_random_state
 
@@ -698,6 +699,7 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
                 name, est.min_weight_fraction_leaf))
 
 
+@does_yield
 def test_min_weight_fraction_leaf():
     # Check on dense input
     for name in ALL_TREES:
@@ -772,6 +774,7 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                           est.min_samples_leaf))
 
 
+@does_yield
 def test_min_weight_fraction_leaf_with_min_samples_leaf():
     # Check on dense input
     for name in ALL_TREES:
@@ -1111,6 +1114,7 @@ def check_class_weights(name):
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
+@does_yield
 def test_class_weights():
     for name in CLF_TREES:
         yield check_class_weights, name
@@ -1135,6 +1139,7 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
 
+@does_yield
 def test_class_weight_errors():
     for name in CLF_TREES:
         yield check_class_weight_errors, name
@@ -1283,6 +1288,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
                                           y_log_proba)
 
 
+@does_yield
 def test_sparse_input():
     for tree, dataset in product(SPARSE_TREES,
                                  ("clf_small", "toy", "digits", "multilabel",
@@ -1342,6 +1348,7 @@ def check_sparse_parameters(tree, dataset):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
+@does_yield
 def test_sparse_parameters():
     for tree, dataset in product(SPARSE_TREES,
                                  ["sparse-pos", "sparse-neg", "sparse-mix",
@@ -1369,6 +1376,7 @@ def check_sparse_criterion(tree, dataset):
         assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
+@does_yield
 def test_sparse_criterion():
     for tree, dataset in product(SPARSE_TREES,
                                  ["sparse-pos", "sparse-neg", "sparse-mix",
@@ -1445,6 +1453,7 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
                                       d.predict_proba(X2))
 
 
+@does_yield
 def test_explicit_sparse_zeros():
     for tree in SPARSE_TREES:
         yield (check_explicit_sparse_zeros, tree)
@@ -1465,6 +1474,7 @@ def check_raise_error_on_1d_input(name):
     assert_raises(ValueError, est.predict, [X])
 
 
+@does_yield
 @ignore_warnings
 def test_1d_input():
     for name in ALL_TREES:
@@ -1495,6 +1505,7 @@ def check_min_weight_leaf_split_level(name):
                                            sample_weight)
 
 
+@does_yield
 def test_min_weight_leaf_split_level():
     for name in ALL_TREES:
         yield check_min_weight_leaf_split_level, name
@@ -1518,6 +1529,7 @@ def check_public_apply_sparse(name):
                        est.tree_.apply(X_small32))
 
 
+@does_yield
 def test_public_apply():
     for name in ALL_TREES:
         yield (check_public_apply, name)
@@ -1530,6 +1542,7 @@ def check_presort_sparse(est, X, y):
     assert_raises(ValueError, est.fit, X, y)
 
 
+@does_yield
 def test_presort_sparse():
     ests = (DecisionTreeClassifier(presort=True),
             DecisionTreeRegressor(presort=True))
@@ -1581,6 +1594,7 @@ def check_decision_path(name):
     assert_less_equal(est.tree_.max_depth, max_depth)
 
 
+@does_yield
 def test_decision_path():
     for name in ALL_TREES:
         yield (check_decision_path, name)
@@ -1592,6 +1606,7 @@ def check_no_sparse_y_support(name):
     assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
 
 
+@does_yield
 def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:

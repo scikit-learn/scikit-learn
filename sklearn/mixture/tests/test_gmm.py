@@ -17,6 +17,7 @@ from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn.utils.testing import (assert_true, assert_greater,
                                    assert_raise_message, assert_warns_message,
                                    ignore_warnings)
+from sklearn.utils.testing import does_yield
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -497,6 +498,7 @@ def check_positive_definite_covars(covariance_type):
             assert_greater(np.linalg.det(c), 0)
 
 
+@does_yield
 def test_positive_definite_covars():
     # Check positive definiteness for all covariance types
     for covariance_type in ["full", "tied", "diag", "spherical"]:
