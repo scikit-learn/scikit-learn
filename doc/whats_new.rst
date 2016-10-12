@@ -69,6 +69,18 @@ Bug fixes
      `#6497 <https://github.com/scikit-learn/scikit-learn/pull/6497>`_
      by `Sebastian Säger`_
 
+   - Attribute ``explained_variance_ratio`` of :clas:`discriminant_analysis.LinearDiscriminantAnalysis`
+     calculated with SVD and Eigen solver are now of the same length. By `JPFrancoia`_
+
+
+API changes summary
+-------------------
+
+Linear, kernelized and related models
+
+   - Length of `explained_variance_ratio` of :clas:`discriminant_analysis.LinearDiscriminantAnalysis`
+     is now the same for Eigen and SVD solvers. By `JPFrancoia`_
+
 
 .. _changes_0_18:
 
@@ -539,9 +551,7 @@ Decomposition, manifold learning and clustering
       and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
-      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns correct results.
-      Attribute `explained_variance_ratio` calculated with SVD and Eigen solver are now of
-      the same length. By `JPFrancoia`_
+      :clas:`discriminant_analysis.LinearDiscriminantAnalysis` now returns correct results. By `JPFrancoia`_
 
 Preprocessing and feature selection
 
@@ -634,9 +644,6 @@ Linear, kernelized and related models
 
    - Access to public attributes ``.X_`` and ``.y_`` has been deprecated in
      :class:`isotonic.IsotonicRegression`. By `Jonathan Arfa`_.
-
-   - Length of `explained_variance_ratio` of :clas:`discriminant_analysis.LinearDiscriminantAnalysis`
-     is now the same for Eigen and SVD solvers.
 
 Decomposition, manifold learning and clustering
 
