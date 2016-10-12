@@ -616,8 +616,8 @@ def test_group_shuffle_split():
               [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
               ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
 
-    for l in groups:
-        X = y = np.ones(len(l))
+    for groups_i in groups:
+        X = y = np.ones(len(groups_i))
         n_splits = 6
         test_size = 1./3
         slo = GroupShuffleSplit(n_splits, test_size=test_size, random_state=0)
@@ -626,20 +626,20 @@ def test_group_shuffle_split():
         repr(slo)
 
         # Test that the length is correct
-        assert_equal(slo.get_n_splits(X, y, groups=l), n_splits)
+        assert_equal(slo.get_n_splits(X, y, groups=groups_i), n_splits)
 
-        l_unique = np.unique(l)
+        l_unique = np.unique(groups_i)
+        l = np.asarray(groups_i)
 
-        for train, test in slo.split(X, y, groups=l):
+        for train, test in slo.split(X, y, groups=groups_i):
             # First test: no train group is in the test set and vice versa
-            l_arr = np.asarray(l)
-            l_train_unique = np.unique(l_arr[train])
-            l_test_unique = np.unique(l_arr[test])
-            assert_false(np.any(np.in1d(l_arr[train], l_test_unique)))
-            assert_false(np.any(np.in1d(l_arr[test], l_train_unique)))
+            l_train_unique = np.unique(l[train])
+            l_test_unique = np.unique(l[test])
+            assert_false(np.any(np.in1d(l[train], l_test_unique)))
+            assert_false(np.any(np.in1d(l[test], l_train_unique)))
 
             # Second test: train and test add up to all the data
-            assert_equal(l_arr[train].size + l_arr[test].size, l_arr.size)
+            assert_equal(l[train].size + l[test].size, l.size)
 
             # Third test: train and test are disjoint
             assert_array_equal(np.intersect1d(train, test), [])
