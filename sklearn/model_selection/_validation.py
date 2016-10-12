@@ -266,7 +266,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         msg += ", score=%f" % test_score
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "%s -%s" % (msg, logger.short_format_time(total_time))
+        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_score, test_score] if return_train_score else [test_score]
