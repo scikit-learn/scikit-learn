@@ -674,6 +674,8 @@ def set_random_state(estimator, random_state=0):
 
 def if_matplotlib(func):
     """Test decorator that skips test if matplotlib not installed."""
+    if inspect.isgeneratorfunction(func):
+        raise NotImplementedError('testwraper needs a generator version')
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
@@ -691,14 +693,28 @@ def if_matplotlib(func):
 
 def skip_if_32bit(func):
     """Test decorator that skips tests on 32bit platforms."""
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        bits = 8 * struct.calcsize("P")
-        if bits == 32:
-            raise SkipTest('Test skipped on 32bit platforms.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
+    if inspect.isgeneratorfunction(func):
+        @wraps(func)
+        def gen_test():
+            # Fix issue with yield tests not being run
+            def _skip():
+                raise SkipTest('Test skipped on 32bit platforms.')
+            bits = 8 * struct.calcsize("P")
+            for tup in func():
+                if bits == 32:
+                    yield (_skip,)
+                else:
+                    yield tup
+        return gen_test
+    else:
+        @wraps(func)
+        def run_test(*args, **kwargs):
+            bits = 8 * struct.calcsize("P")
+            if bits == 32:
+                raise SkipTest('Test skipped on 32bit platforms.')
+            else:
+                return func(*args, **kwargs)
+        return run_test
 
 
 def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
@@ -707,6 +723,8 @@ def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
     """Test decorator that skips test if OS is Mac OS X and its
     major version is one of ``versions``.
     """
+    if inspect.isgeneratorfunction(func):
+        raise NotImplementedError('testwraper needs a generator version')
     warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
                   " in 0.19: use the safer and more generic"
                   " if_safe_multiprocessing_with_blas instead",
@@ -742,6 +760,8 @@ def if_safe_multiprocessing_with_blas(func):
     errors on interactively defined functions. It therefore not enabled by
     default.
     """
+    if inspect.isgeneratorfunction(func):
+        raise NotImplementedError('testwraper needs a generator version')
     @wraps(func)
     def run_test(*args, **kwargs):
         if sys.platform == 'darwin':
