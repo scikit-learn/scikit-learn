@@ -234,6 +234,7 @@ def test_load_boston():
     assert_equal(res.target.size, 506)
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
+    assert_true(res.filename)
 
     # test return_X_y option
     X_y_tuple = load_boston(return_X_y=True)
