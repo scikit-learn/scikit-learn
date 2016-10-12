@@ -77,8 +77,8 @@ chains = [ClassifierChain(LogisticRegression())
           for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)
-Y_pred_ensemble = np.array([chain.predict(X_test)
-                        for chain in chains]).mean(axis=0)
+Y_pred_ensemble = \
+    np.array([chain.predict(X_test) for chain in chains]).mean(axis=0)
 print("classifier chain ensemble jaccard similarity",
       jaccard_similarity_score(Y_test, Y_pred_ensemble >= .5))
 
