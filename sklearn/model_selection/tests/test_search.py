@@ -1178,4 +1178,8 @@ def test_grid_search_custom_cv_iter():
                        param_grid={'C': [0.1, 0.2, 0.3]}, cv=KFold(n_splits=5))
     gs2.fit(X, y)
 
+    for key in ('mean_score_time', 'std_score_time',
+                'mean_fit_time', 'std_fit_time'):
+        gs.cv_results_.pop(key)
+        gs2.cv_results_.pop(key)
     np.testing.assert_equal(gs.cv_results_, gs2.cv_results_)
