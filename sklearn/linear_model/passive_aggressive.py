@@ -112,7 +112,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         self.C = C
         self.loss = loss
 
-    def partial_fit(self, X, y, classes=None):
+    def partial_fit(self, X, y):
         """Fit linear model with Passive Aggressive algorithm.
 
         Parameters
@@ -148,8 +148,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="hinge", learning_rate=lr, n_iter=1,
-                                 classes=classes, sample_weight=None,
-                                 coef_init=None, intercept_init=None)
+                                 sample_weight=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
@@ -289,8 +288,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",
                                  learning_rate=lr, n_iter=1,
-                                 sample_weight=None,
-                                 coef_init=None, intercept_init=None)
+                                 sample_weight=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.

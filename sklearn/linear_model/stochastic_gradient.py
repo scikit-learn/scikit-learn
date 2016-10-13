@@ -17,7 +17,7 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import (check_array, check_random_state, check_X_y,
                      deprecated)
 from ..utils.extmath import safe_sparse_dot
-from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.validation import check_is_fitted
 from ..externals import six
 
@@ -152,66 +152,33 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("Shapes of X and sample_weight do not match.")
         return sample_weight
 
-    def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
-                                intercept_init=None):
+    def _allocate_parameter_mem(self, n_classes, n_features):
         """Allocate mem for parameters; initialize if provided."""
-        if n_classes > 2:
-            # allocate coef_ for multi-class
-            if coef_init is not None:
-                coef_init = np.asarray(coef_init, order="C")
-                if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided ``coef_`` does not match "
-                                     "dataset. ")
-                self.coef_ = coef_init
-            else:
-                self.coef_ = np.zeros((n_classes, n_features),
-                                      dtype=np.float64, order="C")
-
-            # allocate intercept_ for multi-class
-            if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init, order="C")
-                if intercept_init.shape != (n_classes, ):
-                    raise ValueError("Provided intercept_init "
-                                     "does not match dataset.")
-                self.intercept_ = intercept_init
-            else:
-                self.intercept_ = np.zeros(n_classes, dtype=np.float64,
-                                           order="C")
-        else:
-            # allocate coef_ for binary problem
-            if coef_init is not None:
-                coef_init = np.asarray(coef_init, dtype=np.float64,
+        # allocate coef_ for multi-class
+        if self.coef_ is None:
+            self.coef_ = np.zeros((n_classes, n_features),
+                                  dtype=np.float64, order="C")
+            self.intercept_ = np.zeros(n_classes, dtype=np.float64,
                                        order="C")
-                coef_init = coef_init.ravel()
-                if coef_init.shape != (n_features,):
-                    raise ValueError("Provided coef_init does not "
-                                     "match dataset.")
-                self.coef_ = coef_init
-            else:
-                self.coef_ = np.zeros(n_features,
-                                      dtype=np.float64,
-                                      order="C")
-
-            # allocate intercept_ for binary problem
-            if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init, dtype=np.float64)
-                if intercept_init.shape != (1,) and intercept_init.shape != ():
-                    raise ValueError("Provided intercept_init "
-                                     "does not match dataset.")
-                self.intercept_ = intercept_init.reshape(1,)
-            else:
-                self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
+            if self.average > 0:
+                self.average_coef_ = np.zeros(self.coef_.shape,
+                                              dtype=np.float64,
+                                              order="C")
+                self.average_intercept_ = np.zeros(self.intercept_.shape,
+                                                   dtype=np.float64,
+                                                   order="C")
+        else:
+            if (n_classes > self.coef_.shape[0]):
+                self.coef_.resize(n_classes, n_features)
+                self.intercept_.resize(n_classes)
+                if self.average > 0:
+                    self.average_coef_.resize(self.coef_.shape, refcheck=False)
+                    self.average_intercept_.resize(self.intercept_.shape, refcheck=False)
 
         # initialize average parameters
         if self.average > 0:
             self.standard_coef_ = self.coef_
             self.standard_intercept_ = self.intercept_
-            self.average_coef_ = np.zeros(self.coef_.shape,
-                                          dtype=np.float64,
-                                          order="C")
-            self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
-                                               dtype=np.float64,
-                                               order="C")
 
 
 def _prepare_fit_binary(est, y, i):
@@ -338,16 +305,23 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.n_jobs = int(n_jobs)
 
     def _partial_fit(self, X, y, alpha, C,
-                     loss, learning_rate, n_iter,
-                     classes, sample_weight,
-                     coef_init, intercept_init):
+                     loss, learning_rate, n_iter, sample_weight):
         X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C")
 
         n_samples, n_features = X.shape
 
         self._validate_params()
-        _check_partial_fit_first_call(self, classes)
+        # _check_partial_fit_first_call(self, classes)
+        unique_classes = unique_labels(y)
+        new_unique_classes = None
 
+        if self.classes_ is None:
+            self.classes_ = unique_classes
+        else:
+            new_unique_classes = np.setdiff1d(unique_classes, self.classes_)
+            #print("new unique classes", new_unique_classes)
+            self.classes_ = np.concatenate((self.classes_, new_unique_classes))
+        print("num existing classes", len(self.classes_))
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
@@ -355,9 +329,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                            self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None or coef_init is not None:
-            self._allocate_parameter_mem(n_classes, n_features,
-                                         coef_init, intercept_init)
+        if self.coef_ is None or (new_unique_classes is not None
+                                  and len(new_unique_classes) > 0):
+            self._allocate_parameter_mem(n_classes, n_features)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
@@ -367,18 +341,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.t_ = 1.0
 
         # delegate to concrete training procedure
-        if n_classes > 2:
-            self._fit_multiclass(X, y, alpha=alpha, C=C,
-                                 learning_rate=learning_rate,
-                                 sample_weight=sample_weight, n_iter=n_iter)
-        elif n_classes == 2:
-            self._fit_binary(X, y, alpha=alpha, C=C,
+        self._fit_multiclass(X, y, alpha=alpha, C=C,
                              learning_rate=learning_rate,
                              sample_weight=sample_weight, n_iter=n_iter)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
-
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
@@ -470,7 +435,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.standard_intercept_ = np.atleast_1d(self.intercept_)
                 self.intercept_ = self.standard_intercept_
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None):
+    def partial_fit(self, X, y, sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -508,8 +473,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              "parameter.".format(self.class_weight))
         return self._partial_fit(X, y, alpha=self.alpha, C=1.0, loss=self.loss,
                                  learning_rate=self.learning_rate, n_iter=1,
-                                 classes=classes, sample_weight=sample_weight,
-                                 coef_init=None, intercept_init=None)
+                                 sample_weight=sample_weight)
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
