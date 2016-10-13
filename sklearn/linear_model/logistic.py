@@ -926,7 +926,10 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         y_test[~mask] = -1.
 
     # To deal with object dtypes, we need to convert into an array of floats.
-    y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
+    try:
+        y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
+    except:
+        y_test = check_array(y_test, dtype=None, ensure_2d=False)
 
     scores = list()
 
