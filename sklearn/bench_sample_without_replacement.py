@@ -11,7 +11,6 @@ import optparse
 from datetime import datetime
 import operator
 
-import matplotlib.pyplot as plt
 import numpy as np
 import random
 
@@ -54,7 +53,8 @@ if __name__ == "__main__":
 
     default_algorithms = "custom-tracking-selection,custom-auto," \
                          "custom-reservoir-sampling,custom-pool,"\
-                         "python-core-sample,numpy-permutation"
+                         "python-core-sample,numpy-permutation,"\
+                         "numpy-argsort"
 
     op.add_option("--algorithm",
                   dest="selected_algorithm",
@@ -134,6 +134,10 @@ if __name__ == "__main__":
         lambda n_population, n_sample: \
             np.random.permutation(n_population)[:n_sample]
 
+    sampling_algorithm["numpy-argsort"] =\
+        lambda n_population, n_sample: \
+            np.argsort(np.random.random(n_population))[:n_sample]
+
     ###########################################################################
     # Remove unspecified algorithm
     sampling_algorithm = dict((key, value)
@@ -187,21 +191,6 @@ if __name__ == "__main__":
     print("Results are averaged over %s repetition(s)." % opts.n_times)
     print("")
 
-    fig = plt.figure('scikit-learn sample w/o replacement benchmark results')
-    plt.title("n_population = %s, n_times = %s" %
-              (opts.n_population, opts.n_times))
-    ax = fig.add_subplot(111)
+    print('RATIO', *map('{0:.3g}'.format, ratio), sep='\t')
     for name in sampling_algorithm:
-        ax.plot(ratio, time[name], label=name)
-
-    ax.set_xlabel('ratio of n_sample / n_population')
-    ax.set_ylabel('Time (s)')
-    ax.legend()
-
-    # Sort legend labels
-    handles, labels = ax.get_legend_handles_labels()
-    hl = sorted(zip(handles, labels), key=operator.itemgetter(1))
-    handles2, labels2 = zip(*hl)
-    ax.legend(handles2, labels2, loc=0)
-
-    plt.show()
+        print(name, *map('{0:.3g}'.format, time[name]), sep='\t')

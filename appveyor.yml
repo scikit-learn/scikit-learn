@@ -74,7 +74,8 @@ test_script:
   - "mkdir empty_folder"
   - "cd empty_folder"
 
-  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
+  #- "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
+  - "sklearn.bench_sample_without_replacement --n-population 1000000"
 
   # Move back to the project folder
   - "cd .."
