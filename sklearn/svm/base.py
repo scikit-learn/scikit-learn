@@ -551,7 +551,8 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
                           "the shape of the decision function returned by "
                           "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
-            return _ovr_decision_function(dec < 0, dec, len(self.classes_))
+            pred = map(lambda x: 1 if x else 0, dec < 0)
+            return _ovr_decision_function(pred, dec, len(self.classes_))
         return dec
 
     def predict(self, X):
