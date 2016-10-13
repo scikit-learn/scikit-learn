@@ -956,7 +956,6 @@ See the :ref:`metrics` section of the user guide for further details.
 
    mixture.GaussianMixture
    mixture.BayesianGaussianMixture
-   mixture.DPGMM
 
 
 .. _multiclass_ref:
