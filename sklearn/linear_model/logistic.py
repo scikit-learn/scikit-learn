@@ -1,4 +1,3 @@
-
 """
 Logistic Regression
 """
@@ -28,7 +27,6 @@ from ..utils.extmath import (logsumexp, log_logistic, safe_sparse_dot,
 from ..utils.extmath import row_norms
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
-from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
 from ..utils.fixes import expit
 from ..utils.multiclass import check_classification_targets
@@ -925,9 +923,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         y_test = np.ones(y_test.shape, dtype=np.float64)
         y_test[~mask] = -1.
 
-    # To deal with object dtypes, we need to convert into an array of floats.
-    y_test = check_array(y_test, dtype=np.float64, ensure_2d=False)
-
     scores = list()
 
     if isinstance(scoring, six.string_types):
@@ -1561,64 +1556,67 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
-
+        check_classification_targets(y)
         if self.solver == 'sag':
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
 
-        check_classification_targets(y)
+        # Encode for string labels
+        label_encoder = LabelEncoder().fit(y)
+        y = label_encoder.transform(y)
+        self.classes_ = label_encoder.classes_
 
-        if y.ndim == 2 and y.shape[1] == 1:
-            warnings.warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples, ), for example using ravel().",
-                DataConversionWarning)
-            y = np.ravel(y)
+        enc_labels = label_encoder.transform(label_encoder.classes_)
+        cls_labels = self.classes_  # The original class labels
 
-        check_consistent_length(X, y)
+        class_weight = self.class_weight
+        if isinstance(class_weight, dict):
+            old_keys = list(class_weight.keys())
+            new_keys = label_encoder.transform(old_keys)
+            # Don't modify the original class_weight dict.
+            class_weight = dict()
+            for new_key, old_key in zip(new_keys, old_keys):
+                class_weight[new_key] = self.class_weight[old_key]
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
         folds = list(cv.split(X, y))
 
-        self._enc = LabelEncoder()
-        self._enc.fit(y)
-
-        labels = self.classes_ = np.unique(y)
-        n_classes = len(labels)
+        # Use the label encoded classes
+        n_classes = len(enc_labels)
 
         if n_classes < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
                              " class: %r" % self.classes_[0])
+
         if n_classes == 2:
             # OvR in case of binary problems is as good as fitting
             # the higher label
             n_classes = 1
-            labels = labels[1:]
+            enc_labels = enc_labels[1:]
+            cls_labels = cls_labels[1:]
 
         # We need this hack to iterate only once over labels, in the case of
         # multi_class = multinomial, without changing the value of the labels.
-        iter_labels = labels
         if self.multi_class == 'multinomial':
-            iter_labels = [None]
+            iter_labels = iter_classes = [None]
+        else:
+            iter_labels = enc_labels
+            iter_classes = cls_labels
 
-        if self.class_weight and not(isinstance(self.class_weight, dict) or
-                                     self.class_weight in
-                                     ['balanced', 'auto']):
+        if class_weight and not(isinstance(class_weight, dict) or
+                                class_weight in ['balanced', 'auto']):
             # 'auto' is deprecated and will be removed in 0.19
             raise ValueError("class_weight provided should be a "
                              "dict or 'balanced'")
 
         # compute the class weights for the entire dataset y
-        if self.class_weight in ("auto", "balanced"):
-            classes = np.unique(y)
-            class_weight = compute_class_weight(self.class_weight, classes, y)
+        if class_weight in ("auto", "balanced"):
+            classes = np.arange(len(self.classes_))
+            class_weight = compute_class_weight(class_weight, classes, y)
             class_weight = dict(zip(classes, class_weight))
-        else:
-            class_weight = self.class_weight
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1669,9 +1667,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
                                                 len(self.Cs_)))
 
-        self.coefs_paths_ = dict(zip(labels, coefs_paths))
+        self.coefs_paths_ = dict(zip(cls_labels, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
-        self.scores_ = dict(zip(labels, scores))
+        self.scores_ = dict(zip(cls_labels, scores))
 
         self.C_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
@@ -1682,10 +1680,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
-        for index, label in enumerate(iter_labels):
+        for index, (cls_lbl, enc_lbl) in enumerate(
+                zip(iter_classes, iter_labels)):
+
             if self.multi_class == 'ovr':
-                scores = self.scores_[label]
-                coefs_paths = self.coefs_paths_[label]
+                # The scores_ / coefs_paths_ dict have unencoded class
+                # labels as their keys
+                scores = self.scores_[cls_lbl]
+                coefs_paths = self.coefs_paths_[cls_lbl]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
@@ -1698,8 +1700,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 else:
                     coef_init = np.mean(coefs_paths[:, best_index, :], axis=0)
 
+                # Note that y is label encoded and hence pos_class must be
+                # the encoded label / None (for 'multinomial')
                 w, _, _ = logistic_regression_path(
-                    X, y, pos_class=label, Cs=[C_], solver=self.solver,
+                    X, y, pos_class=enc_lbl, Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty, copy=False,
