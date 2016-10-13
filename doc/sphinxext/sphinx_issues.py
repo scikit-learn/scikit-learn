@@ -22,7 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-from docutils import nodes, utils
+try:
+    from docutils import nodes, utils
+except ImportError:
+    # Load lazily so that test-sphinxext does not require docutils dependency
+    pass
 
 __version__ = '0.2.0'
 __author__ = 'Steven Loria'
