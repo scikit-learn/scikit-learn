@@ -15,10 +15,11 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from scipy.sparse import vstack
 
 from ..utils import check_array
 from ..utils import gen_even_slices
-from ..utils import gen_batches
+from ..utils import gen_batches, _get_n_jobs
 from ..utils.fixes import partial
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
@@ -1390,5 +1391,175 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:
         raise ValueError("Unknown kernel %r" % metric)
-
+    
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+
+
+def sparse_dot_row_apply(X, Y=None, func=np.sum, batch_size=None,
+                         n_jobs=1, auto_fmt=True, verbose=0, *args, **kwds):
+    """Compute dot of X and Y in batches and apply a function onto each batch.
+
+    This method takes either one or two sparse matrices and calculates
+    in batches their dot product. On each batch the callable `func` is
+    then applied. Afterwards a proper output fmt is detected, the results
+    combined and returned.
+
+    The function allows for huge sparse matrix dot calculations, where
+    only a (or some) property(ies) of each row is/are needed.
+
+    For example, defining my_func as
+
+        def my_func(A):
+            return A.sum(axis=1)
+
+    and passing it as `func=my_func` to sparse_dot_row_apply returns
+    a vector in which element i is the sum of the dot products ith row.
+
+    Another example might be to find only elements in the dot product large
+    than 0.2. In the case of tf-idf cosine similarity of a huge set of
+    documents this can be especially helpful, since holding the whole dot
+    result in memory might not be possible. Assuming X[n_samples, n_features]
+    is the result of TfidfVectorizer.transform() one could calc similarities
+    between all documents where cosine(doc1, doc2) > 0.2 using the following
+    function call:
+
+        sparse_dot_row_apply(X, X.T,func=my_func)
+
+    where my_func should be defined like that:
+        def my_func(X):
+            X.data[X.data < .2] = 0
+            X.eliminate_zeros()
+            return X
+
+    Another `func` can be used to find highest ten elements per row in
+    the dot product. For instance a text-based recommender system might
+    want to find the 10 most similar documents for each document. A proper
+    `func` might look like the following:
+        def func(X):
+            res = list()
+            for i in range(X.shape[0]):
+                r = np.array(X[i, :].todense()).ravel()
+                limit = np.sort(r)[-10]
+                r[r < limit] = 0.
+                res.append(csr_matrix(r, shape=(1, len(r))))
+            return vstack(res)
+
+    Naturally, the higher batch_sizes and n_jobs, the more memory is needed.
+    Further, used memory is dependent on the result of `func`. If,
+    for example, `func` is set to `func=lambda x: x`, the result will be the
+    unmodified dot product of X and Y without any memory advantages. In such
+    cases simple X.dot(Y) should be used.
+
+
+    Parameters
+    ----------
+    X : sparse matrix
+        X of X dot Y
+
+    Y : sparse or None, default=None
+        Y for X dot Y, if None Y is set to X
+
+    func : callable
+        Function which should be applied to each batch.
+
+    batch_size : int, or None
+        Defines the number of rows processed in each batch. If None the
+        calculation will be split up in n_jobs evenly sized batches.
+
+    n_jobs : int
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debugging. For n_jobs below -1,
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
+    auto_fmt : bool
+        Whether to autodetect the return format or not. If False a list
+        containing the result of each batch is returned.
+
+    verbose : int
+        verbose parameter passed to Parallel of joblib.
+
+    `*args` : optional arguments
+        Any further parameters are passed directly to the callable
+
+    `**kwds` : optional keyword parameters
+        Any further keyword parameters are passed directly to the callable
+
+    Returns
+    -------
+    Z : array, sparse matrix, list, ...
+        The type of the result is heavily dependent on the passed `func`.
+        If, for example, `func` returns a sparse matrix, the result will
+        a sparse matrix consisting of all vstacked results. If `func`
+        returns one value per sample, the result will be a vector. If
+        the function cannot automatically detect how to compose the output
+        or auto_fmt is set to False, a list containing the results of
+        each batch is returned.
+
+    """
+
+    if batch_size is None:
+        # no batch size defined. split into n_jobs batches
+
+        # acount for n_jobs < 0
+        n_jobs = _get_n_jobs(n_jobs)
+
+        # create batch size to fit n_jobs
+        batch_size = int(X.shape[0] / n_jobs)
+        if X.shape[0] % n_jobs != 0:
+            batch_size += 1
+
+    if Y is None:
+        Y = X
+
+    # start computation
+    res = Parallel(n_jobs=n_jobs, backend='threading', verbose=verbose)(
+        delayed(_sparse_row_apply_worker)
+        (X[chunk, :], Y, func, *args, **kwds)
+        for chunk in gen_batches(X.shape[0], batch_size))
+
+    if auto_fmt:
+        # auto detect output format using first batch result
+        f_elem = res[0]
+        if isinstance(f_elem, csr_matrix):
+            # csr_matrices per batch -> stack them
+            return vstack(res)
+        elif isinstance(f_elem, (int, float)):
+            # single value -> create array
+            return np.array(res)
+        elif isinstance(f_elem, np.matrix):
+            # matrix per batch
+            if f_elem.shape[0] > 1 and f_elem.shape[1] == 1:
+                # one value per X row -> create array
+                return np.array(list(itertools.chain.from_iterable(
+                    map(lambda x: x.tolist(), res)))).ravel()
+            else:
+                # more values per X row -> stack them
+                return np.vstack(res)
+    return res
+
+
+def _sparse_row_apply_worker(X_batch, Y, func, *args, **kwds):
+    """ helper function for sparse_dot_row_apply
+    Parameters
+    ----------
+    X_batch : sparse matrix
+        batch of X
+    Y : sparse matrix
+        Y
+    func : callable
+        user defined callable
+    args : list
+        further args for func
+    kwds : dict
+        keyword args for func
+
+    Returns
+    -------
+        depends on the return type of func.
+    """
+    return func(X_batch.dot(Y), *args, **kwds)
