@@ -551,6 +551,30 @@ div.highlight a {
     text-decoration: underline;
 }
 
+div.highlight:hover span.copybutton {
+    background-color: #3F556B;
+}
+
+div.highlight:hover span.copybutton:hover {
+    background-color: #20252B;
+}
+
+@media (min-width: 1060px) {
+    div.highlight:hover span.copybutton:after{
+	background: #3F556B;
+	border-radius: 5px;
+	color: white;
+	content: attr(title);
+	left: 110%;
+	padding: 5px 15px;
+	position: absolute;
+	z-index: 98;
+	width: 140px;
+	top: -10px;
+    }
+}
+
+
 div.note {
     background-color: #eee;
     border: 1px solid #ccc;
