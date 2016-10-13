@@ -1163,16 +1163,17 @@ def test_grid_search_custom_cv_iter():
     class CustomSplitter():
         def __init__(self, n_samples=100):
             self.indices = KFold(n_splits=5).split(np.ones(n_samples))
+
         def split(self, X=None, y=None, groups=None):
             for index in self.indices:
                 yield index
+
         def get_n_splits(self, X=None, y=None, groups=None):
             return 5
 
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.2, 0.3]}, cv=CustomSplitter())
     gs.fit(X, y)
-
 
     gs2 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]}, cv=KFold(n_splits=5))
