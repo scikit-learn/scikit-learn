@@ -219,7 +219,7 @@
     <div class="sphinxsidebar">
     <div class="sphinxsidebarwrapper">
 
-    {%- if rellinks[1:] %}
+    {%- if rellinks %}
 
     {%- if parents %}
         <div class="rel">
@@ -227,10 +227,7 @@
         <div class="rel rellarge">
     {% endif %}
 
-  <!-- rellinks[1:] is an ugly hack to avoid link to module
-  index -->
-
-    {%- for rellink in rellinks[1:]|reverse %}
+    {%- for rellink in rellinks|reverse %}
         <div class="rellink">
         <a href="{{ pathto(rellink[0]) }}"
         {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
@@ -328,7 +325,7 @@
     {% else %}
      <div class="rel rellarge">
     {% endif %}
-    {%- for rellink in rellinks[1:]|reverse %}
+    {%- for rellink in rellinks|reverse %}
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">{{ loop.cycle('Previous', 'Next') }}
       </a>
