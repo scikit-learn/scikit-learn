@@ -204,7 +204,7 @@ def test_rfecv_mockclassifier():
 
 
 def test_rfecv_verbose_output():
-    """Check verbose=1 is producing an output."""
+    # Check verbose=1 is producing an output.
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     sys.stdout = StringIO()
