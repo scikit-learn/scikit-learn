@@ -76,10 +76,10 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
     H = mcd_fit.support_
     # compare with the estimates learnt from the inliers
     error_location = np.mean((pure_data.mean(0) - T) ** 2)
-    assert(error_location < tol_loc)
+    assert error_location < tol_loc
     error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
-    assert(error_cov < tol_cov)
-    assert(np.sum(H) >= tol_support)
+    assert error_cov < tol_cov
+    assert np.sum(H) >= tol_support
     assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
@@ -108,4 +108,4 @@ def test_outlier_detection():
     assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
-    assert(sum(y_pred == -1) == sum(decision_transformed < 0))
+    assert sum(y_pred == -1) == sum(decision_transformed < 0)

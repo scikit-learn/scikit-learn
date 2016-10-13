@@ -3,8 +3,8 @@ Testing for mean shift clustering methods
 
 """
 
-import numpy as np
 import warnings
+import numpy as np
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false

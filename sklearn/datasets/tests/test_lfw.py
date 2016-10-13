@@ -158,7 +158,9 @@ def test_load_fake_lfw_people():
 
 @raises(ValueError)
 def test_load_fake_lfw_people_too_restrictive():
-    fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100, download_if_missing=False)
+    fetch_lfw_people(data_home=SCIKIT_LEARN_DATA,
+                     min_faces_per_person=100,
+                     download_if_missing=False)
 
 
 @raises(IOError)
@@ -191,7 +193,10 @@ def test_load_fake_lfw_pairs():
     # It is possible to ask for the original data without any croping or color
     # conversion
     lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
-                                      resize=None, slice_=None, color=True, download_if_missing=False)
+                                      resize=None,
+                                      slice_=None,
+                                      color=True,
+                                      download_if_missing=False)
     assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 250, 250, 3))
 
     # the ids and class names are the same as previously

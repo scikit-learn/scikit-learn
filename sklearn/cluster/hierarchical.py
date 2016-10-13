@@ -272,7 +272,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
 
         # List comprehension is faster than a for loop
         [heappush(inertia, (ini[idx], k, coord_col[idx]))
-            for idx in range(n_additions)]
+         for idx in range(n_additions)]
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples

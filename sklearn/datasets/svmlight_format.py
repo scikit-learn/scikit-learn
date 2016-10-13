@@ -332,7 +332,7 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
         f.write((line_pattern % feat).encode('ascii'))
 
 
-def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
+def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None,
                        multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
 

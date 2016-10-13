@@ -406,7 +406,7 @@ def fast_mcd(X, support_fraction=None,
         n_samples_subsets = n_samples // n_subsets
         samples_shuffle = random_state.permutation(n_samples)
         h_subset = int(np.ceil(n_samples_subsets *
-                       (n_support / float(n_samples))))
+                               (n_support / float(n_samples))))
         # b. perform a total of 500 trials
         n_trials_tot = 500
         # c. select 10 best (location, covariance) for each subset
@@ -440,7 +440,7 @@ def fast_mcd(X, support_fraction=None,
         # (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
         h_merged = int(np.ceil(n_samples_merged *
-                       (n_support / float(n_samples))))
+                               (n_support / float(n_samples))))
         if n_samples > 1500:
             n_best_merged = 10
         else:

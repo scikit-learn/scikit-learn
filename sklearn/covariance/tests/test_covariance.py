@@ -102,7 +102,7 @@ def test_shrunk_covariance():
     # test shrinkage coeff on a simple data set (without saving precision)
     cov = ShrunkCovariance(shrinkage=0.5, store_precision=False)
     cov.fit(X)
-    assert(cov.precision_ is None)
+    assert cov.precision_ is None
 
 
 def test_ledoit_wolf():
@@ -144,7 +144,7 @@ def test_ledoit_wolf():
     lw = LedoitWolf(store_precision=False, assume_centered=True)
     lw.fit(X_centered)
     assert_almost_equal(lw.score(X_centered), score_, 4)
-    assert(lw.precision_ is None)
+    assert lw.precision_ is None
 
     # Same tests without assuming centered data
     # test shrinkage coeff on a simple data set
@@ -184,7 +184,7 @@ def test_ledoit_wolf():
     lw = LedoitWolf(store_precision=False)
     lw.fit(X)
     assert_almost_equal(lw.score(X), score_, 4)
-    assert(lw.precision_ is None)
+    assert lw.precision_ is None
 
 
 def _naive_ledoit_wolf_shrinkage(X):
@@ -265,7 +265,7 @@ def test_oas():
     oa = OAS(store_precision=False, assume_centered=True)
     oa.fit(X_centered)
     assert_almost_equal(oa.score(X_centered), score_, 4)
-    assert(oa.precision_ is None)
+    assert oa.precision_ is None
 
     # Same tests without assuming centered data--------------------------------
     # test shrinkage coeff on a simple data set
@@ -303,4 +303,4 @@ def test_oas():
     oa = OAS(store_precision=False)
     oa.fit(X)
     assert_almost_equal(oa.score(X), score_, 4)
-    assert(oa.precision_ is None)
+    assert oa.precision_ is None
