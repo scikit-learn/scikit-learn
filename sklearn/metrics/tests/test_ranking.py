@@ -327,28 +327,6 @@ def test_roc_curve_toydata():
     assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
     assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
 
-def test_multi_roc_auc_toydata():
-    y_true = np.array([0, 1, 2])
-    y_scores = np.array([[0.714, 0.072, 0.214], [0.837, 0.143, 0.020], [0.714, 0.072, 0.214]])
-    assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.666666666663)
-
-    y_true = np.array([0, 1, 0, 2])
-    y_scores = np.array([[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
-    assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.75)
-    #y_scores_multi = []
-    #for y_score in y_scores_binary:
-    #    y_scores_multi.append([1 - y_score, y_score])
-    #y_scores_multi = np.array(y_scores_multi)
-    #assert_almost_equal(roc_auc_score(y_true, y_scores_multi, multiclass="ovo"),
-    #    roc_auc_score(y_true, y_scores_binary))
-
-    y_true = np.array([0, 1, 2, 2])
-    y_scores = np.array([[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
-    out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:,0])
-    out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:,1])
-    out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:,2])
-    result = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
-    assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovr"), result)
 
 def test_roc_curve_drop_intermediate():
     # Test that drop_intermediate drops the correct thresholds
@@ -413,6 +391,49 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
 
 
+def test_multi_auc_toydata():
+    y_true = np.array([0, 1, 2])
+    y_scores = np.array(
+        [[0.714, 0.072, 0.214], [0.837, 0.143, 0.020], [0.714, 0.072, 0.214]])
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.666666666663)
+
+    y_true = np.array([0, 1, 0, 2])
+    y_scores = np.array(
+        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.75)
+
+    y_true = np.array([0, 1, 2, 2])
+    y_scores = np.array(
+        [[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
+    out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:,0])
+    out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:,1])
+    out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:,2])
+    result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovr", average="weighted"),
+        result_weighted)
+
+    result_unweighted = out_0 + out_1 + out_2
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovr"),
+        result_unweighted)
+
+def test_auc_score_multi_error():
+    # Test that roc_auc_score function returns an error when trying
+    # to compute multiclass AUC for parameters where an output
+    # is not defined.
+    rng = check_random_state(404)
+    y_pred = rng.rand(10)
+    y_true = rng.randint(0, 3, size=10)
+    assert_raise_message(ValueError,
+			"average has to be one of (None, 'macro', 'weighted')",
+                         roc_auc_score, y_true, y_pred, average="sample")
+    assert_raise_message(ValueError,
+			 "average has to be one of (None, 'macro', 'weighted')",
+                         roc_auc_score, y_true, y_pred, average="micro")
+
 def test_auc_score_non_binary_class():
     # Test that roc_auc_score function returns an error when trying
     # to compute AUC for non-binary class values.
@@ -428,10 +449,6 @@ def test_auc_score_non_binary_class():
     y_true = -np.ones(10, dtype="int")
     assert_raise_message(ValueError, "ROC AUC score is not defined",
                          roc_auc_score, y_true, y_pred)
-    # y_true contains three different class values
-    y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError, "multiclass format is not supported",
-                         roc_auc_score, y_true, y_pred)
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
@@ -446,11 +463,6 @@ def test_auc_score_non_binary_class():
                              roc_auc_score, y_true, y_pred)
         y_true = -np.ones(10, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
-                             roc_auc_score, y_true, y_pred)
-
-        # y_true contains three different class values
-        y_true = rng.randint(0, 3, size=10)
-        assert_raise_message(ValueError, "multiclass format is not supported",
                              roc_auc_score, y_true, y_pred)
 
 

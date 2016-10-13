@@ -135,7 +135,39 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
 
 def _average_multiclass_score(binary_metric, y_true, y_score,
                               average, multiclass):
-    """TODO: DOCUMENTATION
+
+    """Uses the binary metric for multiclass classification
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True multiclass labels
+
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
+        Target scores corresponding to probability estimates of a sample
+        belonging to a particular class
+
+    average : string, [None, 'macro' (default), 'weighted']
+        TODO: difference between 'macro' and None? Should there be both?
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, taking into account the a priori
+            distribution of the classes.
+
+    binary_metric : callable, returns shape [n_classes]
+        The binary metric function to use.
+
+    Returns
+    -------
+    score : float or array of shape [n_classes]
+        If not ``None``, average the score, else return the score for each
+        classes.
+
     """
     average_options = (None, "macro", "weighted")
     if average not in average_options:
@@ -151,23 +183,18 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
     y_score = check_array(y_score)
 
     not_average_axis = 1
-    average_weight = None
-    # TODO: may not apply to multiclass in the same way.
-    if average == "weighted":
-        average_weight = np.sum(y_true, axis=0)
-        if average_weight.sum() == 0:
-            return 0
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
 
     if y_score.ndim == 1:
         y_score = y_score.reshape((-1, 1))
-    # TODO: assumes integer labels?
+
     label_unique, label_counts = np.unique(y_true, return_counts=True)
+    label_counts_map = dict(zip(label_unique, label_counts))
     n_labels = len(label_unique)
     if multiclass == "ovo":
-        # Hand and Till 2001
+        # Hand and Till 2001 (unweighted)
         pairwise = [p for p in itertools.combinations(xrange(n_labels), 2)]
         auc_scores_sum = 0
         for pair in pairwise:
@@ -176,17 +203,23 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
             y_score_filtered = y_score[np.where(ix)]
             y_true_filtered_10 = np.in1d(y_true_filtered.ravel(), pair[0]).astype(int)
             y_true_filtered_01 = np.in1d(y_true_filtered.ravel(), pair[1]).astype(int)
-            auc_scores_sum += (binary_metric(y_true_filtered_10, y_score_filtered[:,pair[0]]) +
-                               binary_metric(y_true_filtered_01, y_score_filtered[:,pair[1]]))/2.0
+            binary_avg_output = \
+              (binary_metric(y_true_filtered_10, y_score_filtered[:,pair[0]]) +
+               binary_metric(y_true_filtered_01, y_score_filtered[:,pair[1]]))/2.0
+            auc_scores_sum += binary_avg_output
+            if average == "weighted":
+                raise ValueError("one-vs-one multiclass AUC is only implemented "
+                                 "for the unweighted Hand and Till (2001) algorithm")
         return auc_scores_sum * (2.0 / (n_labels * (n_labels - 1.0)))
     else:
-        # Provost and Domingos 2001
-        label_counts_map = dict(zip(label_unique, label_counts))
+        # Provost and Domingos 2001 (weighted)
         auc_scores_sum = 0
         for label in label_unique:
             y_true_label = np.in1d(y_true.ravel(), label).astype(int)
-            #y_true_label = y_true[0, np.where(ix)]
             y_score_label = y_score[:,label]
-            auc_scores_sum += binary_metric(y_true_label, y_score_label) * (label_counts_map[label]/float(sum(label_counts_map.values())))
+            binary_output = binary_metric(y_true_label, y_score_label)
+            if average == "weighted":
+                binary_output *= (label_counts_map[label]/float(sum(label_counts_map.values())))
+            auc_scores_sum += binary_output
         return auc_scores_sum
 
