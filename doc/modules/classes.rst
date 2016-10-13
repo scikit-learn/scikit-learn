@@ -1349,3 +1349,20 @@ Low-level methods
    utils.estimator_checks.check_estimator
    utils.resample
    utils.shuffle
+
+
+Recently deprecated
+===================
+
+To be removed in 0.19
+---------------------
+
+
+To be removed in 0.20
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   grid_search.GridSearchCV

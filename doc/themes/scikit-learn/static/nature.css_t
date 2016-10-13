@@ -579,7 +579,7 @@ div.admonition {
     -moz-border-radius: 4px;
 }
 
-div.warning {
+div.warning, div.deprecated {
     color: #b94a48;
     background-color: #F3E5E5;
     border: 1px solid #eed3d7;
