@@ -288,6 +288,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     pos_label : int or str, default=None
         The label of the positive class
+A
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.

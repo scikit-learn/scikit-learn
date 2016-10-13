@@ -332,14 +332,23 @@ def test_multi_roc_auc_toydata():
     y_scores = np.array([[0.714, 0.072, 0.214], [0.837, 0.143, 0.020], [0.714, 0.072, 0.214]])
     assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.666666666663)
 
-    y_true = np.array([0, 0, 1, 1])
-    y_scores_binary = np.array([0.1, 0.4, 0.35, 0.8])
-    y_scores_multi = []
-    for y_score in y_scores_binary:
-        y_scores_multi.append([1 - y_score, y_score])
-    y_scores_multi = np.array(y_scores_multi)
-    assert_almost_equal(roc_auc_score(y_true, y_scores_multi, multiclass="ovo"),
-        roc_auc_score(y_true, y_scores_binary))
+    y_true = np.array([0, 1, 0, 2])
+    y_scores = np.array([[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+    assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.75)
+    #y_scores_multi = []
+    #for y_score in y_scores_binary:
+    #    y_scores_multi.append([1 - y_score, y_score])
+    #y_scores_multi = np.array(y_scores_multi)
+    #assert_almost_equal(roc_auc_score(y_true, y_scores_multi, multiclass="ovo"),
+    #    roc_auc_score(y_true, y_scores_binary))
+
+    y_true = np.array([0, 1, 2, 2])
+    y_scores = np.array([[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
+    out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:,0])
+    out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:,1])
+    out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:,2])
+    result = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
+    assert_almost_equal(roc_auc_score(y_true, y_scores, multiclass="ovr"), result)
 
 def test_roc_curve_drop_intermediate():
     # Test that drop_intermediate drops the correct thresholds

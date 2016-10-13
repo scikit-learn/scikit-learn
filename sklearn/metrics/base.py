@@ -152,6 +152,7 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
 
     not_average_axis = 1
     average_weight = None
+    # TODO: may not apply to multiclass in the same way.
     if average == "weighted":
         average_weight = np.sum(y_true, axis=0)
         if average_weight.sum() == 0:
@@ -162,19 +163,30 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
 
     if y_score.ndim == 1:
         y_score = y_score.reshape((-1, 1))
-
+    # TODO: assumes integer labels?
+    label_unique, label_counts = np.unique(y_true, return_counts=True)
+    n_labels = len(label_unique)
     if multiclass == "ovo":
-        n_labels = len(np.unique(y_true))
+        # Hand and Till 2001
         pairwise = [p for p in itertools.combinations(xrange(n_labels), 2)]
         auc_scores_sum = 0
         for pair in pairwise:
-            ix = np.in1d(y_true.ravel(), [pair[0], pair[1]]).reshape(y_true.shape)
-            y_true_filtered = y_true[np.where(ix)]
-            y_score_filtered = y_score[np.where(ix)[1],:][:,[pair[0], pair[1]]]
-            y_true_filtered_01 = [1 if x == pair[0] else 0 for x in y_true_filtered]
-            y_true_filtered_10 = [1 if x == pair[1] else 0 for x in y_true_filtered]
-            auc_scores_sum += (binary_metric(y_true_filtered_01, y_score_filtered[:,0]) +
-                               binary_metric(y_true_filtered_10, y_score_filtered[:,1]))/2.0
+            ix = np.in1d(y_true.ravel(), [pair[0], pair[1]])
+            y_true_filtered = y_true[0, np.where(ix)]
+            y_score_filtered = y_score[np.where(ix)]
+            y_true_filtered_10 = np.in1d(y_true_filtered.ravel(), pair[0]).astype(int)
+            y_true_filtered_01 = np.in1d(y_true_filtered.ravel(), pair[1]).astype(int)
+            auc_scores_sum += (binary_metric(y_true_filtered_10, y_score_filtered[:,pair[0]]) +
+                               binary_metric(y_true_filtered_01, y_score_filtered[:,pair[1]]))/2.0
         return auc_scores_sum * (2.0 / (n_labels * (n_labels - 1.0)))
     else:
-        raise ValueError("TODO")
+        # Provost and Domingos 2001
+        label_counts_map = dict(zip(label_unique, label_counts))
+        auc_scores_sum = 0
+        for label in label_unique:
+            y_true_label = np.in1d(y_true.ravel(), label).astype(int)
+            #y_true_label = y_true[0, np.where(ix)]
+            y_score_label = y_score[:,label]
+            auc_scores_sum += binary_metric(y_true_label, y_score_label) * (label_counts_map[label]/float(sum(label_counts_map.values())))
+        return auc_scores_sum
+
