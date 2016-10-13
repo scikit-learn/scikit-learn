@@ -307,7 +307,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             names.append(l)
     except IndexError:
         raise ValueError('features[i] must be in [0, n_features) '
-                         'but was %d' % i)
+                         'but was %d' % features[i])
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
