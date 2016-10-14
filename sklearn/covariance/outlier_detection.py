@@ -29,7 +29,7 @@ class OutlierDetectionMixin(object):
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
-    raw_values : bool
+    raw_decision : bool
         Whether or not to consider raw Mahalanobis distances as the
         decision function. Must be False (default) for compatibility
         with the others outlier detection tools.
@@ -41,9 +41,9 @@ class OutlierDetectionMixin(object):
     always take care to work with ``n_samples > n_features ** 2``.
 
     """
-    def __init__(self, contamination=0.1, raw_values=False):
+    def __init__(self, contamination=0.1, raw_decision=False):
         self.contamination = contamination
-        self.raw_values = raw_values
+        self.raw_decision = raw_decision
 
     def decision_function(self, X, raw_values=None):
         """Compute the decision function of the given observations.
@@ -70,15 +70,17 @@ class OutlierDetectionMixin(object):
 
         """
 
+        use_raw_decision = self.raw_decision
+
         if raw_values is not None:
             warnings.warn(
                 'raw_values keyword has been moved to class initialization',
                 DeprecationWarning)
-            self.raw_values = raw_values
+            use_raw_decision = raw_values
 
         check_is_fitted(self, 'threshold_')
         mahal_dist = self.mahalanobis(X)
-        if self.raw_values:
+        if use_raw_decision:
             decision = mahal_dist
         else:
             check_is_fitted(self, 'threshold_')

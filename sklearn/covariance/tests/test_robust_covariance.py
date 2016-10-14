@@ -7,6 +7,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
@@ -105,12 +106,15 @@ def test_outlier_detection():
     previous_decision = assert_warns(
         DeprecationWarning, clf.decision_function, X, raw_values=True)
 
-    clf.raw_values = True
+    # Make sure passing raw_values does not change attribute
+    assert_equal(clf.raw_decision, False)
+
+    clf.raw_decision = True
     new_decision = clf.decision_function(X)
 
     assert_array_almost_equal(previous_decision, new_decision)
 
-    clf.raw_values = False
+    clf.raw_decision = False
     decision_transformed = clf.decision_function(X)
 
     assert_array_almost_equal(
