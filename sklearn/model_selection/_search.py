@@ -30,6 +30,7 @@ from ..externals import six
 from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import rankdata
+from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
@@ -611,10 +612,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         best_index = np.flatnonzero(results["rank_test_score"] == 1)[0]
         best_parameters = candidate_params[best_index]
 
-        # Use one np.MaskedArray and mask all the places where the param is not
+        # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
-        param_results = defaultdict(partial(np.ma.masked_all, (n_candidates,),
+        param_results = defaultdict(partial(MaskedArray,
+                                            np.empty(n_candidates,),
+                                            mask=True,
                                             dtype=object))
         for cand_i, params in enumerate(candidate_params):
             for name, value in params.items():
