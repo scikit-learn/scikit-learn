@@ -2006,14 +2006,14 @@ def boxcox(X, copy=True):
 
 
 class BoxCoxTransformer(BaseEstimator, TransformerMixin):
-    """BoxCox features individually.
+    """BoxCox transformation on individual features.
 
-    Each feature (i.e. each column of the data matrix) will be applied
-    boxcox transform with lambda evaluated to maximise the log-likelihood
+    Boxcox transform wil be applied on each feature (each column of the data matrix)
+    will be applied with lambda evaluated to maximise the log-likelihood
 
     Parameters
     ----------
-    feature_indices: None | array of int or mask, default None
+    feature_indices : None | array of int or mask, default None
         Specify what features are treated are to be transformed.
 
         - None (default): All features are to be transformed.
@@ -2039,10 +2039,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         y = (x ** lmbda - 1.) / lmbda,  for lmbda > 0
             log(x),                     for lmbda = 0
 
-    `boxcox` requires the input data to be positive.
+    ``boxcox`` requires the input data to be positive.
 
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
     """
     def __init__(self, feature_indices=None, n_jobs=1, copy=True):
         self.feature_indices = feature_indices
