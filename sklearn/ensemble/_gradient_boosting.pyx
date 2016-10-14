@@ -106,12 +106,9 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef DTYPE_t* X_data = <DTYPE_t*>(
-        <np.ndarray[ndim=1, dtype=DTYPE_t]>X.data).data
-    cdef INT32_t* X_indices = <INT32_t*>(
-        <np.ndarray[ndim=1, dtype=INT32_t]> X.indices).data
-    cdef INT32_t* X_indptr = <INT32_t*>(
-        <np.ndarray[ndim=1, dtype=INT32_t]> X.indptr).data
+    cdef DTYPE_t* X_data = <DTYPE_t*>(<np.ndarray> X.data).data
+    cdef INT32_t* X_indices = <INT32_t*>(<np.ndarray> X.indices).data
+    cdef INT32_t* X_indptr = <INT32_t*>(<np.ndarray> X.indptr).data
 
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
@@ -122,10 +119,10 @@ def _predict_regression_tree_stages_sparse(np.ndarray[object, ndim=2] estimators
     cdef float64* out_ptr = <float64*> out.data
 
     # Indices and temporary variables
-    cdef SIZE_t sample_i = 0
-    cdef SIZE_t feature_i = 0
-    cdef SIZE_t stage_i = 0
-    cdef SIZE_t output_i = 0
+    cdef SIZE_t sample_i
+    cdef SIZE_t feature_i
+    cdef SIZE_t stage_i
+    cdef SIZE_t output_i
     cdef Node *root_node = NULL
     cdef Node *node = NULL
     cdef double *value = NULL
