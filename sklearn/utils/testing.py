@@ -691,22 +691,23 @@ def if_matplotlib(func):
     return run_test
 
 
-def skip_if_32bit(func):
+def skip_if_32bit(func_or_gen):
     """Test decorator that skips tests on 32bit platforms."""
-    if inspect.isgeneratorfunction(func):
-        @wraps(func)
+    if inspect.isgeneratorfunction(func_or_gen):
+        # Generators must be wrapped by generators
+        gen = func_or_gen
+        @wraps(gen)
         def gen_test():
-            # Fix issue with yield tests not being run
-            def _skip():
-                raise SkipTest('Test skipped on 32bit platforms.')
-            bits = 8 * struct.calcsize("P")
-            for tup in func():
-                if bits == 32:
-                    yield (_skip,)
-                else:
-                    yield tup
+            # Individually wrap each test yielded by the generator
+            for test_tup in gen():
+                func = test_tup[0]
+                args = test_tup[1:]
+                wrapped_tup = (skip_if_32bit(func),) + args
+                yield wrapped_tup
         return gen_test
     else:
+        # Functions are wrapped normally
+        func = func_or_gen
         @wraps(func)
         def run_test(*args, **kwargs):
             bits = 8 * struct.calcsize("P")
