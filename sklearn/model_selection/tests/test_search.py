@@ -1179,8 +1179,27 @@ def test_grid_search_custom_cv_iter():
                        param_grid={'C': [0.1, 0.2, 0.3]}, cv=KFold(n_splits=5))
     gs2.fit(X, y)
 
-    for key in ('mean_score_time', 'std_score_time',
-                'mean_fit_time', 'std_fit_time'):
-        gs.cv_results_.pop(key)
-        gs2.cv_results_.pop(key)
-    np.testing.assert_equal(gs.cv_results_, gs2.cv_results_)
+    def _pop_time_keys(cv_results):
+        for key in ('mean_fit_time', 'std_fit_time',
+                    'mean_score_time', 'std_score_time'):
+            cv_results.pop(key)
+        return cv_results
+
+    np.testing.assert_equal(_pop_time_keys(gs.cv_results_),
+                            _pop_time_keys(gs2.cv_results_))
+
+    # Check consistency of folds across the parameters
+    gs = GridSearchCV(LinearSVC(random_state=0),
+                      param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
+                      cv=KFold(n_splits=5, shuffle=True))
+    gs.fit(X, y)
+
+    per_param_test_scores = {}
+    for param_i in range(4):
+        per_param_test_scores[param_i] = list(
+            gs.cv_results_['split%d_test_score' % s][param_i]
+            for s in range(5))
+    assert_array_almost_equal(per_param_test_scores[0],
+                              per_param_test_scores[1])
+    assert_array_almost_equal(per_param_test_scores[2],
+                              per_param_test_scores[3])
