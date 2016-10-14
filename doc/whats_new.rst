@@ -6,12 +6,24 @@
 Release history
 ===============
 
+Version 0.18.1
+==============
+
+   - The ``min_weight_fraction_leaf`` parameter of tree-based classifiers and
+     regressors now assumes uniform sample weights by default if the
+     ``sample_weight`` argument is not passed to the ``fit`` function.
+     Previously, the parameter was silently ignored. (`#7301
+     <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
+     Liu`_.
+
 Version 0.18
 ============
 
 **September 28, 2016**
 
 .. topic:: Last release with Python 2.6 support
+
+.. _changes_0_18:
 
     Scikit-learn 0.18 will be the last version of scikit-learn to support Python 2.6.
     Later versions of scikit-learn will require Python 2.7 or above.
