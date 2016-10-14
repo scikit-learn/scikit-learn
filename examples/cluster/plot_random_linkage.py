@@ -20,42 +20,46 @@ from time import time
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.cluster import AgglomerativeClustering
-import pandas as pd
 
-ward_mat = []
-average_mat = []
-complete_mat = []
+no_of_iter = 20
+no_of_points = 5000
+no_of_clusters = 4
+range_of_values = 100000
+linkage_mats = [np.empty((0, no_of_clusters), int),
+                np.empty((0, no_of_clusters), int),
+                np.empty((0, no_of_clusters), int)]
+linkage_type = ['ward', 'average', 'complete']
+figure = [0, 0, 0]
+final_plot = [0, 0, 0]
+cluster_no = list(range(1, no_of_iter + 1))
+np.random.seed(0)
 
+for i in range(no_of_iter):
+    X = np.random.randint(range_of_values, size=(no_of_points, 2))
 
-for j in range(50):
-
-    array = np.random.randint(100000, size=(5000, 2))
-
-    for linkage in ('ward', 'average', 'complete'):
-        clustering = AgglomerativeClustering(linkage=linkage, n_clusters=4)
+    for j in range(3):
+        clustering = AgglomerativeClustering(linkage=linkage_type[j],
+                                             n_clusters=no_of_clusters)
         t0 = time()
-        clustering.fit(array)
-        print("%s : %.2fs" % (linkage, time() - t0))
+        clustering.fit(X)
+        print("%s : %.2fs" % (linkage_type[j], time() - t0))
+        Y = np.zeros((no_of_clusters, ), dtype=np.int)
 
-        arr = [0, 0, 0, 0]
-        for i in range(5000):
-            arr[clustering.labels_[i]] += 1
-        arr.sort()
-        mat = linkage + "_mat"
-        eval(mat).append(arr)
+        for k in range(no_of_points):
+            Y[clustering.labels_[k]] += 1
 
-ward_mat.sort()
-complete_mat.sort()
-average_mat.sort()
+        Y = Y[np.argsort(Y)][::-1]
+        linkage_mats[j] = np.append(linkage_mats[j],
+                                    np.reshape(Y, (1, no_of_clusters)), axis=0)
 
-df_ward = pd.DataFrame(ward_mat, columns=list("1234"))
-df_avg = pd.DataFrame(average_mat, columns=list("1234"))
-df_comp = pd.DataFrame(complete_mat, columns=list("1234"))
-
-
-# plots
-df_comp.plot(kind='area')
-df_avg.plot(kind='area')
-df_ward.plot(kind='area')
+for i in range(3):
+    linkage_mats[i] = linkage_mats[i][np.argsort(linkage_mats[i][:, 0])]
+    linkage_mats[i] = linkage_mats[i][:: -1, :]
+    figure[i] = plt.figure()
+    final_plot[i] = figure[i].add_subplot(111)
+    final_plot[i].stackplot(cluster_no, linkage_mats[i].transpose())
+    final_plot[i].set_title(linkage_type[i])
+    final_plot[i].set_ylabel('Number of Points')
+    final_plot[i].set_xlabel('Cluster Number')
 
 plt.show()
