@@ -1,13 +1,17 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_18:
 
 ===============
 Release history
 ===============
 
+.. _changes_0_18_1:
+
 Version 0.18.1
 ==============
+
+Bug fixes
+.........
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs
@@ -30,6 +34,12 @@ Version 0.18.1
      fewer constraints: they must take two 1d-arrays and return a float.
      (`#6288 <https://github.com/scikit-learn/scikit-learn/pull/6288>`_) by
      `Jake VanderPlas`_.
+
+   - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
+     parameters were not being utilised by :class:`manifold.TSNE`.
+     `#6497 <https://github.com/scikit-learn/scikit-learn/pull/6497>`_
+     by `Sebastian Säger`_
+
 
 .. _changes_0_18:
 
