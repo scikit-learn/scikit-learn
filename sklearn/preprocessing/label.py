@@ -352,8 +352,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array or CSR matrix of shape [n_samples, n_classes]
             Shape will be [n_samples, 1] for binary problems.
         """
-        self.fit(y)
-        return self.transform(y)
+        return super(fit_transform, self).fit_transform(y)
     
     
     def inverse_transform(self, Y, threshold=None):
