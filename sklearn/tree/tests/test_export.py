@@ -4,14 +4,11 @@ Testing for export functions of decision trees (sklearn.tree.export).
 
 from re import finditer
 
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
-
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
 from sklearn.externals.six import StringIO
-from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_in, assert_equal, assert_raises
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

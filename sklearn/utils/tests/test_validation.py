@@ -8,9 +8,9 @@ from itertools import product
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
-from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
-from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_true, assert_false, assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns

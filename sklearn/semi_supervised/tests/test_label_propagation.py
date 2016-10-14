@@ -1,8 +1,8 @@
 """ test the label propagation module """
 
-import nose
 import numpy as np
 
+from sklearn.utils.testing import assert_equal
 from sklearn.semi_supervised import label_propagation
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
@@ -21,7 +21,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        nose.tools.assert_equal(clf.transduction_[2], 1)
+        assert_equal(clf.transduction_[2], 1)
 
 
 def test_distribution():
