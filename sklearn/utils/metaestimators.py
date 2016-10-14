@@ -7,8 +7,52 @@ from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
 from ..utils import safe_indexing
+from ..externals import six
+from abc import ABCMeta
+from ..base import BaseEstimator
 
 __all__ = ['if_delegate_has_method']
+
+
+class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
+    """Handles parameter management for classifiers composed of named steps.
+    """
+
+    def _get_params(self, attr, deep=True):
+        out = super(_BaseComposition, self).get_params(deep=False)
+        if not deep:
+            return out
+        estimators = getattr(self, attr)
+        out.update(estimators)
+        for name, estimator in estimators:
+            if estimator is None:
+                continue
+            for key, value in six.iteritems(estimator.get_params(deep=True)):
+                out['%s__%s' % (name, key)] = value
+        return out
+
+    def _set_params(self, attr, **params):
+        # Ensure strict ordering of parameter setting:
+        # 1. All steps
+        if attr in params:
+            setattr(self, attr, params.pop(attr))
+        # 2. Step replacement
+        names, _ = zip(*getattr(self, attr))
+        for name in list(six.iterkeys(params)):
+            if '__' not in name and name in names:
+                self._replace_estimator(attr, name, params.pop(name))
+        # 3. Step parameters and other initilisation arguments
+        super(_BaseComposition, self).set_params(**params)
+        return self
+
+    def _replace_estimator(self, attr, name, new_val):
+        # assumes `name` is a valid step name
+        new_estimators = getattr(self, attr)[:]
+        for i, (estimator_name, _) in enumerate(new_estimators):
+            if estimator_name == name:
+                new_estimators[i] = (name, new_val)
+                break
+        setattr(self, attr, new_estimators)
 
 
 class _IffHasAttrDescriptor(object):

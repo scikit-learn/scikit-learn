@@ -2,7 +2,7 @@
 
 import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, assert_true
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
@@ -258,3 +258,49 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
+
+
+def test_set_params():
+    """set_params should be able to set estimators"""
+    clf1 = LogisticRegression(random_state=123, C=1.0)
+    clf2 = RandomForestClassifier(random_state=123, max_depth=None)
+    clf3 = GaussianNB()
+    eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
+                             weights=[1, 2])
+    eclf1.fit(X, y)
+    eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
+                             weights=[1, 2])
+    eclf2.set_params(nb=clf2).fit(X, y)
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+    eclf1.set_params(lr__C=10.0)
+    eclf2.set_params(nb__max_depth=5)
+
+    assert_true(eclf1.estimators[0][1].get_params()['C'] == 10.0)
+    assert_true(eclf2.estimators[1][1].get_params()['max_depth'] == 5)
+
+
+def test_set_estimator_none():
+    """VotingClassifier set_params should be able to set estimators as None"""
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = GaussianNB()
+    eclf1 = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2),
+                                         ('nb', clf3)],
+                             voting='hard', weights=[1, 0, 0.5]).fit(X, y)
+
+    eclf2 = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2),
+                                         ('nb', clf3)],
+                             voting='hard', weights=[1, 1, 0.5])
+    eclf2.set_params(rf=None).fit(X, y)
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+
+    eclf1.set_params(voting='soft').fit(X, y)
+    eclf2.set_params(voting='soft').fit(X, y)
+    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
+    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    msg = ('All estimators is None. At least one is required'
+           ' to be a classifier!')
+    assert_raise_message(ValueError, msg,
+                         eclf2.set_params(lr=None, rf=None, nb=None).fit, X, y)

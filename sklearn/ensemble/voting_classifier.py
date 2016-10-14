@@ -21,6 +21,7 @@ from ..preprocessing import LabelEncoder
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.metaestimators import _BaseComposition
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight):
@@ -32,7 +33,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight):
     return estimator
 
 
-class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
+class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -44,7 +45,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        `self.estimators_`.
+        `self.estimators_`. An estimator can be set to `None` using
+        `set_params`.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -152,6 +154,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                     raise ValueError('Underlying estimator \'%s\' does not support'
                                      ' sample weights.' % name)
 
+        isnone = np.array([1 if clf is None else 0
+                           for _, clf in self.estimators])
+        if isnone.sum() == len(self.estimators):
+            raise ValueError('All estimators is None. At least one is required'
+                             ' to be a classifier!')
         self.le_ = LabelEncoder()
         self.le_.fit(y)
         self.classes_ = self.le_.classes_
@@ -162,9 +169,17 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
                     sample_weight)
-                    for _, clf in self.estimators)
+                    for _, clf in self.estimators if clf is not None)
 
         return self
+
+    @property
+    def _narej_weights(self):
+        """Get the weights of not `None` estimators"""
+        if self.weights is None:
+            return None
+        return [w for est, w in zip(self.estimators,
+                                    self.weights) if est[1] is not None]
 
     def predict(self, X):
         """ Predict class labels for X.
@@ -189,7 +204,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             predictions = self._predict(X)
             maj = np.apply_along_axis(lambda x:
                                       np.argmax(np.bincount(x,
-                                                weights=self.weights)),
+                                                weights=self._narej_weights)),
                                       axis=1,
                                       arr=predictions.astype('int'))
 
@@ -207,7 +222,7 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
-        avg = np.average(self._collect_probas(X), axis=0, weights=self.weights)
+        avg = np.average(self._collect_probas(X), axis=0, weights=self._narej_weights)
         return avg
 
     @property
@@ -251,17 +266,13 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         else:
             return self._predict(X)
 
+    def set_params(self, **params):
+        super(VotingClassifier, self)._set_params('estimators', **params)
+        return self
+
     def get_params(self, deep=True):
-        """Return estimator parameter names for GridSearch support"""
-        if not deep:
-            return super(VotingClassifier, self).get_params(deep=False)
-        else:
-            out = super(VotingClassifier, self).get_params(deep=False)
-            out.update(self.named_estimators.copy())
-            for name, step in six.iteritems(self.named_estimators):
-                for key, value in six.iteritems(step.get_params(deep=True)):
-                    out['%s__%s' % (name, key)] = value
-            return out
+        return super(VotingClassifier,
+                     self)._get_params('estimators', deep=deep)
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
