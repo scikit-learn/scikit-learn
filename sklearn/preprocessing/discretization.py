@@ -56,7 +56,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     sparse_formats = ['csr', 'csc']
 
 
-    def __init__(self, n_bins=2, copy=False):
+    def __init__(self, n_bins=2):
         self.copy = copy
         self.n_bins = n_bins
 
@@ -122,8 +122,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of features. Expecting {0}, received {1}."
                              .format(self.n_features_, X.shape[1]))
 
-        if self.copy:
-            X = X.copy()
+        # TODO: Make copy parameter?
+        X = X.copy()
 
         # Clip outliers from data (TODO)
         #X[X > self.max_] = self.max_
