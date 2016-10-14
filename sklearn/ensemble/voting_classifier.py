@@ -13,12 +13,10 @@ classification estimators.
 
 import numpy as np
 
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
@@ -168,8 +166,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                    sample_weight)
-                    for _, clf in self.estimators if clf is not None)
+                                                 sample_weight)
+                for _, clf in self.estimators if clf is not None)
 
         return self
 
@@ -222,7 +220,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
-        avg = np.average(self._collect_probas(X), axis=0, weights=self._narej_weights)
+        avg = np.average(self._collect_probas(X), axis=0,
+                         weights=self._narej_weights)
         return avg
 
     @property
