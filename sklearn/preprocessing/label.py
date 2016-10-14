@@ -306,7 +306,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     def fit_transform(self, y):
         """Fit label binarizer and transform multi-class labels to binary labels.
-        
+
         The output of transform is sometimes referred to by some authors as the
         1-of-K coding scheme.
 
@@ -353,7 +353,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                               pos_label=self.pos_label,
                               neg_label=self.neg_label,
                               sparse_output=self.sparse_output)
-    
+
     def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels
 
