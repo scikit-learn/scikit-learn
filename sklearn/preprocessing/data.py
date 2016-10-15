@@ -2008,8 +2008,8 @@ def boxcox(X, copy=True):
 class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     """BoxCox transformation on individual features.
 
-    Boxcox transform wil be applied on each feature (each column of the data matrix)
-    will be applied with lambda evaluated to maximise the log-likelihood
+    Boxcox transform wil be applied on each feature (each column of
+    the data matrix) with lambda evaluated to maximise the log-likelihood
 
     Parameters
     ----------
@@ -2048,7 +2048,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Estimate lambda for each feature to maximise log-likelihood
 
         Parameters
         ----------
@@ -2075,7 +2075,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        """Scale each non zero row of X to unit norm
+        """Transform each feature using the lambdas evaluated during fit time
 
         Parameters
         ----------
