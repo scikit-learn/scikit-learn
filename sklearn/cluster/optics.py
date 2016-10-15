@@ -16,6 +16,7 @@ import numpy as np
 from ..utils import check_array
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.metrics.pairwise import pairwise_distances
 
 
 class setOfObjects(BallTree):
@@ -27,17 +28,18 @@ class setOfObjects(BallTree):
     ----------
     data_points: array [n_samples, n_features]"""
 
-    def __init__(self, data_points, **kwargs):
+    def __init__(self, data_points, metric, **kwargs):
 
-        super(setOfObjects, self).__init__(data_points, **kwargs)
+        super(setOfObjects, self).__init__(data_points,
+                                           metric=metric, **kwargs)
 
         self._n = len(self.data)
+        self.metric = metric
         # Start all points as 'unprocessed' ##
         self._processed = sp.zeros((self._n, 1), dtype=bool)
         self.reachability_ = sp.ones(self._n) * sp.inf
         self.core_dists_ = sp.ones(self._n) * sp.nan
         self._index = sp.array(range(self._n))
-        self._nneighbors = sp.ones(self._n, dtype=int)
         # Start all points as noise ##
         self._cluster_id = -sp.ones(self._n, dtype=int)
         self._is_core = sp.zeros(self._n, dtype=bool)
@@ -60,9 +62,6 @@ def _prep_optics(self, epsilon, min_samples):
     Returns
     -------
     Modified setOfObjects tree structure"""
-
-    self._nneighbors = self.query_radius(self.data, r=epsilon,
-                                         count_only=True)
 
     self.core_dists_[:] = self.query(self.get_arrays()[0],
                                      k=min_samples)[0][:, -1]
@@ -110,20 +109,26 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
     # entries. This is the case for the balltree query...
 
     X = np.array(setofobjects.data[point_index]).reshape(1, -1)
-    dists, indices = setofobjects.query(X,
-                                        setofobjects._nneighbors[point_index])
+    indices = setofobjects.query_radius(X, r=epsilon,
+                                        return_distance=False,
+                                        count_only=False,
+                                        sort_results=False)[0]
 
     # Checks to see if there more than one member in the neighborhood ##
-    if sp.iterable(dists):
+    if sp.iterable(indices):
 
         # Masking processed values ##
         # n_pr is 'not processed'
-        n_pr = indices[(setofobjects._processed[indices] < 1)[0].T]
-        rdists = sp.maximum(dists[(setofobjects._processed[indices] < 1)[0].T],
-                            setofobjects.core_dists_[point_index])
+        n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
+        if len(n_pr) > 0:
+            dists = pairwise_distances(X,
+                                       setofobjects.get_arrays()[0][[n_pr]],
+                                       setofobjects.metric, n_jobs=1)
+            rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
 
-        new_reach = sp.minimum(setofobjects.reachability_[n_pr], rdists)
-        setofobjects.reachability_[n_pr] = new_reach
+            new_reach = sp.minimum(setofobjects.reachability_[n_pr], 
+                                   rdists)
+            setofobjects.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop ##
@@ -186,7 +191,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, eps=0.5, min_samples=5, metric='minkowski', **kwargs):
+    def __init__(self, eps=0.5, min_samples=5, metric='euclidean', **kwargs):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
@@ -212,7 +217,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             print("min_samples used for clustering")
             return
 
-        self.tree = setOfObjects(X)  # ,self.metric)
+        self.tree = setOfObjects(X, self.metric)
         _prep_optics(self.tree, self.eps * 5.0, self.min_samples)
         _build_optics(self.tree, self.eps * 5.0)
         self._index = self.tree._index[:]
