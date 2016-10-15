@@ -839,8 +839,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
@@ -985,8 +985,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
