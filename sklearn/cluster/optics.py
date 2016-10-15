@@ -13,7 +13,6 @@ Dates: May 2013 (implemented), Sept 2015 (Benchmarked), Aug 2016 (updated)
 
 import scipy as sp
 import numpy as np
-import sys
 from ..utils import check_array
 from sklearn.neighbors import BallTree
 from sklearn.base import BaseEstimator, ClusterMixin
@@ -110,7 +109,8 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
     # Assumes that the query returns ordered (smallest distance first)
     # entries. This is the case for the balltree query...
 
-    dists, indices = setofobjects.query(setofobjects.data[point_index],
+    X = np.array(setofobjects.data[point_index]).reshape(1, -1)
+    dists, indices = setofobjects.query(X,
                                         setofobjects._nneighbors[point_index])
 
     # Checks to see if there more than one member in the neighborhood ##
@@ -224,7 +224,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # _extractDBSCAN(self, self.eps)  # extraction needs to be < eps
         _extract_auto(self)
         self.labels_ = self._cluster_id[:]
-        self.core_sample_indices_ = self._index[self._is_core[:] == True]
+        self.core_sample_indices_ = self._index[self._is_core[:]]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
         return self  # self.core_sample_indices_, self.labels_
@@ -244,7 +244,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Returns
         Either boolean or indexed array of core / not core points
         """
-
         if self.processed is False:
             # epsilon has no impact on this method; set to zero
             # to speed up _nneighbors query in _prep_optics
@@ -427,8 +426,7 @@ def _find_local_maxima(RPlot, RPoints, nghsize):
         # if the point is a local maxima on the reachability plot with
         # regard to nghsize, insert it into priority queue and maxima list
         if (RPlot[i] > RPlot[i-1] and RPlot[i] >= RPlot[i+1] and
-            _is_local_maxima(i, RPlot, RPoints, nghsize) == 1):
-
+                _is_local_maxima(i, RPlot, RPoints, nghsize) == 1):
             localMaximaPoints[i] = RPlot[i]
 
     return sorted(localMaximaPoints,
@@ -523,10 +521,12 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
             return
 
     # remove clusters that are too small
-    if len(Node1.points) < min_cluster_size and Nodelist.count((Node1, LocalMax1)) > 0:
-        # cluster 1 is too small"
+    if (len(Node1.points) < min_cluster_size and
+            Nodelist.count((Node1, LocalMax1)) > 0):
+        # cluster 1 is too small
         Nodelist.remove((Node1, LocalMax1))
-    if len(Node2.points) < min_cluster_size and Nodelist.count((Node2, LocalMax1)) > 0:
+    if (len(Node2.points) < min_cluster_size and
+            Nodelist.count((Node2, LocalMax1)) > 0):
         # cluster 2 is too small
         Nodelist.remove((Node2, LocalMax2))
     if len(Nodelist) == 0:
@@ -546,12 +546,14 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
     similaritythreshold = 0.4
     bypassNode = 0
     if parentNode is not None:
-        sumRP = np.average(RPlot[node.start:node.end])
-        sumParent = np.average(RPlot[parentNode.start:parentNode.end])
         if (float(float(node.end-node.start) /
                   float(parentNode.end-parentNode.start)) >
-            similaritythreshold):  # 1)
-        # if float(float(sumRP) / float(sumParent)) > similaritythreshold: # 2)
+                similaritythreshold):
+
+            # sumRP = np.average(RPlot[node.start:node.end])
+            # sumParent = np.average(RPlot[parentNode.start:parentNode.end])
+            # if float(float(sumRP) / float(sumParent)) > similaritythreshold:
+
             parentNode.children.remove(node)
             bypassNode = 1
 
