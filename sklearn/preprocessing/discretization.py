@@ -57,7 +57,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
 
     def __init__(self, n_bins=2):
-        self.copy = copy
         self.n_bins = n_bins
 
         # Attributes
@@ -164,13 +163,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         # Generate output
         discretized = np.floor(X_trans)
 
-        # Addressing corner case issues
+        # Corner case arises when maximum values across each column of X
+        # get shifted to the next integer.
         for col in discretized.T:
-            values = np.unique(col)
-            col_min = values[0]
-            col_max = values[-1]
+            col_min = col.min()
+            col_max = col.max()
             if col_max - col_min > self.n_bins - 1:
-                col_max = values[-1]
                 col[col == col_max] = col_max - 1
 
         return discretized
