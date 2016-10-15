@@ -10,6 +10,7 @@
 
 import numpy as np
 cimport numpy as np
+from _tree cimport Node 
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -36,6 +37,9 @@ ctypedef fused realloc_ptr:
     (unsigned char*)
     (WeightedPQueueRecord*)
     (DOUBLE_t*)
+    (DOUBLE_t**)
+    (Node*)
+    (Node**)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
 
