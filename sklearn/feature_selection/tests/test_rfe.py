@@ -218,6 +218,7 @@ def test_rfecv_verbose_output():
     rfecv.fit(X, y)
 
     verbose_output = sys.stdout
+    verbose_output.seek(0)
     assert_greater(len(verbose_output.readline()), 0)
 
 
