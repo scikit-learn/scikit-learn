@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import scipy.sparse as sps
 
 from .base import SelectorMixin
 from ..base import TransformerMixin, BaseEstimator, clone
@@ -17,11 +18,22 @@ def _get_feature_importances(estimator):
     importances = getattr(estimator, "feature_importances_", None)
 
     if importances is None and hasattr(estimator, "coef_"):
-        if estimator.coef_.ndim == 1:
-            importances = np.abs(estimator.coef_)
-
+        if estimater.coef_ is np.array_type:
+            if estimator.coef_.ndim == 1:
+                importances = np.abs(estimator.coef_)
+            else:
+                importances = np.sum(np.abs(estimator.coef_), axis=0)
+        elif sps.isspmatrix_csr(estimator.coef_):
+            if estimator.coef_.get_shape()[0] == 1:
+                importances = numpy.abs(estimator.coef_[0])
+            else: 
+                importances = np.sum(np.abs(estimator.coef_.toarray()))
         else:
-            importances = np.sum(np.abs(estimator.coef_), axis=0)
+            raise ValueError(
+                "The coef_ parameter of the underlying estimator %s"
+                "is invalid. Expecting either numpy.array or"
+                "scipy.sparse.csr_matrix."
+                % estimator.__class__.__name__)
 
     elif importances is None:
         raise ValueError(
