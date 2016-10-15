@@ -108,6 +108,21 @@ def _yield_non_meta_checks(name, Estimator):
     # give the same answer as before.
     yield check_estimators_pickle
 
+    # FIXME find out how to incorporate the following line as
+    #       the test runs for more estimators than before and
+    #       fails for some of them. Before this commit, the
+    #       test only fan for:
+    # for est_type in ['regressor', 'classifier', 'cluster']:
+
+    # These models are dependent on external solvers like
+    # libsvm and accessing the iter parameter is non-trivial.
+    not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC', 'RidgeClassifier',
+                            'SVC', 'RandomizedLasso', 'LogisticRegressionCV']
+    # Tested in test_transformer_n_iter
+    not_run_check_n_iter += CROSS_DECOMPOSITION + ['LinearSVC', 'LogisticRegression']
+    if name not in not_run_check_n_iter:
+        yield check_non_transformer_estimators_n_iter
+
 
 def _yield_classifier_checks(name, Classifier):
     # test classifiers can handle non-array data
@@ -1480,26 +1495,33 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_non_transformer_estimators_n_iter(name, estimator,
+def check_non_transformer_estimators_n_iter(name, Estimator,
                                             multi_output=False):
-    # Check if all iterative solvers, run for more than one iteration
+    # Test that estimators that are not transformers with an attribute max_iter,
+    # return the attribute of n_iter at least 1.
 
-    iris = load_iris()
-    X, y_ = iris.data, iris.target
-
-    if multi_output:
-        y_ = np.reshape(y_, (-1, 1))
-
-    set_random_state(estimator, 0)
-    if name == 'AffinityPropagation':
-        estimator.fit(X)
+    # LassoLars stops early for the default alpha=1.0 the iris dataset.
+    if name == 'LassoLars':
+        estimator = Estimator(alpha=0.)
     else:
-        estimator.fit(X, y_)
+        estimator = Estimator()
+    if hasattr(estimator, 'max_iter'):
+        iris = load_iris()
+        X, y_ = iris.data, iris.target
 
-    # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
-    # which doesn't return a n_iter for old versions of SciPy.
-    if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
-        assert_greater_equal(estimator.n_iter_, 1)
+        if multi_output:
+            y_ = np.reshape(y_, (-1, 1))
+
+        set_random_state(estimator, 0)
+        if name == 'AffinityPropagation':
+            estimator.fit(X)
+        else:
+            estimator.fit(X, y_)
+
+        # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
+        # which doesn't return a n_iter for old versions of SciPy.
+        if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
+            assert_greater_equal(estimator.n_iter_, 1)
 
 
 @ignore_warnings(category=DeprecationWarning)
