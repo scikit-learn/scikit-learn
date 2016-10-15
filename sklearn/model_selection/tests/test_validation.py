@@ -740,21 +740,21 @@ def test_learning_curve_with_boolean_indices():
 
 def test_learning_curve_with_shuffle():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [11, 12], [13, 14],[15, 16],
-                 [17, 18],[19, 20],[7, 8], [9, 10], [11, 12], [13, 14],
-                 [15, 16],[17, 18]])
+                 [17, 18], [19, 20], [7, 8], [9, 10], [11, 12], [13, 14],
+                 [15, 16], [17, 18]])
     y = np.array([1, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2, 3, 4])
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
-    estimator=LogisticRegression(multi_class='multinomial', penalty='l2',
-        solver='lbfgs')
+    estimator = LogisticRegression(multi_class='multinomial', penalty='l2',
+                                   solver='lbfgs')
     cv = GroupKFold(n_splits=2)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-        cv=cv, n_jobs=1, train_sizes=np.linspace(0.3,1.0,3), groups=groups,
-        shuffle=True, random_state=2)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
+        groups=groups, shuffle=True, random_state=2)
     assert_array_almost_equal(train_scores.mean(axis=1),
-        np.array([1., 0.9, 0.72222222]))
+                              np.array([1., 0.9, 0.72222222]))
 
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
-        train_sizes=np.linspace(0.3,1.0,3), groups=groups)
+                  train_sizes=np.linspace(0.3, 1.0, 3), groups=groups)
 
 
 def test_validation_curve():
