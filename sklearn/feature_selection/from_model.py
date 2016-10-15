@@ -18,16 +18,18 @@ def _get_feature_importances(estimator):
     importances = getattr(estimator, "feature_importances_", None)
 
     if importances is None and hasattr(estimator, "coef_"):
-        if estimater.coef_ is np.array_type:
+        if isinstance(estimator.coef_, np.ndarray):
             if estimator.coef_.ndim == 1:
                 importances = np.abs(estimator.coef_)
             else:
                 importances = np.sum(np.abs(estimator.coef_), axis=0)
         elif sps.isspmatrix_csr(estimator.coef_):
-            if estimator.coef_.get_shape()[0] == 1:
-                importances = numpy.abs(estimator.coef_[0])
-            else: 
-                importances = np.sum(np.abs(estimator.coef_.toarray()))
+            if estimator.coef_.shape == (1, 0):
+                importances = np.abs(estimator.coef_.getrow(0))
+            elif estimator.coef_.shape == (0, 1):
+                importances = np.abs(estimator.coef_.getcol(0))
+            else:
+                importances = np.sum(np.abs(estimator.coef_.toarray()), axis=0)
         else:
             raise ValueError(
                 "The coef_ parameter of the underlying estimator %s"
