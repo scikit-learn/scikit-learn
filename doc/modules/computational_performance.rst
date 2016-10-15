@@ -81,6 +81,9 @@ you an estimate of the order of magnitude of the prediction latency.
       >>> import sklearn
       >>> sklearn.ASSUME_FINITE = True                 # doctest: +SKIP
 
+    Note that this will affect all uses of
+    :func:`sklearn.utils.assert_all_finite`.
+
 Influence of the Number of Features
 -----------------------------------
 
