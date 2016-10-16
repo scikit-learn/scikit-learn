@@ -49,7 +49,6 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
-from sklearn.naive_bayes import MultinomialNB
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
@@ -561,11 +560,11 @@ def test_learning_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    for shuffle in [False, True]:
+    for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
             train_sizes, train_scores, test_scores = learning_curve(
                 estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10),
-                shuffle=shuffle)
+                shuffle=shuffle_train)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
         assert_equal(train_scores.shape, (10, 3))
@@ -625,10 +624,10 @@ def test_learning_curve_incremental_learning():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
-    for shuffle in [False, True]:
+    for shuffle_train in [False, True]:
         train_sizes, train_scores, test_scores = learning_curve(
             estimator, X, y, cv=3, exploit_incremental_learning=True,
-            train_sizes=np.linspace(0.1, 1.0, 10))
+            train_sizes=np.linspace(0.1, 1.0, 10), shuffle=shuffle_train)
         assert_array_equal(train_sizes, np.linspace(2, 20, 10))
         assert_array_almost_equal(train_scores.mean(axis=1),
                                   np.linspace(1.9, 1.0, 10))
