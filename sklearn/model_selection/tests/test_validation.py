@@ -49,6 +49,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
+from sklearn.naive_bayes import MultinomialNB
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
@@ -560,18 +561,20 @@ def test_learning_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    with warnings.catch_warnings(record=True) as w:
-        train_sizes, train_scores, test_scores = learning_curve(
-            estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
-    if len(w) > 0:
-        raise RuntimeError("Unexpected warning: %r" % w[0].message)
-    assert_equal(train_scores.shape, (10, 3))
-    assert_equal(test_scores.shape, (10, 3))
-    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.linspace(1.9, 1.0, 10))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.linspace(0.1, 1.0, 10))
+    for shuffle in [False, True]:
+        with warnings.catch_warnings(record=True) as w:
+            train_sizes, train_scores, test_scores = learning_curve(
+                estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10),
+                shuffle=shuffle)
+        if len(w) > 0:
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
+        assert_equal(train_scores.shape, (10, 3))
+        assert_equal(test_scores.shape, (10, 3))
+        assert_array_equal(train_sizes, np.linspace(2, 20, 10))
+        assert_array_almost_equal(train_scores.mean(axis=1),
+                                  np.linspace(1.9, 1.0, 10))
+        assert_array_almost_equal(test_scores.mean(axis=1),
+                                  np.linspace(0.1, 1.0, 10))
 
 
 def test_learning_curve_unsupervised():
@@ -622,14 +625,15 @@ def test_learning_curve_incremental_learning():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=3, exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10))
-    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.linspace(1.9, 1.0, 10))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.linspace(0.1, 1.0, 10))
+    for shuffle in [False, True]:
+        train_sizes, train_scores, test_scores = learning_curve(
+            estimator, X, y, cv=3, exploit_incremental_learning=True,
+            train_sizes=np.linspace(0.1, 1.0, 10))
+        assert_array_equal(train_sizes, np.linspace(2, 20, 10))
+        assert_array_almost_equal(train_scores.mean(axis=1),
+                                  np.linspace(1.9, 1.0, 10))
+        assert_array_almost_equal(test_scores.mean(axis=1),
+                                  np.linspace(0.1, 1.0, 10))
 
 
 def test_learning_curve_incremental_learning_unsupervised():
@@ -668,31 +672,6 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                               train_scores_batch.mean(axis=1))
     assert_array_almost_equal(test_scores_inc.mean(axis=1),
                               test_scores_batch.mean(axis=1))
-
-
-def test_learning_curve_batch_and_incremental_shuffle():
-    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
-                               n_redundant=0, n_classes=2,
-                               n_clusters_per_class=1, random_state=0)
-    estimator = MockIncrementalImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=3, exploit_incremental_learning=True,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        random_state=1, shuffle=True)
-    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.linspace(1.9, 1.0, 10))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.linspace(0.1, 1.0, 10))
-
-    estimator = MockImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10),
-        random_state=1, shuffle=True)
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.linspace(1.9, 1.0, 10))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.linspace(0.1, 1.0, 10))
 
 
 def test_learning_curve_n_sample_range_out_of_bounds():
@@ -739,6 +718,8 @@ def test_learning_curve_with_boolean_indices():
 
 
 def test_learning_curve_with_shuffle():
+    """Following test case was designed this way to verify the code
+    changes made in pull request: #7506."""
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [11, 12], [13, 14], [15, 16],
                  [17, 18], [19, 20], [7, 8], [9, 10], [11, 12], [13, 14],
                  [15, 16], [17, 18]])
@@ -746,13 +727,15 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     estimator = LogisticRegression(multi_class='multinomial', penalty='l2',
                                    solver='lbfgs')
+
     cv = GroupKFold(n_splits=2)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
         groups=groups, shuffle=True, random_state=2)
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.array([1., 0.9, 0.72222222]))
-
+    assert_array_almost_equal(test_scores.mean(axis=1),
+                              np.array([0.19444444, 0.05555556, 0.13888889]))
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
                   train_sizes=np.linspace(0.3, 1.0, 3), groups=groups)
 

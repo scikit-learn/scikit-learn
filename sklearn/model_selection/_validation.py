@@ -720,8 +720,8 @@ def learning_curve(estimator, X, y, groups=None,
         Controls the verbosity: the higher, the more messages.
 
     shuffle : boolean, optional
-        Whether to shuffle training data before using it based on
-        `train_sizes`
+        Whether to shuffle training data before taking prefixes of it
+        based on``train_sizes``.
 
     random_state : None, int or RandomState
         When shuffle=True, pseudo-random number generator state used for
@@ -768,18 +768,17 @@ def learning_curve(estimator, X, y, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
 
-    rng = check_random_state(random_state) if shuffle else None
+    cv_iter = _shuffle_train_indices(cv_iter, shuffle, random_state)
 
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, _get_train_indices(train, rng),
+            clone(estimator), X, y, classes, train,
             test, train_sizes_abs, scorer, verbose)
             for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
-            train = _get_train_indices(train, rng)
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
@@ -796,11 +795,12 @@ def learning_curve(estimator, X, y, groups=None,
     return train_sizes_abs, out[0], out[1]
 
 
-def _get_train_indices(train, rng):
-    """Shuffle training indices if random number generator is specified."""
-    if rng is not None:
-        train = rng.permutation(train)
-    return train
+def _shuffle_train_indices(cv_iter, shuffle, random_state):
+    """Shuffle training indices if ``shuffle=True``. """
+    if shuffle:
+        rng = check_random_state(random_state)
+        cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
+    return cv_iter
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
