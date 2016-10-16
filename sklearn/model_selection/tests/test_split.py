@@ -652,6 +652,68 @@ def test_group_shuffle_split():
                             round((1.0 - test_size) * len(l_unique))) <= 1)
 
 
+def test_leave_one_p_group_out():
+    logo = LeaveOneGroupOut()
+    lpgo_1 = LeavePGroupsOut(n_groups=1)
+    lpgo_2 = LeavePGroupsOut(n_groups=2)
+    lpgo_3 = LeavePGroupsOut(n_groups=3)
+
+    # Make sure the repr works
+    assert_equal(repr(logo), 'LeaveOneGroupOut()')
+    assert_equal(repr(lpgo_1), 'LeavePGroupsOut(n_groups=1)')
+    assert_equal(repr(lpgo_2), 'LeavePGroupsOut(n_groups=2)')
+    assert_equal(repr(lpgo_3), 'LeavePGroupsOut(n_groups=3)')
+
+    for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1),
+                                            (lpgo_2, 2))):
+        groups = (np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+                  np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+                  np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+                  np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+                  [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
+                  ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
+
+        all_n_splits = np.array([[3, 3, 3],
+                                 [4, 4, 6],
+                                 [4, 4, 6],
+                                 [4, 4, 6],
+                                 [3, 3, 3],
+                                 [3, 3, 3],
+                                 [3, 3, 3]], dtype=int)
+
+        for i, groups_i in enumerate(groups):
+            n_splits = all_n_splits[i, j]
+            X = y = np.ones(len(groups_i))
+            groups_unique = np.unique(groups_i)
+            n_groups = len(groups_unique)
+
+            # Test that the length is correct
+            assert_equal(cv.get_n_splits(X, y, groups=groups_i), n_splits)
+
+            groups_arr = np.asarray(groups_i)
+
+            # Split using the original list / array / list of string groups_i
+            for train, test in cv.split(X, y, groups=groups_i):
+                # First test: no train group is in the test set and vice versa
+                grps_train_unique = np.unique(groups_arr[train])
+                grps_test_unique = np.unique(groups_arr[test])
+                assert_false(np.any(np.in1d(groups_arr[train],
+                                            grps_test_unique)))
+                assert_false(np.any(np.in1d(groups_arr[test],
+                                            grps_train_unique)))
+
+                # Second test: train and test add up to all the data
+                assert_equal(groups_arr[train].size +
+                             groups_arr[test].size, groups_arr.size)
+
+                # Third test: train and test are disjoint
+                assert_array_equal(np.intersect1d(train, test), [])
+
+                # Fourth test:
+                # The number of groups in test must be equal to p_groups_out
+                assert_true(grps_test_unique.shape[0], p_groups_out)
+
+
 def test_leave_group_out_changing_groups():
     # Check that LeaveOneGroupOut and LeavePGroupsOut work normally if
     # the groups variable is changed before calling split
