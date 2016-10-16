@@ -718,7 +718,7 @@ def test_enet_float_precision():
 def test_enet_l1_ratio():
     # Test that an error message is raised if an estimator that
     # uses _alpha_grid is called with l1_ratio=0
-    msg = ("Automatic alpha grid generation is not supported for  l1_ratio=0. "
+    msg = ("Automatic alpha grid generation is not supported for l1_ratio=0. "
            "Please supply a grid by providing your estimator with the "
            "appropriate `alphas=` argument.")
     X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
