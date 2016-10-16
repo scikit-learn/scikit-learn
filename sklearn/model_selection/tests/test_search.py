@@ -64,6 +64,8 @@ from sklearn.linear_model import SGDClassifier
 class CustomSplitter():
     """A wrapper to make KFold single entry cv iterator"""
     def __init__(self, n_splits=4, n_samples=99):
+        self.n_splits = n_splits
+        self.n_samples = n_samples
         self.indices = KFold(n_splits=n_splits).split(np.ones(n_samples))
 
     def split(self, X=None, y=None, groups=None):
@@ -72,7 +74,7 @@ class CustomSplitter():
             yield index
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        return 4
+        return self.n_splits
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -1172,14 +1174,19 @@ def test_search_train_scores_set_to_false():
 
 def test_grid_search_cv_splits_consistency():
     # Check if a one time iterable is accepted as a cv parameter.
-    X, y = make_classification(n_samples=100, random_state=0)
+    n_samples = 100
+    n_splits = 5
+    X, y = make_classification(n_samples=n_samples, random_state=0)
 
     gs = GridSearchCV(LinearSVC(random_state=0),
-                      param_grid={'C': [0.1, 0.2, 0.3]}, cv=CustomSplitter())
+                      param_grid={'C': [0.1, 0.2, 0.3]},
+                      cv=CustomSplitter(n_splits=n_splits,
+                                        n_samples=n_samples))
     gs.fit(X, y)
 
     gs2 = GridSearchCV(LinearSVC(random_state=0),
-                       param_grid={'C': [0.1, 0.2, 0.3]}, cv=KFold(n_splits=5))
+                       param_grid={'C': [0.1, 0.2, 0.3]},
+                       cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
 
     def _pop_time_keys(cv_results):
@@ -1200,7 +1207,7 @@ def test_grid_search_cv_splits_consistency():
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
-                      cv=KFold(n_splits=5, shuffle=True))
+                      cv=KFold(n_splits=n_splits, shuffle=True))
     gs.fit(X, y)
 
     # As the first two param settings (C=0.1) and the next two param
@@ -1211,7 +1218,7 @@ def test_grid_search_cv_splits_consistency():
         per_param_scores = {}
         for param_i in range(4):
             per_param_scores[param_i] = list(
-                gs.cv_results_['split%d_%s_score' % (s, %score_type)][param_i]
+                gs.cv_results_['split%d_%s_score' % (s, score_type)][param_i]
                 for s in range(5))
 
         assert_array_almost_equal(per_param_scores[0],
