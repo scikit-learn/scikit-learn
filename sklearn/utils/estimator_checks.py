@@ -108,21 +108,6 @@ def _yield_non_meta_checks(name, Estimator):
     # give the same answer as before.
     yield check_estimators_pickle
 
-    # FIXME find out how to incorporate the following line as
-    #       the test runs for more estimators than before and
-    #       fails for some of them. Before this commit, the
-    #       test only fan for:
-    # for est_type in ['regressor', 'classifier', 'cluster']:
-
-    # These models are dependent on external solvers like
-    # libsvm and accessing the iter parameter is non-trivial.
-    not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC', 'RidgeClassifier',
-                            'SVC', 'RandomizedLasso', 'LogisticRegressionCV']
-    # Tested in test_transformer_n_iter
-    not_run_check_n_iter += CROSS_DECOMPOSITION + ['LinearSVC', 'LogisticRegression']
-    if name not in not_run_check_n_iter:
-        yield check_non_transformer_estimators_n_iter
-
 
 def _yield_classifier_checks(name, Classifier):
     # test classifiers can handle non-array data
@@ -146,6 +131,8 @@ def _yield_classifier_checks(name, Classifier):
     yield check_estimators_unfitted
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
+
+    yield check_non_transformer_estimators_n_iter
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -187,6 +174,7 @@ def _yield_regressor_checks(name, Regressor):
     if name != "GaussianProcessRegressor":
         # Test if NotFittedError is raised
         yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_transformer_checks(name, Transformer):
@@ -217,6 +205,7 @@ def _yield_clustering_checks(name, Clusterer):
         # let's not test that here.
         yield check_clustering
         yield check_estimators_partial_fit_n_features
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(name, Estimator):
@@ -1499,6 +1488,20 @@ def check_non_transformer_estimators_n_iter(name, Estimator,
                                             multi_output=False):
     # Test that estimators that are not transformers with an attribute max_iter,
     # return the attribute of n_iter at least 1.
+
+    # These models are dependent on external solvers like
+    # libsvm and accessing the iter parameter is non-trivial.
+    not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC', 'RidgeClassifier',
+                            'SVC', 'RandomizedLasso', 'LogisticRegressionCV',
+                            'LinearSVC', 'LogisticRegression']
+
+    # Models made for multi-class scenarios
+    not_run_check_n_iter += ['MultiTaskElasticNet', 'MultiTaskElasticNetCV',
+                             'MultiTaskLasso', 'MultiTaskLassoCV']
+    # Tested in test_transformer_n_iter
+    not_run_check_n_iter += CROSS_DECOMPOSITION
+    if name in not_run_check_n_iter:
+        return
 
     # LassoLars stops early for the default alpha=1.0 the iris dataset.
     if name == 'LassoLars':
