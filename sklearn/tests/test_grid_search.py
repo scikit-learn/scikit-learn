@@ -42,6 +42,7 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
+from sklearn.linear_model import Ridge
 
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import FitFailedWarning
@@ -799,3 +800,15 @@ def test_classes__property():
     grid_search.fit(X, y)
     assert_array_equal(grid_search.best_estimator_.classes_,
                        grid_search.classes_)
+
+def test_classes__regressor():
+    # Test that regressors do not have a classes_ attribute
+    # Test that classes_ property matches best_esimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+
+    regr = Ridge()
+
+    grid_search = GridSearchCV(regr, {'alpha':[1.0,2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
