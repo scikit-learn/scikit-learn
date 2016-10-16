@@ -111,6 +111,38 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
         self.x = X[0]
 
 
+class MockImprovingEstimatorRoundedScores(BaseEstimator):
+    """Dummy classifier to test the learning curve
+
+    This will give scores with precision of 0.1 so as to produce similar scores
+    for almost similar train fractions
+    """
+    def __init__(self, n_max_train_sizes):
+        self.n_max_train_sizes = n_max_train_sizes
+        self.train_sizes = 0
+        self.X_subset = None
+
+    def fit(self, X_subset, y_subset=None):
+        self.X_subset = X_subset
+        self.train_sizes = X_subset.shape[0]
+        return self
+
+    def predict(self, X):
+        raise NotImplementedError
+
+    def score(self, X=None, Y=None):
+        # training score becomes worse (2 -> 1), test error better (0 -> 1)
+        if self._is_training_data(X):
+            return np.round((2. - float(self.train_sizes) /
+                             self.n_max_train_sizes), 1)
+        else:
+            return np.round((float(self.train_sizes) /
+                             self.n_max_train_sizes), 1)
+
+    def _is_training_data(self, X):
+        return X is self.X_subset
+
+
 class MockEstimatorWithParameter(BaseEstimator):
     """Dummy classifier to test the validation curve"""
     def __init__(self, param=0.5):
@@ -557,14 +589,17 @@ def test_cross_val_score_sparse_fit_params():
 
 
 def test_learning_curve():
-    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
-                               n_redundant=0, n_classes=2,
+    n_samples = 30
+    n_splits = 3
+    X, y = make_classification(n_samples=n_samples, n_features=1,
+                               n_informative=1, n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingEstimator(20)
+    estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
     for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
             train_sizes, train_scores, test_scores = learning_curve(
-                estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10),
+                estimator, X, y, cv=KFold(n_splits=n_splits),
+                train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
@@ -575,6 +610,46 @@ def test_learning_curve():
                                   np.linspace(1.9, 1.0, 10))
         assert_array_almost_equal(test_scores.mean(axis=1),
                                   np.linspace(0.1, 1.0, 10))
+
+        # Test a custom cv splitter that can iterate only once
+        with warnings.catch_warnings(record=True) as w:
+            train_sizes2, train_scores2, test_scores2 = learning_curve(
+                estimator, X, y,
+                cv=CustomSplitter(n_splits=n_splits, n_samples=30),
+                train_sizes=np.linspace(0.1, 1.0, 10),
+                shuffle=shuffle_train)
+        if len(w) > 0:
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
+        assert_array_almost_equal(train_scores2, train_scores)
+        assert_array_almost_equal(test_scores2, test_scores)
+
+        # Test consistency of folds in non-deterministic cv splitter
+        n_samples = 300
+        n_splits = 3
+        X, y = np.zeros((n_samples, 3)), np.ones((n_samples, 1))
+
+        estimator = MockImprovingEstimatorRoundedScores(
+            n_samples * ((n_splits - 1) / n_splits))
+
+        with warnings.catch_warnings(record=True) as w:
+            train_sizes3, train_scores3, test_scores3 = learning_curve(
+                estimator, X, y, cv=KFold(n_splits=n_splits, shuffle=True),
+                train_sizes=(0.1, 0.11, 0.9, 0.91),
+                shuffle=shuffle_train)
+        if len(w) > 0:
+            raise RuntimeError("Unexpected warning: %r" % w[0].message)
+
+        # KFold(..., shuffle=True) is non deterministic as random_state
+        # is not set.
+        # However this should not affect the consistency of cv folds across the
+        # different train sizes to ensure that the cross-vadiation scores
+        # remain comparable.
+        # The MockImprovingEstimatorRoundedScores produces similar scores for
+        # train sizes (0.1 and 0.15) and (0.9 and 0.95)
+        assert_array_almost_equal(train_scores3[0, :], train_scores3[1, :])
+        assert_array_almost_equal(train_scores3[2, :], train_scores3[3, :])
+        assert_array_almost_equal(test_scores3[0, :], test_scores3[1, :])
+        assert_array_almost_equal(test_scores3[2, :], test_scores3[3, :])
 
 
 def test_learning_curve_unsupervised():
@@ -766,8 +841,14 @@ def test_validation_curve():
 
 
 def test_validation_curve_cv_splits_consistency():
-    scores1 = validation_curve(LinearSVC(random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2], cv=CustomSplitter())
+    n_samples = 100
+    n_splits = 5
+    X, y = make_classification(n_samples=100, random_state=0)
+
+    scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
+                               cv=CustomSplitter(n_splits=n_splits,
+                                                 n_samples=n_samples))
     # The CustomSplitter is a non-re-entrant cv splitter. Unless, the
     # `split` is called for each parameter, the following should produce
     # identical results for param setting 1 param setting 2 as both have
@@ -775,9 +856,9 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(*np.vsplit(np.hstack(scores1)[(0, 2, 1, 3), :],
                                          2))
 
-    scores2 = validation_curve(LinearSVC(random_state=0), X, y,
+    scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
                                'C', [0.1, 0.1, 0.2, 0.2],
-                               cv=KFold(n_splits=5, shuffle=True))
+                               cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
     # (Since the C value for 1st two param setting is 0.1, they must be
@@ -785,8 +866,9 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(*np.vsplit(np.hstack(scores2)[(0, 2, 1, 3), :],
                                          2))
 
-    scores3 = validation_curve(LinearSVC(random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2], cv=KFold(n_splits=5))
+    scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
+                               cv=KFold(n_splits=n_splits))
 
     # CustomSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
