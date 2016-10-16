@@ -801,6 +801,7 @@ def test_classes__property():
     assert_array_equal(grid_search.best_estimator_.classes_,
                        grid_search.classes_)
 
+
 def test_classes__regressor():
     # Test that regressors do not have a classes_ attribute
     # Test that classes_ property matches best_esimator_.classes_
@@ -809,6 +810,6 @@ def test_classes__regressor():
 
     regr = Ridge()
 
-    grid_search = GridSearchCV(regr, {'alpha':[1.0,2.0]})
+    grid_search = GridSearchCV(regr, {'alpha': [1.0, 2.0]})
     grid_search.fit(X, y)
     assert_false(hasattr(grid_search, 'classes_'))
