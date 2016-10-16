@@ -111,38 +111,6 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
         self.x = X[0]
 
 
-class MockImprovingEstimatorRoundedScores(BaseEstimator):
-    """Dummy classifier to test the learning curve
-
-    This will give scores with precision of 0.1 so as to produce similar scores
-    for almost similar train fractions
-    """
-    def __init__(self, n_max_train_sizes):
-        self.n_max_train_sizes = n_max_train_sizes
-        self.train_sizes = 0
-        self.X_subset = None
-
-    def fit(self, X_subset, y_subset=None):
-        self.X_subset = X_subset
-        self.train_sizes = X_subset.shape[0]
-        return self
-
-    def predict(self, X):
-        raise NotImplementedError
-
-    def score(self, X=None, Y=None):
-        # training score becomes worse (2 -> 1), test error better (0 -> 1)
-        if self._is_training_data(X):
-            return np.round((2. - float(self.train_sizes) /
-                             self.n_max_train_sizes), 1)
-        else:
-            return np.round((float(self.train_sizes) /
-                             self.n_max_train_sizes), 1)
-
-    def _is_training_data(self, X):
-        return X is self.X_subset
-
-
 class MockEstimatorWithParameter(BaseEstimator):
     """Dummy classifier to test the validation curve"""
     def __init__(self, param=0.5):
@@ -595,6 +563,7 @@ def test_learning_curve():
                                n_informative=1, n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
+<<<<<<< 0ea6a4ca74186b4e12ca631b78a3041ee9765f43
     for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
             train_sizes, train_scores, test_scores = learning_curve(
@@ -638,18 +607,6 @@ def test_learning_curve():
                 shuffle=shuffle_train)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
-
-        # KFold(..., shuffle=True) is non deterministic as random_state
-        # is not set.
-        # However this should not affect the consistency of cv folds across the
-        # different train sizes to ensure that the cross-vadiation scores
-        # remain comparable.
-        # The MockImprovingEstimatorRoundedScores produces similar scores for
-        # train sizes (0.1 and 0.15) and (0.9 and 0.95)
-        assert_array_almost_equal(train_scores3[0, :], train_scores3[1, :])
-        assert_array_almost_equal(train_scores3[2, :], train_scores3[3, :])
-        assert_array_almost_equal(test_scores3[0, :], test_scores3[1, :])
-        assert_array_almost_equal(test_scores3[2, :], test_scores3[3, :])
 
 
 def test_learning_curve_unsupervised():
