@@ -474,6 +474,8 @@ class GroupKFold(_BaseKFold):
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, ensure_2d=False, dtype=None)
+        check_consistent_length(X, groups)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
@@ -775,7 +777,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
         # We make a copy of groups to avoid side-effects during iteration
-        groups = np.array(groups, copy=True)
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        check_consistent_length(X, groups)
         unique_groups = np.unique(groups)
         if len(unique_groups) <= 1:
             raise ValueError(
@@ -868,7 +871,8 @@ class LeavePGroupsOut(BaseCrossValidator):
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        groups = np.array(groups, copy=True)
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        check_consistent_length(X, groups)
         unique_groups = np.unique(groups)
         if self.n_groups >= len(unique_groups):
             raise ValueError(
@@ -903,8 +907,11 @@ class LeavePGroupsOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
+        X, y, groups = indexable(X, y, groups)
         if groups is None:
             raise ValueError("The groups parameter should not be None")
+        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
+        check_consistent_length(X, groups)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
 
