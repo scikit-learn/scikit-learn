@@ -253,7 +253,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             # epsilon has no impact on this method; set to zero
             # to speed up _nneighbors query in _prep_optics
             X = check_array(X)
-            self.tree = setOfObjects(X)  # ,self.metric)
+            self.tree = setOfObjects(X, self.metric)
             _prep_optics(self.tree, 0, self.min_samples)
         filtered_pts_bool = self.tree.core_dists_[:] < distance_threshold
         if index_type == 'bool':
