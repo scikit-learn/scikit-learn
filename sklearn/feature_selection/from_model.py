@@ -23,17 +23,14 @@ def _get_feature_importances(estimator):
                 importances = np.abs(estimator.coef_)
             else:
                 importances = np.sum(np.abs(estimator.coef_), axis=0)
+
         elif sps.isspmatrix_csr(estimator.coef_):
-            if estimator.coef_.shape == (1, 0):
-                importances = np.abs(estimator.coef_.getrow(0))
-            elif estimator.coef_.shape == (0, 1):
-                importances = np.abs(estimator.coef_.getcol(0))
-            else:
-                importances = np.sum(np.abs(estimator.coef_.toarray()), axis=0)
+            importances = np.sum(np.abs(estimator.coef_.toarray()), axis=0)
+
         else:
             raise ValueError(
                 "The coef_ parameter of the underlying estimator %s"
-                "is invalid. Expecting either numpy.array or"
+                "is invalid. Expecting either numpy.ndarray or"
                 "scipy.sparse.csr_matrix."
                 % estimator.__class__.__name__)
 

@@ -101,6 +101,18 @@ def test_feature_importances():
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
     assert_array_equal(X_new, X[:, mask])
 
+    # Linear model with CSR yields same result as with ndarray
+    lest = LinearSVC()
+    lest.fit(X, y)
+    transformer = SelectFromModel(estimator=lest, prefit=True)
+    X_new_ndarr = transformer.transform(X)
+
+    lest.fit(X, y).sparsify()
+    transformer = SelectFromModel(estimator=lest, prefit=True)
+    X_new_csr = transformer.transform(X)
+
+    assert_true(X_new_ndarr.shape == X_new_csr.shape)
+
 
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False)
