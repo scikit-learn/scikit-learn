@@ -753,12 +753,12 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
     >>> groups = np.array([1, 1, 2, 2])
-    >>> lol = LeaveOneGroupOut()
-    >>> lol.get_n_splits(X, y, groups)
+    >>> logo = LeaveOneGroupOut()
+    >>> logo.get_n_splits(X, y, groups)
     2
-    >>> print(lol)
+    >>> print(logo)
     LeaveOneGroupOut()
-    >>> for train_index, test_index in lol.split(X, y, groups):
+    >>> for train_index, test_index in logo.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
@@ -810,7 +810,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        return len(np.unique(indexable(groups)))
+        return len(np.unique(groups))
 
 
 class LeavePGroupsOut(BaseCrossValidator):
@@ -841,12 +841,12 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3])
-    >>> lpl = LeavePGroupsOut(n_groups=2)
-    >>> lpl.get_n_splits(X, y, groups)
+    >>> lpgo = LeavePGroupsOut(n_groups=2)
+    >>> lpgo.get_n_splits(X, y, groups)
     3
-    >>> print(lpl)
+    >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
-    >>> for train_index, test_index in lpl.split(X, y, groups):
+    >>> for train_index, test_index in lpgo.split(X, y, groups):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
