@@ -61,6 +61,7 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.test_split import MockClassifier
+from sklearn.model_selection.tests.test_search import CustomSplitter
 
 
 try:
@@ -762,6 +763,33 @@ def test_validation_curve():
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_cv_splits_consistency():
+    scores1 = validation_curve(LinearSVC(random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2], cv=CustomSplitter())
+    # The CustomSplitter is a non-re-entrant cv splitter. Unless, the
+    # `split` is called for each parameter, the following should produce
+    # identical results for param setting 1 param setting 2 as both have
+    # the same C value.
+    assert_array_almost_equal(*np.vsplit(np.hstack(scores1)[(0, 2, 1, 3), :],
+                                         2))
+
+    scores2 = validation_curve(LinearSVC(random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2],
+                               cv=KFold(n_splits=5, shuffle=True))
+
+    # For scores2, compare the 1st and 2nd parameter's scores
+    # (Since the C value for 1st two param setting is 0.1, they must be
+    # consistent unless the train test folds differ between the param settings)
+    assert_array_almost_equal(*np.vsplit(np.hstack(scores2)[(0, 2, 1, 3), :],
+                                         2))
+
+    scores3 = validation_curve(LinearSVC(random_state=0), X, y,
+                               'C', [0.1, 0.1, 0.2, 0.2], cv=KFold(n_splits=5))
+
+    # CustomSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
+    assert_array_almost_equal(np.array(scores3), np.array(scores1))
 
 
 def test_check_is_permutation():
