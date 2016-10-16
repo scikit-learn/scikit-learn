@@ -475,7 +475,6 @@ class GroupKFold(_BaseKFold):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
         groups = check_array(groups, ensure_2d=False, dtype=None)
-        check_consistent_length(X, groups)
 
         unique_groups, groups = np.unique(groups, return_inverse=True)
         n_groups = len(unique_groups)
@@ -622,6 +621,10 @@ class StratifiedKFold(_BaseKFold):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
@@ -638,7 +641,6 @@ class StratifiedKFold(_BaseKFold):
             The testing set indices for that split.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        check_consistent_length(X, y)
         return super(StratifiedKFold, self).split(X, y, groups)
 
 
@@ -702,11 +704,10 @@ class TimeSeriesSplit(_BaseKFold):
             and n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            The target variable for supervised learning problems.
+            Always ignored, exists for compatibility.
 
         groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
+            Always ignored, exists for compatibility.
 
         Returns
         -------
@@ -809,7 +810,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        return len(np.unique(groups))
+        return len(np.unique(indexable(groups)))
 
 
 class LeavePGroupsOut(BaseCrossValidator):
@@ -872,7 +873,6 @@ class LeavePGroupsOut(BaseCrossValidator):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
         groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
-        check_consistent_length(X, groups)
         unique_groups = np.unique(groups)
         if self.n_groups >= len(unique_groups):
             raise ValueError(
@@ -894,9 +894,11 @@ class LeavePGroupsOut(BaseCrossValidator):
         ----------
         X : object
             Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         y : object
             Always ignored, exists for compatibility.
+            ``np.zeros(n_samples)`` may be used as a placeholder.
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
@@ -907,11 +909,10 @@ class LeavePGroupsOut(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        X, y, groups = indexable(X, y, groups)
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
-        check_consistent_length(X, groups)
+        X, y, groups = indexable(X, y, groups)
+        groups = check_array(groups, ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
 
@@ -1109,7 +1110,6 @@ class GroupShuffleSplit(ShuffleSplit):
         if groups is None:
             raise ValueError("The groups parameter should not be None")
         groups = check_array(groups, ensure_2d=False, dtype=None)
-        check_consistent_length(X, groups)
         classes, group_indices = np.unique(groups, return_inverse=True)
         for group_train, group_test in super(
                 GroupShuffleSplit, self)._iter_indices(X=classes):
@@ -1251,7 +1251,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
-        check_consistent_length(X, y)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
                                                   self.train_size)
         classes, y_indices = np.unique(y, return_inverse=True)
@@ -1305,6 +1304,10 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
         y : array-like, shape (n_samples,)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
@@ -1321,7 +1324,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             The testing set indices for that split.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        check_consistent_length(X, y)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
