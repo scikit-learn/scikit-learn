@@ -792,9 +792,10 @@ def test_classes__property():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
     Cs = [.1, 1, 10]
-    
+
     clf = LinearSVC(random_state=0)
 
     grid_search = GridSearchCV(clf, {'C': Cs}, scoring='accuracy')
     grid_search.fit(X, y)
-    assert_array_equal(grid_search.best_estimator_.classes_, grid_search.classes_)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
