@@ -128,7 +128,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, groups)
+    cv_iter = list(cv.split(X, y, groups))
     scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -384,7 +384,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, groups)
+    cv_iter = list(cv.split(X, y, groups))
 
     # Ensure the estimator has implemented the passed decision function
     if not callable(getattr(estimator, method)):
@@ -775,9 +775,8 @@ def learning_curve(estimator, X, y, groups=None,
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train,
-            test, train_sizes_abs, scorer, verbose)
-            for train, test in cv_iter)
+            clone(estimator), X, y, classes, train, test, train_sizes_abs,
+            scorer, verbose) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
