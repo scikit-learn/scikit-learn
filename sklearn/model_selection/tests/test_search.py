@@ -61,6 +61,20 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import SGDClassifier
 
 
+class CustomSplitter():
+    """A wrapper to make KFold single entry cv iterator"""
+    def __init__(self, n_splits=4, n_samples=99):
+        self.indices = KFold(n_splits=n_splits).split(np.ones(n_samples))
+
+    def split(self, X=None, y=None, groups=None):
+        """Split can be called only once"""
+        for index in self.indices:
+            yield index
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        return 4
+
+
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
 class MockClassifier(object):
@@ -1156,20 +1170,9 @@ def test_search_train_scores_set_to_false():
     gs.fit(X, y)
 
 
-def test_grid_search_custom_cv_iter():
+def test_grid_search_cv_splits_consistency():
     # Check if a one time iterable is accepted as a cv parameter.
     X, y = make_classification(n_samples=100, random_state=0)
-
-    class CustomSplitter():
-        def __init__(self, n_samples=100):
-            self.indices = KFold(n_splits=5).split(np.ones(n_samples))
-
-        def split(self, X=None, y=None, groups=None):
-            for index in self.indices:
-                yield index
-
-        def get_n_splits(self, X=None, y=None, groups=None):
-            return 5
 
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.2, 0.3]}, cv=CustomSplitter())
@@ -1185,6 +1188,12 @@ def test_grid_search_custom_cv_iter():
             cv_results.pop(key)
         return cv_results
 
+    # CustomSplitter is a non-re-entrant cv where split can be called only once
+    # if ``cv.split`` is called once per param setting in GridSearchCV.fit
+    # the 2nd and 3rd parameter will not be evaluated as no train/test indices
+    # will be generated for the 2nd and subsequent cv.split calls.
+    # This is a check to make cv.split is not called once per param
+    # setting.
     np.testing.assert_equal(_pop_time_keys(gs.cv_results_),
                             _pop_time_keys(gs2.cv_results_))
 
@@ -1194,12 +1203,18 @@ def test_grid_search_custom_cv_iter():
                       cv=KFold(n_splits=5, shuffle=True))
     gs.fit(X, y)
 
-    per_param_test_scores = {}
-    for param_i in range(4):
-        per_param_test_scores[param_i] = list(
-            gs.cv_results_['split%d_test_score' % s][param_i]
-            for s in range(5))
-    assert_array_almost_equal(per_param_test_scores[0],
-                              per_param_test_scores[1])
-    assert_array_almost_equal(per_param_test_scores[2],
-                              per_param_test_scores[3])
+    # As the first two param settings (C=0.1) and the next two param
+    # settings (C=0.2) are same, the test and train scores must also be
+    # same as long as the same train/test indices are generated for all
+    # the cv splits, for both param setting
+    for score_type in ('train', 'test'):
+        per_param_scores = {}
+        for param_i in range(4):
+            per_param_scores[param_i] = list(
+                gs.cv_results_['split%d_%s_score' % (s, %score_type)][param_i]
+                for s in range(5))
+
+        assert_array_almost_equal(per_param_scores[0],
+                                  per_param_scores[1])
+        assert_array_almost_equal(per_param_scores[2],
+                                  per_param_scores[3])
