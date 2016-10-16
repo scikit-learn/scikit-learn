@@ -669,9 +669,12 @@ def test_leave_group_out_changing_groups():
             assert_array_equal(test, test_chan)
 
     # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
-    assert_equal(3, LeavePGroupsOut(n_groups=2).get_n_splits(X, y, groups))
+    assert_equal(
+        3, LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X,
+                                                    groups=groups))
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
-    assert_equal(3, LeaveOneGroupOut().get_n_splits(X, y, groups))
+    assert_equal(3, LeaveOneGroupOut().get_n_splits(X, y=X,
+                                                    groups=groups))
 
 
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
@@ -838,18 +841,18 @@ def test_shufflesplit_reproducible():
                        list(a for a, b in ss.split(X)))
 
 
-def test_shufflesplit_list_input():
+def test_stratifiedshufflesplit_list_input():
     # Check that when y is a list / list of string labels, it works.
-    ss = ShuffleSplit(random_state=42)
+    sss = StratifiedShuffleSplit(test_size=2, random_state=42)
     X = np.ones(7)
     y1 = ['1'] * 4 + ['0'] * 3
     y2 = np.hstack((np.ones(4), np.zeros(3)))
     y3 = y2.tolist()
 
-    np.testing.assert_equal(list(ss.split(X, y1)),
-                            list(ss.split(X, y2)))
-    np.testing.assert_equal(list(ss.split(X, y3)),
-                            list(ss.split(X, y2)))
+    np.testing.assert_equal(list(sss.split(X, y1)),
+                            list(sss.split(X, y2)))
+    np.testing.assert_equal(list(sss.split(X, y3)),
+                            list(sss.split(X, y2)))
 
 
 def test_train_test_split_allow_nans():
