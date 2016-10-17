@@ -728,3 +728,17 @@ def test_enet_l1_ratio():
                          ElasticNetCV(l1_ratio=0).fit, X, y)
     assert_raise_message(ValueError, msg,
                          MultiTaskElasticNetCV(l1_ratio=0).fit, X, X)
+
+    # Test that l1_ratio=0 is allowed if we supply a grid manually
+    alphas = [0.1, 10]
+    est_desired = ElasticNetCV(l1_ratio=0.00001, alphas=alphas)
+    est = ElasticNetCV(l1_ratio=0, alphas=alphas)
+    est_desired.fit(X, y)
+    est.fit(X, y)
+    assert_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+    est_desired = MultiTaskElasticNetCV(l1_ratio=0.00001, alphas=alphas)
+    est = MultiTaskElasticNetCV(l1_ratio=0, alphas=alphas)
+    est.fit(X, X)
+    est_desired.fit(X, X)
+    assert_almost_equal(est.coef_, est_desired.coef_, decimal=5)
