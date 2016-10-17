@@ -192,6 +192,10 @@ default).
    :target: ../auto_examples/mixture/plot_gmm.html
    :scale: 48%
 
+.. |plot_dpgmm| image:: ../auto_examples/mixture/images/sphx_glr_plot_concentration_prior_002.png
+   :target: ../auto_examples/mixture/plot_concentration_prior.html
+   :scale: 48%
+
 .. centered:: |plot_bgmm| |plot_dpgmm|
 
 The examples below compare Gaussian mixture models with a fixed number of
@@ -210,7 +214,6 @@ fit only one component.
    :target: ../auto_examples/mixture/plot_gmm.html
    :align: center
    :scale: 70%
-
 
 On the following figure we are fitting a dataset not well-depicted by a
 Gaussian mixture. Adjusting the ``weight_concentration_prior``, parameter of the
@@ -283,7 +286,6 @@ Cons
    these biases and the data it might be possible to fit better models using a
    finite mixture.
 
-
 .. _dirichlet_process:
 
 The Dirichlet Process
@@ -320,3 +322,9 @@ use, one just specifies the concentration parameter and an upper bound
 on the number of mixture components (this upper bound, assuming it is
 higher than the "true" number of components, affects only algorithmic
 complexity, not the actual number of components used).
+
+.. topic:: Derivation:
+
+    * See `here <bayesian_gaussian_mixture_derivation.html>`_ for the full 
+      derivation of the Variational Bayesian Gaussian Mixture for the dirichlet
+      distribution prior type (not the dirichlet process prior type).

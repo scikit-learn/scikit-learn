@@ -449,7 +449,10 @@ for each :math:`k` and the posterior multinomial distribution.
 
 Lower bound
 ...........
-The lower bound :math:`\mathcal{L}` is defined by
+This variational lower bound :math:`\mathcal{L}` is guaranteed to be
+non-decreasing. It can therefore be computed to monitor the convergence
+of the model. It can also be used to catch implementation bugs if an update
+causes a decrease of this quantity. It is defined by
 
 .. math::
    :nowrap:
@@ -476,7 +479,7 @@ The lower bound :math:`\mathcal{L}` is defined by
    \end{eqnarray*}
 
 Estimate lower bound terms
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 To compute :math:`\mathbb{E}[\ln p(\mathbf{X}|\mathbf{Z},\boldsymbol{\mu},
 \boldsymbol{\Lambda})]` we can use the Equation :eq:`vbgmm_expectation` and use
 the fact :math:`\sum_{n=1}^N \mathbb{E}[z_{nk}] \mathbf{x}_n \mathbf{x}_n^\top =
@@ -560,7 +563,7 @@ We can estimate
    \end{eqnarray*}
 
 Lower bound combination and simplifications
-...........................................
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some simplifications and combination of terms can be performed in the Equation
 :eq:`vbgmm_responsabilities`:
@@ -628,9 +631,6 @@ Consequently the lower value is :
 
 References
 ----------
-[1] `Bishop, Christopher M. (2006). "Pattern recognition and machine learning".
-     Vol. 4 No. 4. New York: Springer. <http://www.springer.com/kr/book/9780387310732>`_
+[1] `Bishop, Christopher M. (2006). "Pattern recognition and machine learning". Vol. 4 No. 4. New York: Springer. <http://www.springer.com/kr/book/9780387310732>`_
 
-[2] `Hagai Attias. (2000). "A Variational Bayesian Framework for Graphical Models".
-     In Advances in Neural Information Processing Systems 12
-     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.36.2841&rep=rep1&type=pdf>`_
+[2] `Hagai Attias. (2000). "A Variational Bayesian Framework for Graphical Models". In Advances in Neural Information Processing Systems 12 <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.36.2841&rep=rep1&type=pdf>`_
