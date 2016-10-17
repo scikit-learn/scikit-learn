@@ -381,7 +381,7 @@ def test_select_fdr_chi2():
     X = np.array([[10,20],[20,20],[20,30]])
     y = np.array([[1],[0],[0]])
     univariate_filter = SelectFdr(chi2, alpha=0.1)
-    X_r = univariate_filter.fit(X, y).transform(X)
+    univariate_filter.fit(X, y).transform(X)
     support = univariate_filter.get_support()
     assert_array_equal(support, np.array([True, False]))
 
