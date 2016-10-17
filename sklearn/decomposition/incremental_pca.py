@@ -71,7 +71,12 @@ class IncrementalPCA(_BasePCA):
     explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
         If all components are stored, the sum of explained variances is equal
-        to 1.0
+        to 1.0.
+
+    singular_values_ : array, [n_components]
+        The singular values corresponsing to each of the selected components.
+        The singular values corresponds to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
 
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, aggregate over calls to ``partial_fit``.
@@ -166,6 +171,7 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
+        self.singular_values_ = None
         self.noise_variance_ = None
 
         X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
