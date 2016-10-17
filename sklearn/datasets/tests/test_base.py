@@ -172,8 +172,8 @@ def test_load_diabetes():
     assert_equal(res.data.shape, (442, 10))
     assert_true(res.target.size, 442)
     assert_equal(len(res.feature_names), 10)
-    assert_true(res.data_filename)
-    assert_true(res.target_filename)
+    assert_true(os.path.exists(res.data_filename))
+    assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
     X_y_tuple = load_diabetes(return_X_y=True)
@@ -189,8 +189,8 @@ def test_load_linnerud():
     assert_equal(res.target.shape, (20, 3))
     assert_equal(len(res.target_names), 3)
     assert_true(res.DESCR)
-    assert_true(res.data_filename)
-    assert_true(res.target_filename)
+    assert_true(os.path.exists(res.data_filename))
+    assert_true(os.path.exists(res.target_filename))
 
     # test return_X_y option
     X_y_tuple = load_linnerud(return_X_y=True)
@@ -206,7 +206,7 @@ def test_load_iris():
     assert_equal(res.target.size, 150)
     assert_equal(res.target_names.size, 3)
     assert_true(res.DESCR)
-    assert_true(res.filename)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
@@ -222,7 +222,7 @@ def test_load_breast_cancer():
     assert_equal(res.target.size, 569)
     assert_equal(res.target_names.size, 2)
     assert_true(res.DESCR)
-    assert_true(res.filename)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_breast_cancer(return_X_y=True)
@@ -238,7 +238,7 @@ def test_load_boston():
     assert_equal(res.target.size, 506)
     assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)
-    assert_true(res.filename)
+    assert_true(os.path.exists(res.filename))
 
     # test return_X_y option
     X_y_tuple = load_boston(return_X_y=True)

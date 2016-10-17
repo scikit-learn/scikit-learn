@@ -567,10 +567,10 @@ def load_linnerud(return_X_y=False):
         Dictionary-like object, the interesting attributes are: 'data' and
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
-        measurements, as well as 'feature_names' and 'target_names'. In addition,
-        you will also have access to 'data_filename', the physical location of
-        linnerud data csv dataset, and 'target_filename', the physical location
-        of linnerud targets csv datataset.
+        measurements, as well as 'feature_names' and 'target_names'.
+        In addition, you will also have access to 'data_filename', the physical
+        location of linnerud data csv dataset, and 'target_filename', the
+        physical location of linnerud targets csv datataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -627,8 +627,8 @@ def load_boston(return_X_y=False):
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        and 'DESCR', the full description of the dataset,
-        'filename', the physical location of boston csv dataset.
+        'DESCR', the full description of the dataset,
+        and 'filename', the physical location of boston csv dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
