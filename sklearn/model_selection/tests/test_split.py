@@ -685,7 +685,6 @@ def test_leave_one_p_group_out():
             n_splits = all_n_splits[i, j]
             X = y = np.ones(len(groups_i))
             groups_unique = np.unique(groups_i)
-            n_groups = len(groups_unique)
 
             # Test that the length is correct
             assert_equal(cv.get_n_splits(X, y, groups=groups_i), n_splits)
