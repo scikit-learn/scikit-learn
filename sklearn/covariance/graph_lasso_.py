@@ -479,7 +479,7 @@ class GraphLassoCV(GraphLasso):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    tol: positive float, optional
+    tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
 
@@ -489,7 +489,7 @@ class GraphLassoCV(GraphLasso):
         for a given column update, not of the overall parameter estimate. Only
         used for mode='cd'.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations.
 
     mode: {'cd', 'lars'}
@@ -498,10 +498,10 @@ class GraphLassoCV(GraphLasso):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         number of jobs to run in parallel (default 1).
 
-    verbose: boolean, optional
+    verbose : boolean, optional
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
 

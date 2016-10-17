@@ -71,7 +71,7 @@ def compute_class_weight(class_weight, classes, y):
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
         if not isinstance(class_weight, dict):
-            raise ValueError("class_weight must be dict, 'auto', or None,"
+            raise ValueError("class_weight must be dict, 'balanced', or None,"
                              " got: %r" % class_weight)
         for c in class_weight:
             i = np.searchsorted(classes, c)

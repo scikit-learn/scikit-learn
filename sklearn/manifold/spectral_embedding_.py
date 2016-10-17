@@ -195,7 +195,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     References
     ----------
-    * http://en.wikipedia.org/wiki/LOBPCG
+    * https://en.wikipedia.org/wiki/LOBPCG
 
     * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
       Block Preconditioned Conjugate Gradient Method

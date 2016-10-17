@@ -293,7 +293,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         n_components = min(n, p)
     if (n_components > min(n, p)):
         n_components = min(n, p)
-        print("n_components is too large: it will be set to %s" % n_components)
+        warnings.warn('n_components is too large: it will be set to %s' % n_components)
 
     if whiten:
         # Centering the columns (ie the variables)

@@ -1,9 +1,8 @@
-from nose.tools import assert_equal
-
 import numpy as np
 from scipy import linalg
 
 from sklearn.model_selection import train_test_split
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
@@ -246,20 +245,20 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     # same results when early stopping is used.
     # (test : before, in the middle, and in the last part of the path)
     alphas_min = [10, 0.9, 1e-4]
-    for alphas_min in alphas_min:
+
+    for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                       alpha_min=0.9)
+                                                       alpha_min=alpha_min)
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
-    alphas_min = [10, 0.9, 1e-4]
     # same test, with normalization
-    for alphas_min in alphas_min:
+    for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                       alpha_min=0.9)
+                                                       alpha_min=alpha_min)
         lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]

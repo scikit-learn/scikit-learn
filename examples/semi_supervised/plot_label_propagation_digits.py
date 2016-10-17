@@ -17,7 +17,7 @@ At the end, the top 10 most uncertain predictions will be shown.
 print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt

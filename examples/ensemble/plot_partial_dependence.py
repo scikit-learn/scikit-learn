@@ -69,7 +69,7 @@ def main():
                                                         random_state=1)
     names = cal_housing.feature_names
 
-    print("Training GBRT...", flush=True, end='')
+    print("Training GBRT...")
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=4,
                                     learning_rate=0.1, loss='huber',
                                     random_state=1)

@@ -29,7 +29,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its
@@ -106,7 +106,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
         check_classification_targets(y)
-        
+
         n_samples, n_features = X.shape
         le = LabelEncoder()
         y_ind = le.fit_transform(y)
@@ -115,7 +115,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
 
-        # Mask mapping each class to it's members.
+        # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
         # Number of clusters in each class.
         nk = np.zeros(n_classes)

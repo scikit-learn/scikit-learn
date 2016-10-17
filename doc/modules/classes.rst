@@ -164,16 +164,17 @@ Splitter Classes
    :template: class.rst
 
    model_selection.KFold
-   model_selection.LabelKFold
+   model_selection.GroupKFold
    model_selection.StratifiedKFold
-   model_selection.LeaveOneLabelOut
-   model_selection.LeavePLabelOut
+   model_selection.LeaveOneGroupOut
+   model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
    model_selection.ShuffleSplit
-   model_selection.LabelShuffleSplit
+   model_selection.GroupShuffleSplit
    model_selection.StratifiedShuffleSplit
    model_selection.PredefinedSplit
+   model_selection.TimeSeriesSplit
 
 Splitter Functions
 ------------------
@@ -240,6 +241,7 @@ Loaders
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
    datasets.load_boston
+   datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
    datasets.load_files
@@ -257,6 +259,7 @@ Loaders
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
+   datasets.fetch_species_distributions
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.dump_svmlight_file
@@ -689,6 +692,7 @@ Kernels:
    linear_model.BayesianRidge
    linear_model.ElasticNet
    linear_model.ElasticNetCV
+   linear_model.HuberRegressor
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso
@@ -726,6 +730,7 @@ Kernels:
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path
+   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
 
@@ -759,6 +764,7 @@ Kernels:
 
     manifold.locally_linear_embedding
     manifold.spectral_embedding
+    manifold.smacof
 
 
 .. _metrics_ref:
@@ -802,6 +808,7 @@ details.
    metrics.average_precision_score
    metrics.brier_score_loss
    metrics.classification_report
+   metrics.cohen_kappa_score
    metrics.confusion_matrix
    metrics.f1_score
    metrics.fbeta_score
@@ -817,7 +824,6 @@ details.
    metrics.roc_auc_score
    metrics.roc_curve
    metrics.zero_one_loss
-   metrics.brier_score_loss
 
 Regression metrics
 ------------------
@@ -867,7 +873,9 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
+   metrics.calinski_harabaz_score
    metrics.completeness_score
+   metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
    metrics.mutual_info_score
@@ -928,7 +936,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.paired_manhattan_distances
    metrics.pairwise.paired_cosine_distances
    metrics.pairwise.paired_distances
-   
+
 
 .. _mixture_ref:
 
@@ -947,9 +955,8 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   mixture.GMM
-   mixture.DPGMM
-   mixture.VBGMM
+   mixture.GaussianMixture
+   mixture.BayesianGaussianMixture
 
 
 .. _multiclass_ref:
@@ -972,6 +979,26 @@ See the :ref:`metrics` section of the user guide for further details.
     multiclass.OneVsRestClassifier
     multiclass.OneVsOneClassifier
     multiclass.OutputCodeClassifier
+
+.. _multioutput_ref:
+
+:mod:`sklearn.multioutput`: Multioutput regression and classification
+=====================================================================
+
+.. automodule:: sklearn.multioutput
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`multiclass` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    multioutput.MultiOutputRegressor
+    multioutput.MultiOutputClassifier
 
 .. _naive_bayes_ref:
 

@@ -7,7 +7,7 @@ from scipy.sparse import csc_matrix
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raise_message, assert_no_warnings
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_greater
@@ -120,6 +120,19 @@ def test_nmf_transform():
         assert_array_almost_equal(ft, t, decimal=2)
 
 
+def test_nmf_transform_custom_init():
+    # Smoke test that checks if NMF.transform works with custom initialization
+    A = np.abs(random_state.randn(6, 5))
+    n_components = 4
+    avg = np.sqrt(A.mean() / n_components)
+    H_init = np.abs(avg * random_state.randn(n_components, 5))
+    W_init = np.abs(avg * random_state.randn(6, n_components))
+
+    m = NMF(solver='cd', n_components=n_components, init='custom', random_state=0)
+    ft = m.fit_transform(A, W=W_init, H=H_init)
+    t = m.transform(A)
+
+
 @ignore_warnings
 def test_nmf_inverse_transform():
     # Test that NMF.inverse_transform returns close values
@@ -221,7 +234,10 @@ def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    msg = "Number of components must be positive; got (n_components='2')"
+    assert_no_warnings(nnmf, A, A, A, np.int64(1))
+    msg = "Number of components must be a positive integer; got (n_components=1.5)"
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5)
+    msg = "Number of components must be a positive integer; got (n_components='2')"
     assert_raise_message(ValueError, msg, nnmf, A, A, A, '2')
     msg = "Negative values in data passed to NMF (input H)"
     assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')

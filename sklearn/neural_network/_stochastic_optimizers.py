@@ -2,7 +2,7 @@
 """
 
 # Authors:  Jiyuan Qian <jq401@nyu.edu>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 

@@ -1,7 +1,7 @@
 """Testing for Gaussian process classification """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -34,8 +34,7 @@ kernels = [RBF(length_scale=0.1), fixed_kernel,
 
 
 def test_predict_consistent():
-    """ Check binary predict decision has also predicted probability above 0.5.
-    """
+    # Check binary predict decision has also predicted probability above 0.5.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_array_equal(gpc.predict(X),
@@ -43,7 +42,7 @@ def test_predict_consistent():
 
 
 def test_lml_improving():
-    """ Test that hyperparameter-tuning improves log-marginal likelihood. """
+    # Test that hyperparameter-tuning improves log-marginal likelihood.
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
@@ -53,7 +52,7 @@ def test_lml_improving():
 
 
 def test_lml_precomputed():
-    """ Test that lml of optimized kernel is stored correctly. """
+    # Test that lml of optimized kernel is stored correctly.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
         assert_almost_equal(gpc.log_marginal_likelihood(gpc.kernel_.theta),
@@ -61,7 +60,7 @@ def test_lml_precomputed():
 
 
 def test_converged_to_local_maximum():
-    """ Test that we are in local maximum after hyperparameter-optimization."""
+    # Test that we are in local maximum after hyperparameter-optimization.
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
@@ -76,7 +75,7 @@ def test_converged_to_local_maximum():
 
 
 def test_lml_gradient():
-    """ Compare analytic and numeric gradient of log marginal likelihood. """
+    # Compare analytic and numeric gradient of log marginal likelihood.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
 
@@ -91,10 +90,8 @@ def test_lml_gradient():
 
 
 def test_random_starts():
-    """
-    Test that an increasing number of random-starts of GP fitting only
-    increases the log marginal likelihood of the chosen theta.
-    """
+    # Test that an increasing number of random-starts of GP fitting only
+    # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
     np.random.seed(0)
     rng = np.random.RandomState(0)
@@ -115,7 +112,7 @@ def test_random_starts():
 
 
 def test_custom_optimizer():
-    """ Test that GPC can use externally defined optimizers. """
+    # Test that GPC can use externally defined optimizers.
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
@@ -140,7 +137,7 @@ def test_custom_optimizer():
 
 
 def test_multi_class():
-    """ Test GPC for multi-class classification problems. """
+    # Test GPC for multi-class classification problems.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel)
         gpc.fit(X, y_mc)
@@ -153,7 +150,7 @@ def test_multi_class():
 
 
 def test_multi_class_n_jobs():
-    """ Test that multi-class GPC produces identical results with n_jobs>1. """
+    # Test that multi-class GPC produces identical results with n_jobs>1.
     for kernel in kernels:
         gpc = GaussianProcessClassifier(kernel=kernel)
         gpc.fit(X, y_mc)

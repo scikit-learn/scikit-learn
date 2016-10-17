@@ -39,11 +39,23 @@ env:
       NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
       CACHED_BUILD_DIR="$HOME/sklearn_build_oldest"
     # This environment tests the newest supported anaconda env
+    # It also runs tests requiring Pandas.
     - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.2" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0"
+      CYTHON_VERSION="0.23.4" CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
+    # flake8 linting on diff wrt common ancestor with upstream/master
+    - RUN_FLAKE8="true" SKIP_TESTS="true"
+      DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
+      CACHED_BUILD_DIR="$HOME/dummy"
+
 
 matrix:
+  allow_failures:
+    # allow_failures seems to be keyed on the python version
+    # We are using this to allow failures for DISTRIB=scipy-dev-wheels
+    - python: 3.5
+
   include:
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python

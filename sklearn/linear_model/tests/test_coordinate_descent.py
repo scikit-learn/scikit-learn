@@ -16,6 +16,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -170,7 +171,7 @@ def test_lasso_cv():
         np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
         np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
     # check that they also give a similar MSE
-    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
+    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
     np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
                                    clf.mse_path_[5].mean(), significant=2)
 
@@ -509,7 +510,12 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        assert_raises(ValueError, clf.fit, X, y)
+        assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
+                            "array-like.*Got 'invalid'", clf.fit, X, y)
+
+    # Precompute = 'auto' is not supported for ElasticNet
+    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
+                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
 
 
 def test_warm_start_convergence():
@@ -664,3 +670,45 @@ def test_lasso_non_float_y():
         clf_float = model(fit_intercept=False)
         clf_float.fit(X, y_float)
         assert_array_equal(clf.coef_, clf_float.coef_)
+
+
+def test_enet_float_precision():
+    # Generate dataset
+    X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
+    # Here we have a small number of iterations, and thus the
+    # ElasticNet might not converge. This is to speed up tests
+
+    for normalize in [True, False]:
+        for fit_intercept in [True, False]:
+            coef = {}
+            intercept = {}
+            for dtype in [np.float64, np.float32]:
+                clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                                 fit_intercept=fit_intercept,
+                                 normalize=normalize)
+
+                X = dtype(X)
+                y = dtype(y)
+                ignore_warnings(clf.fit)(X, y)
+
+                coef[dtype] = clf.coef_
+                intercept[dtype] = clf.intercept_
+
+                assert_equal(clf.coef_.dtype, dtype)
+
+                # test precompute Gram array
+                Gram = X.T.dot(X)
+                clf_precompute = ElasticNet(alpha=0.5, max_iter=100,
+                                            precompute=Gram,
+                                            fit_intercept=fit_intercept,
+                                            normalize=normalize)
+                ignore_warnings(clf_precompute.fit)(X, y)
+                assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
+                assert_array_almost_equal(clf.intercept_,
+                                          clf_precompute.intercept_)
+
+            assert_array_almost_equal(coef[np.float32], coef[np.float64],
+                                      decimal=4)
+            assert_array_almost_equal(intercept[np.float32],
+                                      intercept[np.float64],
+                                      decimal=4)

@@ -243,7 +243,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                     0.01,
                     (self.n_components, X.shape[1])
                 ),
-                order='fortran')
+                order='F')
         if not hasattr(self, 'intercept_hidden_'):
             self.intercept_hidden_ = np.zeros(self.n_components, )
         if not hasattr(self, 'intercept_visible_'):
@@ -340,7 +340,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='fortran')
+            order='F')
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(X.shape[1], )
         self.h_samples_ = np.zeros((self.batch_size, self.n_components))

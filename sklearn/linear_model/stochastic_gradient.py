@@ -635,9 +635,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     learning_rate : string, optional
         The learning rate schedule:
-        constant: eta = eta0
-        optimal: eta = 1.0 / (alpha * (t + t0)) [default]
-        invscaling: eta = eta0 / pow(t, power_t)
+
+        - 'constant': eta = eta0
+        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
+        - 'invscaling': eta = eta0 / pow(t, power_t)
+
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double
@@ -666,7 +668,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So average=10 will begin averaging after seeing 10 samples.
+        average. So ``average=10`` will begin averaging after seeing 10
+        samples.
 
     Attributes
     ----------
@@ -731,7 +734,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         Elkan.
 
         Binary probability estimates for loss="modified_huber" are given by
-        (clip(decision_function(X), -1, 1) + 1) / 2.
+        (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
+        it is necessary to perform proper probability calibration by wrapping
+        the classifier with
+        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
@@ -1162,10 +1168,13 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         and the correct label are ignored if they are less than this threshold.
 
     learning_rate : string, optional
-        The learning rate:
-        constant: eta = eta0
-        optimal: eta = 1.0/(alpha * t)
-        invscaling: eta = eta0 / pow(t, power_t) [default]
+        The learning rate schedule:
+
+        - 'constant': eta = eta0
+        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
+        - 'invscaling': eta = eta0 / pow(t, power_t)
+
+        where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double, optional
         The initial learning rate [default 0.01].
@@ -1181,7 +1190,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So ``average=10 will`` begin averaging after seeing 10
+        average. So ``average=10`` will begin averaging after seeing 10
         samples.
 
     Attributes

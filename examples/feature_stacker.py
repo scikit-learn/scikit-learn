@@ -30,7 +30,7 @@ iris = load_iris()
 
 X, y = iris.data, iris.target
 
-# This dataset is way to high-dimensional. Better do PCA:
+# This dataset is way too high-dimensional. Better do PCA:
 pca = PCA(n_components=2)
 
 # Maybe some original features where good, too?

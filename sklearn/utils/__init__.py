@@ -32,7 +32,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric"]
+           "check_symmetric", "indices_to_mask"]
 
 
 def safe_mask(X, mask):
@@ -58,6 +58,26 @@ def safe_mask(X, mask):
         ind = np.arange(mask.shape[0])
         mask = ind[mask]
     return mask
+
+
+def axis0_safe_slice(X, mask, len_mask):
+    """
+    This mask is safer than safe_mask since it returns an
+    empty array, when a sparse matrix is sliced with a boolean mask
+    with all False, instead of raising an unhelpful error in older
+    versions of SciPy.
+
+    See: https://github.com/scipy/scipy/issues/5361
+
+    Also note that we can avoid doing the dot product by checking if
+    the len_mask is not zero in _huber_loss_and_gradient but this
+    is not going to be the bottleneck, since the number of outliers
+    and non_outliers are typically non-zero and it makes the code
+    tougher to follow.
+    """
+    if len_mask != 0:
+        return X[safe_mask(X, mask), :]
+    return np.zeros(shape=(0, X.shape[1]))
 
 
 def safe_indexing(X, indices):
@@ -113,6 +133,8 @@ def resample(*arrays, **options):
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
+        If replace is False it should not be larger than the length of
+        arrays.
 
     random_state : int or RandomState instance
         Control the shuffling for reproducible behavior.
@@ -174,10 +196,10 @@ def resample(*arrays, **options):
 
     if max_n_samples is None:
         max_n_samples = n_samples
-
-    if max_n_samples > n_samples:
-        raise ValueError("Cannot sample %d out of arrays with dim %d" % (
-            max_n_samples, n_samples))
+    elif (max_n_samples > n_samples) and (not replace):
+        raise ValueError("Cannot sample %d out of arrays with dim %d"
+                         "when replace is False" % (max_n_samples,
+                                                    n_samples))
 
     check_consistent_length(*arrays)
 
@@ -397,3 +419,27 @@ def tosequence(x):
         return x
     else:
         return list(x)
+
+
+def indices_to_mask(indices, mask_length):
+    """Convert list of indices to boolean mask.
+
+    Parameters
+    ----------
+    indices : list-like
+        List of integers treated as indices.
+    mask_length : int
+        Length of boolean mask to be generated.
+
+    Returns
+    -------
+    mask : 1d boolean nd-array
+        Boolean array that is True where indices are present, else False.
+    """
+    if mask_length <= np.max(indices):
+        raise ValueError("mask_length must be greater than max(indices)")
+
+    mask = np.zeros(mask_length, dtype=np.bool)
+    mask[indices] = True
+
+    return mask

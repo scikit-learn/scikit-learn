@@ -152,8 +152,8 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Notes
     -----
-    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
-    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
+    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
     returns an np.ndarray, as expected.
 
     For compatibility, user code relying on this method should wrap its
@@ -188,8 +188,8 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
 
     Notes
     -----
-    For sklearn versions 0.14.1 and prior, return_as=np.ndarray was handled
-    by returning a dense np.matrix instance.  Going forward, np.ndarray
+    For scikit-learn versions 0.14.1 and prior, return_as=np.ndarray was
+    handled by returning a dense np.matrix instance.  Going forward, np.ndarray
     returns an np.ndarray, as expected.
 
     For compatibility, user code relying on this method should wrap its
