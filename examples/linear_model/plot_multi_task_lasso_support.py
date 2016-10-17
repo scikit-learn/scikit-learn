@@ -5,7 +5,7 @@ Joint feature selection with multi-task Lasso
 =============================================
 
 The multi-task lasso allows to fit multiple regression problems
-jointly enforcing the selected features to be the same accross
+jointly enforcing the selected features to be the same across
 tasks. This example simulates sequential measurements, each task
 is a time instant, and the relevant features vary in amplitude
 over time while being the same. The multi-task lasso imposes that
@@ -13,12 +13,12 @@ features that are selected at one time point are select for all time
 point. This makes feature selection by the Lasso more stable.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.linear_model import MultiTaskLasso, Lasso
@@ -41,26 +41,29 @@ coef_multi_task_lasso_ = MultiTaskLasso(alpha=1.).fit(X, Y).coef_
 
 ###############################################################################
 # Plot support and time series
-fig = pl.figure(figsize=(8, 5))
-pl.subplot(1, 2, 1)
-pl.spy(coef_lasso_)
-pl.xlabel('Feature')
-pl.ylabel('Time (or Task)')
-pl.text(10, 5, 'Lasso')
-pl.subplot(1, 2, 2)
-pl.spy(coef_multi_task_lasso_)
-pl.xlabel('Feature')
-pl.ylabel('Time (or Task)')
-pl.text(10, 5, 'MultiTaskLasso')
+fig = plt.figure(figsize=(8, 5))
+plt.subplot(1, 2, 1)
+plt.spy(coef_lasso_)
+plt.xlabel('Feature')
+plt.ylabel('Time (or Task)')
+plt.text(10, 5, 'Lasso')
+plt.subplot(1, 2, 2)
+plt.spy(coef_multi_task_lasso_)
+plt.xlabel('Feature')
+plt.ylabel('Time (or Task)')
+plt.text(10, 5, 'MultiTaskLasso')
 fig.suptitle('Coefficient non-zero location')
 
 feature_to_plot = 0
-pl.figure()
-pl.plot(coef[:, feature_to_plot], 'k', label='Ground truth')
-pl.plot(coef_lasso_[:, feature_to_plot], 'g', label='Lasso')
-pl.plot(coef_multi_task_lasso_[:, feature_to_plot],
-        'r', label='MultiTaskLasso')
-pl.legend(loc='upper center')
-pl.axis('tight')
-pl.ylim([-1.1, 1.1])
-pl.show()
+plt.figure()
+lw = 2
+plt.plot(coef[:, feature_to_plot], color='seagreen', linewidth=lw,
+         label='Ground truth')
+plt.plot(coef_lasso_[:, feature_to_plot], color='cornflowerblue', linewidth=lw,
+         label='Lasso')
+plt.plot(coef_multi_task_lasso_[:, feature_to_plot], color='gold', linewidth=lw,
+         label='MultiTaskLasso')
+plt.legend(loc='upper center')
+plt.axis('tight')
+plt.ylim([-1.1, 1.1])
+plt.show()

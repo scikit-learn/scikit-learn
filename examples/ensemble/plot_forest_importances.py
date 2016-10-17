@@ -4,15 +4,16 @@ Feature importances with forests of trees
 =========================================
 
 This examples shows the use of forests of trees to evaluate the importance of
-features on an artifical classification task. The red bars are the feature
+features on an artificial classification task. The red bars are the feature
 importances of the forest, along with their inter-trees variability.
 
 As expected, the plot suggests that 3 features are informative, while the
 remaining are not.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
@@ -29,7 +30,6 @@ X, y = make_classification(n_samples=1000,
 
 # Build a forest and compute the feature importances
 forest = ExtraTreesClassifier(n_estimators=250,
-                              compute_importances=True,
                               random_state=0)
 
 forest.fit(X, y)
@@ -39,17 +39,16 @@ std = np.std([tree.feature_importances_ for tree in forest.estimators_],
 indices = np.argsort(importances)[::-1]
 
 # Print the feature ranking
-print "Feature ranking:"
+print("Feature ranking:")
 
-for f in xrange(10):
-    print "%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]])
+for f in range(X.shape[1]):
+    print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the forest
-import pylab as pl
-pl.figure()
-pl.title("Feature importances")
-pl.bar(xrange(10), importances[indices],
+plt.figure()
+plt.title("Feature importances")
+plt.bar(range(X.shape[1]), importances[indices],
        color="r", yerr=std[indices], align="center")
-pl.xticks(xrange(10), indices)
-pl.xlim([-1, 10])
-pl.show()
+plt.xticks(range(X.shape[1]), indices)
+plt.xlim([-1, X.shape[1]])
+plt.show()

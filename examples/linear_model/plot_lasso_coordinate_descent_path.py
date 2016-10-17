@@ -8,13 +8,14 @@ coordinate descent.
 
 The coefficients can be forced to be positive.
 """
-print __doc__
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
+from itertools import cycle
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
@@ -23,72 +24,70 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-X /= X.std(0)  # Standardize data (easier to set the l1_ratio parameter)
+X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
 
-###############################################################################
 # Compute paths
 
 eps = 5e-3  # the smaller it is the longer is the path
 
-print "Computing regularization path using the lasso..."
-models = lasso_path(X, y, eps=eps)
-alphas_lasso = np.array([model.alpha for model in models])
-coefs_lasso = np.array([model.coef_ for model in models])
+print("Computing regularization path using the lasso...")
+alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps, fit_intercept=False)
 
-print "Computing regularization path using the positive lasso..."
-models = lasso_path(X, y, eps=eps, positive=True)
-alphas_positive_lasso = np.array([model.alpha for model in models])
-coefs_positive_lasso = np.array([model.coef_ for model in models])
+print("Computing regularization path using the positive lasso...")
+alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(
+    X, y, eps, positive=True, fit_intercept=False)
+print("Computing regularization path using the elastic net...")
+alphas_enet, coefs_enet, _ = enet_path(
+    X, y, eps=eps, l1_ratio=0.8, fit_intercept=False)
 
-print "Computing regularization path using the elastic net..."
-models = enet_path(X, y, eps=eps, l1_ratio=0.8)
-alphas_enet = np.array([model.alpha for model in models])
-coefs_enet = np.array([model.coef_ for model in models])
+print("Computing regularization path using the positive elastic net...")
+alphas_positive_enet, coefs_positive_enet, _ = enet_path(
+    X, y, eps=eps, l1_ratio=0.8, positive=True, fit_intercept=False)
 
-print "Computing regularization path using the positve elastic net..."
-models = enet_path(X, y, eps=eps, l1_ratio=0.8, positive=True)
-alphas_positive_enet = np.array([model.alpha for model in models])
-coefs_positive_enet = np.array([model.coef_ for model in models])
-
-###############################################################################
 # Display results
 
-pl.figure(1)
-ax = pl.gca()
-ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-l1 = pl.plot(coefs_lasso)
-l2 = pl.plot(coefs_enet, linestyle='--')
+plt.figure(1)
+ax = plt.gca()
 
-pl.xlabel('-Log(lambda)')
-pl.ylabel('weights')
-pl.title('Lasso and Elastic-Net Paths')
-pl.legend((l1[-1], l2[-1]), ('Lasso', 'Elastic-Net'), loc='lower left')
-pl.axis('tight')
+colors = cycle(['b', 'r', 'g', 'c', 'k'])
+neg_log_alphas_lasso = -np.log10(alphas_lasso)
+neg_log_alphas_enet = -np.log10(alphas_enet)
+for coef_l, coef_e, c in zip(coefs_lasso, coefs_enet, colors):
+    l1 = plt.plot(neg_log_alphas_lasso, coef_l, c=c)
+    l2 = plt.plot(neg_log_alphas_enet, coef_e, linestyle='--', c=c)
 
-
-pl.figure(2)
-ax = pl.gca()
-ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-l1 = pl.plot(coefs_lasso)
-l2 = pl.plot(coefs_positive_lasso, linestyle='--')
-
-pl.xlabel('-Log(lambda)')
-pl.ylabel('weights')
-pl.title('Lasso and positive Lasso')
-pl.legend((l1[-1], l2[-1]), ('Lasso', 'positive Lasso'), loc='lower left')
-pl.axis('tight')
+plt.xlabel('-Log(alpha)')
+plt.ylabel('coefficients')
+plt.title('Lasso and Elastic-Net Paths')
+plt.legend((l1[-1], l2[-1]), ('Lasso', 'Elastic-Net'), loc='lower left')
+plt.axis('tight')
 
 
-pl.figure(3)
-ax = pl.gca()
-ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-l1 = pl.plot(coefs_enet)
-l2 = pl.plot(coefs_positive_enet, linestyle='--')
+plt.figure(2)
+ax = plt.gca()
+neg_log_alphas_positive_lasso = -np.log10(alphas_positive_lasso)
+for coef_l, coef_pl, c in zip(coefs_lasso, coefs_positive_lasso, colors):
+    l1 = plt.plot(neg_log_alphas_lasso, coef_l, c=c)
+    l2 = plt.plot(neg_log_alphas_positive_lasso, coef_pl, linestyle='--', c=c)
 
-pl.xlabel('-Log(lambda)')
-pl.ylabel('weights')
-pl.title('Elastic-Net and positive Elastic-Net')
-pl.legend((l1[-1], l2[-1]), ('Elastic-Net', 'positive Elastic-Net'),
-          loc='lower left')
-pl.axis('tight')
-pl.show()
+plt.xlabel('-Log(alpha)')
+plt.ylabel('coefficients')
+plt.title('Lasso and positive Lasso')
+plt.legend((l1[-1], l2[-1]), ('Lasso', 'positive Lasso'), loc='lower left')
+plt.axis('tight')
+
+
+plt.figure(3)
+ax = plt.gca()
+neg_log_alphas_positive_enet = -np.log10(alphas_positive_enet)
+for (coef_e, coef_pe, c) in zip(coefs_enet, coefs_positive_enet, colors):
+    l1 = plt.plot(neg_log_alphas_enet, coef_e, c=c)
+    l2 = plt.plot(neg_log_alphas_positive_enet, coef_pe, linestyle='--', c=c)
+
+plt.xlabel('-Log(alpha)')
+plt.ylabel('coefficients')
+plt.title('Elastic-Net and positive Elastic-Net')
+plt.legend((l1[-1], l2[-1]), ('Elastic-Net', 'positive Elastic-Net'),
+           loc='lower left')
+plt.axis('tight')
+plt.show()

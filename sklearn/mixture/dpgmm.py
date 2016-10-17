@@ -1,5 +1,6 @@
 """Bayesian Gaussian Mixture Models and
 Dirichlet Process Gaussian Mixture Models"""
+from __future__ import print_function
 
 # Author: Alexandre Passos (alexandre.tp@gmail.com)
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
@@ -9,29 +10,40 @@ Dirichlet Process Gaussian Mixture Models"""
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+# Important note for the deprecation cleaning of 0.20 :
+# All the function and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
-from ..utils import check_random_state
-from ..utils.extmath import norm, logsumexp, pinvh
+from ..externals.six.moves import xrange
+from ..utils import check_random_state, check_array, deprecated
+from ..utils.extmath import logsumexp, pinvh, squared_norm
+from ..utils.validation import check_is_fitted
 from .. import cluster
-from .gmm import GMM
+from .gmm import _GMMBase
 
 
-def sqnorm(v):
-    return norm(v) ** 2
-
-
+@deprecated("The function digamma is deprecated in 0.18 and "
+            "will be removed in 0.20. Use scipy.special.digamma instead.")
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
 
 
+@deprecated("The function gammaln is deprecated in 0.18 and "
+            "will be removed in 0.20. Use scipy.special.gammaln instead.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 
 
+@deprecated("The function log_normalize is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 def log_normalize(v, axis=0):
     """Normalized probabilities from unnormalized log-probabilites"""
     v = np.rollaxis(v, axis)
@@ -44,6 +56,8 @@ def log_normalize(v, axis=0):
     return np.swapaxes(v, 0, axis)
 
 
+@deprecated("The function wishart_log_det is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 def wishart_log_det(a, b, detB, n_features):
     """Expected value of the log of the determinant of a Wishart
 
@@ -54,6 +68,8 @@ def wishart_log_det(a, b, detB, n_features):
     return l + detB
 
 
+@deprecated("The function wishart_logz is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 def wishart_logz(v, s, dets, n_features):
     "The logarithm of the normalization constant for the wishart distribution"
     z = 0.
@@ -66,7 +82,7 @@ def wishart_logz(v, s, dets, n_features):
 
 def _bound_wishart(a, B, detB):
     """Returns a function of the dof, scale matrix and its determinant
-    used as an upper bound in variational approcimation of the evidence"""
+    used as an upper bound in variational approximation of the evidence"""
     n_features = B.shape[0]
     logprior = wishart_logz(a, B, detB, n_features)
     logprior -= wishart_logz(n_features,
@@ -95,19 +111,19 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     bound = np.empty((n_samples, n_components))
     bound[:] = initial_bound
     if covariance_type in ['diag', 'spherical']:
-        for k in xrange(n_components):
+        for k in range(n_components):
             d = X - means[k]
             bound[:, k] -= 0.5 * np.sum(d * d * precs[k], axis=1)
     elif covariance_type == 'tied':
-        for k in xrange(n_components):
+        for k in range(n_components):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs)
     elif covariance_type == 'full':
-        for k in xrange(n_components):
+        for k in range(n_components):
             bound[:, k] -= 0.5 * _sym_quad_form(X, means[k], precs[k])
     return bound
 
 
-class DPGMM(GMM):
+class _DPGMMBase(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
     DPGMM stands for Dirichlet Process Gaussian Mixture Model, and it
@@ -126,36 +142,43 @@ class DPGMM(GMM):
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
+    Read more in the :ref:`User Guide <dpgmm>`.
+
     Parameters
     ----------
-    n_components: int, optional
-        Number of mixture components. Defaults to 1.
+    n_components: int, default 1
+        Number of mixture components.
 
-    covariance_type: string, optional
+    covariance_type: string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        Defaults to 'diag'.
 
-    alpha: float, optional
+    alpha: float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
         to add that point to a cluster with alpha elements. A
         higher alpha means more clusters, as the expected number
-        of clusters is ``alpha*log(N)``. Defaults to 1.
+        of clusters is ``alpha*log(N)``.
 
-    thresh : float, optional
+    tol : float, default 1e-3
         Convergence threshold.
-    n_iter : int, optional
+
+    n_iter : int, default 10
         Maximum number of iterations to perform before convergence.
-    params : string, optional
+
+    params : string, default 'wmc'
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
-        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
-    init_params : string, optional
+        'm' for means, and 'c' for covars.
+
+    init_params : string, default 'wmc'
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    verbose : int, default 0
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -166,13 +189,13 @@ class DPGMM(GMM):
     n_components : int
         Number of mixture components.
 
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precisions_` : array
+    precs_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -181,7 +204,7 @@ class DPGMM(GMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False otherwise.
 
     See Also
@@ -192,17 +215,16 @@ class DPGMM(GMM):
         algorithm, better for situations where there might be too little
         data to get a good estimate of the covariance matrix.
     """
-
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
+                 random_state=None, tol=1e-3, verbose=0, min_covar=None,
+                 n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
-        self.verbose = verbose
-        super(DPGMM, self).__init__(n_components, covariance_type,
-                                    random_state=random_state,
-                                    thresh=thresh, min_covar=min_covar,
-                                    n_iter=n_iter, params=params,
-                                    init_params=init_params)
+        super(_DPGMMBase, self).__init__(n_components, covariance_type,
+                                         random_state=random_state,
+                                         tol=tol, min_covar=min_covar,
+                                         n_iter=n_iter, params=params,
+                                         init_params=init_params,
+                                         verbose=verbose)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -220,8 +242,8 @@ class DPGMM(GMM):
         raise NotImplementedError("""The variational algorithm does
         not support setting the covariance parameters.""")
 
-    def eval(self, X):
-        """Evaluate the model on data
+    def score_samples(self, X):
+        """Return the likelihood of the data under the model.
 
         Compute the bound on log probability of X under the model
         and return the posterior distribution (responsibilities) of
@@ -240,11 +262,13 @@ class DPGMM(GMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
-        X = np.asarray(X)
+        check_is_fitted(self, 'gamma_')
+
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
         z = np.zeros((X.shape[0], self.n_components))
@@ -253,7 +277,7 @@ class DPGMM(GMM):
         dgamma2 = np.zeros(self.n_components)
         dgamma2[0] = digamma(self.gamma_[0, 2]) - digamma(self.gamma_[0, 1] +
                                                           self.gamma_[0, 2])
-        for j in xrange(1, self.n_components):
+        for j in range(1, self.n_components):
             dgamma2[j] = dgamma2[j - 1] + digamma(self.gamma_[j - 1, 2])
             dgamma2[j] -= sd[j - 1]
         dgamma = dgamma1 + dgamma2
@@ -276,14 +300,14 @@ class DPGMM(GMM):
         sz = np.sum(z, axis=0)
         self.gamma_.T[1] = 1. + sz
         self.gamma_.T[2].fill(0)
-        for i in xrange(self.n_components - 2, -1, -1):
+        for i in range(self.n_components - 2, -1, -1):
             self.gamma_[i, 2] = self.gamma_[i + 1, 2] + sz[i]
         self.gamma_.T[2] += self.alpha
 
     def _update_means(self, X, z):
         """Update the variational distributions for the means"""
         n_features = X.shape[1]
-        for k in xrange(self.n_components):
+        for k in range(self.n_components):
             if self.covariance_type in ['spherical', 'diag']:
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num *= self.precs_[k]
@@ -304,7 +328,7 @@ class DPGMM(GMM):
         n_features = X.shape[1]
         if self.covariance_type == 'spherical':
             self.dof_ = 0.5 * n_features * np.sum(z, axis=0)
-            for k in xrange(self.n_components):
+            for k in range(self.n_components):
                 # could be more memory efficient ?
                 sq_diff = np.sum((X - self.means_[k]) ** 2, axis=1)
                 self.scale_[k] = 1.
@@ -315,7 +339,7 @@ class DPGMM(GMM):
             self.precs_ = np.tile(self.dof_ / self.scale_, [n_features, 1]).T
 
         elif self.covariance_type == 'diag':
-            for k in xrange(self.n_components):
+            for k in range(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
                 sq_diff = (X - self.means_[k]) ** 2  # see comment above
                 self.scale_[k] = np.ones(n_features) + 0.5 * np.dot(
@@ -328,9 +352,9 @@ class DPGMM(GMM):
         elif self.covariance_type == 'tied':
             self.dof_ = 2 + X.shape[0] + n_features
             self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
-            for k in xrange(self.n_components):
-                    diff = X - self.means_[k]
-                    self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
+            for k in range(self.n_components):
+                diff = X - self.means_[k]
+                self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
             self.scale_ = pinvh(self.scale_)
             self.precs_ = self.dof_ * self.scale_
             self.det_scale_ = linalg.det(self.scale_)
@@ -339,7 +363,7 @@ class DPGMM(GMM):
             self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
 
         elif self.covariance_type == 'full':
-            for k in xrange(self.n_components):
+            for k in range(self.n_components):
                 sum_resp = np.sum(z.T[k])
                 self.dof_[k] = 2 + sum_resp + n_features
                 self.scale_[k] = (sum_resp + 1) * np.identity(n_features)
@@ -361,11 +385,11 @@ class DPGMM(GMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
-            print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
+        if self.verbose > 0:
+            print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
             if end:
-                print "Cluster proportions:", self.gamma_.T[1]
-                print "covariance_type:", self.covariance_type
+                print("Cluster proportions:", self.gamma_.T[1])
+                print("covariance_type:", self.covariance_type)
 
     def _do_mstep(self, X, z, params):
         """Maximize the variational lower bound
@@ -405,7 +429,7 @@ class DPGMM(GMM):
     def _bound_means(self):
         "The variational lower bound for the mean parameters"
         logprior = 0.
-        logprior -= 0.5 * sqnorm(self.means_)
+        logprior -= 0.5 * squared_norm(self.means_)
         logprior -= 0.5 * self.means_.shape[1] * self.n_components
         return logprior
 
@@ -426,7 +450,7 @@ class DPGMM(GMM):
         elif self.covariance_type == 'tied':
             logprior += _bound_wishart(self.dof_, self.scale_, self.det_scale_)
         elif self.covariance_type == 'full':
-            for k in xrange(self.n_components):
+            for k in range(self.n_components):
                 logprior += _bound_wishart(self.dof_[k],
                                            self.scale_[k],
                                            self.det_scale_[k])
@@ -454,10 +478,11 @@ class DPGMM(GMM):
 
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
+        check_is_fitted(self, 'means_')
+
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
-
         X = np.asarray(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
@@ -473,16 +498,18 @@ class DPGMM(GMM):
                                                     + self.gamma_[i, 2])
         self.weights_ /= np.sum(self.weights_)
 
-    def fit(self, X):
+    def _fit(self, X, y=None):
         """Estimate model parameters with the variational
         algorithm.
 
         For a full derivation and description of the algorithm see
-        doc/dp-derivation/dp-derivation.tex
+        doc/modules/dp-derivation.rst
+        or
+        http://scikit-learn.org/stable/modules/dp-derivation.html
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string '' when when creating
+        argument init_params to the empty string '' when creating
         the object. Likewise, if you would like just to do an
         initialization, set n_iter=0.
 
@@ -491,16 +518,22 @@ class DPGMM(GMM):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
-        """
-        self.random_state = check_random_state(self.random_state)
 
-        ## initialization step
-        X = np.asarray(X)
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
+        """
+        self.random_state_ = check_random_state(self.random_state)
+
+        # initialization step
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
 
-        n_features = X.shape[1]
-        z = np.ones((X.shape[0], self.n_components))
+        n_samples, n_features = X.shape
+        z = np.ones((n_samples, self.n_components))
         z /= self.n_components
 
         self._initial_bound = - 0.5 * n_features * np.log(2 * np.pi)
@@ -512,7 +545,7 @@ class DPGMM(GMM):
         if 'm' in self.init_params or not hasattr(self, 'means_'):
             self.means_ = cluster.KMeans(
                 n_clusters=self.n_components,
-                random_state=self.random_state).fit(X).cluster_centers_[::-1]
+                random_state=self.random_state_).fit(X).cluster_centers_[::-1]
 
         if 'w' in self.init_params or not hasattr(self, 'weights_'):
             self.weights_ = np.tile(1.0 / self.n_components, self.n_components)
@@ -541,15 +574,15 @@ class DPGMM(GMM):
                     self.dof_, self.scale_, self.det_scale_, n_features)
                 self.bound_prec_ -= 0.5 * self.dof_ * np.trace(self.scale_)
             elif self.covariance_type == 'full':
-                self.dof_ = (1 + self.n_components + X.shape[0])
+                self.dof_ = (1 + self.n_components + n_samples)
                 self.dof_ *= np.ones(self.n_components)
                 self.scale_ = [2 * np.identity(n_features)
-                               for i in xrange(self.n_components)]
+                               for _ in range(self.n_components)]
                 self.precs_ = [np.identity(n_features)
-                               for i in xrange(self.n_components)]
+                               for _ in range(self.n_components)]
                 self.det_scale_ = np.ones(self.n_components)
                 self.bound_prec_ = np.zeros(self.n_components)
-                for k in xrange(self.n_components):
+                for k in range(self.n_components):
                     self.bound_prec_[k] = wishart_log_det(
                         self.dof_[k], self.scale_[k], self.det_scale_[k],
                         n_features)
@@ -557,28 +590,61 @@ class DPGMM(GMM):
                                             np.trace(self.scale_[k]))
                 self.bound_prec_ *= 0.5
 
-        logprob = []
+        # EM algorithms
+        current_log_likelihood = None
         # reset self.converged_ to False
         self.converged_ = False
-        for i in xrange(self.n_iter):
+
+        for i in range(self.n_iter):
+            prev_log_likelihood = current_log_likelihood
             # Expectation step
-            curr_logprob, z = self.eval(X)
-            logprob.append(curr_logprob.sum() + self._logprior(z))
+            curr_logprob, z = self.score_samples(X)
+
+            current_log_likelihood = (
+                curr_logprob.mean() + self._logprior(z) / n_samples)
 
             # Check for convergence.
-            if i > 0 and abs(logprob[-1] - logprob[-2]) < self.thresh:
-                self.converged_ = True
-                break
+            if prev_log_likelihood is not None:
+                change = abs(current_log_likelihood - prev_log_likelihood)
+                if change < self.tol:
+                    self.converged_ = True
+                    break
 
             # Maximization step
             self._do_mstep(X, z, self.params)
 
+        if self.n_iter == 0:
+            # Need to make sure that there is a z value to output
+            # Output zeros because it was just a quick initialization
+            z = np.zeros((X.shape[0], self.n_components))
+
         self._set_weights()
 
-        return self
+        return z
 
 
-class VBGMM(DPGMM):
+@deprecated("The `DPGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type='dirichlet_process'` "
+            "instead. DPGMM is deprecated in 0.18 and will be "
+            "removed in 0.20.")
+class DPGMM(_DPGMMBase):
+    def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
+                 random_state=None, tol=1e-3, verbose=0, min_covar=None,
+                 n_iter=10, params='wmc', init_params='wmc'):
+        super(DPGMM, self).__init__(
+            n_components=n_components, covariance_type=covariance_type,
+            alpha=alpha, random_state=random_state, tol=tol, verbose=verbose,
+            min_covar=min_covar, n_iter=n_iter, params=params,
+            init_params=init_params)
+
+
+@deprecated("The `VBGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type="
+            "'dirichlet_distribution'` instead. "
+            "VBGMM is deprecated in 0.18 and will be removed in 0.20.")
+class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 
     Variational inference for a Gaussian mixture model probability
@@ -589,23 +655,41 @@ class VBGMM(DPGMM):
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
+    Read more in the :ref:`User Guide <vbgmm>`.
+
     Parameters
     ----------
-    n_components: int, optional
-        Number of mixture components. Defaults to 1.
+    n_components: int, default 1
+        Number of mixture components.
 
-    covariance_type: string, optional
+    covariance_type: string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
-        Defaults to 'diag'.
 
-    alpha: float, optional
+    alpha: float, default 1
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of
-        Gaussians model will use all components it can. Defaults
-        to 1.
+        Gaussians model will use all components it can.
 
+    tol : float, default 1e-3
+        Convergence threshold.
+
+    n_iter : int, default 10
+        Maximum number of iterations to perform before convergence.
+
+    params : string, default 'wmc'
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.
+
+    init_params : string, default 'wmc'
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+
+    verbose : int, default 0
+        Controls output verbosity.
 
     Attributes
     ----------
@@ -619,13 +703,13 @@ class VBGMM(DPGMM):
     n_components : int (read-only)
         Number of mixture components.
 
-    `weights_` : array, shape (`n_components`,)
+    weights_ : array, shape (`n_components`,)
         Mixing weights for each mixture component.
 
-    `means_` : array, shape (`n_components`, `n_features`)
+    means_ : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precisions_` : array
+    precs_ : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -634,28 +718,57 @@ class VBGMM(DPGMM):
             (`n_components`, `n_features`)                if 'diag',
             (`n_components`, `n_features`, `n_features`)  if 'full'
 
-    `converged_` : bool
+    converged_ : bool
         True when convergence was reached in fit(), False
         otherwise.
 
     See Also
     --------
     GMM : Finite Gaussian mixture model fit with EM
-    DPGMM : Ininite Gaussian mixture model, using the dirichlet
+    DPGMM : Infinite Gaussian mixture model, using the dirichlet
         process, fit with a variational algorithm
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=1e-2, verbose=False,
+                 random_state=None, tol=1e-3, verbose=0,
                  min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
         super(VBGMM, self).__init__(
             n_components, covariance_type, random_state=random_state,
-            thresh=thresh, verbose=verbose, min_covar=min_covar,
+            tol=tol, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
-        self.alpha = float(alpha) / n_components
+        self.alpha = alpha
 
-    def eval(self, X):
-        """Evaluate the model on data
+    def _fit(self, X, y=None):
+        """Estimate model parameters with the variational algorithm.
+
+        For a full derivation and description of the algorithm see
+        doc/modules/dp-derivation.rst
+        or
+        http://scikit-learn.org/stable/modules/dp-derivation.html
+
+        A initialization step is performed before entering the EM
+        algorithm. If you want to avoid this step, set the keyword
+        argument init_params to the empty string '' when creating
+        the object. Likewise, if you just would like to do an
+        initialization, set n_iter=0.
+
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
+        """
+        self.alpha_ = float(self.alpha) / self.n_components
+        return super(VBGMM, self)._fit(X, y)
+
+    def score_samples(self, X):
+        """Return the likelihood of the data under the model.
 
         Compute the bound on log probability of X under the model
         and return the posterior distribution (responsibilities) of
@@ -674,16 +787,15 @@ class VBGMM(DPGMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
-        X = np.asarray(X)
+        check_is_fitted(self, 'gamma_')
+
+        X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
-        z = np.zeros((X.shape[0], self.n_components))
-        p = np.zeros(self.n_components)
-        bound = np.zeros(X.shape[0])
         dg = digamma(self.gamma_) - digamma(np.sum(self.gamma_))
 
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
@@ -699,11 +811,11 @@ class VBGMM(DPGMM):
         return bound, z
 
     def _update_concentration(self, z):
-        for i in xrange(self.n_components):
-            self.gamma_[i] = self.alpha + np.sum(z.T[i])
+        for i in range(self.n_components):
+            self.gamma_[i] = self.alpha_ + np.sum(z.T[i])
 
     def _initialize_gamma(self):
-        self.gamma_ = self.alpha * np.ones(self.n_components)
+        self.gamma_ = self.alpha_ * np.ones(self.n_components)
 
     def _bound_proportions(self, z):
         logprior = 0.
@@ -717,10 +829,10 @@ class VBGMM(DPGMM):
     def _bound_concentration(self):
         logprior = 0.
         logprior = gammaln(np.sum(self.gamma_)) - gammaln(self.n_components
-                                                          * self.alpha)
-        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha))
+                                                          * self.alpha_)
+        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha_))
         sg = digamma(np.sum(self.gamma_))
-        logprior += np.sum((self.gamma_ - self.alpha)
+        logprior += np.sum((self.gamma_ - self.alpha_)
                            * (digamma(self.gamma_) - sg))
         return logprior
 
@@ -731,11 +843,11 @@ class VBGMM(DPGMM):
         expected.
 
         Note: this is very expensive and should not be used by default."""
-        if self.verbose:
-            print "Bound after updating %8s: %f" % (n, self.lower_bound(X, z))
+        if self.verbose > 0:
+            print("Bound after updating %8s: %f" % (n, self.lower_bound(X, z)))
             if end:
-                print "Cluster proportions:", self.gamma_
-                print "covariance_type:", self.covariance_type
+                print("Cluster proportions:", self.gamma_)
+                print("covariance_type:", self.covariance_type)
 
     def _set_weights(self):
         self.weights_[:] = self.gamma_

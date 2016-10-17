@@ -1,15 +1,25 @@
-# encoding: utf-8
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#         Lars Buitinck
+#         Danny Sullivan <dsullivan7@hotmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
+cimport cython
+from libc.limits cimport INT_MAX
+from libc.math cimport sqrt
 import numpy as np
 cimport numpy as np
-cimport cython
+
+cdef extern from "cblas.h":
+    double ddot "cblas_ddot"(int, double *, int, double *, int) nogil
+    void dscal "cblas_dscal"(int, double, double *, int) nogil
+    void daxpy "cblas_daxpy" (int, double, const double*,
+                              int, double*, int) nogil
+
 
 np.import_array()
 
@@ -24,9 +34,11 @@ cdef class WeightVector(object):
 
     Attributes
     ----------
-    w : ndarray, dtype=np.float64, order='C'
+    w : ndarray, dtype=double, order='C'
         The numpy array which backs the weight vector.
-    w_data_ptr : np.float64*
+    aw : ndarray, dtype=double, order='C'
+        The numpy array which backs the average_weight vector.
+    w_data_ptr : double*
         A pointer to the data of the numpy array.
     wscale : double
         The scale of the vector.
@@ -36,16 +48,29 @@ cdef class WeightVector(object):
         The squared norm of ``w``.
     """
 
-    def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
+    def __cinit__(self,
+                  np.ndarray[double, ndim=1, mode='c'] w,
+                  np.ndarray[double, ndim=1, mode='c'] aw):
+        cdef double *wdata = <double *>w.data
+
+        if w.shape[0] > INT_MAX:
+            raise ValueError("More than %d features not supported; got %d."
+                             % (INT_MAX, w.shape[0]))
         self.w = w
-        self.w_data_ptr = <DOUBLE *>w.data
+        self.w_data_ptr = wdata
         self.wscale = 1.0
         self.n_features = w.shape[0]
-        self.sq_norm = np.dot(w, w)
+        self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
 
-    cdef void add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                  int xnnz, double c):
-        """Scales example x by constant c and adds it to the weight vector.
+        self.aw = aw
+        if self.aw is not None:
+            self.aw_data_ptr = <double *>aw.data
+            self.average_a = 0.0
+            self.average_b = 1.0
+
+    cdef void add(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
+                  double c) nogil:
+        """Scales sample x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
 
@@ -53,7 +78,7 @@ cdef class WeightVector(object):
         ----------
         x_data_ptr : double*
             The array which holds the feature values of ``x``.
-        x_ind_ptr : np.int32*
+        x_ind_ptr : np.intc*
             The array which holds the feature indices of ``x``.
         xnnz : int
             The number of non-zero features of ``x``.
@@ -68,7 +93,7 @@ cdef class WeightVector(object):
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
-        cdef DOUBLE* w_data_ptr = self.w_data_ptr
+        cdef double* w_data_ptr = self.w_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
@@ -79,17 +104,57 @@ cdef class WeightVector(object):
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
-    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
+    # Update the average weights according to the sparse trick defined
+    # here: http://research.microsoft.com/pubs/192769/tricks-2012.pdf
+    # by Leon Bottou
+    cdef void add_average(self, double *x_data_ptr, int *x_ind_ptr, int xnnz,
+                          double c, double num_iter) nogil:
+        """Updates the average weight vector.
+
+        Parameters
+        ----------
+        x_data_ptr : double*
+            The array which holds the feature values of ``x``.
+        x_ind_ptr : np.intc*
+            The array which holds the feature indices of ``x``.
+        xnnz : int
+            The number of non-zero features of ``x``.
+        c : double
+            The scaling constant for the example.
+        num_iter : double
+            The total number of iterations.
+        """
+        cdef int j
+        cdef int idx
+        cdef double val
+        cdef double mu = 1.0 / num_iter
+        cdef double average_a = self.average_a
+        cdef double wscale = self.wscale
+        cdef double* aw_data_ptr = self.aw_data_ptr
+
+        for j in range(xnnz):
+            idx = x_ind_ptr[j]
+            val = x_data_ptr[j]
+            aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
+
+        # Once the sample has been processed
+        # update the average_a and average_b
+        if num_iter > 1:
+            self.average_b /= (1.0 - mu)
+        self.average_a += mu * self.average_b * wscale
+
+    cdef double dot(self, double *x_data_ptr, int *x_ind_ptr,
+                    int xnnz) nogil:
         """Computes the dot product of a sample x and the weight vector.
 
         Parameters
         ----------
         x_data_ptr : double*
             The array which holds the feature values of ``x``.
-        x_ind_ptr : np.int32*
+        x_ind_ptr : np.intc*
             The array which holds the feature indices of ``x``.
         xnnz : int
-            The number of non-zero features of ``x``.
+            The number of non-zero features of ``x`` (length of x_ind_ptr).
 
         Returns
         -------
@@ -99,14 +164,14 @@ cdef class WeightVector(object):
         cdef int j
         cdef int idx
         cdef double innerprod = 0.0
-        cdef DOUBLE* w_data_ptr = self.w_data_ptr
+        cdef double* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             innerprod += w_data_ptr[idx] * x_data_ptr[j]
         innerprod *= self.wscale
         return innerprod
 
-    cdef void scale(self, double c):
+    cdef void scale(self, double c) nogil:
         """Scales the weight vector by a constant ``c``.
 
         It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
@@ -116,11 +181,19 @@ cdef class WeightVector(object):
         if self.wscale < 1e-9:
             self.reset_wscale()
 
-    cdef void reset_wscale(self):
+    cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
-        self.w *= self.wscale
+        if self.aw is not None:
+            daxpy(<int>self.aw.shape[0], self.average_a,
+                  <double *>self.w.data, 1, <double *>self.aw.data, 1)
+            dscal(<int>self.aw.shape[0], 1.0 / self.average_b,
+                  <double *>self.aw.data, 1)
+            self.average_a = 0.0
+            self.average_b = 1.0
+
+        dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
         self.wscale = 1.0
 
-    cdef double norm(self):
+    cdef double norm(self) nogil:
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)

@@ -1,8 +1,8 @@
 """Modified Olivetti faces dataset.
 
-The original database was available from (now defunct)
+The original database was available from
 
-    http://www.uk.research.att.com/facedatabase.html
+    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
@@ -20,17 +20,25 @@ The original dataset consisted of 92 x 112, while the Roweis version
 consists of 64x64 images.
 """
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
-# License: Simplified BSD
+# License: BSD 3 clause
 
-from os.path import join, exists
+from io import BytesIO
+from os.path import exists
 from os import makedirs
-from cStringIO import StringIO
-import urllib2
+try:
+    # Python 2
+    import urllib2
+    urlopen = urllib2.urlopen
+except ImportError:
+    # Python 3
+    import urllib.request
+    urlopen = urllib.request.urlopen
 
 import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home, Bunch
+from .base import _pkl_filepath
 from ..utils import check_random_state
 from ..externals import joblib
 
@@ -47,6 +55,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
     """Loader for the Olivetti faces data-set from AT&T.
 
+    Read more in the :ref:`User Guide <olivetti_faces>`.
+
     Parameters
     ----------
     data_home : optional, default: None
@@ -57,7 +67,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -65,13 +75,30 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         The seed or the random number generator used to shuffle the
         data.
 
+    Returns
+    -------
+    An object with the following attributes:
+
+    data : numpy array of shape (400, 4096)
+        Each row corresponds to a ravelled face image of original size 64 x 64 pixels.
+
+    images : numpy array of shape (400, 64, 64)
+        Each row is a face image corresponding to one of the 40 subjects of the dataset.
+
+    target : numpy array of shape (400, )
+        Labels associated to each face image. Those labels are ranging from
+        0-39 and correspond to the Subject IDs.
+
+    DESCR : string
+        Description of the modified Olivetti Faces Dataset.
+
     Notes
     ------
 
     This dataset consists of 10 pictures each of 40 individuals. The original
     database was available from (now defunct)
 
-        http://www.uk.research.att.com/facedatabase.html
+        http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
     The version retrieved here comes in MATLAB format from the personal
     web page of Sam Roweis:
@@ -82,17 +109,18 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    if not exists(join(data_home, TARGET_FILENAME)):
+    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
+    if not exists(filepath):
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
-        fhandle = urllib2.urlopen(DATA_URL)
-        buf = StringIO(fhandle.read())
+        fhandle = urlopen(DATA_URL)
+        buf = BytesIO(fhandle.read())
         mfile = loadmat(buf)
         faces = mfile['faces'].T.copy()
-        joblib.dump(faces, join(data_home, TARGET_FILENAME), compress=6)
+        joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = joblib.load(join(data_home, TARGET_FILENAME))
+        faces = joblib.load(filepath)
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
     faces = np.float32(faces)

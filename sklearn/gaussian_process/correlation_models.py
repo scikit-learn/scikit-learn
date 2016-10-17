@@ -1,9 +1,8 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# License: BSD style
+# License: BSD 3 clause
 
 """
 The built-in correlation models submodule for the gaussian_process module.
@@ -18,9 +17,9 @@ def absolute_exponential(theta, d):
     Absolute exponential autocorrelation model.
     (Ornstein-Uhlenbeck stochastic process)::
 
-                                            n
-        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i| )
-                                          i = 1
+                                          n
+        theta, d --> r(theta, d) = exp(  sum  - theta_i * |d_i| )
+                                        i = 1
 
     Parameters
     ----------
@@ -28,7 +27,7 @@ def absolute_exponential(theta, d):
         An array with shape 1 (isotropic) or n (anisotropic) giving the
         autocorrelation parameter(s).
 
-    dx : array_like
+    d : array_like
         An array with shape (n_eval, n_features) giving the componentwise
         distances between locations x and x' at which the correlation model
         should be evaluated.
@@ -39,8 +38,8 @@ def absolute_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.abs(np.asarray(d, dtype=np.float))
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.abs(np.asarray(d, dtype=np.float64))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -60,9 +59,9 @@ def squared_exponential(theta, d):
     Squared exponential correlation model (Radial Basis Function).
     (Infinitely differentiable stochastic process, very smooth)::
 
-                                            n
-        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
-                                          i = 1
+                                          n
+        theta, d --> r(theta, d) = exp(  sum  - theta_i * (d_i)^2 )
+                                        i = 1
 
     Parameters
     ----------
@@ -70,7 +69,7 @@ def squared_exponential(theta, d):
         An array with shape 1 (isotropic) or n (anisotropic) giving the
         autocorrelation parameter(s).
 
-    dx : array_like
+    d : array_like
         An array with shape (n_eval, n_features) giving the componentwise
         distances between locations x and x' at which the correlation model
         should be evaluated.
@@ -82,8 +81,8 @@ def squared_exponential(theta, d):
         autocorrelation model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -104,9 +103,9 @@ def generalized_exponential(theta, d):
     (Useful when one does not know the smoothness of the function to be
     predicted.)::
 
-                                            n
-        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * |dx_i|^p )
-                                          i = 1
+                                          n
+        theta, d --> r(theta, d) = exp(  sum  - theta_i * |d_i|^p )
+                                        i = 1
 
     Parameters
     ----------
@@ -114,7 +113,7 @@ def generalized_exponential(theta, d):
         An array with shape 1+1 (isotropic) or n+1 (anisotropic) giving the
         autocorrelation parameter(s) (theta, p).
 
-    dx : array_like
+    d : array_like
         An array with shape (n_eval, n_features) giving the componentwise
         distances between locations x and x' at which the correlation model
         should be evaluated.
@@ -126,8 +125,8 @@ def generalized_exponential(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -153,17 +152,17 @@ def pure_nugget(theta, d):
     Spatial independence correlation model (pure nugget).
     (Useful when one wants to solve an ordinary least squares problem!)::
 
-                                             n
-        theta, dx --> r(theta, dx) = 1 if   sum |dx_i| == 0
-                                           i = 1
-                                     0 otherwise
+                                           n
+        theta, d --> r(theta, d) = 1 if   sum |d_i| == 0
+                                         i = 1
+                                   0 otherwise
 
     Parameters
     ----------
     theta : array_like
         None.
 
-    dx : array_like
+    d : array_like
         An array with shape (n_eval, n_features) giving the componentwise
         distances between locations x and x' at which the correlation model
         should be evaluated.
@@ -175,8 +174,8 @@ def pure_nugget(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     n_eval = d.shape[0]
     r = np.zeros(n_eval)
@@ -189,9 +188,9 @@ def cubic(theta, d):
     """
     Cubic correlation model::
 
-        theta, dx --> r(theta, dx) =
+        theta, d --> r(theta, d) =
           n
-        prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
+         prod max(0, 1 - 3(theta_j*d_ij)^2 + 2(theta_j*d_ij)^3) ,  i = 1,...,m
         j = 1
 
     Parameters
@@ -200,7 +199,7 @@ def cubic(theta, d):
         An array with shape 1 (isotropic) or n (anisotropic) giving the
         autocorrelation parameter(s).
 
-    dx : array_like
+    d : array_like
         An array with shape (n_eval, n_features) giving the componentwise
         distances between locations x and x' at which the correlation model
         should be evaluated.
@@ -212,8 +211,8 @@ def cubic(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -239,7 +238,7 @@ def linear(theta, d):
     """
     Linear correlation model::
 
-        theta, dx --> r(theta, dx) =
+        theta, d --> r(theta, d) =
               n
             prod max(0, 1 - theta_j*d_ij) ,  i = 1,...,m
             j = 1
@@ -250,7 +249,7 @@ def linear(theta, d):
         An array with shape 1 (isotropic) or n (anisotropic) giving the
         autocorrelation parameter(s).
 
-    dx : array_like
+    d : array_like
         An array with shape (n_eval, n_features) giving the componentwise
         distances between locations x and x' at which the correlation model
         should be evaluated.
@@ -262,8 +261,8 @@ def linear(theta, d):
         model.
     """
 
-    theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    theta = np.asarray(theta, dtype=np.float64)
+    d = np.asarray(d, dtype=np.float64)
 
     if d.ndim > 1:
         n_features = d.shape[1]

@@ -27,23 +27,21 @@ should be used when applicable.
 
 - :func:`assert_all_finite`: Throw an error if array contains NaNs or Infs.
 
-- :func:`safe_asarray`: Convert input to array or sparse matrix.  Equivalent
-  to ``np.asarray``, but sparse matrices are passed through.
-
 - :func:`as_float_array`: convert input to an array of floats.  If a sparse
   matrix is passed, a sparse matrix will be returned.
 
-- :func:`array2d`: equivalent to ``np.atleast_2d``, but the ``order`` and
-  ``dtype`` of the input are maintained.
+- :func:`check_array`: convert input to 2d array, raise error on sparse
+  matrices.  Allowed sparse matrix formats can be given optionally, as well as
+  allowing 1d or nd arrays.  Calls :func:`assert_all_finite` by default.
 
-- :func:`atleast2d_or_csr`: equivalent to ``array2d``, but if a sparse matrix
-  is passed, will convert to csr format.  Also calls ``assert_all_finite``.
+- :func:`check_X_y`: check that X and y have consistent length, calls
+  check_array on X, and column_or_1d on y. For multilabel classification or
+  multitarget regression, specify multi_output=True, in which case check_array
+  will be called on y.
 
-- :func:`check_arrays`: check that all input arrays have consistent first
-  dimensions.  This will work for an arbitrary number of arrays.
-
-- :func:`warn_if_not_float`: Warn if input is not a floating-point value.
-  the input ``X`` is assumed to have ``X.dtype``.
+- :func:`indexable`: check that all input arrays have consistent length and can
+  be sliced or indexed using safe_index.  This is used to validate input for
+  cross-validation.
 
 If your code relies on a random number generator, it should never use
 functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
@@ -95,7 +93,7 @@ Efficient Linear Algebra & Array Operations
   by directly calling the BLAS
   ``nrm2`` function.  This is more stable than ``scipy.linalg.norm``.  See
   `Fabian's blog post
-  <http://fseoane.net/blog/2011/computing-the-vector-norm/>`_ for a discussion.
+  <http://fa.bianp.net/blog/2011/computing-the-vector-norm>`_ for a discussion.
 
 - :func:`extmath.fast_logdet`: efficiently compute the log of the determinant
   of a matrix.
@@ -129,7 +127,7 @@ Efficient Random Sampling
 =========================
 
 - :func:`random.sample_without_replacement`: implements efficient algorithms
-  for sampling `n_samples` integers from a population of size `n_population`
+  for sampling ``n_samples`` integers from a population of size ``n_population``
   without replacement.
 
 
@@ -139,14 +137,14 @@ Efficient Routines for Sparse Matrices
 The ``sklearn.utils.sparsefuncs`` cython module hosts compiled extensions to
 efficiently process ``scipy.sparse`` data.
 
-- :func:`sparsefuncs.mean_variance_axis0`: compute the means and
-  variances along axis 0 of a CSR matrix.
+- :func:`sparsefuncs.mean_variance_axis`: compute the means and
+  variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
   :class:`sklearn.cluster.k_means_.KMeans`.
 
 - :func:`sparsefuncs.inplace_csr_row_normalize_l1` and
   :func:`sparsefuncs.inplace_csr_row_normalize_l2`: can be used to normalize
-  individual sparse samples to unit l1 or l2 norm as done in
+  individual sparse samples to unit L1 or L2 norm as done in
   :class:`sklearn.preprocessing.Normalizer`.
 
 - :func:`sparsefuncs.inplace_csr_column_scale`: can be used to multiply the
@@ -161,7 +159,8 @@ Graph Routines
 - :func:`graph.single_source_shortest_path_length`:
   (not currently used in scikit-learn)
   Return the shortest path from a single source
-  to all connected nodes on a graph.  Code is adapted from networkx.
+  to all connected nodes on a graph.  Code is adapted from `networkx
+  <https://networkx.github.io/>`_.
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
 
@@ -171,7 +170,7 @@ Graph Routines
   both dense and sparse connectivity matrices.
 
 - :func:`graph_shortest_path.graph_shortest_path`:
-  (used in :class:``sklearn.manifold.Isomap``)
+  (used in :class:`sklearn.manifold.Isomap`)
   Return the shortest path between all pairs of connected points on a directed
   or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
   algorithm are available.  The algorithm is most efficient when the
@@ -181,36 +180,11 @@ Graph Routines
 Backports
 =========
 
-- :class:`fixes.Counter` (partial backport of ``collections.Counter`` from
-  Python 2.7) Used in ``sklearn.feature_extraction.text``.
+- :func:`fixes.expit`: Logistic sigmoid function. Replacement for SciPy 0.10's
+  ``scipy.special.expit``.
 
-- :func:`fixes.unique`: (backport of ``np.unique`` from numpy 1.4).  Find the
-  unique entries in an array.  In numpy versions < 1.4, ``np.unique`` is less
-  flexible.  Used in :mod:`sklearn.cross_validation`.
-
-- :func:`fixes.copysign`: (backport of ``np.copysign`` from numpy 1.4).
-  Change the sign of ``x1`` to that of ``x2``, element-wise.
-
-- :func:`fixes.in1d`: (backport of ``np.in1d`` from numpy 1.4).
-  Test whether each element of an array is in a second array.  Used in
-  ``sklearn.datasets.twenty_newsgroups`` and
-  ``sklearn.feature_extraction.image``.
-
-- :func:`fixes.savemat` (backport of ``scipy.io.savemat`` from scipy 0.7.2).
-  Save an array in MATLAB-format. In earlier versions, the keyword
-  ``oned_as`` is not available.
-
-- :func:`fixes.count_nonzero` (backport of ``np.count_nonzero`` from
-  numpy 1.6).  Count the nonzero elements of a matrix.  Used in
-  tests of :mod:`sklearn.linear_model`.
-
-- :func:`arrayfuncs.solve_triangular`
-  (Back-ported from scipy v0.9)  Used in ``sklearn.linear_model.omp``,
-  independent back-ports in ``sklearn.mixture.gmm`` and
-  :mod:`sklearn.gaussian_process`.
-
-- :func:`sparsetools.cs_graph_components`
-  (backported from ``scipy.sparse.cs_graph_components`` in scipy 0.9).
+- :func:`sparsetools.connected_components`
+  (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
 
@@ -253,11 +227,23 @@ Testing Functions
 - :func:`testing.assert_raise_message`: Assertions for checking the
   error raise message.
 
-- :class:`mock_urllib2`: Object which mocks the urllib2 module to fake
-  requests of mldata.  Used in tests of :mod:`sklearn.datasets`.
+- :func:`testing.mock_mldata_urlopen`: Mocks the urlopen function to fake
+  requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
 
 - :func:`testing.all_estimators` : returns a list of all estimators in
-  sklearn to test for consistent behavior and interfaces.
+  scikit-learn to test for consistent behavior and interfaces.
+
+Multiclass and multilabel utility function
+==========================================
+
+- :func:`multiclass.is_multilabel`: Helper function to check if the task
+  is a multi-label classification one.
+
+- :func:`multiclass.is_label_indicator_matrix`: Helper function to check if
+  a classification output is in label indicator matrix format.
+
+- :func:`multiclass.unique_labels`: Helper function to extract an ordered
+  array of unique labels from different formats of target.
 
 
 Helper Functions
@@ -266,10 +252,6 @@ Helper Functions
 - :class:`gen_even_slices`: generator to create ``n``-packs of slices going up
   to ``n``.  Used in ``sklearn.decomposition.dict_learning`` and
   ``sklearn.cluster.k_means``.
-
-- :class:`arraybuilder.ArrayBuilder`: Helper class to incrementally build
-  a 1-d numpy.ndarray.  Currently used in
-  ``sklearn.datasets._svmlight_format.pyx``.
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
@@ -284,17 +266,17 @@ Hash Functions
 ==============
 
 - :func:`murmurhash3_32` provides a python wrapper for the
-  `MurmurHash3_x86_32` C++ non cryptographic hash function. This hash
+  ``MurmurHash3_x86_32`` C++ non cryptographic hash function. This hash
   function is suitable for implementing lookup tables, Bloom filters,
   Count Min Sketch, feature hashing and implicitly defined sparse
   random projections::
 
     >>> from sklearn.utils import murmurhash3_32
-    >>> murmurhash3_32("some feature", seed=0)
-    -384616559
+    >>> murmurhash3_32("some feature", seed=0) == -384616559
+    True
 
-    >>> murmurhash3_32("some feature", seed=0, positive=True)
-    3910350737L
+    >>> murmurhash3_32("some feature", seed=0, positive=True) == 3910350737
+    True
 
   The ``sklearn.utils.murmurhash`` module can also be "cimported" from
   other cython modules so as to benefit from the high performance of
@@ -306,5 +288,5 @@ Warnings and Exceptions
 
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
-- :class:`ConvergenceWarning`: Custom warning to catch convergence problems.
-  Used in ``sklearn.covariance.graph_lasso``.
+- :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
+  convergence problems. Used in ``sklearn.covariance.graph_lasso``.

@@ -44,7 +44,7 @@ struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, 
 struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
-		char *weight_label, char *weight, int max_iter)
+		char *weight_label, char *weight, int max_iter, int random_seed)
 {
     struct svm_parameter *param;
     param = malloc(sizeof(struct svm_parameter));
@@ -65,6 +65,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
     param->weight = (double *) weight;
     param->gamma = gamma;
     param->max_iter = max_iter;
+    param->random_seed = random_seed;
     return param;
 }
 
@@ -101,7 +102,7 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
                             char *SV_data, npy_intp *SV_indices_dims,
                             char *SV_indices, npy_intp *SV_indptr_dims,
                             char *SV_intptr,
-                            char *sv_coef, char *rho, char *nSV, char *label,
+                            char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
 {
     struct svm_csr_model *model;
@@ -135,7 +136,8 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV,   nSV,   model->nr_class * sizeof(int));
-        memcpy(model->label, label, model->nr_class * sizeof(int));
+        for(i=0; i < model->nr_class; i++)
+            model->label[i] = i;
     }
 
     for (i=0; i < model->nr_class-1; i++) {
@@ -263,6 +265,26 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     return 0;
 }
 
+int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_size,
+                char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
+                char *dec_values, int nr_class) {
+    struct svm_csr_node **predict_nodes;
+    npy_intp i;
+
+    predict_nodes = csr_to_libsvm((double *) data, (int *) index,
+                                  (int *) intptr, intptr_size[0]-1);
+
+    if (predict_nodes == NULL)
+        return -1;
+    for(i=0; i < intptr_size[0] - 1; ++i) {
+        svm_csr_predict_values(model, predict_nodes[i],
+                               ((double *) dec_values) + i*nr_class);
+        free(predict_nodes[i]);
+    }
+    free(predict_nodes);
+
+    return 0;
+}
 
 int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_size,
 		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
@@ -305,6 +327,10 @@ void copy_intercept(char *data, struct svm_csr_model *model, npy_intp *dims)
     }
 }
 
+void copy_support (char *data, struct svm_csr_model *model)
+{
+    memcpy (data, model->sv_ind, (model->l) * sizeof(int));
+}
 
 /*
  * Some helpers to convert from libsvm sparse data structures

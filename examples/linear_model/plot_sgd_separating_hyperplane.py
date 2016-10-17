@@ -7,10 +7,10 @@ Plot the maximum margin separating hyperplane within a two-class
 separable dataset using a linear Support Vector Machines classifier
 trained using SGD.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDClassifier
 from sklearn.datasets.samples_generator import make_blobs
 
@@ -30,13 +30,13 @@ Z = np.empty(X1.shape)
 for (i, j), val in np.ndenumerate(X1):
     x1 = val
     x2 = X2[i, j]
-    p = clf.decision_function([x1, x2])
+    p = clf.decision_function([[x1, x2]])
     Z[i, j] = p[0]
 levels = [-1.0, 0.0, 1.0]
 linestyles = ['dashed', 'solid', 'dashed']
 colors = 'k'
-pl.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
-pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
+plt.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
 
-pl.axis('tight')
-pl.show()
+plt.axis('tight')
+plt.show()

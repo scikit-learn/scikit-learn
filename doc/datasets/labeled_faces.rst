@@ -43,7 +43,7 @@ classification task (hence supervised learning)::
   >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
   >>> for name in lfw_people.target_names:
-  ...     print name
+  ...     print(name)
   ...
   Ariel Sharon
   Colin Powell
@@ -92,15 +92,16 @@ is a pair of two picture belonging or not to the same person::
   >>> lfw_pairs_train.target.shape
   (2200,)
 
-Both for the ``fetch_lfw_people`` and ``fetch_lfw_pairs`` function it is
+Both for the :func:`sklearn.datasets.fetch_lfw_people` and
+:func:`sklearn.datasets.fetch_lfw_pairs` function it is
 possible to get an additional dimension with the RGB color channels by
 passing ``color=True``, in that case the shape will be
 ``(2200, 2, 62, 47, 3)``.
 
-The ``fetch_lfw_pairs`` datasets is subdived in 3 subsets: the development
-``train`` set, the development ``test`` set and an evaluation ``10_folds``
-set meant to compute performance metrics using a 10-folds cross
-validation scheme.
+The :func:`sklearn.datasets.fetch_lfw_pairs` datasets is subdivided into
+3 subsets: the development ``train`` set, the development ``test`` set and
+an evaluation ``10_folds`` set meant to compute performance metrics using a
+10-folds cross validation scheme.
 
 .. topic:: References:
 
@@ -114,4 +115,4 @@ validation scheme.
 Examples
 --------
 
-:ref:`example_applications_face_recognition.py`
+:ref:`sphx_glr_auto_examples_applications_face_recognition.py`

@@ -1,5 +1,5 @@
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy
 

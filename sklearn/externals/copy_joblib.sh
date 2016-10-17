@@ -1,18 +1,28 @@
 #!/bin/sh
 # Script to do a local install of joblib
+export LC_ALL=C
 rm -rf tmp joblib
-mkdir -p tmp/lib/python2.7/site-packages
-ln -s tmp/lib/python2.7 tmp/lib/python2.5
-ln -s tmp/lib/python2.7 tmp/lib/python2.6
+PYTHON_VERSION=$(python -c 'import sys; print("{0[0]}.{0[1]}".format(sys.version_info))')
+SITE_PACKAGES="$PWD/tmp/lib/python$PYTHON_VERSION/site-packages"
+
+mkdir -p $SITE_PACKAGES
 mkdir -p tmp/bin
-export PYTHONPATH=$(pwd)/tmp/lib/python2.7/site-packages:$(pwd)/tmp/lib/python2.6/site-packages:$(pwd)/tmp/lib/python2.5/site-packages
+export PYTHONPATH="$SITE_PACKAGES"
 easy_install -Zeab tmp joblib
-old_pwd=$(pwd)
-#cd /home/varoquau/dev/joblib/ 
+
 cd tmp/joblib/
-python setup.py install --prefix $old_pwd/tmp
-cd $old_pwd
-cp -r tmp/lib/python2.7/site-packages/joblib-*.egg/joblib .
+python setup.py install --prefix $OLDPWD/tmp
+cd $OLDPWD
+cp -r $SITE_PACKAGES/joblib-*.egg/joblib .
 rm -rf tmp
 # Needed to rewrite the doctests
-find joblib -name "*.py" | xargs sed -i "s/from joblib/from sklearn.externals.joblib/"
+# Note: BSD sed -i needs an argument unders OSX
+# so first renaming to .bak and then deleting backup files
+find joblib -name "*.py" | xargs sed -i.bak "s/from joblib/from sklearn.externals.joblib/"
+find joblib -name "*.bak" | xargs rm
+
+# Remove the tests folders to speed-up test time for scikit-learn.
+# joblib is already tested on its own CI infrastructure upstream.
+rm -r joblib/test
+
+chmod -x joblib/*.py

@@ -3,4 +3,4 @@
 Dataset examples
 -----------------------
 
-Examples concerning the :mod:`sklearn.datasets` package.
+Examples concerning the :mod:`sklearn.datasets` module.

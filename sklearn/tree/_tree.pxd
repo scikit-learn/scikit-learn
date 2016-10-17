@@ -1,159 +1,104 @@
-# Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
-# License: BSD Style.
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
+#          Joel Nothman <joel.nothman@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
+#          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
+#
+# License: BSD 3 clause
 
 # See _tree.pyx for details.
 
+import numpy as np
 cimport numpy as np
-from cpython cimport bool
 
-ctypedef np.float32_t DTYPE_t
-ctypedef np.float64_t DOUBLE_t
-ctypedef np.int8_t BOOL_t
+ctypedef np.npy_float32 DTYPE_t          # Type of X
+ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
+ctypedef np.npy_intp SIZE_t              # Type for indices and counters
+ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
+from ._splitter cimport Splitter
+from ._splitter cimport SplitRecord
 
-# =============================================================================
-# Criterion
-# =============================================================================
+cdef struct Node:
+    # Base storage structure for the nodes in a Tree object
 
-cdef class Criterion:
-    cdef int n_outputs
-    cdef int n_samples
-    cdef double weighted_n_samples
+    SIZE_t left_child                    # id of the left child of the node
+    SIZE_t right_child                   # id of the right child of the node
+    SIZE_t feature                       # Feature used for splitting the node
+    DOUBLE_t threshold                   # Threshold value at the node
+    DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
+    SIZE_t n_node_samples                # Number of samples at the node
+    DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
-    cdef int n_left
-    cdef int n_right
-    cdef double weighted_n_left
-    cdef double weighted_n_right
-
-    # Methods
-    cdef void init(self, DOUBLE_t* y, int y_stride,
-                         DOUBLE_t* sample_weight,
-                         BOOL_t* sample_mask,
-                         int n_samples,
-                         double weighted_n_samples,
-                         int n_total_samples)
-
-    cdef void reset(self)
-
-    cdef bool update(self, int a,
-                     int b,
-                     DOUBLE_t* y, int y_stride,
-                     int* X_argsorted_i,
-                     DOUBLE_t* sample_weight,
-                     BOOL_t* sample_mask)
-
-    cdef double eval(self)
-
-    cdef void init_value(self, double* buffer_value)
-
-
-# =============================================================================
-# Tree
-# =============================================================================
 
 cdef class Tree:
+    # The Tree object is a binary tree structure constructed by the
+    # TreeBuilder. The tree structure is used for predictions and
+    # feature importances.
+
     # Input/Output layout
-    cdef public int n_features
-    cdef int* n_classes
-    cdef public int n_outputs
+    cdef public SIZE_t n_features        # Number of features in X
+    cdef SIZE_t* n_classes               # Number of classes in y[:, k]
+    cdef public SIZE_t n_outputs         # Number of outputs in y
+    cdef public SIZE_t max_n_classes     # max(n_classes)
 
-    cdef public int max_n_classes
-    cdef public int value_stride
-
-    # Parameters
-    cdef public Criterion criterion
-    cdef public double max_depth
-    cdef public int min_samples_split
-    cdef public int min_samples_leaf
-    cdef public double min_density
-    cdef public int max_features
-    cdef public int find_split_algorithm
-    cdef public object random_state
-
-    # Inner structures
-    cdef public int node_count
-    cdef public int capacity
-    cdef int* children_left
-    cdef int* children_right
-    cdef int* feature
-    cdef double* threshold
-    cdef double* value
-    cdef double* best_error
-    cdef double* init_error
-    cdef int* n_samples
-
-    cdef np.ndarray features
+    # Inner structures: values are stored separately from node structure,
+    # since size is determined at runtime.
+    cdef public SIZE_t max_depth         # Max depth of the tree
+    cdef public SIZE_t node_count        # Counter for node IDs
+    cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
+    cdef Node* nodes                     # Array of nodes
+    cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
+    cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef void resize(self, int capacity=*)
+    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                          SIZE_t feature, double threshold, double impurity,
+                          SIZE_t n_node_samples,
+                          double weighted_n_samples) nogil
+    cdef void _resize(self, SIZE_t capacity) except *
+    cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
-    cpdef build(self, np.ndarray X, np.ndarray y,
-                np.ndarray sample_mask=*,
-                np.ndarray X_argsorted=*,
-                np.ndarray sample_weight=*)
+    cdef np.ndarray _get_value_ndarray(self)
+    cdef np.ndarray _get_node_ndarray(self)
 
-    cdef void recursive_partition(self,
-                                  np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                                  np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
-                                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                                  np.ndarray[DOUBLE_t, ndim=1, mode="c"] sample_weight,
-                                  np.ndarray sample_mask,
-                                  int n_node_samples,
-                                  double weighted_n_node_samples,
-                                  int depth,
-                                  int parent,
-                                  int is_left_child,
-                                  double* buffer_value) except *
+    cpdef np.ndarray predict(self, object X)
 
-    cdef int add_split_node(self, int parent, int is_left_child, int feature,
-                                  double threshold, double* value,
-                                  double best_error, double init_error,
-                                  int n_samples)
+    cpdef np.ndarray apply(self, object X)
+    cdef np.ndarray _apply_dense(self, object X)
+    cdef np.ndarray _apply_sparse_csr(self, object X)
 
-    cdef int add_leaf(self, int parent, int is_left_child, double* value,
-                      double error, int n_samples)
+    cpdef object decision_path(self, object X)
+    cdef object _decision_path_dense(self, object X)
+    cdef object _decision_path_sparse_csr(self, object X)
 
-    cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
-                         int* X_argsorted_ptr, int X_argsorted_stride,
-                         DOUBLE_t* y_ptr, int y_stride,
-                         DOUBLE_t* sample_weight_ptr,
-                         BOOL_t* sample_mask_ptr,
-                         int n_node_samples,
-                         double weighted_n_node_samples,
-                         int n_total_samples,
-                         int* _best_i,
-                         double* _best_t,
-                         double* _best_error,
-                         double* _initial_error)
+    cpdef compute_feature_importances(self, normalize=*)
 
-    cdef void find_best_split(self, DTYPE_t* X_ptr, int X_stride,
-                              int* X_argsorted_ptr, int X_argsorted_stride,
-                              DOUBLE_t* y_ptr, int y_stride,
-                              DOUBLE_t* sample_weight_ptr,
-                              BOOL_t* sample_mask_ptr,
-                              int n_node_samples,
-                              double weighted_n_node_samples,
-                              int n_total_samples, int* _best_i,
-                              double* _best_t, double* _best_error,
-                              double* _initial_error)
 
-    cdef void find_random_split(self, DTYPE_t* X_ptr, int X_stride,
-                                int* X_argsorted_ptr, int X_argsorted_stride,
-                                DOUBLE_t* y_ptr, int y_stride,
-                                DOUBLE_t* sample_weight_ptr,
-                                BOOL_t* sample_mask_ptr,
-                                int n_node_samples,
-                                double weighted_n_node_samples,
-                                int n_total_samples, int* _best_i,
-                                double* _best_t, double* _best_error,
-                                double* _initial_error)
+# =============================================================================
+# Tree builder
+# =============================================================================
 
-    cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
+cdef class TreeBuilder:
+    # The TreeBuilder recursively builds a Tree object from training samples,
+    # using a Splitter object for splitting internal nodes and assigning
+    # values to leaves.
+    #
+    # This class controls the various stopping criteria and the node splitting
+    # evaluation order, e.g. depth-first or best-first.
 
-    cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
+    cdef Splitter splitter          # Splitting algorithm
 
-    cpdef compute_feature_importances(self, method=*)
+    cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
+    cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
+    cdef double min_weight_leaf     # Minimum weight in a leaf
+    cdef SIZE_t max_depth           # Maximal tree depth
+    cdef double min_impurity_split  # Impurity threshold for early stopping
 
-    cdef inline double _compute_feature_importances_gini(self, int node)
-
-    cdef inline double _compute_feature_importances_squared(self, int node)
+    cpdef build(self, Tree tree, object X, np.ndarray y,
+                np.ndarray sample_weight=*,
+                np.ndarray X_idx_sorted=*)
+    cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)

@@ -9,16 +9,16 @@ matrix decomposition (dimension reduction) methods from the module
 :ref:`decompositions`) .
 
 """
-print __doc__
+print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
-# License: BSD
+# License: BSD 3 clause
 
 import logging
 from time import time
 
 from numpy.random import RandomState
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.cluster import MiniBatchKMeans
@@ -45,39 +45,38 @@ faces_centered = faces - faces.mean(axis=0)
 # local centering
 faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 
-print "Dataset consists of %d faces" % n_samples
+print("Dataset consists of %d faces" % n_samples)
 
 
 ###############################################################################
 def plot_gallery(title, images, n_col=n_col, n_row=n_row):
-    pl.figure(figsize=(2. * n_col, 2.26 * n_row))
-    pl.suptitle(title, size=16)
+    plt.figure(figsize=(2. * n_col, 2.26 * n_row))
+    plt.suptitle(title, size=16)
     for i, comp in enumerate(images):
-        pl.subplot(n_row, n_col, i + 1)
+        plt.subplot(n_row, n_col, i + 1)
         vmax = max(comp.max(), -comp.min())
-        pl.imshow(comp.reshape(image_shape), cmap=pl.cm.gray,
-                  interpolation='nearest',
-                  vmin=-vmax, vmax=vmax)
-        pl.xticks(())
-        pl.yticks(())
-    pl.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
+        plt.imshow(comp.reshape(image_shape), cmap=plt.cm.gray,
+                   interpolation='nearest',
+                   vmin=-vmax, vmax=vmax)
+        plt.xticks(())
+        plt.yticks(())
+    plt.subplots_adjust(0.01, 0.05, 0.99, 0.93, 0.04, 0.)
 
 ###############################################################################
 # List of the different estimators, whether to center and transpose the
 # problem, and whether the transformer uses the clustering API.
 estimators = [
-    ('Eigenfaces - RandomizedPCA',
-     decomposition.RandomizedPCA(n_components=n_components, whiten=True),
+    ('Eigenfaces - PCA using randomized SVD',
+     decomposition.PCA(n_components=n_components, svd_solver='randomized',
+                       whiten=True),
      True),
 
     ('Non-negative components - NMF',
-     decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,
-                       tol=5e-3, sparseness='components'),
+     decomposition.NMF(n_components=n_components, init='nndsvda', tol=5e-3),
      False),
 
     ('Independent components - FastICA',
-     decomposition.FastICA(n_components=n_components, whiten=True,
-                           max_iter=10),
+     decomposition.FastICA(n_components=n_components, whiten=True),
      True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
@@ -112,23 +111,30 @@ plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 # Do the estimation and plot it
 
 for name, estimator, center in estimators:
-    print "Extracting the top %d %s..." % (n_components, name)
+    print("Extracting the top %d %s..." % (n_components, name))
     t0 = time()
     data = faces
     if center:
         data = faces_centered
     estimator.fit(data)
     train_time = (time() - t0)
-    print "done in %0.3fs" % train_time
+    print("done in %0.3fs" % train_time)
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
-    if hasattr(estimator, 'noise_variance_'):
+
+    # Plot an image representing the pixelwise variance provided by the
+    # estimator e.g its noise_variance_ attribute. The Eigenfaces estimator,
+    # via the PCA decomposition, also provides a scalar noise_variance_
+    # (the mean of pixelwise variance) that cannot be displayed as an image
+    # so we skip it.
+    if (hasattr(estimator, 'noise_variance_') and
+            estimator.noise_variance_.ndim > 0):  # Skip the Eigenfaces case
         plot_gallery("Pixelwise variance",
                      estimator.noise_variance_.reshape(1, -1), n_col=1,
                      n_row=1)
     plot_gallery('%s - Train time %.1fs' % (name, train_time),
                  components_[:n_components])
 
-pl.show()
+plt.show()

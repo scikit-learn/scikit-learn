@@ -11,7 +11,7 @@ must predict whether the two images are from the same person.
 
 An alternative task, Face Recognition or Face Identification is:
 given the picture of the face of an unknown person, identify the name
-of the person by refering to a gallery of previously seen pictures of
+of the person by referring to a gallery of previously seen pictures of
 identified persons.
 
 Both Face Verification and Face Recognition are tasks that are typically
@@ -21,18 +21,25 @@ implemented in the OpenCV library. The LFW faces were extracted by this face
 detector from various online websites.
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
-from os import listdir, makedirs, remove
+from os import listdir, makedirs, remove, rename
 from os.path import join, exists, isdir
+
+from sklearn.utils import deprecated
 
 import logging
 import numpy as np
-import urllib
+
+try:
+    import urllib.request as urllib  # for backwards compatibility
+except ImportError:
+    import urllib
 
 from .base import get_data_home, Bunch
 from ..externals.joblib import Memory
 
+from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +89,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(target_filepath):
             if download_if_missing:
                 url = BASE_URL + target_filename
-                logger.warn("Downloading LFW metadata: %s", url)
+                logger.warning("Downloading LFW metadata: %s", url)
                 urllib.urlretrieve(url, target_filepath)
             else:
                 raise IOError("%s is missing" % target_filepath)
@@ -91,8 +98,11 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                logger.warn("Downloading LFW data (~200MB): %s", archive_url)
-                urllib.urlretrieve(archive_url, archive_path)
+                archive_path_temp = archive_path + ".tmp"
+                logger.warning("Downloading LFW data (~200MB): %s",
+                               archive_url)
+                urllib.urlretrieve(archive_url, archive_path_temp)
+                rename(archive_path_temp, archive_path)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -117,7 +127,7 @@ def _load_imgs(file_paths, slice_, color, resize):
         from scipy.misc import imresize
     except ImportError:
         raise ImportError("The Python Imaging Library (PIL)"
-                          "is required to load data from jpeg files")
+                          " is required to load data from jpeg files")
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
@@ -128,8 +138,8 @@ def _load_imgs(file_paths, slice_, color, resize):
         slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
 
     h_slice, w_slice = slice_
-    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
-    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+    h = (h_slice.stop - h_slice.start) // (h_slice.step or 1)
+    w = (w_slice.stop - w_slice.start) // (w_slice.step or 1)
 
     if resize is not None:
         resize = float(resize)
@@ -148,13 +158,22 @@ def _load_imgs(file_paths, slice_, color, resize):
     for i, file_path in enumerate(file_paths):
         if i % 1000 == 0:
             logger.info("Loading face #%05d / %05d", i + 1, n_faces)
-        face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
+
+        # Checks if jpeg reading worked. Refer to issue #3594 for more
+        # details.
+        img = imread(file_path)
+        if img.ndim is 0:
+            raise RuntimeError("Failed to read the image file %s, "
+                               "Please make sure that libjpeg is installed"
+                               % file_path)
+
+        face = np.asarray(img[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
         if resize is not None:
             face = imresize(face, resize)
         if not color:
             # average the color channels to compute a gray levels
-            # representaion
+            # representation
             face = face.mean(axis=2)
 
         faces[i, ...] = face
@@ -208,7 +227,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
-                     min_faces_per_person=None, color=False,
+                     min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
                      download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
@@ -226,35 +245,59 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     picture of a face, find the name of the person given a training set
     (gallery).
 
+    The original images are 250 x 250 pixels, but the default slice and resize
+    arguments reduce them to 62 x 74.
+
     Parameters
     ----------
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
-    funneled: boolean, optional, default: True
+    funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
 
-    resize: float, optional, default 0.5
+    resize : float, optional, default 0.5
         Ratio used to resize the each face picture.
 
-    min_faces_per_person: int, optional, default None
+    min_faces_per_person : int, optional, default None
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 
-    color: boolean, optional, default False
+    color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
-    slice_: optional
+    slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    Returns
+    -------
+    dataset : dict-like object with the following attributes:
+
+    dataset.data : numpy array of shape (13233, 2914)
+        Each row corresponds to a ravelled face image of original size 62 x 47
+        pixels. Changing the ``slice_`` or resize parameters will change the
+        shape of the output.
+
+    dataset.images : numpy array of shape (13233, 62, 47)
+        Each row is a face image corresponding to one of the 5749 people in
+        the dataset. Changing the ``slice_`` or resize parameters will change
+        the shape of the output.
+
+    dataset.target : numpy array of shape (13233,)
+        Labels associated to each face image. Those labels range from 0-5748
+        and correspond to the person IDs.
+
+    dataset.DESCR : string
+        Description of the Labeled Faces in the Wild (LFW) dataset.
     """
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
@@ -291,11 +334,11 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
     with open(index_file_path, 'rb') as index_file:
-        split_lines = [ln.strip().split('\t') for ln in index_file]
+        split_lines = [ln.strip().split(b('\t')) for ln in index_file]
     pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
-    # interating over the metadata lines for each pair to find the filename to
+    # iterating over the metadata lines for each pair to find the filename to
     # decode and load in memory
     target = np.zeros(n_pairs, dtype=np.int)
     file_paths = list()
@@ -315,7 +358,10 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
         else:
             raise ValueError("invalid line %d: %r" % (i + 1, components))
         for j, (name, idx) in enumerate(pair):
-            person_folder = join(data_folder_path, name)
+            try:
+                person_folder = join(data_folder_path, name)
+            except TypeError:
+                person_folder = join(data_folder_path, str(name, 'UTF-8'))
             filenames = list(sorted(listdir(person_folder)))
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)
@@ -330,6 +376,9 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     return pairs, target, np.array(['Different persons', 'Same person'])
 
 
+@deprecated("Function 'load_lfw_people' has been deprecated in 0.17 and will "
+            "be removed in 0.19."
+            "Use fetch_lfw_people(download_if_missing=False) instead.")
 def load_lfw_people(download_if_missing=False, **kwargs):
     """Alias for fetch_lfw_people(download_if_missing=False)
 
@@ -362,38 +411,67 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
+    The original images are 250 x 250 pixels, but the default slice and resize
+    arguments reduce them to 62 x 74.
+
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
+
     Parameters
     ----------
-    subset: optional, default: 'train'
+    subset : optional, default: 'train'
         Select the dataset to load: 'train' for the development training
         set, 'test' for the development test set, and '10_folds' for the
         official evaluation set that is meant to be used with a 10-folds
         cross validation.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the datasets. By
         default all scikit learn data is stored in '~/scikit_learn_data'
         subfolders.
 
-    funneled: boolean, optional, default: True
+    funneled : boolean, optional, default: True
         Download and use the funneled variant of the dataset.
 
-    resize: float, optional, default 0.5
+    resize : float, optional, default 0.5
         Ratio used to resize the each face picture.
 
-    color: boolean, optional, default False
+    color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
-        one more dimension than than the shape with color = False.
+        one more dimension than the shape with color = False.
 
-    slice_: optional
+    slice_ : optional
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    Returns
+    -------
+    The data is returned as a Bunch object with the following attributes:
+
+    data : numpy array of shape (2200, 5828). Shape depends on ``subset``.
+        Each row corresponds to 2 ravel'd face images of original size 62 x 47
+        pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
+        will change the shape of the output.
+
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
+            ``subset``.
+        Each row has 2 face images corresponding to same or different person
+        from the dataset containing 5749 people. Changing the ``slice_``,
+        ``resize`` or ``subset`` parameters will change the shape of the
+        output.
+
+    target : numpy array of shape (2200,). Shape depends on ``subset``.
+        Labels associated to each pair of images. The two label values being
+        different persons or the same person.
+
+    DESCR : string
+        Description of the Labeled Faces in the Wild (LFW) dataset.
+
     """
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
@@ -427,6 +505,9 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                  DESCR="'%s' segment of the LFW pairs dataset" % subset)
 
 
+@deprecated("Function 'load_lfw_pairs' has been deprecated in 0.17 and will "
+            "be removed in 0.19."
+            "Use fetch_lfw_pairs(download_if_missing=False) instead.")
 def load_lfw_pairs(download_if_missing=False, **kwargs):
     """Alias for fetch_lfw_pairs(download_if_missing=False)
 

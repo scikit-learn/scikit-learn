@@ -15,8 +15,15 @@ from .univariate_selection import SelectFdr
 from .univariate_selection import SelectFwe
 from .univariate_selection import GenericUnivariateSelect
 
+from .variance_threshold import VarianceThreshold
+
 from .rfe import RFE
 from .rfe import RFECV
+
+from .from_model import SelectFromModel
+
+from .mutual_info_ import mutual_info_regression, mutual_info_classif
+
 
 __all__ = ['GenericUnivariateSelect',
            'RFE',
@@ -25,8 +32,12 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFpr',
            'SelectFwe',
            'SelectKBest',
+           'SelectFromModel',
            'SelectPercentile',
+           'VarianceThreshold',
            'chi2',
            'f_classif',
            'f_oneway',
-           'f_regression']
+           'f_regression',
+           'mutual_info_classif',
+           'mutual_info_regression']

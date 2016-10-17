@@ -14,12 +14,12 @@ def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
     prng = np.random.RandomState(seed)
 
     # the data is voluntary shifted away from zero to check clustering
-    # algorithm robustness w.r.t. non centered data
-    means = np.array([[1,  1, 1, 0],
+    # algorithm robustness with regards to non centered data
+    means = np.array([[1, 1, 1, 0],
                       [-1, -1, 0, 1],
                       [1, -1, 1, 1],
                       [-1, 1, 1, 0],
-                      ]) + 10
+                     ]) + 10
 
     X = np.empty((0, n_features))
     for i in range(n_clusters):

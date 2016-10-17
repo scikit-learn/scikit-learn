@@ -28,19 +28,20 @@ The `fetch_20newsgroups` function will not vectorize the data into numpy
 arrays but the dataset lists the filenames of the posts and their categories
 as target labels.
 
-The `fetch_20newsgroups_tfidf` function will in addition do a simple tf-idf
-vectorization step.
+The `fetch_20newsgroups_vectorized` function will in addition do a simple
+tf-idf vectorization step.
 
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import os
-import urllib
 import logging
 import tarfile
 import pickle
 import shutil
+import re
+import codecs
 
 import numpy as np
 import scipy.sparse as sp
@@ -48,11 +49,16 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import Bunch
 from .base import load_files
+from .base import _pkl_filepath
 from ..utils import check_random_state
-from ..utils.fixes import in1d
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib
+from ..externals import joblib, six
+
+if six.PY3:
+    from urllib.request import urlopen
+else:
+    from urllib2 import urlopen
 
 
 logger = logging.getLogger(__name__)
@@ -75,71 +81,146 @@ def download_20newsgroups(target_dir, cache_path):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    if not os.path.exists(archive_path):
-        logger.warn("Downloading dataset from %s (14 MB)", URL)
-        opener = urllib.urlopen(URL)
-        open(archive_path, 'wb').write(opener.read())
+    if os.path.exists(archive_path):
+        # Download is not complete as the .tar.gz file is removed after
+        # download.
+        logger.warning("Download was incomplete, downloading again.")
+        os.remove(archive_path)
+
+    logger.warning("Downloading dataset from %s (14 MB)", URL)
+    opener = urlopen(URL)
+    with open(archive_path, 'wb') as f:
+        f.write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
     os.remove(archive_path)
 
     # Store a zipped pickle
-    cache = dict(train=load_files(train_path, charset='latin1'),
-                 test=load_files(test_path, charset='latin1'))
-    open(cache_path, 'wb').write(pickle.dumps(cache).encode('zip'))
+    cache = dict(train=load_files(train_path, encoding='latin1'),
+                 test=load_files(test_path, encoding='latin1'))
+    compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
+    with open(cache_path, 'wb') as f:
+        f.write(compressed_content)
+
     shutil.rmtree(target_dir)
     return cache
 
 
+def strip_newsgroup_header(text):
+    """
+    Given text in "news" format, strip the headers, by removing everything
+    before the first blank line.
+    """
+    _before, _blankline, after = text.partition('\n\n')
+    return after
+
+
+_QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
+                       r'|^In article|^Quoted from|^\||^>)')
+
+
+def strip_newsgroup_quoting(text):
+    """
+    Given text in "news" format, strip lines beginning with the quote
+    characters > or |, plus lines that often introduce a quoted section
+    (for example, because they contain the string 'writes:'.)
+    """
+    good_lines = [line for line in text.split('\n')
+                  if not _QUOTE_RE.search(line)]
+    return '\n'.join(good_lines)
+
+
+def strip_newsgroup_footer(text):
+    """
+    Given text in "news" format, attempt to remove a signature block.
+
+    As a rough heuristic, we assume that signatures are set apart by either
+    a blank line or a line made of hyphens, and that it is the last such line
+    in the file (disregarding blank lines at the end).
+    """
+    lines = text.strip().split('\n')
+    for line_num in range(len(lines) - 1, -1, -1):
+        line = lines[line_num]
+        if line.strip().strip('-') == '':
+            break
+
+    if line_num > 0:
+        return '\n'.join(lines[:line_num])
+    else:
+        return text
+
+
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
+                       remove=(),
                        download_if_missing=True):
-    """Load the filenames of the 20 newsgroups dataset.
+    """Load the filenames and data from the 20 newsgroups dataset.
+
+    Read more in the :ref:`User Guide <20newsgroups>`.
 
     Parameters
     ----------
-    subset: 'train' or 'test', 'all', optional
+    subset : 'train' or 'test', 'all', optional
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    data_home: optional, default: None
-        Specify an download and cache folder for the datasets. If None,
+    data_home : optional, default: None
+        Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    categories: None or collection of string or unicode
+    categories : None or collection of string or unicode
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).
 
-    shuffle: bool, optional
+    shuffle : bool, optional
         Whether or not to shuffle the data: might be important for models that
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state: numpy random number generator or seed integer
+    random_state : numpy random number generator or seed integer
         Used to shuffle the dataset.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    remove : tuple
+        May contain any subset of ('headers', 'footers', 'quotes'). Each of
+        these are kinds of text that will be detected and removed from the
+        newsgroup posts, preventing classifiers from overfitting on
+        metadata.
+
+        'headers' removes newsgroup headers, 'footers' removes blocks at the
+        ends of posts that look like signatures, and 'quotes' removes lines
+        that appear to be quoting another post.
+
+        'headers' follows an exact standard; the other filters are not always
+        correct.
     """
 
     data_home = get_data_home(data_home=data_home)
-    cache_path = os.path.join(data_home, CACHE_NAME)
+    cache_path = _pkl_filepath(data_home, CACHE_NAME)
     twenty_home = os.path.join(data_home, "20news_home")
     cache = None
     if os.path.exists(cache_path):
         try:
-            cache = pickle.loads(open(cache_path, 'rb').read().decode('zip'))
+            with open(cache_path, 'rb') as f:
+                compressed_content = f.read()
+            uncompressed_content = codecs.decode(
+                compressed_content, 'zlib_codec')
+            cache = pickle.loads(uncompressed_content)
         except Exception as e:
-            print 80 * '_'
-            print 'Cache loading failed'
-            print 80 * '_'
-            print e
+            print(80 * '_')
+            print('Cache loading failed')
+            print(80 * '_')
+            print(e)
 
     if cache is None:
         if download_if_missing:
+            logger.info("Downloading 20news dataset. "
+                        "This may take a few minutes.")
             cache = download_20newsgroups(target_dir=twenty_home,
                                           cache_path=cache_path)
         else:
@@ -160,17 +241,25 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         data.data = data_lst
         data.target = np.array(target)
         data.filenames = np.array(filenames)
-        data.description = 'the 20 newsgroups by date dataset'
     else:
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
+
+    data.description = 'the 20 newsgroups by date dataset'
+
+    if 'headers' in remove:
+        data.data = [strip_newsgroup_header(text) for text in data.data]
+    if 'footers' in remove:
+        data.data = [strip_newsgroup_footer(text) for text in data.data]
+    if 'quotes' in remove:
+        data.data = [strip_newsgroup_quoting(text) for text in data.data]
 
     if categories is not None:
         labels = [(data.target_names.index(cat), cat) for cat in categories]
         # Sort the categories to have the ordering of the labels
         labels.sort()
         labels, categories = zip(*labels)
-        mask = in1d(data.target, labels)
+        mask = np.in1d(data.target, labels)
         data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels
@@ -195,7 +284,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(subset="train", data_home=None):
+def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
@@ -203,16 +292,28 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom `Vectorizer` or `CountVectorizer`.
 
+    Read more in the :ref:`User Guide <20newsgroups>`.
+
     Parameters
     ----------
 
-    subset: 'train' or 'test', 'all', optional
+    subset : 'train' or 'test', 'all', optional
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    remove : tuple
+        May contain any subset of ('headers', 'footers', 'quotes'). Each of
+        these are kinds of text that will be detected and removed from the
+        newsgroup posts, preventing classifiers from overfitting on
+        metadata.
+
+        'headers' removes newsgroup headers, 'footers' removes blocks at the
+        ends of posts that look like signatures, and 'quotes' removes lines
+        that appear to be quoting another post.
 
     Returns
     -------
@@ -223,20 +324,25 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         bunch.target_names: list, length [n_classes]
     """
     data_home = get_data_home(data_home=data_home)
-    target_file = os.path.join(data_home, "20newsgroup_vectorized.pk")
+    filebase = '20newsgroup_vectorized'
+    if remove:
+        filebase += 'remove-' + ('-'.join(remove))
+    target_file = _pkl_filepath(data_home, filebase + ".pkl")
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,
                                     subset='train',
                                     categories=None,
                                     shuffle=True,
-                                    random_state=12)
+                                    random_state=12,
+                                    remove=remove)
 
     data_test = fetch_20newsgroups(data_home=data_home,
                                    subset='test',
                                    categories=None,
                                    shuffle=True,
-                                   random_state=12)
+                                   random_state=12,
+                                   remove=remove)
 
     if os.path.exists(target_file):
         X_train, X_test = joblib.load(target_file)

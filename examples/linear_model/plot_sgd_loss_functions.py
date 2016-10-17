@@ -1,50 +1,42 @@
 """
 ==========================
-SGD: Convex Loss Functions
+SGD: convex loss functions
 ==========================
 
-Plot the convex loss functions supported by
-`sklearn.linear_model.stochastic_gradient`.
+A plot that compares the various convex loss functions supported by
+:class:`sklearn.linear_model.SGDClassifier` .
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
-from sklearn.linear_model.sgd_fast import SquaredHinge
-from sklearn.linear_model.sgd_fast import Hinge
-from sklearn.linear_model.sgd_fast import ModifiedHuber
-from sklearn.linear_model.sgd_fast import SquaredLoss
+import matplotlib.pyplot as plt
 
-###############################################################################
-# Define loss functions
+
+def modified_huber_loss(y_true, y_pred):
+    z = y_pred * y_true
+    loss = -4 * z
+    loss[z >= -1] = (1 - z[z >= -1]) ** 2
+    loss[z >= 1.] = 0
+    return loss
+
+
 xmin, xmax = -4, 4
-hinge = Hinge(1)
-squared_hinge = SquaredHinge()
-perceptron = Hinge(0)
-log_loss = lambda z, p: np.log2(1.0 + np.exp(-z))
-modified_huber = ModifiedHuber()
-squared_loss = SquaredLoss()
-
-
-###############################################################################
-# Plot loss funcitons
 xx = np.linspace(xmin, xmax, 100)
-pl.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-',
-        label="Zero-one loss")
-pl.plot(xx, [hinge.loss(x, 1) for x in xx], 'g-',
-        label="Hinge loss")
-pl.plot(xx, [perceptron.loss(x, 1) for x in xx], 'm-',
-        label="Perceptron loss")
-pl.plot(xx, [log_loss(x, 1) for x in xx], 'r-',
-        label="Log loss")
-#pl.plot(xx, [2 * squared_loss.loss(x, 1) for x in xx], 'c-',
-#        label="Squared loss")
-pl.plot(xx, [squared_hinge.loss(x, 1) for x in xx], 'b-',
-        label="Squared hinge loss")
-pl.plot(xx, [modified_huber.loss(x, 1) for x in xx], 'y--',
-        label="Modified huber loss")
-pl.ylim((0, 8))
-pl.legend(loc="upper right")
-pl.xlabel(r"$y \cdot f(x)$")
-pl.ylabel("$L(y, f(x))$")
-pl.show()
+lw = 2
+plt.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], color='gold', lw=lw,
+         label="Zero-one loss")
+plt.plot(xx, np.where(xx < 1, 1 - xx, 0), color='teal', lw=lw,
+         label="Hinge loss")
+plt.plot(xx, -np.minimum(xx, 0), color='yellowgreen', lw=lw,
+         label="Perceptron loss")
+plt.plot(xx, np.log2(1 + np.exp(-xx)), color='cornflowerblue', lw=lw,
+         label="Log loss")
+plt.plot(xx, np.where(xx < 1, 1 - xx, 0) ** 2, color='orange', lw=lw,
+         label="Squared hinge loss")
+plt.plot(xx, modified_huber_loss(xx, 1), color='darkorchid', lw=lw,
+         linestyle='--', label="Modified Huber loss")
+plt.ylim((0, 8))
+plt.legend(loc="upper right")
+plt.xlabel(r"Decision function $f(x)$")
+plt.ylabel("$L(y, f(x))$")
+plt.show()

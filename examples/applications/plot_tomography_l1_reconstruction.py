@@ -35,10 +35,10 @@ the circular artifact separating the pixels in the corners, that have
 contributed to fewer projections than the central disk.
 """
 
-print __doc__
+print(__doc__)
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse
@@ -56,8 +56,7 @@ def _weights(x, dx=1, orig=0):
 
 
 def _generate_center_coordinates(l_x):
-    l_x = float(l_x)
-    X, Y = np.mgrid[:l_x, :l_x]
+    X, Y = np.mgrid[:l_x, :l_x].astype(np.float64)
     center = l_x / 2.
     X += 0.5 - center
     Y += 0.5 - center

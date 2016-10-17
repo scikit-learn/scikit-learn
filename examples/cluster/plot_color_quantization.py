@@ -22,13 +22,13 @@ randomly) is also shown.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #
-# License: BSD
+# License: BSD 3 clause
 
-print __doc__
+print(__doc__)
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.metrics import euclidean_distances
+from sklearn.metrics import pairwise_distances_argmin
 from sklearn.datasets import load_sample_image
 from sklearn.utils import shuffle
 from time import time
@@ -39,8 +39,8 @@ n_colors = 64
 china = load_sample_image("china.jpg")
 
 # Convert to floats instead of the default 8 bits integer coding. Dividing by
-# 255 is important so that pl.imshow behaves works well on foat data (need to
-# be in the range [0-1]
+# 255 is important so that plt.imshow behaves works well on float data (need to
+# be in the range [0-1])
 china = np.array(china, dtype=np.float64) / 255
 
 # Load Image and transform to a 2D numpy array.
@@ -48,25 +48,26 @@ w, h, d = original_shape = tuple(china.shape)
 assert d == 3
 image_array = np.reshape(china, (w * h, d))
 
-print "Fitting estimator on a small sub-sample of the data"
+print("Fitting model on a small sub-sample of the data")
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0)[:1000]
 kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 # Get labels for all points
-print "Predicting color indices on the full image (k-means)"
+print("Predicting color indices on the full image (k-means)")
 t0 = time()
 labels = kmeans.predict(image_array)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 
 codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
-print "Predicting color indices on the full image (random)"
+print("Predicting color indices on the full image (random)")
 t0 = time()
-dist = euclidean_distances(codebook_random, image_array, squared=True)
-labels_random = dist.argmin(axis=0)
-print "done in %0.3fs." % (time() - t0)
+labels_random = pairwise_distances_argmin(codebook_random,
+                                          image_array,
+                                          axis=0)
+print("done in %0.3fs." % (time() - t0))
 
 
 def recreate_image(codebook, labels, w, h):
@@ -81,24 +82,24 @@ def recreate_image(codebook, labels, w, h):
     return image
 
 # Display all results, alongside original image
-pl.figure(1)
-pl.clf()
-ax = pl.axes([0, 0, 1, 1])
-pl.axis('off')
-pl.title('Original image (96,615 colors)')
-pl.imshow(china)
+plt.figure(1)
+plt.clf()
+ax = plt.axes([0, 0, 1, 1])
+plt.axis('off')
+plt.title('Original image (96,615 colors)')
+plt.imshow(china)
 
-pl.figure(2)
-pl.clf()
-ax = pl.axes([0, 0, 1, 1])
-pl.axis('off')
-pl.title('Quantized image (64 colors, K-Means)')
-pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
+plt.figure(2)
+plt.clf()
+ax = plt.axes([0, 0, 1, 1])
+plt.axis('off')
+plt.title('Quantized image (64 colors, K-Means)')
+plt.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
-pl.figure(3)
-pl.clf()
-ax = pl.axes([0, 0, 1, 1])
-pl.axis('off')
-pl.title('Quantized image (64 colors, Random)')
-pl.imshow(recreate_image(codebook_random, labels_random, w, h))
-pl.show()
+plt.figure(3)
+plt.clf()
+ax = plt.axes([0, 0, 1, 1])
+plt.axis('off')
+plt.title('Quantized image (64 colors, Random)')
+plt.imshow(recreate_image(codebook_random, labels_random, w, h))
+plt.show()

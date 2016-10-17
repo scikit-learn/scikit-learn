@@ -12,7 +12,7 @@ from sklearn.utils.bench import total_seconds
 
 if __name__ == '__main__':
 
-    import pylab as pl
+    import matplotlib.pyplot as plt
 
     n_iter = 40
 
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     for i in range(n_iter):
 
-        print 'Iteration %s of %s' % (i, n_iter)
+        print('Iteration %s of %s' % (i, n_iter))
 
         n_samples, n_features = 10 * i + 3, 10 * i + 3
 
@@ -46,12 +46,13 @@ if __name__ == '__main__':
         lasso.fit(X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
-    pl.xlabel('Dimesions')
-    pl.ylabel('Time (in seconds)')
-    pl.plot(dimensions, time_ridge, color='r')
-    pl.plot(dimensions, time_ols, color='g')
-    pl.plot(dimensions, time_lasso, color='b')
+    plt.figure('scikit-learn GLM benchmark results')
+    plt.xlabel('Dimensions')
+    plt.ylabel('Time (s)')
+    plt.plot(dimensions, time_ridge, color='r')
+    plt.plot(dimensions, time_ols, color='g')
+    plt.plot(dimensions, time_lasso, color='b')
 
-    pl.legend(['Ridge', 'OLS', 'LassoLars'])
-    pl.axis('tight')
-    pl.show()
+    plt.legend(['Ridge', 'OLS', 'LassoLars'], loc='upper left')
+    plt.axis('tight')
+    plt.show()

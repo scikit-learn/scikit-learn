@@ -1,25 +1,28 @@
+from __future__ import unicode_literals
+
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn.feature_extraction import FeatureHasher
-
-from nose.tools import assert_raises, assert_true
-from numpy.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_raises, assert_true, assert_equal
 
 
 def test_feature_hasher_dicts():
     h = FeatureHasher(n_features=16)
     assert_equal("dict", h.input_type)
 
-    raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
+    raw_X = [{"foo": "bar", "dada": 42, "tzara": 37},
+             {"foo": "baz", "gaga": u"string1"}]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
-    gen = (d.iteritems() for d in raw_X)
+    gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
     assert_array_equal(X1.toarray(), X2.toarray())
 
 
 def test_feature_hasher_strings():
-    raw_X = [[u"foo", "bar", "baz", "foo"],    # note: duplicate
-             [u"bar", "baz", "quux"]]
+    # mix byte and Unicode strings; note that "foo" is a duplicate in row 0
+    raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
+             ["bar".encode("ascii"), "baz", "quux"]]
 
     for lg_n_features in (7, 9, 11, 16, 22):
         n_features = 2 ** lg_n_features
@@ -36,12 +39,12 @@ def test_feature_hasher_strings():
         assert_equal(X[0].sum(), 4)
         assert_equal(X[1].sum(), 3)
 
-        assert_equal(X.nnz, sum(len(set(x)) for x in raw_X))
+        assert_equal(X.nnz, 6)
 
 
 def test_feature_hasher_pairs():
-    raw_X = (d.iteritems() for d in [{"foo": 1, "bar": 2},
-                                     {"baz": 3, "quux": 4, "foo": -1}])
+    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": 2},
+                                       {"baz": 3, "quux": 4, "foo": -1}])
     h = FeatureHasher(n_features=16, input_type="pair")
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
@@ -50,9 +53,29 @@ def test_feature_hasher_pairs():
     assert_equal([1, 3, 4], x2_nz)
 
 
+def test_feature_hasher_pairs_with_string_values():
+    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": "a"},
+                                       {"baz": u"abc", "quux": 4, "foo": -1}])
+    h = FeatureHasher(n_features=16, input_type="pair")
+    x1, x2 = h.transform(raw_X).toarray()
+    x1_nz = sorted(np.abs(x1[x1 != 0]))
+    x2_nz = sorted(np.abs(x2[x2 != 0]))
+    assert_equal([1, 1], x1_nz)
+    assert_equal([1, 1, 4], x2_nz)
+
+    raw_X = (iter(d.items()) for d in [{"bax": "abc"},
+                                       {"bax": "abc"}])
+    x1, x2 = h.transform(raw_X).toarray()
+    x1_nz = np.abs(x1[x1 != 0])
+    x2_nz = np.abs(x2[x2 != 0])
+    assert_equal([1], x1_nz)
+    assert_equal([1], x2_nz)
+    assert_array_equal(x1, x2)
+
+
 def test_hash_empty_input():
     n_features = 16
-    raw_X = [[], (), xrange(0)]
+    raw_X = [[], (), iter(range(0))]
 
     h = FeatureHasher(n_features=n_features, input_type="string")
     X = h.transform(raw_X)
@@ -73,7 +96,13 @@ def test_hasher_invalid_input():
 
 
 def test_hasher_set_params():
-    """Test delayed input validation in fit (useful for grid search)."""
+    # Test delayed input validation in fit (useful for grid search).
     hasher = FeatureHasher()
     hasher.set_params(n_features=np.inf)
     assert_raises(TypeError, hasher.fit)
+
+
+def test_hasher_zeros():
+    # Assert that no zeros are materialized in the output.
+    X = FeatureHasher().transform([{'foo': 0}])
+    assert_equal(X.data.shape, (0,))

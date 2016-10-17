@@ -1,5 +1,5 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 import os
 from os.path import join
 
@@ -19,8 +19,18 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
 
     config = Configuration('cluster', parent_package, top_path)
+    config.add_extension('_dbscan_inner',
+                         sources=['_dbscan_inner.cpp'],
+                         include_dirs=[numpy.get_include()],
+                         language="c++")
+
     config.add_extension('_hierarchical',
-                         sources=['_hierarchical.c'],
+                         sources=['_hierarchical.cpp'],
+                         language="c++",
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+    config.add_extension('_k_means_elkan',
+                         sources=['_k_means_elkan.c'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
@@ -34,6 +44,9 @@ def configuration(parent_package='', top_path=None):
         extra_compile_args=blas_info.pop('extra_compile_args', []),
         **blas_info
     )
+
+    config.add_subpackage('tests')
+
     return config
 
 if __name__ == '__main__':

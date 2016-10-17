@@ -1,4 +1,4 @@
-# simple makefile to simplify repetetive build env management tasks under posix
+# simple makefile to simplify repetitive build env management tasks under posix
 
 # caution: testing won't work on windows, see README
 
@@ -7,56 +7,67 @@ CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
 
+# skip doctests on 32bit python
+BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
+
+ifeq ($(BITS),32)
+  NOSETESTS:=$(NOSETESTS) -c setup32.cfg
+endif
+
+
 all: clean inplace test
-
-clean-pyc:
-	find sklearn -name "*.pyc" | xargs rm -f
-
-clean-so:
-	find sklearn -name "*.so" | xargs rm -f
-	find sklearn -name "*.pyd" | xargs rm -f
-
-clean-build:
-	rm -rf build
 
 clean-ctags:
 	rm -f tags
 
-clean: clean-build clean-pyc clean-so clean-ctags
+clean: clean-ctags
+	$(PYTHON) setup.py clean
+	rm -rf dist
 
 in: inplace # just a shortcut
 inplace:
+	# to avoid errors in 0.15 upgrade
+	rm -f sklearn/utils/sparsefuncs*.so
+	rm -f sklearn/utils/random*.so
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
 	$(NOSETESTS) -s -v sklearn
+test-sphinxext:
+	$(NOSETESTS) -s -v doc/sphinxext/
 test-doc:
-	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
+ifeq ($(BITS),64)
+	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
+	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
+	doc/tutorial/text_analytics
+endif
 
 test-coverage:
 	rm -rf coverage .coverage
 	$(NOSETESTS) -s -v --with-coverage sklearn
 
-test: test-code test-doc
+test: test-code test-sphinxext test-doc
 
 trailing-spaces:
-	find sklearn -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
+	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	find sklearn -name "*.pyx" | xargs $(CYTHON)
+	python build_tools/cythonize.py sklearn
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim
 	# Install with: sudo apt-get install exuberant-ctags
-	$(CTAGS) -R *
+	$(CTAGS) --python-kinds=-i -R sklearn
 
 doc: inplace
-	make -C doc html
+	$(MAKE) -C doc html
 
 doc-noplot: inplace
-	make -C doc html-noplot
+	$(MAKE) -C doc html-noplot
 
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
+
+flake8-diff:
+	./build_tools/travis/flake8_diff.sh

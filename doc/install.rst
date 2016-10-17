@@ -1,23 +1,8 @@
-=========================
-Installing `scikit-learn`
-=========================
+.. _installation-instructions:
 
-There are different ways to get scikit-learn installed:
-
-  * Install the version of scikit-learn provided by your
-    :ref:`operating system or Python distribution <install_by_distribution>`.
-    This is the quickest option for those who have operating systems that
-    distribute scikit-learn.
-
-  * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for users who want a stable version number
-    and aren't concerned about running a slightly older version of
-    scikit-learn.
-
-  * :ref:`Install the latest development version
-    <install_bleeding_edge>`.  This is best for users who want the
-    latest-and-greatest features and aren't afraid of running
-    brand-new code.
+=======================
+Installing scikit-learn
+=======================
 
 .. note::
 
@@ -25,278 +10,88 @@ There are different ways to get scikit-learn installed:
     :ref:`install the latest development version<install_bleeding_edge>`.
 
 
-.. _install_official_release:
+Installing the latest release
+=============================
 
-Installing an official release
-==============================
+Scikit-learn requires:
 
+- Python (>= 2.6 or >= 3.3),
+- NumPy (>= 1.6.1),
+- SciPy (>= 0.9).
 
-Getting the dependencies
-------------------------
-
-Installing from source requires you to have installed Python (>= 2.6),
-NumPy (>= 1.3), SciPy (>= 0.7), setuptools, Python development headers
-and a working C++ compiler.
-Under Debian-based operating systems, which include Ubuntu,
-you can install all these requirements by issuing::
-
-    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev
-
-.. note::
-
-    In order to build the documentation and run the example code contains in
-    this documentation you will need matplotlib::
-
-        sudo apt-get install python-matplotlib
-
-.. note::
-
-    On older versions of Ubuntu,
-    you might need to ``apt-get install python-numpy-dev``
-    to get the header files for NumPy.
-
-    On Ubuntu 10.04 LTS, the package `libatlas-dev` is called `libatlas-headers`.
-
-.. note::
-
-    The above installs the ATLAS implementation of BLAS
-    (the Basic Linear Algebra Subprograms library).
-    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
-    offer an alternative implementation called OpenBLAS.
-    While this implementation has some issues
-    (please don't file bug reports about this),
-    it may offer a significant speedup to some modules of scikit-learn,
-    especially on multicore hardware.
-    Replacing ATLAS with OpenBLAS only requires two commands::
-
-        # NumPy may not run when both ATLAS and OpenBLAS are installed,
-        # so remove the former.
-        sudo apt-get remove libatlas3gf-base libatlas-dev
-        sudo apt-get install libopenblas-dev
-
-Easy install
-~~~~~~~~~~~~
-
-This is usually the fastest way to install the latest stable
-release. If you have pip or easy_install, you can install or update
-with the command::
+If you already have a working installation of numpy and scipy,
+the easiest way to install scikit-learn is using ``pip`` ::
 
     pip install -U scikit-learn
 
-or::
+or ``conda``::
 
-    easy_install -U scikit-learn
+    conda install scikit-learn
 
-for easy_install. Note that you might need root privileges to run
-these commands.
+If you have not installed NumPy or SciPy yet, you can also install these using
+conda or pip. When using pip, please ensure that *binary wheels* are used,
+and NumPy and SciPy are not recompiled from source, which can happen when using
+particular configurations of operating system and hardware (such as Linux on
+a Raspberry Pi). 
+Building numpy and scipy from source can be complex (especially on Windows) and
+requires careful configuration to ensure that they link against an optimized
+implementation of linear algebra routines.
+Instead, use a third-party distribution as described below.
 
+If you must install scikit-learn and its dependencies with pip, you can install
+it as ``scikit-learn[alldeps]``. The most common use case for this is in a
+``requirements.txt`` file used as part of an automated build process for a PaaS
+application or a Docker image. This option is not intended for manual
+installation from the command line.
 
-From source package
-~~~~~~~~~~~~~~~~~~~
+Third-party Distributions
+==========================
+If you don't already have a python installation with numpy and scipy, we
+recommend to install either via your package manager or via a python bundle.
+These come with numpy, scipy, scikit-learn, matplotlib and many other helpful
+scientific and data processing libraries.
 
-Download the package from http://pypi.python.org/pypi/scikit-learn/
-, unpack the sources and cd into the source directory.
+Available options are:
 
-This packages uses distutils, which is the default way of installing
-python modules. The install command is::
+Canopy and Anaconda for all supported platforms
+-----------------------------------------------
 
-  python setup.py install
+`Canopy
+<https://www.enthought.com/products/canopy>`_ and `Anaconda
+<https://www.continuum.io/downloads>`_ both ship a recent
+version of scikit-learn, in addition to a large set of scientific python
+library for Windows, Mac OSX and Linux.
 
+Anaconda offers scikit-learn as part of its free distribution.
 
-Windows installer
------------------
 
-You can download a Windows installer from `downloads
-<https://sourceforge.net/projects/scikit-learn/files/>`_ in the
-project's web page. Note that must also have installed the packages
-numpy and setuptools.
+.. warning::
 
-This package is also expected to work with python(x,y) as of 2.6.5.5.
+    To upgrade or uninstall scikit-learn installed with Anaconda
+    or ``conda`` you **should not use the pip command**. Instead:
 
-.. topic:: **Installing on Windows 64-bit**
+    To upgrade ``scikit-learn``::
 
-   To install a 64-bit version of scikit-learn, you can download the
-   binaries from http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn
-   Note that this will require a compatible version of numpy, scipy and
-   matplotlib. The easiest option is to also download them from the same
-   URL.
+        conda update scikit-learn
 
-Building on windows
--------------------
+    To uninstall ``scikit-learn``::
 
-To build scikit-learn on windows you will need a C/C++ compiler in
-addition to numpy, scipy and setuptools. At least
-`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and
-Microsoft Visual C++ 2008 should work out of the box. To force the use
-of a particular compiler, write a file named ``setup.cfg`` in the
-source directory with the content::
+        conda remove scikit-learn
 
-    [build_ext]
-    compiler=my_compiler
+    Upgrading with ``pip install -U scikit-learn`` or uninstalling
+    ``pip uninstall scikit-learn`` is likely fail to properly remove files
+    installed by the ``conda`` command.
 
-    [build]
-    compiler=my_compiler
+    pip upgrade and uninstall operations only work on packages installed
+    via ``pip install``.
 
-where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
 
-When the appropriate compiler has been set, and assuming Python is
-in your PATH (see
-`Python FAQ for windows <http://docs.python.org/faq/windows.html>`_
-for more details), installation is done by
-executing the command::
+WinPython for Windows
+-----------------------
 
-    python setup.py install
+The `WinPython <https://winpython.github.io/>`_ project distributes
+scikit-learn as an additional plugin.
 
 
-To build a precompiled package like the ones distributed at
-`the downloads section <https://sourceforge.net/projects/scikit-learn/files/>`_,
-the command to execute is::
-
-    python setup.py bdist_wininst -b doc/logos/scikit-learn-logo.bmp
-
-This will create an installable binary under directory ``dist/``.
-
-
-.. _install_by_distribution:
-
-Third party distributions of scikit-learn
-=========================================
-
-Some third-party distributions are now providing versions of
-scikit-learn integrated with their package-management systems.
-
-These can make installation and upgrading much easier for users since
-the integration includes the ability to automatically install
-dependencies (numpy, scipy) that scikit-learn requires.
-
-The following is an imcomplete list of Python and OS distributions
-that provide their own version of scikit-learn:
-
-
-Debian and derivatives (Ubuntu)
--------------------------------
-
-The Debian package is named python-sklearn (formerly
-python-scikits-learn) and can be installed using the following
-commands with root privileges::
-
-      apt-get install python-sklearn
-
-Additionally, backport builds of the most recent release of
-scikit-learn for existing releases of Debian and Ubuntu are available
-from `NeuroDebian repository
-<http://neuro.debian.net/pkgs/python-sklearn.html>`__ .
-
-Python(x, y)
-------------
-
-The `Python(x, y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
-be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/AdditionalPlugins>`_
-page.
-
-
-Enthought Python distribution
------------------------------
-
-The `Enthought Python Distribution
-<http://www.enthought.com/products/epd.php>`_ already ships a recent
-version.
-
-
-Macports
---------
-
-The macport's package is named `py26-sklearn` or `py27-sklearn` depending
-on the version of Python. It can be installed by typing the following
-command::
-
-    sudo port install py26-sklearn
-
-or::
-
-    sudo port install py27-sklearn
-
-depending on the version of Python you want to use.
-
-
-Archlinux
----------
-
-Archlinux's package is provided at 
-`Arch User Repository (AUR) <https://aur.archlinux.org/>`_ with name
-`python2-scikit-learn` for latest stable version and `python2-scikit-learn-git`
-for building from git version. If `yaourt` is available, it can be installed
-by typing the following command::
-
-     sudo yaourt -S python2-scikit-learn
-
-or::
-
-     sudo yaourt -S python2-scikit-learn-git
-
-depending on the version of scikit-learn you want to use.
-
-
-NetBSD
-------
-
-scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
-
-    http://pkgsrc.se/wip/py-scikit_learn
-
-.. _install_bleeding_edge:
-
-Bleeding Edge
-=============
-
-See section :ref:`git_repo` on how to get the development version.
-
-
-.. _testing:
-
-Testing
-=======
-
-Testing requires having the `nose
-<http://somethingaboutorange.com/mrl/projects/nose/>`_ library. After
-installation, the package can be tested by executing *from outside* the
-source directory::
-
-    nosetests sklearn --exe
-
-This should give you a lot of output (and some warnings) but
-eventually should finish with a message similar to::
-
-           Ran 601 tests in 27.920s
-           OK (SKIP=2)
-
-Otherwise, please consider posting an issue into the `bug tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
-:ref:`mailing_lists`.
-
-.. note:: **Alternative testing method**
-
-   If for some reason the recommended method is failing for you, please try
-   the alternate method::
-
-    python -c "import sklearn; sklearn.test()"
-
-   This method might display doctest failures because of nosetests issues.
-
-scikit-learn can also be tested without having the package
-installed. For this you must compile the sources inplace from the
-source directory::
-
-    python setup.py build_ext --inplace
-
-Test can now be run using nosetests::
-
-    nosetests sklearn/
-
-This is automated by the commands::
-
-    make in
-
-and::
-
-    make test
+For installation instructions for particular operating systems or for compiling
+the bleeding edge version, see the :ref:`advanced-installation`.

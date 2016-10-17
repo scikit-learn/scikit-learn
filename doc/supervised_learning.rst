@@ -8,16 +8,19 @@ Supervised learning
 .. toctree::
 
     modules/linear_model
+    modules/lda_qda.rst
+    modules/kernel_ridge.rst
     modules/svm
     modules/sgd
     modules/neighbors
     modules/gaussian_process
-    modules/pls
+    modules/cross_decomposition.rst
     modules/naive_bayes
     modules/tree
     modules/ensemble
     modules/multiclass
     modules/feature_selection.rst
     modules/label_propagation.rst
-    modules/lda_qda.rst
     modules/isotonic.rst
+    modules/calibration.rst
+    modules/neural_networks_supervised

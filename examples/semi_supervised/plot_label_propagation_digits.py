@@ -14,21 +14,20 @@ class will be very good.
 
 At the end, the top 10 most uncertain predictions will be shown.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from scipy import stats
 
 from sklearn import datasets
 from sklearn.semi_supervised import label_propagation
 
-from sklearn.metrics import metrics
-from sklearn.metrics.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)
@@ -62,10 +61,10 @@ cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 print("Label Spreading model: %d labeled & %d unlabeled points (%d total)" %
       (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
-print metrics.classification_report(true_labels, predicted_labels)
+print(classification_report(true_labels, predicted_labels))
 
-print "Confusion matrix"
-print cm
+print("Confusion matrix")
+print(cm)
 
 # calculate uncertainty values for each transduced distribution
 pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
@@ -75,16 +74,16 @@ uncertainty_index = np.argsort(pred_entropies)[-10:]
 
 ###############################################################################
 # plot
-f = pl.figure(figsize=(7, 5))
+f = plt.figure(figsize=(7, 5))
 for index, image_index in enumerate(uncertainty_index):
     image = images[image_index]
 
     sub = f.add_subplot(2, 5, index + 1)
-    sub.imshow(image, cmap=pl.cm.gray_r)
-    pl.xticks([])
-    pl.yticks([])
+    sub.imshow(image, cmap=plt.cm.gray_r)
+    plt.xticks([])
+    plt.yticks([])
     sub.set_title('predict: %i\ntrue: %i' % (
         lp_model.transduction_[image_index], y[image_index]))
 
 f.suptitle('Learning with small amount of labeled data')
-pl.show()
+plt.show()

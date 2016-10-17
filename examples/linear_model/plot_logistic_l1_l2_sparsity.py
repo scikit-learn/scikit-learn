@@ -13,15 +13,15 @@ We classify 8x8 images of digits into two classes: 0-4 against 5-9.
 The visualization shows coefficients of the models for varying C.
 """
 
-print __doc__
+print(__doc__)
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
@@ -37,7 +37,7 @@ y = (y > 4).astype(np.int)
 
 
 # Set regularization parameter
-for i, C in enumerate(10. ** np.arange(1, 4)):
+for i, C in enumerate((100, 1, 0.01)):
     # turn down tolerance for short training time
     clf_l1_LR = LogisticRegression(C=C, penalty='l1', tol=0.01)
     clf_l2_LR = LogisticRegression(C=C, penalty='l2', tol=0.01)
@@ -53,14 +53,14 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
     sparsity_l1_LR = np.mean(coef_l1_LR == 0) * 100
     sparsity_l2_LR = np.mean(coef_l2_LR == 0) * 100
 
-    print "C=%d" % C
-    print "Sparsity with L1 penalty: %.2f%%" % sparsity_l1_LR
-    print "score with L1 penalty: %.4f" % clf_l1_LR.score(X, y)
-    print "Sparsity with L2 penalty: %.2f%%" % sparsity_l2_LR
-    print "score with L2 penalty: %.4f" % clf_l2_LR.score(X, y)
+    print("C=%.2f" % C)
+    print("Sparsity with L1 penalty: %.2f%%" % sparsity_l1_LR)
+    print("score with L1 penalty: %.4f" % clf_l1_LR.score(X, y))
+    print("Sparsity with L2 penalty: %.2f%%" % sparsity_l2_LR)
+    print("score with L2 penalty: %.4f" % clf_l2_LR.score(X, y))
 
-    l1_plot = pl.subplot(3, 2, 2 * i + 1)
-    l2_plot = pl.subplot(3, 2, 2 * (i + 1))
+    l1_plot = plt.subplot(3, 2, 2 * i + 1)
+    l2_plot = plt.subplot(3, 2, 2 * (i + 1))
     if i == 0:
         l1_plot.set_title("L1 penalty")
         l2_plot.set_title("L2 penalty")
@@ -69,11 +69,11 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
                    cmap='binary', vmax=1, vmin=0)
     l2_plot.imshow(np.abs(coef_l2_LR.reshape(8, 8)), interpolation='nearest',
                    cmap='binary', vmax=1, vmin=0)
-    pl.text(-8, 3, "C = %d" % C)
+    plt.text(-8, 3, "C = %.2f" % C)
 
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
     l2_plot.set_xticks(())
     l2_plot.set_yticks(())
 
-pl.show()
+plt.show()

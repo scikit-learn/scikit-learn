@@ -1,7 +1,4 @@
 """
-
-.. _stock_market:
-
 =======================================
 Visualizing the stock market structure
 =======================================
@@ -12,6 +9,7 @@ the stock market structure from variations in historical quotes.
 The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to cofluctuate during a day.
 
+.. _stock_market:
 
 Learning a graph structure
 --------------------------
@@ -19,7 +17,7 @@ Learning a graph structure
 We use sparse inverse covariance estimation to find which quotes are
 correlated conditionally on the others. Specifically, sparse inverse
 covariance gives us a graph, that is a list of connection. For each
-symbol, the symbols that it is connected too are those useful to expain
+symbol, the symbols that it is connected too are those useful to explain
 its fluctuations.
 
 Clustering
@@ -61,28 +59,32 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD
+# License: BSD 3 clause
 
 import datetime
 
 import numpy as np
-import pylab as pl
-from matplotlib import finance
+import matplotlib.pyplot as plt
+try:
+     from matplotlib.finance import quotes_historical_yahoo_ochl
+except ImportError:
+     # quotes_historical_yahoo_ochl was named quotes_historical_yahoo before matplotlib 1.4
+     from matplotlib.finance import quotes_historical_yahoo as quotes_historical_yahoo_ochl
 from matplotlib.collections import LineCollection
-
 from sklearn import cluster, covariance, manifold
 
 ###############################################################################
 # Retrieve the data from Internet
 
-# Choose a time period reasonnably calm (not too long ago so that we get
+# Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime.datetime(2003, 01, 01)
-d2 = datetime.datetime(2008, 01, 01)
+d1 = datetime.datetime(2003, 1, 1)
+d2 = datetime.datetime(2008, 1, 1)
 
+# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -111,13 +113,12 @@ symbol_dict = {
     'MMM': '3M',
     'MCD': 'Mc Donalds',
     'PEP': 'Pepsi',
-    'KFT': 'Kraft Foods',
+    'MDLZ': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
     'PG': 'Procter Gamble',
     'CL': 'Colgate-Palmolive',
-    'NWS': 'News Corp',
     'GE': 'General Electrics',
     'WFC': 'Wells Fargo',
     'JPM': 'JPMorgan Chase',
@@ -132,7 +133,7 @@ symbol_dict = {
     'XRX': 'Xerox',
     'LMT': 'Lookheed Martin',
     'WMT': 'Wal-Mart',
-    'WAG': 'Walgreen',
+    'WBA': 'Walgreen',
     'HD': 'Home Depot',
     'GSK': 'GlaxoSmithKline',
     'PFE': 'Pfizer',
@@ -146,9 +147,9 @@ symbol_dict = {
     'CAT': 'Caterpillar',
     'DD': 'DuPont de Nemours'}
 
-symbols, names = np.array(symbol_dict.items()).T
+symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
+quotes = [quotes_historical_yahoo_ochl(symbol, d1, d2, asobject=True)
           for symbol in symbols]
 
 open = np.array([q.open for q in quotes]).astype(np.float)
@@ -174,7 +175,7 @@ _, labels = cluster.affinity_propagation(edge_model.covariance_)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):
-    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
+    print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
 ###############################################################################
 # Find a low-dimension embedding for visualization: find the best position of
@@ -190,10 +191,10 @@ embedding = node_position_model.fit_transform(X.T).T
 
 ###############################################################################
 # Visualization
-pl.figure(1, facecolor='w', figsize=(10, 8))
-pl.clf()
-ax = pl.axes([0., 0., 1., 1.])
-pl.axis('off')
+plt.figure(1, facecolor='w', figsize=(10, 8))
+plt.clf()
+ax = plt.axes([0., 0., 1., 1.])
+plt.axis('off')
 
 # Display a graph of the partial correlations
 partial_correlations = edge_model.precision_.copy()
@@ -203,8 +204,8 @@ partial_correlations *= d[:, np.newaxis]
 non_zero = (np.abs(np.triu(partial_correlations, k=1)) > 0.02)
 
 # Plot the nodes using the coordinates of our embedding
-pl.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
-           cmap=pl.cm.spectral)
+plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
+            cmap=plt.cm.spectral)
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
@@ -214,8 +215,8 @@ segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]
 values = np.abs(partial_correlations[non_zero])
 lc = LineCollection(segments,
-                    zorder=0, cmap=pl.cm.hot_r,
-                    norm=pl.Normalize(0, .7 * values.max()))
+                    zorder=0, cmap=plt.cm.hot_r,
+                    norm=plt.Normalize(0, .7 * values.max()))
 lc.set_array(values)
 lc.set_linewidths(15 * values)
 ax.add_collection(lc)
@@ -243,16 +244,16 @@ for index, (name, label, (x, y)) in enumerate(
     else:
         verticalalignment = 'top'
         y = y - .002
-    pl.text(x, y, name, size=10,
-            horizontalalignment=horizontalalignment,
-            verticalalignment=verticalalignment,
-            bbox=dict(facecolor='w',
-                      edgecolor=pl.cm.spectral(label / float(n_labels)),
-                      alpha=.6))
+    plt.text(x, y, name, size=10,
+             horizontalalignment=horizontalalignment,
+             verticalalignment=verticalalignment,
+             bbox=dict(facecolor='w',
+                       edgecolor=plt.cm.spectral(label / float(n_labels)),
+                       alpha=.6))
 
-pl.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
-        embedding[0].max() + .10 * embedding[0].ptp(),)
-pl.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
-        embedding[1].max() + .03 * embedding[1].ptp())
+plt.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
+         embedding[0].max() + .10 * embedding[0].ptp(),)
+plt.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
+         embedding[1].max() + .03 * embedding[1].ptp())
 
-pl.show()
+plt.show()

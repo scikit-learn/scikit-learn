@@ -14,15 +14,15 @@ plot the different samples on the 2 first principal components.
 
 Linear Discriminant Analysis (LDA) tries to identify attributes that
 account for the most variance *between classes*. In particular,
-LDA, in constrast to PCA, is a supervised method, using known class labels.
+LDA, in contrast to PCA, is a supervised method, using known class labels.
 """
-print __doc__
+print(__doc__)
 
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.lda import LDA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 iris = datasets.load_iris()
 
@@ -33,23 +33,28 @@ target_names = iris.target_names
 pca = PCA(n_components=2)
 X_r = pca.fit(X).transform(X)
 
-lda = LDA(n_components=2)
+lda = LinearDiscriminantAnalysis(n_components=2)
 X_r2 = lda.fit(X, y).transform(X)
 
 # Percentage of variance explained for each components
-print 'explained variance ratio (first two components):', \
-    pca.explained_variance_ratio_
+print('explained variance ratio (first two components): %s'
+      % str(pca.explained_variance_ratio_))
 
-pl.figure()
-for c, i, target_name in zip("rgb", [0, 1, 2], target_names):
-    pl.scatter(X_r[y == i, 0], X_r[y == i, 1], c=c, label=target_name)
-pl.legend()
-pl.title('PCA of IRIS dataset')
+plt.figure()
+colors = ['navy', 'turquoise', 'darkorange']
+lw = 2
 
-pl.figure()
-for c, i, target_name in zip("rgb", [0, 1, 2], target_names):
-    pl.scatter(X_r2[y == i, 0], X_r2[y == i, 1], c=c, label=target_name)
-pl.legend()
-pl.title('LDA of IRIS dataset')
+for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+    plt.scatter(X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=.8, lw=lw,
+                label=target_name)
+plt.legend(loc='best', shadow=False, scatterpoints=1)
+plt.title('PCA of IRIS dataset')
 
-pl.show()
+plt.figure()
+for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+    plt.scatter(X_r2[y == i, 0], X_r2[y == i, 1], alpha=.8, color=color,
+                label=target_name)
+plt.legend(loc='best', shadow=False, scatterpoints=1)
+plt.title('LDA of IRIS dataset')
+
+plt.show()

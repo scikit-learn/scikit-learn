@@ -1,5 +1,5 @@
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: 3-clause BSD.
+# Author: Lars Buitinck
+# License: BSD 3 clause
 
 import array
 from cpython cimport array
@@ -43,17 +43,26 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     for x in raw_X:
         for f, v in x:
+            if isinstance(v, (str, unicode)):
+                f = "%s%s%s" % (f, '=', v)
+                value = 1
+            else:
+                value = v
+
+            if value == 0:
+                continue
+
             if isinstance(f, unicode):
-                f = f.encode("utf-8")
+                f = (<unicode>f).encode("utf-8")
             # Need explicit type check because Murmurhash does not propagate
             # all exceptions. Add "except *" there?
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
-            h = murmurhash3_bytes_s32(f, 0)
+
+            h = murmurhash3_bytes_s32(<bytes>f, 0)
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
-            value = v
             value *= (h >= 0) * 2 - 1
             values[size] = value
             size += 1
@@ -69,6 +78,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype):
 
     if len(indices):
         indices_a = np.frombuffer(indices, dtype=np.int32)
-    else:
+    else:       # workaround for NumPy < 1.7.0
         indices_a = np.empty(0, dtype=np.int32)
     return (indices_a, np.frombuffer(indptr, dtype=np.int32), values[:size])

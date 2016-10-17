@@ -13,7 +13,32 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
-__version__ = '0.14-git'
+import re
+import warnings
+
+
+# Make sure that DeprecationWarning within this package always gets printed
+warnings.filterwarnings('always', category=DeprecationWarning,
+                        module='^{0}\.'.format(re.escape(__name__)))
+
+# PEP0440 compatible formatted version, see:
+# https://www.python.org/dev/peps/pep-0440/
+#
+# Generic release markers:
+#   X.Y
+#   X.Y.Z   # For bugfix releases
+#
+# Admissible pre-release markers:
+#   X.YaN   # Alpha release
+#   X.YbN   # Beta release
+#   X.YrcN  # Release Candidate
+#   X.Y     # Final release
+#
+# Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
+# 'X.Y.dev0' is the canonical version of 'X.Y.dev'
+#
+__version__ = '0.19.dev0'
+
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -30,53 +55,24 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
+    __check_build  # avoid flakes unused variable error
 
-    try:
-        from numpy.testing import nosetester
-
-        class _NoseTester(nosetester.NoseTester):
-            """ Subclass numpy's NoseTester to add doctests by default
-            """
-
-            def test(self, label='fast', verbose=1, extra_argv=['--exe'],
-                     doctests=True, coverage=False):
-                """Run the full test suite
-
-                Examples
-                --------
-                This will run the test suite and stop at the first failing
-                example
-                >>> from sklearn import test
-                >>> test(extra_argv=['--exe', '-sx']) #doctest: +SKIP
-                """
-                return super(_NoseTester, self).test(label=label,
-                                                     verbose=verbose,
-                                                     extra_argv=extra_argv,
-                                                     doctests=doctests,
-                                                     coverage=coverage)
-
-        try:
-            test = _NoseTester(raise_warnings="release").test
-        except TypeError:
-            # Older versions of numpy do not have a raise_warnings argument
-            test = _NoseTester().test
-        del nosetester
-    except:
-        pass
-
-    __all__ = ['cross_validation', 'cluster', 'covariance',
-               'datasets', 'decomposition', 'feature_extraction',
-               'feature_selection', 'semi_supervised',
-               'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-               'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls',
-               'isotonic','NIPALS']
+    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
+               'cross_validation', 'datasets', 'decomposition', 'dummy',
+               'ensemble', 'exceptions', 'externals', 'feature_extraction',
+               'feature_selection', 'gaussian_process', 'grid_search',
+               'isotonic', 'kernel_approximation', 'kernel_ridge',
+               'lda', 'learning_curve', 'linear_model', 'manifold', 'metrics',
+               'mixture', 'model_selection', 'multiclass', 'multioutput',
+               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
+               'preprocessing', 'qda', 'random_projection', 'semi_supervised',
+               'svm', 'tree', 'discriminant_analysis',
+               # Non-modules:
+               'clone']
 
 
 def setup_module(module):
-    """Fixture for the tests to assure globally controllable seeding of RNGs
-    """
-
+    """Fixture for the tests to assure globally controllable seeding of RNGs"""
     import os
     import numpy as np
     import random
@@ -89,3 +85,5 @@ def setup_module(module):
     print("I: Seeding RNGs with %r" % _random_seed)
     np.random.seed(_random_seed)
     random.seed(_random_seed)
+
+0

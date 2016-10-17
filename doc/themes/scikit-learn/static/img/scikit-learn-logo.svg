@@ -1,0 +1,1050 @@
+
+
+
+<!DOCTYPE html>
+<html>
+  <head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# githubog: http://ogp.me/ns/fb/githubog#">
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>scikit-learn/doc/logos/scikit-learn-logo.svg at master · scikit-learn/scikit-learn</title>
+    <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="GitHub" />
+    <link rel="fluid-icon" href="https://github.com/fluidicon.png" title="GitHub" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-114.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-144.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144.png" />
+    <link rel="logo" type="image/svg" href="https://github-media-downloads.s3.amazonaws.com/github-logo.svg" />
+    <meta property="og:image" content="https://github.global.ssl.fastly.net/images/modules/logos_page/Octocat.png">
+    <meta name="hostname" content="fe4.rs.github.com">
+    <link rel="assets" href="https://github.global.ssl.fastly.net/">
+    <link rel="xhr-socket" href="/_sockets" />
+    
+    
+
+
+    <meta name="msapplication-TileImage" content="/windows-tile.png" />
+    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta name="selected-link" value="repo_source" data-pjax-transient />
+    <meta content="collector.githubapp.com" name="octolytics-host" /><meta content="github" name="octolytics-app-id" /><meta content="295195" name="octolytics-actor-id" /><meta content="vmichel" name="octolytics-actor-login" /><meta content="12af56ff3873f70afc40e04ed1de8c6d1d3afc81672a2e87a8ac3fafdaff894c" name="octolytics-actor-hash" />
+
+    
+    
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+    <meta content="authenticity_token" name="csrf-param" />
+<meta content="AA8ZYQ4c0tpyEgKRynIQM86LTi18O5D4dc/WqxL7AuU=" name="csrf-token" />
+
+    <link href="https://github.global.ssl.fastly.net/assets/github-8921d913c104b05dbca482140b50a4899d808da0.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="https://github.global.ssl.fastly.net/assets/github2-3d41bb4cf621d85b14f818b30d303826fdcc6556.css" media="all" rel="stylesheet" type="text/css" />
+    
+
+
+      <script src="https://github.global.ssl.fastly.net/assets/frameworks-e8054ad804a1cf9e9849130fee5a4a5487b663ed.js" type="text/javascript"></script>
+      <script src="https://github.global.ssl.fastly.net/assets/github-1b7840e1ec2954c0675f2263b9e3789a0fee0808.js" type="text/javascript"></script>
+      
+      <meta http-equiv="x-pjax-version" content="937fa06ecc5e3385af78bf5912d4a166">
+
+        <link data-pjax-transient rel='permalink' href='/scikit-learn/scikit-learn/blob/798f44265472ff4d954c0f78674bb64742408a76/doc/logos/scikit-learn-logo.svg'>
+  <meta property="og:title" content="scikit-learn"/>
+  <meta property="og:type" content="githubog:gitrepository"/>
+  <meta property="og:url" content="https://github.com/scikit-learn/scikit-learn"/>
+  <meta property="og:image" content="https://github.global.ssl.fastly.net/images/gravatars/gravatar-user-420.png"/>
+  <meta property="og:site_name" content="GitHub"/>
+  <meta property="og:description" content="scikit-learn: machine learning in Python"/>
+
+  <meta name="description" content="scikit-learn: machine learning in Python" />
+
+  <meta content="365630" name="octolytics-dimension-user_id" /><meta content="scikit-learn" name="octolytics-dimension-user_login" /><meta content="843222" name="octolytics-dimension-repository_id" /><meta content="scikit-learn/scikit-learn" name="octolytics-dimension-repository_nwo" /><meta content="true" name="octolytics-dimension-repository_public" /><meta content="false" name="octolytics-dimension-repository_is_fork" /><meta content="843222" name="octolytics-dimension-repository_network_root_id" /><meta content="scikit-learn/scikit-learn" name="octolytics-dimension-repository_network_root_nwo" />
+  <link href="https://github.com/scikit-learn/scikit-learn/commits/master.atom" rel="alternate" title="Recent Commits to scikit-learn:master" type="application/atom+xml" />
+
+  </head>
+
+
+  <body class="logged_in page-blob linux vis-public env-production ">
+
+    <div class="wrapper">
+      
+      
+      
+
+
+      <div class="header header-logged-in true">
+  <div class="container clearfix">
+
+    <a class="header-logo-invertocat" href="https://github.com/">
+  <span class="mega-octicon octicon-mark-github"></span>
+</a>
+
+    <div class="divider-vertical"></div>
+
+      <a href="/scikit-learn/scikit-learn/notifications" class="notification-indicator tooltipped downwards contextually-unread" title="You have unread notifications in this repository">
+    <span class="mail-status unread"></span>
+  </a>
+  <div class="divider-vertical"></div>
+
+
+      <div class="command-bar js-command-bar  in-repository">
+          <form accept-charset="UTF-8" action="/search" class="command-bar-form" id="top_search_form" method="get">
+
+<input type="text" data-hotkey=" s" name="q" id="js-command-bar-field" placeholder="Search or type a command" tabindex="1" autocapitalize="off"
+    
+    data-username="vmichel"
+      data-repo="scikit-learn/scikit-learn"
+      data-branch="master"
+      data-sha="717ee4d7202708759558670a8fbcb5f982f37009"
+  >
+
+    <input type="hidden" name="nwo" value="scikit-learn/scikit-learn" />
+
+    <div class="select-menu js-menu-container js-select-menu search-context-select-menu">
+      <span class="minibutton select-menu-button js-menu-target">
+        <span class="js-select-button">This repository</span>
+      </span>
+
+      <div class="select-menu-modal-holder js-menu-content js-navigation-container">
+        <div class="select-menu-modal">
+
+          <div class="select-menu-item js-navigation-item js-this-repository-navigation-item selected">
+            <span class="select-menu-item-icon octicon octicon-check"></span>
+            <input type="radio" class="js-search-this-repository" name="search_target" value="repository" checked="checked" />
+            <div class="select-menu-item-text js-select-button-text">This repository</div>
+          </div> <!-- /.select-menu-item -->
+
+          <div class="select-menu-item js-navigation-item js-all-repositories-navigation-item">
+            <span class="select-menu-item-icon octicon octicon-check"></span>
+            <input type="radio" name="search_target" value="global" />
+            <div class="select-menu-item-text js-select-button-text">All repositories</div>
+          </div> <!-- /.select-menu-item -->
+
+        </div>
+      </div>
+    </div>
+
+  <span class="octicon help tooltipped downwards" title="Show command bar help">
+    <span class="octicon octicon-question"></span>
+  </span>
+
+
+  <input type="hidden" name="ref" value="cmdform">
+
+</form>
+        <ul class="top-nav">
+            <li class="explore"><a href="/explore">Explore</a></li>
+            <li><a href="https://gist.github.com">Gist</a></li>
+            <li><a href="/blog">Blog</a></li>
+          <li><a href="https://help.github.com">Help</a></li>
+        </ul>
+      </div>
+
+    
+
+  
+
+    <ul id="user-links">
+      <li>
+        <a href="/vmichel" class="name">
+          <img height="20" src="https://secure.gravatar.com/avatar/8c9a66f0ba2a68fb378ac4d646712a3c?s=140&amp;d=https://a248.e.akamai.net/assets.github.com%2Fimages%2Fgravatars%2Fgravatar-user-420.png" width="20" /> vmichel
+        </a>
+      </li>
+
+        <li>
+          <a href="/new" id="new_repo" class="tooltipped downwards" title="Create a new repo" aria-label="Create a new repo">
+            <span class="octicon octicon-repo-create"></span>
+          </a>
+        </li>
+
+        <li>
+          <a href="/settings/profile" id="account_settings"
+            class="tooltipped downwards"
+            aria-label="Account settings "
+            title="Account settings ">
+            <span class="octicon octicon-tools"></span>
+          </a>
+        </li>
+        <li>
+          <a class="tooltipped downwards" href="/logout" data-method="post" id="logout" title="Sign out" aria-label="Sign out">
+            <span class="octicon octicon-log-out"></span>
+          </a>
+        </li>
+
+    </ul>
+
+
+<div class="js-new-dropdown-contents hidden">
+  
+
+<ul class="dropdown-menu">
+  <li>
+    <a href="/new"><span class="octicon octicon-repo-create"></span> New repository</a>
+  </li>
+  <li>
+    <a href="/organizations/new"><span class="octicon octicon-organization"></span> New organization</a>
+  </li>
+
+    <li class="section-title">
+      <span title="scikit-learn">This organization</span>
+    </li>
+    <li>
+      <a href="/organizations/scikit-learn/teams/new"><span class="octicon octicon-jersey"></span> New team</a>
+    </li>
+    <li>
+      <a href="/organizations/scikit-learn/repositories/new"><span class="octicon octicon-repo-create"></span> New repository</a>
+    </li>
+
+
+    <li class="section-title">
+      <span title="scikit-learn/scikit-learn">This repository</span>
+    </li>
+    <li>
+      <a href="/scikit-learn/scikit-learn/issues/new"><span class="octicon octicon-issue-opened"></span> New issue</a>
+    </li>
+      <li>
+        <a href="/scikit-learn/scikit-learn/settings/collaboration"><span class="octicon octicon-person-add"></span> New collaborator</a>
+      </li>
+</ul>
+
+</div>
+
+
+    
+  </div>
+</div>
+
+      
+
+      
+
+
+
+
+          <div class="site" itemscope itemtype="http://schema.org/WebPage">
+    
+    <div class="pagehead repohead instapaper_ignore readability-menu">
+      <div class="container">
+        
+
+<ul class="pagehead-actions">
+
+    <li class="subscription">
+      <form accept-charset="UTF-8" action="/notifications/subscribe" class="js-social-container" data-autosubmit="true" data-remote="true" method="post"><div style="margin:0;padding:0;display:inline"><input name="authenticity_token" type="hidden" value="AA8ZYQ4c0tpyEgKRynIQM86LTi18O5D4dc/WqxL7AuU=" /></div>  <input id="repository_id" name="repository_id" type="hidden" value="843222" />
+
+    <div class="select-menu js-menu-container js-select-menu">
+        <a class="social-count js-social-count" href="/scikit-learn/scikit-learn/watchers">
+          180
+        </a>
+      <span class="minibutton select-menu-button with-count js-menu-target">
+        <span class="js-select-button">
+          <span class="octicon octicon-eye-unwatch"></span>
+          Unwatch
+        </span>
+      </span>
+
+      <div class="select-menu-modal-holder">
+        <div class="select-menu-modal subscription-menu-modal js-menu-content">
+          <div class="select-menu-header">
+            <span class="select-menu-title">Notification status</span>
+            <span class="octicon octicon-remove-close js-menu-close"></span>
+          </div> <!-- /.select-menu-header -->
+
+          <div class="select-menu-list js-navigation-container">
+
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <div class="select-menu-item-text">
+                <input id="do_included" name="do" type="radio" value="included" />
+                <h4>Not watching</h4>
+                <span class="description">You only receive notifications for discussions in which you participate or are @mentioned.</span>
+                <span class="js-select-button-text hidden-select-button-text">
+                  <span class="octicon octicon-eye-watch"></span>
+                  Watch
+                </span>
+              </div>
+            </div> <!-- /.select-menu-item -->
+
+            <div class="select-menu-item js-navigation-item selected">
+              <span class="select-menu-item-icon octicon octicon octicon-check"></span>
+              <div class="select-menu-item-text">
+                <input checked="checked" id="do_subscribed" name="do" type="radio" value="subscribed" />
+                <h4>Watching</h4>
+                <span class="description">You receive notifications for all discussions in this repository.</span>
+                <span class="js-select-button-text hidden-select-button-text">
+                  <span class="octicon octicon-eye-unwatch"></span>
+                  Unwatch
+                </span>
+              </div>
+            </div> <!-- /.select-menu-item -->
+
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <div class="select-menu-item-text">
+                <input id="do_ignore" name="do" type="radio" value="ignore" />
+                <h4>Ignoring</h4>
+                <span class="description">You do not receive any notifications for discussions in this repository.</span>
+                <span class="js-select-button-text hidden-select-button-text">
+                  <span class="octicon octicon-mute"></span>
+                  Stop ignoring
+                </span>
+              </div>
+            </div> <!-- /.select-menu-item -->
+
+          </div> <!-- /.select-menu-list -->
+
+        </div> <!-- /.select-menu-modal -->
+      </div> <!-- /.select-menu-modal-holder -->
+    </div> <!-- /.select-menu -->
+
+</form>
+    </li>
+
+  <li>
+  
+<div class="js-toggler-container js-social-container starring-container on">
+  <a href="/scikit-learn/scikit-learn/unstar" class="minibutton with-count js-toggler-target star-button starred upwards" title="Unstar this repo" data-remote="true" data-method="post" rel="nofollow">
+    <span class="octicon octicon-star-delete"></span><span class="text">Unstar</span>
+  </a>
+  <a href="/scikit-learn/scikit-learn/star" class="minibutton with-count js-toggler-target star-button unstarred upwards " title="Star this repo" data-remote="true" data-method="post" rel="nofollow">
+    <span class="octicon octicon-star"></span><span class="text">Star</span>
+  </a>
+  <a class="social-count js-social-count" href="/scikit-learn/scikit-learn/stargazers">1,467</a>
+</div>
+
+  </li>
+
+
+        <li>
+          <a href="/scikit-learn/scikit-learn/fork" class="minibutton with-count js-toggler-target fork-button lighter upwards" title="Fork this repo" rel="facebox nofollow">
+            <span class="octicon octicon-git-branch-create"></span><span class="text">Fork</span>
+          </a>
+          <a href="/scikit-learn/scikit-learn/network" class="social-count">746</a>
+        </li>
+
+
+</ul>
+
+        <h1 itemscope itemtype="http://data-vocabulary.org/Breadcrumb" class="entry-title public">
+          <span class="repo-label"><span>public</span></span>
+          <span class="mega-octicon octicon-repo"></span>
+          <span class="author">
+            <a href="/scikit-learn" class="url fn" itemprop="url" rel="author"><span itemprop="title">scikit-learn</span></a></span
+          ><span class="repohead-name-divider">/</span><strong
+          ><a href="/scikit-learn/scikit-learn" class="js-current-repository js-repo-home-link">scikit-learn</a></strong>
+
+          <span class="page-context-loader">
+            <img alt="Octocat-spinner-32" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+          </span>
+
+        </h1>
+      </div><!-- /.container -->
+    </div><!-- /.repohead -->
+
+    <div class="container">
+
+      <div class="repository-with-sidebar repo-container ">
+
+        <div class="repository-sidebar">
+            
+
+<div class="repo-nav repo-nav-full js-repository-container-pjax js-octicon-loaders">
+  <div class="repo-nav-contents">
+    <ul class="repo-menu">
+      <li class="tooltipped leftwards" title="Code">
+        <a href="/scikit-learn/scikit-learn" aria-label="Code" class="js-selected-navigation-item selected" data-gotokey="c" data-pjax="true" data-selected-links="repo_source repo_downloads repo_commits repo_tags repo_branches /scikit-learn/scikit-learn">
+          <span class="octicon octicon-code"></span> <span class="full-word">Code</span>
+          <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>      </li>
+
+        <li class="tooltipped leftwards" title="Issues">
+          <a href="/scikit-learn/scikit-learn/issues" aria-label="Issues" class="js-selected-navigation-item js-disable-pjax" data-gotokey="i" data-selected-links="repo_issues /scikit-learn/scikit-learn/issues">
+            <span class="octicon octicon-issue-opened"></span> <span class="full-word">Issues</span>
+            <span class='counter'>391</span>
+            <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>        </li>
+
+      <li class="tooltipped leftwards" title="Pull Requests"><a href="/scikit-learn/scikit-learn/pulls" aria-label="Pull Requests" class="js-selected-navigation-item js-disable-pjax" data-gotokey="p" data-selected-links="repo_pulls /scikit-learn/scikit-learn/pulls">
+            <span class="octicon octicon-git-pull-request"></span> <span class="full-word">Pull Requests</span>
+            <span class='counter'>105</span>
+            <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>      </li>
+
+
+        <li class="tooltipped leftwards" title="Wiki">
+          <a href="/scikit-learn/scikit-learn/wiki" aria-label="Wiki" class="js-selected-navigation-item " data-pjax="true" data-selected-links="repo_wiki /scikit-learn/scikit-learn/wiki">
+            <span class="octicon octicon-book"></span> <span class="full-word">Wiki</span>
+            <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>        </li>
+
+
+    </ul>
+    <div class="repo-menu-separator"></div>
+    <ul class="repo-menu">
+
+      <li class="tooltipped leftwards" title="Pulse">
+        <a href="/scikit-learn/scikit-learn/pulse" aria-label="Pulse" class="js-selected-navigation-item " data-pjax="true" data-selected-links="pulse /scikit-learn/scikit-learn/pulse">
+          <span class="octicon octicon-pulse"></span> <span class="full-word">Pulse</span>
+          <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>      </li>
+
+      <li class="tooltipped leftwards" title="Graphs">
+        <a href="/scikit-learn/scikit-learn/graphs" aria-label="Graphs" class="js-selected-navigation-item " data-pjax="true" data-selected-links="repo_graphs repo_contributors /scikit-learn/scikit-learn/graphs">
+          <span class="octicon octicon-graph"></span> <span class="full-word">Graphs</span>
+          <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>      </li>
+
+      <li class="tooltipped leftwards" title="Network">
+        <a href="/scikit-learn/scikit-learn/network" aria-label="Network" class="js-selected-navigation-item js-disable-pjax" data-selected-links="repo_network /scikit-learn/scikit-learn/network">
+          <span class="octicon octicon-git-branch"></span> <span class="full-word">Network</span>
+          <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+</a>      </li>
+
+    </ul>
+
+      <div class="repo-menu-separator"></div>
+      <ul class="repo-menu">
+        <li class="tooltipped leftwards" title="Settings">
+          <a href="/scikit-learn/scikit-learn/settings" data-pjax aria-label="Settings">
+            <span class="octicon octicon-tools"></span> <span class="full-word">Settings</span>
+            <img alt="Octocat-spinner-32" class="mini-loader" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32.gif" width="16" />
+          </a>
+        </li>
+      </ul>
+  </div>
+</div>
+
+            <div class="only-with-full-nav">
+              
+
+  
+
+<div class="clone-url open"
+  data-protocol-type="http"
+  data-url="/users/set_protocol?protocol_selector=http&amp;protocol_type=push">
+  <h3><strong>HTTPS</strong> clone URL</h3>
+
+  <input type="text" class="clone js-url-field"
+         value="https://github.com/scikit-learn/scikit-learn.git" readonly="readonly">
+
+  <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="https://github.com/scikit-learn/scikit-learn.git" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
+</div>
+
+  
+
+<div class="clone-url "
+  data-protocol-type="ssh"
+  data-url="/users/set_protocol?protocol_selector=ssh&amp;protocol_type=push">
+  <h3><strong>SSH</strong> clone URL</h3>
+
+  <input type="text" class="clone js-url-field"
+         value="git@github.com:scikit-learn/scikit-learn.git" readonly="readonly">
+
+  <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="git@github.com:scikit-learn/scikit-learn.git" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
+</div>
+
+  
+
+<div class="clone-url "
+  data-protocol-type="subversion"
+  data-url="/users/set_protocol?protocol_selector=subversion&amp;protocol_type=push">
+  <h3><strong>Subversion</strong> checkout URL</h3>
+
+  <input type="text" class="clone js-url-field"
+         value="https://github.com/scikit-learn/scikit-learn" readonly="readonly">
+
+  <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="https://github.com/scikit-learn/scikit-learn" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
+</div>
+
+
+
+<p class="clone-options">You can clone with
+    <a href="#" class="js-clone-selector" data-protocol="http">HTTPS</a>,
+    <a href="#" class="js-clone-selector" data-protocol="ssh">SSH</a>,
+    <a href="#" class="js-clone-selector" data-protocol="subversion">Subversion</a>,
+  and <a href="https://help.github.com/articles/which-remote-url-should-i-use">other methods.</a>
+</p>
+
+
+
+                <a href="/scikit-learn/scikit-learn/archive/master.zip"
+                   class="minibutton sidebar-button"
+                   title="Download this repository as a zip file"
+                   rel="nofollow">
+                  <span class="octicon octicon-cloud-download"></span>
+                  Download ZIP
+                </a>
+            </div>
+        </div><!-- /.repository-sidebar -->
+
+        <div id="js-repo-pjax-container" class="repository-content context-loader-container" data-pjax-container>
+          
+
+
+<!-- blob contrib key: blob_contributors:v21:d840ac6fb3b8fa9e89a48bb05435b185 -->
+<!-- blob contrib frag key: views10/v8/blob_contributors:v21:d840ac6fb3b8fa9e89a48bb05435b185 -->
+
+<p title="This is a placeholder element" class="js-history-link-replace hidden"></p>
+
+<a href="/scikit-learn/scikit-learn/find/master" data-pjax data-hotkey="t" style="display:none">Show File Finder</a>
+
+<div class="file-navigation">
+  
+
+
+<div class="select-menu js-menu-container js-select-menu" >
+  <span class="minibutton select-menu-button js-menu-target" data-hotkey="w"
+    data-master-branch="master"
+    data-ref="master">
+    <span class="octicon octicon-git-branch"></span>
+    <i>branch:</i>
+    <span class="js-select-button">master</span>
+  </span>
+
+  <div class="select-menu-modal-holder js-menu-content js-navigation-container" data-pjax>
+
+    <div class="select-menu-modal">
+      <div class="select-menu-header">
+        <span class="select-menu-title">Switch branches/tags</span>
+        <span class="octicon octicon-remove-close js-menu-close"></span>
+      </div> <!-- /.select-menu-header -->
+
+      <div class="select-menu-filters">
+        <div class="select-menu-text-filter">
+          <input type="text" id="context-commitish-filter-field" class="js-filterable-field js-navigation-enable" placeholder="Find or create a branch…">
+        </div>
+        <div class="select-menu-tabs">
+          <ul>
+            <li class="select-menu-tab">
+              <a href="#" data-tab-filter="branches" class="js-select-menu-tab">Branches</a>
+            </li>
+            <li class="select-menu-tab">
+              <a href="#" data-tab-filter="tags" class="js-select-menu-tab">Tags</a>
+            </li>
+          </ul>
+        </div><!-- /.select-menu-tabs -->
+      </div><!-- /.select-menu-filters -->
+
+      <div class="select-menu-list select-menu-tab-bucket js-select-menu-tab-bucket" data-tab-filter="branches">
+
+        <div data-filterable-for="context-commitish-filter-field" data-filterable-type="substring">
+
+
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.6.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.6.X" data-skip-pjax="true" rel="nofollow" title="0.6.X">0.6.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.7.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.7.X" data-skip-pjax="true" rel="nofollow" title="0.7.X">0.7.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.8.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.8.X" data-skip-pjax="true" rel="nofollow" title="0.8.X">0.8.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.9.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.9.X" data-skip-pjax="true" rel="nofollow" title="0.9.X">0.9.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.10.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.10.X" data-skip-pjax="true" rel="nofollow" title="0.10.X">0.10.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.11.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.11.X" data-skip-pjax="true" rel="nofollow" title="0.11.X">0.11.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.12.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.12.X" data-skip-pjax="true" rel="nofollow" title="0.12.X">0.12.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.13.X/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.13.X" data-skip-pjax="true" rel="nofollow" title="0.13.X">0.13.X</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian" data-skip-pjax="true" rel="nofollow" title="debian">debian</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/invalid-n-folds/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="invalid-n-folds" data-skip-pjax="true" rel="nofollow" title="invalid-n-folds">invalid-n-folds</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item selected">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/master/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="master" data-skip-pjax="true" rel="nofollow" title="master">master</a>
+            </div> <!-- /.select-menu-item -->
+        </div>
+
+          <form accept-charset="UTF-8" action="/scikit-learn/scikit-learn/branches" class="js-create-branch select-menu-item select-menu-new-item-form js-navigation-item js-new-item-form" method="post"><div style="margin:0;padding:0;display:inline"><input name="authenticity_token" type="hidden" value="AA8ZYQ4c0tpyEgKRynIQM86LTi18O5D4dc/WqxL7AuU=" /></div>
+            <span class="octicon octicon-git-branch-create select-menu-item-icon"></span>
+            <div class="select-menu-item-text">
+              <h4>Create branch: <span class="js-new-item-name"></span></h4>
+              <span class="description">from ‘master’</span>
+            </div>
+            <input type="hidden" name="name" id="name" class="js-new-item-value">
+            <input type="hidden" name="branch" id="branch" value="master" />
+            <input type="hidden" name="path" id="branch" value="doc/logos/scikit-learn-logo.svg" />
+          </form> <!-- /.select-menu-item -->
+
+      </div> <!-- /.select-menu-list -->
+
+      <div class="select-menu-list select-menu-tab-bucket js-select-menu-tab-bucket" data-tab-filter="tags">
+        <div data-filterable-for="context-commitish-filter-field" data-filterable-type="substring">
+
+
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/sprint01/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="sprint01" data-skip-pjax="true" rel="nofollow" title="sprint01">sprint01</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.12.0-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.12.0-1" data-skip-pjax="true" rel="nofollow" title="debian/0.12.0-1">debian/0.12.0-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.11.0-2/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.11.0-2" data-skip-pjax="true" rel="nofollow" title="debian/0.11.0-2">debian/0.11.0-2</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.11.0-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.11.0-1" data-skip-pjax="true" rel="nofollow" title="debian/0.11.0-1">debian/0.11.0-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.10.0-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.10.0-1" data-skip-pjax="true" rel="nofollow" title="debian/0.10.0-1">debian/0.10.0-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.9.0.dfsg-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.9.0.dfsg-1" data-skip-pjax="true" rel="nofollow" title="debian/0.9.0.dfsg-1">debian/0.9.0.dfsg-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.8.1.dfsg-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.8.1.dfsg-1" data-skip-pjax="true" rel="nofollow" title="debian/0.8.1.dfsg-1">debian/0.8.1.dfsg-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.8.0.dfsg-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.8.0.dfsg-1" data-skip-pjax="true" rel="nofollow" title="debian/0.8.0.dfsg-1">debian/0.8.0.dfsg-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.7.1.dfsg-3/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.7.1.dfsg-3" data-skip-pjax="true" rel="nofollow" title="debian/0.7.1.dfsg-3">debian/0.7.1.dfsg-3</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.7.1.dfsg-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.7.1.dfsg-1" data-skip-pjax="true" rel="nofollow" title="debian/0.7.1.dfsg-1">debian/0.7.1.dfsg-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.6.0.dfsg-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.6.0.dfsg-1" data-skip-pjax="true" rel="nofollow" title="debian/0.6.0.dfsg-1">debian/0.6.0.dfsg-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.5-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.5-1" data-skip-pjax="true" rel="nofollow" title="debian/0.5-1">debian/0.5-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.4-3/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.4-3" data-skip-pjax="true" rel="nofollow" title="debian/0.4-3">debian/0.4-3</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.4-2/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.4-2" data-skip-pjax="true" rel="nofollow" title="debian/0.4-2">debian/0.4-2</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.4-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.4-1" data-skip-pjax="true" rel="nofollow" title="debian/0.4-1">debian/0.4-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.3-4/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.3-4" data-skip-pjax="true" rel="nofollow" title="debian/0.3-4">debian/0.3-4</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.3-3/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.3-3" data-skip-pjax="true" rel="nofollow" title="debian/0.3-3">debian/0.3-3</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.3-2/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.3-2" data-skip-pjax="true" rel="nofollow" title="debian/0.3-2">debian/0.3-2</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.3-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.3-1" data-skip-pjax="true" rel="nofollow" title="debian/0.3-1">debian/0.3-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/debian/0.2+svn625-1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="debian/0.2+svn625-1" data-skip-pjax="true" rel="nofollow" title="debian/0.2+svn625-1">debian/0.2+svn625-1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.13-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.13-branching" data-skip-pjax="true" rel="nofollow" title="0.13-branching">0.13-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.13.1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.13.1" data-skip-pjax="true" rel="nofollow" title="0.13.1">0.13.1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.13/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.13" data-skip-pjax="true" rel="nofollow" title="0.13">0.13</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.12-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.12-branching" data-skip-pjax="true" rel="nofollow" title="0.12-branching">0.12-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.12.1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.12.1" data-skip-pjax="true" rel="nofollow" title="0.12.1">0.12.1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.12/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.12" data-skip-pjax="true" rel="nofollow" title="0.12">0.12</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.11-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.11-branching" data-skip-pjax="true" rel="nofollow" title="0.11-branching">0.11-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.11-beta/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.11-beta" data-skip-pjax="true" rel="nofollow" title="0.11-beta">0.11-beta</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.11/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.11" data-skip-pjax="true" rel="nofollow" title="0.11">0.11</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.10-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.10-branching" data-skip-pjax="true" rel="nofollow" title="0.10-branching">0.10-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.10/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.10" data-skip-pjax="true" rel="nofollow" title="0.10">0.10</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.9-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.9-branching" data-skip-pjax="true" rel="nofollow" title="0.9-branching">0.9-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.9/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.9" data-skip-pjax="true" rel="nofollow" title="0.9">0.9</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.8-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.8-branching" data-skip-pjax="true" rel="nofollow" title="0.8-branching">0.8-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.8.1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.8.1" data-skip-pjax="true" rel="nofollow" title="0.8.1">0.8.1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.8/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.8" data-skip-pjax="true" rel="nofollow" title="0.8">0.8</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.7-branching/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.7-branching" data-skip-pjax="true" rel="nofollow" title="0.7-branching">0.7-branching</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.7.1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.7.1" data-skip-pjax="true" rel="nofollow" title="0.7.1">0.7.1</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.7/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.7" data-skip-pjax="true" rel="nofollow" title="0.7">0.7</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.6-rc/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.6-rc" data-skip-pjax="true" rel="nofollow" title="0.6-rc">0.6-rc</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.6.0/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.6.0" data-skip-pjax="true" rel="nofollow" title="0.6.0">0.6.0</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.5.rc3/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.5.rc3" data-skip-pjax="true" rel="nofollow" title="0.5.rc3">0.5.rc3</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.5.rc2/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.5.rc2" data-skip-pjax="true" rel="nofollow" title="0.5.rc2">0.5.rc2</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.5.rc/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.5.rc" data-skip-pjax="true" rel="nofollow" title="0.5.rc">0.5.rc</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.5/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.5" data-skip-pjax="true" rel="nofollow" title="0.5">0.5</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.4/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.4" data-skip-pjax="true" rel="nofollow" title="0.4">0.4</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.3/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.3" data-skip-pjax="true" rel="nofollow" title="0.3">0.3</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.2-beta/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.2-beta" data-skip-pjax="true" rel="nofollow" title="0.2-beta">0.2-beta</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.2/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.2" data-skip-pjax="true" rel="nofollow" title="0.2">0.2</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.1-beta/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.1-beta" data-skip-pjax="true" rel="nofollow" title="0.1-beta">0.1-beta</a>
+            </div> <!-- /.select-menu-item -->
+            <div class="select-menu-item js-navigation-item ">
+              <span class="select-menu-item-icon octicon octicon-check"></span>
+              <a href="/scikit-learn/scikit-learn/blob/0.1/doc/logos/scikit-learn-logo.svg" class="js-navigation-open select-menu-item-text js-select-button-text css-truncate-target" data-name="0.1" data-skip-pjax="true" rel="nofollow" title="0.1">0.1</a>
+            </div> <!-- /.select-menu-item -->
+        </div>
+
+        <div class="select-menu-no-results">Nothing to show</div>
+      </div> <!-- /.select-menu-list -->
+
+    </div> <!-- /.select-menu-modal -->
+  </div> <!-- /.select-menu-modal-holder -->
+</div> <!-- /.select-menu -->
+
+  <div class="breadcrumb">
+    <span class='repo-root js-repo-root'><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn" data-branch="master" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">scikit-learn</span></a></span></span><span class="separator"> / </span><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn/tree/master/doc" data-branch="master" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">doc</span></a></span><span class="separator"> / </span><span itemscope="" itemtype="http://data-vocabulary.org/Breadcrumb"><a href="/scikit-learn/scikit-learn/tree/master/doc/logos" data-branch="master" data-direction="back" data-pjax="true" itemscope="url"><span itemprop="title">logos</span></a></span><span class="separator"> / </span><strong class="final-path">scikit-learn-logo.svg</strong> <span class="js-zeroclipboard minibutton zeroclipboard-button" data-clipboard-text="doc/logos/scikit-learn-logo.svg" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
+  </div>
+</div>
+
+
+  <div class="commit commit-loader file-history-tease js-deferred-content" data-url="/scikit-learn/scikit-learn/contributors/master/doc/logos/scikit-learn-logo.svg">
+    Fetching contributors…
+
+    <div class="participation">
+      <p class="loader-loading"><img alt="Octocat-spinner-32-eaf2f5" height="16" src="https://github.global.ssl.fastly.net/images/spinners/octocat-spinner-32-EAF2F5.gif" width="16" /></p>
+      <p class="loader-error">Cannot retrieve contributors at this time</p>
+    </div>
+  </div>
+
+<div id="files" class="bubble">
+  <div class="file">
+    <div class="meta">
+      <div class="info">
+        <span class="icon"><b class="octicon octicon-file-text"></b></span>
+        <span class="mode" title="File Mode">file</span>
+          <span>110 lines (107 sloc)</span>
+        <span>6.944 kb</span>
+      </div>
+      <div class="actions">
+        <div class="button-group">
+                <a class="minibutton"
+                   href="/scikit-learn/scikit-learn/edit/master/doc/logos/scikit-learn-logo.svg"
+                   data-method="post" rel="nofollow" data-hotkey="e">Edit</a>
+          <a href="/scikit-learn/scikit-learn/raw/master/doc/logos/scikit-learn-logo.svg" class="button minibutton " id="raw-url">Raw</a>
+            <a href="/scikit-learn/scikit-learn/blame/master/doc/logos/scikit-learn-logo.svg" class="button minibutton ">Blame</a>
+          <a href="/scikit-learn/scikit-learn/commits/master/doc/logos/scikit-learn-logo.svg" class="button minibutton " rel="nofollow">History</a>
+        </div><!-- /.button-group -->
+            <a class="minibutton danger empty-icon tooltipped downwards"
+               href="/scikit-learn/scikit-learn/delete/master/doc/logos/scikit-learn-logo.svg"
+               title="" data-method="post" rel="nofollow">
+            Delete
+          </a>
+      </div><!-- /.actions -->
+
+    </div>
+        <div class="blob-wrapper data type-xml js-blob-data">
+      <table class="file-code file-diff">
+        <tr class="file-code-line">
+          <td class="blob-line-nums">
+            <span id="L1" rel="#L1">1</span>
+<span id="L2" rel="#L2">2</span>
+<span id="L3" rel="#L3">3</span>
+<span id="L4" rel="#L4">4</span>
+<span id="L5" rel="#L5">5</span>
+<span id="L6" rel="#L6">6</span>
+<span id="L7" rel="#L7">7</span>
+<span id="L8" rel="#L8">8</span>
+<span id="L9" rel="#L9">9</span>
+<span id="L10" rel="#L10">10</span>
+<span id="L11" rel="#L11">11</span>
+<span id="L12" rel="#L12">12</span>
+<span id="L13" rel="#L13">13</span>
+<span id="L14" rel="#L14">14</span>
+<span id="L15" rel="#L15">15</span>
+<span id="L16" rel="#L16">16</span>
+<span id="L17" rel="#L17">17</span>
+<span id="L18" rel="#L18">18</span>
+<span id="L19" rel="#L19">19</span>
+<span id="L20" rel="#L20">20</span>
+<span id="L21" rel="#L21">21</span>
+<span id="L22" rel="#L22">22</span>
+<span id="L23" rel="#L23">23</span>
+<span id="L24" rel="#L24">24</span>
+<span id="L25" rel="#L25">25</span>
+<span id="L26" rel="#L26">26</span>
+<span id="L27" rel="#L27">27</span>
+<span id="L28" rel="#L28">28</span>
+<span id="L29" rel="#L29">29</span>
+<span id="L30" rel="#L30">30</span>
+<span id="L31" rel="#L31">31</span>
+<span id="L32" rel="#L32">32</span>
+<span id="L33" rel="#L33">33</span>
+<span id="L34" rel="#L34">34</span>
+<span id="L35" rel="#L35">35</span>
+<span id="L36" rel="#L36">36</span>
+<span id="L37" rel="#L37">37</span>
+<span id="L38" rel="#L38">38</span>
+<span id="L39" rel="#L39">39</span>
+<span id="L40" rel="#L40">40</span>
+<span id="L41" rel="#L41">41</span>
+<span id="L42" rel="#L42">42</span>
+<span id="L43" rel="#L43">43</span>
+<span id="L44" rel="#L44">44</span>
+<span id="L45" rel="#L45">45</span>
+<span id="L46" rel="#L46">46</span>
+<span id="L47" rel="#L47">47</span>
+<span id="L48" rel="#L48">48</span>
+<span id="L49" rel="#L49">49</span>
+<span id="L50" rel="#L50">50</span>
+<span id="L51" rel="#L51">51</span>
+<span id="L52" rel="#L52">52</span>
+<span id="L53" rel="#L53">53</span>
+<span id="L54" rel="#L54">54</span>
+<span id="L55" rel="#L55">55</span>
+<span id="L56" rel="#L56">56</span>
+<span id="L57" rel="#L57">57</span>
+<span id="L58" rel="#L58">58</span>
+<span id="L59" rel="#L59">59</span>
+<span id="L60" rel="#L60">60</span>
+<span id="L61" rel="#L61">61</span>
+<span id="L62" rel="#L62">62</span>
+<span id="L63" rel="#L63">63</span>
+<span id="L64" rel="#L64">64</span>
+<span id="L65" rel="#L65">65</span>
+<span id="L66" rel="#L66">66</span>
+<span id="L67" rel="#L67">67</span>
+<span id="L68" rel="#L68">68</span>
+<span id="L69" rel="#L69">69</span>
+<span id="L70" rel="#L70">70</span>
+<span id="L71" rel="#L71">71</span>
+<span id="L72" rel="#L72">72</span>
+<span id="L73" rel="#L73">73</span>
+<span id="L74" rel="#L74">74</span>
+<span id="L75" rel="#L75">75</span>
+<span id="L76" rel="#L76">76</span>
+<span id="L77" rel="#L77">77</span>
+<span id="L78" rel="#L78">78</span>
+<span id="L79" rel="#L79">79</span>
+<span id="L80" rel="#L80">80</span>
+<span id="L81" rel="#L81">81</span>
+<span id="L82" rel="#L82">82</span>
+<span id="L83" rel="#L83">83</span>
+<span id="L84" rel="#L84">84</span>
+<span id="L85" rel="#L85">85</span>
+<span id="L86" rel="#L86">86</span>
+<span id="L87" rel="#L87">87</span>
+<span id="L88" rel="#L88">88</span>
+<span id="L89" rel="#L89">89</span>
+<span id="L90" rel="#L90">90</span>
+<span id="L91" rel="#L91">91</span>
+<span id="L92" rel="#L92">92</span>
+<span id="L93" rel="#L93">93</span>
+<span id="L94" rel="#L94">94</span>
+<span id="L95" rel="#L95">95</span>
+<span id="L96" rel="#L96">96</span>
+<span id="L97" rel="#L97">97</span>
+<span id="L98" rel="#L98">98</span>
+<span id="L99" rel="#L99">99</span>
+<span id="L100" rel="#L100">100</span>
+<span id="L101" rel="#L101">101</span>
+<span id="L102" rel="#L102">102</span>
+<span id="L103" rel="#L103">103</span>
+<span id="L104" rel="#L104">104</span>
+<span id="L105" rel="#L105">105</span>
+<span id="L106" rel="#L106">106</span>
+<span id="L107" rel="#L107">107</span>
+<span id="L108" rel="#L108">108</span>
+<span id="L109" rel="#L109">109</span>
+<span id="L110" rel="#L110">110</span>
+
+          </td>
+          <td class="blob-line-code">
+                  <div class="highlight"><pre><div class='line' id='LC1'><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;</span></div><div class='line' id='LC2'><span class="c">&lt;!-- Generator: Adobe Illustrator 14.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 43363)  --&gt;</span></div><div class='line' id='LC3'><br/></div><div class='line' id='LC4'><span class="nt">&lt;svg</span></div><div class='line' id='LC5'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns:dc=</span><span class="s">&quot;http://purl.org/dc/elements/1.1/&quot;</span></div><div class='line' id='LC6'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns:cc=</span><span class="s">&quot;http://creativecommons.org/ns#&quot;</span></div><div class='line' id='LC7'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns:rdf=</span><span class="s">&quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#&quot;</span></div><div class='line' id='LC8'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns:svg=</span><span class="s">&quot;http://www.w3.org/2000/svg&quot;</span></div><div class='line' id='LC9'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns=</span><span class="s">&quot;http://www.w3.org/2000/svg&quot;</span></div><div class='line' id='LC10'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns:sodipodi=</span><span class="s">&quot;http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd&quot;</span></div><div class='line' id='LC11'>&nbsp;&nbsp;&nbsp;<span class="na">xmlns:inkscape=</span><span class="s">&quot;http://www.inkscape.org/namespaces/inkscape&quot;</span></div><div class='line' id='LC12'>&nbsp;&nbsp;&nbsp;<span class="na">version=</span><span class="s">&quot;1.1&quot;</span></div><div class='line' id='LC13'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;Layer_1&quot;</span></div><div class='line' id='LC14'>&nbsp;&nbsp;&nbsp;<span class="na">x=</span><span class="s">&quot;0px&quot;</span></div><div class='line' id='LC15'>&nbsp;&nbsp;&nbsp;<span class="na">y=</span><span class="s">&quot;0px&quot;</span></div><div class='line' id='LC16'>&nbsp;&nbsp;&nbsp;<span class="na">width=</span><span class="s">&quot;792px&quot;</span></div><div class='line' id='LC17'>&nbsp;&nbsp;&nbsp;<span class="na">height=</span><span class="s">&quot;612px&quot;</span></div><div class='line' id='LC18'>&nbsp;&nbsp;&nbsp;<span class="na">viewBox=</span><span class="s">&quot;0 0 792 612&quot;</span></div><div class='line' id='LC19'>&nbsp;&nbsp;&nbsp;<span class="na">enable-background=</span><span class="s">&quot;new 0 0 792 612&quot;</span></div><div class='line' id='LC20'>&nbsp;&nbsp;&nbsp;<span class="na">xml:space=</span><span class="s">&quot;preserve&quot;</span></div><div class='line' id='LC21'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:version=</span><span class="s">&quot;0.48.2 r9819&quot;</span></div><div class='line' id='LC22'>&nbsp;&nbsp;&nbsp;<span class="na">sodipodi:docname=</span><span class="s">&quot;scikit-learn-logo.svg&quot;</span><span class="nt">&gt;&lt;metadata</span></div><div class='line' id='LC23'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;metadata35&quot;</span><span class="nt">&gt;&lt;rdf:RDF&gt;&lt;cc:Work</span></div><div class='line' id='LC24'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="na">rdf:about=</span><span class="s">&quot;&quot;</span><span class="nt">&gt;&lt;dc:format&gt;</span>image/svg+xml<span class="nt">&lt;/dc:format&gt;&lt;dc:type</span></div><div class='line' id='LC25'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="na">rdf:resource=</span><span class="s">&quot;http://purl.org/dc/dcmitype/StillImage&quot;</span> <span class="nt">/&gt;&lt;/cc:Work&gt;&lt;/rdf:RDF&gt;&lt;/metadata&gt;&lt;defs</span></div><div class='line' id='LC26'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;defs33&quot;</span> <span class="nt">/&gt;&lt;sodipodi:namedview</span></div><div class='line' id='LC27'>&nbsp;&nbsp;&nbsp;<span class="na">pagecolor=</span><span class="s">&quot;#ffffff&quot;</span></div><div class='line' id='LC28'>&nbsp;&nbsp;&nbsp;<span class="na">bordercolor=</span><span class="s">&quot;#666666&quot;</span></div><div class='line' id='LC29'>&nbsp;&nbsp;&nbsp;<span class="na">borderopacity=</span><span class="s">&quot;1&quot;</span></div><div class='line' id='LC30'>&nbsp;&nbsp;&nbsp;<span class="na">objecttolerance=</span><span class="s">&quot;10&quot;</span></div><div class='line' id='LC31'>&nbsp;&nbsp;&nbsp;<span class="na">gridtolerance=</span><span class="s">&quot;10&quot;</span></div><div class='line' id='LC32'>&nbsp;&nbsp;&nbsp;<span class="na">guidetolerance=</span><span class="s">&quot;10&quot;</span></div><div class='line' id='LC33'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:pageopacity=</span><span class="s">&quot;0&quot;</span></div><div class='line' id='LC34'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:pageshadow=</span><span class="s">&quot;2&quot;</span></div><div class='line' id='LC35'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:window-width=</span><span class="s">&quot;1019&quot;</span></div><div class='line' id='LC36'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:window-height=</span><span class="s">&quot;958&quot;</span></div><div class='line' id='LC37'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;namedview31&quot;</span></div><div class='line' id='LC38'>&nbsp;&nbsp;&nbsp;<span class="na">showgrid=</span><span class="s">&quot;false&quot;</span></div><div class='line' id='LC39'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:zoom=</span><span class="s">&quot;2.1814013&quot;</span></div><div class='line' id='LC40'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:cx=</span><span class="s">&quot;276.47817&quot;</span></div><div class='line' id='LC41'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:cy=</span><span class="s">&quot;330.56501&quot;</span></div><div class='line' id='LC42'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:window-x=</span><span class="s">&quot;246&quot;</span></div><div class='line' id='LC43'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:window-y=</span><span class="s">&quot;247&quot;</span></div><div class='line' id='LC44'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:window-maximized=</span><span class="s">&quot;0&quot;</span></div><div class='line' id='LC45'>&nbsp;&nbsp;&nbsp;<span class="na">inkscape:current-layer=</span><span class="s">&quot;Layer_1&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC46'><span class="nt">&lt;g</span></div><div class='line' id='LC47'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;g3&quot;</span><span class="nt">&gt;</span></div><div class='line' id='LC48'>	<span class="nt">&lt;path</span></div><div class='line' id='LC49'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#F89939&quot;</span></div><div class='line' id='LC50'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M333.32,347.348c33.869-33.867,39.498-83.146,12.572-110.07c-26.922-26.921-76.199-21.293-110.066,12.572   c-33.867,33.866-24.07,98.568-12.57,110.07C232.549,369.213,299.455,381.213,333.32,347.348z&quot;</span></div><div class='line' id='LC51'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path5&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC52'>	<span class="nt">&lt;path</span></div><div class='line' id='LC53'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#3499CD&quot;</span></div><div class='line' id='LC54'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M194.35,298.411c-19.648-19.648-48.242-22.919-63.867-7.295c-15.621,15.622-12.355,44.22,7.297,63.865   c19.652,19.654,57.195,13.969,63.863,7.295C207.039,356.889,214.004,318.061,194.35,298.411z&quot;</span></div><div class='line' id='LC55'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path7&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC56'><span class="nt">&lt;/g&gt;</span></div><div class='line' id='LC57'><span class="nt">&lt;g</span></div><div class='line' id='LC58'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;g9&quot;</span><span class="nt">&gt;</span></div><div class='line' id='LC59'>	<span class="nt">&lt;g</span></div><div class='line' id='LC60'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;g11&quot;</span><span class="nt">&gt;</span></div><div class='line' id='LC61'>		<span class="nt">&lt;path</span></div><div class='line' id='LC62'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#010101&quot;</span></div><div class='line' id='LC63'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M262.143,339.047c-3.471,3.195-6.516,5.553-9.133,7.068c-2.617,1.52-5.113,2.279-7.488,2.279    c-2.732,0-4.936-1.059-6.607-3.178c-1.674-2.121-2.508-4.965-2.508-8.543c0-5.361,1.162-11.797,3.486-19.301    c2.32-7.51,5.145-14.43,8.463-20.761l9.729-3.602c0.305-0.102,0.537-0.154,0.691-0.154c0.738,0,1.348,0.544,1.816,1.627    c0.473,1.088,0.711,2.55,0.711,4.388c0,5.209-1.199,10.252-3.602,15.129c-2.402,4.879-6.154,10.086-11.26,15.627    c-0.205,2.656-0.307,4.48-0.307,5.477c0,2.223,0.408,3.982,1.225,5.285c0.818,1.305,1.902,1.953,3.256,1.953    c1.381,0,2.848-0.494,4.406-1.49c1.555-0.998,3.93-3.064,7.121-6.207V339.047z M247.475,324.074    c3.242-3.605,5.875-7.648,7.891-12.121c2.016-4.475,3.023-8.324,3.023-11.549c0-0.94-0.139-1.704-0.418-2.278    c-0.281-0.575-0.641-0.864-1.074-0.864c-0.941,0-2.316,2.352-4.117,7.057C250.979,309.023,249.211,315.609,247.475,324.074z&quot;</span></div><div class='line' id='LC64'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path13&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC65'>		<span class="nt">&lt;path</span></div><div class='line' id='LC66'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#010101&quot;</span></div><div class='line' id='LC67'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M290.795,339.047c-3.242,3.195-6.152,5.553-8.732,7.068c-2.58,1.52-5.424,2.279-8.541,2.279    c-3.473,0-6.275-1.111-8.41-3.33c-2.131-2.225-3.195-5.146-3.195-8.773c0-5.412,1.875-10.309,5.633-14.688    c3.75-4.381,7.914-6.57,12.484-6.57c2.375,0,4.275,0.615,5.707,1.84c1.43,1.227,2.145,2.834,2.145,4.826    c0,5.287-5.617,9.574-16.852,12.869c1.02,4.977,3.688,7.469,8.004,7.469c1.686,0,3.293-0.453,4.824-1.357    c1.535-0.908,3.844-2.922,6.934-6.035V339.047z M270.725,331.963c6.535-1.84,9.805-5.234,9.805-10.188    c0-2.451-0.895-3.676-2.68-3.676c-1.686,0-3.293,1.281-4.824,3.85C271.49,324.514,270.725,327.85,270.725,331.963z&quot;</span></div><div class='line' id='LC68'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path15&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC69'>		<span class="nt">&lt;path</span></div><div class='line' id='LC70'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#010101&quot;</span></div><div class='line' id='LC71'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M331.701,339.047c-4.086,3.881-7.01,6.412-8.77,7.588c-1.762,1.174-3.447,1.76-5.057,1.76    c-4.035,0-5.936-3.561-5.707-10.686c-2.553,3.65-4.91,6.344-7.068,8.084c-2.156,1.736-4.383,2.602-6.684,2.602    c-2.244,0-4.152-1.051-5.725-3.158s-2.354-4.691-2.354-7.758c0-3.828,1.051-7.48,3.156-10.955    c2.109-3.473,4.809-6.279,8.102-8.424s6.207-3.219,8.732-3.219c3.193,0,5.428,1.469,6.705,4.404l7.828-4.326h2.148l-3.381,11.221    c-1.736,5.645-2.607,9.514-2.607,11.607c0,2.195,0.777,3.293,2.336,3.293c0.992,0,2.09-0.529,3.291-1.59s2.883-2.676,5.053-4.846    V339.047z M303.664,341.156c2.553,0,4.959-2.176,7.223-6.529c2.26-4.355,3.389-8.373,3.389-12.049c0-1.428-0.322-2.547-0.957-3.35    c-0.641-0.807-1.496-1.207-2.566-1.207c-2.555,0-4.977,2.17-7.258,6.512c-2.285,4.342-3.43,8.338-3.43,11.986    c0,1.381,0.34,2.498,1.016,3.354S302.615,341.156,303.664,341.156z&quot;</span></div><div class='line' id='LC72'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path17&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC73'>		<span class="nt">&lt;path</span></div><div class='line' id='LC74'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#010101&quot;</span></div><div class='line' id='LC75'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M360.314,339.047c-6.41,6.281-11.352,9.424-14.824,9.424c-1.559,0-2.875-0.658-3.945-1.969    c-1.07-1.316-1.609-2.945-1.609-4.887c0-3.6,1.93-8.424,5.785-14.477c-1.891,0.971-3.957,1.645-6.205,2.029    c-1.66,3.064-4.266,6.359-7.814,9.879h-0.879v-3.443c1.99-2.068,3.791-4.291,5.4-6.666c-2.199-0.971-3.295-2.414-3.295-4.326    c0-1.969,0.668-4.068,2.012-6.305c1.34-2.232,3.184-3.348,5.535-3.348c1.992,0,2.986,1.018,2.986,3.062    c0,1.609-0.574,3.906-1.725,6.895c4.238-0.461,7.941-3.701,11.109-9.729l3.484-0.154l-3.562,9.805    c-1.48,4.137-2.438,6.955-2.871,8.447s-0.652,2.816-0.652,3.963c0,1.074,0.25,1.932,0.746,2.566    c0.498,0.643,1.17,0.959,2.012,0.959c0.918,0,1.801-0.314,2.643-0.936c0.842-0.631,2.732-2.359,5.67-5.193V339.047z&quot;</span></div><div class='line' id='LC76'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path19&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC77'>		<span class="nt">&lt;path</span></div><div class='line' id='LC78'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#010101&quot;</span></div><div class='line' id='LC79'>&nbsp;&nbsp;&nbsp;<span class="na">d=</span><span class="s">&quot;M397.928,339.047c-5.898,6.234-10.957,9.348-15.168,9.348c-1.711,0-3.09-0.6-4.137-1.801    c-1.049-1.199-1.572-2.807-1.572-4.824c0-2.732,1.125-6.908,3.373-12.523c1.199-3.014,1.801-4.932,1.801-5.746    c0-0.818-0.322-1.227-0.957-1.227c-0.357,0-0.832,0.18-1.418,0.535c-0.539,0.357-1.164,0.859-1.879,1.496    c-0.637,0.586-1.354,1.301-2.145,2.141c-0.691,0.721-1.432,1.537-2.219,2.453l-2.148,2.492c-0.943,1.148-1.531,2.359-1.76,3.637    c-0.385,2.17-0.639,4.164-0.768,5.979c-0.078,1.35-0.115,3.174-0.115,5.477l-8.465,1.988c-0.279-3.447-0.422-6.014-0.422-7.697    c0-4.111,0.479-8.006,1.438-11.682c0.957-3.68,2.494-7.814,4.615-12.412l9.344-1.799c-1.965,5.287-3.254,9.447-3.867,12.484    c4.188-4.672,7.508-7.906,9.969-9.709c2.457-1.801,4.645-2.697,6.557-2.697c1.299,0,2.385,0.49,3.25,1.471    c0.869,0.982,1.301,2.215,1.301,3.689c0,2.449-1.098,6.484-3.291,12.104c-1.508,3.854-2.262,6.355-2.262,7.51    c0,1.537,0.627,2.305,1.881,2.305c1.867,0,4.891-2.465,9.064-7.393V339.047z&quot;</span></div><div class='line' id='LC80'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;path21&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC81'>	<span class="nt">&lt;/g&gt;</span></div><div class='line' id='LC82'><span class="nt">&lt;/g&gt;</span></div><div class='line' id='LC83'><span class="nt">&lt;rect</span></div><div class='line' id='LC84'>&nbsp;&nbsp;&nbsp;<span class="na">x=</span><span class="s">&quot;273.943&quot;</span></div><div class='line' id='LC85'>&nbsp;&nbsp;&nbsp;<span class="na">y=</span><span class="s">&quot;285.613&quot;</span></div><div class='line' id='LC86'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;none&quot;</span></div><div class='line' id='LC87'>&nbsp;&nbsp;&nbsp;<span class="na">width=</span><span class="s">&quot;225.242&quot;</span></div><div class='line' id='LC88'>&nbsp;&nbsp;&nbsp;<span class="na">height=</span><span class="s">&quot;83.948&quot;</span></div><div class='line' id='LC89'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;rect23&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC90'><span class="nt">&lt;text</span></div><div class='line' id='LC91'>&nbsp;&nbsp;&nbsp;<span class="na">transform=</span><span class="s">&quot;translate(273.9414,302.2061)&quot;</span></div><div class='line' id='LC92'>&nbsp;&nbsp;&nbsp;<span class="na">font-size=</span><span class="s">&quot;23.0795&quot;</span></div><div class='line' id='LC93'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;text25&quot;</span></div><div class='line' id='LC94'>&nbsp;&nbsp;&nbsp;<span class="na">style=</span><span class="s">&quot;font-size:23.0795002px;fill:#ffffff;font-family:Helvetica&quot;</span><span class="nt">&gt;</span>scikit<span class="nt">&lt;/text&gt;</span></div><div class='line' id='LC95'><br/></div><div class='line' id='LC96'><span class="nt">&lt;rect</span></div><div class='line' id='LC97'>&nbsp;&nbsp;&nbsp;<span class="na">x=</span><span class="s">&quot;345.568&quot;</span></div><div class='line' id='LC98'>&nbsp;&nbsp;&nbsp;<span class="na">y=</span><span class="s">&quot;357.979&quot;</span></div><div class='line' id='LC99'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;none&quot;</span></div><div class='line' id='LC100'>&nbsp;&nbsp;&nbsp;<span class="na">width=</span><span class="s">&quot;327.432&quot;</span></div><div class='line' id='LC101'>&nbsp;&nbsp;&nbsp;<span class="na">height=</span><span class="s">&quot;42.963&quot;</span></div><div class='line' id='LC102'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;rect27&quot;</span> <span class="nt">/&gt;</span></div><div class='line' id='LC103'><span class="nt">&lt;text</span></div><div class='line' id='LC104'>&nbsp;&nbsp;&nbsp;<span class="na">transform=</span><span class="s">&quot;matrix(1 0 0 1 345.5684 375.5176)&quot;</span></div><div class='line' id='LC105'>&nbsp;&nbsp;&nbsp;<span class="na">fill=</span><span class="s">&quot;#010101&quot;</span></div><div class='line' id='LC106'>&nbsp;&nbsp;&nbsp;<span class="na">font-family=</span><span class="s">&quot;&#39;Verdana&#39;&quot;</span></div><div class='line' id='LC107'>&nbsp;&nbsp;&nbsp;<span class="na">font-size=</span><span class="s">&quot;23.0795&quot;</span></div><div class='line' id='LC108'>&nbsp;&nbsp;&nbsp;<span class="na">id=</span><span class="s">&quot;text29&quot;</span><span class="nt">&gt;</span>machine learning in Python<span class="nt">&lt;/text&gt;</span></div><div class='line' id='LC109'><br/></div><div class='line' id='LC110'><span class="nt">&lt;/svg&gt;</span></div></pre></div>
+          </td>
+        </tr>
+      </table>
+  </div>
+
+  </div>
+</div>
+
+<a href="#jump-to-line" rel="facebox[.linejump]" data-hotkey="l" class="js-jump-to-line" style="display:none">Jump to Line</a>
+<div id="jump-to-line" style="display:none">
+  <form accept-charset="UTF-8" class="js-jump-to-line-form">
+    <input class="linejump-input js-jump-to-line-field" type="text" placeholder="Jump to line&hellip;" autofocus>
+    <button type="submit" class="button">Go</button>
+  </form>
+</div>
+
+        </div>
+
+      </div><!-- /.repo-container -->
+      <div class="modal-backdrop"></div>
+    </div><!-- /.container -->
+  </div><!-- /.site -->
+
+
+    </div><!-- /.wrapper -->
+
+      <div class="container">
+  <div class="site-footer">
+    <ul class="site-footer-links right">
+      <li><a href="https://status.github.com/">Status</a></li>
+      <li><a href="http://developer.github.com">API</a></li>
+      <li><a href="http://training.github.com">Training</a></li>
+      <li><a href="http://shop.github.com">Shop</a></li>
+      <li><a href="/blog">Blog</a></li>
+      <li><a href="/about">About</a></li>
+
+    </ul>
+
+    <a href="/">
+      <span class="mega-octicon octicon-mark-github"></span>
+    </a>
+
+    <ul class="site-footer-links">
+      <li>&copy; 2013 <span title="0.13312s from fe4.rs.github.com">GitHub</span>, Inc.</li>
+        <li><a href="/site/terms">Terms</a></li>
+        <li><a href="/site/privacy">Privacy</a></li>
+        <li><a href="/security">Security</a></li>
+        <li><a href="/contact">Contact</a></li>
+    </ul>
+  </div><!-- /.site-footer -->
+</div><!-- /.container -->
+
+
+    <div class="fullscreen-overlay js-fullscreen-overlay" id="fullscreen_overlay">
+  <div class="fullscreen-container js-fullscreen-container">
+    <div class="textarea-wrap">
+      <textarea name="fullscreen-contents" id="fullscreen-contents" class="js-fullscreen-contents" placeholder="" data-suggester="fullscreen_suggester"></textarea>
+          <div class="suggester-container">
+              <div class="suggester fullscreen-suggester js-navigation-container" id="fullscreen_suggester"
+                 data-url="/scikit-learn/scikit-learn/suggestions/commit">
+              </div>
+          </div>
+    </div>
+  </div>
+  <div class="fullscreen-sidebar">
+    <a href="#" class="exit-fullscreen js-exit-fullscreen tooltipped leftwards" title="Exit Zen Mode">
+      <span class="mega-octicon octicon-screen-normal"></span>
+    </a>
+    <a href="#" class="theme-switcher js-theme-switcher tooltipped leftwards"
+      title="Switch themes">
+      <span class="octicon octicon-color-mode"></span>
+    </a>
+  </div>
+</div>
+
+
+
+    <div id="ajax-error-message" class="flash flash-error">
+      <span class="octicon octicon-alert"></span>
+      <a href="#" class="octicon octicon-remove-close close ajax-error-dismiss"></a>
+      Something went wrong with that request. Please try again.
+    </div>
+
+    
+  </body>
+</html>
+

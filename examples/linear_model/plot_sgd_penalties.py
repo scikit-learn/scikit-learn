@@ -3,15 +3,17 @@
 SGD: Penalties
 ==============
 
-Plot the contours of the three penalties supported by
-`sklearn.linear_model.stochastic_gradient`.
+Plot the contours of the three penalties.
+
+All of the above are supported by
+:class:`sklearn.linear_model.stochastic_gradient`.
 
 """
 from __future__ import division
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 
 def l1(xs):
@@ -33,8 +35,8 @@ def el(xs, z):
 
 
 def cross(ext):
-    pl.plot([-ext, ext], [0, 0], "k-")
-    pl.plot([0, 0], [-ext, ext], "k-")
+    plt.plot([-ext, ext], [0, 0], "k-")
+    plt.plot([0, 0], [-ext, ext], "k-")
 
 xs = np.linspace(0, 1, 100)
 
@@ -42,24 +44,29 @@ alpha = 0.501  # 0.5 division throuh zero
 
 cross(1.2)
 
-pl.plot(xs, l1(xs), "r-", label="L1")
-pl.plot(xs, -1.0 * l1(xs), "r-")
-pl.plot(-1 * xs, l1(xs), "r-")
-pl.plot(-1 * xs, -1.0 * l1(xs), "r-")
+l1_color = "navy"
+l2_color = "c"
+elastic_net_color = "darkorange"
+lw = 2
 
-pl.plot(xs, l2(xs), "b-", label="L2")
-pl.plot(xs, -1.0 * l2(xs), "b-")
-pl.plot(-1 * xs, l2(xs), "b-")
-pl.plot(-1 * xs, -1.0 * l2(xs), "b-")
+plt.plot(xs, l1(xs), color=l1_color, label="L1", lw=lw)
+plt.plot(xs, -1.0 * l1(xs), color=l1_color, lw=lw)
+plt.plot(-1 * xs, l1(xs), color=l1_color, lw=lw)
+plt.plot(-1 * xs, -1.0 * l1(xs), color=l1_color, lw=lw)
 
-pl.plot(xs, el(xs, alpha), "y-", label="Elastic Net")
-pl.plot(xs, -1.0 * el(xs, alpha), "y-")
-pl.plot(-1 * xs, el(xs, alpha), "y-")
-pl.plot(-1 * xs, -1.0 * el(xs, alpha), "y-")
+plt.plot(xs, l2(xs), color=l2_color, label="L2", lw=lw)
+plt.plot(xs, -1.0 * l2(xs), color=l2_color, lw=lw)
+plt.plot(-1 * xs, l2(xs), color=l2_color, lw=lw)
+plt.plot(-1 * xs, -1.0 * l2(xs), color=l2_color, lw=lw)
 
-pl.xlabel(r"$w_0$")
-pl.ylabel(r"$w_1$")
-pl.legend()
+plt.plot(xs, el(xs, alpha), color=elastic_net_color, label="Elastic Net", lw=lw)
+plt.plot(xs, -1.0 * el(xs, alpha), color=elastic_net_color, lw=lw)
+plt.plot(-1 * xs, el(xs, alpha), color=elastic_net_color, lw=lw)
+plt.plot(-1 * xs, -1.0 * el(xs, alpha), color=elastic_net_color, lw=lw)
 
-pl.axis("equal")
-pl.show()
+plt.xlabel(r"$w_0$")
+plt.ylabel(r"$w_1$")
+plt.legend()
+
+plt.axis("equal")
+plt.show()

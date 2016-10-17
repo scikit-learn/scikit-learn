@@ -3,4 +3,4 @@
 Generalized Linear Models
 -------------------------
 
-Examples concerning the :mod:`sklearn.linear_model` package.
+Examples concerning the :mod:`sklearn.linear_model` module.

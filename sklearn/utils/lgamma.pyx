@@ -1,7 +1,8 @@
-cimport cython
+cdef extern from "src/gamma.h":
+    cdef double sklearn_lgamma(double x)
 
-cdef extern from "src/Gamma.h":
-    cdef double LogGamma(double x) except +
 
 cdef double lgamma(double x):
-    return LogGamma(x)
+    if x <= 0:
+        raise ValueError("x must be strictly positive, got %f" % x)
+    return sklearn_lgamma(x)

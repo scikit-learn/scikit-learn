@@ -39,8 +39,8 @@ Finally, the coefficients of the l1 precision estimate are biased toward
 zero: because of the penalty, they are all smaller than the corresponding
 ground truth value, as can be seen on the figure.
 
-Note that, the color range of the precision matrices is tweeked to
-improve readibility of the figure. The full range of values of the
+Note that, the color range of the precision matrices is tweaked to
+improve readability of the figure. The full range of values of the
 empirical precision is not displayed.
 
 The alpha parameter of the GraphLasso setting the sparsity of the model is
@@ -48,16 +48,16 @@ set by internal cross-validation in the GraphLassoCV. As can be
 seen on figure 2, the grid to compute the cross-validation score is
 iteratively refined in the neighborhood of the maximum.
 """
-print __doc__
+print(__doc__)
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
-# License: BSD Style
+# License: BSD 3 clause
 # Copyright: INRIA
 
 import numpy as np
 from scipy import linalg
 from sklearn.datasets import make_sparse_spd_matrix
 from sklearn.covariance import GraphLassoCV, ledoit_wolf
-import pylab as pl
+import matplotlib.pyplot as plt
 
 ##############################################################################
 # Generate the data
@@ -93,20 +93,20 @@ lw_prec_ = linalg.inv(lw_cov_)
 
 ##############################################################################
 # Plot the results
-pl.figure(figsize=(10, 6))
-pl.subplots_adjust(left=0.02, right=0.98)
+plt.figure(figsize=(10, 6))
+plt.subplots_adjust(left=0.02, right=0.98)
 
 # plot the covariances
 covs = [('Empirical', emp_cov), ('Ledoit-Wolf', lw_cov_),
         ('GraphLasso', cov_), ('True', cov)]
 vmax = cov_.max()
 for i, (name, this_cov) in enumerate(covs):
-    pl.subplot(2, 4, i + 1)
-    pl.imshow(this_cov, interpolation='nearest', vmin=-vmax, vmax=vmax,
-              cmap=pl.cm.RdBu_r)
-    pl.xticks(())
-    pl.yticks(())
-    pl.title('%s covariance' % name)
+    plt.subplot(2, 4, i + 1)
+    plt.imshow(this_cov, interpolation='nearest', vmin=-vmax, vmax=vmax,
+               cmap=plt.cm.RdBu_r)
+    plt.xticks(())
+    plt.yticks(())
+    plt.title('%s covariance' % name)
 
 
 # plot the precisions
@@ -114,22 +114,22 @@ precs = [('Empirical', linalg.inv(emp_cov)), ('Ledoit-Wolf', lw_prec_),
          ('GraphLasso', prec_), ('True', prec)]
 vmax = .9 * prec_.max()
 for i, (name, this_prec) in enumerate(precs):
-    ax = pl.subplot(2, 4, i + 5)
-    pl.imshow(np.ma.masked_equal(this_prec, 0),
-              interpolation='nearest', vmin=-vmax, vmax=vmax,
-              cmap=pl.cm.RdBu_r)
-    pl.xticks(())
-    pl.yticks(())
-    pl.title('%s precision' % name)
+    ax = plt.subplot(2, 4, i + 5)
+    plt.imshow(np.ma.masked_equal(this_prec, 0),
+               interpolation='nearest', vmin=-vmax, vmax=vmax,
+               cmap=plt.cm.RdBu_r)
+    plt.xticks(())
+    plt.yticks(())
+    plt.title('%s precision' % name)
     ax.set_axis_bgcolor('.7')
 
 # plot the model selection metric
-pl.figure(figsize=(4, 3))
-pl.axes([.2, .15, .75, .7])
-pl.plot(model.cv_alphas_, np.mean(model.cv_scores, axis=1), 'o-')
-pl.axvline(model.alpha_, color='.5')
-pl.title('Model selection')
-pl.ylabel('Cross-validation score')
-pl.xlabel('alpha')
+plt.figure(figsize=(4, 3))
+plt.axes([.2, .15, .75, .7])
+plt.plot(model.cv_alphas_, np.mean(model.grid_scores, axis=1), 'o-')
+plt.axvline(model.alpha_, color='.5')
+plt.title('Model selection')
+plt.ylabel('Cross-validation score')
+plt.xlabel('alpha')
 
-pl.show()
+plt.show()

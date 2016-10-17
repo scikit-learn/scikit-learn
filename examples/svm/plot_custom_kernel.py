@@ -7,10 +7,10 @@ Simple usage of Support Vector Machines to classify a sample. It will
 plot the decision surface and the support vectors.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm, datasets
 
 # import some data to play with
@@ -20,16 +20,16 @@ X = iris.data[:, :2]  # we only take the first two features. We could
 Y = iris.target
 
 
-def my_kernel(x, y):
+def my_kernel(X, Y):
     """
     We create a custom kernel:
 
                  (2  0)
-    k(x, y) = x  (    ) y.T
+    k(X, Y) = X  (    ) Y.T
                  (0  1)
     """
     M = np.array([[2, 0], [0, 1.0]])
-    return np.dot(np.dot(x, M), y.T)
+    return np.dot(np.dot(X, M), Y.T)
 
 
 h = .02  # step size in the mesh
@@ -38,8 +38,8 @@ h = .02  # step size in the mesh
 clf = svm.SVC(kernel=my_kernel)
 clf.fit(X, Y)
 
-# Plot the decision boundary. For that, we will asign a color to each
-# point in the mesh [x_min, m_max]x[y_min, y_max].
+# Plot the decision boundary. For that, we will assign a color to each
+# point in the mesh [x_min, x_max]x[y_min, y_max].
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
@@ -47,11 +47,11 @@ Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-pl.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
+plt.pcolormesh(xx, yy, Z, cmap=plt.cm.Paired)
 
 # Plot also the training points
-pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
-pl.title('3-Class classification using Support Vector Machine with custom'
-         ' kernel')
-pl.axis('tight')
-pl.show()
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+plt.title('3-Class classification using Support Vector Machine with custom'
+          ' kernel')
+plt.axis('tight')
+plt.show()

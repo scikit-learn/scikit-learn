@@ -3,14 +3,16 @@
 One-class SVM with non-linear kernel (RBF)
 ==========================================
 
+An example using a one-class SVM for novelty detection.
+
 :ref:`One-class SVM <svm_outlier_detection>` is an unsupervised
 algorithm that learns a decision function for novelty detection:
 classifying new data as similar or different to the training set.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib.font_manager
 from sklearn import svm
 
@@ -38,24 +40,25 @@ n_error_outliers = y_pred_outliers[y_pred_outliers == 1].size
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
-pl.title("Novelty Detection")
-pl.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=pl.cm.Blues_r)
-a = pl.contour(xx, yy, Z, levels=[0], linewidths=2, colors='red')
-pl.contourf(xx, yy, Z, levels=[0, Z.max()], colors='orange')
+plt.title("Novelty Detection")
+plt.contourf(xx, yy, Z, levels=np.linspace(Z.min(), 0, 7), cmap=plt.cm.PuBu)
+a = plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='darkred')
+plt.contourf(xx, yy, Z, levels=[0, Z.max()], colors='palevioletred')
 
-b1 = pl.scatter(X_train[:, 0], X_train[:, 1], c='white')
-b2 = pl.scatter(X_test[:, 0], X_test[:, 1], c='green')
-c = pl.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red')
-pl.axis('tight')
-pl.xlim((-5, 5))
-pl.ylim((-5, 5))
-pl.legend([a.collections[0], b1, b2, c],
-          ["learned frontier", "training observations",
-           "new regular observations", "new abnormal observations"],
-          loc="upper left",
-          prop=matplotlib.font_manager.FontProperties(size=11))
-pl.xlabel(
-    "error train: %d/200 ; errors novel regular: %d/20 ; "
-    "errors novel abnormal: %d/20"
+s = 40
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white', s=s)
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='blueviolet', s=s)
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='gold', s=s)
+plt.axis('tight')
+plt.xlim((-5, 5))
+plt.ylim((-5, 5))
+plt.legend([a.collections[0], b1, b2, c],
+           ["learned frontier", "training observations",
+            "new regular observations", "new abnormal observations"],
+           loc="upper left",
+           prop=matplotlib.font_manager.FontProperties(size=11))
+plt.xlabel(
+    "error train: %d/200 ; errors novel regular: %d/40 ; "
+    "errors novel abnormal: %d/40"
     % (n_error_train, n_error_test, n_error_outliers))
-pl.show()
+plt.show()

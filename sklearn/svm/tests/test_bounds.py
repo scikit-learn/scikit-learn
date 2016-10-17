@@ -1,5 +1,4 @@
-import nose
-from nose.tools import assert_true
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -7,6 +6,9 @@ from scipy import sparse as sp
 from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
+
+from sklearn.utils.testing import assert_true, raises
+from sklearn.utils.testing import assert_raise_message
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
@@ -17,10 +19,10 @@ Y2 = [2, 1, 0, 0]
 
 
 def test_l1_min_c():
-    losses = ['l2', 'log']
+    losses = ['squared_hinge', 'log']
     Xs = {'sparse': sparse_X, 'dense': dense_X}
     Ys = {'two-classes': Y1, 'multi-class': Y2}
-    intercepts = {'no-intercept':  {'fit_intercept': False},
+    intercepts = {'no-intercept': {'fit_intercept': False},
                   'fit-intercept': {'fit_intercept': True,
                                     'intercept_scaling': 10}}
 
@@ -35,13 +37,18 @@ def test_l1_min_c():
                                           intercept_label))
                     yield check
 
+    # loss='l2' should raise ValueError
+    assert_raise_message(ValueError, "loss type not in",
+                         l1_min_c, dense_X, Y1, "l2")
+
 
 def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
     min_c = l1_min_c(X, y, loss, fit_intercept, intercept_scaling)
 
     clf = {
-        'log':  LogisticRegression(penalty='l1'),
-        'l2':  LinearSVC(loss='l2', penalty='l1', dual=False),
+        'log': LogisticRegression(penalty='l1'),
+        'squared_hinge': LinearSVC(loss='squared_hinge',
+                                   penalty='l1', dual=False),
     }[loss]
 
     clf.fit_intercept = fit_intercept
@@ -58,13 +65,13 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
                 (np.asarray(clf.intercept_) != 0).any())
 
 
-@nose.tools.raises(ValueError)
+@raises(ValueError)
 def test_ill_posed_min_c():
     X = [[0, 0], [0, 0]]
     y = [0, 1]
     l1_min_c(X, y)
 
 
-@nose.tools.raises(ValueError)
+@raises(ValueError)
 def test_unsupported_loss():
     l1_min_c(dense_X, Y1, 'l1')

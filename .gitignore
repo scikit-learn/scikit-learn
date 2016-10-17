@@ -1,7 +1,9 @@
 *.pyc
 *.so
+*.pyd
 *~
 .#*
+*.lprof
 *.swp
 *.swo
 .DS_Store
@@ -11,14 +13,18 @@ sklearn/**/*.html
 .nfs*
 
 dist/
+MANIFEST
 doc/_build/
 doc/auto_examples/
 doc/modules/generated/
 doc/datasets/generated/
+*.pdf
 pip-log.txt
 scikit_learn.egg-info/
 .coverage
 coverage
+*.py,cover
+.tags*
 tags
 covtype.data.gz
 20news-18828/
@@ -31,6 +37,9 @@ coverages
 samples
 doc/coverages
 doc/samples
+*.prof
+.tox/
+.coverage
 
 lfw_preprocessed/
 nips2010_pdf/
@@ -40,4 +49,18 @@ nips2010_pdf/
 *.tgz
 
 examples/cluster/joblib
+reuters/
 benchmarks/bench_covertype_data/
+
+*.prefs
+.pydevproject
+.idea
+
+cythonize.dat
+*.c
+*.cpp
+
+!*/src/*.c
+!*/src/*.cpp
+*.sln
+*.pyproj

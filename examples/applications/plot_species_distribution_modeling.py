@@ -13,17 +13,17 @@ density estimation problem and use the `OneClassSVM` provided
 by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
+`basemap <http://matplotlib.org/basemap>`_
 to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <http://www.iucnredlist.org/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -36,16 +36,17 @@ References
    190:231-259, 2006.
 """
 
-# Authors: Peter Prettenhoer <peter.prettenhofer@gmail.com>
+# Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
+from __future__ import print_function
 
 from time import time
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets.base import Bunch
 from sklearn.datasets import fetch_species_distributions
@@ -60,23 +61,20 @@ try:
 except ImportError:
     basemap = False
 
-print __doc__
+print(__doc__)
 
 
-def create_species_bunch(species_name,
-                         train, test,
-                         coverages, xgrid, ygrid):
-    """
-    create a bunch with information about a particular organism
+def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
+    """Create a bunch with information about a particular organism
 
     This will use the test/train record arrays to extract the
     data specific to the given species name.
     """
     bunch = Bunch(name=' '.join(species_name.split("_")[:2]))
-
+    species_name = species_name.encode('ascii')
     points = dict(test=test, train=train)
 
-    for label, pts in points.iteritems():
+    for label, pts in points.items():
         # choose points associated with the desired species
         pts = pts[pts['species'] == species_name]
         bunch['pts_%s' % label] = pts
@@ -89,14 +87,14 @@ def create_species_bunch(species_name,
     return bunch
 
 
-def plot_species_distribution(species=["bradypus_variegatus_0",
-                                       "microryzomys_minutus_0"]):
+def plot_species_distribution(species=("bradypus_variegatus_0",
+                                       "microryzomys_minutus_0")):
     """
     Plot the species distribution.
     """
     if len(species) > 2:
-        print ("Note: when more than two species are provided, only "
-               "the first two will be used")
+        print("Note: when more than two species are provided,"
+              " only the first two will be used")
 
     t0 = time()
 
@@ -130,8 +128,8 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
 
     # Fit, predict, and plot for each species.
     for i, species in enumerate([BV_bunch, MM_bunch]):
-        print "_" * 80
-        print "Modeling distribution of species '%s'" % species.name
+        print("_" * 80)
+        print("Modeling distribution of species '%s'" % species.name)
 
         # Standardize features
         mean = species.cov_train.mean(axis=0)
@@ -139,29 +137,29 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         train_cover_std = (species.cov_train - mean) / std
 
         # Fit OneClassSVM
-        print " - fit OneClassSVM ... ",
+        print(" - fit OneClassSVM ... ", end='')
         clf = svm.OneClassSVM(nu=0.1, kernel="rbf", gamma=0.5)
         clf.fit(train_cover_std)
-        print "done. "
+        print("done.")
 
         # Plot map of South America
-        pl.subplot(1, 2, i + 1)
+        plt.subplot(1, 2, i + 1)
         if basemap:
-            print " - plot coastlines using basemap"
+            print(" - plot coastlines using basemap")
             m = Basemap(projection='cyl', llcrnrlat=Y.min(),
                         urcrnrlat=Y.max(), llcrnrlon=X.min(),
                         urcrnrlon=X.max(), resolution='c')
             m.drawcoastlines()
             m.drawcountries()
         else:
-            print " - plot coastlines from coverage"
-            pl.contour(X, Y, land_reference,
-                       levels=[-9999], colors="k",
-                       linestyles="solid")
-            pl.xticks([])
-            pl.yticks([])
+            print(" - plot coastlines from coverage")
+            plt.contour(X, Y, land_reference,
+                        levels=[-9999], colors="k",
+                        linestyles="solid")
+            plt.xticks([])
+            plt.yticks([])
 
-        print " - predict species distribution"
+        print(" - predict species distribution")
 
         # Predict species distribution using the training data
         Z = np.ones((data.Ny, data.Nx), dtype=np.float64)
@@ -178,21 +176,21 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         Z[land_reference == -9999] = -9999
 
         # plot contours of the prediction
-        pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
-        pl.colorbar(format='%.2f')
+        plt.contourf(X, Y, Z, levels=levels, cmap=plt.cm.Reds)
+        plt.colorbar(format='%.2f')
 
         # scatter training/testing points
-        pl.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='^', label='train')
-        pl.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='x', label='test')
-        pl.legend()
-        pl.title(species.name)
-        pl.axis('equal')
+        plt.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
+                    s=2 ** 2, c='black',
+                    marker='^', label='train')
+        plt.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
+                    s=2 ** 2, c='black',
+                    marker='x', label='test')
+        plt.legend()
+        plt.title(species.name)
+        plt.axis('equal')
 
-        # Compute AUC w.r.t. background points
+        # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
         pred_test = clf.decision_function((species.cov_test - mean)
                                           / std)[:, 0]
@@ -200,11 +198,11 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)
         roc_auc = metrics.auc(fpr, tpr)
-        pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
-        print "\n Area under the ROC curve : %f" % roc_auc
+        plt.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
+        print("\n Area under the ROC curve : %f" % roc_auc)
 
-    print "\ntime elapsed: %.2fs" % (time() - t0)
+    print("\ntime elapsed: %.2fs" % (time() - t0))
 
 
 plot_species_distribution()
-pl.show()
+plt.show()

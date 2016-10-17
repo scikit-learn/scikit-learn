@@ -5,20 +5,21 @@
 =========================================================
 SVM-Kernels
 =========================================================
+
 Three different types of SVM-Kernels are displayed below.
 The polynomial and RBF are especially useful when the
-data-points are not linearly seperable.
+data-points are not linearly separable.
 
 
 """
-print __doc__
+print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# License: BSD
+# Code source: Gaël Varoquaux
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm
 
 
@@ -51,14 +52,14 @@ for kernel in ('linear', 'poly', 'rbf'):
     clf.fit(X, Y)
 
     # plot the line, the points, and the nearest vectors to the plane
-    pl.figure(fignum, figsize=(4, 3))
-    pl.clf()
+    plt.figure(fignum, figsize=(4, 3))
+    plt.clf()
 
-    pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-               facecolors='none', zorder=10)
-    pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=pl.cm.Paired)
+    plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
+                facecolors='none', zorder=10)
+    plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired)
 
-    pl.axis('tight')
+    plt.axis('tight')
     x_min = -3
     x_max = 3
     y_min = -3
@@ -69,15 +70,15 @@ for kernel in ('linear', 'poly', 'rbf'):
 
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
-    pl.figure(fignum, figsize=(4, 3))
-    pl.pcolormesh(XX, YY, Z > 0, cmap=pl.cm.Paired)
-    pl.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
-               levels=[-.5, 0, .5])
+    plt.figure(fignum, figsize=(4, 3))
+    plt.pcolormesh(XX, YY, Z > 0, cmap=plt.cm.Paired)
+    plt.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
+                levels=[-.5, 0, .5])
 
-    pl.xlim(x_min, x_max)
-    pl.ylim(y_min, y_max)
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
 
-    pl.xticks(())
-    pl.yticks(())
+    plt.xticks(())
+    plt.yticks(())
     fignum = fignum + 1
-pl.show()
+plt.show()

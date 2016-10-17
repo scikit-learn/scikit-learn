@@ -1,18 +1,16 @@
 #ifndef _LIBSVM_H
 #define _LIBSVM_H
 
-#define LIBSVM_VERSION 300
+#define LIBSVM_VERSION 310
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern int libsvm_version;
-
 struct svm_node
 {
 	int dim;
-	int ind; /* index. A bit redundanat, but needed if using a
+	int ind; /* index. A bit redundant, but needed if using a
                     precomputed kernel */
 	double *values;
 };
@@ -64,6 +62,7 @@ struct svm_parameter
 	int shrinking;	/* use the shrinking heuristics */
 	int probability; /* do probability estimates */
 	int max_iter; /* ceiling on Solver runtime */
+    int random_seed; /* seed for random number generator */
 };
 
 //
@@ -139,13 +138,8 @@ void svm_free_and_destroy_model(struct svm_model **model_ptr_ptr);
 void svm_destroy_param(struct svm_parameter *param);
 
 const char *svm_check_parameter(const struct svm_problem *prob, const struct svm_parameter *param);
-int svm_check_probability_model(const struct svm_model *model);
 
 void svm_set_print_string_function(void (*print_func)(const char *));
-
-// deprecated
-// this function will be removed in future release
-void svm_destroy_model(struct svm_model *model_ptr);
 
 
 /* sparse version */
@@ -167,7 +161,6 @@ void svm_csr_free_and_destroy_model(struct svm_csr_model **model_ptr_ptr);
 void svm_csr_destroy_param(struct svm_parameter *param);
 
 const char *svm_csr_check_parameter(const struct svm_csr_problem *prob, const struct svm_parameter *param);
-int svm_csr_check_probability_model(const struct svm_csr_model *model);
 
 /* end sparse version */
 

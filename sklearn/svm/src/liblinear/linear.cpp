@@ -9,7 +9,19 @@
         See issue 546: https://github.com/scikit-learn/scikit-learn/pull/546
    - Also changed roles for pairwise class weights, Andreas Mueller
         See issue 1491: https://github.com/scikit-learn/scikit-learn/pull/1491
-   
+
+   Modified 2014:
+
+   - Remove the hard-coded value of max_iter (1000), that allows max_iter
+     to be passed as a parameter from the classes LogisticRegression and
+     LinearSVC, Manoj Kumar
+   - Added function get_n_iter that exposes the number of iterations.
+        See issue 3499: https://github.com/scikit-learn/scikit-learn/issues/3499
+        See pull 3501: https://github.com/scikit-learn/scikit-learn/pull/3501
+
+   Modified 2015:
+   - Patched liblinear for sample_weights - Manoj Kumar
+     See https://github.com/scikit-learn/scikit-learn/pull/5274
  */
 
 #include <math.h>
@@ -29,7 +41,7 @@ template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }
 template <class T> static inline T max(T x,T y) { return (x>y)?x:y; }
 #endif
 template <class S, class T> static inline void clone(T*& dst, S* src, int n)
-{   
+{
 	dst = new T[n];
 	memcpy((void *)dst,(void *)src,sizeof(T)*n);
 }
@@ -392,12 +404,12 @@ double l2r_l2_svr_fun::fun(double *w)
 	int l=prob->l;
 	int w_size=get_nr_variable();
 	double d;
-	
+
 	Xv(w, z);
 
 	for(i=0;i<w_size;i++)
 		f += w[i]*w[i];
-	f /= 2;	
+	f /= 2;
 	for(i=0;i<l;i++)
 	{
 		d = z[i] - y[i];
@@ -422,7 +434,7 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 	for(i=0;i<l;i++)
 	{
 		d = z[i] - y[i];
-		
+
 		// generate index set I
 		if(d < -p)
 		{
@@ -436,7 +448,7 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 			I[sizeI] = i;
 			sizeI++;
 		}
-	
+
 	}
 	subXTv(z, g);
 
@@ -472,7 +484,7 @@ class Solver_MCSVM_CS
 	public:
 		Solver_MCSVM_CS(const problem *prob, int nr_class, double *C, double eps=0.1, int max_iter=100000);
 		~Solver_MCSVM_CS();
-		void Solve(double *w);
+		int Solve(double *w);
 	private:
 		void solve_sub_problem(double A_i, int yi, double C_yi, int active_i, double *alpha_new);
 		bool be_shrunk(int i, int m, int yi, double alpha_i, double minG);
@@ -547,7 +559,7 @@ bool Solver_MCSVM_CS::be_shrunk(int i, int m, int yi, double alpha_i, double min
 	return false;
 }
 
-void Solver_MCSVM_CS::Solve(double *w)
+int Solver_MCSVM_CS::Solve(double *w)
 {
 	int i, m, s;
 	int iter = 0;
@@ -573,7 +585,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 		alpha[i] = 0;
 
 	for(i=0;i<w_size*nr_class;i++)
-		w[i] = 0; 
+		w[i] = 0;
 	for(i=0;i<l;i++)
 	{
 		for(m=0;m<nr_class;m++)
@@ -584,7 +596,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 		{
 			double val = xi->value;
 			QD[i] += val*val;
-	
+
 			// Uncomment the for loop if initial alpha isn't zero
 			// for(m=0; m<nr_class; m++)
 			//	w[(xi->index-1)*nr_class+m] += alpha[i*nr_class+m]*val;
@@ -595,7 +607,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 		index[i] = i;
 	}
 
-	while(iter < max_iter) 
+	while(iter < max_iter)
 	{
 		double stopping = -INF;
 		for(i=0;i<active_size;i++)
@@ -646,14 +658,14 @@ void Solver_MCSVM_CS::Solve(double *w)
 						active_size_i[i]--;
 						while(active_size_i[i]>m)
 						{
-							if(!be_shrunk(i, active_size_i[i], y_index[i], 
+							if(!be_shrunk(i, active_size_i[i], y_index[i],
 											alpha_i[alpha_index_i[active_size_i[i]]], minG))
 							{
 								swap(alpha_index_i[m], alpha_index_i[active_size_i[i]]);
 								swap(G[m], G[active_size_i[i]]);
 								if(y_index[i] == active_size_i[i])
 									y_index[i] = m;
-								else if(y_index[i] == m) 
+								else if(y_index[i] == m)
 									y_index[i] = active_size_i[i];
 								break;
 							}
@@ -666,7 +678,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 				{
 					active_size--;
 					swap(index[s], index[active_size]);
-					s--;	
+					s--;
 					continue;
 				}
 
@@ -757,6 +769,7 @@ void Solver_MCSVM_CS::Solve(double *w)
 	delete [] alpha_index;
 	delete [] y_index;
 	delete [] active_size_i;
+	return iter;
 }
 
 // A coordinate descent algorithm for 
@@ -789,16 +802,15 @@ void Solver_MCSVM_CS::Solve(double *w)
 #define GETI(i) (y[i]+1)
 // To support weights for instances, use GETI(i) (i)
 
-static void solve_l2r_l1l2_svc(
-	const problem *prob, double *w, double eps, 
-	double Cp, double Cn, int solver_type)
+static int solve_l2r_l1l2_svc(
+	const problem *prob, double *w, double eps,
+	double Cp, double Cn, int solver_type, int max_iter)
 {
 	int l = prob->l;
 	int w_size = prob->n;
 	int i, s, iter = 0;
 	double C, d, G;
 	double *QD = new double[l];
-	int max_iter = 1000;
 	int *index = new int[l];
 	double *alpha = new double[l];
 	schar *y = new schar[l];
@@ -825,7 +837,7 @@ static void solve_l2r_l1l2_svc(
 	{
 		if(prob->y[i] > 0)
 		{
-			y[i] = +1; 
+			y[i] = +1;
 		}
 		else
 		{
@@ -837,7 +849,7 @@ static void solve_l2r_l1l2_svc(
 	// 0 <= alpha[i] <= upper_bound[GETI(i)]
 	for(i=0; i<l; i++)
 		alpha[i] = 0;
-	
+
 	for(i=0; i<w_size; i++)
 		w[i] = 0;
 	for(i=0; i<l; i++)
@@ -976,6 +988,7 @@ static void solve_l2r_l1l2_svc(
 	delete [] alpha;
 	delete [] y;
 	delete [] index;
+	return iter;
 }
 
 
@@ -1007,9 +1020,9 @@ static void solve_l2r_l1l2_svc(
 #define GETI(i) (0)
 // To support weights for instances, use GETI(i) (i)
 
-static void solve_l2r_l1l2_svr(
+static int solve_l2r_l1l2_svr(
 	const problem *prob, double *w, const parameter *param,
-	int solver_type)
+	int solver_type, int max_iter)
 {
 	int l = prob->l;
 	double C = param->C;
@@ -1017,14 +1030,13 @@ static void solve_l2r_l1l2_svr(
 	int w_size = prob->n;
 	double eps = param->eps;
 	int i, s, iter = 0;
-	int max_iter = 1000;
 	int active_size = l;
 	int *index = new int[l];
 
 	double d, G, H;
 	double Gmax_old = INF;
 	double Gmax_new, Gnorm1_new;
-	double Gnorm1_init;
+	double Gnorm1_init = -1.0; // Gnorm1_init is initialized at the first iteration
 	double *beta = new double[l];
 	double *QD = new double[l];
 	double *y = prob->y;
@@ -1209,6 +1221,7 @@ static void solve_l2r_l1l2_svr(
 	delete [] beta;
 	delete [] QD;
 	delete [] index;
+	return iter;
 }
 
 
@@ -1230,44 +1243,46 @@ static void solve_l2r_l1l2_svr(
 //
 // See Algorithm 5 of Yu et al., MLJ 2010
 
-#undef GETI
-#define GETI(i) (y[i]+1)
-// To support weights for instances, use GETI(i) (i)
 
-void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn)
+#define SAMPLE_WEIGHT(i) upper_bound[y[i]+1]*sample_weight[i]
+// To support weights for instances, use SAMPLE_WEIGHT(i)
+// Each instance is weighted by sample_weight*class_weight)
+
+int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, double Cn,
+					   int max_iter)
 {
 	int l = prob->l;
 	int w_size = prob->n;
 	int i, s, iter = 0;
 	double *xTx = new double[l];
-	int max_iter = 1000;
-	int *index = new int[l];		
+	int *index = new int[l];
 	double *alpha = new double[2*l]; // store alpha and C - alpha
-	schar *y = new schar[l];	
+	schar *y = new schar[l];
 	int max_inner_iter = 100; // for inner Newton
-	double innereps = 1e-2; 
+	double innereps = 1e-2;
 	double innereps_min = min(1e-8, eps);
 	double upper_bound[3] = {Cn, 0, Cp};
+	double *sample_weight = prob->sample_weight;
 
 	for(i=0; i<l; i++)
 	{
 		if(prob->y[i] > 0)
 		{
-			y[i] = +1; 
+			y[i] = +1;
 		}
 		else
 		{
 			y[i] = -1;
 		}
 	}
-		
+
 	// Initial alpha can be set here. Note that
-	// 0 < alpha[i] < upper_bound[GETI(i)]
-	// alpha[2*i] + alpha[2*i+1] = upper_bound[GETI(i)]
+	// 0 < alpha[i] < SAMPLE_WEIGHT(i)
+	// alpha[2*i] + alpha[2*i+1] = SAMPLE_WEIGHT(i)
 	for(i=0; i<l; i++)
 	{
-		alpha[2*i] = min(0.001*upper_bound[GETI(i)], 1e-8);
-		alpha[2*i+1] = upper_bound[GETI(i)] - alpha[2*i];
+		alpha[2*i] = min(0.001*SAMPLE_WEIGHT(i), 1e-8);
+		alpha[2*i+1] = SAMPLE_WEIGHT(i) - alpha[2*i];
 	}
 
 	for(i=0; i<w_size; i++)
@@ -1299,7 +1314,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		{
 			i = index[s];
 			schar yi = y[i];
-			double C = upper_bound[GETI(i)];
+			double C = SAMPLE_WEIGHT(i);
 			double ywTx = 0, xisq = xTx[i];
 			feature_node *xi = prob->x[i];
 			while (xi->index != -1)
@@ -1312,7 +1327,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 
 			// Decide to minimize g_1(z) or g_2(z)
 			int ind1 = 2*i, ind2 = 2*i+1, sign = 1;
-			if(0.5*a*(alpha[ind2]-alpha[ind1])+b < 0) 
+			if(0.5*a*(alpha[ind2]-alpha[ind1])+b < 0)
 			{
 				ind1 = 2*i+1;
 				ind2 = 2*i;
@@ -1322,7 +1337,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 			//  g_t(z) = z*log(z) + (C-z)*log(C-z) + 0.5a(z-alpha_old)^2 + sign*b(z-alpha_old)
 			double alpha_old = alpha[ind1];
 			double z = alpha_old;
-			if(C - z < 0.5 * C) 
+			if(C - z < 0.5 * C)
 				z = 0.1*z;
 			double gp = a*(z-alpha_old)+sign*b+log(z/(C-z));
 			Gmax = max(Gmax, fabs(gp));
@@ -1330,13 +1345,13 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 			// Newton method on the sub-problem
 			const double eta = 0.1; // xi in the paper
 			int inner_iter = 0;
-			while (inner_iter <= max_inner_iter) 
+			while (inner_iter <= max_inner_iter)
 			{
 				if(fabs(gp) < innereps)
 					break;
 				double gpp = a + C/(C-z)/z;
 				double tmpz = z - gp/gpp;
-				if(tmpz <= 0) 
+				if(tmpz <= 0)
 					z *= eta;
 				else // tmpz in (0, C)
 					z = tmpz;
@@ -1354,7 +1369,7 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 				{
 					w[xi->index-1] += sign*(z-alpha_old)*yi*xi->value;
 					xi++;
-				}  
+				}
 			}
 		}
 
@@ -1362,10 +1377,10 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		if(iter % 10 == 0)
 			info(".");
 
-		if(Gmax < eps) 
+		if(Gmax < eps)
 			break;
 
-		if(newton_iter <= l/10) 
+		if(newton_iter <= l/10)
 			innereps = max(innereps_min, 0.1*innereps);
 
 	}
@@ -1375,28 +1390,29 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 		info("\nWARNING: reaching max number of iterations\nUsing -s 0 may be faster (also see FAQ)\n\n");
 
 	// calculate objective value
-	
+
 	double v = 0;
 	for(i=0; i<w_size; i++)
 		v += w[i] * w[i];
 	v *= 0.5;
 	for(i=0; i<l; i++)
-		v += alpha[2*i] * log(alpha[2*i]) + alpha[2*i+1] * log(alpha[2*i+1]) 
-			- upper_bound[GETI(i)] * log(upper_bound[GETI(i)]);
+		v += alpha[2*i] * log(alpha[2*i]) + alpha[2*i+1] * log(alpha[2*i+1])
+			- SAMPLE_WEIGHT(i) * log(SAMPLE_WEIGHT(i));
 	info("Objective value = %lf\n", v);
 
 	delete [] xTx;
 	delete [] alpha;
 	delete [] y;
 	delete [] index;
+	return iter;
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-regularized L2-loss support vector classification
 //
 //  min_w \sum |wj| + C \sum max(0, 1-yi w^T xi)^2,
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
@@ -1408,14 +1424,13 @@ void solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, do
 #define GETI(i) (y[i]+1)
 // To support weights for instances, use GETI(i) (i)
 
-static void solve_l1r_l2_svc(
-	problem *prob_col, double *w, double eps, 
-	double Cp, double Cn)
+static int solve_l1r_l2_svc(
+	problem *prob_col, double *w, double eps,
+	double Cp, double Cn, int max_iter)
 {
 	int l = prob_col->l;
 	int w_size = prob_col->n;
 	int j, s, iter = 0;
-	int max_iter = 1000;
 	int active_size = w_size;
 	int max_num_linesearch = 20;
 
@@ -1423,7 +1438,7 @@ static void solve_l1r_l2_svc(
 	double d, G_loss, G, H;
 	double Gmax_old = INF;
 	double Gmax_new, Gnorm1_new;
-	double Gnorm1_init;
+	double Gnorm1_init = -1.0; // Gnorm1_init is initialized at the first iteration
 	double d_old, d_diff;
 	double loss_old, loss_new;
 	double appxcond, cond;
@@ -1676,33 +1691,33 @@ static void solve_l1r_l2_svc(
 	delete [] y;
 	delete [] b;
 	delete [] xj_sq;
+	return iter;
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-regularized logistic regression problems
 //
 //  min_w \sum |wj| + C \sum log(1+exp(-yi w^T xi)),
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
 // solution will be put in w
 //
 // See Yuan et al. (2011) and appendix of LIBLINEAR paper, Fan et al. (2008)
+#undef SAMPLE_WEIGHT
+#define SAMPLE_WEIGHT(i) C[y[i]+1]*sample_weight[i]
+// To support weights for instances, use SAMPLE_WEIGHT(i)
+// Each instance is weighted by (class_weight*sample_weight)
 
-#undef GETI
-#define GETI(i) (y[i]+1)
-// To support weights for instances, use GETI(i) (i)
-
-static void solve_l1r_lr(
-	const problem *prob_col, double *w, double eps, 
-	double Cp, double Cn)
+static int solve_l1r_lr(
+	const problem *prob_col, double *w, double eps,
+	double Cp, double Cn, int max_newton_iter)
 {
 	int l = prob_col->l;
 	int w_size = prob_col->n;
 	int j, s, newton_iter=0, iter=0;
-	int max_newton_iter = 100;
 	int max_iter = 1000;
 	int max_num_linesearch = 20;
 	int active_size;
@@ -1713,7 +1728,7 @@ static void solve_l1r_lr(
 	double sigma = 0.01;
 	double w_norm, w_norm_new;
 	double z, G, H;
-	double Gnorm1_init;
+	double Gnorm1_init = -1.0; // Gnorm1_init is initialized at the first iteration
 	double Gmax_old = INF;
 	double Gmax_new, Gnorm1_new;
 	double QP_Gmax_old = INF;
@@ -1731,6 +1746,7 @@ static void solve_l1r_lr(
 	double *exp_wTx_new = new double[l];
 	double *tau = new double[l];
 	double *D = new double[l];
+	double *sample_weight = prob_col->sample_weight;
 	feature_node *x;
 
 	double C[3] = {Cn,0,Cp};
@@ -1763,7 +1779,7 @@ static void solve_l1r_lr(
 			double val = x->value;
 			exp_wTx[ind] += w[j]*val;
 			if(y[ind] == -1)
-				xjneg_sum[j] += C[GETI(ind)]*val;
+				xjneg_sum[j] += SAMPLE_WEIGHT(ind)*val;
 			x++;
 		}
 	}
@@ -1771,8 +1787,8 @@ static void solve_l1r_lr(
 	{
 		exp_wTx[j] = exp(exp_wTx[j]);
 		double tau_tmp = 1/(1+exp_wTx[j]);
-		tau[j] = C[GETI(j)]*tau_tmp;
-		D[j] = C[GETI(j)]*exp_wTx[j]*tau_tmp*tau_tmp;
+		tau[j] = SAMPLE_WEIGHT(j)*tau_tmp;
+		D[j] = SAMPLE_WEIGHT(j)*exp_wTx[j]*tau_tmp*tau_tmp;
 	}
 
 	while(newton_iter < max_newton_iter)
@@ -1948,7 +1964,7 @@ static void solve_l1r_lr(
 		negsum_xTd = 0;
 		for(int i=0; i<l; i++)
 			if(y[i] == -1)
-				negsum_xTd += C[GETI(i)]*xTd[i];
+				negsum_xTd += SAMPLE_WEIGHT(i)*xTd[i];
 
 		int num_linesearch;
 		for(num_linesearch=0; num_linesearch < max_num_linesearch; num_linesearch++)
@@ -1959,7 +1975,7 @@ static void solve_l1r_lr(
 			{
 				double exp_xTd = exp(xTd[i]);
 				exp_wTx_new[i] = exp_wTx[i]*exp_xTd;
-				cond += C[GETI(i)]*log((1+exp_wTx_new[i])/(exp_xTd+exp_wTx_new[i]));
+				cond += SAMPLE_WEIGHT(i)*log((1+exp_wTx_new[i])/(exp_xTd+exp_wTx_new[i]));
 			}
 
 			if(cond <= 0)
@@ -1971,8 +1987,8 @@ static void solve_l1r_lr(
 				{
 					exp_wTx[i] = exp_wTx_new[i];
 					double tau_tmp = 1/(1+exp_wTx[i]);
-					tau[i] = C[GETI(i)]*tau_tmp;
-					D[i] = C[GETI(i)]*exp_wTx[i]*tau_tmp*tau_tmp;
+					tau[i] = SAMPLE_WEIGHT(i)*tau_tmp;
+					D[i] = SAMPLE_WEIGHT(i)*exp_wTx[i]*tau_tmp*tau_tmp;
 				}
 				break;
 			}
@@ -2028,7 +2044,7 @@ static void solve_l1r_lr(
 		info("WARNING: reaching max number of iterations\n");
 
 	// calculate objective value
-	
+
 	double v = 0;
 	int nnz = 0;
 	for(j=0; j<w_size; j++)
@@ -2039,9 +2055,9 @@ static void solve_l1r_lr(
 		}
 	for(j=0; j<l; j++)
 		if(y[j] == 1)
-			v += C[GETI(j)]*log(1+1/exp_wTx[j]);
+			v += SAMPLE_WEIGHT(j)*log(1+1/exp_wTx[j]);
 		else
-			v += C[GETI(j)]*log(1+exp_wTx[j]);
+			v += SAMPLE_WEIGHT(j)*log(1+exp_wTx[j]);
 
 	info("Objective value = %lf\n", v);
 	info("#nonzeros/#features = %d/%d\n", nnz, w_size);
@@ -2057,6 +2073,7 @@ static void solve_l1r_lr(
 	delete [] exp_wTx_new;
 	delete [] tau;
 	delete [] D;
+	return newton_iter;
 }
 
 // transpose matrix X from row format to column format
@@ -2065,13 +2082,14 @@ static void transpose(const problem *prob, feature_node **x_space_ret, problem *
 	int i;
 	int l = prob->l;
 	int n = prob->n;
-	int nnz = 0;
-	int *col_ptr = new int[n+1];
+	size_t nnz = 0;
+	size_t *col_ptr = new size_t [n+1];
 	feature_node *x_space;
 	prob_col->l = l;
 	prob_col->n = n;
 	prob_col->y = new double[l];
 	prob_col->x = new feature_node*[n];
+	prob_col->sample_weight=prob->sample_weight;
 
 	for(i=0; i<l; i++)
 		prob_col->y[i] = prob->y[i];
@@ -2155,7 +2173,7 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 	}
 
         /* START MOD: Sort labels and apply to array count --dyamins */
-        
+
         int j;
         for (j=1; j<nr_class; j++)
         {
@@ -2186,6 +2204,25 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 
         /* END MOD */
 
+#if 0
+	//
+	// Labels are ordered by their first occurrence in the training set.
+	// However, for two-class sets with -1/+1 labels and -1 appears first,
+	// we swap labels to ensure that internally the binary SVM has positive data corresponding to the +1 instances.
+	//
+	if (nr_class == 2 && label[0] == -1 && label[1] == 1)
+	{
+		swap(label[0],label[1]);
+		swap(count[0],count[1]);
+		for(i=0;i<l;i++)
+		{
+			if(data_label[i] == 0)
+				data_label[i] = 1;
+			else
+				data_label[i] = 0;
+		}
+	}
+#endif
 
 	int *start = Malloc(int,nr_class);
 	start[0] = 0;
@@ -2207,16 +2244,19 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 	free(data_label);
 }
 
-static void train_one(const problem *prob, const parameter *param, double *w, double Cp, double Cn)
+static int train_one(const problem *prob, const parameter *param, double *w, double Cp, double Cn)
 {
 	double eps=param->eps;
+	double* sample_weight=prob->sample_weight;
+	int max_iter=param->max_iter;
 	int pos = 0;
 	int neg = 0;
+	int n_iter = -1;
 	for(int i=0;i<prob->l;i++)
 		if(prob->y[i] > 0)
 			pos++;
 	neg = prob->l - pos;
-	
+
 	double primal_solver_tol = eps*max(min(pos,neg), 1)/prob->l;
 
 	function *fun_obj=NULL;
@@ -2228,16 +2268,17 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			for(int i = 0; i < prob->l; i++)
 			{
 				if(prob->y[i] > 0)
-					C[i] = Cp;
+					C[i] = sample_weight[i]*Cp;
 				else
-					C[i] = Cn;
+					C[i] = sample_weight[i]*Cn;
 			}
+
 			fun_obj=new l2r_lr_fun(prob, C);
-			TRON tron_obj(fun_obj, primal_solver_tol);
+			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
-			tron_obj.tron(w);
+			n_iter=tron_obj.tron(w);
 			delete fun_obj;
-			delete C;
+			delete[] C;
 			break;
 		}
 		case L2R_L2LOSS_SVC:
@@ -2251,25 +2292,25 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 					C[i] = Cn;
 			}
 			fun_obj=new l2r_l2_svc_fun(prob, C);
-			TRON tron_obj(fun_obj, primal_solver_tol);
+			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
-			tron_obj.tron(w);
+			n_iter=tron_obj.tron(w);
 			delete fun_obj;
-			delete C;
+			delete[] C;
 			break;
 		}
 		case L2R_L2LOSS_SVC_DUAL:
-			solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L2LOSS_SVC_DUAL);
+			n_iter=solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L2LOSS_SVC_DUAL, max_iter);
 			break;
 		case L2R_L1LOSS_SVC_DUAL:
-			solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L1LOSS_SVC_DUAL);
+			n_iter=solve_l2r_l1l2_svc(prob, w, eps, Cp, Cn, L2R_L1LOSS_SVC_DUAL, max_iter);
 			break;
 		case L1R_L2LOSS_SVC:
 		{
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn);
+			n_iter=solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
@@ -2280,40 +2321,41 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			problem prob_col;
 			feature_node *x_space = NULL;
 			transpose(prob, &x_space ,&prob_col);
-			solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn);
+			n_iter=solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
 			delete [] x_space;
 			break;
 		}
 		case L2R_LR_DUAL:
-			solve_l2r_lr_dual(prob, w, eps, Cp, Cn);
+			n_iter=solve_l2r_lr_dual(prob, w, eps, Cp, Cn, max_iter);
 			break;
 		case L2R_L2LOSS_SVR:
 		{
 			double *C = new double[prob->l];
 			for(int i = 0; i < prob->l; i++)
 				C[i] = param->C;
-			
+
 			fun_obj=new l2r_l2_svr_fun(prob, C, param->p);
-			TRON tron_obj(fun_obj, param->eps);
+			TRON tron_obj(fun_obj, param->eps, max_iter);
 			tron_obj.set_print_string(liblinear_print_string);
-			tron_obj.tron(w);
+			n_iter=tron_obj.tron(w);
 			delete fun_obj;
-			delete C;
+			delete[] C;
 			break;
 
 		}
 		case L2R_L1LOSS_SVR_DUAL:
-			solve_l2r_l1l2_svr(prob, w, param, L2R_L1LOSS_SVR_DUAL);
+			n_iter=solve_l2r_l1l2_svr(prob, w, param, L2R_L1LOSS_SVR_DUAL, max_iter);
 			break;
 		case L2R_L2LOSS_SVR_DUAL:
-			solve_l2r_l1l2_svr(prob, w, param, L2R_L2LOSS_SVR_DUAL);
+			n_iter=solve_l2r_l1l2_svr(prob, w, param, L2R_L2LOSS_SVR_DUAL, max_iter);
 			break;
 		default:
 			fprintf(stderr, "ERROR: unknown solver_type\n");
 			break;
 	}
+	return n_iter;
 }
 
 //
@@ -2325,6 +2367,7 @@ model* train(const problem *prob, const parameter *param)
 	int l = prob->l;
 	int n = prob->n;
 	int w_size = prob->n;
+	int n_iter;
 	model *model_ = Malloc(model,1);
 
 	if(prob->bias>=0)
@@ -2334,14 +2377,13 @@ model* train(const problem *prob, const parameter *param)
 	model_->param = *param;
 	model_->bias = prob->bias;
 
-	if(param->solver_type == L2R_L2LOSS_SVR ||
-	   param->solver_type == L2R_L1LOSS_SVR_DUAL ||
-	   param->solver_type == L2R_L2LOSS_SVR_DUAL)
+	if(check_regression_model(model_))
 	{
 		model_->w = Malloc(double, w_size);
+		model_->n_iter = Malloc(int, 1);
 		model_->nr_class = 2;
 		model_->label = NULL;
-		train_one(prob, param, &model_->w[0], 0, 0);
+		model_->n_iter[0] =train_one(prob, param, &model_->w[0], 0, 0);
 	}
 	else
 	{
@@ -2376,8 +2418,12 @@ model* train(const problem *prob, const parameter *param)
 
 		// constructing the subproblem
 		feature_node **x = Malloc(feature_node *,l);
+		double *sample_weight = new double[l];
 		for(i=0;i<l;i++)
+		{
 			x[i] = prob->x[perm[i]];
+			sample_weight[i] = prob->sample_weight[perm[i]];
+		}
 
 		int k;
 		problem sub_prob;
@@ -2385,6 +2431,7 @@ model* train(const problem *prob, const parameter *param)
 		sub_prob.n = n;
 		sub_prob.x = Malloc(feature_node *,sub_prob.l);
 		sub_prob.y = Malloc(double,sub_prob.l);
+		sub_prob.sample_weight = sample_weight;
 
 		for(k=0; k<sub_prob.l; k++)
 			sub_prob.x[k] = x[k];
@@ -2393,18 +2440,19 @@ model* train(const problem *prob, const parameter *param)
 		if(param->solver_type == MCSVM_CS)
 		{
 			model_->w=Malloc(double, n*nr_class);
+			model_->n_iter=Malloc(int, 1);
 			for(i=0;i<nr_class;i++)
 				for(j=start[i];j<start[i]+count[i];j++)
 					sub_prob.y[j] = i;
 			Solver_MCSVM_CS Solver(&sub_prob, nr_class, weighted_C, param->eps);
-			Solver.Solve(model_->w);
+			model_->n_iter[0]=Solver.Solve(model_->w);
 		}
 		else
 		{
 			if(nr_class == 2)
 			{
 				model_->w=Malloc(double, w_size);
-
+				model_->n_iter=Malloc(int, 1);
 				int e0 = start[0]+count[0];
 				k=0;
 				for(; k<e0; k++)
@@ -2412,12 +2460,13 @@ model* train(const problem *prob, const parameter *param)
 				for(; k<sub_prob.l; k++)
 					sub_prob.y[k] = +1;
 
-				train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
+				model_->n_iter[0]=train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
 			}
 			else
 			{
 				model_->w=Malloc(double, w_size*nr_class);
 				double *w=Malloc(double, w_size);
+				model_->n_iter=Malloc(int, nr_class);
 				for(i=0;i<nr_class;i++)
 				{
 					int si = start[i];
@@ -2431,7 +2480,7 @@ model* train(const problem *prob, const parameter *param)
 					for(; k<sub_prob.l; k++)
 						sub_prob.y[k] = -1;
 
-					train_one(&sub_prob, param, w, weighted_C[i], param->C);
+					model_->n_iter[i]=train_one(&sub_prob, param, w, weighted_C[i], param->C);
 
 					for(int j=0;j<w_size;j++)
 						model_->w[j*nr_class+i] = w[j];
@@ -2449,6 +2498,7 @@ model* train(const problem *prob, const parameter *param)
 		free(sub_prob.x);
 		free(sub_prob.y);
 		free(weighted_C);
+		delete[] sample_weight;
 	}
 	return model_;
 }
@@ -2457,10 +2507,15 @@ model* train(const problem *prob, const parameter *param)
 void cross_validation(const problem *prob, const parameter *param, int nr_fold, double *target)
 {
 	int i;
-	int *fold_start = Malloc(int,nr_fold+1);
+	int *fold_start;
 	int l = prob->l;
 	int *perm = Malloc(int,l);
-
+	if (nr_fold > l)
+	{
+		nr_fold = l;
+		fprintf(stderr,"WARNING: # folds > # data. Will use # folds = # data instead (i.e., leave-one-out cross validation)\n");
+	}
+	fold_start = Malloc(int,nr_fold+1);
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
 	{
@@ -2537,9 +2592,7 @@ double predict_values(const struct model *model_, const struct feature_node *x, 
 
 	if(nr_class==2)
 	{
-		if(model_->param.solver_type == L2R_L2LOSS_SVR ||
-		   model_->param.solver_type == L2R_L1LOSS_SVR_DUAL ||
-		   model_->param.solver_type == L2R_L2LOSS_SVR_DUAL)
+		if(check_regression_model(model_))
 			return dec_values[0];
 		else
 			return (dec_values[0]>0)?model_->label[0]:model_->label[1];
@@ -2592,7 +2645,7 @@ double predict_probability(const struct model *model_, const struct feature_node
 				prob_estimates[i]=prob_estimates[i]/sum;
 		}
 
-		return label;		
+		return label;
 	}
 	else
 		return 0;
@@ -2632,7 +2685,7 @@ int save_model(const char *model_file_name, const struct model *model_)
 
 	fprintf(fp, "solver_type %s\n", solver_type_table[param.solver_type]);
 	fprintf(fp, "nr_class %d\n", model_->nr_class);
-	
+
 	if(model_->label)
 	{
 		fprintf(fp, "label");
@@ -2675,7 +2728,7 @@ struct model *load_model(const char *model_file_name)
 	parameter& param = model_->param;
 
 	model_->label = NULL;
-	
+
 	char *old_locale = strdup(setlocale(LC_ALL, NULL));
 	setlocale(LC_ALL, "C");
 
@@ -2698,7 +2751,7 @@ struct model *load_model(const char *model_file_name)
 			if(solver_type_table[i] == NULL)
 			{
 				fprintf(stderr,"unknown solver type.\n");
-				
+
 				setlocale(LC_ALL, old_locale);
 				free(model_->label);
 				free(model_);
@@ -2763,10 +2816,10 @@ struct model *load_model(const char *model_file_name)
 			fscanf(fp, "%lf ", &model_->w[i*nr_w+j]);
 		fscanf(fp, "\n");
 	}
-	
+
 	setlocale(LC_ALL, old_locale);
 	free(old_locale);
-	
+
 	if (ferror(fp) != 0 || fclose(fp) != 0) return NULL;
 
 	return model_;
@@ -2789,6 +2842,67 @@ void get_labels(const model *model_, int* label)
 		for(int i=0;i<model_->nr_class;i++)
 			label[i] = model_->label[i];
 }
+
+void get_n_iter(const model *model_, int* n_iter)
+{
+    int labels;
+    labels = model_->nr_class;
+    if (labels == 2)
+        labels = 1;
+
+    if (model_->n_iter != NULL)
+        for(int i=0;i<labels;i++)
+            n_iter[i] = model_->n_iter[i];
+}
+
+#if 0
+// use inline here for better performance (around 20% faster than the non-inline one)
+static inline double get_w_value(const struct model *model_, int idx, int label_idx)
+{
+	int nr_class = model_->nr_class;
+	int solver_type = model_->param.solver_type;
+	const double *w = model_->w;
+
+	if(idx < 0 || idx > model_->nr_feature)
+		return 0;
+	if(check_regression_model(model_))
+		return w[idx];
+	else
+	{
+		if(label_idx < 0 || label_idx >= nr_class)
+			return 0;
+		if(nr_class == 2 && solver_type != MCSVM_CS)
+		{
+			if(label_idx == 0)
+				return w[idx];
+			else
+				return -w[idx];
+		}
+		else
+			return w[idx*nr_class+label_idx];
+	}
+}
+
+// feat_idx: starting from 1 to nr_feature
+// label_idx: starting from 0 to nr_class-1 for classification models;
+//            for regression models, label_idx is ignored.
+double get_decfun_coef(const struct model *model_, int feat_idx, int label_idx)
+{
+	if(feat_idx > model_->nr_feature)
+		return 0;
+	return get_w_value(model_, feat_idx-1, label_idx);
+}
+
+double get_decfun_bias(const struct model *model_, int label_idx)
+{
+	int bias_idx = model_->nr_feature;
+	double bias = model_->bias;
+	if(bias <= 0)
+		return 0;
+	else
+		return bias*get_w_value(model_, bias_idx, label_idx);
+}
+#endif
 
 void free_model_content(struct model *model_ptr)
 {
@@ -2823,7 +2937,7 @@ const char *check_parameter(const problem *prob, const parameter *param)
 
 	if(param->C <= 0)
 		return "C <= 0";
-	
+
 	if(param->p < 0)
 		return "p < 0";
 
@@ -2852,9 +2966,16 @@ int check_probability_model(const struct model *model_)
 }
 #endif
 
+int check_regression_model(const struct model *model_)
+{
+	return (model_->param.solver_type==L2R_L2LOSS_SVR ||
+			model_->param.solver_type==L2R_L1LOSS_SVR_DUAL ||
+			model_->param.solver_type==L2R_L2LOSS_SVR_DUAL);
+}
+
 void set_print_string_function(void (*print_func)(const char*))
 {
-	if (print_func == NULL) 
+	if (print_func == NULL)
 		liblinear_print_string = &print_string_stdout;
 	else
 		liblinear_print_string = print_func;

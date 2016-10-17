@@ -7,10 +7,10 @@ Semi-Supervised
 .. currentmodule:: sklearn.semi_supervised
 
 `Semi-supervised learning
-<http://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
+<https://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
 in which in your training data some of the samples are not labeled. The
-semi-supervised estimators, in :mod:`sklean.semi_supervised` are able to
-make use of this addition unlabeled data to capture better the shape of
+semi-supervised estimators in :mod:`sklearn.semi_supervised` are able to
+make use of this additional unlabeled data to better capture the shape of
 the underlying data distribution and generalize better to new samples.
 These algorithms can perform well when we have a very small amount of
 labeled points and a large amount of unlabeled points.
@@ -18,15 +18,15 @@ labeled points and a large amount of unlabeled points.
 .. topic:: Unlabeled entries in `y`
 
     It is important to assign an identifier to unlabeled points along with the
-    labeled data when training the model with the `fit` method. The identifier
-    that this implementation uses the integer value :math:`-1`.
+    labeled data when training the model with the ``fit`` method. The identifier
+    that this implementation uses is the integer value :math:`-1`.
 
 .. _label_propagation:
 
 Label Propagation
 =================
 
-Label propagation denote a few variations of semi-supervised graph
+Label propagation denotes a few variations of semi-supervised graph
 inference algorithms. 
 
 A few features available in this model:
@@ -37,7 +37,7 @@ A few features available in this model:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
 constructing a similarity graph over all items in the input dataset. 
 
-.. figure:: ../auto_examples/semi_supervised/images/plot_label_propagation_structure_1.png
+.. figure:: ../auto_examples/semi_supervised/images/sphx_glr_plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
     :align: center
     :scale: 60%
@@ -55,7 +55,7 @@ data to some degree. The :class:`LabelPropagation` algorithm performs hard
 clamping of input labels, which means :math:`\alpha=1`. This clamping factor
 can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
-change it's confidence of the distribution within 20 percent.
+change its confidence of the distribution within 20 percent.
 
 :class:`LabelPropagation` uses the raw similarity matrix constructed from
 the data with no modifications. In contrast, :class:`LabelSpreading`
@@ -75,19 +75,18 @@ available:
   * knn (:math:`1[x' \in kNN(x)]`). :math:`k` is specified by keyword
     n_neighbors.
 
-RBF kernel will produce a fully connected graph which is represented in memory
+The RBF kernel will produce a fully connected graph which is represented in memory
 by a dense matrix. This matrix may be very large and combined with the cost of
 performing a full matrix multiplication calculation for each iteration of the
 algorithm can lead to prohibitively long running times. On the other hand,
-the KNN kernel will produce a much more memory friendly sparse matrix
+the KNN kernel will produce a much more memory-friendly sparse matrix
 which can drastically reduce running times.
 
 .. topic:: Examples
 
-  * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
-  * :ref:`example_semi_supervised_plot_label_propagation_structure.py`
-  * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
-  * :ref:`example_semi_supervised_plot_label_propagation_digits_active_learning.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
 

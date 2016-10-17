@@ -19,14 +19,15 @@ analogous to the random splits in Random Forests
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
 """
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
+
 from sklearn import ensemble
 from sklearn import datasets
 
@@ -34,13 +35,16 @@ from sklearn import datasets
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X = X.astype(np.float32)
 
+# map labels from {-1, 1} to {0, 1}
+labels, y = np.unique(y, return_inverse=True)
+
 X_train, X_test = X[:2000], X[2000:]
 y_train, y_test = y[:2000], y[2000:]
 
-original_params = {'n_estimators': 1000, 'max_depth': 2, 'random_state': 1,
+original_params = {'n_estimators': 1000, 'max_leaf_nodes': 4, 'max_depth': None, 'random_state': 2,
                    'min_samples_split': 5}
 
-pl.figure()
+plt.figure()
 
 for label, color, setting in [('No shrinkage', 'orange',
                                {'learning_rate': 1.0, 'subsample': 1.0}),
@@ -62,13 +66,14 @@ for label, color, setting in [('No shrinkage', 'orange',
     test_deviance = np.zeros((params['n_estimators'],), dtype=np.float64)
 
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
+        # clf.loss_ assumes that y_test[i] in {0, 1}
         test_deviance[i] = clf.loss_(y_test, y_pred)
 
-    pl.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5],
+    plt.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5],
             '-', color=color, label=label)
 
-pl.legend(loc='upper left')
-pl.xlabel('Boosting Iterations')
-pl.ylabel('Test Set Deviance')
+plt.legend(loc='upper left')
+plt.xlabel('Boosting Iterations')
+plt.ylabel('Test Set Deviance')
 
-pl.show()
+plt.show()

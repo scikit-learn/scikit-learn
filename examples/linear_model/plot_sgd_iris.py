@@ -8,10 +8,10 @@ The hyperplanes corresponding to the three one-versus-all (OVA) classifiers
 are represented by the dashed lines.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.linear_model import SGDClassifier
 
@@ -44,25 +44,25 @@ y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                      np.arange(y_min, y_max, h))
 
-# Plot the decision boundary. For that, we will asign a color to each
-# point in the mesh [x_min, m_max]x[y_min, y_max].
+# Plot the decision boundary. For that, we will assign a color to each
+# point in the mesh [x_min, x_max]x[y_min, y_max].
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
-pl.axis('tight')
+cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+plt.axis('tight')
 
 # Plot also the training points
 for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
-    pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
-               cmap=pl.cm.Paired)
-pl.title("Decision surface of multi-class SGD")
-pl.axis('tight')
+    plt.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
+                cmap=plt.cm.Paired)
+plt.title("Decision surface of multi-class SGD")
+plt.axis('tight')
 
 # Plot the three one-against-all classifiers
-xmin, xmax = pl.xlim()
-ymin, ymax = pl.ylim()
+xmin, xmax = plt.xlim()
+ymin, ymax = plt.ylim()
 coef = clf.coef_
 intercept = clf.intercept_
 
@@ -71,10 +71,10 @@ def plot_hyperplane(c, color):
     def line(x0):
         return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
 
-    pl.plot([xmin, xmax], [line(xmin), line(xmax)],
-            ls="--", color=color)
+    plt.plot([xmin, xmax], [line(xmin), line(xmax)],
+             ls="--", color=color)
 
 for i, color in zip(clf.classes_, colors):
     plot_hyperplane(i, color)
-pl.legend()
-pl.show()
+plt.legend()
+plt.show()

@@ -2,17 +2,20 @@
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
+from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet, \
     EllipticEnvelope
+from sklearn.covariance import fast_mcd
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -20,10 +23,8 @@ n_samples, n_features = X.shape
 
 
 def test_mcd():
-    """Tests the FastMCD algorithm implementation
-
-    """
-    ### Small data set
+    # Tests the FastMCD algorithm implementation
+    # Small data set
     # test without outliers (random independent normal data)
     launch_mcd_on_dataset(100, 5, 0, 0.01, 0.1, 80)
     # test with a contaminated data set (medium contamination)
@@ -31,14 +32,27 @@ def test_mcd():
     # test with a contaminated data set (strong contamination)
     launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50)
 
-    ### Medium data set
+    # Medium data set
     launch_mcd_on_dataset(1000, 5, 450, 0.1, 0.1, 540)
 
-    ### Large data set
+    # Large data set
     launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870)
 
-    ### 1D data set
+    # 1D data set
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
+
+
+def test_fast_mcd_on_invalid_input():
+    X = np.arange(100)
+    assert_raise_message(ValueError, 'fast_mcd expects at least 2 samples',
+                         fast_mcd, X)
+
+
+def test_mcd_class_on_invalid_input():
+    X = np.arange(100)
+    mcd = MinCovDet()
+    assert_raise_message(ValueError, 'MinCovDet expects at least 2 samples',
+                         mcd.fit, X)
 
 
 def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
@@ -82,9 +96,8 @@ def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    print clf.threshold
-    assert_raises(Exception, clf.predict, X)
-    assert_raises(Exception, clf.decision_function, X)
+    assert_raises(NotFittedError, clf.predict, X)
+    assert_raises(NotFittedError, clf.decision_function, X)
     clf.fit(X)
     y_pred = clf.predict(X)
     decision = clf.decision_function(X, raw_values=True)

@@ -3,24 +3,31 @@
 
 """
 =========================================================
-Principal Component Analysis
+Principal components analysis (PCA)
 =========================================================
 
-These figures aid in illustrating how a the point cloud
-can be very flad in one direction - which is where PCA
-would come in to choose a direction that is not flat.
+These figures aid in illustrating how a point cloud
+can be very flat in one direction--which is where PCA
+comes in to choose a direction that is not flat.
 
 """
-print __doc__
+print(__doc__)
 
-# Code source: Gael Varoquaux
-# Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# Authors: Gael Varoquaux
+#          Jaques Grobler
+#          Kevin Hughes
+# License: BSD 3 clause
 
-import pylab as pl
-import numpy as np
-from scipy import stats, linalg
+from sklearn.decomposition import PCA
+
 from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
+
+
+###############################################################################
+# Create the data
 
 e = np.exp(1)
 np.random.seed(4)
@@ -51,13 +58,21 @@ b /= norm
 ###############################################################################
 # Plot the figures
 def plot_figs(fig_num, elev, azim):
-    fig = pl.figure(fig_num, figsize=(4, 3))
-    pl.clf()
+    fig = plt.figure(fig_num, figsize=(4, 3))
+    plt.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=elev, azim=azim)
 
-    ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+', alpha=.4)
+    ax.scatter(a[::10], b[::10], c[::10], c=density[::10], marker='+', alpha=.4)
     Y = np.c_[a, b, c]
-    U, pca_score, V = linalg.svd(Y, full_matrices=False)
+
+    # Using SciPy's SVD, this would be:
+    # _, pca_score, V = scipy.linalg.svd(Y, full_matrices=False)
+
+    pca = PCA(n_components=3)
+    pca.fit(Y)
+    pca_score = pca.explained_variance_ratio_
+    V = pca.components_
+
     x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()
 
     x_pca_axis, y_pca_axis, z_pca_axis = 3 * V.T
@@ -81,4 +96,4 @@ elev = 30
 azim = 20
 plot_figs(2, elev, azim)
 
-pl.show()
+plt.show()

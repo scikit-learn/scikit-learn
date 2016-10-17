@@ -3,8 +3,10 @@
 FastICA on 2D point clouds
 ==========================
 
-Illustrate visually the results of :ref:`ICA` vs :ref:`PCA` in the
-feature space.
+This example illustrates visually in the feature space a comparison by
+results using two different component analysis techniques.
+
+:ref:`ICA` vs :ref:`PCA`.
 
 Representing ICA in the feature space gives the view of 'geometric ICA':
 ICA is an algorithm that finds directions in the feature space
@@ -20,18 +22,18 @@ Here we simulate independent sources using a highly non-Gaussian
 process, 2 student T with a low number of degrees of freedom (top left
 figure). We mix them to create observations (top right figure).
 In this raw observation space, directions identified by PCA are
-represented by green vectors. We represent the signal in the PCA space,
+represented by orange vectors. We represent the signal in the PCA space,
 after whitening by the variance corresponding to the PCA vectors (lower
 left). Running ICA corresponds to finding a rotation in this space to
 identify the directions of largest non-Gaussianity (lower right).
 """
-print __doc__
+print(__doc__)
 
 # Authors: Alexandre Gramfort, Gael Varoquaux
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA, FastICA
 
@@ -59,43 +61,45 @@ S_ica_ /= S_ica_.std(axis=0)
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    pl.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10)
+    plt.scatter(S[:, 0], S[:, 1], s=2, marker='o', zorder=10,
+                color='steelblue', alpha=0.5)
     if axis_list is not None:
-        colors = [(0, 0.6, 0), (0.6, 0, 0)]
+        colors = ['orange', 'red']
         for color, axis in zip(colors, axis_list):
             axis /= axis.std()
             x_axis, y_axis = axis
             # Trick to get legend to work
-            pl.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
-            # pl.quiver(x_axis, y_axis, x_axis, y_axis, zorder=11, width=0.01,
-            pl.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01, scale=6,
-                      color=color)
+            plt.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
+            plt.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01, scale=6,
+                       color=color)
 
-    pl.hlines(0, -3, 3)
-    pl.vlines(0, -3, 3)
-    pl.xlim(-3, 3)
-    pl.ylim(-3, 3)
-    pl.xlabel('x')
-    pl.ylabel('y')
+    plt.hlines(0, -3, 3)
+    plt.vlines(0, -3, 3)
+    plt.xlim(-3, 3)
+    plt.ylim(-3, 3)
+    plt.xlabel('x')
+    plt.ylabel('y')
 
-pl.subplot(2, 2, 1)
+plt.figure()
+plt.subplot(2, 2, 1)
 plot_samples(S / S.std())
-pl.title('True Independent Sources')
+plt.title('True Independent Sources')
 
-axis_list = [pca.components_.T, ica.get_mixing_matrix()]
-pl.subplot(2, 2, 2)
+axis_list = [pca.components_.T, ica.mixing_]
+plt.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
-pl.legend(['PCA', 'ICA'], loc='upper left')
-pl.title('Observations')
+legend = plt.legend(['PCA', 'ICA'], loc='upper right')
+legend.set_zorder(100)
 
-pl.subplot(2, 2, 3)
+plt.title('Observations')
+
+plt.subplot(2, 2, 3)
 plot_samples(S_pca_ / np.std(S_pca_, axis=0))
-pl.title('PCA scores')
+plt.title('PCA recovered signals')
 
-pl.subplot(2, 2, 4)
+plt.subplot(2, 2, 4)
 plot_samples(S_ica_ / np.std(S_ica_))
-pl.title('ICA estimated sources')
+plt.title('ICA recovered signals')
 
-pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
-
-pl.show()
+plt.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.36)
+plt.show()

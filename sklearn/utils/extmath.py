@@ -1,42 +1,82 @@
 """
 Extended math utilities.
 """
-# Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
-# License: BSD
+# Authors: Gael Varoquaux
+#          Alexandre Gramfort
+#          Alexandre T. Passos
+#          Olivier Grisel
+#          Lars Buitinck
+#          Stefan van der Walt
+#          Kyle Kastner
+#          Giorgio Patrini
+# License: BSD 3 clause
 
+from __future__ import division
+from functools import partial
 import warnings
+
 import numpy as np
 from scipy import linalg
+from scipy.sparse import issparse, csr_matrix
 
 from . import check_random_state
-from .fixes import qr_economic
+from .fixes import np_version
+from ._logistic_sigmoid import _log_logistic_sigmoid
+from ..externals.six.moves import xrange
+from .sparsefuncs_fast import csr_row_norms
+from .validation import check_array
+from ..exceptions import NonBLASDotWarning
 
 
-def norm(v):
-    v = np.asarray(v)
-    __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
-    return __nrm2(v)
+def norm(x):
+    """Compute the Euclidean or Frobenius norm of x.
 
-
-def _fast_logdet(A):
-    """Compute log(det(A)) for A symmetric
-
-    Equivalent to : np.log(np.linalg.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
+    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
+    is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
     """
-    # XXX: Should be implemented as in numpy, using ATLAS
-    # http://projects.scipy.org/numpy/browser/ \
-    #        trunk/numpy/linalg/linalg.py#L1559
-    ld = np.sum(np.log(np.diag(A)))
-    a = np.exp(ld / A.shape[0])
-    d = np.linalg.det(A / a)
-    ld += np.log(d)
-    if not np.isfinite(ld):
-        return -np.inf
-    return ld
+    x = np.asarray(x)
+    nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
+    return nrm2(x)
 
 
-def _fast_logdet_numpy(A):
+# Newer NumPy has a ravel that needs less copying.
+if np_version < (1, 7, 1):
+    _ravel = np.ravel
+else:
+    _ravel = partial(np.ravel, order='K')
+
+
+def squared_norm(x):
+    """Squared Euclidean or Frobenius norm of x.
+
+    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
+    is a matrix (2-d array). Faster than norm(x) ** 2.
+    """
+    x = _ravel(x)
+    return np.dot(x, x)
+
+
+def row_norms(X, squared=False):
+    """Row-wise (squared) Euclidean norm of X.
+
+    Equivalent to np.sqrt((X * X).sum(axis=1)), but also supports sparse
+    matrices and does not create an X.shape-sized temporary.
+
+    Performs no input validation.
+    """
+    if issparse(X):
+        if not isinstance(X, csr_matrix):
+            X = csr_matrix(X)
+        norms = csr_row_norms(X)
+    else:
+        norms = np.einsum('ij,ij->i', X, X)
+
+    if not squared:
+        np.sqrt(norms, norms)
+    return norms
+
+
+def fast_logdet(A):
     """Compute log(det(A)) for A symmetric
 
     Equivalent to : np.log(nl.det(A)) but more robust.
@@ -48,11 +88,78 @@ def _fast_logdet_numpy(A):
     return ld
 
 
-# Numpy >= 1.5 provides a fast logdet
-if hasattr(np.linalg, 'slogdet'):
-    fast_logdet = _fast_logdet_numpy
+def _impose_f_order(X):
+    """Helper Function"""
+    # important to access flags instead of calling np.isfortran,
+    # this catches corner cases.
+    if X.flags.c_contiguous:
+        return check_array(X.T, copy=False, order='F'), True
+    else:
+        return check_array(X, copy=False, order='F'), False
+
+
+def _fast_dot(A, B):
+    if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
+        raise ValueError
+
+    if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
+                                 for x in [A, B]):
+        warnings.warn('Falling back to np.dot. '
+                      'Data must be of same type of either '
+                      '32 or 64 bit float for the BLAS function, gemm, to be '
+                      'used for an efficient dot operation. ',
+                      NonBLASDotWarning)
+        raise ValueError
+
+    if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
+        raise ValueError
+
+    # scipy 0.9 compliant API
+    dot = linalg.get_blas_funcs(['gemm'], (A, B))[0]
+    A, trans_a = _impose_f_order(A)
+    B, trans_b = _impose_f_order(B)
+    return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
+
+
+def _have_blas_gemm():
+    try:
+        linalg.get_blas_funcs(['gemm'])
+        return True
+    except (AttributeError, ValueError):
+        warnings.warn('Could not import BLAS, falling back to np.dot')
+        return False
+
+
+# Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
+if np_version < (1, 7, 2) and _have_blas_gemm():
+    def fast_dot(A, B):
+        """Compute fast dot products directly calling BLAS.
+
+        This function calls BLAS directly while warranting Fortran contiguity.
+        This helps avoiding extra copies `np.dot` would have created.
+        For details see section `Linear Algebra on large Arrays`:
+        http://wiki.scipy.org/PerformanceTips
+
+        Parameters
+        ----------
+        A, B: instance of np.ndarray
+            Input arrays. Arrays are supposed to be of the same dtype and to
+            have exactly 2 dimensions. Currently only floats are supported.
+            In case these requirements aren't met np.dot(A, B) is returned
+            instead. To activate the related warning issued in this case
+            execute the following lines of code:
+
+            >> import warnings
+            >> from sklearn.exceptions import NonBLASDotWarning
+            >> warnings.simplefilter('always', NonBLASDotWarning)
+        """
+        try:
+            return _fast_dot(A, B)
+        except ValueError:
+            # Maltyped or malformed data.
+            return np.dot(A, B)
 else:
-    fast_logdet = _fast_logdet
+    fast_dot = np.dot
 
 
 def density(w, **kwargs):
@@ -68,29 +175,46 @@ def density(w, **kwargs):
 
 
 def safe_sparse_dot(a, b, dense_output=False):
-    """Dot product that handle the sparse matrix case correctly"""
-    from scipy import sparse
-    if sparse.issparse(a) or sparse.issparse(b):
+    """Dot product that handle the sparse matrix case correctly
+
+    Uses BLAS GEMM as replacement for numpy.dot where possible
+    to avoid unnecessary copies.
+    """
+    if issparse(a) or issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
         return ret
     else:
-        return np.dot(a, b)
+        return fast_dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iter, random_state=None,
-                            n_iterations=None):
+def randomized_range_finder(A, size, n_iter,
+                            power_iteration_normalizer='auto',
+                            random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------
     A: 2D array
         The input data matrix
+
     size: integer
         Size of the return array
+
     n_iter: integer
         Number of power iterations used to stabilize the result
+
+    power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter`<=2 and switches to LU otherwise.
+
+        .. versionadded:: 0.18
+
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
 
@@ -107,33 +231,45 @@ def randomized_range_finder(A, size, n_iter, random_state=None,
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
     Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+
+    An implementation of a randomized algorithm for principal component
+    analysis
+    A. Szlam et al. 2014
     """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
     random_state = check_random_state(random_state)
 
-    # generating random gaussian vectors r with shape: (A.shape[1], size)
-    R = random_state.normal(size=(A.shape[1], size))
+    # Generating normal random vectors with shape: (A.shape[1], size)
+    Q = random_state.normal(size=(A.shape[1], size))
 
-    # sampling the range of A using by linear projection of r
-    Y = safe_sparse_dot(A, R)
-    del R
+    # Deal with "auto" mode
+    if power_iteration_normalizer == 'auto':
+        if n_iter <= 2:
+            power_iteration_normalizer = 'none'
+        else:
+            power_iteration_normalizer = 'LU'
 
-    # perform power iterations with Y to further 'imprint' the top
-    # singular vectors of A in Y
-    for i in xrange(n_iter):
-        Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
+    # Perform power iterations with Q to further 'imprint' the top
+    # singular vectors of A in Q
+    for i in range(n_iter):
+        if power_iteration_normalizer == 'none':
+            Q = safe_sparse_dot(A, Q)
+            Q = safe_sparse_dot(A.T, Q)
+        elif power_iteration_normalizer == 'LU':
+            Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
+            Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
+        elif power_iteration_normalizer == 'QR':
+            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
 
-    # extracting an orthonormal basis of the A range samples
-    Q, R = qr_economic(Y)
+    # Sample the range of A using by linear projection of Q
+    # Extract an orthonormal basis
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', flip_sign=True, random_state=0,
-                   n_iterations=None):
+def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
+                   power_iteration_normalizer='auto', transpose='auto',
+                   flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -147,18 +283,36 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     n_oversamples: int (default is 10)
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
-        used to find the range of M is n_components + n_oversamples.
+        used to find the range of M is n_components + n_oversamples. Smaller
+        number can improve speed but can negatively impact the quality of
+        approximation of singular vectors and singular values.
 
-    n_iter: int (default is 0)
-        Number of power iterations (can be used to deal with very noisy
-        problems).
+    n_iter: int or 'auto' (default is 'auto')
+        Number of power iterations. It can be used to deal with very noisy
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
+
+        .. versionchanged:: 0.18
+
+    power_iteration_normalizer: 'auto' (default), 'QR', 'LU', 'none'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter`<=2 and switches to LU otherwise.
+
+        .. versionadded:: 0.18
 
     transpose: True, False or 'auto' (default)
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
-        case).
+        case.
+
+        .. versionchanged:: 0.18
 
     flip_sign: boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
@@ -174,7 +328,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     This algorithm finds a (usually very good) approximate truncated
     singular value decomposition using randomization to speed up the
     computations. It is particularly fast on large matrices on which
-    you wish to extract only a small number of components.
+    you wish to extract only a small number of components. In order to
+    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    loss of precision).
 
     References
     ----------
@@ -184,23 +340,28 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
-    """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
 
+    * An implementation of a randomized algorithm for principal component
+      analysis
+      A. Szlam et al. 2014
+    """
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if transpose == 'auto' and n_samples > n_features:
-        transpose = True
+    if n_iter == 'auto':
+        # Checks if the number of iterations is explicitely specified
+        # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
+        n_iter = 7 if n_components < .1 * min(M.shape) else 4
+
+    if transpose == 'auto':
+        transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iter, random_state)
+    Q = randomized_range_finder(M, n_random, n_iter,
+                                power_iteration_normalizer, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -211,7 +372,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     U = np.dot(Q, Uhat)
 
     if flip_sign:
-        U, s, V = svd_flip(U, s, V)
+        if not transpose:
+            U, V = svd_flip(U, V)
+        else:
+            # In case of transpose u_based_decision=false
+            # to actually flip based on u and not v.
+            U, V = svd_flip(U, V, u_based_decision=False)
 
     if transpose:
         # transpose back the results according to the input convention
@@ -330,12 +496,21 @@ def pinvh(a, cond=None, rcond=None, lower=True):
     ----------
     a : array, shape (N, N)
         Real symmetric or complex hermetian matrix to be pseudo-inverted
-    cond, rcond : float or None
+
+    cond : float or None, default None
         Cutoff for 'small' eigenvalues.
         Singular values smaller than rcond * largest_eigenvalue are considered
         zero.
 
         If None or -1, suitable machine precision is used.
+
+    rcond : float or None, default None (deprecated)
+        Cutoff for 'small' eigenvalues.
+        Singular values smaller than rcond * largest_eigenvalue are considered
+        zero.
+
+        If None or -1, suitable machine precision is used.
+
     lower : boolean
         Whether the pertinent array data is taken from the lower or upper
         triangle of a. (Default: lower)
@@ -351,13 +526,13 @@ def pinvh(a, cond=None, rcond=None, lower=True):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = random.randn(9, 6)
+    >>> import numpy as np
+    >>> a = np.random.randn(9, 6)
     >>> a = np.dot(a, a.T)
     >>> B = pinvh(a)
-    >>> allclose(a, dot(a, dot(B, a)))
+    >>> np.allclose(a, np.dot(a, np.dot(B, a)))
     True
-    >>> allclose(B, dot(B, dot(a, B)))
+    >>> np.allclose(B, np.dot(B, np.dot(a, B)))
     True
 
     """
@@ -411,46 +586,279 @@ def cartesian(arrays, out=None):
            [3, 5, 6],
            [3, 5, 7]])
 
-    References
-    ----------
-    http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays
-
     """
-    arrays = [np.asarray(x).ravel() for x in arrays]
+    arrays = [np.asarray(x) for x in arrays]
+    shape = (len(x) for x in arrays)
     dtype = arrays[0].dtype
 
-    n = np.prod([x.size for x in arrays])
-    if out is None:
-        out = np.empty([n, len(arrays)], dtype=dtype)
+    ix = np.indices(shape)
+    ix = ix.reshape(len(arrays), -1).T
 
-    m = n / arrays[0].size
-    out[:, 0] = np.repeat(arrays[0], m)
-    if arrays[1:]:
-        cartesian(arrays[1:], out=out[0:m, 1:])
-        for j in xrange(1, arrays[0].size):
-            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    if out is None:
+        out = np.empty_like(ix, dtype=dtype)
+
+    for n, arr in enumerate(arrays):
+        out[:, n] = arrays[n][ix[:, n]]
+
     return out
 
 
-def svd_flip(u, s, v):
-    """Sign correction to ensure deterministic output from SVD
+def svd_flip(u, v, u_based_decision=True):
+    """Sign correction to ensure deterministic output from SVD.
 
     Adjusts the columns of u and the rows of v such that the loadings in the
     columns in u that are largest in absolute value are always positive.
 
     Parameters
     ----------
-    u, s, v: arrays,
-        The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
-        with matching inner dimensions so one can compute `np.dot(u * s, v)`.
+    u, v : ndarray
+        u and v are the output of `linalg.svd` or
+        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
+        so one can compute `np.dot(u * s, v)`.
+
+    u_based_decision : boolean, (default=True)
+        If True, use the columns of u as the basis for sign flipping.
+        Otherwise, use the rows of v. The choice of which variable to base the
+        decision on is generally algorithm dependent.
+
 
     Returns
     -------
-    u_adjusted, s, v_adjusted: arrays with the same dimensions as the input.
+    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
 
     """
-    max_abs_cols = np.argmax(np.abs(u), axis=0)
-    signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
-    u *= signs
-    v *= signs[:, np.newaxis]
-    return u, s, v
+    if u_based_decision:
+        # columns of u, rows of v
+        max_abs_cols = np.argmax(np.abs(u), axis=0)
+        signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+        u *= signs
+        v *= signs[:, np.newaxis]
+    else:
+        # rows of v, columns of u
+        max_abs_rows = np.argmax(np.abs(v), axis=1)
+        signs = np.sign(v[xrange(v.shape[0]), max_abs_rows])
+        u *= signs
+        v *= signs[:, np.newaxis]
+    return u, v
+
+
+def log_logistic(X, out=None):
+    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
+
+    This implementation is numerically stable because it splits positive and
+    negative values::
+
+        -log(1 + exp(-x_i))     if x_i > 0
+        x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    For the ordinary logistic function, use ``sklearn.utils.fixes.expit``.
+
+    Parameters
+    ----------
+    X: array-like, shape (M, N) or (M, )
+        Argument to the logistic function
+
+    out: array-like, shape: (M, N) or (M, ), optional:
+        Preallocated output array.
+
+    Returns
+    -------
+    out: array, shape (M, N) or (M, )
+        Log of the logistic function evaluated at every point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
+    """
+    is_1d = X.ndim == 1
+    X = np.atleast_2d(X)
+    X = check_array(X, dtype=np.float64)
+
+    n_samples, n_features = X.shape
+
+    if out is None:
+        out = np.empty_like(X)
+
+    _log_logistic_sigmoid(n_samples, n_features, X, out)
+
+    if is_1d:
+        return np.squeeze(out)
+    return out
+
+
+def softmax(X, copy=True):
+    """
+    Calculate the softmax function.
+
+    The softmax function is calculated by
+    np.exp(X) / np.sum(np.exp(X), axis=1)
+
+    This will cause overflow when large values are exponentiated.
+    Hence the largest value in each row is subtracted from each data
+    point to prevent this.
+
+    Parameters
+    ----------
+    X: array-like, shape (M, N)
+        Argument to the logistic function
+
+    copy: bool, optional
+        Copy X or not.
+
+    Returns
+    -------
+    out: array, shape (M, N)
+        Softmax function evaluated at every point in x
+    """
+    if copy:
+        X = np.copy(X)
+    max_prob = np.max(X, axis=1).reshape((-1, 1))
+    X -= max_prob
+    np.exp(X, X)
+    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+    X /= sum_prob
+    return X
+
+
+def safe_min(X):
+    """Returns the minimum value of a dense or a CSR/CSC matrix.
+
+    Adapated from http://stackoverflow.com/q/13426580
+
+    """
+    if issparse(X):
+        if len(X.data) == 0:
+            return 0
+        m = X.data.min()
+        return m if X.getnnz() == X.size else min(m, 0)
+    else:
+        return X.min()
+
+
+def make_nonnegative(X, min_value=0):
+    """Ensure `X.min()` >= `min_value`."""
+    min_ = safe_min(X)
+    if min_ < min_value:
+        if issparse(X):
+            raise ValueError("Cannot make the data matrix"
+                             " nonnegative because it is sparse."
+                             " Adding a value to every entry would"
+                             " make it no longer sparse.")
+        X = X + (min_value - min_)
+    return X
+
+
+def _incremental_mean_and_var(X, last_mean=.0, last_variance=None,
+                              last_sample_count=0):
+    """Calculate mean update and a Youngs and Cramer variance update.
+
+    last_mean and last_variance are statistics computed at the last step by the
+    function. Both must be initialized to 0.0. In case no scaling is required
+    last_variance can be None. The mean is always required and returned because
+    necessary for the calculation of the variance. last_n_samples_seen is the
+    number of samples encountered until now.
+
+    From the paper "Algorithms for computing the sample variance: analysis and
+    recommendations", by Chan, Golub, and LeVeque.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Data to use for variance update
+
+    last_mean : array-like, shape: (n_features,)
+
+    last_variance : array-like, shape: (n_features,)
+
+    last_sample_count : int
+
+    Returns
+    -------
+    updated_mean : array, shape (n_features,)
+
+    updated_variance : array, shape (n_features,)
+        If None, only mean is computed
+
+    updated_sample_count : int
+
+    References
+    ----------
+    T. Chan, G. Golub, R. LeVeque. Algorithms for computing the sample
+        variance: recommendations, The American Statistician, Vol. 37, No. 3,
+        pp. 242-247
+
+    Also, see the sparse implementation of this in
+    `utils.sparsefuncs.incr_mean_variance_axis` and
+    `utils.sparsefuncs_fast.incr_mean_variance_axis0`
+    """
+    # old = stats until now
+    # new = the current increment
+    # updated = the aggregated stats
+    last_sum = last_mean * last_sample_count
+    new_sum = X.sum(axis=0)
+
+    new_sample_count = X.shape[0]
+    updated_sample_count = last_sample_count + new_sample_count
+
+    updated_mean = (last_sum + new_sum) / updated_sample_count
+
+    if last_variance is None:
+        updated_variance = None
+    else:
+        new_unnormalized_variance = X.var(axis=0) * new_sample_count
+        if last_sample_count == 0:  # Avoid division by 0
+            updated_unnormalized_variance = new_unnormalized_variance
+        else:
+            last_over_new_count = last_sample_count / new_sample_count
+            last_unnormalized_variance = last_variance * last_sample_count
+            updated_unnormalized_variance = (
+                last_unnormalized_variance +
+                new_unnormalized_variance +
+                last_over_new_count / updated_sample_count *
+                (last_sum / last_over_new_count - new_sum) ** 2)
+        updated_variance = updated_unnormalized_variance / updated_sample_count
+
+    return updated_mean, updated_variance, updated_sample_count
+
+
+def _deterministic_vector_sign_flip(u):
+    """Modify the sign of vectors for reproducibility
+
+    Flips the sign of elements of all the vectors (rows of u) such that
+    the absolute maximum element of each vector is positive.
+
+    Parameters
+    ----------
+    u : ndarray
+        Array with vectors as its rows.
+
+    Returns
+    -------
+    u_flipped : ndarray with same shape as u
+        Array with the sign flipped vectors as its rows.
+    """
+    max_abs_rows = np.argmax(np.abs(u), axis=1)
+    signs = np.sign(u[range(u.shape[0]), max_abs_rows])
+    u *= signs[:, np.newaxis]
+    return u
+
+
+def stable_cumsum(arr, rtol=1e-05, atol=1e-08):
+    """Use high precision for cumsum and check that final value matches sum
+
+    Parameters
+    ----------
+    arr : array-like
+        To be cumulatively summed as flat
+    rtol : float
+        Relative tolerance, see ``np.allclose``
+    atol : float
+        Absolute tolerance, see ``np.allclose``
+    """
+    out = np.cumsum(arr, dtype=np.float64)
+    expected = np.sum(arr, dtype=np.float64)
+    if not np.allclose(out[-1], expected, rtol=rtol, atol=atol):
+        raise RuntimeError('cumsum was found to be unstable: '
+                           'its last element does not correspond to sum')
+    return out

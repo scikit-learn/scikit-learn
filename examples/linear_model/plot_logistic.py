@@ -6,24 +6,25 @@
 =========================================================
 Logit function
 =========================================================
+
 Show in the plot is how the logistic regression would, in this
 synthetic dataset, classify values as either 0 or 1,
 i.e. class one or two, using the logit-curve.
 
 """
-print __doc__
+print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# License: BSD
+# Code source: Gael Varoquaux
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import linear_model
 
 # this is our test set, it's just a straight line with some
-# gaussian noise
+# Gaussian noise
 xmin, xmax = -5, 5
 n_samples = 100
 np.random.seed(0)
@@ -38,27 +39,27 @@ clf = linear_model.LogisticRegression(C=1e5)
 clf.fit(X, y)
 
 # and plot the result
-pl.figure(1, figsize=(4, 3))
-pl.clf()
-pl.scatter(X.ravel(), y, color='black', zorder=20)
+plt.figure(1, figsize=(4, 3))
+plt.clf()
+plt.scatter(X.ravel(), y, color='black', zorder=20)
 X_test = np.linspace(-5, 10, 300)
 
 
 def model(x):
     return 1 / (1 + np.exp(-x))
 loss = model(X_test * clf.coef_ + clf.intercept_).ravel()
-pl.plot(X_test, loss, color='blue', linewidth=3)
+plt.plot(X_test, loss, color='blue', linewidth=3)
 
 ols = linear_model.LinearRegression()
 ols.fit(X, y)
-pl.plot(X_test, ols.coef_ * X_test + ols.intercept_, linewidth=1)
-pl.axhline(.5, color='.5')
+plt.plot(X_test, ols.coef_ * X_test + ols.intercept_, linewidth=1)
+plt.axhline(.5, color='.5')
 
-pl.ylabel('y')
-pl.xlabel('X')
-pl.xticks(())
-pl.yticks(())
-pl.ylim(-.25, 1.25)
-pl.xlim(-4, 10)
+plt.ylabel('y')
+plt.xlabel('X')
+plt.xticks(())
+plt.yticks(())
+plt.ylim(-.25, 1.25)
+plt.xlim(-4, 10)
 
-pl.show()
+plt.show()

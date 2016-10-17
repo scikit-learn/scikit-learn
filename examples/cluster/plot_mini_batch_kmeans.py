@@ -1,7 +1,7 @@
 """
-=====================================================
-A demo of the K Means clustering algorithm
-=====================================================
+====================================================================
+Comparison of the K-Means and MiniBatchKMeans clustering algorithms
+====================================================================
 
 We want to compare the performance of the MiniBatchKMeans and KMeans:
 the MiniBatchKMeans is faster, but gives slightly different results (see
@@ -12,15 +12,15 @@ MiniBatchKMeans, and plot the results.
 We will also plot the points that are labelled differently between the two
 algorithms.
 """
-print __doc__
+print(__doc__)
 
 import time
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.datasets.samples_generator import make_blobs
 
 ##############################################################################
@@ -39,9 +39,6 @@ k_means = KMeans(init='k-means++', n_clusters=3, n_init=10)
 t0 = time.time()
 k_means.fit(X)
 t_batch = time.time() - t0
-k_means_labels = k_means.labels_
-k_means_cluster_centers = k_means.cluster_centers_
-k_means_labels_unique = np.unique(k_means_labels)
 
 ##############################################################################
 # Compute clustering with MiniBatchKMeans
@@ -51,25 +48,23 @@ mbk = MiniBatchKMeans(init='k-means++', n_clusters=3, batch_size=batch_size,
 t0 = time.time()
 mbk.fit(X)
 t_mini_batch = time.time() - t0
-mbk_means_labels = mbk.labels_
-mbk_means_cluster_centers = mbk.cluster_centers_
-mbk_means_labels_unique = np.unique(mbk_means_labels)
 
 ##############################################################################
 # Plot result
 
-fig = pl.figure(figsize=(8, 3))
+fig = plt.figure(figsize=(8, 3))
 fig.subplots_adjust(left=0.02, right=0.98, bottom=0.05, top=0.9)
 colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 
 # We want to have the same colors for the same cluster from the
 # MiniBatchKMeans and the KMeans algorithm. Let's pair the cluster centers per
 # closest one.
-
-distance = euclidean_distances(k_means_cluster_centers,
-                               mbk_means_cluster_centers,
-                               squared=True)
-order = distance.argmin(axis=1)
+k_means_cluster_centers = np.sort(k_means.cluster_centers_, axis=0)
+mbk_means_cluster_centers = np.sort(mbk.cluster_centers_, axis=0)
+k_means_labels = pairwise_distances_argmin(X, k_means_cluster_centers)
+mbk_means_labels = pairwise_distances_argmin(X, mbk_means_cluster_centers)
+order = pairwise_distances_argmin(k_means_cluster_centers,
+                                  mbk_means_cluster_centers)
 
 # KMeans
 ax = fig.add_subplot(1, 3, 1)
@@ -83,7 +78,7 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
+plt.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
     t_batch, k_means.inertia_))
 
 # MiniBatchKMeans
@@ -98,14 +93,14 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
-        (t_mini_batch, mbk.inertia_))
+plt.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
+         (t_mini_batch, mbk.inertia_))
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)
 ax = fig.add_subplot(1, 3, 3)
 
-for l in range(n_clusters):
+for k in range(n_clusters):
     different += ((k_means_labels == k) != (mbk_means_labels == order[k]))
 
 identic = np.logical_not(different)
@@ -117,4 +112,4 @@ ax.set_title('Difference')
 ax.set_xticks(())
 ax.set_yticks(())
 
-pl.show()
+plt.show()

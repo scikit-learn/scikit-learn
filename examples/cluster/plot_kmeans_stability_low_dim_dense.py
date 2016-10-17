@@ -15,19 +15,19 @@ of the model (``KMeans`` or ``MiniBatchKMeans``) and the init method
 
 The second plot demonstrate one single run of the ``MiniBatchKMeans``
 estimator using a ``init="random"`` and ``n_init=1``. This run leads to
-a bad convergence (local optimum) with estimated centers between stucked
+a bad convergence (local optimum) with estimated centers stuck
 between ground truth clusters.
 
-The dataset used for evaluation is a 2D grid of isotropic gaussian
+The dataset used for evaluation is a 2D grid of isotropic Gaussian
 clusters widely spaced.
 """
-print __doc__
+print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 from sklearn.utils import shuffle
@@ -69,7 +69,7 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
 
 # Part 1: Quantitative evaluation of various init methods
 
-fig = pl.figure()
+fig = plt.figure()
 plots = []
 legends = []
 
@@ -81,7 +81,7 @@ cases = [
 ]
 
 for factory, init, params in cases:
-    print "Evaluation of %s with %s init" % (factory.__name__, init)
+    print("Evaluation of %s with %s init" % (factory.__name__, init))
     inertia = np.empty((len(n_init_range), n_runs))
 
     for run_id in range(n_runs):
@@ -90,14 +90,14 @@ for factory, init, params in cases:
             km = factory(n_clusters=n_clusters, init=init, random_state=run_id,
                          n_init=n_init, **params).fit(X)
             inertia[i, run_id] = km.inertia_
-    p = pl.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
+    p = plt.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
     plots.append(p[0])
     legends.append("%s with %s init" % (factory.__name__, init))
 
-pl.xlabel('n_init')
-pl.ylabel('inertia')
-pl.legend(plots, legends)
-pl.title("Mean inertia for various k-means init across %d runs" % n_runs)
+plt.xlabel('n_init')
+plt.ylabel('inertia')
+plt.legend(plots, legends)
+plt.title("Mean inertia for various k-means init across %d runs" % n_runs)
 
 # Part 2: Qualitative visual inspection of the convergence
 
@@ -105,15 +105,15 @@ X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
 km = MiniBatchKMeans(n_clusters=n_clusters, init='random', n_init=1,
                      random_state=random_state).fit(X)
 
-fig = pl.figure()
+fig = plt.figure()
 for k in range(n_clusters):
     my_members = km.labels_ == k
     color = cm.spectral(float(k) / n_clusters, 1)
-    pl.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
+    plt.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
     cluster_center = km.cluster_centers_[k]
-    pl.plot(cluster_center[0], cluster_center[1], 'o',
-            markerfacecolor=color, markeredgecolor='k', markersize=6)
-    pl.title("Example cluster allocation with a single random init\n"
-             "with MiniBatchKMeans")
+    plt.plot(cluster_center[0], cluster_center[1], 'o',
+             markerfacecolor=color, markeredgecolor='k', markersize=6)
+    plt.title("Example cluster allocation with a single random init\n"
+              "with MiniBatchKMeans")
 
-pl.show()
+plt.show()

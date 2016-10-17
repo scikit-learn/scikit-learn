@@ -1,19 +1,19 @@
 """Partial dependence plots for tree ensembles. """
 
 # Authors: Peter Prettenhofer
-# License: BSD Style.
+# License: BSD 3 clause
 
-from itertools import count, izip
-
+from itertools import count
 import numbers
 
 import numpy as np
-
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
-from ..utils import array2d
+from ..externals import six
+from ..externals.six.moves import map, range, zip
+from ..utils import check_array
 from ..tree._tree import DTYPE
 
 from ._gradient_boosting import _partial_dependence_tree
@@ -48,7 +48,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     """
     if len(percentiles) != 2:
         raise ValueError('percentile must be tuple of len 2')
-    if not all(map(lambda x: 0.0 <= x <= 1.0, percentiles)):
+    if not all(0. <= x <= 1. for x in percentiles):
         raise ValueError('percentile values must be in [0, 1]')
 
     axes = []
@@ -76,6 +76,8 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     of the ``target_variables`` and the function represented
     by the ``gbrt``.
 
+    Read more in the :ref:`User Guide <partial_dependence>`.
+
     Parameters
     ----------
     gbrt : BaseGradientBoosting
@@ -85,7 +87,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         computed (size should be smaller than 3 for visual renderings).
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
-        partial dependecy should be evaluted (either ``grid`` or ``X``
+        partial dependecy should be evaluated (either ``grid`` or ``X``
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
@@ -112,10 +114,10 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier().fit(samples, labels)
+    >>> gb = GradientBoostingClassifier(random_state=0).fit(samples, labels)
     >>> kwargs = dict(X=samples, percentiles=(0, 1), grid_resolution=2)
-    >>> partial_dependence(gb, [0], **kwargs)
-    (array([[-10.72892297,  10.72892297]]), [array([ 0.,  1.])])
+    >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
+    (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
@@ -133,7 +135,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
                          % (gbrt.n_features - 1))
 
     if X is not None:
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = check_array(X, dtype=DTYPE, order='C')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
@@ -153,7 +155,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     n_estimators = gbrt.estimators_.shape[0]
     pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
                    order='C')
-    for stage in xrange(n_estimators):
+    for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k].tree_
             _partial_dependence_tree(tree, grid, target_variables,
@@ -169,9 +171,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
 
-    The ``len(features)`` plots are aranged in a grid with ``n_cols``
+    The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
     plots.
+
+    Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
     ----------
@@ -192,7 +196,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
-        The lower and upper percentile used create the extreme values
+        The lower and upper percentile used to create the extreme values
         for the PDP axes.
     grid_resolution : int, default=100
         The number of equally spaced points on the axes.
@@ -204,10 +208,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ax : Matplotlib axis object, default None
         An axis object onto which the plots will be drawn.
     line_kw : dict
-        Dict with keywords passed to the ``pylab.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
     contour_kw : dict
-        Dict with keywords passed to the ``pylab.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
     fig_kw : dict
         Dict with keywords passed to the figure() call.
@@ -252,7 +256,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         # regression and binary classification
         label_idx = 0
 
-    X = array2d(X, dtype=DTYPE, order='C')
+    X = check_array(X, dtype=DTYPE, order='C')
     if gbrt.n_features != X.shape[1]:
         raise ValueError('X.shape[1] does not match gbrt.n_features')
 
@@ -264,12 +268,12 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = map(str, range(gbrt.n_features))
+        feature_names = [str(i) for i in range(gbrt.n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, basestring):
+        if isinstance(fx, six.string_types):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -279,7 +283,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral, basestring)):
+        if isinstance(fxs, (numbers.Integral,) + six.string_types):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)
@@ -296,7 +300,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     names = []
     try:
         for fxs in features:
-            names.append([feature_names[i] for i in fxs])
+            l = []
+            # explicit loop so "i" is bound for exception below
+            for i in fxs:
+                l.append(feature_names[i])
+            names.append(l)
     except IndexError:
         raise ValueError('features[i] must be in [0, n_features) '
                          'but was %d' % i)
@@ -304,7 +312,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(gbrt, fxs, X=X,
-                                    grid_resolution=grid_resolution)
+                                    grid_resolution=grid_resolution,
+                                    percentiles=percentiles)
         for fxs in features)
 
     # get global min and max values of PD grouped by plot type
@@ -330,8 +339,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
-    for i, fx, name, (pdp, axes) in izip(count(), features, names,
-                                         pd_result):
+    for i, fx, name, (pdp, axes) in zip(count(), features, names,
+                                        pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:
@@ -340,7 +349,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             # make contour plot
             assert len(axes) == 2
             XX, YY = np.meshgrid(axes[0], axes[1])
-            Z = pdp[label_idx].reshape(map(np.size, axes)).T
+            Z = pdp[label_idx].reshape(list(map(np.size, axes))).T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],

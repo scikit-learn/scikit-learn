@@ -6,10 +6,10 @@ Nearest Neighbors Classification
 Sample usage of Nearest Neighbors classification.
 It will plot the decision boundaries for each class.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import neighbors, datasets
 
@@ -32,8 +32,8 @@ for weights in ['uniform', 'distance']:
     clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights)
     clf.fit(X, y)
 
-    # Plot the decision boundary. For that, we will asign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # Plot the decision boundary. For that, we will assign a color to each
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
@@ -42,13 +42,14 @@ for weights in ['uniform', 'distance']:
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
-    pl.figure()
-    pl.pcolormesh(xx, yy, Z, cmap=cmap_light)
+    plt.figure()
+    plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
-    pl.title("3-Class classification (k = %i, weights = '%s')"
-             % (n_neighbors, weights))
-    pl.axis('tight')
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    plt.xlim(xx.min(), xx.max())
+    plt.ylim(yy.min(), yy.max())
+    plt.title("3-Class classification (k = %i, weights = '%s')"
+              % (n_neighbors, weights))
 
-pl.show()
+plt.show()

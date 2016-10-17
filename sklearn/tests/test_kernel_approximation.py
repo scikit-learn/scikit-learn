@@ -1,14 +1,17 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
+from sklearn.utils.testing import assert_less_equal
 
+from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data
 rng = np.random.RandomState(0)
@@ -19,10 +22,10 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
 def test_additive_chi2_sampler():
-    """test that AdditiveChi2Sampler approximates kernel on random data"""
+    # test that AdditiveChi2Sampler approximates kernel on random data
 
     # compute exact kernel
-    # appreviations for easier formular
+    # abbreviations for easier formula
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
 
@@ -31,7 +34,7 @@ def test_additive_chi2_sampler():
     # reduce to n_samples_x x n_samples_y by summing over features
     kernel = (large_kernel.sum(axis=2))
 
-    # appoximate kernel mapping
+    # approximate kernel mapping
     transform = AdditiveChi2Sampler(sample_steps=3)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
@@ -55,13 +58,33 @@ def test_additive_chi2_sampler():
     transform = AdditiveChi2Sampler(sample_steps=4)
     assert_raises(ValueError, transform.fit, X)
 
+    # test that the sample interval is set correctly
+    sample_steps_available = [1, 2, 3]
+    for sample_steps in sample_steps_available:
+
+        # test that the sample_interval is initialized correctly
+        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
+        assert_equal(transform.sample_interval, None)
+
+        # test that the sample_interval is changed in the fit method
+        transform.fit(X)
+        assert_not_equal(transform.sample_interval_, None)
+
+    # test that the sample_interval is set correctly
+    sample_interval = 0.3
+    transform = AdditiveChi2Sampler(sample_steps=4,
+                                    sample_interval=sample_interval)
+    assert_equal(transform.sample_interval, sample_interval)
+    transform.fit(X)
+    assert_equal(transform.sample_interval_, sample_interval)
+
 
 def test_skewed_chi2_sampler():
-    """test that RBFSampler approximates kernel on random data"""
+    # test that RBFSampler approximates kernel on random data
 
     # compute exact kernel
     c = 0.03
-    # appreviations for easier formular
+    # abbreviations for easier formula
     X_c = (X + c)[:, np.newaxis, :]
     Y_c = (Y + c)[np.newaxis, :, :]
 
@@ -72,7 +95,7 @@ def test_skewed_chi2_sampler():
     # reduce to n_samples_x x n_samples_y by summing over features in log-space
     kernel = np.exp(log_kernel.sum(axis=2))
 
-    # appoximate kernel mapping
+    # approximate kernel mapping
     transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
                                   random_state=42)
     X_trans = transform.fit_transform(X)
@@ -88,25 +111,27 @@ def test_skewed_chi2_sampler():
 
 
 def test_rbf_sampler():
-    """test that RBFSampler approximates kernel on random data"""
+    # test that RBFSampler approximates kernel on random data
     # compute exact kernel
     gamma = 10.
     kernel = rbf_kernel(X, Y, gamma=gamma)
 
-    # appoximate kernel mapping
+    # approximate kernel mapping
     rbf_transform = RBFSampler(gamma=gamma, n_components=1000, random_state=42)
     X_trans = rbf_transform.fit_transform(X)
     Y_trans = rbf_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
-    assert_array_almost_equal(kernel, kernel_approx, 1)
+    error = kernel - kernel_approx
+    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    np.abs(error, out=error)
+    assert_less_equal(np.max(error), 0.1)  # nothing too far off
+    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
 
 
 def test_input_validation():
-    """Regression test: kernel approx. transformers should work on lists
-
-    No assertions; the old versions would simply crash
-    """
+    # Regression test: kernel approx. transformers should work on lists
+    # No assertions; the old versions would simply crash
     X = [[1, 2], [3, 4], [5, 6]]
     AdditiveChi2Sampler().fit(X).transform(X)
     SkewedChi2Sampler().fit(X).transform(X)
@@ -116,7 +141,7 @@ def test_input_validation():
     RBFSampler().fit(X).transform(X)
 
 
-def test_nystrom_approximation():
+def test_nystroem_approximation():
     # some basic tests
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 4))
@@ -136,9 +161,56 @@ def test_nystrom_approximation():
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
+    # test that available kernels fit and transform
+    kernels_available = kernel_metrics()
+    for kern in kernels_available:
+        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        X_transformed = trans.fit(X).transform(X)
+        assert_equal(X_transformed.shape, (X.shape[0], 2))
 
-if __name__ == "__main__":
-    test_additive_chi2_sampler()
-    test_input_validation()
-    test_skewed_chi2_sampler()
-    test_rbf_sampler()
+
+def test_nystroem_singular_kernel():
+    # test that nystroem works with singular kernel matrix
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 20)
+    X = np.vstack([X] * 2)  # duplicate samples
+
+    gamma = 100
+    N = Nystroem(gamma=gamma, n_components=X.shape[0]).fit(X)
+    X_transformed = N.transform(X)
+
+    K = rbf_kernel(X, gamma=gamma)
+
+    assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
+    assert_true(np.all(np.isfinite(Y)))
+
+
+def test_nystroem_poly_kernel_params():
+    # Non-regression: Nystroem should pass other parameters beside gamma.
+    rnd = np.random.RandomState(37)
+    X = rnd.uniform(size=(10, 4))
+
+    K = polynomial_kernel(X, degree=3.1, coef0=.1)
+    nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
+                        degree=3.1, coef0=.1)
+    X_transformed = nystroem.fit_transform(X)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+
+def test_nystroem_callable():
+    # Test Nystroem on a callable.
+    rnd = np.random.RandomState(42)
+    n_samples = 10
+    X = rnd.uniform(size=(n_samples, 4))
+
+    def logging_histogram_kernel(x, y, log):
+        """Histogram kernel that writes to a log."""
+        log.append(1)
+        return np.minimum(x, y).sum()
+
+    kernel_log = []
+    X = list(X)     # test input validation
+    Nystroem(kernel=logging_histogram_kernel,
+             n_components=(n_samples - 1),
+             kernel_params={'log': kernel_log}).fit(X)
+    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)

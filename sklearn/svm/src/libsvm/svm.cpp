@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    - Support for dense data by Ming-Fang Weng
 
-   - Return indicies for support vectors, Fabian Pedregosa
+   - Return indices for support vectors, Fabian Pedregosa
      <fabian.pedregosa@inria.fr>
 
    - Fixes to avoid name collision, Fabian Pedregosa
@@ -60,7 +60,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "svm.h"
 
 #ifndef _LIBSVM_CPP
-int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
 #ifndef min
@@ -96,7 +95,7 @@ static void print_string_stdout(const char *s)
 	fflush(stdout);
 }
 static void (*svm_print_string) (const char *) = &print_string_stdout;
-#if 1
+
 static void info(const char *fmt,...)
 {
 	char buf[BUFSIZ];
@@ -106,9 +105,6 @@ static void info(const char *fmt,...)
 	va_end(ap);
 	(*svm_print_string)(buf);
 }
-#else
-static void info(const char *fmt,...) {}
-#endif
 #endif
 #define _LIBSVM_CPP
 
@@ -1013,7 +1009,7 @@ int Solver::select_working_set(int &out_i, int &out_j)
 		}
 	}
 
-	if(Gmax+Gmax2 < eps)
+	if(Gmax+Gmax2 < eps || Gmin_idx == -1)
 		return 1;
 
 	out_i = Gmax_idx;
@@ -1265,7 +1261,7 @@ int Solver_NU::select_working_set(int &out_i, int &out_j)
 		}
 	}
 
-	if(max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps)
+	if(max(Gmaxp+Gmaxp2,Gmaxn+Gmaxn2) < eps || Gmin_idx == -1)
 		return 1;
 
 	if (y[Gmin_idx] == +1)
@@ -1895,7 +1891,7 @@ static decision_function svm_train_one(
 	return f;
 }
 
-// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
+// Platt's binary SVM Probabilistic Output: an improvement from Lin et al.
 static void sigmoid_train(
 	int l, const double *dec_values, const double *labels, 
 	double& A, double& B)
@@ -2012,6 +2008,7 @@ static void sigmoid_train(
 static double sigmoid_predict(double decision_value, double A, double B)
 {
 	double fApB = decision_value*A+B;
+	// 1-p used later; avoid catastrophic cancellation
 	if (fApB >= 0)
 		return exp(-fApB)/(1.0+exp(-fApB));
 	else
@@ -2192,6 +2189,8 @@ static double svm_svr_probability(
 
 	svm_parameter newparam = *param;
 	newparam.probability = 0;
+    newparam.random_seed = -1; // This is called from train, which already sets
+                               // the seed.
 	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
 	for(i=0;i<prob->l;i++)
 	{
@@ -2346,6 +2345,11 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	PREFIX(model) *model = Malloc(PREFIX(model),1);
 	model->param = *param;
 	model->free_sv = 0;	// XXX
+
+    if(param->random_seed >= 0)
+    {
+        srand(param->random_seed);
+    }
 
 	if(param->svm_type == ONE_CLASS ||
 	   param->svm_type == EPSILON_SVR ||
@@ -2622,6 +2626,10 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int l = prob->l;
 	int *perm = Malloc(int,l);
 	int nr_class;
+    if(param->random_seed >= 0)
+    {
+        srand(param->random_seed);
+    }
 
 	// stratified cv may not give leave-one-out rate
 	// Each class to l folds -> some folds may have zero elements
@@ -2779,14 +2787,13 @@ double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 
 double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
 {
-        int i;
+	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
 	   model->param.svm_type == NU_SVR)
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
-
 		
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
@@ -2804,7 +2811,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	}
 	else
 	{
-		int i;
 		int nr_class = model->nr_class;
 		int l = model->l;
 		
@@ -2921,39 +2927,53 @@ double PREFIX(predict_probability)(
 
 void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 {
-	if(model_ptr->free_sv && model_ptr->l > 0)
+	if(model_ptr->free_sv && model_ptr->l > 0 && model_ptr->SV != NULL)
 #ifdef _DENSE_REP
-	for (int i = 0; i < model_ptr->l; i++)
-		free (model_ptr->SV[i].values);
+		for (int i = 0; i < model_ptr->l; i++)
+			free(model_ptr->SV[i].values);
 #else
 		free((void *)(model_ptr->SV[0]));
 #endif
-	for(int i=0;i<model_ptr->nr_class-1;i++)
-		free(model_ptr->sv_coef[i]);
+
+	if(model_ptr->sv_coef)
+	{
+		for(int i=0;i<model_ptr->nr_class-1;i++)
+			free(model_ptr->sv_coef[i]);
+	}
+
 	free(model_ptr->SV);
+	model_ptr->SV = NULL;
+
 	free(model_ptr->sv_coef);
+	model_ptr->sv_coef = NULL;
+
 	free(model_ptr->sv_ind);
+	model_ptr->sv_ind = NULL;
+
 	free(model_ptr->rho);
+	model_ptr->rho = NULL;
+
 	free(model_ptr->label);
+	model_ptr->label= NULL;
+
 	free(model_ptr->probA);
+	model_ptr->probA = NULL;
+
 	free(model_ptr->probB);
+	model_ptr->probB= NULL;
+
 	free(model_ptr->nSV);
+	model_ptr->nSV = NULL;
 }
 
 void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)
 {
-	PREFIX(model)* model_ptr = *model_ptr_ptr;
-	if(model_ptr != NULL)
+	if(model_ptr_ptr != NULL && *model_ptr_ptr != NULL)
 	{
-		PREFIX(free_model_content)(model_ptr);
-		free(model_ptr);
+		PREFIX(free_model_content)(*model_ptr_ptr);
+		free(*model_ptr_ptr);
+		*model_ptr_ptr = NULL;
 	}
-}
-
-void PREFIX(destroy_model)(PREFIX(model)* model_ptr)
-{
-	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(PREFIX(model) **model_ptr_ptr)\n");
-	PREFIX(free_and_destroy_model)(&model_ptr);
 }
 
 void PREFIX(destroy_param)(svm_parameter* param)
@@ -3082,14 +3102,6 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	}
 
 	return NULL;
-}
-
-int PREFIX(check_probability_model)(const PREFIX(model) *model)
-{
-	return ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
-		model->probA!=NULL && model->probB!=NULL) ||
-		((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
-		 model->probA!=NULL);
 }
 
 void PREFIX(set_print_string_function)(void (*print_func)(const char *))

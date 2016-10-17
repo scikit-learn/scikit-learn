@@ -9,7 +9,7 @@
  * but libsvm does not expose this structure, so we define it here
  * along some utilities to convert from numpy arrays.
  *
- * License: New BSD.
+ * License: BSD 3 clause
  *
  * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
  */
@@ -53,13 +53,12 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
 
 
 /*
- * Create a svm_parameter struct and return it. It is up to the user to
- * free the resulting object.
+ * Fill an svm_parameter struct.
  */
 void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
-		char *weight_label, char *weight, int max_iter)
+		char *weight_label, char *weight, int max_iter, int random_seed)
 {
     param->svm_type = svm_type;
     param->kernel_type = kernel_type;
@@ -77,11 +76,11 @@ void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, i
     param->weight = (double *) weight;
     param->gamma = gamma;
     param->max_iter = max_iter;
+    param->random_seed = random_seed;
 }
 
 /*
- * Create and return a svm_problem struct. It is up to the user to free resulting
- * structure.
+ * Fill an svm_problem struct. problem->x will be malloc'd.
  */
 void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
 {
@@ -109,7 +108,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *SV, npy_intp *SV_dims,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
-                            char *sv_coef, char *rho, char *nSV, char *label,
+                            char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
 {
     struct svm_model *model;
@@ -149,7 +148,8 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV, nSV,     model->nr_class * sizeof(int));
-        memcpy(model->label, label, model->nr_class * sizeof(int));
+        for(i=0; i < model->nr_class; i++)
+            model->label[i] = i;
     }
 
     for (i=0; i < model->nr_class-1; i++) {
@@ -277,16 +277,6 @@ void copy_nSV(char *data, struct svm_model *model)
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
 }
 
-/*
- * same as above with model->label
- * TODO: maybe merge into the previous?
- */
-void copy_label(char *data, struct svm_model *model)
-{
-    if (model->label == NULL) return;
-    memcpy(data, model->label, model->nr_class * sizeof(int));
-}
-
 void copy_probA(char *data, struct svm_model *model, npy_intp * dims)
 {
     memcpy(data, model->probA, dims[0] * sizeof(double));
@@ -393,11 +383,6 @@ int free_param(struct svm_parameter *param)
 }
 
 
-/* rely on built-in facility to control verbose output
- * in the versions of libsvm >= 2.89
- */
-#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
-
 /* borrowed from original libsvm code */
 static void print_null(const char *s) {}
 
@@ -410,14 +395,7 @@ static void print_string_stdout(const char *s)
 /* provide convenience wrapper */
 void set_verbosity(int verbosity_flag){
 	if (verbosity_flag)
-# if LIBSVM_VERSION < 291
-		svm_print_string = &print_string_stdout;
-	else
-		svm_print_string = &print_null;
-# else
 		svm_set_print_string_function(&print_string_stdout);
 	else
 		svm_set_print_string_function(&print_null);
-# endif
 }
-#endif

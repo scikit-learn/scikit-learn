@@ -61,7 +61,7 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
         if (sparse[i] == NULL) {
             int k;
             for (k=0; k<i; k++)
-                free(sparse[i]);
+                free(sparse[k]);
             goto sparse_i_error;
         }
         memcpy(sparse[i], temp, count * sizeof(struct feature_node));
@@ -100,7 +100,7 @@ static struct feature_node **csr_to_sparse(double *values,
         if (sparse[i] == NULL) {
             int l;
             for (l=0; l<i; l++)
-                free(sparse[i]);
+                free(sparse[l]);
             break;
         }
 
@@ -124,7 +124,7 @@ static struct feature_node **csr_to_sparse(double *values,
     return sparse;
 }
 
-struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
+struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, char* sample_weight)
 {
     struct problem *problem;
     /* not performant but simple */
@@ -139,8 +139,10 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
     }
 
     problem->y = (double *) Y;
+    problem->sample_weight = (double *) sample_weight;
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
+    problem->sample_weight = sample_weight;
     if (problem->x == NULL) { 
         free(problem);
         return NULL;
@@ -151,12 +153,13 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias)
 
 struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 	char *indices, npy_intp *n_indptr, char *indptr, char *Y,
-        npy_intp n_features, double bias) {
+        npy_intp n_features, double bias, char *sample_weight) {
 
     struct problem *problem;
     problem = malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
     problem->l = (int) n_indptr[0] -1;
+    problem->sample_weight = (double *) sample_weight;
 
     if (bias > 0){
         problem->n = (int) n_features + 1;
@@ -168,6 +171,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
     problem->x = csr_to_sparse((double *) values, n_indices, (int *) indices,
 			n_indptr, (int *) indptr, bias, n_features);
     problem->bias = bias;
+    problem->sample_weight = sample_weight;
 
     if (problem->x == NULL) {
         free(problem);
@@ -181,7 +185,8 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 /* Create a paramater struct with and return it */
 struct parameter *set_parameter(int solver_type, double eps, double C,
                                 npy_intp nr_weight, char *weight_label,
-                                char *weight, unsigned seed)
+                                char *weight, int max_iter, unsigned seed, 
+                                double epsilon)
 {
     struct parameter *param = malloc(sizeof(struct parameter));
     if (param == NULL)
@@ -191,10 +196,11 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
-    param->p = .1;  // epsilon for epsilon-SVR; TODO pass as a parameter
+    param->p = epsilon;  // epsilon for epsilon-SVR
     param->nr_weight = (int) nr_weight;
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
+    param->max_iter = max_iter;
     return param;
 }
 

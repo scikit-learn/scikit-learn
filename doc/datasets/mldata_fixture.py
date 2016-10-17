@@ -1,6 +1,6 @@
 """Fixture module to skip the datasets loading when offline
 
-Mock urllib2 access to mldata.org
+Mock urllib2 access to mldata.org and create a temporary data folder.
 """
 
 from os import makedirs
@@ -10,12 +10,22 @@ import tempfile
 import shutil
 
 from sklearn import datasets
-from sklearn.utils.testing import mock_urllib2
+from sklearn.utils.testing import install_mldata_mock
+from sklearn.utils.testing import uninstall_mldata_mock
 
 
 def globs(globs):
+    # Create a temporary folder for the data fetcher
+    global custom_data_home
+    custom_data_home = tempfile.mkdtemp()
+    makedirs(join(custom_data_home, 'mldata'))
+    globs['custom_data_home'] = custom_data_home
+    return globs
+
+
+def setup_module():
     # setup mock urllib2 module to avoid downloading from mldata.org
-    mock_dataset = {
+    install_mldata_mock({
         'mnist-original': {
             'data': np.empty((70000, 784)),
             'label': np.repeat(np.arange(10, dtype='d'), 7000),
@@ -27,20 +37,9 @@ def globs(globs):
             'double0': np.empty((150, 4)),
             'class': np.empty((150,)),
         },
-    }
-
-    global custom_data_home
-    custom_data_home = tempfile.mkdtemp()
-    makedirs(join(custom_data_home, 'mldata'))
-    globs['custom_data_home'] = custom_data_home
-
-    global _urllib2_ref
-    _urllib2_ref = datasets.mldata.urllib2
-    globs['_urllib2_ref'] = _urllib2_ref
-    datasets.mldata.urllib2 = mock_urllib2(mock_dataset)
-    return globs
+    })
 
 
-def teardown_module(module):
-    datasets.mldata.urllib2 = _urllib2_ref
+def teardown_module():
+    uninstall_mldata_mock()
     shutil.rmtree(custom_data_home)

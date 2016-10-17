@@ -12,16 +12,16 @@ relevant.
 As detailed in :ref:`the compressive sensing notes
 <compressive_sensing>`, the ability of L1-based approach to identify the
 relevant variables depends on the sparsity of the ground truth, the
-number of samples, the number of features, the conditionning of the
+number of samples, the number of features, the conditioning of the
 design matrix on the signal subspace, the amount of noise, and the
 absolute value of the smallest non-zero coefficient [Wainwright2006]
-(http://statistics.berkeley.edu/tech-reports/709.pdf).
+(http://statistics.berkeley.edu/sites/default/files/tech-reports/709.pdf).
 
-Here we keep all parameters constant and vary the conditionning of the
-design matrix. For a well-conditionned design matrix (small mutual
+Here we keep all parameters constant and vary the conditioning of the
+design matrix. For a well-conditioned design matrix (small mutual
 incoherence) we are exactly in compressive sensing conditions (i.i.d
 Gaussian sensing matrix), and L1-recovery with the Lasso performs very
-well. For an ill-conditionned matrix (high mutual incoherence),
+well. For an ill-conditioned matrix (high mutual incoherence),
 regressors are very correlated, and the Lasso randomly selects one.
 However, randomized-Lasso can recover the ground truth well.
 
@@ -38,14 +38,14 @@ In a second time, we set alpha and compare the performance of different
 feature selection methods, using the area under curve (AUC) of the
 precision-recall.
 """
-print __doc__
+print(__doc__)
 
 # Author: Alexandre Gramfort and Gael Varoquaux
-# License: BSD
+# License: BSD 3 clause
 
 import warnings
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import linalg
 
@@ -56,6 +56,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.utils.extmath import pinvh
+from sklearn.exceptions import ConvergenceWarning
 
 
 def mutual_incoherence(X_relevant, X_irelevant):
@@ -66,7 +67,7 @@ def mutual_incoherence(X_relevant, X_irelevant):
     return np.max(np.abs(projector).sum(axis=1))
 
 
-for conditionning in (1, 1e-4):
+for conditioning in (1, 1e-4):
     ###########################################################################
     # Simulate regression data with a correlated design
     n_features = 501
@@ -74,7 +75,7 @@ for conditionning in (1, 1e-4):
     noise_level = .2
     coef_min = .2
     # The Donoho-Tanner phase transition is around n_samples=25: below we
-    # will completely fail to recover in the well-conditionned case
+    # will completely fail to recover in the well-conditioned case
     n_samples = 25
     block_size = n_relevant_features
 
@@ -87,7 +88,7 @@ for conditionning in (1, 1e-4):
     # The correlation of our design: variables correlated by blocs of 3
     corr = np.zeros((n_features, n_features))
     for i in range(0, n_features, block_size):
-        corr[i:i + block_size, i:i + block_size] = 1 - conditionning
+        corr[i:i + block_size, i:i + block_size] = 1 - conditioning
     corr.flat[::n_features + 1] = 1
     corr = linalg.cholesky(corr)
 
@@ -114,19 +115,19 @@ for conditionning in (1, 1e-4):
     alpha_grid, scores_path = lasso_stability_path(X, y, random_state=42,
                                                    eps=0.05)
 
-    pl.figure()
+    plt.figure()
     # We plot the path as a function of alpha/alpha_max to the power 1/3: the
     # power 1/3 scales the path less brutally than the log, and enables to
     # see the progression along the path
-    hg = pl.plot(alpha_grid[1:] ** .333, scores_path[coef != 0].T[1:], 'r')
-    hb = pl.plot(alpha_grid[1:] ** .333, scores_path[coef == 0].T[1:], 'k')
-    ymin, ymax = pl.ylim()
-    pl.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
-    pl.ylabel('Stability score: proportion of times selected')
-    pl.title('Stability Scores Path - Mutual incoherence: %.1f' % mi)
-    pl.axis('tight')
-    pl.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
-              loc='best')
+    hg = plt.plot(alpha_grid[1:] ** .333, scores_path[coef != 0].T[1:], 'r')
+    hb = plt.plot(alpha_grid[1:] ** .333, scores_path[coef == 0].T[1:], 'k')
+    ymin, ymax = plt.ylim()
+    plt.xlabel(r'$(\alpha / \alpha_{max})^{1/3}$')
+    plt.ylabel('Stability score: proportion of times selected')
+    plt.title('Stability Scores Path - Mutual incoherence: %.1f' % mi)
+    plt.axis('tight')
+    plt.legend((hg[0], hb[0]), ('relevant features', 'irrelevant features'),
+               loc='best')
 
     ###########################################################################
     # Plot the estimated stability scores for a given alpha
@@ -137,6 +138,7 @@ for conditionning in (1, 1e-4):
     # as it is specifically set up to be challenging.
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', UserWarning)
+        warnings.simplefilter('ignore', ConvergenceWarning)
         lars_cv = LassoLarsCV(cv=6).fit(X, y)
 
     # Run the RandomizedLasso: we use a paths going down to .1*alpha_max
@@ -144,11 +146,11 @@ for conditionning in (1, 1e-4):
     # the model
     alphas = np.linspace(lars_cv.alphas_[0], .1 * lars_cv.alphas_[0], 6)
     clf = RandomizedLasso(alpha=alphas, random_state=42).fit(X, y)
-    trees = ExtraTreesRegressor(100, compute_importances=True).fit(X, y)
+    trees = ExtraTreesRegressor(100).fit(X, y)
     # Compare with F-score
     F, _ = f_regression(X, y)
 
-    pl.figure()
+    plt.figure()
     for name, score in [('F-test', F),
                         ('Stability selection', clf.scores_),
                         ('Lasso coefs', np.abs(lars_cv.coef_)),
@@ -156,17 +158,17 @@ for conditionning in (1, 1e-4):
                         ]:
         precision, recall, thresholds = precision_recall_curve(coef != 0,
                                                                score)
-        pl.semilogy(np.maximum(score / np.max(score), 1e-4),
-                    label="%s. AUC: %.3f" % (name, auc(recall, precision)))
+        plt.semilogy(np.maximum(score / np.max(score), 1e-4),
+                     label="%s. AUC: %.3f" % (name, auc(recall, precision)))
 
-    pl.plot(np.where(coef != 0)[0], [2e-4] * n_relevant_features, 'mo',
-            label="Ground truth")
-    pl.xlabel("Features")
-    pl.ylabel("Score")
+    plt.plot(np.where(coef != 0)[0], [2e-4] * n_relevant_features, 'mo',
+             label="Ground truth")
+    plt.xlabel("Features")
+    plt.ylabel("Score")
     # Plot only the 100 first coefficients
-    pl.xlim(0, 100)
-    pl.legend(loc='best')
-    pl.title('Feature selection scores - Mutual incoherence: %.1f'
-             % mi)
+    plt.xlim(0, 100)
+    plt.legend(loc='best')
+    plt.title('Feature selection scores - Mutual incoherence: %.1f'
+              % mi)
 
-pl.show()
+plt.show()

@@ -4,13 +4,13 @@ SVM: Maximum margin separating hyperplane
 =========================================
 
 Plot the maximum margin separating hyperplane within a two-class
-separable dataset using a Support Vector Machines classifier with
+separable dataset using a Support Vector Machine classifier with
 linear kernel.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import svm
 
 # we create 40 separable points
@@ -36,13 +36,13 @@ b = clf.support_vectors_[-1]
 yy_up = a * xx + (b[1] - a * b[0])
 
 # plot the line, the points, and the nearest vectors to the plane
-pl.plot(xx, yy, 'k-')
-pl.plot(xx, yy_down, 'k--')
-pl.plot(xx, yy_up, 'k--')
+plt.plot(xx, yy, 'k-')
+plt.plot(xx, yy_down, 'k--')
+plt.plot(xx, yy_up, 'k--')
 
-pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
-           s=80, facecolors='none')
-pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
+plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
+            s=80, facecolors='none')
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
 
-pl.axis('tight')
-pl.show()
+plt.axis('tight')
+plt.show()

@@ -18,7 +18,7 @@ def raise_build_error(e):
     # directory to help debugging on the mailing list.
     local_dir = os.path.split(__file__)[0]
     msg = STANDARD_MSG
-    if local_dir == "sklearn/check_build":
+    if local_dir == "sklearn/__check_build":
         # Picking up the local install: this will work only if the
         # install is an 'inplace build'
         msg = INPLACE_MSG
@@ -28,8 +28,7 @@ def raise_build_error(e):
             dir_content.append(filename.ljust(26))
         else:
             dir_content.append(filename + '\n')
-    raise ImportError(
-"""%s
+    raise ImportError("""%s
 ___________________________________________________________________________
 Contents of %s:
 %s
