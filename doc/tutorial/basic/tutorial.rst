@@ -136,10 +136,27 @@ learn::
     <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
-    
+
 .. topic:: Loading from external datasets
 
     To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`.
+
+.. topic:: Accessing source files
+
+    All standard datasets which you can import with ``load_`` have underlying source files that
+    you can read manually (consider numpy.loadtxt and pandas for analysis).
+    The data and target can be stored in one file (e.g. iris, boston, breast_cancer) or
+    in several (e.g. diabetes, linnerud).
+
+      >>> boston = load_boston()
+      >>> print(boston.filename)
+      .*/sklearn/datasets/data/boston_house_prices.csv
+
+      >>> diabetes = load_diabetes()
+      >>> print(diabetes.data_filename)
+      .*/sklearn/datasets/data/diabetes_data.csv.gz
+      >>> print(diabetes.target_filename)
+      .*/sklearn/datasets/data/diabetes_target.csv.gz
 
 Learning and predicting
 ------------------------
