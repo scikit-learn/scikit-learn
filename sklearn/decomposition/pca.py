@@ -24,6 +24,7 @@ from ..utils import deprecated
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
 from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.arpack import svds
 
@@ -393,7 +394,7 @@ class PCA(_BasePCA):
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
-            ratio_cumsum = explained_variance_ratio_.cumsum()
+            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
             n_components = np.searchsorted(ratio_cumsum, n_components) + 1
 
         # Compute noise covariance using Probabilistic PCA model

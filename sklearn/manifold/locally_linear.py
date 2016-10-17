@@ -10,6 +10,7 @@ from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.arpack import eigsh
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
@@ -420,7 +421,7 @@ def locally_linear_embedding(
         # this is the size of the largest set of eigenvalues
         # such that Sum[v; v in set]/Sum[v; v not in set] < eta
         s_range = np.zeros(N, dtype=int)
-        evals_cumsum = np.cumsum(evals, 1)
+        evals_cumsum = stable_cumsum(evals, 1)
         eta_range = evals_cumsum[:, -1:] / evals_cumsum[:, :-1] - 1
         for i in range(N):
             s_range[i] = np.searchsorted(eta_range[i, ::-1], eta)
