@@ -458,7 +458,7 @@ def _find_local_maxima(RPlot, RPoints, nghsize):
 
 def _cluster_tree(node, parentNode, localMaximaPoints,
                   RPlot, RPoints, min_cluster_size,
-                  maxima_ratio, rejection_ratio, significant_min)
+                  maxima_ratio, rejection_ratio, significant_min):
     # node is a node or the root of the tree in the first call
     # parentNode is parent node of N or None if node is root of the tree
     # localMaximaPoints is list of local maxima points sorted in
