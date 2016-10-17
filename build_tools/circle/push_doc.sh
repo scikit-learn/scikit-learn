@@ -4,7 +4,7 @@
 # The behavior of the script is controlled by environment variable defined
 # in the circle.yml in the top level folder of the project.
 
-set -o pipefail && cd doc && make latexpdf 2>&1 | tee ~/log.txt
+set -o pipefail && cd doc && make dist 2>&1 | tee ~/log.txt
 
 if [ -z $CIRCLE_PROJECT_USERNAME ];
 then USERNAME="sklearn-ci";
