@@ -141,7 +141,7 @@ learn::
 
     To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`.
 
-.. topic:: Accessing source files
+.. topic:: Loading from the data files
 
     All standard datasets which you can import with ``load_`` have underlying source files that
     you can read manually (consider numpy.loadtxt and pandas for analysis).
