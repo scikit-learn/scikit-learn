@@ -112,13 +112,13 @@ def test_outlier_detection():
     clf.raw_decision = True
     new_decision = clf.decision_function(X)
 
-    assert_array_almost_equal(previous_decision, new_decision)
+    assert_array_almost_equal(-previous_decision, new_decision)
 
     clf.raw_decision = False
     decision_transformed = clf.decision_function(X)
 
     assert_array_almost_equal(
-        new_decision, clf.mahalanobis(X))
+        new_decision, -clf.mahalanobis(X))
     assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
