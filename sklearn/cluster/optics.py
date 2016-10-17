@@ -126,7 +126,7 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
                                        setofobjects.metric, n_jobs=1)
             rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
 
-            new_reach = sp.minimum(setofobjects.reachability_[n_pr], 
+            new_reach = sp.minimum(setofobjects.reachability_[n_pr],
                                    rdists)
             setofobjects.reachability_[n_pr] = new_reach
 
@@ -263,17 +263,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # elif index_type is not ('idx' or 'bool'):
         #     print(index_type + ' is not a valid index type.')
 
-    def extract(self, epsilon_prime, clustering='auto'):
-        """Performs DBSCAN equivalent extraction for arbitrary epsilon.
-        Can be run multiple times.
+    def extract(self, epsilon_prime, clustering='auto', **kwargs):
+        """Performs Automatic or DBSCAN equivalent extraction for an 
+        arbitrary epsilon. Can be run multiple times. 
+        
+        See extract_auto() for full description of parameters
 
         Parameters
         ----------
         epsilon_prime: float or int, optional
         Used for 'dbscan' clustering. Must be less than or equal to what
         was used for prep and build steps
-        clustering: {'dbscan', hierarchical'}, optional
-        Type of cluster extraction to perform; defaults to 'dbscan'.
+        clustering: {'auto', 'dbscan' }, optional
+        Type of cluster extraction to perform; defaults to 'auto'.
 
         Returns
         -------
@@ -288,7 +290,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                     self.eps_prime = epsilon_prime
                     _extractDBSCAN(self, epsilon_prime)
                 elif clustering == 'auto':
-                    _extract_auto(self)
+                    extract_auto(self, **kwargs)
                 # else:
                 #    print(clustering + " is not a valid clustering method")
                 self.labels_ = self._cluster_id[:]
@@ -303,72 +305,86 @@ class OPTICS(BaseEstimator, ClusterMixin):
         else:
             print("Run fit method first")
 
-# Extract DBSCAN Equivalent cluster structure ##
+    def extract_auto(self,
+                     maxima_ratio = .75,
+                     rejection_ratio = .7,
+                     similarity_threshold = 0.4,
+                     significant_min = .003,
+                     min_cluster_size_ratio = .005,
+                     min_maxima_ratio = 0.001):
 
-# Important: Epsilon prime should be less than epsilon used in OPTICS #
+        """Performs automatic cluster extraction for variable density data.
+        Can be run multiple times with adjusted parameters. Only returns 
+        core and noise labels.
+
+        Parameters
+        ----------
+        maxima_ratio: float, optional
+        The maximum ratio we allow of average height of clusters on the right
+        and left to the local maxima in question. The higher the ratio, 
+        the more generous the algorithm is to preserving local minimums, 
+        and the more cuts the resulting tree will have.
+        rejection_ratio: float, optional
+        Adjusts the fitness of the clustering. When the maxima_ratio is
+        exceeded, determine which of the clusters to the left and right to
+        reject based on rejection_ratio
+        similarity_threshold: float, optional
+        Used to check if nodes can be moved up one level, that is, if the
+        new cluster created is too "similar" to its parent, given the
+        similarity threshold. Similarity can be determined by 1) the size
+        of the new cluster relative to the size of the parent node or
+        2) the average of the reachability values of the new cluster relative
+        to the average of the reachability values of the parent node. A lower
+        value for the similarity threshold means less levels in the tree.
+        significant_min: float, optional
+        Sets a lower threshold on how small a significant maxima can be
+        min_cluster_size_ratio: float, optional
+        Minimum percentage of dataset expected for cluster membership. 
+        min_maxima_ratio: float, optional
+        Used to determine neighborhood size for minimum cluster membership.
+       
+        Returns
+        -------
+        New core_sample_indices_ and labels_ arrays. Modifies OPTICS object
+        and stores core_sample_indices_ and lables_ as attributes."""
+
+        # Extraction wrapper
+        RPlot = self.reachability_[self.ordering_].tolist()
+        RPoints = self.ordering_
+        rootNode = _automatic_cluster(RPlot, RPoints)
+        leaves = _get_leaves(rootNode, [])
+        # Start cluster id's at 1
+        clustid = 1
+        # Start all points as non-core noise
+        self._cluster_id[:] = -1
+        self._is_core[:] = 0
+        for leaf in leaves:
+            index = self.ordering_[leaf.start:leaf.end]
+            self._cluster_id[index] = clustid
+            self._is_core[index] = 1
+            clustid += 1
 
 
-def _extractDBSCAN(setofobjects, epsilon_prime):
+def _automatic_cluster(RPlot, RPoints,
+                       maxima_ratio,
+                       rejection_ratio,
+                       similarity_threshold,
+                       significant_min,
+                       min_cluster_size_ratio,
+                       min_maxima_ratio):
 
-    # Start Cluster_id at zero, incremented to '1' for first cluster
-    cluster_id = 0
-    for entry in setofobjects.ordering_:
-        if setofobjects.reachability_[entry] > epsilon_prime:
-            if setofobjects.core_dists_[entry] <= epsilon_prime:
-                cluster_id += 1
-                setofobjects._cluster_id[entry] = cluster_id
-            else:
-                # This is only needed for compatibility for repeated scans.
-                # -1 is Noise points
-                setofobjects._cluster_id[entry] = -1
-                setofobjects._is_core[entry] = 0
-        else:
-            setofobjects._cluster_id[entry] = cluster_id
-            if setofobjects.core_dists_[entry] <= epsilon_prime:
-                # One (i.e., 'True') for core points #
-                setofobjects._is_core[entry] = 1
-            else:
-                # Zero (i.e., 'False') for non-core, non-noise points #
-                setofobjects._is_core[entry] = 0
-
-# Automatic cluster extraction
-# Author:     Amy X. Zhang
-# Modified:   Shane Grigsby, 2015
-
-
-def _extract_auto(setofobjects):
-    # Extraction wrapper
-    RPlot = setofobjects.reachability_[setofobjects.ordering_].tolist()
-    # RPoints = setofobjects.tree.get_arrays()[0][setofobjects.ordering_]
-    # RPoints = RPoints.tolist()
-    RPoints = setofobjects.ordering_
-    rootNode = _automatic_cluster(RPlot, RPoints)
-    leaves = _get_leaves(rootNode, [])
-    # Start cluster id's at 1
-    clustid = 1
-    # Start all points as non-core noise
-    setofobjects._cluster_id[:] = -1
-    setofobjects._is_core[:] = 0
-    for leaf in leaves:
-        index = setofobjects.ordering_[leaf.start:leaf.end]
-        setofobjects._cluster_id[index] = clustid
-        setofobjects._is_core[index] = 1
-        clustid += 1
-
-
-def _automatic_cluster(RPlot, RPoints):
     # Main extraction function
-    min_cluster_size_ratio = .005
     min_neighborhood_size = 2
-    min_maxima_ratio = 0.001
 
     min_cluster_size = int(min_cluster_size_ratio * len(RPoints))
 
+    # Should this check for < min_samples? Should this be public?
     if min_cluster_size < 5:
         min_cluster_size = 5
 
     nghsize = int(min_maxima_ratio*len(RPoints))
 
+    # Again, should this check < min_samples, should the parameter be public?
     if nghsize < min_neighborhood_size:
         nghsize = min_neighborhood_size
 
@@ -376,7 +392,8 @@ def _automatic_cluster(RPlot, RPoints):
 
     rootNode = TreeNode(RPoints, 0, len(RPoints), None)
     _cluster_tree(rootNode, None, localMaximaPoints,
-                  RPlot, RPoints, min_cluster_size)
+                  RPlot, RPoints, min_cluster_size,
+                  maxima_ratio, rejection_ratio, significant_min)
 
     return rootNode
 
@@ -440,7 +457,8 @@ def _find_local_maxima(RPlot, RPoints, nghsize):
 
 
 def _cluster_tree(node, parentNode, localMaximaPoints,
-                  RPlot, RPoints, min_cluster_size):
+                  RPlot, RPoints, min_cluster_size,
+                  maxima_ratio, rejection_ratio, significant_min)
     # node is a node or the root of the tree in the first call
     # parentNode is parent node of N or None if node is root of the tree
     # localMaximaPoints is list of local maxima points sorted in
@@ -469,14 +487,13 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
     Nodelist.append((Node1, LocalMax1))
     Nodelist.append((Node2, LocalMax2))
 
-    # set a lower threshold on how small a significant maxima can be
-    significantMin = .003
 
-    if RPlot[s] < significantMin:
+    if RPlot[s] < significant_min:
         node.assignSplitPoint(-1)
         # if splitpoint is not significant, ignore this split and continue
         _cluster_tree(node, parentNode, localMaximaPoints,
-                      RPlot, RPoints, min_cluster_size)
+                      RPlot, RPoints, min_cluster_size,
+                      maxima_ratio, rejection_ratio, significant_min)
         return
 
     # only check a certain ratio of points in the child
@@ -491,38 +508,25 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
     avgReachValue2 = float(np.average(RPlot[Node2.start:(Node2.start +
                                                          checkValue2)]))
 
-    '''
-    To adjust the fineness of the clustering, adjust the following ratios.
-    The higher the ratio, the more generous the algorithm is to preserving
-    local minimums, and the more cuts the resulting tree will have.
-    '''
-
-    # the maximum ratio we allow of average height of clusters
-    # on the right and left to the local maxima in question
-    maximaRatio = .75
-
-    # if ratio above exceeds maximaRatio, find which of the clusters
-    # to the left and right to reject based on rejectionRatio
-    rejectionRatio = .7
-
     if (float(avgReachValue1 / float(RPlot[s])) >
-        maximaRatio or float(avgReachValue2 /
-                             float(RPlot[s])) > maximaRatio):
+        maxima_ratio or float(avgReachValue2 /
+                             float(RPlot[s])) > maxima_ratio):
 
-        if float(avgReachValue1 / float(RPlot[s])) < rejectionRatio:
+        if float(avgReachValue1 / float(RPlot[s])) < rejection_ratio:
             # reject node 2
             Nodelist.remove((Node2, LocalMax2))
-        if float(avgReachValue2 / float(RPlot[s])) < rejectionRatio:
+        if float(avgReachValue2 / float(RPlot[s])) < rejection_ratio:
             # reject node 1
             Nodelist.remove((Node1, LocalMax1))
         if (float(avgReachValue1 / float(RPlot[s])) >=
-            rejectionRatio and float(avgReachValue2 /
-                                     float(RPlot[s])) >= rejectionRatio):
+            rejection_ratio and float(avgReachValue2 /
+                                     float(RPlot[s])) >= rejection_ratio):
             node.assignSplitPoint(-1)
             # since splitpoint is not significant,
             # ignore this split and continue (reject both child nodes)
             _cluster_tree(node, parentNode, localMaximaPoints,
-                          RPlot, RPoints, min_cluster_size)
+                          RPlot, RPoints, min_cluster_size,
+                          maxima_ratio, rejection_ratio, significant_min)
             return
 
     # remove clusters that are too small
@@ -548,16 +552,15 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
     reachability values of the parent node
     A lower value for the similarity threshold means less levels in the tree.
     '''
-    similaritythreshold = 0.4
     bypassNode = 0
     if parentNode is not None:
         if (float(float(node.end-node.start) /
                   float(parentNode.end-parentNode.start)) >
-                similaritythreshold):
+                similarity_threshold):
 
             # sumRP = np.average(RPlot[node.start:node.end])
             # sumParent = np.average(RPlot[parentNode.start:parentNode.end])
-            # if float(float(sumRP) / float(sumParent)) > similaritythreshold:
+            # if float(float(sumRP) / float(sumParent)) > similarity_threshold:
 
             parentNode.children.remove(node)
             bypassNode = 1
@@ -566,10 +569,12 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
         if bypassNode == 1:
             parentNode.addChild(nl[0])
             _cluster_tree(nl[0], parentNode, nl[1], RPlot, RPoints,
-                          min_cluster_size)
+                          min_cluster_size, maxima_ratio,
+                          rejection_ratio, significant_min)
         else:
             node.addChild(nl[0])
-            _cluster_tree(nl[0], node, nl[1], RPlot, RPoints, min_cluster_size)
+            _cluster_tree(nl[0], node, nl[1], RPlot, RPoints, min_cluster_size,
+                          maxima_ratio, rejection_ratio, significant_min)
 
 
 def _get_leaves(node, arr):
@@ -579,3 +584,33 @@ def _get_leaves(node, arr):
         for n in node.children:
             _get_leaves(n, arr)
     return arr
+
+
+# Extract DBSCAN Equivalent cluster structure ##
+
+# Important: Epsilon prime should be less than epsilon used in OPTICS #
+
+
+def _extractDBSCAN(setofobjects, epsilon_prime):
+
+    # Start Cluster_id at zero, incremented to '1' for first cluster
+    cluster_id = 0
+    for entry in setofobjects.ordering_:
+        if setofobjects.reachability_[entry] > epsilon_prime:
+            if setofobjects.core_dists_[entry] <= epsilon_prime:
+                cluster_id += 1
+                setofobjects._cluster_id[entry] = cluster_id
+            else:
+                # This is only needed for compatibility for repeated scans.
+                # -1 is Noise points
+                setofobjects._cluster_id[entry] = -1
+                setofobjects._is_core[entry] = 0
+        else:
+            setofobjects._cluster_id[entry] = cluster_id
+            if setofobjects.core_dists_[entry] <= epsilon_prime:
+                # One (i.e., 'True') for core points #
+                setofobjects._is_core[entry] = 1
+            else:
+                # Zero (i.e., 'False') for non-core, non-noise points #
+                setofobjects._is_core[entry] = 0
+
