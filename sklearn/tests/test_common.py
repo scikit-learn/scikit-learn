@@ -231,5 +231,3 @@ def test_get_params_invariance():
             else:
                 yield _named_check(
                     check_get_params_invariance, name), name, Estimator
-
-0
