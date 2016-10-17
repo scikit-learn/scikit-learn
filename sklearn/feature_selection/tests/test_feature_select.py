@@ -371,6 +371,21 @@ def test_select_heuristics_regression():
         assert_less(np.sum(support[5:] == 1), 3)
 
 
+def test_select_fdr_chi2():
+    # Test PR #7490 works
+    # chi2(X,y)
+    # scores = array([4., 0.71]),  pvalues = array([0.046, 0.398])
+    # for the master code
+    # the result of get_support of the following code is array([False, False])
+    # by PR #7490, the result is array([True, False])
+    X = np.array([[10,20],[20,20],[20,30]])
+    y = np.array([[1],[0],[0]])
+    univariate_filter = SelectFdr(chi2, alpha=0.1)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    support = univariate_filter.get_support()
+    assert_array_equal(support, np.array([True, False]))
+
+
 def test_select_fdr_regression():
     # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
