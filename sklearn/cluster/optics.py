@@ -227,7 +227,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self._is_core = self.tree._is_core[:]
         self.ordering_ = self.tree.ordering_[:]
         # _extractDBSCAN(self, self.eps)  # extraction needs to be < eps
-        _extract_auto(self)
+        self.extract_auto()
         self.labels_ = self._cluster_id[:]
         self.core_sample_indices_ = self._index[self._is_core[:]]
         self.n_clusters = max(self._cluster_id)
@@ -290,7 +290,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                     self.eps_prime = epsilon_prime
                     _extractDBSCAN(self, epsilon_prime)
                 elif clustering == 'auto':
-                    extract_auto(self, **kwargs)
+                    self.extract_auto(**kwargs)
                 # else:
                 #    print(clustering + " is not a valid clustering method")
                 self.labels_ = self._cluster_id[:]
@@ -351,7 +351,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Extraction wrapper
         RPlot = self.reachability_[self.ordering_].tolist()
         RPoints = self.ordering_
-        rootNode = _automatic_cluster(RPlot, RPoints)
+        rootNode = _automatic_cluster(RPlot, RPoints,
+                                      maxima_ratio,
+                                      rejection_ratio,
+                                      similarity_threshold,
+                                      significant_min,
+                                      min_cluster_size_ratio,
+                                      min_maxima_ratio)
         leaves = _get_leaves(rootNode, [])
         # Start cluster id's at 1
         clustid = 1
@@ -393,7 +399,8 @@ def _automatic_cluster(RPlot, RPoints,
     rootNode = TreeNode(RPoints, 0, len(RPoints), None)
     _cluster_tree(rootNode, None, localMaximaPoints,
                   RPlot, RPoints, min_cluster_size,
-                  maxima_ratio, rejection_ratio, significant_min)
+                  maxima_ratio, rejection_ratio,
+                  similarity_threshold, significant_min)
 
     return rootNode
 
@@ -458,7 +465,8 @@ def _find_local_maxima(RPlot, RPoints, nghsize):
 
 def _cluster_tree(node, parentNode, localMaximaPoints,
                   RPlot, RPoints, min_cluster_size,
-                  maxima_ratio, rejection_ratio, significant_min):
+                  maxima_ratio, rejection_ratio,
+                  similarity_threshold, significant_min):
     # node is a node or the root of the tree in the first call
     # parentNode is parent node of N or None if node is root of the tree
     # localMaximaPoints is list of local maxima points sorted in
@@ -493,7 +501,8 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
         # if splitpoint is not significant, ignore this split and continue
         _cluster_tree(node, parentNode, localMaximaPoints,
                       RPlot, RPoints, min_cluster_size,
-                      maxima_ratio, rejection_ratio, significant_min)
+                      maxima_ratio, rejection_ratio,
+                      similarity_threshold, significant_min)
         return
 
     # only check a certain ratio of points in the child
@@ -526,7 +535,8 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
             # ignore this split and continue (reject both child nodes)
             _cluster_tree(node, parentNode, localMaximaPoints,
                           RPlot, RPoints, min_cluster_size,
-                          maxima_ratio, rejection_ratio, significant_min)
+                          maxima_ratio, rejection_ratio,
+                          similarity_threshold, significant_min)
             return
 
     # remove clusters that are too small
@@ -570,11 +580,13 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
             parentNode.addChild(nl[0])
             _cluster_tree(nl[0], parentNode, nl[1], RPlot, RPoints,
                           min_cluster_size, maxima_ratio,
-                          rejection_ratio, significant_min)
+                          rejection_ratio,
+                          similarity_threshold, significant_min)
         else:
             node.addChild(nl[0])
             _cluster_tree(nl[0], node, nl[1], RPlot, RPoints, min_cluster_size,
-                          maxima_ratio, rejection_ratio, significant_min)
+                          maxima_ratio, rejection_ratio,
+                          similarity_threshold, significant_min)
 
 
 def _get_leaves(node, arr):
