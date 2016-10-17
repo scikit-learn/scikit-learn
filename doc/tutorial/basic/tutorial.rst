@@ -148,15 +148,17 @@ learn::
     The data and target can be stored in one file (e.g. iris, boston, breast_cancer) or
     in several (e.g. diabetes, linnerud).
 
+      >>> from sklearn.datasets import load_boston
       >>> boston = load_boston()
-      >>> print(boston.filename)
-      .*/sklearn/datasets/data/boston_house_prices.csv
+      >>> print(boston.filename)  # doctest: +SKIP
+      (some-path)/sklearn/datasets/data/boston_house_prices.csv
 
+      >>> from sklearn.datasets import load_diabetes
       >>> diabetes = load_diabetes()
-      >>> print(diabetes.data_filename)
-      .*/sklearn/datasets/data/diabetes_data.csv.gz
-      >>> print(diabetes.target_filename)
-      .*/sklearn/datasets/data/diabetes_target.csv.gz
+      >>> print(diabetes.data_filename)  # doctest: +SKIP
+      (some-path)/sklearn/datasets/data/diabetes_data.csv.gz
+      >>> print(diabetes.target_filename)  # doctest: +SKIP
+      (some-path)/sklearn/datasets/data/diabetes_target.csv.gz
 
 Learning and predicting
 ------------------------
