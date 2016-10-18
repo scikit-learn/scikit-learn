@@ -264,8 +264,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         #     print(index_type + ' is not a valid index type.')
 
     def extract(self, epsilon_prime, clustering='auto', **kwargs):
-        """Performs Automatic or DBSCAN equivalent extraction for an 
-        arbitrary epsilon. Can be run multiple times. 
+        """Performs Automatic or DBSCAN equivalent extraction for an
+        arbitrary epsilon. Can be run multiple times.
         
         See extract_auto() for full description of parameters
 
@@ -306,23 +306,23 @@ class OPTICS(BaseEstimator, ClusterMixin):
             print("Run fit method first")
 
     def extract_auto(self,
-                     maxima_ratio = .75,
-                     rejection_ratio = .7,
-                     similarity_threshold = 0.4,
-                     significant_min = .003,
-                     min_cluster_size_ratio = .005,
-                     min_maxima_ratio = 0.001):
+                     maxima_ratio=.75,
+                     rejection_ratio=.7,
+                     similarity_threshold=0.4,
+                     significant_min=.003,
+                     min_cluster_size_ratio=.005,
+                     min_maxima_ratio=0.001):
 
         """Performs automatic cluster extraction for variable density data.
-        Can be run multiple times with adjusted parameters. Only returns 
+        Can be run multiple times with adjusted parameters. Only returns
         core and noise labels.
 
         Parameters
         ----------
         maxima_ratio: float, optional
         The maximum ratio we allow of average height of clusters on the right
-        and left to the local maxima in question. The higher the ratio, 
-        the more generous the algorithm is to preserving local minimums, 
+        and left to the local maxima in question. The higher the ratio,
+        the more generous the algorithm is to preserving local minimums,
         and the more cuts the resulting tree will have.
         rejection_ratio: float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
@@ -339,10 +339,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         significant_min: float, optional
         Sets a lower threshold on how small a significant maxima can be
         min_cluster_size_ratio: float, optional
-        Minimum percentage of dataset expected for cluster membership. 
+        Minimum percentage of dataset expected for cluster membership.
         min_maxima_ratio: float, optional
         Used to determine neighborhood size for minimum cluster membership.
-       
+
         Returns
         -------
         New core_sample_indices_ and labels_ arrays. Modifies OPTICS object
@@ -495,7 +495,6 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
     Nodelist.append((Node1, LocalMax1))
     Nodelist.append((Node2, LocalMax2))
 
-
     if RPlot[s] < significant_min:
         node.assignSplitPoint(-1)
         # if splitpoint is not significant, ignore this split and continue
@@ -519,7 +518,7 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
 
     if (float(avgReachValue1 / float(RPlot[s])) >
         maxima_ratio or float(avgReachValue2 /
-                             float(RPlot[s])) > maxima_ratio):
+                              float(RPlot[s])) > maxima_ratio):
 
         if float(avgReachValue1 / float(RPlot[s])) < rejection_ratio:
             # reject node 2
@@ -529,7 +528,7 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
             Nodelist.remove((Node1, LocalMax1))
         if (float(avgReachValue1 / float(RPlot[s])) >=
             rejection_ratio and float(avgReachValue2 /
-                                     float(RPlot[s])) >= rejection_ratio):
+                                      float(RPlot[s])) >= rejection_ratio):
             node.assignSplitPoint(-1)
             # since splitpoint is not significant,
             # ignore this split and continue (reject both child nodes)
@@ -625,4 +624,3 @@ def _extractDBSCAN(setofobjects, epsilon_prime):
             else:
                 # Zero (i.e., 'False') for non-core, non-noise points #
                 setofobjects._is_core[entry] = 0
-
