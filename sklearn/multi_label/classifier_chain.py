@@ -1,7 +1,6 @@
 import numpy as np
 from ..base import BaseEstimator, clone
 from ..utils import check_random_state
-import random
 
 
 class ClassifierChain(BaseEstimator):
