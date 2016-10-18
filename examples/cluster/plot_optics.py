@@ -32,7 +32,7 @@ X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
 ##############################################################################
 # plot scatterplot of points
 
-plt.figure(figsize=(12, 12))
+plt.figure(figsize=(10, 10))
 
 plt.subplot(221)
 plt.plot(X[:, 0], X[:, 1], 'b.', ms=2)
@@ -41,7 +41,7 @@ plt.title("Raw Data")
 ##############################################################################
 # Compute OPTICS
 
-clust = OPTICS(eps=30.3, min_samples=9)
+clust = OPTICS(eps=30.3, min_samples=10, metric='minkowski')
 
 # Run the fit
 clust.fit(X)
@@ -73,8 +73,8 @@ for k, col in zip(unique_labels, colors):
     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
              markeredgecolor='k', markersize=2, alpha=0.5)
 
-plt.title("Automatic Clustering \n Estimated number of clusters: %d" 
-           % clust.n_clusters)
+plt.title("Automatic Clustering \n Estimated number of clusters: %d"
+          % clust.n_clusters)
 
 # (Re)-extract clustering structure, using a single eps to show comparison
 # with DBSCAN. This can be run for any clustering distance, and can be run
