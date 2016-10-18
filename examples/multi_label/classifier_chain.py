@@ -39,4 +39,3 @@ Y_pred_ensemble = np.array([chain.predict(X_test) for chain in
                             chains]).mean(axis=0)
 print("Classifier chain ensemble Jaccard similarity score:",
       jaccard_similarity_score(Y_test, Y_pred_ensemble >= .5))
-
