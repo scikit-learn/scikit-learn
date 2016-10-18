@@ -724,15 +724,14 @@ def test_leave_group_out_changing_groups():
     assert_equal(3, LeaveOneGroupOut().get_n_splits(X, y, groups))
 
 
-def test_leave_group_out_split_errors():
-    def leave_one_group_out_zero_groups():
-        X = y = groups = np.ones(0)
-        list(LeaveOneGroupOut().split(X, y, groups))
-    def leave_p_groups_out_greater_than_unique_groups():
-        X = y = groups = np.ones(10)
-        list(LeavePGroupsOut(n_groups=5).split(X, y, groups))
-    assert_raises(ValueError, leave_one_group_out_zero_groups)
-    assert_raises(ValueError, leave_p_groups_out_greater_than_unique_groups)
+def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
+    X = y = groups = np.ones(0)
+    assert_raise_message(ValueError, "Cannot have zero groups",
+                         next, LeaveOneGroupOut().split(X, y, groups))
+    X = y = groups = np.ones(10)
+    msg = "Cannot have n_groups=5 greater than the number of unique groups: 1."
+    assert_raise_message(ValueError, msg, next,
+                         LeavePGroupsOut(n_groups=5).split(X, y, groups))
 
 
 def test_train_test_split_errors():
