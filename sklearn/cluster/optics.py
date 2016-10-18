@@ -266,7 +266,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def extract(self, epsilon_prime, clustering='auto', **kwargs):
         """Performs Automatic or DBSCAN equivalent extraction for an
         arbitrary epsilon. Can be run multiple times.
-        
+
         See extract_auto() for full description of parameters
 
         Parameters
