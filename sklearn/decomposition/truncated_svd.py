@@ -71,16 +71,16 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     ----------
     components_ : array, shape (n_components, n_features)
 
-    explained_variance_ : array, [n_components]
+    explained_variance_ : array, shape (n_components,)
         The variance of the training samples transformed by a projection to
         each component.
 
-    explained_variance_ratio_ : array, [n_components]
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
-    singular_values_ : array, [n_components]
-        The singular values corresponsing to each of the selected components.
-        The singular values corresponds to the 2-norms of the ``n_components``
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
     Examples

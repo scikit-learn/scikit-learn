@@ -73,9 +73,9 @@ class IncrementalPCA(_BasePCA):
         If all components are stored, the sum of explained variances is equal
         to 1.0.
 
-    singular_values_ : array, [n_components]
-        The singular values corresponsing to each of the selected components.
-        The singular values corresponds to the 2-norms of the ``n_components``
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
     mean_ : array, shape (n_features,)

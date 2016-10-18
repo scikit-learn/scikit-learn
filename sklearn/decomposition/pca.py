@@ -186,28 +186,28 @@ class PCA(_BasePCA):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
         ``explained_variance_``.
 
-    explained_variance_ : array, [n_components]
+    explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
 
         .. versionadded:: 0.18
 
-    explained_variance_ratio_ : array, [n_components]
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
         If ``n_components`` is not set then all components are stored and the
         sum of explained variances is equal to 1.0.
 
-    singular_values_ : array, [n_components]
-        The singular values corresponsing to each of the selected components.
-        The singular values corresponds to the 2-norms of the ``n_components``
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
-    mean_ : array, [n_features]
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
         Equal to `X.mean(axis=1)`.
@@ -580,20 +580,20 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Components with maximum variance.
 
-    explained_variance_ratio_ : array, [n_components]
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
         If k is not set then all components are stored and the sum of explained
         variances is equal to 1.0.
 
-    singular_values_ : array, [n_components]
-        The singular values corresponsing to each of the selected components.
-        The singular values corresponds to the 2-norms of the ``n_components``
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
-    mean_ : array, [n_features]
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
     Examples
@@ -686,7 +686,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
         full_var = np.var(X, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
-        self.singular_values_ = S.copy()  # Store the singular values.
+        self.singular_values_ = S  # Store the singular values.
 
         if self.whiten:
             self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
