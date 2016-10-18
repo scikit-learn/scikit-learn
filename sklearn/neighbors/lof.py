@@ -131,6 +131,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
     def fit_predict(self, X, y=None):
         """Compute the local outlier factor (LOF) on X.
+
         Return the labels (1 inlier, -1 outlier) of X according to LOF score
         and the contamination parameter.
 
@@ -138,11 +139,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         ----------
         X : array-like, shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            wrt to the training samples.
+            w.r.t. to the training samples.
 
         Returns
         -------
-        is_inlier : array of shape (n_samples,)
+        is_inlier : array, shape (n_samples,)
             Returns 1 for anomalies/outliers and -1 for inliers.
         """
 
@@ -177,8 +178,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         self.threshold_ = -scoreatpercentile(
             self.outlier_factor_, 100. * (1. - self.contamination))
 
-        # XXX may be optimized (if X is not None) by only computing it for
-        # X_sub_samples = neighbors of neighbors of X ?
         return self
 
     def _predict(self, X=None):
@@ -193,12 +192,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         ----------
         X : array-like, shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
-            wrt to the training samples. If None, makes prediction on the
+            w.r.t. to the training samples. If None, makes prediction on the
             training data without considering them as their own neighbors.
 
         Returns
         -------
-        is_inlier : array of shape (n_samples,)
+        is_inlier : array, shape (n_samples,)
             Returns 1 for anomalies/outliers and -1 for inliers.
         """
         check_is_fitted(self, ["threshold_", "outlier_factor_",
@@ -227,14 +226,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         Parameters
         ----------
-
         X : array-like, shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
         Returns
         -------
-        lof_scores : array of shape (n_samples,)
+        lof_scores : array, shape (n_samples,)
             The Local Outlier Factor of each input samples. The lower,
             the more abnormal.
         """
@@ -256,17 +254,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         Parameters
         ----------
-        distances_X : Array of shape (n_query, self.n_neighbors).
+        distances_X : array, shape (n_query, self.n_neighbors)
             Distances to the neighbors (in the training samples self._fit_X) of
             each query point to compute the LRD.
 
-        neighbors_indices : Array of shape (n_query, self.n_neighbors)
+        neighbors_indices : array, shape (n_query, self.n_neighbors)
             Neighbors indices (of each query point) among training samples
             self._fit_X.
 
         Returns
         -------
-        lof : numpy array of shape (n_samples,)
+        lof : numpy array, shape (n_samples,)
             The LOF of X. The lower, the more normal.
         """
         n_samples = distances_X.shape[0]
@@ -296,11 +294,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         Parameters
         ----------
-        distances_X : Array of shape (n_query, self.n_neighbors).
+        distances_X : array, shape (n_query, self.n_neighbors)
             Distances to the neighbors (in the training samples self._fit_X) of
             each query point to compute the LRD.
 
-        neighbors_indices : Array of shape (n_query, self.n_neighbors)
+        neighbors_indices : array, shape (n_query, self.n_neighbors)
             Neighbors indices (of each query point) among training samples
             self._fit_X.
 
