@@ -144,8 +144,8 @@ learn::
 .. topic:: Loading from the data files
 
     All standard datasets which you can import with ``load_`` have underlying source files that
-    you can read manually (consider numpy.loadtxt and pandas for analysis).
-    The data and target can be stored in one file (e.g. iris, boston, breast_cancer) or
+    you can read manually (consider :func:`numpy.loadtxt` and `pandas <http://pandas.pydata.org/>`_
+    for analysis). The data and target can be stored in one file (e.g. iris, boston, breast_cancer) or
     in several (e.g. diabetes, linnerud).
 
       >>> from sklearn.datasets import load_boston
@@ -159,6 +159,19 @@ learn::
       (some-path)/sklearn/datasets/data/diabetes_data.csv.gz
       >>> print(diabetes.target_filename)  # doctest: +SKIP
       (some-path)/sklearn/datasets/data/diabetes_target.csv.gz
+
+    Example of reading data file with numpy. Boston dataset contains
+    2 header lines, that is why we are going to skip them:
+
+      >>> import numpy as np
+      >>> boston_data = np.loadtxt(boston.filename, delimiter=",", skiprows=2)
+      >>> boston.data.shape  # sklearn dataset
+      (506, 13)
+      >>> boston_data.shape  # also contains target columns
+      (506, 14)
+
+    See also:
+        :func:`pandas.read_csv`
 
 Learning and predicting
 ------------------------
