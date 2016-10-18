@@ -64,7 +64,7 @@ Documentation of scikit-learn 0.19.dev0
           <!-- row -->
             <div class="row-fluid">
                 <div class="span4 box">
-                    <h2><a href="developers/index.html">Contributing</a></h2>
+                    <h2><a href="developers/index.html">Development</a></h2>
                             <blockquote>Information on how to contribute. This also
                             contains useful information for advanced users, for example
                             how to build their own estimators.
