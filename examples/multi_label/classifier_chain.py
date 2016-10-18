@@ -2,8 +2,9 @@
 ============================
 Classifier Chain
 ============================
-On a multi-label dataset an ensemble of classifier chains achieves a higher
-Jaccard similarity score than a set of independently trained models.
+An ensemble of 10 logistic regression classifier chains trained on a
+multi-label dataset achieves a higher Jaccard similarity score than a set
+of independently trained logistic regression models.
 
 """
 
@@ -15,7 +16,7 @@ from sklearn.metrics import jaccard_similarity_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import fetch_mldata
 
-# Fetch a multi-label dataset
+# Load a multi-label dataset
 yeast = fetch_mldata('yeast')
 X = yeast['data']
 Y = yeast['target'].transpose().toarray()

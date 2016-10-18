@@ -50,7 +50,7 @@ class ClassifierChain(BaseEstimator):
     def __init__(self, base_estimator, random_state=None):
 
         self.base_estimator = base_estimator
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
         self.classifiers_ = []
         self.chain_order = None
 
@@ -64,6 +64,7 @@ class ClassifierChain(BaseEstimator):
             A list of integers specifying the order of the classes in the
             chain.
         """
+        random_state = check_random_state(self.random_state)
         self.classifiers_ = [clone(self.base_estimator) for _ in range(
             Y.shape[1])]
 
@@ -76,7 +77,7 @@ class ClassifierChain(BaseEstimator):
         else:
             self.chain_order = list(range(Y.shape[1]))
         if shuffle:
-            self.random_state.shuffle(self.chain_order)
+            random_state.shuffle(self.chain_order)
 
         for chain_idx, classifier in enumerate(self.classifiers_):
             previous_labels = Y[:, self.chain_order[:chain_idx]]
