@@ -1,7 +1,8 @@
 """Testing for K-Medoids"""
 import numpy as np
 
-from sklearn.utils.testing import assert_equal
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.testing import assert_equal, assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_equal
@@ -13,55 +14,34 @@ from sklearn.datasets import load_iris
 
 from sklearn.cluster import KMedoids, KMeans
 
-from sklearn.utils.validation import NotFittedError
 
-
-def get_dummy_X():
-
-    np.random.seed(0)
-
-    return np.random.rand(100, 5)
-
+rng = np.random.RandomState(0)
+X = rng.rand(100, 5)
 
 @raises(ValueError)
 def test_kmedoids_fit_fails_n_clusters_is_zero():
-
-    X = get_dummy_X()
-
     # n_clusters is 0
     KMedoids(n_clusters=0).fit(X)
 
 
 @raises(ValueError)
 def test_kmedoids_fit_fails_n_clusters_is_none():
-
-    X = get_dummy_X()
-
     # n_clusters is None
     KMedoids(n_clusters=None).fit(X)
 
 
 @raises(ValueError)
 def test_kmedoids_fit_fails_bad_clustering_method():
-
-    X = get_dummy_X()
-
     # Bad clustering
     KMedoids(n_clusters=5, clustering_method='foo').fit(X)
 
 
 @raises(ValueError)
 def test_kmedoids_fit_fails_init_is_none():
-
-    X = get_dummy_X()
-
     KMedoids(init=None).fit(X)
 
 
 def test_kmedoids_fit_succeeds():
-
-    X = get_dummy_X()
-
     model = KMedoids().fit(X)
 
     assert_true(model is not None)
@@ -75,92 +55,73 @@ def test_kmedoids_fit_succeeds():
     assert_true(model is not None)
 
 
-@raises(ValueError)
 def test_kmedoids_fit_fails_too_few_samples_vs_clusters():
-
     model = KMedoids(n_clusters=8)
 
-    np.random.seed(0)
-
-    X = np.random.rand(5, 2)
+    Xsmall = rng.rand(5, 2)
 
     # Trying to fit 3 samples to 8 clusters -> Wrong!
-    model.fit(X)
+    assert_raises(ValueError, model.fit, Xsmall)
 
 
-@raises(NotFittedError)
 def test_kmedoids_fails_predict_before_fit():
-
-    X = get_dummy_X()
-
     model = KMedoids()
 
-    model.predict(X)
+    assert_raises(NotFittedError, model.predict, X)
 
 
-@raises(NotFittedError)
 def test_kmedoids_fails_transform_before_fit():
-
-    X = get_dummy_X()
-
     model = KMedoids()
 
-    model.transform(X)
-
-
-def test_kmedoids_fit_naive():
-
-    model = KMedoids(n_clusters=3)
-
-    X = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-
-    model.fit(X)
-
-    assert_array_equal(model.labels_, [0, 1, 2])
+    assert_raises(NotFittedError, model.transform, X)
 
 
 def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
-
-    for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
+    for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.values():
+        if distance_metric is None:
+            continue
 
         model = KMedoids(n_clusters=3, distance_metric=distance_metric)
 
-        X = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-        model.fit(X)
+        model.fit(Xnaive)
 
         assert_array_equal(model.labels_, [0, 1, 2])
 
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
-
     np.random.seed(0)
 
-    X = load_iris()['data']
+    Xiris = load_iris()['data']
 
     refModel = KMeans(n_clusters=3)
 
-    refModel.fit(X)
+    refModel.fit(Xiris)
 
     avgDistToClosestCentroid = \
-        np.sum(np.min(euclidean_distances(X, Y=refModel.cluster_centers_),
-                      axis=1)) / X.shape[0]
+        np.sum(np.min(euclidean_distances(Xiris, Y=refModel.cluster_centers_),
+                      axis=1)) / Xiris.shape[0]
 
     for init in ['random', 'heuristic']:
 
-        for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
+        for (distance_metric_name,
+             distance_metric) in PAIRWISE_DISTANCE_FUNCTIONS.items():
+
+            if distance_metric is None:
+                continue
 
             model = KMedoids(n_clusters=3,
                              distance_metric=distance_metric,
                              init=init)
 
-            D = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](X)
+            D = distance_metric(Xiris)
 
             avgDistToRandomMedoid = np.mean(D.ravel())
 
-            model.fit(X)
+            model.fit(Xiris)
 
-            avgDistToClosestMedoid = model.inertia(X) / X.shape[0]
+            avgDistToClosestMedoid = model.inertia(Xiris) / Xiris.shape[0]
 
             # We want distance-to-closest-medoid to be reduced from average
             # distance by more than 50%
@@ -171,17 +132,14 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
             # we can compare its performance to
             # K-Means. We want to average distance to cluster centers
             # be similar between K-Means and K-Medoids
-            if distance_metric == "euclidean":
+            if distance_metric_name == "euclidean":
                 assert_greater(0.1,
                                np.abs(avgDistToClosestMedoid -
                                       avgDistToClosestCentroid))
 
 
 def test_kmedoids_fit_predict():
-
     model = KMedoids()
-
-    X = np.random.rand(100, 5)
 
     labels1 = model.fit_predict(X)
 
@@ -195,10 +153,7 @@ def test_kmedoids_fit_predict():
 
 
 def test_kmedoids_fit_transform():
-
     model = KMedoids()
-
-    X = np.random.rand(100, 5)
 
     Xt1 = model.fit_transform(X)
 

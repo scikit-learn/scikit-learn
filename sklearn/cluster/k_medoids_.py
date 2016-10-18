@@ -101,7 +101,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix}, shape=(n_samples, n_features)
 
         Returns
         -------
@@ -118,6 +118,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         D = self.distance_func(X)
 
         medoid_ics = self._get_initial_medoid_indices(D, self.n_clusters)
+        cluster_ics = self._get_cluster_ics(D, medoid_ics)
 
         # Old medoids will be stored here for reference
         old_medoid_ics = np.zeros((self.n_clusters,))
@@ -145,15 +146,14 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.labels_ = cluster_ics
 
         # Expose cluster centers, i.e. medoids
-        self.cluster_centers_ = X.take(medoid_ics, axis=0)
+        self.cluster_centers_ = X[medoid_ics]
 
         # Return self to enable method chaining
         return self
 
     def _check_array(self, X):
 
-        X = check_array(X)
-
+        X = check_array(X, accept_sparse=['csr', 'csc'])
         # Check that the number of clusters is less than or equal to
         # the number of samples
         if self.n_clusters > X.shape[0]:
@@ -221,12 +221,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix}, shape=(n_isamples, n_features)
             Data to transform.
 
         Returns
         -------
-        X_new : array, shape=(n_samples, n_clusters)
+        X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
             X transformed in the new space.
         """
 
@@ -237,6 +237,18 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return self.distance_func(X, Y=self.cluster_centers_)
 
     def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
 
         check_is_fitted(self, "cluster_centers_")
 
@@ -255,6 +267,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return labels
 
     def inertia(self, X):
+        """Compute inertia of new samples. Inertia is defined as the sum of the
+        sample distances to closest cluster centers.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape=(n_isamples, n_features)
+            Samples to compute inertia for.
+
+        Returns
+        -------
+        X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
+            X transformed in the new space.
+
+        """
 
         # Map the original X to the distance-space
         Xt = self.transform(X)
@@ -266,6 +292,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return inertia
 
     def _get_initial_medoid_indices(self, D, n_clusters):
+        """Initialize medoid indices using either a random or heuristic 
+        approach.
+        
+        """
 
         if self.init == 'random':  # Random initialization
 
