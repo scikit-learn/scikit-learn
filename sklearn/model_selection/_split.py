@@ -564,7 +564,9 @@ class StratifiedKFold(_BaseKFold):
             rng = self.random_state
         y = np.asarray(y)
         n_samples = y.shape[0]
-        unique_y, y_inversed = np.unique(y, return_inverse=True)
+        y_helperview = np.ascontiguousarray(y).view(np.dtype((np.void, y.dtype.itemsize * y.shape[1])))
+        unique_y, y_inversed = np.unique(y_helperview, return_inverse=True)
+        unique_y = unique_y.view(y.dtype).reshape(-1, y.shape[1])
         y_counts = bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
@@ -592,7 +594,7 @@ class StratifiedKFold(_BaseKFold):
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[y == cls]
+                cls_test_folds = test_folds[(y == cls).all(axis=1)]
                 # the test split can be too big because we used
                 # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
                 # stratifiable for all the classes
@@ -600,7 +602,7 @@ class StratifiedKFold(_BaseKFold):
                 # If this is the case, let's trim it:
                 test_split = test_split[test_split < len(cls_test_folds)]
                 cls_test_folds[test_split] = test_fold_indices
-                test_folds[y == cls] = cls_test_folds
+                test_folds[(y == cls).all(axis=1)] = cls_test_folds
 
         return test_folds
 
