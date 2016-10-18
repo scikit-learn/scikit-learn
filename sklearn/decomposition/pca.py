@@ -15,6 +15,7 @@ from math import log, sqrt
 import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
+from scipy.sparse import issparse
 
 from ..externals import six
 
@@ -115,6 +116,9 @@ class PCA(_BasePCA):
 
     It can also use the scipy.sparse.linalg ARPACK implementation of the
     truncated SVD.
+
+    Notice that this class does not support sparse input. See
+    :ref:`<TruncatedSVD>` for an alternative with sparse data.
 
     Read more in the :ref:`User Guide <PCA>`.
 
@@ -332,6 +336,13 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
+
+        # Raise an error for sparse input.
+        # This is more informative than the generic one raised by check_array.
+        if issparse(X):
+            raise TypeError('PCA does not support sparse input. See '
+                            'TruncatedSVD for a possible alternative.')
+
         X = check_array(X, dtype=[np.float64], ensure_2d=True,
                         copy=self.copy)
 
