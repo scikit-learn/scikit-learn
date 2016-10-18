@@ -20,10 +20,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
-
 from sklearn.externals.joblib import Parallel, delayed
-
-import time
 
 from tudarmstadt import fetch_tu_darmstadt
 
@@ -52,9 +49,6 @@ def image_extraction_projection(path_image, dict_PCA, rng,
     return dict_PCA.transform(patch.reshape((patch.shape[0],
                                              np.prod(patch_size) *
                                              len(im.shape))))
-
-# Script starts here
-start = time.time()
 
 # Define the parameters in use afterwards
 patch_size = (9, 9)
@@ -145,4 +139,3 @@ pred = rf.fit(train_data, train_label).predict(test_data)
 
 print('Classification performed - the confusion matrix obtained is:')
 print(confusion_matrix(test_label, pred))
-print('It took', time.time()-start, 'seconds.')
