@@ -7,7 +7,7 @@ from .base import SelectorMixin
 from ..base import TransformerMixin, BaseEstimator, clone
 from ..externals import six
 
-from ..utils import safe_mask, check_array, deprecated
+from ..utils import safe_mask, check_array, deprecated, check_X_y
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 
@@ -172,6 +172,9 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
+    max_features : int, between 0 and number of features, optional.
+        Select at most this many features that score above the threshold.
+
     Attributes
     ----------
     `estimator_`: an estimator
@@ -182,10 +185,28 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     `threshold_`: float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None, prefit=False):
+    def __init__(self, estimator, threshold=None, prefit=False,
+                 max_features=None):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
+        self.max_features = max_features
+
+    def _check_max_features(self, X, max_features):
+        if self.max_features is not None:
+            if isinstance(self.max_features, int):
+                if 0 <= self.max_features <= X.shape[1]:
+                    return
+            elif self.max_features == 'all':
+                    return
+            raise ValueError(
+                    "max_features should be >=0, <= n_features; got %r."
+                    " Use max_features='all' to return all features."
+                    % self.max_features)
+
+    def _check_params(self, X, y):
+        X, y = check_X_y(X, y)
+        self._check_max_features(X, self.max_features)
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
@@ -200,7 +221,15 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         scores = _get_feature_importances(estimator)
         self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
-        return scores >= self.threshold_
+        mask = np.zeros_like(scores, dtype=bool)
+        if self.max_features == 'all':
+            self.max_features = scores.size
+        candidate_indices = np.argsort(-scores,
+                                       kind='mergesort')[:self.max_features]
+        mask[candidate_indices] = True
+        if self.threshold is not None:
+            mask[scores < self.threshold_] = False
+        return mask
 
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -221,6 +250,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
+        self._check_params(X, y)
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")
