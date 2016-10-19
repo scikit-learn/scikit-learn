@@ -717,13 +717,15 @@ def test_learning_curve_with_boolean_indices():
 
 
 def test_learning_curve_with_shuffle():
-    """Following test case was designed this way to verify the code
-    changes made in pull request: #7506."""
+    # Following test case was designed this way to verify the code
+    # changes made in pull request: #7506.
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [11, 12], [13, 14], [15, 16],
                  [17, 18], [19, 20], [7, 8], [9, 10], [11, 12], [13, 14],
                  [15, 16], [17, 18]])
     y = np.array([1, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2, 3, 4])
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
+    # Splits on these groups fail without shuffle as the first iteration
+    # of the learning curve doesn't contain label 4 in the training set.
     estimator = PassiveAggressiveClassifier(shuffle=False)
 
     cv = GroupKFold(n_splits=2)
