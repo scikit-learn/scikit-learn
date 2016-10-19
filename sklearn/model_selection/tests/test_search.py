@@ -940,12 +940,16 @@ def test_pickle():
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True)
     grid_search.fit(X, y)
-    pickle.dumps(grid_search)  # smoke test
+    grid_search_pickled = pickle.loads(pickle.dumps(grid_search))
+    assert_array_almost_equal(grid_search.predict(X),
+                              grid_search_pickled.predict(X))
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]},
                                        refit=True, n_iter=3)
     random_search.fit(X, y)
-    pickle.dumps(random_search)  # smoke test
+    random_search_pickled = pickle.loads(pickle.dumps(random_search))
+    assert_array_almost_equal(random_search.predict(X),
+                              random_search_pickled.predict(X))
 
 
 def test_grid_search_with_multioutput_data():
