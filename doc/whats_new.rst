@@ -44,6 +44,10 @@ Enhancements
 Bug fixes
 .........
 
+   - :class:`sklearn.feature_selection.SelectFdr` now correctly works
+     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
+     `Peng Meng`_.
+
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs
      (`#6282 <https://github.com/scikit-learn/scikit-learn/pull/6282>`_) by
