@@ -485,6 +485,21 @@ def test_tied_pvalues():
         assert_not_in(9998, Xt)
 
 
+def test_scorefunc_multilabel():
+    # Test whether k-best and percentiles works with multilabels with chi2.
+
+    X = np.array([[10000, 9999, 0], [100, 9999, 0], [1000, 99, 0]])
+    y = [[1, 1], [0, 1], [1, 0]]
+
+    Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
+
+    Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
+
+
 def test_tied_scores():
     # Test for stable sorting in k-best with tied scores.
     X_train = np.array([[0, 0, 0], [1, 1, 1]])
