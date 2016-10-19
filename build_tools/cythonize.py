@@ -165,7 +165,13 @@ def cythonize_if_unchanged(path, cython_file, gen_file, hashes):
 
 def check_and_cythonize(root_dir):
     print(root_dir)
-    hashes = load_hashes(HASH_FILE)
+    if "[ci recythonize]" in os.environ.get("TRAVIS_COMMIT_MSG", "").lower():
+        # Force recythonizing of all the cython files.
+        print("Commit flag '[ci recythonize]' detected. Forcing a recythonize"
+              " of all the cython sources.")
+        hashes = {}
+    else:
+        hashes = load_hashes(HASH_FILE)
 
     for cur_dir, dirs, files in os.walk(root_dir):
         for filename in files:
