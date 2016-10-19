@@ -44,7 +44,8 @@ Enhancements
 Bug fixes
 .........
 
-   - :class:`sklearn.feature_selection.SelectFdr` now correctly works
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+     exactly implement Benjamini-Hochberg procedure
      (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
      `Peng Meng`_.
 
