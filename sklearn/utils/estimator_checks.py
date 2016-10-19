@@ -1484,20 +1484,17 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_non_transformer_estimators_n_iter(name, Estimator,
-                                            multi_output=False):
-    # Test that estimators that are not transformers with an attribute max_iter,
-    # return the attribute of n_iter at least 1.
+def check_non_transformer_estimators_n_iter(name, Estimator):
+    # Test that estimators that are not transformers with an attribute
+    # max_iter, return the attribute of n_iter at least 1.
 
     # These models are dependent on external solvers like
     # libsvm and accessing the iter parameter is non-trivial.
-    not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC', 'RidgeClassifier',
-                            'SVC', 'RandomizedLasso', 'LogisticRegressionCV',
-                            'LinearSVC', 'LogisticRegression']
+    not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
+                            'RidgeClassifier', 'SVC', 'RandomizedLasso',
+                            'LogisticRegressionCV', 'LinearSVC',
+                            'LogisticRegression']
 
-    # Models made for multi-class scenarios
-    not_run_check_n_iter += ['MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-                             'MultiTaskLasso', 'MultiTaskLassoCV']
     # Tested in test_transformer_n_iter
     not_run_check_n_iter += CROSS_DECOMPOSITION
     if name in not_run_check_n_iter:
@@ -1511,9 +1508,7 @@ def check_non_transformer_estimators_n_iter(name, Estimator,
     if hasattr(estimator, 'max_iter'):
         iris = load_iris()
         X, y_ = iris.data, iris.target
-
-        if multi_output:
-            y_ = np.reshape(y_, (-1, 1))
+        y_ = multioutput_estimator_convert_y_2d(name, y_)
 
         set_random_state(estimator, 0)
         if name == 'AffinityPropagation':
