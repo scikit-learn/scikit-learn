@@ -1756,8 +1756,8 @@ Pedregosa, Florian Wilhelm, floydsoft, Félix-Antoine Fortin, Gael Varoquaux,
 Garrett-R, Gilles Louppe, gpassino, gwulfs, Hampus Bengtsson, Hamzeh Alsalhi,
 Hanna Wallach, Harry Mavroforakis, Hasil Sharma, Helder, Herve Bredin,
 Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore, Ilambharathi Kanniah, Imran Haque,
-isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
-Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
+isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
+Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
 Helmus, Joseph, Kaicheng Zhang, Kevin Markham, Kyle Beauchamp, Kyle Kastner,
 Lagacherie Matthieu, Lars Buitinck, Laurent Direr, leepei, Loic Esteve, Luis
 Pedro Coelho, Lukas Michelbacher, maheshakya, Manoj Kumar, Manuel, Mario
