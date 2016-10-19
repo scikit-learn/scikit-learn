@@ -372,7 +372,7 @@ def test_select_heuristics_regression():
 
 
 def test_boundary_case_ch2():
-    # Test boundary case, and always aiming to select 1 feature
+    # Test boundary case, and always aim to select 1 feature.
     X = np.array([[10, 20], [20, 20], [20, 30]])
     y = np.array([[1], [0], [0]])
     scores, pvalues = chi2(X, y)
