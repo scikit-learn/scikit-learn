@@ -93,13 +93,17 @@ Trees and forests
      <https://github.com/scikit-learn/scikit-learn/pull/7301>`_) by `Nelson
      Liu`_.
 
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
+     By `Ibraim Ganiev`_.
+
+
 Linear, kernelized and related models
 
-   - Length of `explained_variance_ratio` of
-     :class:`discriminant_analysis.LinearDiscriminantAnalysis`
-     changed for both Eigen and SVD solvers. The attribute has now a length
-     of min(n_components, n_classes - 1). :issue:`7632`
-     by :user:`JPFrancoia <JPFrancoia>`
+   - Numerical issue with :class:`linear_model.RidgeCV` on centered data when
+     `n_features > n_samples`. (`#6178
+     <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
+     Thirion`_
 
 .. _changes_0_18:
 
