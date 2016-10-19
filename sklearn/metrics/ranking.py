@@ -35,7 +35,7 @@ from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
-from .base import _average_binary_score, _average_multiclass_score
+from .base import _average_binary_score, _average_multiclass_ovo_score
 
 
 def auc(x, y, reorder=False):
@@ -185,7 +185,8 @@ def average_precision_score(y_true, y_score, average="macro",
                                  average, sample_weight=sample_weight)
 
 
-def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro", sample_weight=None):
+def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
+                  sample_weight=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task
@@ -261,9 +262,9 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro", sample_wei
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
-    elif multiclass == "ovo":
-        '''
-        average_options = (None, "macro", "weighted")
+    else:
+        # validation for multiclass parameter specifications
+        average_options = ("macro", "weighted")
         if average not in average_options:
             raise ValueError("average has to be one of {0}"
                              "".format(average_options))
@@ -271,16 +272,22 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro", sample_wei
         if multiclass not in multiclass_options:
             raise ValueError("{0} is not supported for multiclass ROC AUC"
                              "".format(multiclass))
-        '''
-        return _average_multiclass_score(
-            _binary_roc_auc_score, y_true, y_score,
-            average, multiclass)
-    else:
-        print y_true
-        y_true = y_true.reshape((-1, 1))
-        y_true_multilabels = MultiLabelBinarizer().fit_transform(y_true)
-        return _average_binary_score(_binary_roc_auc_score,
-               y_true_multilabels, y_score, average, sample_weight=sample_weight)
+
+        check_consistent_length(y_true, y_score)
+        y_true = check_array(y_true)
+        y_score = check_array(y_score)
+
+        if y_true.ndim == 1:
+            y_true = y_true.reshape((-1, 1))
+
+        if multiclass == "ovo":
+            return _average_multiclass_ovo_score(
+                _binary_roc_auc_score, y_true, y_score, average)
+        else:
+            y_true_multilabel = MultiLabelBinarizer().fit_transform(y_true)
+            return _average_binary_score(_binary_roc_auc_score,
+                                         y_true_multilabel, y_score, average,
+                                         sample_weight=sample_weight)
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):

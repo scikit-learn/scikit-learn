@@ -133,10 +133,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         return score
 
 
-def _average_multiclass_score(binary_metric, y_true, y_score,
-                              average, multiclass):
-
-    """Uses the binary metric for multiclass classification
+def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
+    """Uses the binary metric for one-vs-one multiclass classification,
+    where the score is computed according to the Hand & Till (2001) algorithm.
 
     Parameters
     ----------
@@ -165,27 +164,9 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
     score : float
         Average the score.
         TODO: improve documentation on this line.
-
     """
-    average_options = ("macro", "weighted")
-    if average not in average_options:
-        raise ValueError("average has to be one of {0}"
-                         "".format(average_options))
-    multiclass_options = ("ovo", "ovr")
-    if multiclass not in multiclass_options:
-        raise ValueError("{0} is not supported for multiclass ROC AUC"
-                         "".format(multiclass))
-
-    check_consistent_length(y_true, y_score)
-    y_true = check_array(y_true)
-    y_score = check_array(y_score)
-
-    if y_true.ndim == 1:
-        y_true = y_true.reshape((-1, 1))
-
     label_unique, label_counts = np.unique(y_true, return_counts=True)
     n_labels = len(label_unique)
-    # Hand and Till 2001 (unweighted)
     auc_scores_sum = 0
     for pos in range(n_labels):
         for neg in range(n_labels):
@@ -204,4 +185,4 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
                 auc_scores_sum += binary_avg_auc * probability_pos
             else:
                 auc_scores_sum += binary_avg_auc
-    return auc_scores_sum * (1.0 / (n_labels * (n_labels - 1.0)))
+    return auc_scores_sum / (n_labels * (n_labels - 1.0))
