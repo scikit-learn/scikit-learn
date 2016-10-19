@@ -538,6 +538,12 @@ class PCA(_BasePCA):
 class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
 
+    .. deprecated:: 0.18
+        Deprecated :class:`RandomizedPCA` will be removed in 0.20.
+        Use :class:`PCA` with parameter svd_solver 'randomized' instead.
+        The new implementation DOES NOT store whiten ``components_``.
+        Apply transform to get them.
+
     Linear dimensionality reduction using approximated Singular Value
     Decomposition of the data and keeping only the most significant
     singular vectors to project the data to a lower dimensional space.

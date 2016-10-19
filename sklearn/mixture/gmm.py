@@ -662,6 +662,15 @@ class _GMMBase(BaseEstimator):
 @deprecated("The class GMM is deprecated in 0.18 and will be "
             " removed in 0.20. Use class GaussianMixture instead.")
 class GMM(_GMMBase):
+    """
+    Legacy Gaussian Mixture Model
+
+    .. deprecated:: 0.18
+        The :class:`sklearn.mixture.GMM` will be removed in 0.20.
+        Use :class:`sklearn.mixture.GaussianMixture` instead.
+
+    """
+
     def __init__(self, n_components=1, covariance_type='diag',
                  random_state=None, tol=1e-3, min_covar=1e-3,
                  n_iter=100, n_init=1, params='wmc', init_params='wmc',

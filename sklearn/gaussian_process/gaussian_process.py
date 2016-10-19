@@ -64,8 +64,9 @@ def l1_cross_distances(X):
 class GaussianProcess(BaseEstimator, RegressorMixin):
     """The legacy Gaussian Process model class.
 
-    Note that this class was deprecated in version 0.18 and will be
-    removed in 0.20. Use the GaussianProcessRegressor instead.
+    .. deprecated:: 0.18
+        :class:`GaussianProcess` will be removed in 0.20.
+        Use the :class:`GaussianProcessRegressor` instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
