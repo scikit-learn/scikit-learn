@@ -35,8 +35,7 @@ Enhancements
 
    - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
      now support sparse input for prediction.
-     (`#6101 <https://github.com/scikit-learn/scikit-learn/pull/6101>`_)
-     By `Ibraim Ganiev`_.
+     :issue:`6101` by `Ibraim Ganiev`_.
 
 Bug fixes
 .........
