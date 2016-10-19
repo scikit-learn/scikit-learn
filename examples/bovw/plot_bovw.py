@@ -3,7 +3,18 @@
 Bag of Visual Words
 ===================
 
-An illustration of a Bag of Visual Words approach for image recognition
+An illustration of a Bag of Visual Words (BoVW) approach using textons for
+image recognition [1]_. The proposed solution is a naive and simplified
+solution using a limited number of patches and words and do not rely on any
+other well known computer vision features. It aims at illustrating the BoVW
+under a limited processing time rather than achieving high classification
+performance.
+
+References
+----------
+.. [1] Varma, Manik, and Andrew Zisserman. "A statistical approach to material
+       classification using image patch exemplars." IEEE transactions on
+       pattern analysis and machine intelligence 31.11 (2009): 2032-2047.
 
 """
 print(__doc__)
