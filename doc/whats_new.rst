@@ -19,6 +19,11 @@ New features
 Enhancements
 ............
 
+   - Added ``classes_`` attribute to gridSearchCV object that matches the
+     ``classes_`` attribute of ``best_estimator_``. (`#7661
+     <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
+     Batula`_ and `Dylan Werner-Meier`_.
+
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
