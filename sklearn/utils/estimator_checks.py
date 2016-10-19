@@ -42,6 +42,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
 from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import NMF, ProjectedGradientNMF
+from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.model_selection import train_test_split
@@ -132,6 +133,8 @@ def _yield_classifier_checks(name, Classifier):
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
 
+    yield check_estimators_are_deterministic
+
 
 @ignore_warnings(category=DeprecationWarning)
 def check_supervised_y_no_nan(name, Estimator):
@@ -172,6 +175,8 @@ def _yield_regressor_checks(name, Regressor):
     if name != "GaussianProcessRegressor":
         # Test if NotFittedError is raised
         yield check_estimators_unfitted
+
+    yield check_estimators_are_deterministic
 
 
 def _yield_transformer_checks(name, Transformer):
@@ -326,6 +331,47 @@ class NotAnArray(object):
 def _is_32bit():
     """Detect if process is 32bit Python."""
     return struct.calcsize('P') * 8 == 32
+
+
+def check_estimators_are_deterministic(name, Estimator):
+    # all estimators should be deterministic with a fixed random_state
+    X, y = make_classification(n_classes=3, n_informative=5, n_samples=100,
+                               random_state=2)
+    # make sure there is nothing to be learnt
+    rng = np.random.RandomState(0)
+    rng.shuffle(y)
+    # For some estimators we need to make sure that we have non negative data
+    X -= X.min() - .1
+
+    # XXX skipping bad estimators for the moment
+    if name in ('HuberRegressor', 'LogisticRegressionCV',
+                'LinearRegression', 'RANSACRegressor',
+                'RadiusNeighborsClassifier'):
+        return
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        train_size=0.5,
+                                                        random_state=4)
+    if "MultiTask" in name:
+        y_train = np.reshape(y_train, (-1, 1))
+        y_test = np.reshape(y_test, (-1, 1))
+
+    needs_state = 'random_state' in signature(Estimator.__init__).parameters
+    if needs_state:
+        est1 = Estimator(random_state=1)
+        est2 = Estimator(random_state=1)
+    else:
+        est1 = Estimator()
+        est2 = Estimator()
+
+    est1.fit(X_train, y_train)
+    est2.fit(X_train, y_train)
+
+    # XXX replace me by a better identity test, want identity not just
+    # XXX statistical equivalence
+    assert_array_almost_equal(est1.predict(X_test),
+                              est2.predict(X_test))
+    assert_equal(pickle.dumps(est1), pickle.dumps(est2))
 
 
 def check_estimator_sparse_data(name, Estimator):
