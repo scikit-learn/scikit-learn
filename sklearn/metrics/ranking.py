@@ -23,6 +23,7 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
+from ..preprocessing import MultiLabelBinarizer
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
@@ -260,7 +261,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro", sample_wei
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
-    else:
+    elif multiclass == "ovo":
         '''
         average_options = (None, "macro", "weighted")
         if average not in average_options:
@@ -274,6 +275,13 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro", sample_wei
         return _average_multiclass_score(
             _binary_roc_auc_score, y_true, y_score,
             average, multiclass)
+    else:
+        print y_true
+        y_true = y_true.reshape((-1, 1))
+        y_true_multilabels = MultiLabelBinarizer().fit_transform(y_true)
+        return _average_binary_score(_binary_roc_auc_score,
+               y_true_multilabels, y_score, average, sample_weight=sample_weight)
+
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Calculate true and false positives per binary classification threshold.
@@ -288,7 +296,6 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     pos_label : int or str, default=None
         The label of the positive class
-A
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.

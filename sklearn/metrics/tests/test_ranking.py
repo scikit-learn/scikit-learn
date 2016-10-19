@@ -415,7 +415,7 @@ def test_multi_auc_toydata():
         roc_auc_score(y_true, y_scores, multiclass="ovr", average="weighted"),
         result_weighted)
 
-    result_unweighted = out_0 + out_1 + out_2
+    result_unweighted = (out_0 + out_1 + out_2)/3.0
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovr"),
         result_unweighted)

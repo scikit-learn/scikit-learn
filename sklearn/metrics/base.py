@@ -14,7 +14,6 @@ Common code for all metrics
 
 from __future__ import division
 
-import itertools
 import numpy as np
 
 from ..utils import check_array, check_consistent_length
@@ -133,6 +132,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     else:
         return score
 
+
 def _average_multiclass_score(binary_metric, y_true, y_score,
                               average, multiclass):
 
@@ -147,29 +147,27 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    average : string, [None, 'macro' (default), 'weighted']
-        TODO: difference between 'macro' and None? Should there be both?
-        If ``None``, the scores for each class are returned. Otherwise,
-        this determines the type of averaging performed on the data:
-
+    average : string, ['macro' (default), 'weighted']
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.
+            mean. This does not take label imbalance into account. (Classes
+            are assumed to be uniformly distributed.)
         ``'weighted'``:
             Calculate metrics for each label, taking into account the a priori
             distribution of the classes.
 
     binary_metric : callable, returns shape [n_classes]
         The binary metric function to use.
+        TODO: what is the input requirement?
 
     Returns
     -------
-    score : float or array of shape [n_classes]
-        If not ``None``, average the score, else return the score for each
-        classes.
+    score : float
+        Average the score.
+        TODO: improve documentation on this line.
 
     """
-    average_options = (None, "macro", "weighted")
+    average_options = ("macro", "weighted")
     if average not in average_options:
         raise ValueError("average has to be one of {0}"
                          "".format(average_options))
@@ -182,35 +180,32 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
     y_true = check_array(y_true)
     y_score = check_array(y_score)
 
-    not_average_axis = 1
-
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
 
-    if y_score.ndim == 1:
-        y_score = y_score.reshape((-1, 1))
-
     label_unique, label_counts = np.unique(y_true, return_counts=True)
-    label_counts_map = dict(zip(label_unique, label_counts))
     n_labels = len(label_unique)
-    if multiclass == "ovo":
-        # Hand and Till 2001 (unweighted)
-        pairwise = [p for p in itertools.combinations(xrange(n_labels), 2)]
-        auc_scores_sum = 0
-        for pair in pairwise:
-            ix = np.in1d(y_true.ravel(), [pair[0], pair[1]])
+    # Hand and Till 2001 (unweighted)
+    auc_scores_sum = 0
+    for pos in range(n_labels):
+        for neg in range(n_labels):
+            if pos == neg:
+                continue
+            ix = np.in1d(y_true.ravel(), [pos, neg])
             y_true_filtered = y_true[0, np.where(ix)]
             y_score_filtered = y_score[np.where(ix)]
-            y_true_filtered_10 = np.in1d(y_true_filtered.ravel(), pair[0]).astype(int)
-            y_true_filtered_01 = np.in1d(y_true_filtered.ravel(), pair[1]).astype(int)
-            binary_avg_output = \
-              (binary_metric(y_true_filtered_10, y_score_filtered[:,pair[0]]) +
-               binary_metric(y_true_filtered_01, y_score_filtered[:,pair[1]]))/2.0
-            auc_scores_sum += binary_avg_output
+            y_true_10 = y_true_filtered == pos
+            y_true_01 = y_true_filtered == neg
+            score_10 = binary_metric(y_true_10[0], y_score_filtered[:, pos])
+            score_01 = binary_metric(y_true_01[0], y_score_filtered[:, neg])
+            binary_avg_auc = (score_10 + score_01)/2.0
             if average == "weighted":
-                raise ValueError("one-vs-one multiclass AUC is only implemented "
-                                 "for the unweighted Hand and Till (2001) algorithm")
-        return auc_scores_sum * (2.0 / (n_labels * (n_labels - 1.0)))
+                probability_pos = len(y_true[0] == pos)/float(len(y_true))
+                auc_scores_sum += binary_avg_auc * probability_pos
+            else:
+                auc_scores_sum += binary_avg_auc
+    return auc_scores_sum * (1.0 / (n_labels * (n_labels - 1.0)))
+    '''
     else:
         # Provost and Domingos 2001 (weighted)
         auc_scores_sum = 0
@@ -222,4 +217,4 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
                 binary_output *= (label_counts_map[label]/float(sum(label_counts_map.values())))
             auc_scores_sum += binary_output
         return auc_scores_sum
-
+    '''
