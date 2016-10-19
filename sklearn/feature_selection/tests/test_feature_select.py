@@ -371,19 +371,44 @@ def test_select_heuristics_regression():
         assert_less(np.sum(support[5:] == 1), 3)
 
 
-def test_select_fdr_chi2():
+def test_select_artificial_data_ch2():
     # Test PR #7490 works
     # chi2(X,y)
     # scores = array([4., 0.71]),  pvalues = array([0.046, 0.398])
     # for the master code
-    # the result of get_support of the following code is array([False, False])
+    # the result of get_support of SelectFdr is array([False, False])
     # by PR #7490, the result is array([True, False])
+    # SelectKBest, SelectPercentile, SelectFpr, SelectFwe also tested
     X = np.array([[10, 20], [20, 20], [20, 30]])
     y = np.array([[1], [0], [0]])
-    univariate_filter = SelectFdr(chi2, alpha=0.1)
-    univariate_filter.fit(X, y).transform(X)
-    support = univariate_filter.get_support()
-    assert_array_equal(support, np.array([True, False]))
+    scores, pvalues = chi2(X, y)
+    assert_array_almost_equal(scores, np.array([4., 0.71428571]))
+    assert_array_almost_equal(pvalues, np.array([0.04550026, 0.39802472]))
+
+    filter_fdr = SelectFdr(chi2, alpha=0.1)
+    filter_fdr.fit(X, y).transform(X)
+    support_fdr = filter_fdr.get_support()
+    assert_array_equal(support_fdr, np.array([True, False]))
+
+    filter_kbest = SelectKBest(chi2, k=1)
+    filter_kbest.fit(X, y).transform(X)
+    support_kbest = filter_kbest.get_support()
+    assert_array_equal(support_kbest, np.array([True, False]))
+
+    filter_percentile = SelectPercentile(chi2, percentile=50)
+    filter_percentile.fit(X, y).transform(X)
+    support_percentile = filter_percentile.get_support()
+    assert_array_equal(support_percentile, np.array([True, False]))
+
+    filter_fpr = SelectFpr(chi2, alpha=0.1)
+    filter_fpr.fit(X, y).transform(X)
+    support_fpr = filter_fpr.get_support()
+    assert_array_equal(support_fpr, np.array([True, False]))
+
+    filter_fwe = SelectFwe(chi2, alpha=0.1)
+    filter_fwe.fit(X, y).transform(X)
+    support_fwe = filter_fwe.get_support()
+    assert_array_equal(support_fwe, np.array([True, False]))
 
 
 def test_select_fdr_regression():
