@@ -6,8 +6,8 @@ from ..utils import check_random_state
 class ClassifierChain(BaseEstimator):
     """Classifier Chain
     A multi-label model that arranges classifiers into a chain. Predictions
-    are made in the order specified by the chain. The predictions of
-    earlier models are used as features by later models.
+    are made in the order specified by the chain. The prediction of a model
+    is use as a feature by models that appear later in the classifier chain.
 
     By default the order of the chain is random although it can be specified
     at the time of fitting with the chain_order parameter. Since the optimal
