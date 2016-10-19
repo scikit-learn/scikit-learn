@@ -41,6 +41,12 @@ Enhancements
      (`#6101 <https://github.com/scikit-learn/scikit-learn/pull/6101>`_)
      By `Ibraim Ganiev`_.
 
+   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
+     data before taking prefixes of it based on training sizes in
+     :func:`model_selection.learning_curve`.
+     (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
+     `Narine Kokhlikyan`_.
+
 Bug fixes
 .........
 
@@ -4861,3 +4867,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Utkarsh Upadhyay: https://github.com/musically-ut
 
 .. _Eugene Chen: https://github.com/eyc88
+
+.. _Narine Kokhlikyan: https://github.com/NarineK
