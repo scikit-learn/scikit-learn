@@ -63,8 +63,7 @@ Bug fixes
 
    - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
      parameters were not being utilised by :class:`manifold.TSNE`.
-     :issue:`6497`
-     by `Sebastian Säger`_
+     :issue:`6497` by `Sebastian Säger`_
 
 
 .. _changes_0_18:
@@ -196,10 +195,10 @@ Classifiers and Regressors
      examples are provided. By `Jan Hendrik Metzen`_.
 
    - Added new supervised learning algorithm: :ref:`Multi-layer Perceptron <multilayer_perceptron>`
-     (:issue:`3204`) by `Issam H. Laradji`_
+     :issue:`3204` by `Issam H. Laradji`_
 
    - Added :class:`linear_model.HuberRegressor`, a linear model robust to outliers.
-     (:issue:`5291`) by `Manoj Kumar`_.
+     :issue:`5291` by `Manoj Kumar`_.
 
    - Added the :class:`multioutput.MultiOutputRegressor` meta-estimator. It
      converts single output regressors to multi-ouput regressors by fitting
@@ -209,9 +208,7 @@ Other estimators
 
    - New :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
      replace former mixture models, employing faster inference
-     for sounder results.
-     (:issue:`7295`) by
-     `Wei Xue`_ and `Thierry Guillemot`_.
+     for sounder results. :issue:`7295` by `Wei Xue`_ and `Thierry Guillemot`_.
 
    - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
      and it is available calling with parameter ``svd_solver='randomized'``.
@@ -219,8 +216,7 @@ Other estimators
      behavior of PCA is recovered by ``svd_solver='full'``. An additional solver
      calls ``arpack`` and performs truncated (non-randomized) SVD. By default,
      the best solver is selected depending on the size of the input and the
-     number of components requested.
-     (:issue:`5299`) by `Giorgio Patrini`_.
+     number of components requested. :issue:`5299` by `Giorgio Patrini`_.
 
    - Added two functions for mutual information estimation:
      :func:`feature_selection.mutual_info_classif` and
@@ -247,15 +243,12 @@ Model selection and evaluation
 
    - Added new cross-validation splitter
      :class:`model_selection.TimeSeriesSplit` to handle time series data.
-     (:issue:`6586`) by `YenChen
-     Lin`_
+     :issue:`6586` by `YenChen Lin`_
 
    - The cross-validation iterators are replaced by cross-validation splitters
      available from :mod:`sklearn.model_selection`, allowing for nested
-     cross-validation.
-     See :ref:`model_selection_changes` for more information.
-     (:issue:`4294`) by
-     `Raghav R V`_.
+     cross-validation. See :ref:`model_selection_changes` for more information.
+     :issue:`4294` by `Raghav R V`_.
 
 Enhancements
 ............
@@ -266,12 +259,10 @@ Trees and ensembles
      the mean absolute error. This criterion can also be used in
      :class:`ensemble.ExtraTreesRegressor`,
      :class:`ensemble.RandomForestRegressor`, and the gradient boosting
-     estimators. (:issue:`6667`) by `Nelson
-     Liu`_.
+     estimators. :issue:`6667` by `Nelson Liu`_.
 
    - Added weighted impurity-based early stopping criterion for decision tree
-     growth. (:issue:`6954`) by `Nelson
-     Liu`_
+     growth. :issue:`6954` by `Nelson Liu`_
 
    - The random forest, extra tree and decision tree estimators now has a
      method ``decision_path`` which returns the decision path of samples in
@@ -282,12 +273,11 @@ Trees and ensembles
 
    - Random forest, extra trees, decision trees and gradient boosting estimator
      accept the parameter ``min_samples_split`` and ``min_samples_leaf``
-     provided as a percentage of the training samples. By
-     `yelite`_ and `Arnaud Joly`_.
+     provided as a percentage of the training samples. By `yelite`_ and `Arnaud Joly`_.
 
    - Gradient boosting estimators accept the parameter ``criterion`` to specify
-     to splitting criterion used in built decision trees. (:issue:`6667`) by `Nelson
-     Liu`_.
+     to splitting criterion used in built decision trees.
+     :issue:`6667` by `Nelson Liu`_.
 
    - The memory footprint is reduced (sometimes greatly) for
      :class:`ensemble.bagging.BaseBagging` and classes that inherit from it,
@@ -298,15 +288,12 @@ Trees and ensembles
 
    - Added ``n_jobs`` and ``sample_weights`` parameters for
      :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
-     (:issue:`5805`)
-     By `Ibraim Ganiev`_.
+     :issue:`5805` by `Ibraim Ganiev`_.
 
 Linear, kernelized and related models
 
    - In :class:`linear_model.LogisticRegression`, the SAG solver is now
-     available in the multinomial case.
-     (:issue:`5251`)
-     By `Tom Dupre la Tour`_.
+     available in the multinomial case. :issue:`5251` by `Tom Dupre la Tour`_.
 
    - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
      :class:`svm.LinearSVR` now support ``sample_weights``.
@@ -329,13 +316,11 @@ Linear, kernelized and related models
    - :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso`
      now works with ``np.float32`` input data without converting it
      into ``np.float64``. This allows to reduce the memory
-     consumption.
-     (:issue:`6913`)
-     By `YenChen Lin`_.
+     consumption. :issue:`6913` by `YenChen Lin`_.
 
    - :class:`semi_supervised.LabelPropagation` and :class:`semi_supervised.LabelSpreading`
      now accept arbitrary kernel functions in addition to strings ``knn`` and ``rbf``.
-     (:issue:`5762`) By `Utkarsh Upadhyay`_.
+     :issue:`5762` by `Utkarsh Upadhyay`_.
 
 Decomposition, manifold learning and clustering
 
@@ -345,18 +330,15 @@ Decomposition, manifold learning and clustering
    - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
      with ``np.float32`` and ``np.float64`` input data without converting it.
      This allows to reduce the memory consumption by using ``np.float32``.
-     (:issue:`6846`)
-     By `Sebastian Säger`_ and `YenChen Lin`_.
+     :issue:`6846` by `Sebastian Säger`_ and `YenChen Lin`_.
 
 Preprocessing and feature selection
 
    - :class:`preprocessing.RobustScaler` now accepts ``quantile_range`` parameter.
-     (:issue:`5929`)
-     By `Konstantin Podshumok`_.
+     :issue:`5929` by `Konstantin Podshumok`_.
 
    - :class:`feature_extraction.FeatureHasher` now accepts string values.
-     (:issue:`6173`) By `Ryad Zenine`_
-     and `Devashish Deshpande`_.
+     :issue:`6173` by `Ryad Zenine`_ and `Devashish Deshpande`_.
 
    - Keyword arguments can now be supplied to ``func`` in
      :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
@@ -380,9 +362,7 @@ Model evaluation and meta-estimators
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
      into pandas as a ``DataFrame``. Ref :ref:`model_selection_changes` for
-     more information.
-     (:issue:`6697`) by
-     `Raghav R V`_.
+     more information. :issue:`6697` by `Raghav R V`_.
 
    - Generalization of :func:`model_selection.cross_val_predict`.
      One can pass method names such as `predict_proba` to be used in the cross
@@ -392,19 +372,18 @@ Model evaluation and meta-estimators
    - The training scores and time taken for training followed by scoring for
      each search candidate are now available at the ``cv_results_`` dict.
      See :ref:`model_selection_changes` for more information.
-     (:issue:`7325`) By `Eugene Chen`_ and `Raghav R V`_.
+     :issue:`7325` by `Eugene Chen`_ and `Raghav R V`_.
 
 Metrics
 
    - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
-     (:issue:`7239`) by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
+     :issue:`7239` by `Hong Guangguo`_ with help from `Mads Jensen`_ and `Nelson Liu`_.
 
    - Support sparse contingency matrices in cluster evaluation
      (:mod:`metrics.cluster.supervised`) to scale to a large number of
      clusters.
-     (:issue:`7419`)
-     By `Gregory Stupp`_ and `Joel Nothman`_.
+     :issue:`7419` by `Gregory Stupp`_ and `Joel Nothman`_.
 
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
      By `Jatin Shah`_ and `Raghav R V`_.
@@ -445,15 +424,11 @@ Miscellaneous
      `Manvendra Singh`_.
 
    - Simplification of the ``clone`` function, deprecate support for estimators
-     that modify parameters in ``__init__``.
-     (:issue:`5540`)
-     By `Andreas Müller`_.
+     that modify parameters in ``__init__``. :issue:`5540` by `Andreas Müller`_.
 
    - When unpickling a scikit-learn estimator in a different version than the one
      the estimator was trained with, a ``UserWarning`` is raised, see :ref:`the documentation
-     on model persistence <persistence_limitations>`
-     for more details.
-     (:issue:`7248`)
+     on model persistence <persistence_limitations>` for more details. (:issue:`7248`)
      By `Andreas Müller`_.
 
 Bug fixes
@@ -472,13 +447,11 @@ Trees and ensembles
     - Fix bug where :class:`ensemble.AdaBoostClassifier` and
       :class:`ensemble.AdaBoostRegressor` would perform poorly if the
       ``random_state`` was fixed
-      (:issue:`7411`).
-      By `Joel Nothman`_.
+      (:issue:`7411`). By `Joel Nothman`_.
 
     - Fix bug in ensembles with randomization where the ensemble would not
       set ``random_state`` on base estimators in a pipeline or similar nesting.
-      (:issue:`7411`).
-      Note, results for :class:`ensemble.BaggingClassifier`
+      (:issue:`7411`). Note, results for :class:`ensemble.BaggingClassifier`
       :class:`ensemble.BaggingRegressor`, :class:`ensemble.AdaBoostClassifier`
       and :class:`ensemble.AdaBoostRegressor` will now differ from previous
       versions. By `Joel Nothman`_.
@@ -491,8 +464,7 @@ Linear, kernelized and related models
 
     - Fix bug in :class:`linear_model.LogisticRegressionCV` where
       ``solver='liblinear'`` did not accept ``class_weights='balanced``.
-      (:issue:`6817`).
-      By `Tom Dupre la Tour`_.
+      (:issue:`6817`). By `Tom Dupre la Tour`_.
 
     - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
       occurred when there were outliers being labelled and a weight function
@@ -505,22 +477,22 @@ Linear, kernelized and related models
 Decomposition, manifold learning and clustering
 
     - :class:`decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
-      (:issue:`5141`) by `Giorgio Patrini`_.
+      :issue:`5141` by `Giorgio Patrini`_.
 
     - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.
       In practice this is enough for obtaining a good approximation of the
       true eigenvalues/vectors in the presence of noise. When `n_components` is
       small (``< .1 * min(X.shape)``) `n_iter` is set to 7, unless the user specifies
       a higher number. This improves precision with few components.
-      (:issue:`5299`) by `Giorgio Patrini`_.
+      :issue:`5299` by `Giorgio Patrini`_.
 
     - Whiten/non-whiten inconsistency between components of :class:`decomposition.PCA`
       and :class:`decomposition.RandomizedPCA` (now factored into PCA, see the
       New features) is fixed. `components_` are stored with no whitening.
-      (:issue:`5299`) by `Giorgio Patrini`_.
+      :issue:`5299` by `Giorgio Patrini`_.
 
     - Fixed bug in :func:`manifold.spectral_embedding` where diagonal of unnormalized
-      Laplacian matrix was incorrectly set to 1. (:issue:`4995`) By `Peter Fischer`_.
+      Laplacian matrix was incorrectly set to 1. :issue:`4995` by `Peter Fischer`_.
 
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
@@ -541,7 +513,7 @@ Model evaluation and meta-estimators
 
     - :class:`model_selection.StratifiedKFold` now raises error if all n_labels
       for individual classes is less than n_folds.
-      (:issue:`6182`) by `Devashish Deshpande`_.
+      :issue:`6182` by `Devashish Deshpande`_.
 
     - Fixed bug in :class:`model_selection.StratifiedShuffleSplit`
       where train and test sample could overlap in some edge cases,
@@ -550,12 +522,11 @@ Model evaluation and meta-estimators
 
     - Fix in :class:`sklearn.model_selection.StratifiedShuffleSplit` to
       return splits of size ``train_size`` and ``test_size`` in all cases
-      (:issue:`6472`).
-      By `Andreas Müller`_.
+      (:issue:`6472`). By `Andreas Müller`_.
 
     - Cross-validation of :class:`OneVsOneClassifier` and
       :class:`OneVsRestClassifier` now works with precomputed kernels.
-      (:issue:`7350`) By `Russell Smith`_.
+      :issue:`7350` by `Russell Smith`_.
 
     - Fix incomplete ``predict_proba`` method delegation from
       :class:`model_selection.GridSearchCV` to
@@ -576,8 +547,7 @@ Metrics
 
     - :func:`metrics.pairwise.pairwise_distances` now converts arrays to
       boolean arrays when required in ``scipy.spatial.distance``.
-      (:issue:`5460`)
-      By `Tom Dupre la Tour`_.
+      :issue:`5460` by `Tom Dupre la Tour`_.
 
     - Fix sparse input support in :func:`metrics.silhouette_score` as well as
       example examples/text/document_clustering.py. By `YenChen Lin`_.
@@ -590,22 +560,20 @@ Miscellaneous
 
     - :func:`model_selection.tests._search._check_param_grid` now works correctly with all types
       that extends/implements `Sequence` (except string), including range (Python 3.x) and xrange
-      (Python 2.x).
-      (:issue:`7323`) by Viacheslav Kovalevskyi.
+      (Python 2.x). :issue:`7323` by Viacheslav Kovalevskyi.
 
     - :func:`utils.extmath.randomized_range_finder` is more numerically stable when many
       power iterations are requested, since it applies LU normalization by default.
       If ``n_iter<2`` numerical issues are unlikely, thus no normalization is applied.
       Other normalization options are available: ``'none', 'LU'`` and ``'QR'``.
-      (:issue:`5141`) by `Giorgio Patrini`_.
+      :issue:`5141` by `Giorgio Patrini`_.
 
     - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
       with them as parameters, could not be passed to :func:`base.clone`.
       By `Loic Esteve`_.
 
     - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
-      (:issue:`7101`)
-      By `Ibraim Ganiev`_.
+      :issue:`7101` by `Ibraim Ganiev`_.
 
 
 API changes summary
@@ -627,8 +595,7 @@ Decomposition, manifold learning and clustering
      The new class solves the computational
      problems of the old class and computes the Gaussian mixture with a
      Dirichlet process prior faster than before.
-     (:issue:`7295`) by
-     `Wei Xue`_ and `Thierry Guillemot`_.
+     :issue:`7295` by `Wei Xue`_ and `Thierry Guillemot`_.
 
    - The old :class:`mixture.VBGMM` is deprecated in favor of the new
      :class:`mixture.BayesianGaussianMixture` (with the parameter
@@ -636,14 +603,12 @@ Decomposition, manifold learning and clustering
      The new class solves the computational
      problems of the old class and computes the Variational Bayesian Gaussian
      mixture faster than before.
-     (:issue:`6651`) by
-     `Wei Xue`_ and `Thierry Guillemot`_.
+     :issue:`6651` by `Wei Xue`_ and `Thierry Guillemot`_.
 
    - The old :class:`mixture.GMM` is deprecated in favor of the new
      :class:`mixture.GaussianMixture`. The new class computes the Gaussian mixture
      faster than before and some of computational problems have been solved.
-     (:issue:`6666`) by
-     `Wei Xue`_ and `Thierry Guillemot`_.
+     :issue:`6666` by `Wei Xue`_ and `Thierry Guillemot`_.
 
 Model evaluation and meta-estimators
 
@@ -651,26 +616,21 @@ Model evaluation and meta-estimators
      :mod:`sklearn.learning_curve` have been deprecated and the classes and
      functions have been reorganized into the :mod:`sklearn.model_selection`
      module. Ref :ref:`model_selection_changes` for more information.
-     (:issue:`4294`) by
-     `Raghav R V`_.
+     :issue:`4294` by `Raghav R V`_.
 
    - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
      and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
      the attribute ``cv_results_``.
      Ref :ref:`model_selection_changes` for more information.
-     (:issue:`6697`) by
-     `Raghav R V`_.
+     :issue:`6697` by `Raghav R V`_.
 
    - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
      by the new parameter ``n_splits`` since it can provide a consistent
      and unambiguous interface to represent the number of train-test splits.
-     (:issue:`7187`)
-     by `YenChen Lin`_.
+     :issue:`7187` by `YenChen Lin`_.
 
    - ``classes`` parameter was renamed to ``labels`` in
-     :func:`metrics.hamming_loss`.
-     (:issue:`7260`) by
-     `Sebastián Vanrell`_.
+     :func:`metrics.hamming_loss`. :issue:`7260` by `Sebastián Vanrell`_.
 
    - The splitter classes ``LabelKFold``, ``LabelShuffleSplit``,
      ``LeaveOneLabelOut`` and ``LeavePLabelsOut`` are renamed to
@@ -683,8 +643,7 @@ Model evaluation and meta-estimators
      :class:`model_selection.LeavePGroupsOut` is renamed to
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
-     (:issue:`6660`)
-     by `Raghav R V`_.
+     :issue:`6660` by `Raghav R V`_.
 
 Code Contributors
 -----------------
@@ -868,8 +827,7 @@ Enhancements
    - Added the :func:`metrics.cohen_kappa_score` metric.
 
    - Added a ``warm_start`` constructor parameter to the bagging ensemble
-     models to increase the size of the ensemble. By
-     `Tim Head`_.
+     models to increase the size of the ensemble. By `Tim Head`_.
 
    - Added option to use multi-output regression metrics without averaging.
      By Konstantin Shmelkov and `Michael Eickenberg`_.
@@ -1076,8 +1034,7 @@ Bug fixes
     - Fixed temporarily :class:`linear_model.Ridge`, which was incorrect
       when fitting the intercept in the case of sparse data. The fix
       automatically changes the solver to 'sag' in this case.
-      (:issue:`5360`)
-      By `Tom Dupre la Tour`_.
+      :issue:`5360` by `Tom Dupre la Tour`_.
 
     - Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
       with a large number of features and fewer samples. (:issue:`4478`)
