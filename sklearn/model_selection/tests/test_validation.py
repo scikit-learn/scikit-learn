@@ -724,19 +724,27 @@ def test_learning_curve_with_shuffle():
                  [15, 16], [17, 18]])
     y = np.array([1, 1, 1, 2, 3, 4, 1, 1, 2, 3, 4, 1, 2, 3, 4])
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
-    estimator = LogisticRegression(multi_class='multinomial', penalty='l2',
-                                   solver='lbfgs')
+    estimator = PassiveAggressiveClassifier(shuffle=False)
 
     cv = GroupKFold(n_splits=2)
-    train_sizes, train_scores, test_scores = learning_curve(
+    train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
         estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
         groups=groups, shuffle=True, random_state=2)
-    assert_array_almost_equal(train_scores.mean(axis=1),
-                              np.array([1., 0.9, 0.72222222]))
-    assert_array_almost_equal(test_scores.mean(axis=1),
-                              np.array([0.19444444, 0.05555556, 0.13888889]))
+    assert_array_almost_equal(train_scores_batch.mean(axis=1),
+                              np.array([0.75, 0.3, 0.36111111]))
+    assert_array_almost_equal(test_scores_batch.mean(axis=1),
+                              np.array([0.36111111, 0.25, 0.25]))
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=cv, n_jobs=1,
                   train_sizes=np.linspace(0.3, 1.0, 3), groups=groups)
+
+    train_sizes_inc, train_scores_inc, test_scores_inc = learning_curve(
+        estimator, X, y, cv=cv, n_jobs=1, train_sizes=np.linspace(0.3, 1.0, 3),
+        groups=groups, shuffle=True, random_state=2,
+        exploit_incremental_learning=True)
+    assert_array_almost_equal(train_scores_inc.mean(axis=1),
+                              train_scores_batch.mean(axis=1))
+    assert_array_almost_equal(test_scores_inc.mean(axis=1),
+                              test_scores_batch.mean(axis=1))
 
 
 def test_validation_curve():

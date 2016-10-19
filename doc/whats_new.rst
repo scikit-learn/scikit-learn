@@ -31,6 +31,12 @@ Enhancements
      <https://github.com/scikit-learn/scikit-learn/pull/4939>`_) by `Andrea
      Esuli`_.
 
+   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
+     data before taking prefixes of it based on training sizes in
+     ``model_selection``s ``learning_curve``.
+     (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
+     `Narine Kokhlikyan`_.
+
 Bug fixes
 .........
 

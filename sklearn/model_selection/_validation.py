@@ -768,7 +768,9 @@ def learning_curve(estimator, X, y, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
 
-    cv_iter = _shuffle_train_indices(cv_iter, shuffle, random_state)
+    if shuffle:
+        rng = check_random_state(random_state)
+        cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
 
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
@@ -793,14 +795,6 @@ def learning_curve(estimator, X, y, groups=None,
     out = np.asarray(out).transpose((2, 1, 0))
 
     return train_sizes_abs, out[0], out[1]
-
-
-def _shuffle_train_indices(cv_iter, shuffle, random_state):
-    """Shuffle training indices if ``shuffle=True``. """
-    if shuffle:
-        rng = check_random_state(random_state)
-        cv_iter = ((rng.permutation(train), test) for train, test in cv_iter)
-    return cv_iter
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
