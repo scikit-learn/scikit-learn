@@ -139,31 +139,35 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True multiclass labels
+    y_true : array, shape = [n_samples]
+        True multiclass labels.
+        Currently only handles labels with values 0 to n_classes - 1.
 
-    y_score : array, shape = [n_samples] or [n_samples, n_classes]
+    y_score : array, shape = [n_samples, n_classes]
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
     average : string, ['macro' (default), 'weighted']
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
-            mean. This does not take label imbalance into account. (Classes
-            are assumed to be uniformly distributed.)
+            mean. This does not take label imbalance into account. Classes
+            are assumed to be uniformly distributed.
         ``'weighted'``:
             Calculate metrics for each label, taking into account the a priori
             distribution of the classes.
 
-    binary_metric : callable, returns shape [n_classes]
-        The binary metric function to use.
-        TODO: what is the input requirement?
+    binary_metric : callable, the binary metric function to use.
+        Accepts the following as input
+            y_true' : array, shape = [n_samples']
+                Some sub-array of y_true
+            y_score' : array, shape = [n_samples']
+                Target scores corresponding to the probability estimates
+                of a sample belonging to the designated positive class label
 
     Returns
     -------
     score : float
-        Average the score.
-        TODO: improve documentation on this line.
+        Average the sum of the pairwise binary metric scores
     """
     label_unique, label_counts = np.unique(y_true, return_counts=True)
     n_labels = len(label_unique)
@@ -173,15 +177,18 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
             if pos == neg:
                 continue
             ix = np.in1d(y_true.ravel(), [pos, neg])
-            y_true_filtered = y_true[0, np.where(ix)]
+            y_true_filtered = y_true[np.where(ix.reshape(y_true.shape))]
             y_score_filtered = y_score[np.where(ix)]
+
             y_true_10 = y_true_filtered == pos
             y_true_01 = y_true_filtered == neg
-            score_10 = binary_metric(y_true_10[0], y_score_filtered[:, pos])
-            score_01 = binary_metric(y_true_01[0], y_score_filtered[:, neg])
+            score_10 = binary_metric(
+                    y_true_10, y_score_filtered[:, pos])
+            score_01 = binary_metric(
+                    y_true_01, y_score_filtered[:, neg])
             binary_avg_auc = (score_10 + score_01)/2.0
             if average == "weighted":
-                probability_pos = len(y_true[0] == pos)/float(len(y_true))
+                probability_pos = np.sum(y_true == pos)/float(y_true.size)
                 auc_scores_sum += binary_avg_auc * probability_pos
             else:
                 auc_scores_sum += binary_avg_auc

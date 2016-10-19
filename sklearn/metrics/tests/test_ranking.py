@@ -404,12 +404,19 @@ def test_multi_auc_toydata():
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovo"), 0.75)
 
+    y_true = np.array([0, 1, 0, 2])
+    y_scores = np.array(
+        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, multiclass="ovo", average="weighted"),
+        0.23958333333)
+
     y_true = np.array([0, 1, 2, 2])
     y_scores = np.array(
         [[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
-    out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:,0])
-    out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:,1])
-    out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:,2])
+    out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
+    out_1 = roc_auc_score([0, 1, 0, 0], y_scores[:, 1])
+    out_2 = roc_auc_score([0, 0, 1, 1], y_scores[:, 2])
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multiclass="ovr", average="weighted"),
@@ -420,6 +427,7 @@ def test_multi_auc_toydata():
         roc_auc_score(y_true, y_scores, multiclass="ovr"),
         result_unweighted)
 
+
 def test_auc_score_multi_error():
     # Test that roc_auc_score function returns an error when trying
     # to compute multiclass AUC for parameters where an output
@@ -428,11 +436,12 @@ def test_auc_score_multi_error():
     y_pred = rng.rand(10)
     y_true = rng.randint(0, 3, size=10)
     assert_raise_message(ValueError,
-			"average has to be one of (None, 'macro', 'weighted')",
+                         "average has to be one of ('macro', 'weighted')",
                          roc_auc_score, y_true, y_pred, average="sample")
     assert_raise_message(ValueError,
-			 "average has to be one of (None, 'macro', 'weighted')",
+                         "average has to be one of ('macro', 'weighted')",
                          roc_auc_score, y_true, y_pred, average="micro")
+
 
 def test_auc_score_non_binary_class():
     # Test that roc_auc_score function returns an error when trying

@@ -189,9 +189,6 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                   sample_weight=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
-    Note: this implementation is restricted to the binary classification task
-    or multilabel classification task in label indicator format.
-
     Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
@@ -203,6 +200,17 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+
+    multiclass : string, ['ovr' (default), 'ovo']
+        Note: multiclass ROC AUC currently only handles the 'macro' and
+        'weighted' averages.
+
+        ``'ovr'``:
+            Calculate metrics for the multiclass case using the one-vs-rest
+            approach.
+        ``'ovo'``:
+            Calculate metrics for the multiclass case using the one-vs-one
+            approach.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -274,8 +282,6 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                              "".format(multiclass))
 
         check_consistent_length(y_true, y_score)
-        y_true = check_array(y_true)
-        y_score = check_array(y_score)
 
         if y_true.ndim == 1:
             y_true = y_true.reshape((-1, 1))
@@ -286,8 +292,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         else:
             y_true_multilabel = MultiLabelBinarizer().fit_transform(y_true)
             return _average_binary_score(_binary_roc_auc_score,
-                                         y_true_multilabel, y_score, average,
-                                         sample_weight=sample_weight)
+                                         y_true_multilabel, y_score, average)
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
