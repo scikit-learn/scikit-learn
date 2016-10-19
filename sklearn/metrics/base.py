@@ -205,16 +205,3 @@ def _average_multiclass_score(binary_metric, y_true, y_score,
             else:
                 auc_scores_sum += binary_avg_auc
     return auc_scores_sum * (1.0 / (n_labels * (n_labels - 1.0)))
-    '''
-    else:
-        # Provost and Domingos 2001 (weighted)
-        auc_scores_sum = 0
-        for label in label_unique:
-            y_true_label = np.in1d(y_true.ravel(), label).astype(int)
-            y_score_label = y_score[:,label]
-            binary_output = binary_metric(y_true_label, y_score_label)
-            if average == "weighted":
-                binary_output *= (label_counts_map[label]/float(sum(label_counts_map.values())))
-            auc_scores_sum += binary_output
-        return auc_scores_sum
-    '''
