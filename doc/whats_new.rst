@@ -67,6 +67,10 @@ Bug fixes
      <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
      Thirion`_
 
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
+     By `Ibraim Ganiev`_.
+
 .. _changes_0_18_1:
 
 Version 0.18.1
