@@ -935,7 +935,8 @@ def test_sample():
                              gmm.sample, 0)
 
         # Just to make sure the class samples correctly
-        X_s, y_s = gmm.sample(20000)
+        n_samples = 20000
+        X_s, y_s = gmm.sample(n_samples)
         for k in range(n_features):
             if covar_type == 'full':
                 assert_array_almost_equal(gmm.covariances_[k],
@@ -955,6 +956,13 @@ def test_sample():
         means_s = np.array([np.mean(X_s[y_s == k], 0)
                            for k in range(n_features)])
         assert_array_almost_equal(gmm.means_, means_s, decimal=1)
+
+        # Check that sizes that are drawn match what is requested
+        assert_equal(X_s.shape, (n_samples, n_components))
+        for sample_size in range(1, 50):
+            X_s, _ = gmm.sample(sample_size)
+            assert_equal(X_s.shape, (sample_size, n_components))
+
 
 
 @ignore_warnings(category=ConvergenceWarning)
