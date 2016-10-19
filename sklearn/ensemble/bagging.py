@@ -18,7 +18,6 @@ from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils import indices_to_mask
 from ..utils.fixes import bincount
@@ -40,8 +39,7 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     if bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
     else:
-        indices = sample_without_replacement(n_population, n_samples,
-                                             random_state=random_state)
+        indices = np.random.permutation(n_population)[:n_samples]
 
     return indices
 

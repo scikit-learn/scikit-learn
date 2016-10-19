@@ -16,7 +16,6 @@ from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.fixes import astype
-from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
 zip = six.moves.zip
@@ -28,8 +27,7 @@ def _generate_hypercube(samples, dimensions, rng):
     if dimensions > 30:
         return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
                           _generate_hypercube(samples, 30, rng)])
-    out = astype(sample_without_replacement(2 ** dimensions, samples,
-                                            random_state=rng),
+    out = astype(np.random.permutation(2 ** dimensions)[:samples],
                  dtype='>u4', copy=False)
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
