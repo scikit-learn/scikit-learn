@@ -235,6 +235,7 @@ cdef class ClassificationCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = 0
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -273,11 +274,10 @@ cdef class ClassificationCriterion(Criterion):
 
     def __dealloc__(self):
         """Destructor."""
-
         free(self.n_classes)
 
     def __reduce__(self):
-        return (ClassificationCriterion,
+        return (type(self),
                 (self.n_outputs,
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
@@ -710,6 +710,7 @@ cdef class RegressionCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -734,7 +735,7 @@ cdef class RegressionCriterion(Criterion):
             raise MemoryError()
 
     def __reduce__(self):
-        return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
@@ -881,6 +882,7 @@ cdef class MSE(RegressionCriterion):
 
         MSE = var_left + var_right
     """
+
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
@@ -1004,6 +1006,7 @@ cdef class MAE(RegressionCriterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
