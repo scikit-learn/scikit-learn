@@ -204,7 +204,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     copy : boolean, optional, default True
@@ -403,7 +403,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     axis : int (0 by default)
@@ -1737,6 +1737,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
 
+    Note: a one-hot encoding of y labels should use a LabelBinarizer
+    instead.
+
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
@@ -1751,7 +1754,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                   ``X[:, i]``. Each feature value should be
                   in ``range(n_values[i])``
 
-    categorical_features: "all" or array of indices or mask
+    categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
 
         - 'all' (default): All features are treated as categorical.
@@ -1810,6 +1813,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
+    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
+      and n_classes-1.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):

@@ -6,14 +6,15 @@ dependencies:
   # Check whether the doc build is required, install build dependencies and
   # run sphinx to build the doc.
   override:
-    - ./build_tools/circle/build_doc.sh
+    - ./build_tools/circle/build_doc.sh:
+        timeout: 3600 # seconds
 test:
   # Grep error on the documentation
   override:
     - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
 deployment:
  push:
-   branch: master
+   branch: /^master$|^[0-9]+\.[0-9]+\.X$/
    commands:
      - bash build_tools/circle/push_doc.sh
 general:

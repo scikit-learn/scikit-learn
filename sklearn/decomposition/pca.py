@@ -15,6 +15,7 @@ from math import log, sqrt
 import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
+from scipy.sparse import issparse
 
 from ..externals import six
 
@@ -24,6 +25,7 @@ from ..utils import deprecated
 from ..utils import check_random_state, as_float_array
 from ..utils import check_array
 from ..utils.extmath import fast_dot, fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.arpack import svds
 
@@ -115,6 +117,9 @@ class PCA(_BasePCA):
     It can also use the scipy.sparse.linalg ARPACK implementation of the
     truncated SVD.
 
+    Notice that this class does not support sparse input. See
+    :ref:`<TruncatedSVD>` for an alternative with sparse data.
+
     Read more in the :ref:`User Guide <PCA>`.
 
     Parameters
@@ -152,7 +157,7 @@ class PCA(_BasePCA):
             the solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
-            dimension of the data, then then more efficient 'randomized'
+            dimension of the data, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full SVD is computed and
             optionally truncated afterwards.
         full :
@@ -193,6 +198,8 @@ class PCA(_BasePCA):
 
     explained_variance_ : array, [n_components]
         The amount of variance explained by each of the selected components.
+
+        .. versionadded:: 0.18
 
     explained_variance_ratio_ : array, [n_components]
         Percentage of variance explained by each of the selected components.
@@ -329,6 +336,13 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
+
+        # Raise an error for sparse input.
+        # This is more informative than the generic one raised by check_array.
+        if issparse(X):
+            raise TypeError('PCA does not support sparse input. See '
+                            'TruncatedSVD for a possible alternative.')
+
         X = check_array(X, dtype=[np.float64], ensure_2d=True,
                         copy=self.copy)
 
@@ -391,7 +405,7 @@ class PCA(_BasePCA):
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
-            ratio_cumsum = explained_variance_ratio_.cumsum()
+            ratio_cumsum = stable_cumsum(explained_variance_ratio_)
             n_components = np.searchsorted(ratio_cumsum, n_components) + 1
 
         # Compute noise covariance using Probabilistic PCA model

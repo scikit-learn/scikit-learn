@@ -764,6 +764,7 @@ Kernels:
 
     manifold.locally_linear_embedding
     manifold.spectral_embedding
+    manifold.smacof
 
 
 .. _metrics_ref:
@@ -956,7 +957,6 @@ See the :ref:`metrics` section of the user guide for further details.
 
    mixture.GaussianMixture
    mixture.BayesianGaussianMixture
-   mixture.DPGMM
 
 
 .. _multiclass_ref:

@@ -216,10 +216,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
 
-                is_leaf = ((depth >= max_depth) or
-                           (n_node_samples < min_samples_split) or
-                           (n_node_samples < 2 * min_samples_leaf) or
-                           (weighted_n_node_samples < min_weight_leaf))
+                is_leaf = (depth >= max_depth or
+                           n_node_samples < min_samples_split or
+                           n_node_samples < 2 * min_samples_leaf or
+                           weighted_n_node_samples < 2 * min_weight_leaf)
 
                 if first:
                     impurity = splitter.node_impurity()
@@ -436,11 +436,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             impurity = splitter.node_impurity()
 
         n_node_samples = end - start
-        is_leaf = ((depth > self.max_depth) or
-                   (n_node_samples < self.min_samples_split) or
-                   (n_node_samples < 2 * self.min_samples_leaf) or
-                   (weighted_n_node_samples < self.min_weight_leaf) or
-                   (impurity <= min_impurity_split))
+        is_leaf = (depth > self.max_depth or
+                   n_node_samples < self.min_samples_split or
+                   n_node_samples < 2 * self.min_samples_leaf or
+                   weighted_n_node_samples < 2 * self.min_weight_leaf or
+                   impurity <= min_impurity_split)
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
@@ -839,8 +839,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
@@ -985,8 +985,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))

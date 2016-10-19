@@ -44,6 +44,8 @@ class IsolationForest(BaseBagging):
 
     Read more in the :ref:`User Guide <isolation_forest>`.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     n_estimators : int, optional (default=100)
@@ -64,6 +66,7 @@ class IsolationForest(BaseBagging):
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
+
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
@@ -105,6 +108,7 @@ class IsolationForest(BaseBagging):
     .. [2] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation-based
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
+
     """
 
     def __init__(self,

@@ -74,6 +74,13 @@ class Transf(NoInvTransf):
         return X
 
 
+class TransfFitParams(Transf):
+
+    def fit(self, X, y, **fit_params):
+        self.fit_params = fit_params
+        return self
+
+
 class Mult(BaseEstimator):
     def __init__(self, mult=1):
         self.mult = mult
@@ -108,6 +115,10 @@ class FitParamT(BaseEstimator):
 
     def predict(self, X):
         return self.successful
+
+    def fit_predict(self, X, y, should_succeed=False):
+        self.fit(X, y, should_succeed=should_succeed)
+        return self.predict(X)
 
 
 def test_pipeline_init():
@@ -278,13 +289,20 @@ def test_fit_predict_on_pipeline():
     iris = load_iris()
     scaler = StandardScaler()
     km = KMeans(random_state=0)
+    # As pipeline doesn't clone estimators on construction,
+    # it must have its own estimators
+    scaler_for_pipeline = StandardScaler()
+    km_for_pipeline = KMeans(random_state=0)
 
     # first compute the transform and clustering step separately
     scaled = scaler.fit_transform(iris.data)
     separate_pred = km.fit_predict(scaled)
 
     # use a pipeline to do the transform and clustering in one step
-    pipe = Pipeline([('scaler', scaler), ('Kmeans', km)])
+    pipe = Pipeline([
+        ('scaler', scaler_for_pipeline),
+        ('Kmeans', km_for_pipeline)
+    ])
     pipeline_pred = pipe.fit_predict(iris.data)
 
     assert_array_almost_equal(pipeline_pred, separate_pred)
@@ -299,6 +317,19 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     assert_raises_regex(AttributeError,
                         "'PCA' object has no attribute 'fit_predict'",
                         getattr, pipe, 'fit_predict')
+
+
+def test_fit_predict_with_intermediate_fit_params():
+    # tests that Pipeline passes fit_params to intermediate steps
+    # when fit_predict is invoked
+    pipe = Pipeline([('transf', TransfFitParams()), ('clf', FitParamT())])
+    pipe.fit_predict(X=None,
+                     y=None,
+                     transf__should_get_this=True,
+                     clf__should_succeed=True)
+    assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
+    assert_true(pipe.named_steps['clf'].successful)
+    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
 
 
 def test_feature_union():

@@ -67,6 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
+# Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
@@ -107,7 +108,7 @@ except TypeError:
 try:
     np.array(5).astype(float, copy=False)
 except TypeError:
-    # Compat where astype accepted no copy argument
+    # Compat where astype accepted no copy argument (numpy < 1.7.0)
     def astype(array, dtype, copy=True):
         if not copy and array.dtype == dtype:
             return array
@@ -400,3 +401,21 @@ if sp_version < (0, 13, 0):
         return .5 * (count[dense] + count[dense - 1] + 1)
 else:
     from scipy.stats import rankdata
+
+
+if np_version < (1, 12, 0):
+    class MaskedArray(np.ma.MaskedArray):
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
+        # This fix is needed to make our model_selection.GridSearchCV
+        # picklable as the ``cv_results_`` param uses MaskedArray
+        def __getstate__(self):
+            """Return the internal state of the masked array, for pickling
+            purposes.
+
+            """
+            cf = 'CF'[self.flags.fnc]
+            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
+                                 self._fill_value)
+else:
+    from numpy.ma import MaskedArray    # noqa

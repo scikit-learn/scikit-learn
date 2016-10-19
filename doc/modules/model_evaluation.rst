@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-==========================      =========================================     ==================================
+===========================     =========================================     ==================================
 Scoring                         Function                                      Comment
-==========================      =========================================     ==================================
+===========================     =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -443,16 +443,16 @@ and inferred labels::
 
    >>> from sklearn.metrics import classification_report
    >>> y_true = [0, 1, 2, 2, 0]
-   >>> y_pred = [0, 0, 2, 2, 0]
+   >>> y_pred = [0, 0, 2, 1, 0]
    >>> target_names = ['class 0', 'class 1', 'class 2']
    >>> print(classification_report(y_true, y_pred, target_names=target_names))
                 precision    recall  f1-score   support
    <BLANKLINE>
        class 0       0.67      1.00      0.80         2
        class 1       0.00      0.00      0.00         1
-       class 2       1.00      1.00      1.00         2
+       class 2       1.00      0.50      0.67         2
    <BLANKLINE>
-   avg / total       0.67      0.80      0.72         5
+   avg / total       0.67      0.60      0.59         5
    <BLANKLINE>
 
 .. topic:: Example:
@@ -1101,7 +1101,7 @@ Here is a small example of usage of this function:::
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_calibration_plot_calibration.py`
+  * See :ref:`sphx_glr_auto_examples_calibration_plot_calibration.py`
     for an example of Brier score loss usage to perform probability
     calibration of classifiers.
 

@@ -415,8 +415,8 @@ Note that, if there is a possibilty that the training data might have missing ca
 features, one has to explicitly set ``n_values``. For example,
 
     >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
-    >>> # Note that for there are missing categorical values for the 2nd and 3rd
-    >>> # feature
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
            handle_unknown='error', n_values=[2, 3, 4], sparse=True)

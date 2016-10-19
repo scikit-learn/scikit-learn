@@ -24,7 +24,7 @@ from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp, pinvh, squared_norm
+from ..utils.extmath import logsumexp, pinvh, squared_norm, stable_cumsum
 from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import _GMMBase
@@ -262,7 +262,7 @@ class _DPGMMBase(_GMMBase):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -462,7 +462,7 @@ class _DPGMMBase(_GMMBase):
         dg1 = digamma(self.gamma_.T[1]) - dg12
         dg2 = digamma(self.gamma_.T[2]) - dg12
 
-        cz = np.cumsum(z[:, ::-1], axis=-1)[:, -2::-1]
+        cz = stable_cumsum(z[:, ::-1], axis=-1)[:, -2::-1]
         logprior = np.sum(cz * dg2[:-1]) + np.sum(z * dg1)
         del cz  # Save memory
         z_non_zeros = z[z > np.finfo(np.float32).eps]
@@ -787,7 +787,7 @@ class VBGMM(_DPGMMBase):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
