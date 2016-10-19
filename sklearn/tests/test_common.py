@@ -33,7 +33,8 @@ from sklearn.utils.estimator_checks import (
     check_class_weight_balanced_linear_classifier,
     check_transformer_n_iter,
     check_non_transformer_estimators_n_iter,
-    check_get_params_invariance)
+    check_get_params_invariance,
+    check_estimator_data_frame)
 
 
 def test_all_estimator_no_base_class():
@@ -56,6 +57,20 @@ def test_all_estimators():
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
         yield (_named_check(check_parameters_default_constructible, name),
+               name, Estimator)
+
+
+def test_all_estimators_data_frame():
+    # Test that estimators are default-constructible, cloneable
+    # and have working repr.
+    estimators = all_estimators(include_meta_estimators=True)
+
+    # Meta sanity-check to make sure that the estimator introspection runs
+    # properly
+    assert_greater(len(estimators), 0)
+
+    for name, Estimator in estimators:
+        yield (_named_check(check_estimator_data_frame, name),
                name, Estimator)
 
 
