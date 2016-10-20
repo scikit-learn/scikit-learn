@@ -387,6 +387,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def _estimator_type(self):
         return self.estimator._estimator_type
 
+    @property
+    def classes_(self):
+        return self.best_estimator_.classes_
+
     def score(self, X, y=None):
         """Returns the score on the given data, if the estimator has been refit.
 
@@ -688,7 +692,7 @@ class GridSearchCV(BaseSearchCV):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, 
+        either binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. In all
         other cases, :class:`sklearn.model_selection.KFold` is used.
 
@@ -900,7 +904,7 @@ class RandomizedSearchCV(BaseSearchCV):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, 
+        either binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. In all
         other cases, :class:`sklearn.model_selection.KFold` is used.
 

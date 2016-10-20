@@ -42,6 +42,7 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
+from sklearn.linear_model import Ridge
 
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import FitFailedWarning
@@ -785,3 +786,20 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_classes__property():
+    # Test that classes_ property matches best_esimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    Cs = [.1, 1, 10]
+
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
+
+    # Test that regressors do not have a classes_ attribute
+    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))
