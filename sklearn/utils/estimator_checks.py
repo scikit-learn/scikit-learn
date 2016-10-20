@@ -1485,8 +1485,8 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 @ignore_warnings(category=DeprecationWarning)
 def check_non_transformer_estimators_n_iter(name, Estimator):
-    # Test that estimators that are not transformers with an attribute
-    # max_iter, return the attribute of n_iter at least 1.
+    # Test that estimators that are not transformers with a parameter
+    # max_iter, return the attribute of n_iter_ at least 1.
 
     # These models are dependent on external solvers like
     # libsvm and accessing the iter parameter is non-trivial.
@@ -1524,8 +1524,8 @@ def check_non_transformer_estimators_n_iter(name, Estimator):
 
 @ignore_warnings(category=DeprecationWarning)
 def check_transformer_n_iter(name, Estimator):
-    # Test that transformers with an attribute max_iter, return the attribute
-    # of n_iter at least 1.
+    # Test that transformers with a parameter max_iter, return the
+    # attribute of n_iter_ at least 1.
     estimator = Estimator()
     if hasattr(estimator, "max_iter"):
         if name in CROSS_DECOMPOSITION:
