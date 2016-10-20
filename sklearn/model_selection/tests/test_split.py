@@ -59,7 +59,78 @@ from sklearn.svm import SVC
 
 X = np.ones(10)
 y = np.arange(10) // 2
+P_sparse = coo_matrix(np.eye(5))
+test_groups = (
+    np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
+    np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
+    np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
+    np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
+    [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
+    ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
 digits = load_digits()
+
+
+class MockClassifier(object):
+    """Dummy classifier to test the cross-validation"""
+
+    def __init__(self, a=0, allow_nd=False):
+        self.a = a
+        self.allow_nd = allow_nd
+
+    def fit(self, X, Y=None, sample_weight=None, class_prior=None,
+            sparse_sample_weight=None, sparse_param=None, dummy_int=None,
+            dummy_str=None, dummy_obj=None, callback=None):
+        """The dummy arguments are to test that this fit function can
+        accept non-array arguments through cross-validation, such as:
+            - int
+            - str (this is actually array-like)
+            - object
+            - function
+        """
+        self.dummy_int = dummy_int
+        self.dummy_str = dummy_str
+        self.dummy_obj = dummy_obj
+        if callback is not None:
+            callback(self)
+
+        if self.allow_nd:
+            X = X.reshape(len(X), -1)
+        if X.ndim >= 3 and not self.allow_nd:
+            raise ValueError('X cannot be d')
+        if sample_weight is not None:
+            assert_true(sample_weight.shape[0] == X.shape[0],
+                        'MockClassifier extra fit_param sample_weight.shape[0]'
+                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                                                        X.shape[0]))
+        if class_prior is not None:
+            assert_true(class_prior.shape[0] == len(np.unique(y)),
+                        'MockClassifier extra fit_param class_prior.shape[0]'
+                        ' is {0}, should be {1}'.format(class_prior.shape[0],
+                                                        len(np.unique(y))))
+        if sparse_sample_weight is not None:
+            fmt = ('MockClassifier extra fit_param sparse_sample_weight'
+                   '.shape[0] is {0}, should be {1}')
+            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
+                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
+        if sparse_param is not None:
+            fmt = ('MockClassifier extra fit_param sparse_param.shape '
+                   'is ({0}, {1}), should be ({2}, {3})')
+            assert_true(sparse_param.shape == P_sparse.shape,
+                        fmt.format(sparse_param.shape[0],
+                                   sparse_param.shape[1],
+                                   P_sparse.shape[0], P_sparse.shape[1]))
+        return self
+
+    def predict(self, T):
+        if self.allow_nd:
+            T = T.reshape(len(T), -1)
+        return T[:, 0]
+
+    def score(self, X=None, Y=None):
+        return 1. / (1 + np.abs(self.a))
+
+    def get_params(self, deep=False):
+        return {'a': self.a, 'allow_nd': self.allow_nd}
 
 
 @ignore_warnings
@@ -609,14 +680,7 @@ def test_predefinedsplit_with_kfold_split():
 
 
 def test_group_shuffle_split():
-    groups = (np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
-              np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-              np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
-              np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
-              [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
-              ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
-
-    for groups_i in groups:
+    for groups_i in test_groups:
         X = y = np.ones(len(groups_i))
         n_splits = 6
         test_size = 1./3
@@ -656,35 +720,21 @@ def test_leave_one_p_group_out():
     logo = LeaveOneGroupOut()
     lpgo_1 = LeavePGroupsOut(n_groups=1)
     lpgo_2 = LeavePGroupsOut(n_groups=2)
-    lpgo_3 = LeavePGroupsOut(n_groups=3)
 
     # Make sure the repr works
     assert_equal(repr(logo), 'LeaveOneGroupOut()')
     assert_equal(repr(lpgo_1), 'LeavePGroupsOut(n_groups=1)')
     assert_equal(repr(lpgo_2), 'LeavePGroupsOut(n_groups=2)')
-    assert_equal(repr(lpgo_3), 'LeavePGroupsOut(n_groups=3)')
+    assert_equal(repr(LeavePGroupsOut(n_groups=3)),
+                 'LeavePGroupsOut(n_groups=3)')
 
     for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1),
                                             (lpgo_2, 2))):
-        groups = (np.array([1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3]),
-                  np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3]),
-                  np.array([0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2]),
-                  np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4]),
-                  [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
-                  ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
-
-        all_n_splits = np.array([[3, 3, 3],
-                                 [4, 4, 6],
-                                 [4, 4, 6],
-                                 [4, 4, 6],
-                                 [3, 3, 3],
-                                 [3, 3, 3],
-                                 [3, 3, 3]], dtype=int)
-
-        for i, groups_i in enumerate(groups):
-            n_splits = all_n_splits[i, j]
+        for i, groups_i in enumerate(test_groups):
+            n_groups = len(np.unique(groups_i))
+            n_splits = (n_groups if p_groups_out == 1
+                        else n_groups * (n_groups - 1) / 2)
             X = y = np.ones(len(groups_i))
-            groups_unique = np.unique(groups_i)
 
             # Test that the length is correct
             assert_equal(cv.get_n_splits(X, y, groups=groups_i), n_splits)
@@ -702,8 +752,7 @@ def test_leave_one_p_group_out():
                                             grps_train_unique)))
 
                 # Second test: train and test add up to all the data
-                assert_equal(groups_arr[train].size +
-                             groups_arr[test].size, groups_arr.size)
+                assert_equal(len(train) + len(test), len(groups_i))
 
                 # Third test: train and test are disjoint
                 assert_array_equal(np.intersect1d(train, test), [])
@@ -943,7 +992,7 @@ def test_check_cv():
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
-                            [1, 1, 0, 1], [0, 0, 1, 0]])
+                             [1, 1, 0, 1], [0, 0, 1, 0]])
     cv = check_cv(3, y_multilabel, classifier=True)
     np.testing.assert_equal(list(KFold(3).split(X)), list(cv.split(X)))
 

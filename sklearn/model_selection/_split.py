@@ -911,8 +911,8 @@ class LeavePGroupsOut(BaseCrossValidator):
         """
         if groups is None:
             raise ValueError("The groups parameter should not be None")
-        X, y, groups = indexable(X, y, groups)
         groups = check_array(groups, ensure_2d=False, dtype=None)
+        X, y, groups = indexable(X, y, groups)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
 
