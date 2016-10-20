@@ -39,7 +39,7 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
     if bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
     else:
-        indices = np.random.permutation(n_population)[:n_samples]
+        indices = random_state.permutation(n_population)[:n_samples]
 
     return indices
 

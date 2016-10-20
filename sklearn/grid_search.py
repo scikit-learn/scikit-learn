@@ -239,7 +239,7 @@ class ParameterSampler(object):
                     "The total space of parameters %d is smaller "
                     "than n_iter=%d." % (grid_size, self.n_iter)
                     + " For exhaustive searches, use GridSearchCV.")
-            for i in np.random.permutation(grid_size)[:self.n_iter]:
+            for i in rnd.permutation(grid_size)[:self.n_iter]:
                 yield param_grid[i]
 
         else:

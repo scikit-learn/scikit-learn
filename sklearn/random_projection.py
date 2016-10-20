@@ -268,7 +268,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         for i in xrange(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
-            indices_i = np.random.permutation(n_features)[:n_nonzero_i]
+            indices_i = rng.permutation(n_features)[:n_nonzero_i]
             indices.append(indices_i)
             offset += n_nonzero_i
             indptr.append(offset)

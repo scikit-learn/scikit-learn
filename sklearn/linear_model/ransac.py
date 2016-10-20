@@ -315,7 +315,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         for self.n_trials_ in range(1, self.max_trials + 1):
 
             # choose random sample set
-            subset_idxs = np.random.permutation(n_samples)[:min_samples]
+            subset_idxs = random_state.permutation(n_samples)[:min_samples]
             X_subset = X[subset_idxs]
             y_subset = y[subset_idxs]
 
