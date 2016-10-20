@@ -69,8 +69,8 @@ Bug fixes
      `#6497 <https://github.com/scikit-learn/scikit-learn/pull/6497>`_
      by `Sebastian Säger`_
 
-   - Fixes issue in :class:`_BaseFilter` where score functions were 
-     not accepting multi-label targets.(`#7676
+   - Fixes issue in :ref:`univariate_feature_selection` where score 
+     functions were not accepting multi-label targets.(`#7676
      <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
      by `Mohammed Affan`_
      
