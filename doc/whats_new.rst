@@ -19,6 +19,9 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 * tree-based models using ``min_weight_fraction_leaf``
+* :class:`feature_selection.SelectFdr`
+
+Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
