@@ -19,8 +19,8 @@ New features
 Enhancements
 ............
 
-   - Added ``classes_`` attribute to gridSearchCV object that matches the
-     ``classes_`` attribute of ``best_estimator_``. (`#7661
+   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
+     that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
      <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
      Batula`_ and `Dylan Werner-Meier`_.
 
