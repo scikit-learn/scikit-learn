@@ -64,6 +64,7 @@ ctypedef fused realloc_ptr:
     (PriorityHeapRecord*)
     (void**)
     (INT32_t*)
+    (UINT32_t*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems, size_t elem_bytes) nogil except *
 
@@ -81,6 +82,15 @@ cdef double rand_uniform(double low, double high,
 
 
 cdef double log(double x) nogil
+
+
+cdef void setup_cat_cache(UINT32_t* cachebits, UINT64_t cat_split,
+                          INT32_t n_categories) nogil
+
+
+cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
+                    INT32_t n_categories, UINT32_t* cachebits) nogil
+
 
 # =============================================================================
 # Stack data structure

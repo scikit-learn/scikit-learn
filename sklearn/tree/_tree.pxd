@@ -37,6 +37,15 @@ cdef struct Node:
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
 
+cdef class CategoryCacheMgr:
+    # Class to manage the category cache memory during Tree.apply()
+
+    cdef SIZE_t n_nodes
+    cdef UINT32_t **bits
+
+    cdef void populate(self, Node *nodes, SIZE_t n_nodes, INT32_t *n_categories)
+
+
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
     # TreeBuilder. The tree structure is used for predictions and
@@ -61,7 +70,7 @@ cdef class Tree:
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
+                          SIZE_t feature, SplitValue split_value, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_samples) nogil except -1
     cdef int _resize(self, SIZE_t capacity) nogil except -1

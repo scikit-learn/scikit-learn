@@ -93,6 +93,46 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
+cdef inline void setup_cat_cache(UINT32_t *cachebits, UINT64_t cat_split,
+                                 INT32_t n_categories) nogil:
+    """Populate the bits of the category cache from a split.
+    """
+    cdef INT32_t j
+    cdef UINT32_t rng_seed, val
+
+    if n_categories > 0:
+        if cat_split & 1:
+            # RandomSplitter
+            for j in range((n_categories + 31) // 32):
+                cachebits[j] = 0
+            rng_seed = cat_split >> 32
+            for j in range(n_categories):
+                val = rand_int(0, 2, &rng_seed)
+                cachebits[j // 32] |= val << (j % 32)
+        else:
+            # BestSplitter
+            for j in range((n_categories + 31) // 32):
+                cachebits[j] = (cat_split >> (j * 32)) & <UINT64_t> 0xFFFFFFFF
+
+
+cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
+                           INT32_t n_categories, UINT32_t* cachebits) nogil:
+    """Determine whether a sample goes to the left or right child node."""
+    cdef SIZE_t idx, shift
+
+    if n_categories < 1:
+        # Non-categorical feature
+        return feature_value <= split.threshold
+    else:
+        # Categorical feature, using bit cache
+        if (<SIZE_t> feature_value) < n_categories:
+            idx = (<SIZE_t> feature_value) // 32
+            shift = (<SIZE_t> feature_value) % 32
+            return (cachebits[idx] >> shift) & 1
+        else:
+            return 0
+
+
 # =============================================================================
 # Stack data structure
 # =============================================================================
