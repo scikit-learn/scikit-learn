@@ -337,9 +337,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         # Get maximum length for explained_variance_ratio_
         if self.n_components is None:
-            max_length_exp = len(self.classes_)
+            max_length_exp = len(self.classes_) - 1
         else:
-            max_length_exp = min(len(self.classes_), self.n_components)
+            max_length_exp = min(len(self.classes_) - 1, self.n_components)
 
         evals, evecs = linalg.eigh(Sb, Sw)
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
@@ -406,8 +406,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
+        # Get maximum length for explained_variance_ratio_
+        if self.n_components is None:
+            max_length_exp = len(self.classes_) - 1
+        else:
+            max_length_exp = min(len(self.classes_) - 1, self.n_components)
+
         self.explained_variance_ratio_ = (S**2 / np.sum(
-                S**2))[:self.n_components]
+                S**2))[:max_length_exp]
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
