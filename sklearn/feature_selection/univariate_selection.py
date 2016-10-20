@@ -596,8 +596,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()

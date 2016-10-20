@@ -78,7 +78,7 @@ Development
 
 We welcome new contributors of all experience levels. The scikit-learn
 community goals are to be helpful, welcoming, and effective. The
-`Contributor's Guide <http://scikit-learn.org/stable/developers/index.html>`_ 
+`Development Guide <http://scikit-learn.org/stable/developers/index.html>`_ 
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
 

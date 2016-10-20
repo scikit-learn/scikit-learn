@@ -41,8 +41,20 @@ Enhancements
      (`#6101 <https://github.com/scikit-learn/scikit-learn/pull/6101>`_)
      By `Ibraim Ganiev`_.
 
+   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
+     data before taking prefixes of it based on training sizes in
+     :func:`model_selection.learning_curve`.
+     (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
+     `Narine Kokhlikyan`_.
+
 Bug fixes
 .........
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
+     `Peng Meng`_.
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs
@@ -60,6 +72,10 @@ Bug fixes
      `n_features > n_samples`. (`#6178
      <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
      Thirion`_
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
+     By `Ibraim Ganiev`_.
 
 .. _changes_0_18_1:
 
@@ -1790,8 +1806,8 @@ Pedregosa, Florian Wilhelm, floydsoft, Félix-Antoine Fortin, Gael Varoquaux,
 Garrett-R, Gilles Louppe, gpassino, gwulfs, Hampus Bengtsson, Hamzeh Alsalhi,
 Hanna Wallach, Harry Mavroforakis, Hasil Sharma, Helder, Herve Bredin,
 Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore, Ilambharathi Kanniah, Imran Haque,
-isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
-Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
+isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
+Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
 Helmus, Joseph, Kaicheng Zhang, Kevin Markham, Kyle Beauchamp, Kyle Kastner,
 Lagacherie Matthieu, Lars Buitinck, Laurent Direr, leepei, Loic Esteve, Luis
 Pedro Coelho, Lukas Michelbacher, maheshakya, Manoj Kumar, Manuel, Mario
@@ -4861,3 +4877,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Utkarsh Upadhyay: https://github.com/musically-ut
 
 .. _Eugene Chen: https://github.com/eyc88
+
+.. _Narine Kokhlikyan: https://github.com/NarineK
+
+.. _Peng Meng: https://github.com/mpjlu
