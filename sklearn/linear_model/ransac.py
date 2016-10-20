@@ -91,7 +91,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         depedent upon the model, so if a base_estimator other than
         `LinearRegression` is used, the user must provide a value. For example,
-        when RANSAC is used to find correspondances between images, a value of
+        when RANSAC is used to find correspondences between images, a value of
         4 is appropriate for stereo images, and 2 is appropriate for images of
         a rigid body in motion.
 
