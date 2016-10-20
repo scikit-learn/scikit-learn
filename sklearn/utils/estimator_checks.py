@@ -288,7 +288,9 @@ def set_testing_parameters(estimator):
     if "decision_function_shape" in params:
         # SVC
         estimator.set_params(decision_function_shape='ovo')
-
+    if "n_best" in params:
+        # BiCluster
+        estimator.set_params(n_best=1)
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
         estimator.set_params(alpha=.5)
@@ -335,6 +337,8 @@ def check_estimator_sparse_data(name, Estimator):
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
+        if name == 'SpectralCoclustering':
+            continue
         X = X_csr.asformat(sparse_format)
         # catch deprecation warnings
         with ignore_warnings(category=DeprecationWarning):
@@ -684,7 +688,11 @@ def check_fit_score_takes_y(name, Estimator):
 @ignore_warnings
 def check_estimators_dtypes(name, Estimator):
     rnd = np.random.RandomState(0)
-    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    if name in ["BoxCoxTransformer", "SpectralCoclustering",
+                "SpectralBiclustering"]:
+        X_train_32 = 3 * rnd.uniform(1., 2., size=(20, 5)).astype(np.float32)
+    else:
+        X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
@@ -1314,7 +1322,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 @ignore_warnings(category=DeprecationWarning)
 def check_estimators_overwrite_params(name, Estimator):
-    X, y = make_blobs(random_state=0, n_samples=9)
+    X, y = make_blobs(random_state=0, n_samples=9, n_features=3)
     y = multioutput_estimator_convert_y_2d(name, y)
     # some want non-negative input
     X -= X.min()
