@@ -60,7 +60,7 @@ from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
-from sklearn.model_selection.tests.common import CustomSplitter
+from sklearn.model_selection.tests.common import OneTimeSplitter
 
 
 try:
@@ -646,7 +646,7 @@ def test_learning_curve():
         with warnings.catch_warnings(record=True) as w:
             train_sizes2, train_scores2, test_scores2 = learning_curve(
                 estimator, X, y,
-                cv=CustomSplitter(n_splits=n_splits, n_samples=n_samples),
+                cv=OneTimeSplitter(n_splits=n_splits, n_samples=n_samples),
                 train_sizes=np.linspace(0.1, 1.0, 10),
                 shuffle=shuffle_train)
         if len(w) > 0:
@@ -850,9 +850,9 @@ def test_validation_curve_cv_splits_consistency():
 
     scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
                                'C', [0.1, 0.1, 0.2, 0.2],
-                               cv=CustomSplitter(n_splits=n_splits,
-                                                 n_samples=n_samples))
-    # The CustomSplitter is a non-re-entrant cv splitter. Unless, the
+                               cv=OneTimeSplitter(n_splits=n_splits,
+                                                  n_samples=n_samples))
+    # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
     # `split` is called for each parameter, the following should produce
     # identical results for param setting 1 param setting 2 as both have
     # the same C value.
@@ -873,7 +873,7 @@ def test_validation_curve_cv_splits_consistency():
                                'C', [0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
-    # CustomSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
+    # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
     assert_array_almost_equal(np.array(scores3), np.array(scores1))
 
 

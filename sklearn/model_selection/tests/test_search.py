@@ -60,7 +60,7 @@ from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import SGDClassifier
 
-from sklearn.model_selection.tests.common import CustomSplitter
+from sklearn.model_selection.tests.common import OneTimeSplitter
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -1166,8 +1166,8 @@ def test_grid_search_cv_splits_consistency():
 
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.2, 0.3]},
-                      cv=CustomSplitter(n_splits=n_splits,
-                                        n_samples=n_samples))
+                      cv=OneTimeSplitter(n_splits=n_splits,
+                                         n_samples=n_samples))
     gs.fit(X, y)
 
     gs2 = GridSearchCV(LinearSVC(random_state=0),
@@ -1181,7 +1181,7 @@ def test_grid_search_cv_splits_consistency():
             cv_results.pop(key)
         return cv_results
 
-    # CustomSplitter is a non-re-entrant cv where split can be called only once
+    # OneTimeSplitter is a non-re-entrant cv where split can be called only once
     # if ``cv.split`` is called once per param setting in GridSearchCV.fit
     # the 2nd and 3rd parameter will not be evaluated as no train/test indices
     # will be generated for the 2nd and subsequent cv.split calls.

@@ -7,12 +7,12 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 
-class CustomSplitter:
+class OneTimeSplitter:
     """A wrapper to make KFold single entry cv iterator"""
     def __init__(self, n_splits=4, n_samples=99):
         self.n_splits = n_splits
         self.n_samples = n_samples
-        self.indices = KFold(n_splits=n_splits).split(np.ones(n_samples))
+        self.indices = iter(KFold(n_splits=n_splits).split(np.ones(n_samples)))
 
     def split(self, X=None, y=None, groups=None):
         """Split can be called only once"""
