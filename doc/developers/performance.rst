@@ -211,40 +211,21 @@ It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line-prof`` and wire it to IPython::
+us install ``line-profiler`` and wire it to IPython::
 
   $ pip install line-profiler
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%lprun`` magic::
-
-    import line_profiler
-    ip.expose_magic('lprun', line_profiler.magic_lprun)
-
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.13+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/line_profiler_ext.py`` with
-  the following content::
-
-    import line_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('lprun', line_profiler.magic_lprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
+  Then register the line-profiler extension in ``~/.ipython/profile_default/ipython_config.py``::
 
     c.TerminalIPythonApp.extensions = [
-        'line_profiler_ext',
+        'line_profiler',
     ]
     c.InteractiveShellApp.extensions = [
-        'line_profiler_ext',
+        'line_profiler',
     ]
 
   This will register the ``%lprun`` magic command in the IPython terminal
