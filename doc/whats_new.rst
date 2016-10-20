@@ -19,6 +19,11 @@ New features
 Enhancements
 ............
 
+   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
+     that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
+     <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
+     Batula`_ and `Dylan Werner-Meier`_.
+
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
      is less than 2 * the minimum. Note that the constructed tree will be
@@ -36,8 +41,25 @@ Enhancements
      (`#6288 <https://github.com/scikit-learn/scikit-learn/pull/6288>`_) by
      `Jake VanderPlas`_.
 
+   - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
+     now support sparse input for prediction.
+     (`#6101 <https://github.com/scikit-learn/scikit-learn/pull/6101>`_)
+     By `Ibraim Ganiev`_.
+
+   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
+     data before taking prefixes of it based on training sizes in
+     :func:`model_selection.learning_curve`.
+     (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
+     `Narine Kokhlikyan`_.
+
 Bug fixes
 .........
+
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
+     `Peng Meng`_.
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs
@@ -55,6 +77,10 @@ Bug fixes
      `n_features > n_samples`. (`#6178
      <https://github.com/scikit-learn/scikit-learn/pull/6178>`_) by `Bertrand
      Thirion`_
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
+     By `Ibraim Ganiev`_.
 
 .. _changes_0_18_1:
 
@@ -74,6 +100,11 @@ Bug fixes
      with SVD and Eigen solver are now of the same length. (`#7632
      <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
      By `JPFrancoia`_
+
+   - Fixes issue in :ref:`univariate_feature_selection` where score 
+     functions were not accepting multi-label targets.(`#7676
+     <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
+     by `Mohammed Affan`_
 
 
 API changes summary
@@ -1804,8 +1835,8 @@ Pedregosa, Florian Wilhelm, floydsoft, Félix-Antoine Fortin, Gael Varoquaux,
 Garrett-R, Gilles Louppe, gpassino, gwulfs, Hampus Bengtsson, Hamzeh Alsalhi,
 Hanna Wallach, Harry Mavroforakis, Hasil Sharma, Helder, Herve Bredin,
 Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore, Ilambharathi Kanniah, Imran Haque,
-isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
-Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
+isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
+Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
 Helmus, Joseph, Kaicheng Zhang, Kevin Markham, Kyle Beauchamp, Kyle Kastner,
 Lagacherie Matthieu, Lars Buitinck, Laurent Direr, leepei, Loic Esteve, Luis
 Pedro Coelho, Lukas Michelbacher, maheshakya, Manoj Kumar, Manuel, Mario
@@ -4875,3 +4906,11 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Utkarsh Upadhyay: https://github.com/musically-ut
 
 .. _Eugene Chen: https://github.com/eyc88
+
+.. _Narine Kokhlikyan: https://github.com/NarineK
+
+.. _Peng Meng: https://github.com/mpjlu
+
+.. _Dylan Werner-Meier: https://github.com/unautre
+
+.. _Alyssa Batula: https://github.com/abatula
