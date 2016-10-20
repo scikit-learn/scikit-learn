@@ -4886,3 +4886,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Narine Kokhlikyan: https://github.com/NarineK
 
 .. _Peng Meng: https://github.com/mpjlu
+
+.. _Dylan Werner-Meier: https://github.com/unautre
+
+.. _Alyssa Batula: https://github.com/abatula
