@@ -1096,7 +1096,7 @@ class _BaseRidgeCV(LinearModel):
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv,
                               scoring=self.scoring)
- 
+
             gs.fit(X, y)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
@@ -1202,7 +1202,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Estimated regularization parameter.
 
     best_score_ : float
-        Score of best_estimator on the left out data.  
+        Score of best_estimator on the left out data.
 
 
     See also
