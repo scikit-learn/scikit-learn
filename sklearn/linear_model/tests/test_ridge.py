@@ -459,13 +459,10 @@ def test_ridge_cv_individual_penalties():
     assert_array_almost_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
                               ridge_cv.coef_)
 
-    # Find optimal alphas using a custom CV object
-    cv = LeaveOneOut()
-    ridge_cv = RidgeCV(alphas=alphas, cv=cv, scoring='mean_squared_error',
-                       alpha_per_target=True).fit(X, y)
-    assert_array_equal(optimal_alphas, ridge_cv.alpha_)
-    assert_array_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
-                       ridge_cv.coef_)
+    # Using a custom CV object should trow an error in combination with
+    # alpha_per_target=True
+    ridge_cv = RidgeCV(alphas=alphas, cv=LeaveOneOut(), alpha_per_target=True)
+    assert_raises(ValueError, ridge_cv.fit, X, y)
 
 
 def _test_ridge_diabetes(filter_):

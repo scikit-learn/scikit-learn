@@ -10,7 +10,6 @@ Ridge regression
 
 
 from abc import ABCMeta, abstractmethod
-from itertools import product
 import warnings
 
 import numpy as np
@@ -1248,9 +1247,8 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             if self.alpha_per_target:
-                n_targets = y.shape[1] if y.ndim > 1 else 1
-                alphas = product(*([self.alphas] * n_targets))
-                parameters = {'alpha': list(alphas)}
+                raise ValueError("cv!=None and alpha_per_target=True "
+                                 " are incompatible")
             else:
                 parameters = {'alpha': self.alphas}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
