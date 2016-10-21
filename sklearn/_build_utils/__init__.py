@@ -42,7 +42,7 @@ def get_cython_source(filename):
     is_cpp_filename = filename.endswith('.cpp')
 
     # files in src are .c and .cpp files that are not cython-generated
-    if 'src/' in filename and (is_c_filename or is_cpp_filename):
+    if ('src' + os.sep) in filename and (is_c_filename or is_cpp_filename):
         return filename
     elif is_c_filename:
         filename = filename[:-1]
