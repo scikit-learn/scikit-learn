@@ -311,7 +311,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             names.append(l)
     except IndexError:
         raise ValueError('All entries of features must be less than '
-                         'len(feature_names)={0}.'.format(len(feature_names)))
+                         'len(feature_names) = {0}, got {1}.'
+                         .format(len(feature_names), i))
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
