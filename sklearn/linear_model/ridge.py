@@ -1201,7 +1201,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Estimated regularization parameter.
 
     best_score_ : float
-        Score of best_estimator on the left out data.  
+        Score of best_estimator on the left out data.
 
 
     See also
