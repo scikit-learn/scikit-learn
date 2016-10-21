@@ -120,6 +120,11 @@ class FitParamT(BaseEstimator):
         self.fit(X, y, should_succeed=should_succeed)
         return self.predict(X)
 
+    def score(self, X, y=None, sample_weight=None):
+        if sample_weight is not None:
+            X = X * sample_weight
+        return np.sum(X)
+
 
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
@@ -212,6 +217,16 @@ def test_pipeline_fit_params():
     # and transformer params should not be changed
     assert_true(pipe.named_steps['transf'].a is None)
     assert_true(pipe.named_steps['transf'].b is None)
+
+
+def test_pipeline_score_params():
+    # Pipeline should pass score parameters
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
+    pipe.fit(X, y=None)
+    assert_equal(pipe.score(X), 3)
+    assert_equal(pipe.score(X, y=None), 3)
+    assert_equal(pipe.score(X, sample_weight=np.array([2, 3])), 8)
 
 
 def test_pipeline_raise_set_params_error():
