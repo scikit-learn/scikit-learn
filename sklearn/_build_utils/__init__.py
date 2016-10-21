@@ -58,15 +58,19 @@ def add_cython_extension(top_path, config, name, sources, **kwargs):
     is_dev_version = not os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
     if is_dev_version:
+        sources = [get_cython_source(filename) for filename in sources]
+
+    config.add_extension(name, sources, **kwargs)
+
+
+def maybe_cythonize_extensions(top_path, config):
+    is_dev_version = not os.path.exists(os.path.join(top_path, 'PKG-INFO'))
+
+    if is_dev_version:
         try:
             from Cython.Build import cythonize
         except ImportError:
             raise ValueError('Please install cython in order '
                              'to build a scikit-learn development version')
 
-        sources = [get_cython_source(filename) for filename in sources]
-
-    config.add_extension(name, sources, **kwargs)
-
-    if is_dev_version:
         config.ext_modules = cythonize(config.ext_modules)

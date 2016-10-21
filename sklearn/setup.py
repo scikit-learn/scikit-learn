@@ -3,6 +3,7 @@ from os.path import join
 import warnings
 
 from sklearn._build_utils import add_cython_extension
+from sklearn._build_utils import maybe_cythonize_extensions
 
 
 def configuration(parent_package='', top_path=None):
@@ -81,6 +82,8 @@ def configuration(parent_package='', top_path=None):
 
     # add the test directory
     config.add_subpackage('tests')
+
+    maybe_cythonize_extensions(top_path, config)
 
     return config
 
