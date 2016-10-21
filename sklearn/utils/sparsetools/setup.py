@@ -1,20 +1,26 @@
 import numpy
 
+from sklearn._build_utils import add_cython_extension
+
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration('sparsetools', parent_package, top_path)
 
-    config.add_extension('_traversal',
+    add_cython_extension(top_path,
+                         config,
+                         '_traversal',
                          sources=['_traversal.c'],
                          include_dirs=[numpy.get_include()],
-                         #libraries=libraries
+                         # libraries=libraries
                          )
-    config.add_extension('_graph_tools',
+    add_cython_extension(top_path,
+                         config,
+                         '_graph_tools',
                          sources=['_graph_tools.c'],
                          include_dirs=[numpy.get_include()],
-                         #libraries=libraries
+                         # libraries=libraries
                          )
 
     config.add_subpackage('tests')

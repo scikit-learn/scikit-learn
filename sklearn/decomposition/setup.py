@@ -2,6 +2,8 @@ import os
 import numpy
 from numpy.distutils.misc_util import Configuration
 
+from sklearn._build_utils import add_cython_extension
+
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("decomposition", parent_package, top_path)
@@ -10,12 +12,16 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    config.add_extension("_online_lda",
+    add_cython_extension(top_path,
+                         config,
+                         "_online_lda",
                          sources=["_online_lda.c"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('cdnmf_fast',
+    add_cython_extension(top_path,
+                         config,
+                         'cdnmf_fast',
                          sources=['cdnmf_fast.c'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)

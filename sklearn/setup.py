@@ -2,6 +2,8 @@ import os
 from os.path import join
 import warnings
 
+from sklearn._build_utils import add_cython_extension
+
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -55,7 +57,9 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('svm')
 
     # add cython extension module for isotonic regression
-    config.add_extension(
+    add_cython_extension(
+        top_path,
+        config,
         '_isotonic',
         sources=['_isotonic.c'],
         include_dirs=[numpy.get_include()],

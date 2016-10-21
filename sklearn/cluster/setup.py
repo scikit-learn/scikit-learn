@@ -6,6 +6,7 @@ from os.path import join
 import numpy
 
 from sklearn._build_utils import get_blas_info
+from sklearn._build_utils import add_cython_extension
 
 
 def configuration(parent_package='', top_path=None):
@@ -19,22 +20,30 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
 
     config = Configuration('cluster', parent_package, top_path)
-    config.add_extension('_dbscan_inner',
+    add_cython_extension(top_path,
+                         config,
+                         '_dbscan_inner',
                          sources=['_dbscan_inner.cpp'],
                          include_dirs=[numpy.get_include()],
                          language="c++")
 
-    config.add_extension('_hierarchical',
+    add_cython_extension(top_path,
+                         config,
+                         '_hierarchical',
                          sources=['_hierarchical.cpp'],
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
-    config.add_extension('_k_means_elkan',
+    add_cython_extension(top_path,
+                         config,
+                         '_k_means_elkan',
                          sources=['_k_means_elkan.c'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension(
+    add_cython_extension(
+        top_path,
+        config,
         '_k_means',
         libraries=cblas_libs,
         sources=['_k_means.c'],
