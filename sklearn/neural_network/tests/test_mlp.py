@@ -242,7 +242,7 @@ def test_gradient_with_dropout():
             for dropout in [[0, 0.5], [0.5, 0.5], [0.5, 0], [0, 0]]:
                 mlp = MLPClassifier(activation=activation,
                                     hidden_layer_sizes=10,
-                                    solver='lbgfs', alpha=1e-5,
+                                    solver='lbfgs', alpha=1e-5,
                                     learning_rate_init=0.2, max_iter=1,
                                     random_state=1, dropout=dropout)
                 mlp.fit(X, y)
@@ -586,7 +586,7 @@ def test_sparse_matrices_with_dropout():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
     X_sparse = csr_matrix(X)
-    for solver in ['lbgfs', 'sgd', 'adam']:
+    for solver in ['lbfgs', 'sgd', 'adam']:
         mlp = MLPClassifier(solver=solver, hidden_layer_sizes=15,
                             random_state=1, dropout=[0.5, 0.5])
         mlp.fit(X, y)
