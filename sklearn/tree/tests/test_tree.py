@@ -1671,22 +1671,26 @@ def test_criterion_copy():
 
     def _pickle_copy(obj):
         return pickle.loads(pickle.dumps(obj))
-    for copy_func in [copy.copy, copy.deepcopy, _pickle_copy]:
-        for _, typename in CRITERIA_CLF.items():
-            criteria = typename(n_outputs, n_classes)
-            result = copy_func(criteria).__reduce__()
-            typename_, (n_outputs_, n_classes_), _ = result
-            assert_equal(typename, typename_)
-            assert_equal(n_outputs, n_outputs_)
-            assert_array_equal(n_classes, n_classes_)
 
-        for _, typename in CRITERIA_REG.items():
-            criteria = typename(n_outputs, n_samples)
-            result = copy_func(criteria).__reduce__()
-            typename_, (n_outputs_, n_samples_), _ = result
-            assert_equal(typename, typename_)
-            assert_equal(n_outputs, n_outputs_)
-            assert_equal(n_samples, n_samples_)
+    for copy_func in [copy.copy, copy.deepcopy, _pickle_copy]:
+        for allow_missing in (True, False):
+            for _, typename in CRITERIA_CLF.items():
+                criteria = typename(n_outputs, n_classes, allow_missing)
+                result = copy_func(criteria).__reduce__()
+                typename_, (n_outputs_, n_classes_, allow_missing_), _ = result
+                assert_equal(typename, typename_)
+                assert_equal(n_outputs, n_outputs_)
+                assert_array_equal(n_classes, n_classes_)
+                assert_equal(allow_missing, allow_missing_)
+
+            for _, typename in CRITERIA_REG.items():
+                criteria = typename(n_outputs, n_samples, allow_missing)
+                result = copy_func(criteria).__reduce__()
+                typename_, (n_outputs_, n_samples_, allow_missing_), _ = result
+                assert_equal(typename, typename_)
+                assert_equal(n_outputs, n_outputs_)
+                assert_equal(n_samples, n_samples_)
+                assert_equal(allow_missing, allow_missing_)
 
 
 def test_tree_missing_value_handling_corner_cases_best_splitter():
@@ -1880,7 +1884,7 @@ def test_tree_missing_value_handling_corner_cases_random_splitter():
     # When the missing values are equally from all the classes
     # the tree building should split it into separate node
     X_de = np.array([[110], [100], [1], [2], [0], [np.nan], [500],
-                    [600], [np.nan], [5]])
+                     [600], [np.nan], [5]])
     X_sp = coo_matrix(X_de)
     y = np.array([1, 1, 0, 0, 0, 0, 1, 1, 1, 0])
 
