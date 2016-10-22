@@ -14,6 +14,8 @@ import scipy.sparse as sp
 cimport numpy as np
 cimport cython
 from cython cimport floating
+from cpython cimport array as c_array
+from array import array
 
 from ..utils.extmath import norm
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
