@@ -3,18 +3,21 @@
 #          Lars Buitinck
 # License: BSD 3 clause
 
+import pickle
 import numpy as np
 import math
-from nose.tools import assert_equal
-from nose.tools import assert_false
-from nose.tools import assert_true
-from numpy.testing import (assert_almost_equal,
-                           assert_array_almost_equal)
+
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.utils.fixes import divide, expit
 from sklearn.utils.fixes import astype
+from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import norm
-from sklearn.utils.testing import assert_array_equal
 
 
 def test_expit():
@@ -56,6 +59,15 @@ def test_astype_copy_memory():
     e_int32 = astype(a_int32, dtype=np.int32)
     assert_false(np.may_share_memory(e_int32, a_int32))
 
+
+def test_masked_array_obj_dtype_pickleable():
+    marr = MaskedArray([1, None, 'a'], dtype=object)
+
+    for mask in (True, False, [0, 1, 0]):
+        marr.mask = mask
+        marr_pickled = pickle.loads(pickle.dumps(marr))
+        assert_array_equal(marr.data, marr_pickled.data)
+        assert_array_equal(marr.mask, marr_pickled.mask)
 
 def test_norm():
     X = np.array([[-2, 4, 5],

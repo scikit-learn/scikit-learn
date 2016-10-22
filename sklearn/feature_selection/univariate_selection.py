@@ -162,7 +162,8 @@ def _chisquare(f_obs, f_exp):
     chisq = f_obs
     chisq -= f_exp
     chisq **= 2
-    chisq /= f_exp
+    with np.errstate(invalid="ignore"):
+        chisq /= f_exp
     chisq = chisq.sum(axis=0)
     return chisq, special.chdtrc(k - 1, chisq)
 
@@ -232,12 +233,12 @@ def f_regression(X, y, center=True):
     Quick linear model for testing the effect of a single regressor,
     sequentially for many regressors.
 
-    This is done in 3 steps:
+    This is done in 2 steps:
 
-    1. The regressor of interest and the data are orthogonalized
-       wrt constant regressors.
-    2. The cross correlation between data and regressors is computed.
-    3. It is converted to an F score then to a p-value.
+    1. The cross correlation between each regressor and the target is computed,
+       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
+       std(y)).
+    2. It is converted to an F score then to a p-value.
 
     Read more in the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -318,7 +319,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -355,6 +356,8 @@ class SelectPercentile(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -410,7 +413,7 @@ class SelectPercentile(_BaseFilter):
         mask = scores > treshold
         ties = np.where(scores == treshold)[0]
         if len(ties):
-            max_feats = len(scores) * self.percentile // 100
+            max_feats = int(len(scores) * self.percentile / 100)
             kept_ties = ties[:max_feats - mask.sum()]
             mask[kept_ties] = True
         return mask
@@ -426,6 +429,8 @@ class SelectKBest(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     k : int or "all", optional, default=10
         Number of top features to select.
@@ -498,6 +503,8 @@ class SelectFpr(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest p-value for features to be kept.
@@ -547,6 +554,8 @@ class SelectFdr(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
@@ -562,7 +571,7 @@ class SelectFdr(_BaseFilter):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/False_discovery_rate
+    https://en.wikipedia.org/wiki/False_discovery_rate
 
     See also
     --------
@@ -587,8 +596,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()
@@ -604,6 +613,8 @@ class SelectFwe(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.

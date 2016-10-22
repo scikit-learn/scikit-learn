@@ -8,9 +8,9 @@ from itertools import product
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
-from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
-from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_true, assert_false, assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
@@ -234,6 +234,16 @@ def test_check_array_pandas_dtype_object_conversion():
     # smoke-test against dataframes with column named "dtype"
     X_df.dtype = "Hans"
     assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
+
+
+def test_check_array_on_mock_dataframe():
+    arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    mock_df = MockDataFrame(arr)
+    checked_arr = check_array(mock_df)
+    assert_equal(checked_arr.dtype,
+                 arr.dtype)
+    checked_arr = check_array(mock_df, dtype=np.float32)
+    assert_equal(checked_arr.dtype, np.dtype(np.float32))
 
 
 def test_check_array_dtype_stability():

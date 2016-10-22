@@ -5,7 +5,7 @@
 #          Robert Layton <robertlayton@gmail.com>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Philippe Gervais <philippe.gervais@inria.fr>
-#          Lars Buitinck <larsmans@gmail.com>
+#          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
@@ -54,7 +54,7 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
-def check_pairwise_arrays(X, Y, precomputed=False):
+def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -64,9 +64,9 @@ def check_pairwise_arrays(X, Y, precomputed=False):
 
     Specifically, this function first ensures that both X and Y are arrays,
     then checks that they are at least two dimensional while ensuring that
-    their elements are floats. Finally, the function checks that the size
-    of the second dimension of the two arrays is equal, or the equivalent
-    check for a precomputed distance matrix.
+    their elements are floats (or dtype if provided). Finally, the function
+    checks that the size of the second dimension of the two arrays is equal, or
+    the equivalent check for a precomputed distance matrix.
 
     Parameters
     ----------
@@ -78,6 +78,12 @@ def check_pairwise_arrays(X, Y, precomputed=False):
         True if X is to be treated as precomputed distances to the samples in
         Y.
 
+    dtype : string, type, list of types or None (default=None)
+        Data type required for X and Y. If None, the dtype will be an
+        appropriate float type selected by _return_float_dtype.
+
+        .. versionadded:: 0.18
+
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
@@ -88,13 +94,21 @@ def check_pairwise_arrays(X, Y, precomputed=False):
         If Y was None, safe_Y will be a pointer to X.
 
     """
-    X, Y, dtype = _return_float_dtype(X, Y)
+    X, Y, dtype_float = _return_float_dtype(X, Y)
+
+    warn_on_dtype = dtype is not None
+    estimator = 'check_pairwise_arrays'
+    if dtype is None:
+        dtype = dtype_float
 
     if Y is X or Y is None:
-        X = Y = check_array(X, accept_sparse='csr', dtype=dtype)
+        X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
+                            warn_on_dtype=warn_on_dtype, estimator=estimator)
     else:
-        X = check_array(X, accept_sparse='csr', dtype=dtype)
-        Y = check_array(Y, accept_sparse='csr', dtype=dtype)
+        X = check_array(X, accept_sparse='csr', dtype=dtype,
+                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+        Y = check_array(Y, accept_sparse='csr', dtype=dtype,
+                        warn_on_dtype=warn_on_dtype, estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -773,7 +787,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
     Returns
     -------
-    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -879,7 +893,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
         ``False``, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.17
-           parameter *dense_output* for sparse output.
+           parameter ``dense_output`` for dense output.
 
     Returns
     -------
@@ -1208,13 +1222,31 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not"
                             " support sparse matrices.")
-        X, Y = check_pairwise_arrays(X, Y)
+
+        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
         if n_jobs == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
                                                       **kwds))
         func = partial(distance.cdist, metric=metric, **kwds)
 
     return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
+
+
+# These distances recquire boolean arrays, when using scipy.spatial.distance
+PAIRWISE_BOOLEAN_FUNCTIONS = [
+    'dice',
+    'jaccard',
+    'kulsinski',
+    'matching',
+    'rogerstanimoto',
+    'russellrao',
+    'sokalmichener',
+    'sokalsneath',
+    'yule',
+]
 
 
 # Helper functions - distance
@@ -1322,7 +1354,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    filter_params: boolean
+    filter_params : boolean
         Whether to filter invalid parameters or not.
 
     `**kwds` : optional keyword parameters

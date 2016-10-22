@@ -1,40 +1,24 @@
-machine:
-  environment:
-    # We need to set this variable to let python see the package installed through apt-get
-    PYTHONPATH: "/usr/lib/python2.7/dist-packages"
 dependencies:
   cache_directories:
     - "~/scikit_learn_data"
     - "~/scikit-learn.github.io"
-  # Various dependencies
-  pre:
-    - sudo apt-get update
-    - sudo apt-get install libatlas-dev libatlas3gf-base
-    - sudo apt-get install build-essential python-dev python-setuptools
-    - sudo apt-get install python-numpy python-scipy python-dev python-matplotlib
-    - sudo apt-get install python-nose python-coverage
-    - sudo apt-get install python-sphinx
-    - pip install cython
-  # The --user is needed to let sphinx see the source and the binaries
-  # The pipefail is requested to propagate exit code
+    - "~/download"
+  # Check whether the doc build is required, install build dependencies and
+  # run sphinx to build the doc.
   override:
-    - python setup.py install --user
-    - set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt
+    - ./build_tools/circle/build_doc.sh:
+        timeout: 3600 # seconds
 test:
   # Grep error on the documentation
   override:
     - cat ~/log.txt && if grep -q "Traceback (most recent call last):" ~/log.txt; then false; else true; fi
 deployment:
-  push:
-    branch: master
-    commands:
-      - bash continuous_integration/push_doc.sh
+ push:
+   branch: /^master$|^[0-9]+\.[0-9]+\.X$/
+   commands:
+     - bash build_tools/circle/push_doc.sh
 general:
   # Open the doc to the API
   artifacts:
     - "doc/_build/html"
     - "~/log.txt"
-  # Restric the build to the branch master only
-  branches:
-    only:
-       - master

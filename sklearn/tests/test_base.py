@@ -1,21 +1,34 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import sys
+
 import numpy as np
 import scipy.sparse as sp
 
+import sklearn
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn import datasets
 from sklearn.utils import deprecated
+
+from sklearn.base import TransformerMixin
+from sklearn.utils.mocking import MockDataFrame
+import pickle
 
 
 #############################################################################
@@ -37,6 +50,15 @@ class T(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
+
+
+class ModifyInitParams(BaseEstimator):
+    """Deprecated behavior.
+    Equal parameters but with a type cast.
+    Doesn't fulfill a is a
+    """
+    def __init__(self, a=np.array([0])):
+        self.a = a.copy()
 
 
 class DeprecatedAttributeEstimator(BaseEstimator):
@@ -71,7 +93,7 @@ class NoEstimator(object):
 
 
 class VargEstimator(BaseEstimator):
-    """Sklearn estimators shouldn't have vargs."""
+    """scikit-learn estimators shouldn't have vargs."""
     def __init__(self, *vargs):
         pass
 
@@ -143,6 +165,34 @@ def test_clone_nan():
     assert_true(clf.empty is clf2.empty)
 
 
+def test_clone_copy_init_params():
+    # test for deprecation warning when copying or casting an init parameter
+    est = ModifyInitParams()
+    message = ("Estimator ModifyInitParams modifies parameters in __init__. "
+               "This behavior is deprecated as of 0.18 and support "
+               "for this behavior will be removed in 0.20.")
+
+    assert_warns_message(DeprecationWarning, message, clone, est)
+
+
+def test_clone_sparse_matrices():
+    sparse_matrix_classes = [
+        getattr(sp, name)
+        for name in dir(sp) if name.endswith('_matrix')]
+
+    PY26 = sys.version_info[:2] == (2, 6)
+    if PY26:
+        # sp.dok_matrix can not be deepcopied in Python 2.6
+        sparse_matrix_classes.remove(sp.dok_matrix)
+
+    for cls in sparse_matrix_classes:
+        sparse_matrix = cls(np.eye(5))
+        clf = MyEstimator(empty=sparse_matrix)
+        clf_cloned = clone(clf)
+        assert_true(clf.empty.__class__ is clf_cloned.empty.__class__)
+        assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
+
+
 def test_repr():
     # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
@@ -192,8 +242,8 @@ def test_is_classifier():
     assert_true(is_classifier(svc))
     assert_true(is_classifier(GridSearchCV(svc, {'C': [0.1, 1]})))
     assert_true(is_classifier(Pipeline([('svc', svc)])))
-    assert_true(is_classifier(Pipeline([('svc_cv',
-                              GridSearchCV(svc, {'C': [0.1, 1]}))])))
+    assert_true(is_classifier(Pipeline(
+        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))])))
 
 
 def test_set_params():
@@ -210,9 +260,6 @@ def test_set_params():
 
 
 def test_score_sample_weight():
-    from sklearn.tree import DecisionTreeClassifier
-    from sklearn.tree import DecisionTreeRegressor
-    from sklearn import datasets
 
     rng = np.random.RandomState(0)
 
@@ -232,3 +279,88 @@ def test_score_sample_weight():
                                    sample_weight=sample_weight),
                          msg="Unweighted and weighted scores "
                              "are unexpectedly equal")
+
+
+def test_clone_pandas_dataframe():
+
+    class DummyEstimator(BaseEstimator, TransformerMixin):
+        """This is a dummy class for generating numerical features
+
+        This feature extractor extracts numerical features from pandas data
+        frame.
+
+        Parameters
+        ----------
+
+        df: pandas data frame
+            The pandas data frame parameter.
+
+        Notes
+        -----
+        """
+        def __init__(self, df=None, scalar_param=1):
+            self.df = df
+            self.scalar_param = scalar_param
+
+        def fit(self, X, y=None):
+            pass
+
+        def transform(self, X, y=None):
+            pass
+
+    # build and clone estimator
+    d = np.arange(10)
+    df = MockDataFrame(d)
+    e = DummyEstimator(df, scalar_param=1)
+    cloned_e = clone(e)
+
+    # the test
+    assert_true((e.df == cloned_e.df).values.all())
+    assert_equal(e.scalar_param, cloned_e.scalar_param)
+
+
+class TreeNoVersion(DecisionTreeClassifier):
+    def __getstate__(self):
+        return self.__dict__
+
+
+class TreeBadVersion(DecisionTreeClassifier):
+    def __getstate__(self):
+        return dict(self.__dict__.items(), _sklearn_version="something")
+
+
+def test_pickle_version_warning():
+    # check that warnings are raised when unpickling in a different version
+
+    # first, check no warning when in the same version:
+    iris = datasets.load_iris()
+    tree = DecisionTreeClassifier().fit(iris.data, iris.target)
+    tree_pickle = pickle.dumps(tree)
+    assert_true(b"version" in tree_pickle)
+    assert_no_warnings(pickle.loads, tree_pickle)
+
+    # check that warning is raised on different version
+    tree = TreeBadVersion().fit(iris.data, iris.target)
+    tree_pickle_other = pickle.dumps(tree)
+    message = ("Trying to unpickle estimator TreeBadVersion from "
+               "version {0} when using version {1}. This might lead to "
+               "breaking code or invalid results. "
+               "Use at your own risk.".format("something",
+                                              sklearn.__version__))
+    assert_warns_message(UserWarning, message, pickle.loads, tree_pickle_other)
+
+    # check that not including any version also works:
+    # TreeNoVersion has no getstate, like pre-0.18
+    tree = TreeNoVersion().fit(iris.data, iris.target)
+
+    tree_pickle_noversion = pickle.dumps(tree)
+    assert_false(b"version" in tree_pickle_noversion)
+    message = message.replace("something", "pre-0.18")
+    message = message.replace("TreeBadVersion", "TreeNoVersion")
+    # check we got the warning about using pre-0.18 pickle
+    assert_warns_message(UserWarning, message, pickle.loads,
+                         tree_pickle_noversion)
+
+    # check that no warning is raised for external estimators
+    TreeNoVersion.__module__ = "notsklearn"
+    assert_no_warnings(pickle.loads, tree_pickle_noversion)

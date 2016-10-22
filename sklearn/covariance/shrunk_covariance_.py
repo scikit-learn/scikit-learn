@@ -441,7 +441,7 @@ def oas(X, assume_centered=False):
     The formula we used to implement the OAS
     does not correspond to the one given in the article. It has been taken
     from the MATLAB program available from the author's webpage
-    (https://tbayes.eecs.umich.edu/yilun/covestimation).
+    (http://tbayes.eecs.umich.edu/yilun/covestimation).
 
     """
     X = np.asarray(X)
@@ -485,7 +485,11 @@ class OAS(EmpiricalCovariance):
 
     The formula used here does not correspond to the one given in the
     article. It has been taken from the Matlab program available from the
-    authors' webpage (https://tbayes.eecs.umich.edu/yilun/covestimation).
+    authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
+    In the original article, formula (23) states that 2/p is multiplied by 
+    Trace(cov*cov) in both the numerator and denominator, this operation is omitted
+    in the author's MATLAB program because for a large p, the value of 2/p is so 
+    small that it doesn't affect the value of the estimator. 
 
     Parameters
     ----------

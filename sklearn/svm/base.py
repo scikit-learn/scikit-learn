@@ -9,7 +9,7 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..multiclass import _ovr_decision_function
+from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight, deprecated
@@ -231,6 +231,15 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
+
+        if six.PY2:
+            # In python2 ensure kernel is ascii bytes to prevent a TypeError
+            if isinstance(kernel, six.types.UnicodeType):
+                kernel = str(kernel)
+        if six.PY3:
+            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
+            if isinstance(kernel, bytes):
+                kernel = str(kernel, 'utf8')
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -538,7 +547,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         dec = self._decision_function(X)
         if self.decision_function_shape is None and len(self.classes_) > 2:
             warnings.warn("The decision_function_shape default value will "
-                          "change from 'ovo' to 'ovr' in 0.18. This will change "
+                          "change from 'ovo' to 'ovr' in 0.19. This will change "
                           "the shape of the decision function returned by "
                           "SVC.", ChangedBehaviorWarning)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:

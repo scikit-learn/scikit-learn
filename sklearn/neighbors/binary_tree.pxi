@@ -293,11 +293,10 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
-
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
-    >>> dist, ind = tree.query(X[0], k=3)                # doctest: +SKIP
+    >>> dist, ind = tree.query([X[0]], k=3)                # doctest: +SKIP
     >>> print ind  # indices of 3 closest neighbors
     [0 3 1]
     >>> print dist  # distances to 3 closest neighbors
@@ -375,7 +374,7 @@ cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
 ######################################################################
 # Kernel functions
 #
-# Note: Kernels assume dist is non-negative and and h is positive
+# Note: Kernels assume dist is non-negative and h is positive
 #       All kernel functions are normalized such that K(0, h) = 1.
 #       The fully normalized kernel is:
 #         K = exp[kernel_norm(h, d, kernel) + compute_kernel(dist, h, kernel)]

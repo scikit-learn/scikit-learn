@@ -105,19 +105,19 @@ if __name__ == '__main__':
     results = compute_bench(samples_range, features_range)
     max_time = max(np.max(t) for t in results.values())
 
-    import pylab as pl
-    fig = pl.figure('scikit-learn OMP vs. LARS benchmark results')
+    import matplotlib.pyplot as plt
+    fig = plt.figure('scikit-learn OMP vs. LARS benchmark results')
     for i, (label, timings) in enumerate(sorted(results.iteritems())):
-        ax = fig.add_subplot(1, 2, i)
+        ax = fig.add_subplot(1, 2, i+1)
         vmax = max(1 - timings.min(), -1 + timings.max())
-        pl.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)
+        plt.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)
         ax.set_xticklabels([''] + map(str, samples_range))
         ax.set_yticklabels([''] + map(str, features_range))
-        pl.xlabel('n_samples')
-        pl.ylabel('n_features')
-        pl.title(label)
+        plt.xlabel('n_samples')
+        plt.ylabel('n_features')
+        plt.title(label)
 
-    pl.subplots_adjust(0.1, 0.08, 0.96, 0.98, 0.4, 0.63)
-    ax = pl.axes([0.1, 0.08, 0.8, 0.06])
-    pl.colorbar(cax=ax, orientation='horizontal')
-    pl.show()
+    plt.subplots_adjust(0.1, 0.08, 0.96, 0.98, 0.4, 0.63)
+    ax = plt.axes([0.1, 0.08, 0.8, 0.06])
+    plt.colorbar(cax=ax, orientation='horizontal')
+    plt.show()

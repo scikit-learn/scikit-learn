@@ -547,35 +547,35 @@ def test_logistic_regression_solvers_multiclass():
 
 
 def test_logistic_regressioncv_class_weights():
-    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
-                               n_classes=3, random_state=0)
+    for weight in [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}]:
+        n_classes = len(weight)
+        for class_weight in (weight, 'balanced'):
+            X, y = make_classification(n_samples=30, n_features=3,
+                                       n_repeated=0,
+                                       n_informative=3, n_redundant=0,
+                                       n_classes=n_classes, random_state=0)
 
-    msg = ("In LogisticRegressionCV the liblinear solver cannot handle "
-           "multiclass with class_weight of type dict. Use the lbfgs, "
-           "newton-cg or sag solvers or set class_weight='balanced'")
-    clf_lib = LogisticRegressionCV(class_weight={0: 0.1, 1: 0.2},
-                                   solver='liblinear')
-    assert_raise_message(ValueError, msg, clf_lib.fit, X, y)
-    y_ = y.copy()
-    y_[y == 2] = 1
-    clf_lib.fit(X, y_)
-    assert_array_equal(clf_lib.classes_, [0, 1])
-
-    # Test for class_weight=balanced
-    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
-                               random_state=0)
-    clf_lbf = LogisticRegressionCV(solver='lbfgs', fit_intercept=False,
-                                   class_weight='balanced')
-    clf_lbf.fit(X, y)
-    clf_lib = LogisticRegressionCV(solver='liblinear', fit_intercept=False,
-                                   class_weight='balanced')
-    clf_lib.fit(X, y)
-    clf_sag = LogisticRegressionCV(solver='sag', fit_intercept=False,
-                                   class_weight='balanced', max_iter=2000)
-    clf_sag.fit(X, y)
-    assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
-    assert_array_almost_equal(clf_sag.coef_, clf_lbf.coef_, decimal=4)
-    assert_array_almost_equal(clf_lib.coef_, clf_sag.coef_, decimal=4)
+            clf_lbf = LogisticRegressionCV(solver='lbfgs', Cs=1,
+                                           fit_intercept=False,
+                                           class_weight=class_weight)
+            clf_ncg = LogisticRegressionCV(solver='newton-cg', Cs=1,
+                                           fit_intercept=False,
+                                           class_weight=class_weight)
+            clf_lib = LogisticRegressionCV(solver='liblinear', Cs=1,
+                                           fit_intercept=False,
+                                           class_weight=class_weight)
+            clf_sag = LogisticRegressionCV(solver='sag', Cs=1,
+                                           fit_intercept=False,
+                                           class_weight=class_weight,
+                                           tol=1e-5, max_iter=10000,
+                                           random_state=0)
+            clf_lbf.fit(X, y)
+            clf_ncg.fit(X, y)
+            clf_lib.fit(X, y)
+            clf_sag.fit(X, y)
+            assert_array_almost_equal(clf_lib.coef_, clf_lbf.coef_, decimal=4)
+            assert_array_almost_equal(clf_ncg.coef_, clf_lbf.coef_, decimal=4)
+            assert_array_almost_equal(clf_sag.coef_, clf_lbf.coef_, decimal=4)
 
 
 def test_logistic_regression_sample_weights():
@@ -630,10 +630,10 @@ def test_logistic_regression_sample_weights():
     # since the patched liblinear code is different.
     clf_cw = LogisticRegression(
         solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
-        penalty="l1")
+        penalty="l1", tol=1e-5)
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, penalty="l1")
+        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5)
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
@@ -926,7 +926,6 @@ def test_n_iter():
         assert_equal(clf.n_iter_.shape, (1, n_cv_fold, n_Cs))
 
 
-@ignore_warnings
 def test_warm_start():
     # A 1-iteration second fit on same data should give almost same result
     # with warm starting, and quite different result without warm starting.
@@ -947,11 +946,11 @@ def test_warm_start():
                                              solver=solver,
                                              random_state=42, max_iter=100,
                                              fit_intercept=fit_intercept)
-                    clf.fit(X, y)
-                    coef_1 = clf.coef_
+                    with ignore_warnings(category=ConvergenceWarning):
+                        clf.fit(X, y)
+                        coef_1 = clf.coef_
 
-                    clf.max_iter = 1
-                    with ignore_warnings():
+                        clf.max_iter = 1
                         clf.fit(X, y)
                     cum_diff = np.sum(np.abs(coef_1 - clf.coef_))
                     msg = ("Warm starting issue with %s solver in %s mode "

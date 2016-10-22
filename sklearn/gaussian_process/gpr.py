@@ -23,7 +23,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     The implementation is based on Algorithm 2.1 of Gaussian Processes
     for Machine Learning (GPML) by Rasmussen and Williams.
 
-    In addition to standard sklearn estimator API, GaussianProcessRegressor:
+    In addition to standard scikit-learn estimator API,
+    GaussianProcessRegressor:
 
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method sample_y(X), which evaluates samples
@@ -31,6 +32,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
        * exposes a method log_marginal_likelihood(theta), which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -74,7 +79,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 0)
+    n_restarts_optimizer : int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -83,7 +88,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y: boolean, optional (default: False)
+    normalize_y : boolean, optional (default: False)
         Whether the target values y are normalized, i.e., the mean of the
         observed target values become zero. This parameter should be set to
         True if the target values' mean is expected to differ considerable from
@@ -107,21 +112,22 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_: array-like, shape = (n_samples, [n_output_dims])
+    y_train_ : array-like, shape = (n_samples, [n_output_dims])
         Target values in training data (also required for prediction)
 
-    kernel_: kernel object
+    kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_: array-like, shape = (n_samples, n_samples)
+    L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    alpha_: array-like, shape = (n_samples,)
+    alpha_ : array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
 
-    log_marginal_likelihood_value_: float
+    log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
+
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,

@@ -7,13 +7,14 @@
 #          Brian Holt <bdholt1@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from cpython cimport Py_INCREF, PyObject
 
@@ -63,7 +64,6 @@ TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
-cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
@@ -131,12 +131,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  SIZE_t max_depth):
+                  SIZE_t max_depth, double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
+        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
@@ -166,6 +167,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
+        cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
         splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
@@ -192,13 +194,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 
-        # push root node onto stack
-        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
-        if rc == -1:
-            # got return code -1 - out-of-memory
-            raise MemoryError()
-
         with nogil:
+            # push root node onto stack
+            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+            if rc == -1:
+                # got return code -1 - out-of-memory
+                with gil:
+                    raise MemoryError()
+
             while not stack.is_empty():
                 stack.pop(&stack_record)
 
@@ -213,16 +216,17 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
 
-                is_leaf = ((depth >= max_depth) or
-                           (n_node_samples < min_samples_split) or
-                           (n_node_samples < 2 * min_samples_leaf) or
-                           (weighted_n_node_samples < min_weight_leaf))
+                is_leaf = (depth >= max_depth or
+                           n_node_samples < min_samples_split or
+                           n_node_samples < 2 * min_samples_leaf or
+                           weighted_n_node_samples < 2 * min_weight_leaf)
 
                 if first:
                     impurity = splitter.node_impurity()
                     first = 0
 
-                is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
+                is_leaf = (is_leaf or
+                           (impurity <= min_impurity_split))
 
                 if not is_leaf:
                     splitter.node_split(impurity, &split, &n_constant_features)
@@ -281,20 +285,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     The best node to expand is given by the node at the frontier that has the
     highest impurity improvement.
-
-    NOTE: this TreeBuilder will ignore ``tree.max_depth`` .
     """
     cdef SIZE_t max_leaf_nodes
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf,  min_weight_leaf,
-                  SIZE_t max_depth, SIZE_t max_leaf_nodes):
+                  SIZE_t max_depth, SIZE_t max_leaf_nodes,
+                  double min_impurity_split):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
@@ -341,10 +345,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                       &split_node_left)
             if rc >= 0:
                 rc = _add_to_frontier(&split_node_left, frontier)
-        if rc == -1:
-            raise MemoryError()
 
-        with nogil:
+            if rc == -1:
+                with gil:
+                    raise MemoryError()
+
             while not frontier.is_empty():
                 frontier.pop(&record)
 
@@ -419,6 +424,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
         cdef double weighted_n_samples = splitter.weighted_n_samples
+        cdef double min_impurity_split = self.min_impurity_split
         cdef double weighted_n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
@@ -430,11 +436,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             impurity = splitter.node_impurity()
 
         n_node_samples = end - start
-        is_leaf = ((depth > self.max_depth) or
-                   (n_node_samples < self.min_samples_split) or
-                   (n_node_samples < 2 * self.min_samples_leaf) or
-                   (weighted_n_node_samples < self.min_weight_leaf) or
-                   (impurity <= MIN_IMPURITY_SPLIT))
+        is_leaf = (depth > self.max_depth or
+                   n_node_samples < self.min_samples_split or
+                   n_node_samples < 2 * self.min_samples_leaf or
+                   weighted_n_node_samples < 2 * self.min_weight_leaf or
+                   impurity <= min_impurity_split)
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
@@ -537,12 +543,11 @@ cdef class Tree:
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
-    # must not be be freed by a subsequent memory allocation.
+    # must not be freed by a subsequent memory allocation.
     # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):
-            # it's small; copy for memory safety
-            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs).copy()
+            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
 
     property children_left:
         def __get__(self):
@@ -833,8 +838,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
@@ -979,8 +984,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))

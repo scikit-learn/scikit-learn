@@ -144,7 +144,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
        *LinearDiscriminantAnalysis*.
 
     .. versionchanged:: 0.17
-       Deprecated :class:`lda.LDA` have been moved to *LinearDiscriminantAnalysis*.
+       Deprecated :class:`lda.LDA` have been moved to :class:`LinearDiscriminantAnalysis`.
+
+    Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------
@@ -397,7 +399,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, V = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = S[:self.n_components] / S.sum()
+        self.explained_variance_ratio_ = (S**2 / np.sum(
+                S**2))[:self.n_components]
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, V.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
@@ -553,7 +556,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
        *QuadraticDiscriminantAnalysis*
 
     .. versionchanged:: 0.17
-       Deprecated :class:`qda.QDA` have been moved to *QuadraticDiscriminantAnalysis*.
+       Deprecated :class:`qda.QDA` have been moved to :class:`QuadraticDiscriminantAnalysis`.
+
+    Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------

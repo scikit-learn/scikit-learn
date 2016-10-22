@@ -20,6 +20,7 @@ from ..utils import deprecated
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import combinations_with_replacement as combinations_w_r
+from ..utils.fixes import bincount
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -120,10 +121,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
-    scaling using the ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`)
-    """
+    StandardScaler: Performs scaling to unit variance using the``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+    """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     warn_on_dtype=True, estimator='the scale function',
                     dtype=FLOAT_DTYPES)
@@ -204,7 +204,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     copy : boolean, optional, default True
@@ -239,6 +239,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.17
            *data_range_* instead of deprecated *data_range*.
+
+    See also
+    --------
+    minmax_scale: Equivalent function without the object oriented API.
     """
 
     def __init__(self, feature_range=(0, 1), copy=True):
@@ -394,11 +398,12 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     .. versionadded:: 0.17
-       *minmax_scale* function interface to :class:`sklearn.preprocessing.MinMaxScaler`.
+       *minmax_scale* function interface
+       to :class:`sklearn.preprocessing.MinMaxScaler`.
 
     Parameters
     ----------
-    feature_range: tuple (min, max), default=(0, 1)
+    feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
     axis : int (0 by default)
@@ -408,7 +413,12 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     copy : boolean, optional, default is True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
-    """
+
+    See also
+    --------
+    MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+    """  # noqa
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
     # Although, we want to allow the users to keep calling this function
@@ -502,12 +512,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    :func:`sklearn.preprocessing.scale` to perform centering and
-    scaling without using the ``Transformer`` object oriented API
+    scale: Equivalent function without the object oriented API.
 
-    :class:`sklearn.decomposition.RandomizedPCA` with `whiten=True`
-    to further remove the linear correlation across features.
-    """
+    :class:`sklearn.decomposition.PCA`
+        Further removes the linear correlation across features with 'whiten=True'.
+    """  # noqa
 
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
@@ -515,7 +524,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     @property
-    @deprecated("Attribute ``std_`` will be removed in 0.19. Use ``scale_`` instead")
+    @deprecated("Attribute ``std_`` will be removed in 0.19. "
+                "Use ``scale_`` instead")
     def std_(self):
         return self.scale_
 
@@ -718,6 +728,10 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
+
+    See also
+    --------
+    maxabs_scale: Equivalent function without the object oriented API.
     """
 
     def __init__(self, copy=True):
@@ -848,7 +862,12 @@ def maxabs_scale(X, axis=0, copy=True):
     copy : boolean, optional, default is True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
-    """
+
+    See also
+    --------
+    MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+    """  # noqa
     # To allow retro-compatibility, we handle here the case of 1D-input
     # From 0.17, 1D-input are deprecated in scaler objects
     # Although, we want to allow the users to keep calling this function
@@ -880,8 +899,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
-    the Interquartile Range (IQR). The IQR is the range between the 1st
-    quartile (25th quantile) and the 3rd quartile (75th quantile).
+    the quantile range (defaults to IQR: Interquartile Range).
+    The IQR is the range between the 1st quartile (25th quantile)
+    and the 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
     sample, depending on the `axis` argument) by computing the relevant
@@ -911,6 +931,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     with_scaling : boolean, True by default
         If True, scale the data to interquartile range.
 
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
+        Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
+        Quantile range used to calculate ``scale_``.
+
+        .. versionadded:: 0.18
+
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
@@ -930,23 +956,25 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    :class:`sklearn.preprocessing.StandardScaler` to perform centering
-    and scaling using mean and variance.
+    robust_scale: Equivalent function without the object oriented API.
 
-    :class:`sklearn.decomposition.RandomizedPCA` with `whiten=True`
-    to further remove the linear correlation across features.
+    :class:`sklearn.decomposition.PCA`
+        Further removes the linear correlation across features with
+        'whiten=True'.
 
     Notes
     -----
     See examples/preprocessing/plot_robust_scaling.py for an example.
 
-    http://en.wikipedia.org/wiki/Median_(statistics)
-    http://en.wikipedia.org/wiki/Interquartile_range
+    https://en.wikipedia.org/wiki/Median_(statistics)
+    https://en.wikipedia.org/wiki/Interquartile_range
     """
 
-    def __init__(self, with_centering=True, with_scaling=True, copy=True):
+    def __init__(self, with_centering=True, with_scaling=True,
+                 quantile_range=(25.0, 75.0), copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
+        self.quantile_range = quantile_range
         self.copy = copy
 
     def _check_array(self, X, copy):
@@ -982,7 +1010,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             self.center_ = np.median(X, axis=0)
 
         if self.with_scaling:
-            q = np.percentile(X, (25, 75), axis=0)
+            q_min, q_max = self.quantile_range
+            if not 0 <= q_min <= q_max <= 100:
+                raise ValueError("Invalid quantile range: %s" %
+                                 str(self.quantile_range))
+
+            q = np.percentile(X, self.quantile_range, axis=0)
             self.scale_ = (q[1] - q[0])
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
@@ -1040,7 +1073,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return X
 
 
-def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
+def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
+                 quantile_range=(25.0, 75.0), copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1065,6 +1099,12 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
+    quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
+        Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
+        Quantile range used to calculate ``scale_``.
+
+        .. versionadded:: 0.18
+
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
@@ -1085,12 +1125,11 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.RobustScaler` to perform centering and
-    scaling using the ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`)
+    RobustScaler: Performs centering and scaling using the ``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     copy=copy)
+                     quantile_range=quantile_range, copy=copy)
     if axis == 0:
         return s.fit_transform(X)
     else:
@@ -1140,7 +1179,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    powers_ : array, shape (n_input_features, n_output_features)
+    powers_ : array, shape (n_output_features, n_input_features)
         powers_[i, j] is the exponent of the jth input in the ith output.
 
     n_input_features_ : int
@@ -1158,7 +1197,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     exponentially in the degree. High degrees can cause overfitting.
 
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
-    <example_linear_model_plot_polynomial_interpolation.py>`
+    <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
@@ -1179,8 +1218,38 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
-        return np.vstack(np.bincount(c, minlength=self.n_input_features_)
+        return np.vstack(bincount(c, minlength=self.n_input_features_)
                          for c in combinations)
+
+    def get_feature_names(self, input_features=None):
+        """
+        Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length n_output_features
+
+        """
+        powers = self.powers_
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(powers.shape[1])]
+        feature_names = []
+        for row in powers:
+            inds = np.where(row)[0]
+            if len(inds):
+                name = " ".join("%s^%d" % (input_features[ind], exp)
+                                if exp != 1 else input_features[ind]
+                                for ind, exp in zip(inds, row[inds]))
+            else:
+                name = "1"
+            feature_names.append(name)
+        return feature_names
 
     def fit(self, X, y=None):
         """
@@ -1228,7 +1297,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         return XP
 
 
-def normalize(X, norm='l2', axis=1, copy=True):
+def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     """Scale input vectors individually to unit norm (vector length).
 
     Read more in the :ref:`User Guide <preprocessing_normalization>`.
@@ -1253,11 +1322,13 @@ def normalize(X, norm='l2', axis=1, copy=True):
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
+    return_norm : boolean, default False
+        whether to return the computed norms
+
     See also
     --------
-    :class:`sklearn.preprocessing.Normalizer` to perform normalization
-    using the ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`)
+    Normalizer: Performs normalization using the ``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     if norm not in ('l1', 'l2', 'max'):
         raise ValueError("'%s' is not a supported norm" % norm)
@@ -1297,7 +1368,10 @@ def normalize(X, norm='l2', axis=1, copy=True):
     if axis == 0:
         X = X.T
 
-    return X
+    if return_norm:
+        return X, norms
+    else:
+        return X
 
 
 class Normalizer(BaseEstimator, TransformerMixin):
@@ -1336,8 +1410,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    :func:`sklearn.preprocessing.normalize` equivalent function
-    without the object oriented API
+    normalize: Equivalent function without the object oriented API.
     """
 
     def __init__(self, norm='l2', copy=True):
@@ -1390,9 +1463,8 @@ def binarize(X, threshold=0.0, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.Binarizer` to perform binarization
-    using the ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`)
+    Binarizer: Performs binarization using the ``Transformer`` API
+        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
@@ -1446,6 +1518,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
+
+    See also
+    --------
+    binarize: Equivalent function without the object oriented API.
     """
 
     def __init__(self, threshold=0.0, copy=True):
@@ -1533,6 +1609,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
 
         return K
 
+    @property
+    def _pairwise(self):
+        return True
+
 
 def add_dummy_feature(X, value=1.0):
     """Augment dataset with an additional dummy feature.
@@ -1614,10 +1694,10 @@ def _transform_selected(X, transform, selected="all", copy=True):
     -------
     X : array or sparse matrix, shape=(n_samples, n_features_new)
     """
+    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
+
     if isinstance(selected, six.string_types) and selected == "all":
         return transform(X)
-
-    X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
 
     if len(selected) == 0:
         return X
@@ -1657,6 +1737,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
 
+    Note: a one-hot encoding of y labels should use a LabelBinarizer
+    instead.
+
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
@@ -1668,9 +1751,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         - int : number of categorical values per feature.
                 Each feature value should be in ``range(n_values)``
         - array : ``n_values[i]`` is the number of categorical values in
-                  ``X[:, i]``. Each feature value should be in ``range(n_values[i])``
+                  ``X[:, i]``. Each feature value should be
+                  in ``range(n_values[i])``
 
-    categorical_features: "all" or array of indices or mask
+    categorical_features : "all" or array of indices or mask
         Specify what features are treated as categorical.
 
         - 'all' (default): All features are treated as categorical.
@@ -1729,6 +1813,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
+    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
+      and n_classes-1.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
@@ -1759,7 +1850,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
-        if self.n_values == 'auto':
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
             if (np.max(X, axis=0) >= self.n_values).any():
@@ -1791,7 +1883,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if self.n_values == 'auto':
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
             out = out[:, active_features]
@@ -1842,7 +1935,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if self.n_values == 'auto':
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
             out = out[:, self.active_features_]
 
         return out if self.sparse else out.toarray()

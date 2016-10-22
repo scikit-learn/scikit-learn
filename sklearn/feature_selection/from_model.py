@@ -15,17 +15,16 @@ from ..utils.fixes import norm
 
 def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
-    if hasattr(estimator, "feature_importances_"):
-        importances = estimator.feature_importances_
+    importances = getattr(estimator, "feature_importances_", None)
 
-    elif hasattr(estimator, "coef_"):
+    if importances is None and hasattr(estimator, "coef_"):
         if estimator.coef_.ndim == 1:
             importances = np.abs(estimator.coef_)
 
         else:
             importances = norm(estimator.coef_, axis=0, ord=norm_order)
 
-    else:
+    elif importances is None:
         raise ValueError(
             "The underlying estimator %s has no `coef_` or "
             "`feature_importances_` attribute. Either pass a fitted estimator"
@@ -163,7 +162,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if the
         estimator has a parameter penalty set to l1, either explicitly
-        or implicitly (e.g, Lasso), the threshold is used is 1e-5.
+        or implicitly (e.g, Lasso), the threshold used is 1e-5.
         Otherwise, "mean" is used by default.
 
     prefit : bool, default False

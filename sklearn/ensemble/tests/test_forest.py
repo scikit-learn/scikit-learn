@@ -147,7 +147,7 @@ def check_boston_criterion(name, criterion):
                           random_state=1)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
-    assert_greater(score, 0.95, "Failed with max_features=None, criterion %s "
+    assert_greater(score, 0.94, "Failed with max_features=None, criterion %s "
                                 "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
@@ -159,7 +159,7 @@ def check_boston_criterion(name, criterion):
 
 
 def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", )):
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
         yield check_boston_criterion, name, criterion
 
 
@@ -244,7 +244,7 @@ def test_importances():
     for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
         yield check_importances, name, criterion, X, y
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse"]):
+    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
         yield check_importances, name, criterion, X, y
 
 
@@ -566,6 +566,8 @@ def test_random_trees_dense_equal():
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
 
 
+# Ignore warnings from switching to more power iterations in randomized_svd
+@ignore_warnings
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.

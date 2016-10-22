@@ -7,7 +7,7 @@ Logistic Regression 3-class Classifier
 =========================================================
 
 Show below is a logistic-regression classifiers decision boundaries on the
-`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ dataset. The
+`iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ dataset. The
 datapoints are colored according to their labels.
 
 """
@@ -35,7 +35,7 @@ logreg = linear_model.LogisticRegression(C=1e5)
 logreg.fit(X, Y)
 
 # Plot the decision boundary. For that, we will assign a color to each
-# point in the mesh [x_min, m_max]x[y_min, y_max].
+# point in the mesh [x_min, x_max]x[y_min, y_max].
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))

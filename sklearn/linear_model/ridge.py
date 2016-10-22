@@ -210,8 +210,13 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     alpha : {float, array-like},
         shape = [n_targets] if array-like
-        The l_2 penalty to be used. If an array is passed, penalties are
-        assumed to be specific to targets
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        assumed to be specific to the targets. Hence they must correspond in
+        number.
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
@@ -243,7 +248,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
@@ -280,7 +285,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
-        data, use sklearn.linear_model.center_data before your regression.
+        data, use sklearn.linear_model._preprocess_data before your regression.
 
         .. versionadded:: 0.17
 
@@ -463,7 +468,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                 np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
-        X, y, X_mean, y_mean, X_std = self._center_data(
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
@@ -474,14 +479,14 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True)
-            self.intercept_ += y_mean
+            self.intercept_ += y_offset
         else:
             self.coef_, self.n_iter_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=False)
-            self._set_intercept(X_mean, y_mean, X_std)
+            self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
 
@@ -500,11 +505,13 @@ class Ridge(_BaseRidge, RegressorMixin):
     Parameters
     ----------
     alpha : {float, array-like}, shape (n_targets)
-        Small positive values of alpha improve the conditioning of the problem
-        and reduce the variance of the estimates.  Alpha corresponds to
-        ``C^-1`` in other linear models such as LogisticRegression or
-        LinearSVC. If an array is passed, penalties are assumed to be specific
-        to the targets. Hence they must correspond in number.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. If an array is passed, penalties are
+        assumed to be specific to the targets. Hence they must correspond in
+        number.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -521,6 +528,13 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
         Solver to use in the computational routines:
@@ -583,7 +597,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV, :func:`sklearn.kernel_ridge.KernelRidge`
+    RidgeClassifier, RidgeCV, :class:`sklearn.kernel_ridge.KernelRidge`
 
     Examples
     --------
@@ -636,10 +650,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     Parameters
     ----------
     alpha : float
-        Small positive values of alpha improve the conditioning of the problem
-        and reduce the variance of the estimates.  Alpha corresponds to
-        ``C^-1`` in other linear models such as LogisticRegression or
-        LinearSVC.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC.
 
     class_weight : dict or 'balanced', optional
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -663,6 +678,13 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag'}
         Solver to use in the computational routines:
@@ -682,7 +704,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
-          scipy.sparse.linalg.lsqr. It is the fatest but may not be available
+          scipy.sparse.linalg.lsqr. It is the fastest but may not be available
           in old scipy versions. It also uses an iterative procedure.
 
         - 'sag' uses a Stochastic Average Gradient descent. It also uses an
@@ -828,9 +850,14 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _pre_compute(self, X, y):
+    def _pre_compute(self, X, y, centered_kernel=True):
         # even if X is very sparse, K is usually very dense
         K = safe_sparse_dot(X, X.T, dense_output=True)
+        # the following emulates an additional constant regressor
+        # corresponding to fit_intercept=True
+        # but this is done only when the features have been centered
+        if centered_kernel:
+            K += np.ones_like(K)
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         return v, Q, QT_y
@@ -854,7 +881,11 @@ class _RidgeGCV(LinearModel):
         -----
         We don't construct matrix G, instead compute action on y & diagonal.
         """
-        w = 1.0 / (v + alpha)
+        w = 1. / (v + alpha)
+        constant_column = np.var(Q, 0) < 1.e-12
+        # detect constant columns
+        w[constant_column] = 0  # cancel the regularization for the intercept
+        w[v == 0] = 0
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
         # handle case where y is 2-d
@@ -870,9 +901,13 @@ class _RidgeGCV(LinearModel):
         G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return y - (c / G_diag), c
 
-    def _pre_compute_svd(self, X, y):
+    def _pre_compute_svd(self, X, y, centered_kernel=True):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
+        if centered_kernel:
+            X = np.hstack((X, np.ones((X.shape[0], 1))))
+        # to emulate fit_intercept=True situation, add a column on ones
+        # Note that by centering, the other columns are orthogonal to that one
         U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
@@ -882,7 +917,11 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
+        constant_column = np.var(U, 0) < 1.e-12
+        # detect columns colinear to ones
         w = ((v + alpha) ** -1) - (alpha ** -1)
+        w[constant_column] = - (alpha ** -1)
+        # cancel the regularization for the intercept
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
@@ -918,10 +957,9 @@ class _RidgeGCV(LinearModel):
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
-
         n_samples, n_features = X.shape
 
-        X, y, X_mean, y_mean, X_std = LinearModel._center_data(
+        X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
@@ -951,7 +989,12 @@ class _RidgeGCV(LinearModel):
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
-        v, Q, QT_y = _pre_compute(X, y)
+        if sample_weight is not None:
+            X, y = _rescale_data(X, y, sample_weight)
+
+        centered_kernel = not sparse.issparse(X) and self.fit_intercept
+
+        v, Q, QT_y = _pre_compute(X, y, centered_kernel)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -960,13 +1003,10 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
-            weighted_alpha = (sample_weight * alpha
-                              if sample_weight is not None
-                              else alpha)
             if error:
-                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
+                out, c = _errors(alpha, y, v, Q, QT_y)
             else:
-                out, c = _values(weighted_alpha, y, v, Q, QT_y)
+                out, c = _values(alpha, y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -989,7 +1029,7 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = C[best]
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_values:
             if len(y.shape) == 1:
@@ -1050,7 +1090,8 @@ class _BaseRidgeCV(LinearModel):
             parameters = {'alpha': self.alphas}
             fit_params = {'sample_weight': sample_weight}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
-                              parameters, fit_params=fit_params, cv=self.cv)
+                              parameters, fit_params=fit_params, cv=self.cv,
+                              scoring=self.scoring)
             gs.fit(X, y)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
@@ -1073,10 +1114,11 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     ----------
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. 
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -1085,6 +1127,13 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1101,7 +1150,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used, else, :class:`KFold` is used.
+        :class:`sklearn.model_selection.StratifiedKFold` is used, else, 
+        :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1167,10 +1217,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     ----------
     alphas : numpy array of shape [n_alphas]
         Array of alpha values to try.
-        Small positive values of alpha improve the conditioning of the
-        problem and reduce the variance of the estimates.
-        Alpha corresponds to ``C^-1`` in other linear models such as
-        LogisticRegression or LinearSVC.
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``C^-1`` in other linear models such as 
+        LogisticRegression or LinearSVC. 
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
@@ -1179,6 +1230,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or

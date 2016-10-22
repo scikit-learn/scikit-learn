@@ -1,13 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
 
-from nose.tools import assert_raises, assert_true
-from sklearn.utils.fixes import norm
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
 
@@ -17,6 +17,7 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.utils.fixes import norm
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target

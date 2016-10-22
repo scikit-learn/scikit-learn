@@ -6,11 +6,50 @@ Base class for ensemble-based estimators.
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
-from ..utils import _get_n_jobs
+from ..utils import _get_n_jobs, check_random_state
+
+MAX_RAND_SEED = np.iinfo(np.int32).max
+
+
+def _set_random_states(estimator, random_state=None):
+    """Sets fixed random_state parameters for an estimator
+
+    Finds all parameters ending ``random_state`` and sets them to integers
+    derived from ``random_state``.
+
+    Parameters
+    ----------
+
+    estimator : estimator supporting get/set_params
+        Estimator with potential randomness managed by random_state
+        parameters.
+
+    random_state : numpy.RandomState or int, optional
+        Random state used to generate integer values.
+
+    Notes
+    -----
+    This does not necessarily set *all* ``random_state`` attributes that
+    control an estimator's randomness, only those accessible through
+    ``estimator.get_params()``.  ``random_state``s not controlled include
+    those belonging to:
+
+        * cross-validation splitters
+        * ``scipy.stats`` rvs
+    """
+    random_state = check_random_state(random_state)
+    to_set = {}
+    for key in sorted(estimator.get_params(deep=True)):
+        if key == 'random_state' or key.endswith('__random_state'):
+            to_set[key] = random_state.randint(MAX_RAND_SEED)
+
+    if to_set:
+        estimator.set_params(**to_set)
 
 
 class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
@@ -55,6 +94,10 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the
         `base_estimator_` attribute."""
+        if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
+            raise ValueError("n_estimators must be an integer, "
+                             "got {0}.".format(type(self.n_estimators)))
+
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than zero, "
                              "got {0}.".format(self.n_estimators))
@@ -67,7 +110,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         if self.base_estimator_ is None:
             raise ValueError("base_estimator cannot be None")
 
-    def _make_estimator(self, append=True):
+    def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `base_estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
@@ -76,6 +119,9 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         estimator = clone(self.base_estimator_)
         estimator.set_params(**dict((p, getattr(self, p))
                                     for p in self.estimator_params))
+
+        if random_state is not None:
+            _set_random_states(estimator, random_state)
 
         if append:
             self.estimators_.append(estimator)

@@ -1027,7 +1027,7 @@ def test_non_uniform_weights_toy_edge_case_clf():
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     for loss in ('deviance', 'exponential'):
-        gb = GradientBoostingClassifier(n_estimators=5)
+        gb = GradientBoostingClassifier(n_estimators=5, loss=loss)
         gb.fit(X, y, sample_weight=sample_weight)
         assert_array_equal(gb.predict([[1, 0]]), [1])
 
@@ -1050,6 +1050,9 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
     assert_array_almost_equal(sparse.feature_importances_,
                               auto.feature_importances_)
 
+    assert_array_almost_equal(sparse.predict(X_sparse), dense.predict(X))
+    assert_array_almost_equal(dense.predict(X_sparse), sparse.predict(X))
+
     if isinstance(EstimatorClass, GradientBoostingClassifier):
         assert_array_almost_equal(sparse.predict_proba(X),
                                   dense.predict_proba(X))
@@ -1061,6 +1064,14 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
         assert_array_almost_equal(sparse.predict_log_proba(X),
                                   auto.predict_log_proba(X))
 
+        assert_array_almost_equal(sparse.decision_function(X_sparse),
+                                  sparse.decision_function(X))
+        assert_array_almost_equal(dense.decision_function(X_sparse),
+                                  sparse.decision_function(X))
+
+        assert_array_almost_equal(
+            np.array(sparse.staged_decision_function(X_sparse)),
+            np.array(sparse.staged_decision_function(X)))
 
 @skip_if_32bit
 def test_sparse_input():

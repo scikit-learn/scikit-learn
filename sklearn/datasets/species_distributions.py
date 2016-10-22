@@ -9,11 +9,11 @@ The dataset is provided by Phillips et. al. (2006).
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <http://www.iucnredlist.org/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -141,7 +141,7 @@ def fetch_species_distributions(data_home=None,
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -182,11 +182,11 @@ def fetch_species_distributions(data_home=None,
     The two species are:
 
     - `"Bradypus variegatus"
-      <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+      <http://www.iucnredlist.org/details/3038/0>`_ ,
       the Brown-throated Sloth.
 
     - `"Microryzomys minutus"
-      <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+      <http://www.iucnredlist.org/details/13408/0>`_ ,
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 

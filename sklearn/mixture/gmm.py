@@ -9,13 +9,19 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
-import warnings
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy import linalg
 from time import time
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, deprecated
 from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
@@ -24,14 +30,15 @@ from sklearn.externals.six.moves import zip
 
 EPS = np.finfo(float).eps
 
-
+@deprecated("The function log_multivariate_normal_density is deprecated in 0.18"
+            " and will be removed in 0.20.")
 def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
     """Compute the log probability under a multivariate Gaussian distribution.
 
     Parameters
     ----------
     X : array_like, shape (n_samples, n_features)
-        List of n_features-dimensional data points.  Each row corresponds to a
+        List of n_features-dimensional data points. Each row corresponds to a
         single data point.
 
     means : array_like, shape (n_components, n_features)
@@ -65,6 +72,9 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
         X, means, covars)
 
 
+@deprecated("The function sample_gaussian is deprecated in 0.18"
+            " and will be removed in 0.20."
+            " Use numpy.random.multivariate_normal instead.")
 def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
                     random_state=None):
     """Generate random samples from a Gaussian distribution.
@@ -81,8 +91,8 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
             (n_features, n_features)  if 'tied', or 'full'
 
     covariance_type : string, optional
-        Type of the covariance parameters.  Must be one of
-        'spherical', 'tied', 'diag', 'full'.  Defaults to 'diag'.
+        Type of the covariance parameters. Must be one of
+        'spherical', 'tied', 'diag', 'full'. Defaults to 'diag'.
 
     n_samples : int, optional
         Number of samples to generate. Defaults to 1.
@@ -104,7 +114,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
         rand = np.dot(np.diag(np.sqrt(covar)), rand)
     else:
         s, U = linalg.eigh(covar)
-        s.clip(0, out=s)        # get rid of tiny negatives
+        s.clip(0, out=s)  # get rid of tiny negatives
         np.sqrt(s, out=s)
         U *= s
         rand = np.dot(U, rand)
@@ -112,8 +122,8 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     return (rand.T + mean).T
 
 
-class GMM(BaseEstimator):
-    """Gaussian Mixture Model
+class _GMMBase(BaseEstimator):
+    """Gaussian Mixture Model.
 
     Representation of a Gaussian mixture model probability distribution.
     This class allows for easy evaluation of, sampling from, and
@@ -139,27 +149,27 @@ class GMM(BaseEstimator):
 
     min_covar : float, optional
         Floor on the diagonal of the covariance matrix to prevent
-        overfitting.  Defaults to 1e-3.
+        overfitting. Defaults to 1e-3.
 
     tol : float, optional
         Convergence threshold. EM iterations will stop when average
-        gain in log-likelihood is below this threshold.  Defaults to 1e-3.
+        gain in log-likelihood is below this threshold. Defaults to 1e-3.
 
     n_iter : int, optional
         Number of EM iterations to perform.
 
     n_init : int, optional
-        Number of initializations to perform. the best results is kept
+        Number of initializations to perform. The best results is kept.
 
     params : string, optional
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
-        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+        'm' for means, and 'c' for covars. Defaults to 'wmc'.
 
     init_params : string, optional
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
-        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+        'm' for means, and 'c' for covars. Defaults to 'wmc'.
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it always prints the current
@@ -189,7 +199,7 @@ class GMM(BaseEstimator):
     See Also
     --------
 
-    DPGMM : Infinite gaussian mixture model, using the dirichlet
+    DPGMM : Infinite gaussian mixture model, using the Dirichlet
         process, fit with a variational algorithm
 
 
@@ -208,7 +218,7 @@ class GMM(BaseEstimator):
     >>> # and 10 to use for training.
     >>> obs = np.concatenate((np.random.randn(100, 1),
     ...                       10 + np.random.randn(300, 1)))
-    >>> g.fit(obs) # doctest: +NORMALIZE_WHITESPACE
+    >>> g.fit(obs)  # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, tol=0.001, verbose=0)
@@ -217,16 +227,16 @@ class GMM(BaseEstimator):
     >>> np.round(g.means_, 2)
     array([[ 10.05],
            [  0.06]])
-    >>> np.round(g.covars_, 2) #doctest: +SKIP
+    >>> np.round(g.covars_, 2) # doctest: +SKIP
     array([[[ 1.02]],
            [[ 0.96]]])
-    >>> g.predict([[0], [2], [9], [10]]) #doctest: +ELLIPSIS
+    >>> g.predict([[0], [2], [9], [10]]) # doctest: +ELLIPSIS
     array([1, 1, 0, 0]...)
     >>> np.round(g.score([[0], [2], [9], [10]]), 2)
     array([-2.19, -4.58, -1.75, -1.21])
     >>> # Refit the model on new data (initial parameters remain the
     >>> # same), this time with an even split between the two modes.
-    >>> g.fit(20 * [[0]] +  20 * [[10]]) # doctest: +NORMALIZE_WHITESPACE
+    >>> g.fit(20 * [[0]] + 20 * [[10]])  # doctest: +NORMALIZE_WHITESPACE
     GMM(covariance_type='diag', init_params='wmc', min_covar=0.001,
             n_components=2, n_init=1, n_iter=100, params='wmc',
             random_state=None, tol=0.001, verbose=0)
@@ -284,7 +294,7 @@ class GMM(BaseEstimator):
             return [np.diag(cov) for cov in self.covars_]
 
     def _set_covars(self, covars):
-        """Provide values for covariance"""
+        """Provide values for covariance."""
         covars = np.asarray(covars)
         _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
@@ -334,7 +344,7 @@ class GMM(BaseEstimator):
         Parameters
         ----------
         X : array_like, shape (n_samples, n_features)
-            List of n_features-dimensional data points.  Each row
+            List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
         Returns
@@ -421,8 +431,8 @@ class GMM(BaseEstimator):
     def fit_predict(self, X, y=None):
         """Fit and then predict labels for data.
 
-        Warning: due to the final maximization step in the EM algorithm,
-        with low iterations the prediction may not be 100% accurate
+        Warning: Due to the final maximization step in the EM algorithm,
+        with low iterations the prediction may not be 100%  accurate.
 
         .. versionadded:: 0.17
            *fit_predict* method in Gaussian Mixture Model.
@@ -449,7 +459,7 @@ class GMM(BaseEstimator):
         Parameters
         ----------
         X : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
+            List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
         Returns
@@ -588,7 +598,7 @@ class GMM(BaseEstimator):
         return self
 
     def _do_mstep(self, X, responsibilities, params, min_covar=0):
-        """ Perform the Mstep of the EM algorithm and return the class weights
+        """Perform the Mstep of the EM algorithm and return the cluster weights.
         """
         weights = responsibilities.sum(axis=0)
         weighted_X_sum = np.dot(responsibilities.T, X)
@@ -621,7 +631,7 @@ class GMM(BaseEstimator):
 
     def bic(self, X):
         """Bayesian information criterion for the current model fit
-        and the proposed data
+        and the proposed data.
 
         Parameters
         ----------
@@ -636,7 +646,7 @@ class GMM(BaseEstimator):
 
     def aic(self, X):
         """Akaike information criterion for the current model fit
-        and the proposed data
+        and the proposed data.
 
         Parameters
         ----------
@@ -649,13 +659,26 @@ class GMM(BaseEstimator):
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
 
 
+@deprecated("The class GMM is deprecated in 0.18 and will be "
+            " removed in 0.20. Use class GaussianMixture instead.")
+class GMM(_GMMBase):
+    def __init__(self, n_components=1, covariance_type='diag',
+                 random_state=None, tol=1e-3, min_covar=1e-3,
+                 n_iter=100, n_init=1, params='wmc', init_params='wmc',
+                 verbose=0):
+        super(GMM, self).__init__(
+            n_components=n_components, covariance_type=covariance_type,
+            random_state=random_state, tol=tol, min_covar=min_covar,
+            n_iter=n_iter, n_init=n_init, params=params,
+            init_params=init_params, verbose=verbose)
+
 #########################################################################
 # some helper routines
 #########################################################################
 
 
 def _log_multivariate_normal_density_diag(X, means, covars):
-    """Compute Gaussian log-density at X for a diagonal model"""
+    """Compute Gaussian log-density at X for a diagonal model."""
     n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
                   + np.sum((means ** 2) / covars, 1)
@@ -665,17 +688,17 @@ def _log_multivariate_normal_density_diag(X, means, covars):
 
 
 def _log_multivariate_normal_density_spherical(X, means, covars):
-    """Compute Gaussian log-density at X for a spherical model"""
+    """Compute Gaussian log-density at X for a spherical model."""
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    if covars.shape[1] == 1:
+    if cv.shape[1] == 1:
         cv = np.tile(cv, (1, X.shape[-1]))
     return _log_multivariate_normal_density_diag(X, means, cv)
 
 
 def _log_multivariate_normal_density_tied(X, means, covars):
-    """Compute Gaussian log-density at X for a tied model"""
+    """Compute Gaussian log-density at X for a tied model."""
     cv = np.tile(covars, (means.shape[0], 1, 1))
     return _log_multivariate_normal_density_full(X, means, cv)
 
@@ -707,8 +730,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
 
 
 def _validate_covars(covars, covariance_type, n_components):
-    """Do basic checks on matrix covariance sizes and values
-    """
+    """Do basic checks on matrix covariance sizes and values."""
     from scipy import linalg
     if covariance_type == 'spherical':
         if len(covars) != n_components:
@@ -745,9 +767,11 @@ def _validate_covars(covars, covariance_type, n_components):
                          "'spherical', 'tied', 'diag', 'full'")
 
 
+@deprecated("The functon distribute_covar_matrix_to_match_covariance_type"
+            "is deprecated in 0.18 and will be removed in 0.20.")
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):
-    """Create all the covariance matrices from a given template"""
+    """Create all the covariance matrices from a given template."""
     if covariance_type == 'spherical':
         cv = np.tile(tied_cv.mean() * np.ones(tied_cv.shape[1]),
                      (n_components, 1))
@@ -765,7 +789,7 @@ def distribute_covar_matrix_to_match_covariance_type(
 
 def _covar_mstep_diag(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
-    """Performing the covariance M step for diagonal cases"""
+    """Perform the covariance M step for diagonal cases."""
     avg_X2 = np.dot(responsibilities.T, X * X) * norm
     avg_means2 = gmm.means_ ** 2
     avg_X_means = gmm.means_ * weighted_X_sum * norm
@@ -773,14 +797,14 @@ def _covar_mstep_diag(gmm, X, responsibilities, weighted_X_sum, norm,
 
 
 def _covar_mstep_spherical(*args):
-    """Performing the covariance M step for spherical cases"""
+    """Perform the covariance M step for spherical cases."""
     cv = _covar_mstep_diag(*args)
     return np.tile(cv.mean(axis=1)[:, np.newaxis], (1, cv.shape[1]))
 
 
 def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
-    """Performing the covariance M step for full cases"""
+    """Perform the covariance M step for full cases."""
     # Eq. 12 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
     n_features = X.shape[1]
@@ -798,6 +822,7 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
 
 def _covar_mstep_tied(gmm, X, responsibilities, weighted_X_sum, norm,
                       min_covar):
+    """Perform the covariance M step for tied cases."""
     # Eq. 15 from K. Murphy, "Fitting a Conditional Linear Gaussian
     # Distribution"
     avg_X2 = np.dot(X.T, X)

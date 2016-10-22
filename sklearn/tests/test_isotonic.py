@@ -1,5 +1,7 @@
+import warnings
 import numpy as np
 import pickle
+import copy
 
 from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression)
@@ -78,6 +80,10 @@ def test_isotonic_regression():
     y_ = np.array([3, 6, 6, 8, 8, 8, 10])
     assert_array_equal(y_, isotonic_regression(y))
 
+    y = np.array([10, 0, 2])
+    y_ = np.array([4, 4, 4])
+    assert_array_equal(y_, isotonic_regression(y))
+
     x = np.arange(len(y))
     ir = IsotonicRegression(y_min=0., y_max=1.)
     ir.fit(x, y)
@@ -98,9 +104,9 @@ def test_isotonic_regression():
 
 def test_isotonic_regression_ties_min():
     # Setup examples with ties on minimum
-    x = [0, 1, 1, 2, 3, 4, 5]
-    y = [0, 1, 2, 3, 4, 5, 6]
-    y_true = [0, 1.5, 1.5, 3, 4, 5, 6]
+    x = [1, 1, 2, 3, 4, 5]
+    y = [1, 2, 3, 4, 5, 6]
+    y_true = [1.5, 1.5, 3, 4, 5, 6]
 
     # Check that we get identical results for fit/transform and fit_transform
     ir = IsotonicRegression()
@@ -166,7 +172,12 @@ def test_isotonic_regression_auto_decreasing():
 
     # Create model and fit_transform
     ir = IsotonicRegression(increasing='auto')
-    y_ = assert_no_warnings(ir.fit_transform, x, y)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        y_ = ir.fit_transform(x, y)
+        # work-around for pearson divide warnings in scipy <= 0.17.0
+        assert_true(all(["invalid value encountered in "
+                         in str(warn.message) for warn in w]))
 
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
@@ -180,7 +191,12 @@ def test_isotonic_regression_auto_increasing():
 
     # Create model and fit_transform
     ir = IsotonicRegression(increasing='auto')
-    y_ = assert_no_warnings(ir.fit_transform, x, y)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        y_ = ir.fit_transform(x, y)
+        # work-around for pearson divide warnings in scipy <= 0.17.0
+        assert_true(all(["invalid value encountered in "
+                         in str(warn.message) for warn in w]))
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
@@ -326,6 +342,29 @@ def test_isotonic_duplicate_min_entry():
     assert_true(all_predictions_finite)
 
 
+def test_isotonic_ymin_ymax():
+    # Test from @NelleV's issue:
+    # https://github.com/scikit-learn/scikit-learn/issues/6921
+    x = np.array([1.263, 1.318, -0.572, 0.307, -0.707, -0.176, -1.599, 1.059,
+                  1.396, 1.906, 0.210, 0.028, -0.081, 0.444, 0.018, -0.377,
+                  -0.896, -0.377, -1.327, 0.180])
+    y = isotonic_regression(x, y_min=0., y_max=0.1)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
+
+    # Also test decreasing case since the logic there is different
+    y = isotonic_regression(x, y_min=0., y_max=0.1, increasing=False)
+
+    assert(np.all(y >= 0))
+    assert(np.all(y <= 0.1))
+
+    # Finally, test with only one bound
+    y = isotonic_regression(x, y_min=0., increasing=False)
+
+    assert(np.all(y >= 0))
+
+
 def test_isotonic_zero_weight_loop():
     # Test from @ogrisel's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/4297
@@ -346,3 +385,47 @@ def test_isotonic_zero_weight_loop():
 
     # This will hang in failure case.
     regression.fit(x, y, sample_weight=w)
+
+
+def test_fast_predict():
+    # test that the faster prediction change doesn't
+    # affect out-of-sample predictions:
+    # https://github.com/scikit-learn/scikit-learn/pull/6206
+    rng = np.random.RandomState(123)
+    n_samples = 10 ** 3
+    # X values over the -10,10 range
+    X_train = 20.0 * rng.rand(n_samples) - 10
+    y_train = np.less(
+        rng.rand(n_samples),
+        1.0 / (1.0 + np.exp(-X_train))
+    ).astype('int64')
+
+    weights = rng.rand(n_samples)
+    # we also want to test that everything still works when some weights are 0
+    weights[rng.rand(n_samples) < 0.1] = 0
+
+    slow_model = IsotonicRegression(y_min=0, y_max=1, out_of_bounds="clip")
+    fast_model = IsotonicRegression(y_min=0, y_max=1, out_of_bounds="clip")
+
+    # Build interpolation function with ALL input data, not just the
+    # non-redundant subset. The following 2 lines are taken from the
+    # .fit() method, without removing unnecessary points
+    X_train_fit, y_train_fit = slow_model._build_y(X_train, y_train,
+                                                   sample_weight=weights,
+                                                   trim_duplicates=False)
+    slow_model._build_f(X_train_fit, y_train_fit)
+
+    # fit with just the necessary data
+    fast_model.fit(X_train, y_train, sample_weight=weights)
+
+    X_test = 20.0 * rng.rand(n_samples) - 10
+    y_pred_slow = slow_model.predict(X_test)
+    y_pred_fast = fast_model.predict(X_test)
+
+    assert_array_equal(y_pred_slow, y_pred_fast)
+
+
+def test_isotonic_copy_before_fit():
+    # https://github.com/scikit-learn/scikit-learn/issues/6628
+    ir = IsotonicRegression()
+    copy.copy(ir)
