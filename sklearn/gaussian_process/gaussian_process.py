@@ -65,7 +65,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     """The legacy Gaussian Process model class.
 
     .. deprecated:: 0.18
-        :class:`GaussianProcess` will be removed in 0.20.
+        This class will be removed in 0.20.
         Use the :class:`GaussianProcessRegressor` instead.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
