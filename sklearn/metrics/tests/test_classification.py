@@ -102,16 +102,6 @@ def make_prediction(dataset=None, binary=False):
 # Tests
 
 
-def test_metrics_no_nan():
-    y_test = [np.nan, 1, 2]
-    y_pred = [1, 2, 3]
-
-    err_message = "Input contains NaN, infinity or a value too large for " \
-                  "dtype('float64')."
-
-    for metric in [accuracy_score]:
-        assert_raise_message(ValueError, err_message, metric, y_test, y_pred)
-
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])

@@ -36,11 +36,11 @@ from ..utils import check_consistent_length
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..utils.validation import _num_samples
+from ..utils.validation import _assert_all_finite, _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..utils.fixes import bincount
 from ..exceptions import UndefinedMetricWarning
-from ..utils.validation import _assert_all_finite
+
 
 def _check_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
