@@ -638,7 +638,7 @@ def test_inf_nan_input():
     for metric in CLASSIFICATION_METRICS.values():
         for y_true, y_score in invalids:
             assert_raise_message(ValueError,
-                                 "Input contains NaN, infinity or a value " \
+                                 "Input contains NaN, infinity or a value "
                                  "too large for dtype('float64').",
                                  metric, y_true, y_score)
 
