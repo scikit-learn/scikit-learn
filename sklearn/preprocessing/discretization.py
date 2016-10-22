@@ -53,8 +53,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
            [ 0., 3., -2.,  1.]])
     """
 
-    sparse_formats = ['csr', 'csc']
-
 
     def __init__(self, n_bins=2):
         self.n_bins = n_bins
@@ -85,12 +83,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of bins. Received {0}, expected at least 2."
                              .format(self.n_bins))
 
-        X = check_array(X, accept_sparse=self.sparse_formats, dtype=float,
-                        ensure_2d=False)
+        X = check_array(X, dtype=float, ensure_2d=False)
         self.n_features_ = X.shape[1]
 
-        self.min_ = X.min(axis=0)
-        self.max_ = X.max(axis=0)
+        self.min_ = np.min(X, axis=0)
+        self.max_ = np.max(X, axis=0)
+
+        self.cut_points_ =
+
         return self
 
 
@@ -119,7 +119,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if X.shape[1] != self.n_features_:
             raise ValueError("Transformed array does not have currect number "
                              "of features. Expecting {0}, received {1}."
-                             .format(self.n_features_, X.shape[1]))
+                             .format(s elf.n_features_, X.shape[1]))
 
         # TODO: Make copy parameter?
         X = X.copy()
