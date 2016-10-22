@@ -113,7 +113,9 @@ def test_feature_importances_2d_coef():
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
         for order in [1, 2, np.inf]:
             # Fit SelectFromModel a multi-class problem
-            transformer = SelectFromModel(estimator=LogisticRegression(), threshold=threshold, norm_order=order)
+            transformer = SelectFromModel(estimator=LogisticRegression(),
+                                          threshold=threshold,
+                                          norm_order=order)
             transformer.fit(X, y)
             assert_true(hasattr(transformer.estimator_, 'coef_'))
             X_new = transformer.transform(X)

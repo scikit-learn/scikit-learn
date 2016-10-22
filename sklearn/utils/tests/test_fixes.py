@@ -69,6 +69,7 @@ def test_masked_array_obj_dtype_pickleable():
         assert_array_equal(marr.data, marr_pickled.data)
         assert_array_equal(marr.mask, marr_pickled.mask)
 
+
 def test_norm():
     X = np.array([[-2, 4, 5],
                   [1, 3, -4],
