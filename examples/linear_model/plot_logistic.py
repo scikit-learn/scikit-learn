@@ -4,12 +4,12 @@
 
 """
 =========================================================
-Logit function
+Logistic function
 =========================================================
 
-Show in the plot is how the logistic regression would, in this
+Shown in the plot is how the logistic regression would, in this
 synthetic dataset, classify values as either 0 or 1,
-i.e. class one or two, using the logit-curve.
+i.e. class one or two, using the logistic curve.
 
 """
 print(__doc__)
