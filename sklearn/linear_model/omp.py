@@ -336,7 +336,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     Notes
     -----
-    Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
+    Orthogonal matching pursuit was introduced in S. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
     (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
