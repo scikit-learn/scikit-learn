@@ -1,8 +1,7 @@
 import numpy as np
 
 from sklearn.preprocessing import KBinsDiscretizer
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_equal, assert_raises
 
 X = np.array([[-2, 1, -4,   -1],
               [-1, 2, -3, -0.5],

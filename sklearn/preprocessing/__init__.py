@@ -36,7 +36,7 @@ __all__ = [
     'Binarizer',
     'FunctionTransformer',
     'Imputer',
-    'KBinsDiscretizer'
+    'KBinsDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
