@@ -680,7 +680,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
-                        max_features <= 0):
+                    max_features <= 0):
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
@@ -944,13 +944,16 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a Bm25 weighted representation
 
     Bm25 is a weighting scheme that differs from tf-idf in two main ways:
-        1.) As the frequency of a given term in a document increases, the weight
-            of that term approaches the hyperparameter k asymptotically.
+        1.) As the frequency of a given term in a document increases, the
+            weight of that term approaches the hyperparameter k asymptotically.
 
         2.) Longer documents are penalized, and the impact of terms contained
-            within them is scaled down. The extent to which verbosity is penalized
-            is controlled by the hyperparameter b {0,1}.  If b=0, verbosity is not
-            penalized. If b=1, verbosity of a given document is penalized exactly
+            within them is scaled down. The extent to which verbosity is
+            penalized
+            is controlled by the hyperparameter b {0,1}.  If b=0, verbosity
+            is not
+            penalized. If b=1, verbosity of a given document is penalized
+            exactly
             in proportion to the ratio that document's length and the average
             document length in the corpus.
 
@@ -961,7 +964,8 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
     bm25(t,d): the bm25 weight of term t in document d.
 
     IDF(t): the inverse document frequency of term t, calculated as:
-    log(num_documents/df(t)) where df(t) is the total number of documents in which
+    log(num_documents/df(t)) where df(t) is the total number of documents in
+    which
     term t appears.
 
     k, b: hyperparmeters
@@ -991,7 +995,8 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
     References
     ----------
 
-    .. [Robertson2011] `Stephen Robertson and Hugo Zaragoza (2011). The Probabilistic
+    .. [Robertson2011] `Stephen Robertson and Hugo Zaragoza (2011). The
+    Probabilistic
                         Relevance Framework: BM25 and Beyond`
     """
 
@@ -1034,13 +1039,6 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
         idf = np.log(float(n_samples_calc) / df) + 1.0
         self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, n=n_features)
 
-        # sum along rows for document lengths
-        lengths = np.array(X.sum(axis=1)).reshape((n_samples,))
-        avglen = sum(lengths) / n_samples
-
-        beta = (1 - self.b + self.b * lengths / avglen)
-        self._beta_diag = sp.spdiags(beta, diags=0, m=n_samples, n=n_samples)
-
         return self
 
     def transform(self, X, copy=True):
@@ -1070,7 +1068,6 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
-        check_is_fitted(self, '_beta_diag', 'beta vector is not fitted')
 
         expected_n_features = self._idf_diag.shape[0]
 
@@ -1079,12 +1076,20 @@ class Bm25Transformer(BaseEstimator, TransformerMixin):
                              " has been trained with n_features=%d" % (
                                  n_features, expected_n_features))
 
+        # sum along rows for document lengths
+        lengths = np.array(X.sum(axis=1)).reshape((n_samples,))
+        avglen = sum(lengths) / n_samples
+
+        beta = (1 - self.b + self.b * lengths / avglen)
+        self._beta_diag = sp.spdiags(beta, diags=0, m=n_samples, n=n_samples,
+                                     format='csr')
+
         weightedtfs = X.copy()
+        binary = X.copy()
+        binary.data = np.sign(X.data)
 
-        binary = X>0
-
-        weightedtfs.data = (self.k + 1) / \
-                           (self.k * self._beta_diag.dot(binary).data / X.data + 1)
+        weightedtfs.data = ((self.k + 1) / (self.k * self._beta_diag.dot(
+            binary).data / X.data + 1))
 
         bm25 = weightedtfs.dot(self._idf_diag)
         return bm25
@@ -1201,7 +1206,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(float(n_samples) / df) + 1.0
-            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features, 
+            self._idf_diag = sp.spdiags(idf, diags=0, m=n_features,
                                         n=n_features, format='csr')
 
         return self
@@ -1547,7 +1552,8 @@ class TfidfVectorizer(CountVectorizer):
 
 
 class Bm25Vectorizer(CountVectorizer):
-    """Convert a collection of raw documents to a matrix of BM25 weighted features.
+    """Convert a collection of raw documents to a matrix of BM25 weighted
+    features.
 
      Equivalent to CountVectorizer followed by BM25Transformer.
 
@@ -1720,7 +1726,6 @@ class Bm25Vectorizer(CountVectorizer):
                  max_df=1.0, min_df=1, max_features=None,
                  vocabulary=None, binary=False, dtype=np.int64,
                  smooth_idf=True, k=2, b=0.75):
-
         super(Bm25Vectorizer, self).__init__(
             input=input, encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
@@ -1760,11 +1765,9 @@ class Bm25Vectorizer(CountVectorizer):
     def idf_(self):
         return self._bm25.idf_
 
-
     @property
     def beta_(self):
         return self._bm25.beta_
-
 
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.
@@ -1781,7 +1784,7 @@ class Bm25Vectorizer(CountVectorizer):
         X = super(Bm25Vectorizer, self).fit_transform(raw_documents)
         self._bm25.fit(X)
         return self
- 
+
     def fit_transform(self, raw_documents, y=None):
         """Learn vocabulary and idf, return term-document matrix.
 
@@ -1826,5 +1829,3 @@ class Bm25Vectorizer(CountVectorizer):
         """
         X = super(Bm25Vectorizer, self).transform(raw_documents)
         return self._bm25.transform(X, copy=False)
-
-

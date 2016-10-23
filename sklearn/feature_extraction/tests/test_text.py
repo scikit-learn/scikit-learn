@@ -310,13 +310,14 @@ def test_bm25_no_smoothing():
          [0, 1, 1, 2]]
     tr = Bm25Transformer(smooth_idf=False, k=2, b=0.75)
     bm25_act = tr.fit_transform(X).toarray()
-    assert(tr._beta_diag.shape[0]==3)
-    assert(tr._beta_diag.shape[1]==3)
+    assert(tr._beta_diag.shape[0] == 3)
+    assert(tr._beta_diag.shape[1] == 3)
     bm25_exp = np.array([[2.62326536, 1.25, 0., 0.],
                          [0., 1.39534884, 1.9611141, 0.],
                          [0., 0.90909091, 1.27769555, 2.92829622]])
 
     assert_array_almost_equal(bm25_exp, bm25_act)
+
 
 def test_bm25_smoothing():
     X = [[1, 1, 1],
@@ -333,6 +334,33 @@ def test_bm25_smoothing():
     tr = Bm25Transformer(smooth_idf=True)
     bm25 = tr.fit_transform(X).toarray()
     assert_true((bm25 >= 0).all())
+
+def test_bm25_idf_shape():
+    X1 = [[1, 1, 1],
+          [2, 0, 1]]
+
+    X2 = [3,1,0]
+
+    tr = Bm25Transformer(smooth_idf = True)
+    tr.fit(X1)
+    assert_true(hasattr(tr, "idf_"))
+    if hasattr(tr, "idf_"):
+        assert_true(tr.idf_.shape[0] == 3)
+
+
+def test_bm25_beta_shape():
+    X1 = [[1, 1, 1],
+          [2, 0, 1]]
+
+    X2 = [3,1,0]
+
+    tr = Bm25Transformer(smooth_idf = True)
+    tr.fit(X1)
+    tr.transform(X2)
+    assert_true(hasattr(tr, "beta_"))
+    if hasattr(tr, "beta_"):
+        print(tr.beta_)
+        assert_true(tr.beta_.shape[0] == 1)
 
 
 def test_tf_idf_smoothing():
