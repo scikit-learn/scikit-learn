@@ -23,7 +23,6 @@ import unicodedata
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import dot
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -671,7 +670,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
-                        max_features <= 0):
+                    max_features <= 0):
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
