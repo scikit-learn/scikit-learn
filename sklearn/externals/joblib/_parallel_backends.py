@@ -25,9 +25,9 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
     def effective_n_jobs(self, n_jobs):
         """Determine the number of jobs that can actually run in parallel
 
-        n_jobs is the is the number of workers requested by the callers.
-        Passing n_jobs=-1 means requesting all available workers for instance
-        matching the number of CPU cores on the worker host(s).
+        n_jobs is the number of workers requested by the callers. Passing
+        n_jobs=-1 means requesting all available workers for instance matching
+        the number of CPU cores on the worker host(s).
 
         This method should return a guesstimate of the number of workers that
         can actually perform work concurrently. The primary use case is to make
@@ -265,12 +265,16 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
         This also checks if we are attempting to create a nested parallel
         loop.
         """
+        if mp is None:
+            return 1
+
         if mp.current_process().daemon:
             # Daemonic processes cannot have children
-            warnings.warn(
-                'Multiprocessing-backed parallel loops cannot be nested,'
-                ' setting n_jobs=1',
-                stacklevel=3)
+            if n_jobs != 1:
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested,'
+                    ' setting n_jobs=1',
+                    stacklevel=3)
             return 1
 
         elif threading.current_thread().name != 'MainThread':

@@ -9,17 +9,17 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
-from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_equal, assert_true, assert_false
 from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import ignore_warnings, assert_raises
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError

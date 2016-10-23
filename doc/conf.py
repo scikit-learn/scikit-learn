@@ -32,10 +32,19 @@ import sphinx_gallery
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-    'sphinx.ext.pngmath', 'numpy_ext.numpydoc',
+    'numpy_ext.numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx_gallery.gen_gallery',
 ]
+
+# pngmath / imgmath compatibility layer for different sphinx versions
+import sphinx
+from distutils.version import LooseVersion
+if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
+    extensions.append('sphinx.ext.pngmath')
+else:
+    extensions.append('sphinx.ext.imgmath')
+
 
 autodoc_default_flags = ['members', 'inherited-members']
 

@@ -32,6 +32,10 @@ from ._parallel_backends import (FallbackToBackend, MultiprocessingBackend,
 from ._compat import _basestring
 from .func_inspect import getfullargspec
 
+# Make sure that those two classes are part of the public joblib.parallel API
+# so that 3rd party backend implementers can import them from here.
+from ._parallel_backends import AutoBatchingMixin  # noqa
+from ._parallel_backends import ParallelBackendBase  # noqa
 
 BACKENDS = {
     'multiprocessing': MultiprocessingBackend,

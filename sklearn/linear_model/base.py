@@ -459,6 +459,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         array. If the target vector passed during the fit is 1-dimensional,
         this is a (1,) shape array.
 
+        .. versionadded:: 0.18
+
     intercept_ : array
         Independent term in the linear model.
 

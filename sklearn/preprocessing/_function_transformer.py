@@ -23,6 +23,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     .. versionadded:: 0.17
 
+    Read more in the :ref:`User Guide <function_transformer>`.
+
     Parameters
     ----------
     func : callable, optional default=None
@@ -48,7 +50,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         False, this has no effect. Otherwise, if accept_sparse is false,
         sparse matrix inputs will cause an exception to be raised.
 
-    pass_y: bool, optional default=False
+    pass_y : bool, optional default=False
         Indicate that transform should forward the y argument to the
         inner callable.
 

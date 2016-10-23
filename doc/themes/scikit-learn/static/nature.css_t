@@ -40,9 +40,7 @@ ul.horizontal, ul.horizontal li {
 
 
 div.header {
-    /* for the logo to correctly expand when showing results
-       but remain cut when not */
-       height: 60px;
+    /* Don't leave a fixed height. It won't allow the header to expand when search results appear. */
 }
 
 
@@ -107,6 +105,9 @@ div.navbar div.nav-icon {
 }
 /* Nav bar collapses for mobile phones and shows the hamburger */
 @media screen and (max-width: 680px) {
+    div.header {
+      height: 60px;
+    }
     div.navbar div.nav-icon {
         position: absolute;
         display: inline-block;
@@ -116,6 +117,7 @@ div.navbar div.nav-icon {
         background: #ff9c34;
         padding: 5px 10px;
         border-radius: 5px;
+        z-index: 10;
     }
     div.navbar ul li {
         display: none;
@@ -128,7 +130,7 @@ div.navbar div.nav-icon {
         margin-left: 6px;
     }
     div.navbar.responsive > ul li.btn-li + li {
-        margin-top: -5px;   
+        margin-top: -5px;
     }
     div.navbar.responsive > ul {
         visiblity: visible;
@@ -137,6 +139,7 @@ div.navbar div.nav-icon {
         top: 10px;
         margin-right: 10px;
         background: #ff9c34;
+        z-index: 9;
     }
     div.navbar.responsive > ul li {
         display: flex;
@@ -548,6 +551,30 @@ div.highlight a {
     text-decoration: underline;
 }
 
+div.highlight:hover span.copybutton {
+    background-color: #3F556B;
+}
+
+div.highlight:hover span.copybutton:hover {
+    background-color: #20252B;
+}
+
+@media (min-width: 1060px) {
+    div.highlight:hover span.copybutton:after{
+	background: #3F556B;
+	border-radius: 5px;
+	color: white;
+	content: attr(title);
+	left: 110%;
+	padding: 5px 15px;
+	position: absolute;
+	z-index: 98;
+	width: 140px;
+	top: -10px;
+    }
+}
+
+
 div.note {
     background-color: #eee;
     border: 1px solid #ccc;
@@ -774,6 +801,11 @@ div.sprint-wrapper:hover {
 }
 
 /*-----------------------The Examples Gallery-------------------------------*/
+
+div.sphx-glr-download code.download {
+  display: inline-block;
+  white-space: normal;
+}
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
@@ -1186,6 +1218,7 @@ div.navbar ul.dropdown-menu li a.btn {
   vertical-align: middle;
   padding: 0;
   padding-left: 4px;
+  font-size: 8px;
 }
 
 .navbar .btn-group .btn {
@@ -1195,10 +1228,6 @@ div.navbar ul.dropdown-menu li a.btn {
 .navbar .btn-group.open .btn.dropdown-toggle {
   background-color: transparent;
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
-}
-
-a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
-  vertical-align: baseline;
 }
 
 li#other-versions {
@@ -1268,7 +1297,7 @@ li#other-versions {
   color: #fff;
   vertical-align: middle;
   border-top-color: rgb(255, 255, 255);
-  padding-bottom: 8px;
+  padding-bottom: 5px;
 }
 
 .navbar .dropdown-menu .divider {

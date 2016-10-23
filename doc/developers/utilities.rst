@@ -188,11 +188,6 @@ Backports
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
 
-- :func:`fixes.isclose`
-  (backported from ``numpy.isclose`` in numpy 1.8.1).
-  In versions before 1.7, this function was not available in
-  numpy. Used in ``sklearn.metrics``.
-
 
 ARPACK
 ------

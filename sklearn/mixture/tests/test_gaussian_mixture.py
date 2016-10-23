@@ -33,6 +33,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -650,7 +651,7 @@ def test_gaussian_mixture_fit_convergence_warning():
         assert_warns_message(ConvergenceWarning,
                              'Initialization %d did not converged. '
                              'Try different init parameters, '
-                             'or increase n_init, tol '
+                             'or increase max_iter, tol '
                              'or check for degenerate data.'
                              % max_iter, g.fit, X)
 
@@ -883,10 +884,12 @@ def test_regularisation():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
             assert_raise_message(ValueError,
-                                 "The algorithm has diverged because of too "
-                                 "few samples per components. "
-                                 "Try to decrease the number of components, "
-                                 "or increase reg_covar.", gmm.fit, X)
+                                 "Fitting the mixture model failed because "
+                                 "some components have ill-defined empirical "
+                                 "covariance (for instance caused by "
+                                 "singleton or collapsed samples). Try to "
+                                 "decrease the number of components, or "
+                                 "increase reg_covar.", gmm.fit, X)
 
             gmm.set_params(reg_covar=1e-6).fit(X)
 
@@ -902,7 +905,6 @@ def test_property():
                               covariance_type=covar_type, random_state=rng,
                               n_init=5)
         gmm.fit(X)
-        print(covar_type)
         if covar_type == 'full':
             for prec, covar in zip(gmm.precisions_, gmm.covariances_):
 
@@ -912,3 +914,70 @@ def test_property():
                                       gmm.covariances_)
         else:
             assert_array_almost_equal(gmm.precisions_, 1. / gmm.covariances_)
+
+
+def test_sample():
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=7, n_components=3)
+    n_features, n_components = rand_data.n_features, rand_data.n_components
+
+    for covar_type in COVARIANCE_TYPE:
+        X = rand_data.X[covar_type]
+
+        gmm = GaussianMixture(n_components=n_components,
+                              covariance_type=covar_type, random_state=rng)
+        # To sample we need that GaussianMixture is fitted
+        assert_raise_message(NotFittedError, "This GaussianMixture instance "
+                             "is not fitted", gmm.sample, 0)
+        gmm.fit(X)
+
+        assert_raise_message(ValueError, "Invalid value for 'n_samples",
+                             gmm.sample, 0)
+
+        # Just to make sure the class samples correctly
+        n_samples = 20000
+        X_s, y_s = gmm.sample(n_samples)
+
+        for k in range(n_components):
+            if covar_type == 'full':
+                assert_array_almost_equal(gmm.covariances_[k],
+                                          np.cov(X_s[y_s == k].T), decimal=1)
+            elif covar_type == 'tied':
+                assert_array_almost_equal(gmm.covariances_,
+                                          np.cov(X_s[y_s == k].T), decimal=1)
+            elif covar_type == 'diag':
+                assert_array_almost_equal(gmm.covariances_[k],
+                                          np.diag(np.cov(X_s[y_s == k].T)),
+                                          decimal=1)
+            else:
+                assert_array_almost_equal(
+                    gmm.covariances_[k], np.var(X_s[y_s == k] - gmm.means_[k]),
+                    decimal=1)
+
+        means_s = np.array([np.mean(X_s[y_s == k], 0)
+                           for k in range(n_components)])
+        assert_array_almost_equal(gmm.means_, means_s, decimal=1)
+
+        # Check shapes of sampled data, see
+        # https://github.com/scikit-learn/scikit-learn/issues/7701
+        assert_equal(X_s.shape, (n_samples, n_features))
+
+        for sample_size in range(1, 100):
+            X_s, _ = gmm.sample(sample_size)
+            assert_equal(X_s.shape, (sample_size, n_features))
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_init():
+    # We check that by increasing the n_init number we have a better solution
+    random_state = 0
+    rand_data = RandomData(np.random.RandomState(random_state), scale=1)
+    n_components = rand_data.n_components
+    X = rand_data.X['full']
+
+    gmm1 = GaussianMixture(n_components=n_components, n_init=1,
+                           max_iter=1, random_state=random_state).fit(X)
+    gmm2 = GaussianMixture(n_components=n_components, n_init=100,
+                           max_iter=1, random_state=random_state).fit(X)
+
+    assert_greater(gmm2.lower_bound_, gmm1.lower_bound_)

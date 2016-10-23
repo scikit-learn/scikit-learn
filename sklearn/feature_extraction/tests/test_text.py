@@ -22,19 +22,15 @@ from sklearn.svm import LinearSVC
 from sklearn.base import clone
 
 import numpy as np
-from nose import SkipTest
-from nose.tools import assert_equal
-from nose.tools import assert_false
-from nose.tools import assert_not_equal
-from nose.tools import assert_true
-from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.random import choice
-from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
+from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
+                                   assert_not_equal, assert_almost_equal,
+                                   assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry)
+                                   clean_warning_registry, SkipTest)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -893,7 +889,6 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     assert_true(vect.fixed_vocabulary_)
 
 
-
 def test_pickling_vectorizer():
     instances = [
         HashingVectorizer(),
@@ -928,7 +923,7 @@ def test_countvectorizer_vocab_sets_when_pickling():
                             'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
         vocab_set = set(choice(vocab_words, size=5, replace=False,
-                        random_state=rng))
+                               random_state=rng))
         cv = CountVectorizer(vocabulary=vocab_set)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
@@ -1028,3 +1023,14 @@ def test_vectorizer_vocab_clone():
     vect_vocab_clone.fit(ALL_FOOD_DOCS)
     assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
 
+
+def test_vectorizer_string_object_as_input():
+    message = ("Iterable over raw text documents expected, "
+               "string object received.")
+    for vec in [CountVectorizer(), TfidfVectorizer(), HashingVectorizer()]:
+        assert_raise_message(
+            ValueError, message, vec.fit_transform, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.fit, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.transform, "hello world!")

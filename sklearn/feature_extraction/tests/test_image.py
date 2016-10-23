@@ -6,14 +6,13 @@ import numpy as np
 import scipy as sp
 from scipy import ndimage
 
-from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
 from sklearn.utils.graph import connected_components
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import SkipTest, assert_equal, assert_true
 from sklearn.utils.fixes import sp_version
 
 if sp_version < (0, 12):

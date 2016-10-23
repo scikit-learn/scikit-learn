@@ -44,15 +44,6 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-def test_kmeans_dtype():
-    rnd = np.random.RandomState(0)
-    X = rnd.normal(size=(40, 2))
-    X = (X * 10).astype(np.uint8)
-    km = KMeans(n_init=1).fit(X)
-    pred_x = assert_warns(DataConversionWarning, km.predict, X)
-    assert_array_equal(km.labels_, pred_x)
-
-
 def test_elkan_results():
     rnd = np.random.RandomState(0)
     X_normal = rnd.normal(size=(50, 10))
@@ -669,7 +660,7 @@ def test_int_input():
 
         expected_labels = [0, 1, 1, 0, 0, 1]
         scores = np.array([v_measure_score(expected_labels, km.labels_)
-                        for km in fitted_models])
+                           for km in fitted_models])
         assert_array_equal(scores, np.ones(scores.shape[0]))
 
 
@@ -793,24 +784,28 @@ def test_float_precision():
                 if is_sparse:
                     X_test = sp.csr_matrix(X_csr, dtype=dtype)
                 else:
-                    X_test = dtype(X)
+                    X_test = X.astype(dtype)
                 estimator.fit(X_test)
-                # dtype of cluster centers has to be the dtype of the input data
+                # dtype of cluster centers has to be the dtype of the input
+                # data
                 assert_equal(estimator.cluster_centers_.dtype, dtype)
                 inertia[dtype] = estimator.inertia_
                 X_new[dtype] = estimator.transform(X_test)
                 centers[dtype] = estimator.cluster_centers_
-                # make sure predictions correspond to the correct label
-                assert_equal(estimator.predict(X_test[0]), estimator.labels_[0])
+                # ensure the extracted row is a 2d array
+                assert_equal(estimator.predict(X_test[:1]),
+                             estimator.labels_[0])
                 if hasattr(estimator, 'partial_fit'):
                     estimator.partial_fit(X_test[0:3])
-                    # dtype of cluster centers has to stay the same after partial_fit
+                    # dtype of cluster centers has to stay the same after
+                    # partial_fit
                     assert_equal(estimator.cluster_centers_.dtype, dtype)
 
             # compare arrays with low precision since the difference between
-            # 32 and 64 bit sometimes makes a difference up to the 4th decimal place
+            # 32 and 64 bit sometimes makes a difference up to the 4th decimal
+            # place
             assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
-                                    decimal=4)
+                                      decimal=4)
             assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
                                       decimal=4)
             assert_array_almost_equal(centers[np.float32], centers[np.float64],
@@ -818,14 +813,14 @@ def test_float_precision():
 
 
 def test_KMeans_init_centers():
-    # This test is used to check KMeans won't mutate the user provided input array silently
-    # even if input data and init centers have the same type
+    # This test is used to check KMeans won't mutate the user provided input
+    # array silently even if input data and init centers have the same type
     X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
     init_centers = np.array([[0.0, 0.0], [5.0, 5.0], [-5.0, -5.0]])
     for dtype in [np.int32, np.int64, np.float32, np.float64]:
         X_test = dtype(X_small)
         init_centers_test = dtype(init_centers)
         assert_array_equal(init_centers, init_centers_test)
-        km = KMeans(init=init_centers_test, n_clusters=3)
+        km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
         km.fit(X_test)
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))

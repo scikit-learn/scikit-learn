@@ -67,6 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
+# Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
@@ -107,7 +108,7 @@ except TypeError:
 try:
     np.array(5).astype(float, copy=False)
 except TypeError:
-    # Compat where astype accepted no copy argument
+    # Compat where astype accepted no copy argument (numpy < 1.7.0)
     def astype(array, dtype, copy=True):
         if not copy and array.dtype == dtype:
             return array
@@ -225,49 +226,6 @@ except ImportError:
                 return
             indices[i:] = [indices[i] + 1] * (r - i)
             yield tuple(pool[i] for i in indices)
-
-
-try:
-    from numpy import isclose
-except ImportError:
-    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
-        """
-        Returns a boolean array where two arrays are element-wise equal within
-        a tolerance.
-
-        This function was added to numpy v1.7.0, and the version you are
-        running has been backported from numpy v1.8.1. See its documentation
-        for more details.
-        """
-        def within_tol(x, y, atol, rtol):
-            with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
-            if np.isscalar(a) and np.isscalar(b):
-                result = bool(result)
-            return result
-
-        x = np.array(a, copy=False, subok=True, ndmin=1)
-        y = np.array(b, copy=False, subok=True, ndmin=1)
-        xfin = np.isfinite(x)
-        yfin = np.isfinite(y)
-        if all(xfin) and all(yfin):
-            return within_tol(x, y, atol, rtol)
-        else:
-            finite = xfin & yfin
-            cond = np.zeros_like(finite, subok=True)
-            # Since we're using boolean indexing, x & y must be the same shape.
-            # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
-            # lib.stride_tricks, though, so we can't import it here.
-            x = x * np.ones_like(cond)
-            y = y * np.ones_like(cond)
-            # Avoid subtraction with infinite/nan values...
-            cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
-            # Check for equality of infinite values...
-            cond[~finite] = (x[~finite] == y[~finite])
-            if equal_nan:
-                # Make NaN == NaN
-                cond[np.isnan(x) & np.isnan(y)] = True
-            return cond
 
 
 if np_version < (1, 7):
@@ -443,3 +401,21 @@ if sp_version < (0, 13, 0):
         return .5 * (count[dense] + count[dense - 1] + 1)
 else:
     from scipy.stats import rankdata
+
+
+if np_version < (1, 12, 0):
+    class MaskedArray(np.ma.MaskedArray):
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
+        # This fix is needed to make our model_selection.GridSearchCV
+        # picklable as the ``cv_results_`` param uses MaskedArray
+        def __getstate__(self):
+            """Return the internal state of the masked array, for pickling
+            purposes.
+
+            """
+            cf = 'CF'[self.flags.fnc]
+            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
+                                 self._fill_value)
+else:
+    from numpy.ma import MaskedArray    # noqa

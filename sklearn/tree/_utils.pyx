@@ -62,10 +62,10 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
 
 
 cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
-    """Encapsulate data into a 1D numpy array of intp's."""
+    """Return copied data as 1D numpy array of intp's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
-    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data)
+    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data).copy()
 
 
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,

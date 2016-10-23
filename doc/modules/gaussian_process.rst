@@ -66,7 +66,7 @@ WhiteKernel component into the kernel, which can estimate the global noise
 level from the data (see example below).
 
 The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
-the API of standard sklearn estimators, GaussianProcessRegressor:
+the API of standard scikit-learn estimators, GaussianProcessRegressor:
 
 * allows prediction without prior fitting (based on the GP prior)
 
@@ -164,7 +164,7 @@ than just predicting the mean.
 GPR on Mauna Loa CO2 data
 -------------------------
 
-This example is based on Section 5.4.3 of [RW2006]_. 
+This example is based on Section 5.4.3 of [RW2006]_.
 It illustrates an example of complex kernel engineering and
 hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
@@ -602,11 +602,11 @@ References
 ----------
 
     * `[RW2006]
-      <http://www.gaussianprocess.org/gpml/chapters/>`_ 
-      **Gaussian Processes for Machine Learning**, 
-      Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006. 
-      Link to an official complete PDF version of the book 
-      `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ . 
+      <http://www.gaussianprocess.org/gpml/chapters/>`_
+      **Gaussian Processes for Machine Learning**,
+      Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006.
+      Link to an official complete PDF version of the book
+      `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
 
@@ -616,9 +616,9 @@ References
 Legacy Gaussian Processes
 =========================
 
-In this section, the implementation of Gaussian processes used in sklearn until
-release 0.16.1 is described. Note that this implementation is deprecated and
-will be removed in version 0.18.
+In this section, the implementation of Gaussian processes used in scikit-learn
+until release 0.16.1 is described. Note that this implementation is deprecated
+and will be removed in version 0.18.
 
 An introductory regression example
 ----------------------------------
