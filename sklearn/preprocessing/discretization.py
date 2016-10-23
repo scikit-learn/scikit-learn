@@ -3,7 +3,7 @@
 from __future__ import division
 
 import numpy as np
-from six.moves import xrange
+from ..externals.six.moves import xrange
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_array, check_is_fitted, column_or_1d
