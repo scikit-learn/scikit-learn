@@ -1,18 +1,22 @@
-# These tests are those of the deprecated GMM class
-
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
 import unittest
 import copy
 import sys
 
-from nose.tools import assert_true
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_raises)
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.utils.testing import (assert_greater, assert_raise_message,
-                                   assert_warns_message, ignore_warnings)
+from sklearn.utils.testing import (assert_true, assert_greater,
+                                   assert_raise_message, assert_warns_message,
+                                   ignore_warnings)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.externals.six.moves import cStringIO as StringIO
 

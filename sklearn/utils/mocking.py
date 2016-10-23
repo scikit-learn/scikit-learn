@@ -18,6 +18,7 @@ class MockDataFrame(object):
     # have shape an length but don't support indexing.
     def __init__(self, array):
         self.array = array
+        self.values = array
         self.shape = array.shape
         self.ndim = array.ndim
         # ugly hack to make iloc work.
@@ -26,11 +27,14 @@ class MockDataFrame(object):
     def __len__(self):
         return len(self.array)
 
-    def __array__(self):
+    def __array__(self, dtype=None):
         # Pandas data frames also are array-like: we want to make sure that
         # input validation in cross-validation does not try to call that
         # method.
         return self.array
+
+    def __eq__(self, other):
+        return MockDataFrame(self.array == other.array)
 
 
 class CheckingClassifier(BaseEstimator, ClassifierMixin):

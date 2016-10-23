@@ -216,10 +216,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 n_node_samples = end - start
                 splitter.node_reset(start, end, &weighted_n_node_samples)
 
-                is_leaf = ((depth >= max_depth) or
-                           (n_node_samples < min_samples_split) or
-                           (n_node_samples < 2 * min_samples_leaf) or
-                           (weighted_n_node_samples < min_weight_leaf))
+                is_leaf = (depth >= max_depth or
+                           n_node_samples < min_samples_split or
+                           n_node_samples < 2 * min_samples_leaf or
+                           weighted_n_node_samples < 2 * min_weight_leaf)
 
                 if first:
                     impurity = splitter.node_impurity()
@@ -285,8 +285,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     The best node to expand is given by the node at the frontier that has the
     highest impurity improvement.
-
-    NOTE: this TreeBuilder will ignore ``tree.max_depth`` .
     """
     cdef SIZE_t max_leaf_nodes
 
@@ -438,11 +436,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             impurity = splitter.node_impurity()
 
         n_node_samples = end - start
-        is_leaf = ((depth > self.max_depth) or
-                   (n_node_samples < self.min_samples_split) or
-                   (n_node_samples < 2 * self.min_samples_leaf) or
-                   (weighted_n_node_samples < self.min_weight_leaf) or
-                   (impurity <= min_impurity_split))
+        is_leaf = (depth > self.max_depth or
+                   n_node_samples < self.min_samples_split or
+                   n_node_samples < 2 * self.min_samples_leaf or
+                   weighted_n_node_samples < 2 * self.min_weight_leaf or
+                   impurity <= min_impurity_split)
 
         if not is_leaf:
             splitter.node_split(impurity, &split, &n_constant_features)
@@ -549,8 +547,7 @@ cdef class Tree:
     # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):
-            # it's small; copy for memory safety
-            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs).copy()
+            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
 
     property children_left:
         def __get__(self):
@@ -841,8 +838,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))
@@ -987,8 +984,8 @@ cdef class Tree:
         # which features are nonzero in the present sample.
         cdef SIZE_t* feature_to_sample = NULL
 
-        safe_realloc(&X_sample, n_features * sizeof(DTYPE_t))
-        safe_realloc(&feature_to_sample, n_features * sizeof(SIZE_t))
+        safe_realloc(&X_sample, n_features)
+        safe_realloc(&feature_to_sample, n_features)
 
         with nogil:
             memset(feature_to_sample, -1, n_features * sizeof(SIZE_t))

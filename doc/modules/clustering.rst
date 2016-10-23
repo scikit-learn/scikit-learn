@@ -718,7 +718,7 @@ More formally, we define a core sample as being a sample in the dataset such
 that there exist ``min_samples`` other samples within a distance of
 ``eps``, which are defined as *neighbors* of the core sample. This tells
 us that the core sample is in a dense area of the vector space. A cluster
-is a set of core samples, that can be built by recursively by taking a core
+is a set of core samples that can be built by recursively taking a core
 sample, finding all of its neighbors that are core samples, finding all of
 *their* neighbors that are core samples, and so on. A cluster also has a
 set of non-core samples, which are samples that are neighbors of a core sample

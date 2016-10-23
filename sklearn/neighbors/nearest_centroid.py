@@ -29,7 +29,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    metric: string, or callable
+    metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by metrics.pairwise.pairwise_distances for its

@@ -1,10 +1,9 @@
 import numpy as np
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_array_equal, assert_true,
                                    assert_raise_message)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
-from nose.tools import assert_equal
 
 
 def test_pls():

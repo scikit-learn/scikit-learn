@@ -787,7 +787,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
     Returns
     -------
-    Gram matrix: array of shape (n_samples_1, n_samples_2)
+    Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -893,7 +893,7 @@ def cosine_similarity(X, Y=None, dense_output=True):
         ``False``, the output is sparse if both input arrays are sparse.
 
         .. versionadded:: 0.17
-           parameter *dense_output* for sparse output.
+           parameter ``dense_output`` for dense output.
 
     Returns
     -------
@@ -1354,7 +1354,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    filter_params: boolean
+    filter_params : boolean
         Whether to filter invalid parameters or not.
 
     `**kwds` : optional keyword parameters

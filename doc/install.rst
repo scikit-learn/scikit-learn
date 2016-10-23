@@ -28,15 +28,21 @@ or ``conda``::
 
     conda install scikit-learn
 
-**We don't recommend installing scipy or numpy using pip on linux**,
-as this will involve a lengthy build-process with many dependencies.
-Without careful configuration, building numpy yourself can lead to an installation
-that is much slower than it should be. 
-If you are using Linux, consider using your package manager to install
-scikit-learn. It is usually the easiest way, but might not provide the newest
-version.
-If you haven't already installed numpy and scipy and can't install them via
-your operation system, it is recommended to use a third party distribution.
+If you have not installed NumPy or SciPy yet, you can also install these using
+conda or pip. When using pip, please ensure that *binary wheels* are used,
+and NumPy and SciPy are not recompiled from source, which can happen when using
+particular configurations of operating system and hardware (such as Linux on
+a Raspberry Pi). 
+Building numpy and scipy from source can be complex (especially on Windows) and
+requires careful configuration to ensure that they link against an optimized
+implementation of linear algebra routines.
+Instead, use a third-party distribution as described below.
+
+If you must install scikit-learn and its dependencies with pip, you can install
+it as ``scikit-learn[alldeps]``. The most common use case for this is in a
+``requirements.txt`` file used as part of an automated build process for a PaaS
+application or a Docker image. This option is not intended for manual
+installation from the command line.
 
 Third-party Distributions
 ==========================
@@ -80,10 +86,10 @@ Anaconda offers scikit-learn as part of its free distribution.
     via ``pip install``.
 
 
-Python(x,y) for Windows
+WinPython for Windows
 -----------------------
 
-The `Python(x,y) <https://python-xy.github.io>`_ project distributes
+The `WinPython <https://winpython.github.io/>`_ project distributes
 scikit-learn as an additional plugin.
 
 

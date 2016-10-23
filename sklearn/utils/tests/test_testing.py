@@ -2,9 +2,8 @@ import warnings
 import unittest
 import sys
 
-from nose.tools import assert_raises
-
 from sklearn.utils.testing import (
+    assert_raises,
     _assert_less,
     _assert_greater,
     assert_less_equal,

@@ -4,17 +4,19 @@ r"""
 Parser for Jupyter notebooks
 ============================
 
-Class that holds the Ipython notebook information
+Class that holds the Jupyter notebook information
 
 """
 # Author: Óscar Nájera
 # License: 3-clause BSD
 
 from __future__ import division, absolute_import, print_function
+from functools import partial
 import json
 import os
 import re
 import sys
+
 
 def ipy_notebook_skeleton():
     """Returns a dictionary with the elements of a Jupyter notebook"""
@@ -46,25 +48,58 @@ def ipy_notebook_skeleton():
     return notebook_skeleton
 
 
+def directive_fun(match, directive):
+    """Helper to fill in directives"""
+    directive_to_alert = dict(note="info", warning="danger")
+    return ('<div class="alert alert-{0}"><h4>{1}</h4><p>{2}</p></div>'
+            .format(directive_to_alert[directive], directive.capitalize(),
+                    match.group(1).strip()))
+
+
 def rst2md(text):
     """Converts the RST text from the examples docstrigs and comments
-    into markdown text for the IPython notebooks"""
+    into markdown text for the Jupyter notebooks"""
 
     top_heading = re.compile(r'^=+$\s^([\w\s-]+)^=+$', flags=re.M)
     text = re.sub(top_heading, r'# \1', text)
 
     math_eq = re.compile(r'^\.\. math::((?:.+)?(?:\n+^  .+)*)', flags=re.M)
     text = re.sub(math_eq,
-                  lambda match: r'$${0}$$'.format(match.group(1).strip()),
+                  lambda match: r'\begin{{align}}{0}\end{{align}}'.format(
+                      match.group(1).strip()),
                   text)
-    inline_math = re.compile(r':math:`(.+)`')
+    inline_math = re.compile(r':math:`(.+?)`', re.DOTALL)
     text = re.sub(inline_math, r'$\1$', text)
+
+    directives = ('warning', 'note')
+    for directive in directives:
+        directive_re = re.compile(r'^\.\. %s::((?:.+)?(?:\n+^  .+)*)'
+                                  % directive, flags=re.M)
+        text = re.sub(directive_re,
+                      partial(directive_fun, directive=directive), text)
+
+    links = re.compile(r'^ *\.\. _.*:.*$\n', flags=re.M)
+    text = re.sub(links, '', text)
+
+    refs = re.compile(r':ref:`')
+    text = re.sub(refs, '`', text)
+
+    contents = re.compile(r'^\s*\.\. contents::.*$(\n +:\S+: *$)*\n',
+                          flags=re.M)
+    text = re.sub(contents, '', text)
+
+    images = re.compile(
+        r'^\.\. image::(.*$)(?:\n *:alt:(.*$)\n)?(?: +:\S+:.*$\n)*',
+        flags=re.M)
+    text = re.sub(
+        images, lambda match: '![{1}]({0})\n'.format(
+            match.group(1).strip(), (match.group(2) or '').strip()), text)
 
     return text
 
 
 class Notebook(object):
-    """Ipython notebook object
+    """Jupyter notebook object
 
     Constructs the file cell-by-cell and writes it at the end"""
 

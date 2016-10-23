@@ -75,7 +75,7 @@ def get_short_module_name(module_name, obj_name):
         short_name = '.'.join(parts[:i])
         try:
             exec('from %s import %s' % (short_name, obj_name))
-        except ImportError:
+        except Exception:  # libraries can throw all sorts of exceptions...
             # get the last working module name
             short_name = '.'.join(parts[:(i + 1)])
             break

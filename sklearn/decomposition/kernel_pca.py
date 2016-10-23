@@ -34,15 +34,15 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     degree : int, default=3
         Degree for poly kernels. Ignored by other kernels.
 
-    gamma : float, optional
-        Kernel coefficient for rbf and poly kernels. Default: 1/n_features.
-        Ignored by other kernels.
+    gamma : float, default=1/n_features
+        Kernel coefficient for rbf and poly kernels. Ignored by other
+        kernels.
 
-    coef0 : float, optional
+    coef0 : float, default=1
         Independent term in poly and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, optional
+    kernel_params : mapping of string to any, default=None
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
@@ -54,18 +54,18 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : string ['auto'|'dense'|'arpack']
+    eigen_solver : string ['auto'|'dense'|'arpack'], default='auto'
         Select eigensolver to use. If n_components is much less than
         the number of training samples, arpack may be more efficient
         than the dense eigensolver.
 
     tol : float, default=0
-        Convergence tolerance for arpack. If zero, optimal value will be
-        chosen by arpack.
+        Convergence tolerance for arpack.
+        If 0, optimal value will be chosen by arpack.
 
     max_iter : int, default=None
-        Maximum number of iterations for arpack. If None, optimal value will
-        be chosen by arpack.
+        Maximum number of iterations for arpack.
+        If None, optimal value will be chosen by arpack.
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
@@ -78,14 +78,20 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         A pseudo random number generator used for the initialization of the
         residuals when eigen_solver == 'arpack'.
 
+        .. versionadded:: 0.18
+
     n_jobs : int, default=1
         The number of parallel jobs to run.
         If `-1`, then the number of jobs is set to the number of CPU cores.
+
+        .. versionadded:: 0.18
 
     copy_X : boolean, default=True
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
+
+        .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -99,15 +105,14 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         `remove_zero_eig` are not set, then all components are stored.
 
     dual_coef_ : array, (n_samples, n_features)
-        Inverse transform matrix. If `fit_inverse_transform=False`,
-        dual_coef_ is not present.
+        Inverse transform matrix. Set if `fit_inverse_transform` is True.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
 
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
-        a reference.
+        a reference. This attribute is used for the calls to transform.
 
     References
     ----------

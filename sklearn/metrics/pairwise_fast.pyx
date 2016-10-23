@@ -14,8 +14,8 @@ cimport numpy as np
 cdef extern from "cblas.h":
     double cblas_dasum(int, const double *, int) nogil
 
-ctypedef float [:, :] float_array_2d_t 
-ctypedef double [:, :] double_array_2d_t 
+ctypedef float [:, :] float_array_2d_t
+ctypedef double [:, :] double_array_2d_t
 
 cdef fused floating1d:
     float[::1]
