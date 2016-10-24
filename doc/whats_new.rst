@@ -16,6 +16,9 @@ Changelog
 New features
 ............
 
+   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly detection based
+     on nearest neighbors. By `Nicolas Goix`_ and `Alexandre Gramfort`_.
+
 Enhancements
 ............
 
@@ -265,9 +268,6 @@ Model selection and evaluation
      See :ref:`model_selection_changes` for more information.
      (`#4294 <https://github.com/scikit-learn/scikit-learn/pull/4294>`_) by
      `Raghav R V`_.
-
-   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly detection based on
-     nearest neighbors. By `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
 Enhancements
 ............

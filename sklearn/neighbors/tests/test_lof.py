@@ -21,15 +21,16 @@ def test_lof():
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
 
     # Test LocalOutlierFactor:
-    clf = neighbors.LocalOutlierFactor()
+    clf = neighbors.LocalOutlierFactor(n_neighbors=5)
     score = clf.fit(X).outlier_factor_
     assert_array_equal(clf._fit_X, X)
 
-    # Assert scores are good:
+    # Assert smallest outlier score is greater than largest inlier score:
     assert_greater(np.min(score[-2:]), np.max(score[:-2]))
 
     # Assert predict() works:
-    clf = neighbors.LocalOutlierFactor(contamination=0.25).fit(X)
+    clf = neighbors.LocalOutlierFactor(contamination=0.25,
+                                       n_neighbors=5).fit(X)
     assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
 
 
@@ -49,7 +50,7 @@ def test_lof_performance():
     clf = neighbors.LocalOutlierFactor().fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = - clf.decision_function(X_test)
+    y_pred = -clf.decision_function(X_test)
 
     # check that roc_auc is good
     assert_greater(roc_auc_score(y_test, y_pred), .99)

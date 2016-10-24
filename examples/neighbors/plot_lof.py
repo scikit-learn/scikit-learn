@@ -8,6 +8,14 @@ algorithm is an unsupervised outlier detection method which computes the local
 density deviation of a given data point with respect to its neighbors.
 It considers as outlier samples that have a substantially lower density than
 their neighbors.
+
+The number of neighbors considered, (parameter n_neighbors) is typically
+chosen 1) greater than the minimum number of objects a cluster has to contain,
+so that other objects can be local outliers relative to this cluster, and 2)
+smaller than the maximum number of close by objects that can potentially be
+local outliers.
+In practice, such informations are generally not available, and taking
+n_neighbors=20 appears to work well in general.
 """
 
 import numpy as np

@@ -168,7 +168,7 @@ This strategy is illustrated below.
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
      method) and a covariance-based outlier detection with
-     :class:`covariance.MinCovDet`.
+     :class:`covariance.EllipticEnvelope`.
 
 .. topic:: References:
 
@@ -194,6 +194,17 @@ average local density of his k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 
+The number k of neighbors considered, (alias parameter n_neighbors) is typically
+chosen 1) greater than the minimum number of objects a cluster has to contain,
+so that other objects can be local outliers relative to this cluster, and 2)
+smaller than the maximum number of close by objects that can potentially be
+local outliers.
+In practice, such informations are generally not available, and taking
+n_neighbors=20 appears to work well in general.
+When the proportion of outliers is high (i.e. greater than 10 \%, as in the
+example below), n_neighbors should be greater (n_neighbors=35 in the example
+below).
+
 The strength of the LOF algorithm is that it takes both local and global
 properties of datasets into consideration: it can perform well even in datasets
 where abnormal samples have different underlying densities.
@@ -210,7 +221,7 @@ This strategy is illustrated below.
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_example_neighbors_plot_lof.py` for
-     an illustration of the use of LocalOutlierFactor.
+     an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
    * See :ref:`sphx_glr_auto_example_covariance_plot_outlier_detection.py` for a
      comparison with other anomaly detection methods.
@@ -271,7 +282,7 @@ multiple modes and :class:`ensemble.IsolationForest` and
 	:class:`svm.OneClassSVM` and :class:`neighbors.LocalOutlierFactor`
 	have difficulties to detect the two modes,
 	and that the :class:`svm.OneClassSVM`
-        tends to overfit: because it has not model of inliers, it
+        tends to overfit: because it has no model of inliers, it
         interprets a region where, by chance some outliers are
         clustered, as inliers.
       - |outlier2|
@@ -290,4 +301,4 @@ multiple modes and :class:`ensemble.IsolationForest` and
      comparison of the :class:`svm.OneClassSVM` (tuned to perform like
      an outlier detection method), the :class:`ensemble.IsolationForest`,
      the :class:`neighbors.LocalOutlierFactor`
-     and a covariance-based outlier detection :class:`covariance.MinCovDet`.
+     and a covariance-based outlier detection :class:`covariance.EllipticEnvelope`.

@@ -58,8 +58,9 @@ classifiers = {
     "Isolation Forest": IsolationForest(max_samples=n_samples,
                                         contamination=outliers_fraction,
                                         random_state=rng),
-    "Local Outlier Factor": LocalOutlierFactor(n_neighbors=35,
-                                               contamination=0.25)}
+    "Local Outlier Factor": LocalOutlierFactor(
+        n_neighbors=20,
+        contamination=outliers_fraction)}
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 100), np.linspace(-7, 7, 100))
@@ -98,6 +99,8 @@ for i, offset in enumerate(clusters_separation):
         subplot = plt.subplot(2, 2, i + 1)
         subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
                          cmap=plt.cm.Blues_r)
+        print clf_name
+        print sum(scores_pred<threshold)
         a = subplot.contour(xx, yy, Z, levels=[threshold],
                             linewidths=2, colors='red')
         subplot.contourf(xx, yy, Z, levels=[threshold, Z.max()],

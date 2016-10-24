@@ -27,11 +27,11 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     is used to estimate the local density.
     By comparing the local density of a sample to the local densities of
     its neighbors, one can identify samples that have a substantially lower
-    density than their neighbors. These are considered as outliers.
+    density than their neighbors. These are considered outliers.
 
     Parameters
     ----------
-    n_neighbors : int, optional (default = 5)
+    n_neighbors : int, optional (default=20)
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
@@ -46,13 +46,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    leaf_size : int, optional (default = 30)
+    leaf_size : int, optional (default=30)
         Leaf size passed to :class:`BallTree` or :class:`KDTree`. This can
         affect the speed of the construction and query, as well as the memory
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    p: integer, optional (default = 2)
+    p : integer, optional (default=2)
         Parameter for the Minkowski metric from
         :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -71,8 +71,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         distance between them. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-        Distance matrices are not supported.
-
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
@@ -88,15 +86,15 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         metrics:
         http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
 
-    metric_params : dict, optional (default = None)
+    metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
     contamination : float in (0., 0.5), optional (default=0.1)
         The amount of contamination of the data set, i.e. the proportion
-        of outliers in the data set. When fitting it is used to define the
+        of outliers in the data set. When fitting this is used to define the
         threshold on the decision function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
@@ -119,7 +117,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
-    def __init__(self, n_neighbors=5, algorithm='auto', leaf_size=30,
+    def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination=0.1, n_jobs=1):
         self._init_params(n_neighbors=n_neighbors,
@@ -130,10 +128,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         self.contamination = contamination
 
     def fit_predict(self, X, y=None):
-        """Compute the local outlier factor (LOF) on X.
-
-        Return the labels (1 inlier, -1 outlier) of X according to LOF score
+        """"Fits the model to the training set X and returns the labels
+        (1 inlier, -1 outlier) on the training set according to the LOF score
         and the contamination parameter.
+
 
         Parameters
         ----------
@@ -168,12 +166,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         super(LocalOutlierFactor, self).fit(X)
 
-        self._distances_fit_X_, self._neighbors_indices_fit_X_ = (
+        self._distances_fit_X_, _neighbors_indices_fit_X_ = (
             self.kneighbors(None))
 
-        # Compute score over training samples to define threshold_:
-        self.outlier_factor_ = self._local_outlier_factor(
-            self._distances_fit_X_, self._neighbors_indices_fit_X_)
+        self._lrd = self._local_reachability_density(
+            self._distances_fit_X_, _neighbors_indices_fit_X_)
+
+        # Compute lof score over training samples to define threshold_:
+        lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_]
+                            / self._lrd[:, np.newaxis])
+
+        self.outlier_factor_ = np.mean(lrd_ratios_array, axis=1)
 
         self.threshold_ = -scoreatpercentile(
             self.outlier_factor_, 100. * (1. - self.contamination))
@@ -198,11 +201,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Returns
         -------
         is_inlier : array, shape (n_samples,)
-            Returns 1 for anomalies/outliers and -1 for inliers.
+            Returns -1 for anomalies/outliers and +1 for inliers.
         """
         check_is_fitted(self, ["threshold_", "outlier_factor_",
-                               "_distances_fit_X_",
-                               "_neighbors_indices_fit_X_"])
+                               "_distances_fit_X_"])
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
@@ -215,7 +217,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         return is_inlier
 
     def decision_function(self, X):
-        """Opposite of the Local Outlier Factor of X (as bigger is better).
+        """Opposite of the Local Outlier Factor of X (as bigger is better,
+        i.e. large values correspond to inliers).
 
         The argument X is supposed to contain *new data*: if X contains a
         point from training, it consider the later in its own neighborhood.
@@ -232,59 +235,24 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         Returns
         -------
-        lof_scores : array, shape (n_samples,)
-            The Local Outlier Factor of each input samples. The lower,
-            the more abnormal.
+        opposite_lof_scores : array, shape (n_samples,)
+            The opposite of the Local Outlier Factor of each input samples.
+            The lower, the more abnormal.
         """
         check_is_fitted(self, ["threshold_", "outlier_factor_",
-                               "_distances_fit_X_",
-                               "_neighbors_indices_fit_X_"])
+                               "_distances_fit_X_"])
 
         X = check_array(X, accept_sparse='csr')
 
         distances_X, neighbors_indices_X = self.kneighbors(X)
-        # as bigger is better:
-        return -self._local_outlier_factor(distances_X, neighbors_indices_X)
-
-    def _local_outlier_factor(self, distances_X, neighbors_indices_X):
-        """Compute the local outlier factor (LOF)
-
-        It is the average of the ratio of the local reachability density of
-        a sample and those of its k-nearest neighbors.
-
-        Parameters
-        ----------
-        distances_X : array, shape (n_query, self.n_neighbors)
-            Distances to the neighbors (in the training samples self._fit_X) of
-            each query point to compute the LRD.
-
-        neighbors_indices : array, shape (n_query, self.n_neighbors)
-            Neighbors indices (of each query point) among training samples
-            self._fit_X.
-
-        Returns
-        -------
-        lof : numpy array, shape (n_samples,)
-            The LOF of X. The lower, the more normal.
-        """
-        n_samples = distances_X.shape[0]
-
-        # Compute the local_reachability_density of samples X:
         X_lrd = self._local_reachability_density(distances_X,
                                                  neighbors_indices_X)
-        lrd_ratios_array = np.zeros((n_samples, self.n_neighbors))
 
-        # Avoid re-computing X_lrd if same parameters:
-        if not (np.all(distances_X == self._distances_fit_X_) *
-                np.all(self._neighbors_indices_fit_X_ == neighbors_indices_X)):
-            lrd = self._local_reachability_density(
-                self._distances_fit_X_, self._neighbors_indices_fit_X_)
-        else:
-            lrd = X_lrd
+        lrd_ratios_array = (self._lrd[neighbors_indices_X]
+                            / X_lrd[:, np.newaxis])
 
-        lrd_ratios_array = lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
-
-        return np.mean(lrd_ratios_array, axis=1)
+        # as bigger is better:
+        return -np.mean(lrd_ratios_array, axis=1)
 
     def _local_reachability_density(self, distances_X, neighbors_indices):
         """The local reachability density (LRD)
