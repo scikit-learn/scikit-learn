@@ -14,6 +14,19 @@ from sklearn.metrics import roc_auc_score
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_warns_message
+
+from sklearn.datasets import load_iris
+
+
+# load the iris dataset
+# and randomly permute it
+rng = check_random_state(0)
+iris = load_iris()
+perm = rng.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
 
 
 def test_lof():
@@ -93,3 +106,15 @@ def test_lof_precomputed(random_state=42):
 
     assert_array_almost_equal(pred_X_X, pred_D_X)
     assert_array_almost_equal(pred_X_Y, pred_D_Y)
+
+
+def test_n_neighbors_attribute():
+    X = iris.data
+    clf = neighbors.LocalOutlierFactor(n_neighbors=500).fit(X)
+    assert_equal(clf.n_neighbors_, X.shape[0] - 1)
+
+    clf = neighbors.LocalOutlierFactor(n_neighbors=500)
+    assert_warns_message(UserWarning,
+                         "n_neighbors will be set to (n_samples - 1)",
+                         clf.fit, X)
+    assert_equal(clf.n_neighbors_, X.shape[0] - 1)

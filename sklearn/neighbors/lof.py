@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+from warnings import warn
 from scipy.stats import scoreatpercentile
 
 from .base import NeighborsBase
@@ -33,6 +34,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     ----------
     n_neighbors : int, optional (default=20)
         Number of neighbors to use by default for :meth:`kneighbors` queries.
+        If n_neighbors is larger than the number of samples provided,
+        all samples will be used.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -112,6 +115,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         It is the average of the ratio of the local reachability density of
         a sample and those of its k-nearest neighbors.
 
+    n_neighbors_ : integer
+        The actual number of neighbors used for :meth:`kneighbors` queries.
+
     References
     ----------
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
@@ -166,15 +172,23 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         super(LocalOutlierFactor, self).fit(X)
 
+        n_samples = self._fit_X.shape[0]
+        if self.n_neighbors > n_samples:
+            warn("n_neighbors (%s) is greater than the "
+                 "total number of samples (%s). n_neighbors "
+                 "will be set to (n_samples - 1) for estimation."
+                 % (self.n_neighbors, n_samples))
+        self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
+
         self._distances_fit_X_, _neighbors_indices_fit_X_ = (
-            self.kneighbors(None))
+            self.kneighbors(None, n_neighbors=self.n_neighbors_))
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_)
 
         # Compute lof score over training samples to define threshold_:
-        lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_]
-                            / self._lrd[:, np.newaxis])
+        lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_] /
+                            self._lrd[:, np.newaxis])
 
         self.outlier_factor_ = np.mean(lrd_ratios_array, axis=1)
 
@@ -204,7 +218,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         check_is_fitted(self, ["threshold_", "outlier_factor_",
-                               "_distances_fit_X_"])
+                               "n_neighbors_", "_distances_fit_X_"])
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
@@ -244,12 +258,13 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         X = check_array(X, accept_sparse='csr')
 
-        distances_X, neighbors_indices_X = self.kneighbors(X)
+        distances_X, neighbors_indices_X = (
+            self.kneighbors(X, n_neighbors=self.n_neighbors_))
         X_lrd = self._local_reachability_density(distances_X,
                                                  neighbors_indices_X)
 
-        lrd_ratios_array = (self._lrd[neighbors_indices_X]
-                            / X_lrd[:, np.newaxis])
+        lrd_ratios_array = (self._lrd[neighbors_indices_X] /
+                            X_lrd[:, np.newaxis])
 
         # as bigger is better:
         return -np.mean(lrd_ratios_array, axis=1)
@@ -276,8 +291,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             The local reachability density of each sample.
         """
         dist_k = self._distances_fit_X_[neighbors_indices,
-                                        self.n_neighbors - 1]
+                                        self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
-        #  1e-10 to avoid `nan' when when nb of duplicates > n_neighbors:
+        #  1e-10 to avoid `nan' when when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
