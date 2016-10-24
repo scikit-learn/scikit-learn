@@ -419,3 +419,33 @@ if np_version < (1, 12, 0):
                                  self._fill_value)
 else:
     from numpy.ma import MaskedArray    # noqa
+
+if 'axis' not in signature(np.linalg.norm).parameters:
+
+    def norm(X, ord=None, axis=None):
+        """
+        Handles the axis parameter for the norm function
+        in old versions of numpy (useless for numpy >= 1.8).
+        """
+
+        if axis is None or X.ndim == 1:
+            result = np.linalg.norm(X, ord=ord)
+            return result
+
+        if axis not in (0, 1):
+            raise NotImplementedError("""
+            The fix that adds axis parameter to the old numpy
+            norm only works for 1D or 2D arrays.
+            """)
+
+        if axis == 0:
+            X = X.T
+
+        result = np.zeros(X.shape[0])
+        for i in range(len(result)):
+            result[i] = np.linalg.norm(X[i], ord=ord)
+
+        return result
+
+else:
+    norm = np.linalg.norm
