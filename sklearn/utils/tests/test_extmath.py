@@ -65,8 +65,8 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis)
 
-        assert_true(np.all(mode == mode2))
-        assert_true(np.all(score == score2))
+        assert_array_equal(mode == mode2)
+        assert_array_equal(score == score2)
 
 
 def test_random_weights():
