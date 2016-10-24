@@ -14,7 +14,7 @@
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
 # License: BSD 3 clause
-# remove me
+
 from ._criterion cimport Criterion
 
 from libc.stdlib cimport free
