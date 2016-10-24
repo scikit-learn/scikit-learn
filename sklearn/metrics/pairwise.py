@@ -570,6 +570,11 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
+    np.clip(S, 0, 2, out=S)
+    if X is Y or Y is None:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        S.flat[::S.shape[0] + 1] = 0.0
     return S
 
 
