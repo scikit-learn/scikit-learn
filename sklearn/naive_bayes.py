@@ -696,9 +696,9 @@ class MultinomialNB(BaseDiscreteNB):
         if self._alpha < 0:
             raise ValueError('Smoothing parameter alpha = %e. '
                              'alpha must be >= 0!' % self._alpha)
-        if self._alpha == 0:
-            warnings.warn('alpha = 0 will result in numeric errors, setting'
-                          ' alpha = %e' % _ALPHA_MIN)
+        if self._alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %e' % _ALPHA_MIN)
             return _ALPHA_MIN
         return self._alpha
 
@@ -809,9 +809,9 @@ class BernoulliNB(BaseDiscreteNB):
         if self._alpha < 0:
             raise ValueError('Smoothing parameter alpha = %e. '
                              'alpha must be >= 0!' % self._alpha)
-        if self._alpha == 0:
-            warnings.warn('alpha = 0 will result in numeric errors, setting'
-                          ' alpha = %e' % _ALPHA_MIN)
+        if self._alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %e' % _ALPHA_MIN)
             return _ALPHA_MIN
         return self._alpha
 
