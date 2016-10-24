@@ -425,7 +425,7 @@ if 'axis' not in signature(np.linalg.norm).parameters:
     def norm(X, ord=None, axis=None):
         """
         Handles the axis parameter for the norm function
-        in old versions of numpy.
+        in old versions of numpy (useless for numpy >= 1.8).
         """
 
         if axis is None or X.ndim == 1:
