@@ -129,7 +129,7 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
     contamination : float, 0. < contamination < 0.5
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
-        
+
     Attributes
     ----------
     location_ : array-like, shape (n_features,)
