@@ -22,6 +22,7 @@ from .base import RegressorMixin, ClassifierMixin
 from .utils import check_array, check_X_y
 from .utils.fixes import parallel_helper
 from .utils.validation import check_is_fitted, has_fit_parameter
+from .exceptions import NotFittedError
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
@@ -112,6 +113,30 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
                                          for e in self.estimators_)
 
         return np.asarray(y).T
+
+    def get_estimators_attributes(self, attribute_name):
+        """Get the given attribute from all estimators that were fitted,
+         or from the initial given estimator.
+
+        Parameters
+        ----------
+        attribute_name : string
+            Name of the attribute of the estimators.
+
+        Returns
+        -------
+        attributes : list of attributes
+            Attributes of the fitted estimators.
+            If not fitted yet, single attribute of the initial estimator (still as a list).
+        """
+        try:
+            check_is_fitted(self, 'estimators_')
+            estimators = self.estimators_
+        except NotFittedError:
+            estimators = [self.estimator]
+
+        attributes = [getattr(e, param_name) for e in estimators]
+        return attributes
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
