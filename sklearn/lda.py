@@ -12,7 +12,7 @@ class LDA(LinearDiscriminantAnalysis):
     :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`.
 
     .. deprecated:: 0.17
-        Deprecated :class:`sklearn.lda.LDA` will be removed in 0.19.
+        This class will be removed in 0.19.
         Use
         :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
         instead.

@@ -384,10 +384,9 @@ def load_lfw_people(download_if_missing=False, **kwargs):
     Alias for fetch_lfw_people(download_if_missing=False)
 
     .. deprecated:: 0.17
-        Deprecated :func:`sklearn.datasets.load_lfw_people` will be removed in
-        0.19.
+        This function will be removed in 0.19.
         Use :func:`sklearn.datasets.fetch_lfw_people` with parameter
-        download_of_missing=False instead.
+        ``download_if_missing=False`` instead.
 
     Check fetch_lfw_people.__doc__ for the documentation and parameter list.
     """
@@ -520,10 +519,9 @@ def load_lfw_pairs(download_if_missing=False, **kwargs):
     Alias for fetch_lfw_pairs(download_if_missing=False)
 
     .. deprecated:: 0.17
-        Deprecated :func:`sklearn.datasets.load_lfw_pairs` will be removed in
-         0.19.
+        This function will be removed in 0.19.
         Use :func:`sklearn.datasets.fetch_lfw_pairs` with parameter
-        download_if_missing=False instead.
+        ``download_if_missing=False`` instead.
 
     Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
     """

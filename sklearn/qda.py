@@ -12,7 +12,7 @@ class QDA(QuadraticDiscriminantAnalysis):
     :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`.
 
     .. deprecated:: 0.17
-        Deprecated :class:`sklearn.qda.QDA` will be removed in 0.19.
+        This class will be removed in 0.19.
         Use
         :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
         instead.

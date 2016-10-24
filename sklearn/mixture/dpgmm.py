@@ -632,9 +632,9 @@ class DPGMM(_DPGMMBase):
     """Dirichlet Process Gaussian Mixture Models
 
     .. deprecated:: 0.18
-        The :class:`sklearn.mixture.DPGMM` will be removed in 0.20.
+        This class will be removed in 0.20.
         Use :class:`sklearn.mixture.BayesianGaussianMixture` with
-        parameter `weight_concentration_prior_type='dirichlet_process'`
+        parameter ``weight_concentration_prior_type='dirichlet_process'``
         instead.
 
     """
@@ -658,10 +658,9 @@ class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 
     .. deprecated:: 0.18
-        The :class:`sklearn.mixture.VBGMM` will be removed in 0.20.
-        Use :class:`sklearn.mixture.BayesianGaussianMixture` with
-        parameter `weight_concentration_prior_type='dirichlet_distribution'`
-        instead.
+        This class will be removed in 0.20.
+        Use :class:`sklearn.mixture.BayesianGaussianMixture` with parameter
+        ``weight_concentration_prior_type='dirichlet_distribution'`` instead.
 
     Variational inference for a Gaussian mixture model probability
     distribution. This class allows for easy and efficient inference

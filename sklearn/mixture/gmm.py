@@ -666,7 +666,7 @@ class GMM(_GMMBase):
     Legacy Gaussian Mixture Model
 
     .. deprecated:: 0.18
-        The :class:`sklearn.mixture.GMM` will be removed in 0.20.
+        This class will be removed in 0.20.
         Use :class:`sklearn.mixture.GaussianMixture` instead.
 
     """
