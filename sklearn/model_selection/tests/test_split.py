@@ -744,20 +744,14 @@ def test_leave_one_p_group_out():
             # Split using the original list / array / list of string groups_i
             for train, test in cv.split(X, y, groups=groups_i):
                 # First test: no train group is in the test set and vice versa
-                grps_train_unique = np.unique(groups_arr[train])
-                grps_test_unique = np.unique(groups_arr[test])
-                assert_false(np.any(np.in1d(groups_arr[train],
-                                            grps_test_unique)))
-                assert_false(np.any(np.in1d(groups_arr[test],
-                                            grps_train_unique)))
+                assert_array_equal(np.intersect1d(groups_arr[train],
+                                                  groups_arr[test]).tolist(),
+                                   [])
 
                 # Second test: train and test add up to all the data
                 assert_equal(len(train) + len(test), len(groups_i))
 
-                # Third test: train and test are disjoint
-                assert_array_equal(np.intersect1d(train, test), [])
-
-                # Fourth test:
+                # Third test:
                 # The number of groups in test must be equal to p_groups_out
                 assert_true(grps_test_unique.shape[0], p_groups_out)
 
