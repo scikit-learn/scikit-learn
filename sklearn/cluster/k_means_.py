@@ -555,9 +555,9 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
     n_samples = X.shape[0]
 
     # Breakup nearest neighbor distance computation into batches to prevent
-    # memory blowup
+    # memory blowup in the case of a large number of samples and clusters.
     metric_kwargs = dict(squared=True)
-    # Should use check_inputs=False when speedup_kmpp is merged
+    # TODO: Once the functionality (PR #7383) is merged use check_inputs=False.
     # metric_kwargs = dict(squared=True, check_inputs=False)
     labels, mindist = pairwise_distances_argmin_min(
         X=X, Y=centers, metric='euclidean', metric_kwargs=metric_kwargs)
