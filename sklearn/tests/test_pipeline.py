@@ -227,7 +227,11 @@ def test_pipeline_score_params():
     assert_equal(pipe.score(X), 3)
     assert_equal(pipe.score(X, y=None), 3)
     assert_equal(pipe.score(X, sample_weight=np.array([2, 3])), 8)
-    assert_raises(TypeError, pipe.score, X, foo='bar')
+    assert_raise_message(
+        TypeError,
+        "score() got an unexpected keyword argument 'foo'",
+        pipe.score, X, foo='bar'
+    )
 
 
 def test_pipeline_raise_set_params_error():
