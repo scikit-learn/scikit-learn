@@ -1680,14 +1680,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
-        for index, (casses_label, encoded_label) in enumerate(
+        for index, (classes_label, encoded_label) in enumerate(
                 zip(iter_classes_labels, iter_encoded_labels)):
 
             if self.multi_class == 'ovr':
                 # The scores_ / coefs_paths_ dict have unencoded class
                 # labels as their keys
-                scores = self.scores_[casses_label]
-                coefs_paths = self.coefs_paths_[casses_label]
+                scores = self.scores_[classes_label]
+                coefs_paths = self.coefs_paths_[classes_label]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
