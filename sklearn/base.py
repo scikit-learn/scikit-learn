@@ -336,7 +336,7 @@ class BaseEstimator(object):
         return '%s(%s)' % (class_name, _pprint(params,
                                                offset=len(class_name),),)
 
-    def __str__(self):
+    def _repr_pretty_(self, p, cycle):
         my_repr = self.__repr__()
         if _PRINTOPTIONS['info'] is True:
             print_attributes = ['classes_', 'n_outputs_']
@@ -348,9 +348,6 @@ class BaseEstimator(object):
             if n_features is not None:
                 my_repr += "\n- {0}={1}".format('n_features', n_features)
 
-        return my_repr
-
-    def _repr_pretty_(self, p, cycle):
         # representation for ipython / jupyter
         return p.text(self.__str__())
 
