@@ -48,7 +48,7 @@ X_test = np.linspace(-5, 10, 300)
 def model(x):
     return 1 / (1 + np.exp(-x))
 loss = model(X_test * clf.coef_ + clf.intercept_).ravel()
-plt.plot(X_test, loss, color='blue', linewidth=3)
+plt.plot(X_test, loss, color='red', linewidth=3)
 
 ols = linear_model.LinearRegression()
 ols.fit(X, y)
@@ -57,9 +57,10 @@ plt.axhline(.5, color='.5')
 
 plt.ylabel('y')
 plt.xlabel('X')
-plt.xticks(())
-plt.yticks(())
+plt.xticks(range(-5, 10))
+plt.yticks([0, 0.5, 1])
 plt.ylim(-.25, 1.25)
 plt.xlim(-4, 10)
-
+plt.legend(('Logistic Curve', 'Least Squares Line'), loc="lower right"
+    , fontsize='small')
 plt.show()
