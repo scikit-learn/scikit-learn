@@ -61,6 +61,6 @@ plt.xticks(range(-5, 10))
 plt.yticks([0, 0.5, 1])
 plt.ylim(-.25, 1.25)
 plt.xlim(-4, 10)
-plt.legend(('Logistic Curve', 'Least Squares Line'), loc="lower right",
+plt.legend(('Logistic Regression Model', 'Linear Regression Model'), loc="lower right",
            fontsize='small')
 plt.show()
