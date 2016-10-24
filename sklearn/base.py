@@ -21,6 +21,9 @@ _PRINTOPTIONS = {'parameters': 'all', 'info': False}
 def set_print(parameters=None, info=None):
     """Set estimator print options.
 
+    WARNING: This functionality is experimental and might be removed or changed
+    at any time.
+
     Parameters
     ----------
     parameters : None, 'all' or 'changed', default=None
