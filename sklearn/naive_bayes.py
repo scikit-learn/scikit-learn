@@ -15,6 +15,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         (parts based on earlier work by Mathieu Blondel)
 #
 # License: BSD 3 clause
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -33,30 +34,6 @@ from .utils.validation import check_is_fitted
 from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
-
-
-def _safe_logprob(p):
-    """
-    Setting log(0) = -inf as -th where `th` is a very larger number.
-
-    Parameters
-    ----------
-    p : array-like or scalar
-        Probabilities values. Must be within [0, 1] range.
-
-    This avoids summation errors, e.g. np.log(0) - np.log(0) = nan, which
-    may happen while calculating dot product of log probability matrices for
-    joint likelihood estimation
-
-    Note that `th` too large will cause overflow during dot product and wrongly
-    estimate the joint likelihood
-    """
-    th = 1e30
-    p = np.asarray(p)
-    if (p > 1).any() or (p < 0).any():
-        raise ValueError('Input `p` must be within [0, 1] range!')
-
-    return np.clip(np.log(p), -th, 0)
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -448,7 +425,7 @@ class GaussianNB(BaseNB):
         X = check_array(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
-            jointi = _safe_logprob(self.class_prior_[i])
+            jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
@@ -473,11 +450,11 @@ class BaseDiscreteNB(BaseNB):
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
-            self.class_log_prior_ = _safe_logprob(class_prior)
+            self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = _safe_logprob(self.class_count_ /
-                                                  self.class_count_.sum())
+            self.class_log_prior_ = (np.log(self.class_count_) -
+                                     np.log(self.class_count_.sum()))
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
@@ -627,6 +604,9 @@ class BaseDiscreteNB(BaseNB):
     intercept_ = property(_get_intercept)
 
 
+_ALPHA_MIN = 1e-10
+
+
 class MultinomialNB(BaseDiscreteNB):
     """
     Naive Bayes classifier for multinomial models
@@ -704,9 +684,20 @@ class MultinomialNB(BaseDiscreteNB):
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
-        self.alpha = alpha
+        self._alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+
+    @property
+    def alpha(self):
+        if self._alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %e. '
+                             'alpha must be >= 0!' % self._alpha)
+        if self._alpha == 0:
+            warnings.warn('alpha = 0 will result in numeric errors, setting'
+                          ' alpha = %e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self._alpha
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -720,8 +711,8 @@ class MultinomialNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = _safe_logprob(smoothed_fc /
-                                               smoothed_cc.reshape(-1, 1))
+        self.feature_log_prob_ = (np.log(smoothed_fc) -
+                                  np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -805,10 +796,21 @@ class BernoulliNB(BaseDiscreteNB):
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
                  class_prior=None):
-        self.alpha = alpha
+        self._alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+
+    @property
+    def alpha(self):
+        if self._alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %e. '
+                             'alpha must be >= 0!' % self._alpha)
+        if self._alpha == 0:
+            warnings.warn('alpha = 0 will result in numeric errors, setting'
+                          ' alpha = %e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self._alpha
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -822,8 +824,8 @@ class BernoulliNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = self.class_count_ + self.alpha * 2
 
-        self.feature_log_prob_ = _safe_logprob(smoothed_fc /
-                                               smoothed_cc.reshape(-1, 1))
+        self.feature_log_prob_ = (np.log(smoothed_fc) -
+                                  np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -841,9 +843,9 @@ class BernoulliNB(BaseDiscreteNB):
             raise ValueError("Expected input with %d features, got %d instead"
                              % (n_features, n_features_X))
 
-        # Compute X*logp + (1-X)*log(1-p) as X*[logp - log(1-p)] + ∑log(1-p)
-        # for sparse array support
-        logp = self.feature_log_prob_.T
-        log1_p = _safe_logprob(1 - np.exp(logp))
-        return (safe_sparse_dot(X, logp - log1_p) + log1_p.sum(axis=0) +
-                self.class_log_prior_)
+        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
+        # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
+        jll = safe_sparse_dot(X, (self.feature_log_prob_ - neg_prob).T)
+        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
+
+        return jll
