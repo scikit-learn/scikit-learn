@@ -217,6 +217,12 @@ def test_pipeline_fit_params():
     # and transformer params should not be changed
     assert_true(pipe.named_steps['transf'].a is None)
     assert_true(pipe.named_steps['transf'].b is None)
+    # invalid parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        "fit() got an unexpected keyword argument 'bad'",
+        pipe.fit, None, None, clf__bad=True
+    )
 
 
 def test_pipeline_score_params():
