@@ -52,6 +52,9 @@ Enhancements
      (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
      `Narine Kokhlikyan`_.
 
+   - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
+     to enable selection of the norm order when ``coef_`` is more than 1D
+
 Bug fixes
 .........
 
