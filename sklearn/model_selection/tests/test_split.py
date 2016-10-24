@@ -753,7 +753,7 @@ def test_leave_one_p_group_out():
 
                 # Third test:
                 # The number of groups in test must be equal to p_groups_out
-                assert_true(grps_test_unique.shape[0], p_groups_out)
+                assert_true(np.unique(groups_arr[test]).shape[0], p_groups_out)
 
 
 def test_leave_group_out_changing_groups():
