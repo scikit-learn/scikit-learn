@@ -68,7 +68,7 @@ def test_initialize_variants():
                                    random_state=0)
 
     for ref, evl in ((W0, Wa), (W0, War), (H0, Ha), (H0, Har)):
-        assert_true(np.allclose(evl[ref != 0], ref[ref != 0]))
+        assert_almost_equal(evl[ref != 0], ref[ref != 0])
 
 
 @ignore_warnings
@@ -128,9 +128,10 @@ def test_nmf_transform_custom_init():
     H_init = np.abs(avg * random_state.randn(n_components, 5))
     W_init = np.abs(avg * random_state.randn(6, n_components))
 
-    m = NMF(solver='cd', n_components=n_components, init='custom', random_state=0)
-    ft = m.fit_transform(A, W=W_init, H=H_init)
-    t = m.transform(A)
+    m = NMF(solver='cd', n_components=n_components, init='custom',
+            random_state=0)
+    m.fit_transform(A, W=W_init, H=H_init)
+    m.transform(A)
 
 
 @ignore_warnings
@@ -140,7 +141,7 @@ def test_nmf_inverse_transform():
     A = np.abs(random_state.randn(6, 4))
     for solver in ('pg', 'cd'):
         m = NMF(solver=solver, n_components=4, init='random', random_state=0)
-        ft = m.fit_transform(A)
+        m.fit_transform(A)
         t = m.transform(A)
         A_new = m.inverse_transform(t)
         assert_array_almost_equal(A, A_new, decimal=2)
@@ -235,9 +236,11 @@ def test_non_negative_factorization_checking():
     # Test parameters checking is public function
     nnmf = non_negative_factorization
     assert_no_warnings(nnmf, A, A, A, np.int64(1))
-    msg = "Number of components must be a positive integer; got (n_components=1.5)"
+    msg = ("Number of components must be a positive integer; "
+           "got (n_components=1.5)")
     assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5)
-    msg = "Number of components must be a positive integer; got (n_components='2')"
+    msg = ("Number of components must be a positive integer; "
+           "got (n_components='2')")
     assert_raise_message(ValueError, msg, nnmf, A, A, A, '2')
     msg = "Negative values in data passed to NMF (input H)"
     assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
