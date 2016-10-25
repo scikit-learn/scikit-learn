@@ -18,6 +18,9 @@ different ways of performing :ref:`outlier_detection`:
   hence more adapted to large-dimensional settings, even if it performs
   quite well in the examples below.
 
+- using the Local Outlier Factor to measure the local deviation of a given
+  data point with respect to its neighbors by comparing their local density.
+
 The ground truth about inliers and outliers is given by the points colors
 while the orange-filled area indicates which points are reported as inliers
 by each method.
@@ -27,7 +30,6 @@ Thus rather than using the 'predict' method of the objects, we set the
 threshold on the decision_function to separate out the corresponding
 fraction.
 """
-print(__doc__)
 
 import numpy as np
 from scipy import stats
@@ -37,6 +39,9 @@ import matplotlib.font_manager
 from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+
+print(__doc__)
 
 rng = np.random.RandomState(42)
 
@@ -52,10 +57,13 @@ classifiers = {
     "Robust covariance": EllipticEnvelope(contamination=outliers_fraction),
     "Isolation Forest": IsolationForest(max_samples=n_samples,
                                         contamination=outliers_fraction,
-                                        random_state=rng)}
+                                        random_state=rng),
+    "Local Outlier Factor": LocalOutlierFactor(
+        n_neighbors=35,
+        contamination=outliers_fraction)}
 
 # Compare given classifiers under given settings
-xx, yy = np.meshgrid(np.linspace(-7, 7, 500), np.linspace(-7, 7, 500))
+xx, yy = np.meshgrid(np.linspace(-7, 7, 100), np.linspace(-7, 7, 100))
 n_inliers = int((1. - outliers_fraction) * n_samples)
 n_outliers = int(outliers_fraction * n_samples)
 ground_truth = np.ones(n_samples, dtype=int)
@@ -72,19 +80,27 @@ for i, offset in enumerate(clusters_separation):
     X = np.r_[X, np.random.uniform(low=-6, high=6, size=(n_outliers, 2))]
 
     # Fit the model
-    plt.figure(figsize=(10.8, 3.6))
+    plt.figure(figsize=(9, 7))
     for i, (clf_name, clf) in enumerate(classifiers.items()):
         # fit the data and tag outliers
-        clf.fit(X)
-        scores_pred = clf.decision_function(X)
+        if clf_name == "Local Outlier Factor":
+            y_pred = clf.fit_predict(X)
+            scores_pred = clf.negative_outlier_factor_
+        else:
+            clf.fit(X)
+            scores_pred = clf.decision_function(X)
+            y_pred = clf.predict(X)
         threshold = stats.scoreatpercentile(scores_pred,
                                             100 * outliers_fraction)
-        y_pred = clf.predict(X)
         n_errors = (y_pred != ground_truth).sum()
         # plot the levels lines and the points
-        Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
+        if clf_name == "Local Outlier Factor":
+            # decision_function is private for LOF
+            Z = clf._decision_function(np.c_[xx.ravel(), yy.ravel()])
+        else:
+            Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
-        subplot = plt.subplot(1, 3, i + 1)
+        subplot = plt.subplot(2, 2, i + 1)
         subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
                          cmap=plt.cm.Blues_r)
         a = subplot.contour(xx, yy, Z, levels=[threshold],
@@ -97,11 +113,12 @@ for i, offset in enumerate(clusters_separation):
         subplot.legend(
             [a.collections[0], b, c],
             ['learned decision function', 'true inliers', 'true outliers'],
-            prop=matplotlib.font_manager.FontProperties(size=11),
+            prop=matplotlib.font_manager.FontProperties(size=10),
             loc='lower right')
-        subplot.set_title("%d. %s (errors: %d)" % (i + 1, clf_name, n_errors))
+        subplot.set_xlabel("%d. %s (errors: %d)" % (i + 1, clf_name, n_errors))
         subplot.set_xlim((-7, 7))
         subplot.set_ylim((-7, 7))
-    plt.subplots_adjust(0.04, 0.1, 0.96, 0.92, 0.1, 0.26)
+    plt.subplots_adjust(0.04, 0.1, 0.96, 0.94, 0.1, 0.26)
+    plt.suptitle("Outlier detection")
 
 plt.show()
