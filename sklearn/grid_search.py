@@ -26,6 +26,7 @@ from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
+from .utils.random import sample_without_replacement
 from .utils.validation import _num_samples, indexable
 from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
@@ -239,7 +240,8 @@ class ParameterSampler(object):
                     "The total space of parameters %d is smaller "
                     "than n_iter=%d." % (grid_size, self.n_iter)
                     + " For exhaustive searches, use GridSearchCV.")
-            for i in rnd.permutation(grid_size)[:self.n_iter]:
+            for i in sample_without_replacement(grid_size, self.n_iter,
+                                                random_state=rnd):
                 yield param_grid[i]
 
         else:

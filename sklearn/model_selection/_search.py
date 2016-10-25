@@ -31,6 +31,7 @@ from ..utils import check_random_state
 from ..utils.fixes import sp_version
 from ..utils.fixes import rankdata
 from ..utils.fixes import MaskedArray
+from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import check_scoring
@@ -239,7 +240,8 @@ class ParameterSampler(object):
                     "The total space of parameters %d is smaller "
                     "than n_iter=%d. For exhaustive searches, use "
                     "GridSearchCV." % (grid_size, self.n_iter))
-            for i in rnd.permutation(grid_size)[:self.n_iter]:
+            for i in sample_without_replacement(grid_size, self.n_iter,
+                                                random_state=rnd):
                 yield param_grid[i]
 
         else:

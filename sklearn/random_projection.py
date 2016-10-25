@@ -40,6 +40,7 @@ from .externals import six
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
+from .utils.random import sample_without_replacement
 from .utils.validation import check_array
 from .exceptions import DataDimensionalityWarning
 from .exceptions import NotFittedError
@@ -268,7 +269,8 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         for i in xrange(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
-            indices_i = rng.permutation(n_features)[:n_nonzero_i]
+            indices_i = sample_without_replacement(n_features, n_nonzero_i,
+                                                   random_state=rng)
             indices.append(indices_i)
             offset += n_nonzero_i
             indptr.append(offset)

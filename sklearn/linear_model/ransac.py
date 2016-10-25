@@ -9,6 +9,7 @@ import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..utils import check_random_state, check_array, check_consistent_length
+from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
 from ..utils.validation import has_fit_parameter
@@ -315,7 +316,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         for self.n_trials_ in range(1, self.max_trials + 1):
 
             # choose random sample set
-            subset_idxs = random_state.permutation(n_samples)[:min_samples]
+            subset_idxs = sample_without_replacement(n_samples, min_samples,
+                                                     random_state=random_state)
             X_subset = X[subset_idxs]
             y_subset = y[subset_idxs]
 
