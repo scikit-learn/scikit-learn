@@ -1568,16 +1568,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.classes_ = label_encoder.classes_
 
         encoded_labels = label_encoder.transform(label_encoder.classes_)
-        classes_labels = self.classes_  # The original class labels
+        classes = self.classes_  # The original class labels
 
         class_weight = self.class_weight
         if isinstance(class_weight, dict):
-            old_keys = list(class_weight.keys())
-            new_keys = label_encoder.transform(old_keys)
-            # Don't modify the original class_weight dict.
-            class_weight = dict()
-            for new_key, old_key in zip(new_keys, old_keys):
-                class_weight[new_key] = self.class_weight[old_key]
+            class_weight = {label_encoder.transform([cls])[0]: v
+                            for cls, v in class_weight.items()}
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
@@ -1596,15 +1592,15 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             # the higher label
             n_classes = 1
             encoded_labels = encoded_labels[1:]
-            classes_labels = classes_labels[1:]
+            classes = classes[1:]
 
         # We need this hack to iterate only once over labels, in the case of
         # multi_class = multinomial, without changing the value of the labels.
         if self.multi_class == 'multinomial':
-            iter_encoded_labels = iter_classes_labels = [None]
+            iter_encoded_labels = iter_classes = [None]
         else:
             iter_encoded_labels = encoded_labels
-            iter_classes_labels = classes_labels
+            iter_classes = classes
 
         if class_weight and not(isinstance(class_weight, dict) or
                                 class_weight in ['balanced', 'auto']):
@@ -1614,9 +1610,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # compute the class weights for the entire dataset y
         if class_weight in ("auto", "balanced"):
-            classes = np.arange(len(self.classes_))
-            class_weight = compute_class_weight(class_weight, classes, y)
-            class_weight = dict(zip(classes, class_weight))
+            all_encoded_labels = np.arange(len(self.classes_))
+            class_weight = compute_class_weight(class_weight,
+                                                all_encoded_labels, y)
+            class_weight = dict(zip(all_encoded_labels, class_weight))
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1667,9 +1664,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             self.n_iter_ = np.reshape(n_iter_, (n_classes, len(folds),
                                                 len(self.Cs_)))
 
-        self.coefs_paths_ = dict(zip(classes_labels, coefs_paths))
+        self.coefs_paths_ = dict(zip(classes, coefs_paths))
         scores = np.reshape(scores, (n_classes, len(folds), -1))
-        self.scores_ = dict(zip(classes_labels, scores))
+        self.scores_ = dict(zip(classes, scores))
 
         self.C_ = list()
         self.coef_ = np.empty((n_classes, X.shape[1]))
@@ -1680,14 +1677,14 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scores = multi_scores
             coefs_paths = multi_coefs_paths
 
-        for index, (classes_label, encoded_label) in enumerate(
-                zip(iter_classes_labels, iter_encoded_labels)):
+        for index, (cls, encoded_label) in enumerate(
+                zip(iter_classes, iter_encoded_labels)):
 
             if self.multi_class == 'ovr':
                 # The scores_ / coefs_paths_ dict have unencoded class
                 # labels as their keys
-                scores = self.scores_[classes_label]
-                coefs_paths = self.coefs_paths_[classes_label]
+                scores = self.scores_[cls]
+                coefs_paths = self.coefs_paths_[cls]
 
             if self.refit:
                 best_index = scores.sum(axis=0).argmax()
