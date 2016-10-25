@@ -127,7 +127,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         attributes : list of attributes
             Attributes of the fitted estimators.
-            If not fitted yet, single attribute of the initial estimator (still as a list).
+            If not fitted yet, single attribute of the initial estimator
+            (still as a list).
         """
         try:
             check_is_fitted(self, 'estimators_')
