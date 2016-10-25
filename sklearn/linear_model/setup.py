@@ -4,7 +4,6 @@ from os.path import join
 import numpy
 
 from sklearn._build_utils import get_blas_info
-from sklearn._build_utils import add_cython_extension
 
 
 def configuration(parent_package='', top_path=None):
@@ -17,9 +16,7 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         cblas_libs.append('m')
 
-    add_cython_extension(top_path,
-                         config,
-                         'cd_fast', sources=['cd_fast.c'],
+    config.add_extension('cd_fast', sources=['cd_fast.pyx'],
                          libraries=cblas_libs,
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
@@ -27,10 +24,8 @@ def configuration(parent_package='', top_path=None):
                          extra_compile_args=blas_info.pop('extra_compile_args',
                                                           []), **blas_info)
 
-    add_cython_extension(top_path,
-                         config,
-                         'sgd_fast',
-                         sources=['sgd_fast.c'],
+    config.add_extension('sgd_fast',
+                         sources=['sgd_fast.pyx'],
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],
@@ -39,10 +34,8 @@ def configuration(parent_package='', top_path=None):
                                                           []),
                          **blas_info)
 
-    add_cython_extension(top_path,
-                         config,
-                         'sag_fast',
-                         sources=['sag_fast.c'],
+    config.add_extension('sag_fast',
+                         sources=['sag_fast.pyx'],
                          include_dirs=numpy.get_include())
 
     # add other directories

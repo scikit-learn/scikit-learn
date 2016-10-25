@@ -1,7 +1,5 @@
 import os
 
-from sklearn._build_utils import add_cython_extension
-
 
 def configuration(parent_package='', top_path=None):
     import numpy
@@ -12,10 +10,8 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    add_cython_extension(top_path,
-                         config,
-                         '_hashing',
-                         sources=['_hashing.c'],
+    config.add_extension('_hashing',
+                         sources=['_hashing.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
     config.add_subpackage("tests")

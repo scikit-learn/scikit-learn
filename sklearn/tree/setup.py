@@ -3,39 +3,29 @@ import os
 import numpy
 from numpy.distutils.misc_util import Configuration
 
-from sklearn._build_utils import add_cython_extension
-
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("tree", parent_package, top_path)
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
-    add_cython_extension(top_path,
-                         config,
-                         "_tree",
-                         sources=["_tree.c"],
+    config.add_extension("_tree",
+                         sources=["_tree.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
-    add_cython_extension(top_path,
-                         config,
-                         "_splitter",
-                         sources=["_splitter.c"],
+    config.add_extension("_splitter",
+                         sources=["_splitter.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
-    add_cython_extension(top_path,
-                         config,
-                         "_criterion",
-                         sources=["_criterion.c"],
+    config.add_extension("_criterion",
+                         sources=["_criterion.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
-    add_cython_extension(top_path,
-                         config,
-                         "_utils",
-                         sources=["_utils.c"],
+    config.add_extension("_utils",
+                         sources=["_utils.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])

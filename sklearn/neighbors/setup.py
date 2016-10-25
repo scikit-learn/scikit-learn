@@ -1,7 +1,5 @@
 import os
 
-from sklearn._build_utils import add_cython_extension
-
 
 def configuration(parent_package='', top_path=None):
     import numpy
@@ -12,33 +10,25 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    add_cython_extension(top_path,
-                         config,
-                         'ball_tree',
-                         sources=['ball_tree.c'],
+    config.add_extension('ball_tree',
+                         sources=['ball_tree.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         'kd_tree',
-                         sources=['kd_tree.c'],
+    config.add_extension('kd_tree',
+                         sources=['kd_tree.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         'dist_metrics',
-                         sources=['dist_metrics.c'],
+    config.add_extension('dist_metrics',
+                         sources=['dist_metrics.pyx'],
                          include_dirs=[numpy.get_include(),
                                        os.path.join(numpy.get_include(),
                                                     'numpy')],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         'typedefs',
-                         sources=['typedefs.c'],
+    config.add_extension('typedefs',
+                         sources=['typedefs.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

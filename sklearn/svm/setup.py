@@ -3,7 +3,6 @@ from os.path import join
 import numpy
 
 from sklearn._build_utils import get_blas_info
-from sklearn._build_utils import add_cython_extension
 
 
 def configuration(parent_package='', top_path=None):
@@ -25,15 +24,13 @@ def configuration(parent_package='', top_path=None):
                        extra_link_args=['-lstdc++'],
                        )
 
-    libsvm_sources = ['libsvm.c']
+    libsvm_sources = ['libsvm.pyx']
     libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c'),
                       join('src', 'libsvm', 'libsvm_template.cpp'),
                       join('src', 'libsvm', 'svm.cpp'),
                       join('src', 'libsvm', 'svm.h')]
 
-    add_cython_extension(top_path,
-                         config,
-                         'libsvm',
+    config.add_extension('libsvm',
                          sources=libsvm_sources,
                          include_dirs=[numpy.get_include(),
                                        join('src', 'libsvm')],
@@ -46,15 +43,13 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         cblas_libs.append('m')
 
-    liblinear_sources = ['liblinear.c',
+    liblinear_sources = ['liblinear.pyx',
                          join('src', 'liblinear', '*.cpp')]
 
     liblinear_depends = [join('src', 'liblinear', '*.h'),
                          join('src', 'liblinear', 'liblinear_helper.c')]
 
-    add_cython_extension(top_path,
-                         config,
-                         'liblinear',
+    config.add_extension('liblinear',
                          sources=liblinear_sources,
                          libraries=cblas_libs,
                          include_dirs=[join('..', 'src', 'cblas'),
@@ -69,10 +64,8 @@ def configuration(parent_package='', top_path=None):
     # end liblinear module
 
     # this should go *after* libsvm-skl
-    libsvm_sparse_sources = ['libsvm_sparse.c']
-    add_cython_extension(top_path,
-                         config,
-                         'libsvm_sparse', libraries=['libsvm-skl'],
+    libsvm_sparse_sources = ['libsvm_sparse.pyx']
+    config.add_extension('libsvm_sparse', libraries=['libsvm-skl'],
                          sources=libsvm_sparse_sources,
                          include_dirs=[numpy.get_include(),
                                        join("src", "libsvm")],

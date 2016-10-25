@@ -2,7 +2,6 @@ import os
 from os.path import join
 
 from sklearn._build_utils import get_blas_info
-from sklearn._build_utils import add_cython_extension
 
 
 def configuration(parent_package='', top_path=None):
@@ -23,15 +22,11 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
         cblas_libs.append('m')
 
-    add_cython_extension(top_path,
-                         config,
-                         'sparsefuncs_fast', sources=['sparsefuncs_fast.c'],
+    config.add_extension('sparsefuncs_fast', sources=['sparsefuncs_fast.pyx'],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         'arrayfuncs',
-                         sources=['arrayfuncs.c'],
+    config.add_extension('arrayfuncs',
+                         sources=['arrayfuncs.pyx'],
                          depends=[join('src', 'cholesky_delete.h')],
                          libraries=cblas_libs,
                          include_dirs=cblas_includes,
@@ -39,59 +34,43 @@ def configuration(parent_package='', top_path=None):
                          **blas_info
                          )
 
-    add_cython_extension(
-        top_path,
-        config,
-        'murmurhash',
-        sources=['murmurhash.c', join('src', 'MurmurHash3.cpp')],
-        include_dirs=['src'])
+    config.add_extension('murmurhash',
+                         sources=['murmurhash.pyx', join(
+                             'src', 'MurmurHash3.cpp')],
+                         include_dirs=['src'])
 
-    add_cython_extension(top_path,
-                         config,
-                         'lgamma',
-                         sources=['lgamma.c', join('src', 'gamma.c')],
+    config.add_extension('lgamma',
+                         sources=['lgamma.pyx', join('src', 'gamma.c')],
                          include_dirs=['src'],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         'graph_shortest_path',
-                         sources=['graph_shortest_path.c'],
+    config.add_extension('graph_shortest_path',
+                         sources=['graph_shortest_path.pyx'],
                          include_dirs=[numpy.get_include()])
 
-    add_cython_extension(top_path,
-                         config,
-                         'fast_dict',
-                         sources=['fast_dict.cpp'],
+    config.add_extension('fast_dict',
+                         sources=['fast_dict.pyx'],
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         'seq_dataset',
-                         sources=['seq_dataset.c'],
+    config.add_extension('seq_dataset',
+                         sources=['seq_dataset.pyx'],
                          include_dirs=[numpy.get_include()])
 
-    add_cython_extension(top_path,
-                         config,
-                         'weight_vector',
-                         sources=['weight_vector.c'],
+    config.add_extension('weight_vector',
+                         sources=['weight_vector.pyx'],
                          include_dirs=cblas_includes,
                          libraries=cblas_libs,
                          **blas_info)
 
-    add_cython_extension(top_path,
-                         config,
-                         "_random",
-                         sources=["_random.c"],
+    config.add_extension("_random",
+                         sources=["_random.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    add_cython_extension(top_path,
-                         config,
-                         "_logistic_sigmoid",
-                         sources=["_logistic_sigmoid.c"],
+    config.add_extension("_logistic_sigmoid",
+                         sources=["_logistic_sigmoid.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

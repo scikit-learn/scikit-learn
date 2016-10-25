@@ -37,40 +37,36 @@ def get_blas_info():
     return cblas_libs, blas_info
 
 
-def get_cython_source(filename):
-    is_c_filename = filename.endswith('.c')
-    is_cpp_filename = filename.endswith('.cpp')
+def tweak_extensions_to_build_from_c_and_cpp_files(extensions):
+    """Modify the extensions to build from the .c and .cpp files.
 
-    # files in src are .c and .cpp files that are not cython-generated
-    if ('src' + os.sep) in filename and (is_c_filename or is_cpp_filename):
-        return filename
-    elif is_c_filename:
-        filename = filename[:-1]
-    elif is_cpp_filename:
-        filename = filename[:-3]
+    This is useful for releases, this way cython is not required to
+    run python setup.py install.
+    """
+    for extension in extensions:
+        sources = []
+        for sfile in extension.sources:
+            path, ext = os.path.splitext(sfile)
+            if ext in ('.pyx', '.py'):
+                if extension.language == 'c++':
+                    ext = '.cpp'
+                else:
+                    ext = '.c'
+                sfile = path + ext
+            sources.append(sfile)
+        extension.sources = sources
+
+
+def tweak_extensions(top_path, config):
+    """Tweaks between release and development mode."""
+    is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
+
+    if is_release:
+        tweak_extensions_to_build_from_c_and_cpp_files(config.ext_modules)
     else:
-        raise ValueError('Only .c and .cpp files are supported. '
-                         'Got {0!r} instead'.format(filename))
-    return filename + 'pyx'
-
-
-def add_cython_extension(top_path, config, name, sources, **kwargs):
-    is_dev_version = not os.path.exists(os.path.join(top_path, 'PKG-INFO'))
-
-    if is_dev_version:
-        sources = [get_cython_source(filename) for filename in sources]
-
-    config.add_extension(name, sources, **kwargs)
-
-
-def maybe_cythonize_extensions(top_path, config):
-    is_dev_version = not os.path.exists(os.path.join(top_path, 'PKG-INFO'))
-
-    if is_dev_version:
         try:
             from Cython.Build import cythonize
         except ImportError:
             raise ValueError('Please install cython in order '
                              'to build a scikit-learn development version')
-
         config.ext_modules = cythonize(config.ext_modules)

@@ -3,16 +3,12 @@
 
 import numpy
 
-from sklearn._build_utils import add_cython_extension
-
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     config = Configuration('__check_build', parent_package, top_path)
-    add_cython_extension(top_path,
-                         config,
-                         '_check_build',
-                         sources=['_check_build.c'],
+    config.add_extension('_check_build',
+                         sources=['_check_build.pyx'],
                          include_dirs=[numpy.get_include()])
 
     return config

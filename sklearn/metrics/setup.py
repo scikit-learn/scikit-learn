@@ -5,7 +5,6 @@ import numpy
 from numpy.distutils.misc_util import Configuration
 
 from sklearn._build_utils import get_blas_info
-from sklearn._build_utils import add_cython_extension
 
 
 def configuration(parent_package="", top_path=None):
@@ -15,10 +14,8 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         cblas_libs.append('m')
 
-    add_cython_extension(top_path,
-                         config,
-                         "pairwise_fast",
-                         sources=["pairwise_fast.c"],
+    config.add_extension("pairwise_fast",
+                         sources=["pairwise_fast.pyx"],
                          include_dirs=[os.path.join('..', 'src', 'cblas'),
                                        numpy.get_include(),
                                        blas_info.pop('include_dirs', [])],

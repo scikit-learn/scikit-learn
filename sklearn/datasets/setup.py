@@ -2,8 +2,6 @@
 import numpy
 import os
 
-from sklearn._build_utils import add_cython_extension
-
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -12,10 +10,8 @@ def configuration(parent_package='', top_path=None):
     config.add_data_dir('descr')
     config.add_data_dir('images')
     config.add_data_dir(os.path.join('tests', 'data'))
-    add_cython_extension(top_path,
-                         config,
-                         '_svmlight_format',
-                         sources=['_svmlight_format.c'],
+    config.add_extension('_svmlight_format',
+                         sources=['_svmlight_format.pyx'],
                          include_dirs=[numpy.get_include()])
     config.add_subpackage('tests')
     return config
