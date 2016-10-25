@@ -135,7 +135,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator)):
         except NotFittedError:
             estimators = [self.estimator]
 
-        attributes = [getattr(e, param_name) for e in estimators]
+        attributes = [getattr(e, attribute_name) for e in estimators]
         return attributes
 
 
