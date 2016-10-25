@@ -16,6 +16,9 @@ Changelog
 New features
 ............
 
+   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly detection based
+     on nearest neighbors. By `Nicolas Goix`_ and `Alexandre Gramfort`_.
+
 Enhancements
 ............
 
@@ -4740,7 +4743,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Eric Martin: http://www.ericmart.in
 
-.. _Nicolas Goix: https://webperso.telecom-paristech.fr/front/frontoffice.php?SP_ID=241
+.. _Nicolas Goix: https://perso.telecom-paristech.fr/~goix/
 
 .. _Cory Lorenz: https://github.com/clorenz7
 
