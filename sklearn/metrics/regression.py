@@ -438,7 +438,18 @@ def r2_score(y_true, y_pred,
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred, multioutput='variance_weighted')  # doctest: +ELLIPSIS
     0.938...
-
+    >>> y_true = [1,2,3]
+    >>> y_pred = [1,2,3]
+    >>> r2_score(y_true, y_pred)
+    1.0
+    >>> y_true = [1,2,3]
+    >>> y_pred = [2,2,2]
+    >>> r2_score(y_true, y_pred)
+    0.0
+    >>> y_true = [1,2,3]
+    >>> y_pred = [3,2,1]
+    >>> r2_score(y_true, y_pred)
+    -3.0
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
