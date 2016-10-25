@@ -118,7 +118,7 @@ class PCA(_BasePCA):
     truncated SVD.
 
     Notice that this class does not support sparse input. See
-    :ref:`<TruncatedSVD>` for an alternative with sparse data.
+    :class:`TruncatedSVD` for an alternative with sparse data.
 
     Read more in the :ref:`User Guide <PCA>`.
 
