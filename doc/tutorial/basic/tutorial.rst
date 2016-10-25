@@ -160,8 +160,8 @@ learn::
       >>> print(diabetes.target_filename)  # doctest: +SKIP
       (some-path)/sklearn/datasets/data/diabetes_target.csv.gz
 
-    Example of reading data file with numpy. Boston dataset contains
-    2 header lines, that is why we are going to skip them:
+    You can also read the data file directly with numpy. Consider the following example.
+    Boston dataset contains 2 header lines, that is why we are going to skip them:
 
       >>> import numpy as np
       >>> boston_data = np.loadtxt(boston.filename, delimiter=",", skiprows=2)
