@@ -101,15 +101,6 @@ fi
 if [[ "$SKIP_TESTS" == "true" ]]; then
     echo "No need to build scikit-learn when not running the tests"
 else
-    if [ ! -d "$CACHED_BUILD_DIR" ]; then
-        mkdir -p $CACHED_BUILD_DIR
-    fi
-
-    rsync -av --exclude '.git/' --exclude='testvenv/' \
-          $TRAVIS_BUILD_DIR $CACHED_BUILD_DIR
-
-    cd $CACHED_BUILD_DIR/scikit-learn
-
     # Build scikit-learn in the install.sh script to collapse the verbose
     # build output in the travis output when it succeeds.
     python --version
