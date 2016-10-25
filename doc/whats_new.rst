@@ -16,6 +16,12 @@ Changelog
 Bug fixes
 .........
 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
+     `Peng Meng`_.
+
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs
      (`#6282 <https://github.com/scikit-learn/scikit-learn/pull/6282>`_) by
@@ -4834,3 +4840,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Utkarsh Upadhyay: https://github.com/musically-ut
 
 .. _Eugene Chen: https://github.com/eyc88
+
+.. _Narine Kokhlikyan: https://github.com/NarineK
+
+.. _Peng Meng: https://github.com/mpjlu
