@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
@@ -65,8 +64,8 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis)
 
-        assert_array_equal(mode == mode2)
-        assert_array_equal(score == score2)
+        assert_array_equal(mode, mode2)
+        assert_array_equal(score, score2)
 
 
 def test_random_weights():
