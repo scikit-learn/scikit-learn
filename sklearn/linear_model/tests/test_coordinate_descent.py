@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -712,3 +713,35 @@ def test_enet_float_precision():
             assert_array_almost_equal(intercept[np.float32],
                                       intercept[np.float64],
                                       decimal=4)
+
+
+def test_enet_l1_ratio():
+    # Test that an error message is raised if an estimator that
+    # uses _alpha_grid is called with l1_ratio=0
+    msg = ("Automatic alpha grid generation is not supported for l1_ratio=0. "
+           "Please supply a grid by providing your estimator with the "
+           "appropriate `alphas=` argument.")
+    X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
+    y = np.array([12, 10, 11, 21, 5])
+
+    assert_raise_message(ValueError, msg, ElasticNetCV(
+        l1_ratio=0, random_state=42).fit, X, y)
+    assert_raise_message(ValueError, msg, MultiTaskElasticNetCV(
+        l1_ratio=0, random_state=42).fit, X, y[:, None])
+
+    # Test that l1_ratio=0 is allowed if we supply a grid manually
+    alphas = [0.1, 10]
+    estkwds = {'alphas': alphas, 'random_state': 42}
+    est_desired = ElasticNetCV(l1_ratio=0.00001, **estkwds)
+    est = ElasticNetCV(l1_ratio=0, **estkwds)
+    with ignore_warnings():
+        est_desired.fit(X, y)
+        est.fit(X, y)
+    assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+    est_desired = MultiTaskElasticNetCV(l1_ratio=0.00001, **estkwds)
+    est = MultiTaskElasticNetCV(l1_ratio=0, **estkwds)
+    with ignore_warnings():
+        est.fit(X, y[:, None])
+        est_desired.fit(X, y[:, None])
+    assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
