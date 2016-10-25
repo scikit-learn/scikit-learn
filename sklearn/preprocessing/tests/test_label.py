@@ -40,7 +40,7 @@ def test_label_binarizer():
     # For dense case:
     inp = ["pos", "pos", "pos", "pos"]
     lb = LabelBinarizer(sparse_output=False)
-    expected = np.ones((len(inp), 1), dtype=int)
+    expected = 0 * np.ones((len(inp), 1), dtype=int)
     got = lb.fit_transform(inp)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got)

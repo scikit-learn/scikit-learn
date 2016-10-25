@@ -514,7 +514,7 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
     if y_type == "binary":
         if n_classes == 1:
             y_out = np.empty((len(y), 1), dtype=np.int)
-            y_out.fill(pos_label)
+            y_out.fill(0)
             if sparse_output:
                 return sp.csr_matrix(y_out, dtype=int)
             return y_out
