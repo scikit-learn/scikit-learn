@@ -98,11 +98,31 @@ Bug fixes
      `#6497 <https://github.com/scikit-learn/scikit-learn/pull/6497>`_
      by `Sebastian Säger`_
 
+   - Attribute ``explained_variance_ratio`` of
+     :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
+     with SVD and Eigen solver are now of the same length. (`#7632
+     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
+     By `JPFrancoia`_
+
    - Fixes issue in :ref:`univariate_feature_selection` where score 
      functions were not accepting multi-label targets.(`#7676
      <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
      by `Mohammed Affan`_
-     
+
+
+API changes summary
+-------------------
+
+Linear, kernelized and related models
+
+   - Length of `explained_variance_ratio` of
+     :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+     changed for both Eigen and SVD solvers. The attribute has now a length
+     of min(n_components, n_classes - 1). (`#7632
+     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
+     By `JPFrancoia`_
+
+
 .. _changes_0_18:
 
 Version 0.18
@@ -571,8 +591,8 @@ Decomposition, manifold learning and clustering
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
       and :class:`manifold.SpectralEmbedding` (`#5012 <https://github.com/scikit-learn/scikit-learn/pull/5012>`_). By `Peter Fischer`_.
 
-    - Attribute ``explained_variance_ratio_`` calculated with the SVD solver of
-      :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
+    - Attribute ``explained_variance_ratio_`` calculated with the SVD solver
+      of :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
       correct results. By `JPFrancoia`_
 
 Preprocessing and feature selection
