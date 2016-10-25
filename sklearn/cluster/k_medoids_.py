@@ -3,10 +3,12 @@
 
 # Authors: Timo Erkkilä <timo.erkkila@gmail.com>
 #          Antti Lehmussola <antti.lehmussola@gmail.com>
+#          Kornel Kiełczewski <kornel.k@plusnet.pl>
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
+
+import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
@@ -78,20 +80,20 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             raise ValueError("distance_metric needs to be " +
                              "callable or one of the " +
                              "following strings: " +
-                             "{}".format(PAIRWISE_DISTANCE_FUNCTIONS.keys()) +
-                             ". Instead, '{}' ".format(self.distance_metric) +
-                             "was given.")
+                             "%s. Instead, '%s' was given"
+                             % (PAIRWISE_DISTANCE_FUNCTIONS.keys(),
+                                self.distance_metric))
 
         # Check clustering_method
         if self.clustering_method not in self.CLUSTERING_METHODS:
-            raise ValueError("clustering must be one of the following: " +
-                             "{}".format(self.CLUSTERING_METHODS))
+            raise ValueError("clustering must be one of the following: %s"
+                             % self.CLUSTERING_METHODS)
 
         # Check init
         if self.init not in self.INIT_METHODS:
             raise ValueError("init needs to be one of " +
                              "the following: " +
-                             "{}".format(self.INIT_METHODS))
+                             "%s" % self.INIT_METHODS)
 
         # Check random state
         self.random_state_ = check_random_state(self.random_state)
@@ -129,7 +131,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         self.n_iter_ = 0
         while not np.all(old_medoid_ics == medoid_ics) and \
                 self.n_iter_ < self.max_iter:
-
             self.n_iter_ += 1
 
             # Keep a copy of the old medoid assignments
@@ -157,10 +158,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         # Check that the number of clusters is less than or equal to
         # the number of samples
         if self.n_clusters > X.shape[0]:
-            raise ValueError("The number of medoids " +
-                             "({}) ".format(self.n_clusters) +
-                             "must be larger than the number " +
-                             "of samples ({})".format(X.shape[0]))
+            raise ValueError("The number of medoids %d must be larger "
+                             "than the number of samples %d."
+                             % (self.n_clusters, X.shape[0]))
 
         return X
 
@@ -181,7 +181,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         for cluster_idx in range(self.n_clusters):
 
             if sum(cluster_ics == cluster_idx) == 0:
-                warnings.warn("Cluster {} is empty!".format(cluster_idx))
+                warnings.warn("Cluster %d is empty!" % cluster_idx)
                 continue
 
             # Find current cost that is associated with cluster_idx.
@@ -209,7 +209,6 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # exhibited by the currently used medoid,
             # we switch to using the new medoid in cluster_idx
             if min_cost < curr_cost:
-
                 # Find data points that belong to cluster_idx,
                 # and assign the newly found medoid as the medoid
                 # for cluster c
@@ -221,7 +220,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=(n_isamples, n_features)
+        X : {array-like, sparse matrix}, shape=(n_samples, n_features)
             Data to transform.
 
         Returns
@@ -229,6 +228,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
             X transformed in the new space.
         """
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         check_is_fitted(self, "cluster_centers_")
 
@@ -254,7 +254,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Check that the array is good and attempt to convert it to
         # Numpy array if possible
-        X = check_array(X)
+        X = check_array(X, accept_sparse=['csr', 'csc'])
 
         # Apply distance metric wrt. cluster centers (medoids)
         D = self.distance_func(X, Y=self.cluster_centers_)
@@ -272,13 +272,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=(n_isamples, n_features)
+        X : {array-like, sparse matrix}, shape=(n_samples, n_features)
             Samples to compute inertia for.
 
         Returns
         -------
-        X_new : {array-like, sparse matrix}, shape=(n_samples, n_clusters)
-            X transformed in the new space.
+        Sum of sample distances to closest cluster centers.
 
         """
 
@@ -292,9 +291,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         return inertia
 
     def _get_initial_medoid_indices(self, D, n_clusters):
-        """Initialize medoid indices using either a random or heuristic 
-        approach.
-        
+        """Initialize medoid indices using either a random or
+        heuristic approach.
+
         """
 
         if self.init == 'random':  # Random initialization
@@ -310,7 +309,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         else:
 
-            raise ValueError("Initialization not implemented for method: " +
-                             "'{}'".format(self.init))
+            raise ValueError("Initialization not implemented for method: '%s'"
+                             % self.init)
 
         return medoids

@@ -18,6 +18,7 @@ from sklearn.cluster import KMedoids, KMeans
 rng = np.random.RandomState(0)
 X = rng.rand(100, 5)
 
+
 @raises(ValueError)
 def test_kmedoids_fit_fails_n_clusters_is_zero():
     # n_clusters is 0
@@ -91,7 +92,6 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
 
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
-    np.random.seed(0)
 
     Xiris = load_iris()['data']
 
