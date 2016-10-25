@@ -547,8 +547,7 @@ cdef class Tree:
     # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):
-            # it's small; copy for memory safety
-            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs).copy()
+            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
 
     property children_left:
         def __get__(self):

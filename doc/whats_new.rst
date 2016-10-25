@@ -10,6 +10,9 @@ Release history
 Version 0.18.1
 ==============
 
+Changelog
+---------
+
 Bug fixes
 .........
 
@@ -34,6 +37,10 @@ Bug fixes
      fewer constraints: they must take two 1d-arrays and return a float.
      (`#6288 <https://github.com/scikit-learn/scikit-learn/pull/6288>`_) by
      `Jake VanderPlas`_.
+
+   - Tree splitting criterion classes' cloning/pickling is now memory safe
+     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
+     By `Ibraim Ganiev`_.
 
    - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
      parameters were not being utilised by :class:`manifold.TSNE`.
