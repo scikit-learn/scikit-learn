@@ -773,8 +773,10 @@ class LeaveOneGroupOut(BaseCrossValidator):
         # We make a copy of groups to avoid side-effects during iteration
         groups = np.array(groups, copy=True)
         unique_groups = np.unique(groups)
-        if len(unique_groups) == 0:
-            raise ValueError("Cannot have zero groups")
+        if len(unique_groups) <= 1:
+            raise ValueError(
+                "The groups parameter contains fewer than 2 unique groups "
+                "(%s). LeaveOneGroupOut expects at least 2." % unique_groups)
         for i in unique_groups:
             yield groups == i
 
@@ -864,10 +866,12 @@ class LeavePGroupsOut(BaseCrossValidator):
             raise ValueError("The groups parameter should not be None")
         groups = np.array(groups, copy=True)
         unique_groups = np.unique(groups)
-        if self.n_groups > len(unique_groups):
-            raise ValueError("Cannot have n_groups=%d greater than the number "
-                             "of unique groups: %d."
-                             % (self.n_groups, len(unique_groups)))
+        if self.n_groups >= len(unique_groups):
+            raise ValueError(
+                "The groups parameter contains fewer than (or equal to) "
+                "n_groups (%d) numbers of unique groups (%s). LeavePGroupsOut "
+                "expects that at least n_groups + 1 (%d) unique groups be "
+                "present" % (self.n_groups, unique_groups, self.n_groups + 1))
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
             test_index = np.zeros(_num_samples(X), dtype=np.bool)
