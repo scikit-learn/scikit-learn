@@ -588,24 +588,28 @@ def test_logistic_regression_sample_weights():
         # Test that passing sample_weight as ones is the same as
         # not passing them at all (default None)
         for solver in ['lbfgs', 'liblinear']:
-            clf_sw_none = LR(solver=solver, fit_intercept=False)
+            clf_sw_none = LR(solver=solver, fit_intercept=False,
+                             random_state=42)
             clf_sw_none.fit(X, y)
-            clf_sw_ones = LR(solver=solver, fit_intercept=False)
+            clf_sw_ones = LR(solver=solver, fit_intercept=False,
+                             random_state=42)
             clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
             assert_array_almost_equal(
                 clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
-        clf_sw_lbfgs = LR(solver='lbfgs', fit_intercept=False)
+        clf_sw_lbfgs = LR(solver='lbfgs', fit_intercept=False, random_state=42)
         clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
-        clf_sw_n = LR(solver='newton-cg', fit_intercept=False)
+        clf_sw_n = LR(solver='newton-cg', fit_intercept=False, random_state=42)
         clf_sw_n.fit(X, y, sample_weight=sample_weight)
-        clf_sw_sag = LR(solver='sag', fit_intercept=False, tol=1e-10)
+        clf_sw_sag = LR(solver='sag', fit_intercept=False, tol=1e-10,
+                        random_state=42)
         # ignore convergence warning due to small dataset
         with ignore_warnings():
             clf_sw_sag.fit(X, y, sample_weight=sample_weight)
-        clf_sw_liblinear = LR(solver='liblinear', fit_intercept=False)
+        clf_sw_liblinear = LR(solver='liblinear', fit_intercept=False,
+                              random_state=42)
         clf_sw_liblinear.fit(X, y, sample_weight=sample_weight)
         assert_array_almost_equal(
             clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
@@ -619,9 +623,9 @@ def test_logistic_regression_sample_weights():
         # to be 2 for all instances of class 2
         for solver in ['lbfgs', 'liblinear']:
             clf_cw_12 = LR(solver=solver, fit_intercept=False,
-                           class_weight={0: 1, 1: 2})
+                           class_weight={0: 1, 1: 2}, random_state=42)
             clf_cw_12.fit(X, y)
-            clf_sw_12 = LR(solver=solver, fit_intercept=False)
+            clf_sw_12 = LR(solver=solver, fit_intercept=False, random_state=42)
             clf_sw_12.fit(X, y, sample_weight=sample_weight)
             assert_array_almost_equal(
                 clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
@@ -630,19 +634,21 @@ def test_logistic_regression_sample_weights():
     # since the patched liblinear code is different.
     clf_cw = LogisticRegression(
         solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
-        penalty="l1", tol=1e-5)
+        penalty="l1", tol=1e-5, random_state=42)
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5)
+        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5,
+        random_state=42)
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
     clf_cw = LogisticRegression(
         solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
-        penalty="l2", dual=True)
+        penalty="l2", dual=True, random_state=42)
     clf_cw.fit(X, y)
     clf_sw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, penalty="l2", dual=True)
+        solver="liblinear", fit_intercept=False, penalty="l2", dual=True,
+        random_state=42)
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
