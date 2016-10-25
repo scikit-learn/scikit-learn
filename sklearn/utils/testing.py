@@ -89,7 +89,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "SkipTest"]
+           "assert_approx_equal", "assert_is", "SkipTest"]
 __all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
@@ -106,6 +106,7 @@ assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 assert_less_equal = _dummy.assertLessEqual
 assert_greater_equal = _dummy.assertGreaterEqual
+assert_is = _dummy.assertIs
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of

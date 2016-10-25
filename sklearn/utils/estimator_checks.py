@@ -16,6 +16,7 @@ from sklearn.externals.joblib import hash, Memory
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_is
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_true
@@ -232,6 +233,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
+    yield check_set_params
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
 
@@ -1913,6 +1915,46 @@ def check_get_params_invariance(name, estimator_orig):
 
     assert_true(all(item in deep_params.items() for item in
                     shallow_params.items()))
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_set_params(name, estimator_orig):
+    estimator = clone(estimator_orig)
+
+    # Trivial check to make sure set_params is working
+    params = estimator.get_params()
+    estimator.set_params(**params)
+
+    # Check that get_params() returns the same thing
+    # before and after set_params() with some fuzz
+    # values
+
+    test_values = [-np.inf, np.inf, None,
+                   -100, 100, -0.5, 0.5, 0,
+                   "", "value",
+                   ('a', 'b'), {'key': 'value'}]
+
+    msg = ("get_params result does not match what was passed to set_params: "
+           "called set_params of {0} with {1} "
+           "but get_params returns {2}")
+    for param_name in params.keys():
+        estimator = clone(estimator_orig)
+        params = estimator.get_params()
+        for value in test_values:
+            params[param_name] = value
+            try:
+                estimator.set_params(**params)
+            except Exception:
+                # triggered some parameter validation
+                # continue checking other test values
+                pass
+            else:
+                _params = estimator.get_params()
+                errmsg = msg.format(name, params, _params)
+
+                assert_equal(set(params.keys()), set(_params.keys()), errmsg)
+                for k, v in _params.items():
+                    assert_is(params[k], v, errmsg)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
