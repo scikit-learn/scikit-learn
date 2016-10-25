@@ -1572,8 +1572,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         class_weight = self.class_weight
         if isinstance(class_weight, dict):
-            class_weight = {label_encoder.transform([cls])[0]: v
-                            for cls, v in class_weight.items()}
+            class_weight = dict((label_encoder.transform([cls])[0], v)
+                                for cls, v in class_weight.items())
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
