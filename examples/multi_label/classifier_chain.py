@@ -27,8 +27,8 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.5)
 ovr = OneVsRestClassifier(LogisticRegression())
 ovr.fit(X_train, Y_train)
 Y_pred_ovr = ovr.predict(X_test)
-print("Independent models, Jaccard similarity score:", jaccard_similarity_score(
-    Y_test, Y_pred_ovr))
+print("Independent models Jaccard similarity score:",
+      jaccard_similarity_score(Y_test, Y_pred_ovr))
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains
@@ -37,5 +37,5 @@ for chain in chains:
     chain.fit(X_train, Y_train)
 Y_pred_ensemble = np.array([chain.predict(X_test) for chain in
                             chains]).mean(axis=0)
-print("Classifier chain ensemble, Jaccard similarity score:",
+print("Classifier chain ensemble Jaccard similarity score:",
       jaccard_similarity_score(Y_test, Y_pred_ensemble >= .5))
