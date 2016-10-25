@@ -51,10 +51,12 @@ except ImportError:
                                      expected_exception(expected_regexp))
 
 
-def check_subprocess_call(cmd, timeout=1, stdout_regex=None):
+def check_subprocess_call(cmd, timeout=1, stdout_regex=None,
+                          stderr_regex=None):
     """Runs a command in a subprocess with timeout in seconds.
 
-    Also checks returncode is zero and stdout if stdout_regex is set.
+    Also checks returncode is zero, stdout if stdout_regex is set, and
+    stderr if stderr_regex is set.
     """
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
@@ -79,7 +81,13 @@ def check_subprocess_call(cmd, timeout=1, stdout_regex=None):
         if (stdout_regex is not None and
                 not re.search(stdout_regex, stdout)):
             raise ValueError(
-                "Unexpected output: '{0!r}' does not match:\n{1!r}".format(
+                "Unexpected stdout: {0!r} does not match:\n{1!r}".format(
                     stdout_regex, stdout))
+        if (stderr_regex is not None and
+                not re.search(stderr_regex, stderr)):
+            raise ValueError(
+                "Unexpected stderr: {0!r} does not match:\n{1!r}".format(
+                    stderr_regex, stderr))
+
     finally:
         timer.cancel()

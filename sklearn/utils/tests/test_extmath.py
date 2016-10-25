@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.fixes import np_version
@@ -36,6 +36,7 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -63,8 +64,8 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis)
 
-        assert_true(np.all(mode == mode2))
-        assert_true(np.all(score == score2))
+        assert_array_equal(mode, mode2)
+        assert_array_equal(score, score2)
 
 
 def test_random_weights():
@@ -654,7 +655,10 @@ def test_stable_cumsum():
         raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
-    assert_raise_message(RuntimeError,
-                         'cumsum was found to be unstable: its last element '
-                         'does not correspond to sum',
-                         stable_cumsum, r, rtol=0, atol=0)
+    assert_warns(ConvergenceWarning, stable_cumsum, r, rtol=0, atol=0)
+
+    # test axis parameter
+    A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))
+    assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
+    assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
+    assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))

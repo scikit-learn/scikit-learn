@@ -41,8 +41,8 @@ def test_gpr_interpolation():
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         y_pred, y_cov = gpr.predict(X, return_cov=True)
 
-        assert_true(np.allclose(y_pred, y))
-        assert_true(np.allclose(np.diag(y_cov), 0.))
+        assert_almost_equal(y_pred, y)
+        assert_almost_equal(np.diag(y_cov), 0.)
 
 
 def test_lml_improving():
