@@ -105,8 +105,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
     Attributes
     ----------
-    outlier_factor_ : numpy array, shape (n_samples,)
-        The LOF of X. The lower, the more normal.
+    negative_outlier_factor_ : numpy array, shape (n_samples,)
+        The opposite LOF of the training samples. The lower, the more normal.
         Inliers tend to have a LOF score close to 1, while outliers tend
         to have a larger LOF score.
 
@@ -190,10 +190,10 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_] /
                             self._lrd[:, np.newaxis])
 
-        self.outlier_factor_ = np.mean(lrd_ratios_array, axis=1)
+        self.negative_outlier_factor_ = -np.mean(lrd_ratios_array, axis=1)
 
         self.threshold_ = -scoreatpercentile(
-            self.outlier_factor_, 100. * (1. - self.contamination))
+            -self.negative_outlier_factor_, 100. * (1. - self.contamination))
 
         return self
 
@@ -217,20 +217,20 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        check_is_fitted(self, ["threshold_", "outlier_factor_",
+        check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
                                "n_neighbors_", "_distances_fit_X_"])
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             is_inlier = np.ones(X.shape[0], dtype=int)
-            is_inlier[self.decision_function(X) <= self.threshold_] = -1
+            is_inlier[self._decision_function(X) <= self.threshold_] = -1
         else:
             is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
-            is_inlier[-self.outlier_factor_ <= self.threshold_] = -1
+            is_inlier[self.negative_outlier_factor_ <= self.threshold_] = -1
 
         return is_inlier
 
-    def decision_function(self, X):
+    def _decision_function(self, X):
         """Opposite of the Local Outlier Factor of X (as bigger is better,
         i.e. large values correspond to inliers).
 
@@ -239,7 +239,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Also, the samples in X are not considered in the neighborhood of any
         point.
         The decision function on training data is available by considering the
-        opposite of the outlier_factor_ attribute.
+        opposite of the negative_outlier_factor_ attribute.
 
         Parameters
         ----------
@@ -253,7 +253,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self, ["threshold_", "outlier_factor_",
+        check_is_fitted(self, ["threshold_", "negative_outlier_factor_",
                                "_distances_fit_X_"])
 
         X = check_array(X, accept_sparse='csr')
@@ -278,8 +278,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         Parameters
         ----------
         distances_X : array, shape (n_query, self.n_neighbors)
-            Distances to the neighbors (in the training samples self._fit_X) of
-            each query point to compute the LRD.
+            Distances to the neighbors (in the training samples `self._fit_X`)
+            of each query point to compute the LRD.
 
         neighbors_indices : array, shape (n_query, self.n_neighbors)
             Neighbors indices (of each query point) among training samples
