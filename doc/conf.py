@@ -35,6 +35,7 @@ extensions = [
     'numpy_ext.numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx_gallery.gen_gallery',
+    'sphinx_issues',
 ]
 
 # pngmath / imgmath compatibility layer for different sphinx versions
@@ -267,6 +268,13 @@ def make_carousel_thumbs(app, exception):
         if os.path.exists(image):
             c_thumb = os.path.join(image_dir, glr_plot[:-4] + '_carousel.png')
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
+
+
+# Config for sphinx_issues
+
+issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
+issues_github_path = 'scikit-learn/scikit-learn'
+issues_user_uri = 'https://github.com/{user}'
 
 
 def setup(app):
