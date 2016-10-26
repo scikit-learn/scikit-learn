@@ -227,9 +227,9 @@ def test_singular_values():
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(pca.singular_values_,
-                              np.linalg.norm(X_pca, axis=0), 14)
+                              np.sqrt(np.sum(X_pca**2.0, axis=0)), 14)
     assert_array_almost_equal(ipca.singular_values_,
-                              np.linalg.norm(X_ipca, axis=0), 2)
+                              np.sqrt(np.sum(X_ipca**2.0, axis=0)), 2)
 
     # Set the singular values and see what we get back
     rng = np.random.RandomState(0)
@@ -243,7 +243,7 @@ def test_singular_values():
     ipca = IncrementalPCA(n_components=3, batch_size=100)
 
     X_pca = pca.fit_transform(X)
-    X_pca /= np.linalg.norm(X_pca, axis=0)
+    X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 

@@ -266,11 +266,11 @@ def test_singular_values():
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(pca.singular_values_,
-                              np.linalg.norm(X_pca, axis=0), 14)
+                              np.sqrt(np.sum(X_pca**2.0, axis=0)), 14)
     assert_array_almost_equal(apca.singular_values_,
-                              np.linalg.norm(X_apca, axis=0), 12)
+                              np.sqrt(np.sum(X_apca**2.0, axis=0)), 12)
     assert_array_almost_equal(rpca.singular_values_,
-                              np.linalg.norm(X_rpca, axis=0), 2)
+                              np.sqrt(np.sum(X_rpca**2.0, axis=0)), 2)
 
     # Set the singular values and see what we get back
     rng = np.random.RandomState(0)
@@ -284,7 +284,7 @@ def test_singular_values():
     rpca = PCA(n_components=3, svd_solver='randomized', random_state=rng)
     X_pca = pca.fit_transform(X)
 
-    X_pca /= np.linalg.norm(X_pca, axis=0)
+    X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 
