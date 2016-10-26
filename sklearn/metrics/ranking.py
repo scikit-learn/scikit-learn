@@ -289,13 +289,11 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         check_array(y_true, ensure_2d=False)
         check_array(y_score)
 
-        if y_true.ndim == 1:
-            y_true = y_true.reshape((-1, 1))
-
         if multiclass == "ovo":
             return _average_multiclass_ovo_score(
                 _binary_roc_auc_score, y_true, y_score, average)
         else:
+            y_true = y_true.reshape((-1, 1))
             y_true_multilabel = MultiLabelBinarizer().fit_transform(y_true)
             return _average_binary_score(_binary_roc_auc_score,
                                          y_true_multilabel, y_score, average)
