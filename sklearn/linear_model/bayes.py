@@ -14,6 +14,7 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet, pinvh
 from ..utils import check_X_y
+from ..utils import deprecated
 
 
 ###############################################################################
@@ -29,7 +30,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    n_iter : int, optional
+    max_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
     tol : float, optional
@@ -102,7 +103,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
     ... # doctest: +NORMALIZE_WHITESPACE
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
             copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
-            n_iter=300, normalize=False, tol=0.001, verbose=False)
+            max_iter=300, normalize=False, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
 
@@ -111,11 +112,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
     See examples/linear_model/plot_bayesian_ridge.py for an example.
     """
 
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @property
+    @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
+    def __init__(self, max_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  fit_intercept=True, normalize=False, copy_X=True,
                  verbose=False):
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
@@ -164,7 +167,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         eigen_vals_ = S ** 2
 
         # Convergence loop of the bayesian ridge regression
-        for iter_ in range(self.n_iter):
+        for iter_ in range(self.max_iter):
 
             # Compute mu and sigma
             # sigma_ = lambda_ / alpha_ * np.eye(n_features) + np.dot(X.T, X)
@@ -238,7 +241,7 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    n_iter : int, optional
+    max_iter : int, optional
         Maximum number of iterations. Default is 300
 
     tol : float, optional
@@ -315,7 +318,7 @@ class ARDRegression(LinearModel, RegressorMixin):
     ... # doctest: +NORMALIZE_WHITESPACE
     ARDRegression(alpha_1=1e-06, alpha_2=1e-06, compute_score=False,
             copy_X=True, fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06,
-            n_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
+            max_iter=300, normalize=False, threshold_lambda=10000.0, tol=0.001,
             verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.])
@@ -325,11 +328,13 @@ class ARDRegression(LinearModel, RegressorMixin):
     See examples/linear_model/plot_ard.py for an example.
     """
 
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @property
+    @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
+    def __init__(self, max_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
                  copy_X=True, verbose=False):
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -385,7 +390,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         coef_old_ = None
 
         # Iterative procedure of ARDRegression
-        for iter_ in range(self.n_iter):
+        for iter_ in range(self.max_iter):
             # Compute mu and sigma (using Woodbury matrix identity)
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *

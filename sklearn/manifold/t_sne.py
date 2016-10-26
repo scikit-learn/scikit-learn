@@ -17,6 +17,7 @@ from ..neighbors import BallTree
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils import deprecated
 from ..utils.extmath import _ravel
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
@@ -295,7 +296,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
     return error, grad
 
 
-def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
+def _gradient_descent(objective, p0, it, max_iter, objective_error=None,
                       n_iter_check=1, n_iter_without_progress=50,
                       momentum=0.5, learning_rate=1000.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
@@ -317,7 +318,7 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         Current number of iterations (this function will be called more than
         once during the optimization).
 
-    n_iter : int
+    max_iter : int
         Maximum number of gradient descent iterations.
 
     n_iter_check : int
@@ -383,7 +384,7 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
     best_error = np.finfo(np.float).max
     best_iter = 0
 
-    for i in range(it, n_iter):
+    for i in range(it, max_iter):
         new_error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
@@ -541,7 +542,7 @@ class TSNE(BaseEstimator):
         might be too high. If the cost function gets stuck in a bad local
         minimum increasing the learning rate helps sometimes.
 
-    n_iter : int, optional (default: 1000)
+    max_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
@@ -644,8 +645,10 @@ class TSNE(BaseEstimator):
         http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
 
+    @property
+    @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
+                 early_exaggeration=4.0, learning_rate=1000.0, max_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
@@ -658,7 +661,7 @@ class TSNE(BaseEstimator):
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
@@ -711,8 +714,8 @@ class TSNE(BaseEstimator):
             raise ValueError("early_exaggeration must be at least 1, but is "
                              "%f" % self.early_exaggeration)
 
-        if self.n_iter < 200:
-            raise ValueError("n_iter should be at least 200")
+        if self.max_iter < 200:
+            raise ValueError("max_iter should be at least 200")
 
         if self.metric == "precomputed":
             if isinstance(self.init, string_types) and self.init == 'pca':
@@ -806,7 +809,7 @@ class TSNE(BaseEstimator):
                                                    self.n_components)
         params = X_embedded.ravel()
 
-        opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
+        opt_args = {"max_iter": 50, "momentum": 0.5, "it": 0,
                     "learning_rate": self.learning_rate,
                     "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 25,
@@ -840,7 +843,7 @@ class TSNE(BaseEstimator):
 
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)
-        opt_args['n_iter'] = 100
+        opt_args['max_iter'] = 100
         opt_args['momentum'] = 0.8
         opt_args['it'] = it + 1
         params, kl_divergence, it = _gradient_descent(obj_func, params,
@@ -853,7 +856,7 @@ class TSNE(BaseEstimator):
 
         # Final optimization
         P /= self.early_exaggeration
-        opt_args['n_iter'] = self.n_iter
+        opt_args['max_iter'] = self.max_iter
         opt_args['it'] = it + 1
         params, error, it = _gradient_descent(obj_func, params, **opt_args)
 

@@ -17,6 +17,7 @@ from ..base import TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils import deprecated
 from ..utils import gen_even_slices
 from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
@@ -51,7 +52,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     batch_size : int, optional
         Number of examples per minibatch.
 
-    n_iter : int, optional
+    max_iter : int, optional
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
@@ -83,7 +84,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
-    BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
+    BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, max_iter=10,
            random_state=None, verbose=0)
 
     References
@@ -97,12 +98,15 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
     """
+
+    @property
+    @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
-                 n_iter=10, verbose=0, random_state=None):
+                 max_iter=10, verbose=0, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
-        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.verbose = verbose
         self.random_state = random_state
 
@@ -350,7 +354,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                             n_batches, n_samples))
         verbose = self.verbose
         begin = time.time()
-        for iteration in xrange(1, self.n_iter + 1):
+        for iteration in xrange(1, self.max_iter + 1):
             for batch_slice in batch_slices:
                 self._fit(X[batch_slice], rng)
 
