@@ -441,6 +441,9 @@ def test_auc_score_multi_error():
     assert_raise_message(ValueError,
                          "average has to be one of ('macro', 'weighted')",
                          roc_auc_score, y_true, y_pred, average="micro")
+    assert_raise_message(ValueError,
+                         "'invalid' is not supported for multiclass ROC AUC",
+                         roc_auc_score, y_true, y_pred, multiclass="invalid")
 
 
 def test_auc_score_non_binary_class():

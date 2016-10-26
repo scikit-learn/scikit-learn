@@ -282,7 +282,7 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                              "".format(average_options))
         multiclass_options = ("ovo", "ovr")
         if multiclass not in multiclass_options:
-            raise ValueError("{0} is not supported for multiclass ROC AUC"
+            raise ValueError("'{0}' is not supported for multiclass ROC AUC"
                              "".format(multiclass))
 
         check_consistent_length(y_true, y_score)
