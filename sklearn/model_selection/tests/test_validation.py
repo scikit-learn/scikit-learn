@@ -854,7 +854,7 @@ def test_validation_curve_cv_splits_consistency():
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
     # `split` is called for each parameter, the following should produce
-    # identical results for param setting 1 param setting 2 as both have
+    # identical results for param setting 1 and param setting 2 as both have
     # the same C value.
     assert_array_almost_equal(*np.vsplit(np.hstack(scores1)[(0, 2, 1, 3), :],
                                          2))
