@@ -169,8 +169,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average):
     score : float
         Average the sum of the pairwise binary metric scores
     """
-    label_unique, label_counts = np.unique(y_true, return_counts=True)
-    n_labels = len(label_unique)
+    n_labels = len(np.unique(y_true))
     auc_scores_sum = 0
     for pos in range(n_labels):
         for neg in range(n_labels):

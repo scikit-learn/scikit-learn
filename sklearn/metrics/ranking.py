@@ -195,11 +195,15 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.
+        The multiclass case expects shape = [n_samples] and labels
+        with values from 0 to (n_classes-1), inclusive.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
+        The multiclass case expects shape = [n_samples, n_classes]
+        where the scores correspond to probability estimates.
 
     multiclass : string, ['ovr' (default), 'ovo']
         Note: multiclass ROC AUC currently only handles the 'macro' and
@@ -282,6 +286,8 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                              "".format(multiclass))
 
         check_consistent_length(y_true, y_score)
+        check_array(y_true, ensure_2d=False)
+        check_array(y_score)
 
         if y_true.ndim == 1:
             y_true = y_true.reshape((-1, 1))
