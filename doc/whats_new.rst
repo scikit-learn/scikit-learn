@@ -102,6 +102,9 @@ Bug fixes
      <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
      by `Mohammed Affan`_
 
+   - Fixed setting parameters when calling ``fit`` multiple times on
+     :ref:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
+
 
 API changes summary
 -------------------
