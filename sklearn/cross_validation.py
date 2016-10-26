@@ -260,7 +260,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
 
-	check_random_state_shuffle(random_state, shuffle)
+        check_random_state_shuffle(random_state, shuffle)
         self.shuffle = shuffle
         self.random_state = random_state
 
