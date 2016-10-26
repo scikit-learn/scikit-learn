@@ -248,7 +248,11 @@ cpdef sample_without_replacement(np.int_t n_population,
         by `np.random`.
 
     method : "auto", "tracking_selection", "reservoir_sampling" or "pool"
-        If method == "auto", an algorithm is automatically selected.
+        If method == "auto", the ratio of n_samples / n_population is used
+        to determine an algorithm:
+        If the ratio is between 0 and 0.01, tracking selection is used.
+        If the ratio is between 0.01 and 0.99, numpy permutation is used.
+        If the ratio is greater than 0.99, reservoir sampling is used.
         The order of the selected integers is undefined. If a random order is
         desired, the selected subset should be shuffled.
 
