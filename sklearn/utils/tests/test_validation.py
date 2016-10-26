@@ -29,6 +29,7 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
+    check_random_state_shuffle,
 )
 
 from sklearn.exceptions import NotFittedError
@@ -469,3 +470,8 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def test_check_random_state_shuffle():
+    assert_warns(UserWarning, check_random_state_shuffle,
+                 random_state=1, shuffle=False)
