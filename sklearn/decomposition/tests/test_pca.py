@@ -249,7 +249,7 @@ def test_singular_values():
     pca = PCA(n_components=2, svd_solver='full', random_state=rng).fit(X)
     apca = PCA(n_components=2, svd_solver='arpack', random_state=rng).fit(X)
     rpca = PCA(n_components=2, svd_solver='randomized', random_state=rng).fit(X)
-    assert_array_almost_equal(pca.singular_values_, apca.singular_values_, 14)
+    assert_array_almost_equal(pca.singular_values_, apca.singular_values_, 12)
     assert_array_almost_equal(pca.singular_values_, rpca.singular_values_, 1)
     assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 1)
 

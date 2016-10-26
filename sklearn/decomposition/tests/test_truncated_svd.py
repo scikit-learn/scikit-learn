@@ -175,7 +175,7 @@ def test_singular_values():
 
     apca = TruncatedSVD(n_components=2, algorithm='arpack', random_state=rng).fit(X)
     rpca = TruncatedSVD(n_components=2, algorithm='arpack', random_state=rng).fit(X)
-    assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 13)
+    assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 12)
 
     # Compare to the Frobenius norm
     X_apca = apca.transform(X)
