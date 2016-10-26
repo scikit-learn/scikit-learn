@@ -173,8 +173,10 @@ def test_singular_values():
 
     X = rng.randn(n_samples, n_features)
 
-    apca = TruncatedSVD(n_components=2, algorithm='arpack', random_state=rng).fit(X)
-    rpca = TruncatedSVD(n_components=2, algorithm='arpack', random_state=rng).fit(X)
+    apca = TruncatedSVD(n_components=2, algorithm='arpack',
+                        random_state=rng).fit(X)
+    rpca = TruncatedSVD(n_components=2, algorithm='arpack',
+                        random_state=rng).fit(X)
     assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 12)
 
     # Compare to the Frobenius norm
@@ -198,8 +200,10 @@ def test_singular_values():
 
     X = rng.randn(n_samples, n_features)
 
-    apca = TruncatedSVD(n_components=3, algorithm='arpack', random_state=rng)
-    rpca = TruncatedSVD(n_components=3, algorithm='randomized', random_state=rng)
+    apca = TruncatedSVD(n_components=3, algorithm='arpack',
+                        random_state=rng)
+    rpca = TruncatedSVD(n_components=3, algorithm='randomized',
+                        random_state=rng)
     X_apca = apca.fit_transform(X)
     X_rpca = rpca.fit_transform(X)
 
