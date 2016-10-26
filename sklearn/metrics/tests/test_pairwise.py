@@ -418,7 +418,7 @@ def test_cosine_distances():
     assert_true(np.all(D >= 0.))
     assert_true(np.all(D <= 2.))
     # check that diagonal elements are equal to 0
-    assert_array_equal(D.flat[::D.shape[0] + 1], [0., 0.])
+    assert_array_equal(D[np.diag_indices_from(D)], [0., 0.])
 
     XB = np.vstack([x, -x])
     D2 = cosine_distances(XB)
@@ -432,7 +432,7 @@ def test_cosine_distances():
     X = np.abs(rng.rand(1000, 5000))
     D = cosine_distances(X)
     # check that diagonal elements are equal to 0
-    assert_array_almost_equal(D.flat[::D.shape[0] + 1], [0.] * D.shape[0])
+    assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
     assert_true(np.all(D >= 0.))
     assert_true(np.all(D <= 2.))
 
