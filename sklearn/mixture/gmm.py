@@ -84,7 +84,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     mean : array_like, shape (n_features,)
         Mean of the distribution.
 
-    covar : array_like, optional
+    covar : array_like
         Covariance of the distribution. The shape depends on `covariance_type`:
             scalar if 'spherical',
             (n_features) if 'diag',
@@ -99,9 +99,17 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
 
     Returns
     -------
-    X : array, shape (n_features, n_samples)
-        Randomly generated sample
+    X : array
+        Randomly generated sample. The shape depends on `n_samples`:
+        (n_features,) if `1`
+        (n_features, n_samples) otherwise
     """
+    _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None)
+
+
+def _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None):
     rng = check_random_state(random_state)
     n_dim = len(mean)
     rand = rng.randn(n_dim, n_samples)
@@ -423,7 +431,7 @@ class _GMMBase(BaseEstimator):
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
-                X[comp_in_X] = sample_gaussian(
+                X[comp_in_X] = _sample_gaussian(
                     self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
