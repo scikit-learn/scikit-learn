@@ -407,6 +407,36 @@ def test_euclidean_distances():
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
 
+def test_cosine_distances():
+    # Check the pairwise Cosine distances computation
+    rng = np.random.RandomState(1337)
+    x = np.abs(rng.rand(910))
+    XA = np.vstack([x, x])
+    D = cosine_distances(XA)
+    assert_array_almost_equal(D, [[0., 0.], [0., 0.]])
+    # check that all elements are in [0, 2]
+    assert_true(np.all(D >= 0.))
+    assert_true(np.all(D <= 2.))
+    # check that diagonal elements are equal to 0
+    assert_array_equal(D[np.diag_indices_from(D)], [0., 0.])
+
+    XB = np.vstack([x, -x])
+    D2 = cosine_distances(XB)
+    # check that all elements are in [0, 2]
+    assert_true(np.all(D2 >= 0.))
+    assert_true(np.all(D2 <= 2.))
+    # check that diagonal elements are equal to 0 and non diagonal to 2
+    assert_array_equal(D2, [[0., 2.], [2., 0.]])
+
+    # check large random matrix
+    X = np.abs(rng.rand(1000, 5000))
+    D = cosine_distances(X)
+    # check that diagonal elements are equal to 0
+    assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
+    assert_true(np.all(D >= 0.))
+    assert_true(np.all(D <= 2.))
+
+
 # Paired distances
 
 def test_paired_euclidean_distances():
