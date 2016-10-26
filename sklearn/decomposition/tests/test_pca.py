@@ -266,7 +266,7 @@ def test_singular_values():
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(pca.singular_values_,
-                              np.sqrt(np.sum(X_pca**2.0, axis=0)), 14)
+                              np.sqrt(np.sum(X_pca**2.0, axis=0)), 12)
     assert_array_almost_equal(apca.singular_values_,
                               np.sqrt(np.sum(X_apca**2.0, axis=0)), 12)
     assert_array_almost_equal(rpca.singular_values_,
