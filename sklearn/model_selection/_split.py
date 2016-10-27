@@ -1631,7 +1631,7 @@ def train_test_split(*arrays, **options):
 
     stratify : array-like or None (default is None)
         If not None, data is split in a stratified fashion, using this as
-        the groups array.
+        the class labels.
 
     Returns
     -------
