@@ -1127,21 +1127,21 @@ the ground truth labels.
 Coverage error
 --------------
 
-The :func:`coverage_error` function computes the average number of labels that
-have to be included in the final prediction such that all true labels
-are predicted. This is useful if you want to know how many top-scored-labels
-you have to predict in average without missing any true one. The best value
-of this metrics is thus the average number of true labels.
+The :func:`coverage_error` function evaluates how far we need, on average, to go
+down the ranked list of labels in order to cover all the relevant labels of the
+example. This is useful if one wants to know how many top-scored labels need to
+be predicted, on average, without missing any true ones. The best value of this
+metric is thus the average number of true labels minus 1.
 
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
-score associated with each label
+target scores associated with each label
 :math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
 the coverage is defined as
 
 .. math::
   coverage(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij} - 1
 
 with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
 Given the rank definition, ties in ``y_scores`` are broken by giving the
@@ -1154,7 +1154,7 @@ Here is a small example of usage of this function::
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> coverage_error(y_true, y_score)
-    2.5
+    1.5
 
 .. _label_ranking_average_precision:
 

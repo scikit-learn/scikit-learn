@@ -670,12 +670,16 @@ def coverage_error(y_true, y_score, sample_weight=None):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
+    if np.any(np.sum(y_true, axis=1) == 0):
+        raise ValueError("one or more rows in y_true have no true label")
+
     y_score_mask = np.ma.masked_array(y_score, mask=np.logical_not(y_true))
     y_min_relevant = y_score_mask.min(axis=1).reshape((-1, 1))
     coverage = (y_score >= y_min_relevant).sum(axis=1)
     coverage = coverage.filled(0)
+    coverage = np.average(coverage, weights=sample_weight) - 1
 
-    return np.average(coverage, weights=sample_weight)
+    return coverage
 
 
 def label_ranking_loss(y_true, y_score, sample_weight=None):
