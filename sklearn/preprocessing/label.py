@@ -472,9 +472,9 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
     Single class always as vector
 
     >>> label_binarize(['a', 'a', 'a'])
-    array([[1],
-           [1],
-           [1]])
+    array([[0],
+           [0],
+           [0]])
 
     See also
     --------
@@ -513,10 +513,10 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
 
     if y_type == "binary":
         if n_classes == 1:
-            y_out = np.empty((len(y), 1), dtype=np.int)
+            y_out = np.empty((len(y), 1))
             y_out.fill(0)
             if sparse_output:
-                return sp.csr_matrix(y_out, dtype=int)
+                return sp.csr_matrix(y_out)
             return y_out
         elif n_classes >= 3:
             y_type = "multiclass"
@@ -536,13 +536,13 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
 
         if pos_label != 0:
             indptr = np.hstack((0, np.cumsum(y_in_classes)))
-            data = np.empty_like(indices, dtype=np.int)
+            data = np.empty_like(indices)
             data.fill(pos_label)
             y_out = sp.csr_matrix((data, indices, indptr),
                                   shape=(n_samples, n_classes))
         else:
             indptr = np.arange(len(y_in_classes))
-            data = np.empty((n_samples, n_classes), dtype=np.int)
+            data = np.empty((n_samples, n_classes))
             data.fill(neg_label)
             data[indptr, indices] = 0
             y_out = sp.csr_matrix(data)
@@ -562,7 +562,7 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
             y_out[y_out == 0] = neg_label
 
     else:
-        y_out.data = astype(y_out.data, int, copy=False)
+        y_out.data = astype(y_out.data, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
