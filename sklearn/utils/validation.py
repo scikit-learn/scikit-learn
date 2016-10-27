@@ -705,3 +705,19 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_random_state_shuffle(random_state, shuffle):
+    """Show a warning if random_state is not None and shuffle is False.
+    Parameters
+    ----------
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+    shuffle : bool
+        Whether or not the training data should be shuffled after each epoch.
+    """
+    if random_state is not None and not shuffle:
+        warnings.warn("`shuffle` should be set to True for the data"
+                      " to be shuffled based on the given `random_state`.",
+                      UserWarning)

@@ -159,7 +159,3 @@ Communication
 - IRC channel: ``#scikit-learn`` at ``irc.freenode.net``
 - Stack Overflow: http://stackoverflow.com/questions/tagged/scikit-learn
 - Website: http://scikit-learn.org
-
-Citation
-~~~~~~~~~~~~~
-If you use scikit-learn in a scientific publication, we would appreciate citations: http://scikit-learn.org/stable/about.html#citing-scikit-learn
