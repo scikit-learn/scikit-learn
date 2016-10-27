@@ -25,7 +25,7 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import (_is_arraylike, _num_samples,
-                               column_or_1d)
+                               column_or_1d, check_random_state_shuffle)
 from .utils.multiclass import type_of_target
 from .utils.random import choice
 from .externals.joblib import Parallel, delayed, logger
@@ -259,6 +259,8 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
+
+        check_random_state_shuffle(random_state, shuffle)
         self.shuffle = shuffle
         self.random_state = random_state
 
