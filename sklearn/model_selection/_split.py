@@ -779,7 +779,6 @@ class LeaveOneGroupOut(BaseCrossValidator):
             raise ValueError("The groups parameter should not be None")
         # We make a copy of groups to avoid side-effects during iteration
         groups = check_array(groups, copy=True, ensure_2d=False, dtype=None)
-        check_consistent_length(X, groups)
         unique_groups = np.unique(groups)
         if len(unique_groups) <= 1:
             raise ValueError(
