@@ -556,11 +556,9 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
 
     # Breakup nearest neighbor distance computation into batches to prevent
     # memory blowup in the case of a large number of samples and clusters.
-    metric_kwargs = dict(squared=True)
-    # TODO: Once the functionality (PR #7383) is merged use check_inputs=False.
-    # metric_kwargs = dict(squared=True, check_inputs=False)
+    # TODO: Once PR #7383 is merged use check_inputs=False in metric_kwargs.
     labels, mindist = pairwise_distances_argmin_min(
-        X=X, Y=centers, metric='euclidean', metric_kwargs=metric_kwargs)
+        X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
     # cython k-means code assumes int32 inputs
     labels = labels.astype(np.int32)
     if n_samples == distances.shape[0]:
