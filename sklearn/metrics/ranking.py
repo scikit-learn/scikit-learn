@@ -817,7 +817,7 @@ def ndcg_score(y_true, y_score, k=5):
     1.0
     >>> y_score = [[0.9, 0.5, 0.8], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
     >>> ndcg_score(y_true, y_score, k=2)
-    0.6666666666
+    0.66666666666666663
     """
     y_score, y_true = check_X_y(y_score, y_true)
 
