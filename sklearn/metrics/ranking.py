@@ -822,13 +822,16 @@ def ndcg_score(y_true, y_score, k=5):
     y_score, y_true = check_X_y(y_score, y_true)
 
     lb = LabelBinarizer()
-    lb.fit(range(len(y_score) + 1))
-    binaryzed_y_true = lb.transform(y_true)
+    lb.fit(range(max(max(y_true) + 1, len(y_true))))
+    binarized_y_true = lb.transform(y_true)
+
+    if binarized_y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different value ranges")
 
     scores = []
 
     # Iterate over each y_value_true and compute the DCG score
-    for y_value_true, y_value_score in zip(binaryzed_y_true, y_score):
+    for y_value_true, y_value_score in zip(binarized_y_true, y_score):
         actual = dcg_score(y_value_true, y_value_score, k)
         best = dcg_score(y_value_true, y_value_true, k)
         score = float(actual) / float(best)
