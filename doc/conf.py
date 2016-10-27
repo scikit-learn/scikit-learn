@@ -39,8 +39,8 @@ extensions = [
 ]
 
 # this is needed for some reason...
-# http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-numpydoc_show_class_members = False
+# see https://github.com/numpy/numpydoc/issues/69
+numpydoc_class_members_toctree = False
 
 
 # pngmath / imgmath compatibility layer for different sphinx versions
