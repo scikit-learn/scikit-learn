@@ -854,7 +854,7 @@ def test_cv_iterable_wrapper():
     # If the splits are randomized, successive calls to split yields different
     # results
     kf_randomized_iter = KFold(n_splits=5, shuffle=True).split(X, y)
-    kf_randomized_iter_wrapped = check_cv(kf_iter)
+    kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     assert_array_equal(list(kf_randomized_iter_wrapped.split(X, y)),
                        list(kf_randomized_iter_wrapped.split(X, y)))
     try:
