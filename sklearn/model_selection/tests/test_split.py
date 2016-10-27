@@ -783,9 +783,7 @@ def test_leave_group_out_changing_groups():
 
 def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     X = y = groups = np.ones(0)
-    msg = ("The groups parameter contains fewer than 2 unique groups ([]). "
-           "LeaveOneGroupOut expects at least 2.")
-    assert_raise_message(ValueError, msg, next,
+    assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
     msg = ("The groups parameter contains fewer than 2 unique groups ([ 1.]). "
