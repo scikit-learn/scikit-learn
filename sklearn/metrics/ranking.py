@@ -25,7 +25,7 @@ from scipy.sparse import csr_matrix
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils import column_or_1d, check_array
+from ..utils import column_or_1d, check_array, check_X_y
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.fixes import bincount
@@ -819,6 +819,8 @@ def ndcg_score(y_true, y_score, k=5):
     >>> ndcg_score(y_true, y_score, k=2)
     0.6666666666
     """
+    y_score, y_true = check_X_y(y_score, y_true)
+
     lb = LabelBinarizer()
     lb.fit(range(len(y_score) + 1))
     binaryzed_y_true = lb.transform(y_true)
