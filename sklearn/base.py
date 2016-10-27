@@ -340,7 +340,8 @@ class BaseEstimator(object):
                                                offset=len(class_name),),)
 
     def _repr_pretty_(self, p, cycle):
-        my_repr = self.__repr__()
+        # for interactive use such as IPython console and notebooks
+        my_repr = repr(self)
         if _PRINTOPTIONS['info'] is True:
             print_attributes = ['classes_', 'n_outputs_']
             for attr in print_attributes:
@@ -352,7 +353,7 @@ class BaseEstimator(object):
                 my_repr += "\n- {0}={1}".format('n_features', n_features)
 
         # representation for ipython / jupyter
-        return p.text(self.__str__())
+        return p.text(my_repr)
 
     def __getstate__(self):
         if type(self).__module__.startswith('sklearn.'):
