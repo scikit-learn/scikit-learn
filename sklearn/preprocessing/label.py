@@ -562,7 +562,7 @@ def label_binarize(y, classes=None, neg_label=0, pos_label=1,
             y_out[y_out == 0] = neg_label
 
     else:
-        y_out.data = astype(y_out.data, copy=False)
+        y_out.data = astype(y_out.data, int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):
