@@ -834,7 +834,6 @@ def ndcg_score(y_true, y_score, k=5):
     for y_value_true, y_value_score in zip(binarized_y_true, y_score):
         actual = dcg_score(y_value_true, y_value_score, k)
         best = dcg_score(y_value_true, y_value_true, k)
-        score = float(actual) / float(best)
-        scores.append(score)
+        scores.append(actual / best)
 
     return np.mean(scores)
