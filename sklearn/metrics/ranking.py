@@ -789,7 +789,7 @@ def dcg_score(y_true, y_score, k=5):
     return np.sum(gain / discounts)
 
 
-def ndcg_score(ground_truth, predictions, k=5):
+def ndcg_score(y_true, y_score, k=5):
     """Normalized discounted cumulative gain (NDCG) at rank K.
     Normalized Discounted Cumulative Gain (NDCG) measures the performance of a
     recommendation system based on the graded relevance of the recommended
@@ -798,9 +798,9 @@ def ndcg_score(ground_truth, predictions, k=5):
 
     Parameters
     ----------
-    ground_truth : array, shape = [n_samples]
+    y_true : array, shape = [n_samples]
         Ground truth (true labels represended as integers).
-    predictions : array, shape = [n_samples, n_classes]
+    y_score : array, shape = [n_samples, n_classes]
         Predicted probabilities.
     k : int
         Rank.
@@ -811,24 +811,24 @@ def ndcg_score(ground_truth, predictions, k=5):
 
     Example
     -------
-    >>> ground_truth = [1, 0, 2]
-    >>> predictions = [[0.15, 0.55, 0.2], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
-    >>> score = ndcg_score(ground_truth, predictions, k=2)
+    >>> y_true = [1, 0, 2]
+    >>> y_score = [[0.15, 0.55, 0.2], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
+    >>> ndcg_score(y_true, y_score, k=2)
     1.0
-    >>> predictions = [[0.9, 0.5, 0.8], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
-    >>> score = ndcg_score(ground_truth, predictions, k=2)
+    >>> y_score = [[0.9, 0.5, 0.8], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
+    >>> ndcg_score(y_true, y_score, k=2)
     0.6666666666
     """
     lb = LabelBinarizer()
-    lb.fit(range(len(predictions) + 1))
-    T = lb.transform(ground_truth)
+    lb.fit(range(len(y_score) + 1))
+    binaryzed_y_true = lb.transform(y_true)
 
     scores = []
 
-    # Iterate over each y_true and compute the DCG score
-    for y_true, y_score in zip(T, predictions):
-        actual = dcg_score(y_true, y_score, k)
-        best = dcg_score(y_true, y_true, k)
+    # Iterate over each y_value_true and compute the DCG score
+    for y_value_true, y_value_score in zip(binaryzed_y_true, y_score):
+        actual = dcg_score(y_value_true, y_value_score, k)
+        best = dcg_score(y_value_true, y_value_true, k)
         score = float(actual) / float(best)
         scores.append(score)
 
