@@ -35,7 +35,7 @@ FILE_URLS = [
     'https://ndownloader.figshare.com/files/5976060',
     'https://ndownloader.figshare.com/files/5976057'
 ]
-URL_topics = ('https://ndownloader.figshare.com/files/5976048')
+URL_topics = 'https://ndownloader.figshare.com/files/5976048'
 
 logger = logging.getLogger()
 

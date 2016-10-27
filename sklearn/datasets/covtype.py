@@ -33,7 +33,7 @@ from ..externals import joblib
 from ..utils import check_random_state
 
 
-URL = ('https://ndownloader.figshare.com/files/5976039')
+URL = 'https://ndownloader.figshare.com/files/5976039'
 
 
 logger = logging.getLogger()

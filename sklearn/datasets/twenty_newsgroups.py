@@ -64,7 +64,7 @@ else:
 logger = logging.getLogger(__name__)
 
 
-URL = ("https://ndownloader.figshare.com/files/5975967")
+URL = "https://ndownloader.figshare.com/files/5975967"
 ARCHIVE_NAME = "20news-bydate.tar.gz"
 CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"

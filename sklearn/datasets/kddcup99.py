@@ -29,9 +29,9 @@ from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
 
-URL10 = ('https://ndownloader.figshare.com/files/5976042')
+URL10 = 'https://ndownloader.figshare.com/files/5976042'
 
-URL = ('https://ndownloader.figshare.com/files/5976045')
+URL = 'https://ndownloader.figshare.com/files/5976045'
 
 
 logger = logging.getLogger()
