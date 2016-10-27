@@ -22,6 +22,12 @@ New features
 Enhancements
 ............
 
+   - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
+     now uses significantly less memory when assigning data points to their
+     nearest cluster center.
+     (`#7721 <https://github.com/scikit-learn/scikit-learn/pull/7721>`_)
+     By `Jon Crall`_.
+
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
      that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
      <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
