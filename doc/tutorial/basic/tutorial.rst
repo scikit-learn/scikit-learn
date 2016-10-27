@@ -161,7 +161,7 @@ learn::
       (some-path)/sklearn/datasets/data/diabetes_target.csv.gz
 
     You can also read the data file directly with numpy. Consider the following example.
-    Boston dataset contains 2 header lines, that is why we are going to skip them:
+    Boston dataset contains 2 header lines, that is why we are going to skip them::
 
       >>> import numpy as np
       >>> boston_data = np.loadtxt(boston.filename, delimiter=",", skiprows=2)
@@ -170,7 +170,7 @@ learn::
       >>> boston_data.shape  # also contains target columns
       (506, 14)
 
-    See also:
+    .. seealso::
         :func:`pandas.read_csv`
 
 Learning and predicting
