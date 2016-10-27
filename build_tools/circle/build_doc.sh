@@ -57,7 +57,7 @@ if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]
 then
     MAKE_TARGET=dist
 else
-    MAKE_TARGET=dist
+    MAKE_TARGET=html
 fi
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
