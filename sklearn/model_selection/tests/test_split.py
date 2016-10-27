@@ -857,14 +857,8 @@ def test_cv_iterable_wrapper():
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     assert_array_equal(list(kf_randomized_iter_wrapped.split(X, y)),
                        list(kf_randomized_iter_wrapped.split(X, y)))
-    try:
-        assert_array_equal(list(kf_iter_wrapped.split(X, y)),
-                           list(kf_randomized_iter_wrapped.split(X, y)))
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError("After randomization, wrapped kfold (with "
-                             "shuffle) did not produce differing results.")
+    assert_true(np.any(np.array(list(kf_iter_wrapped.split(X, y))) !=
+                       np.array(list(kf_randomized_iter_wrapped.split(X, y)))))
 
 
 def test_group_kfold():
