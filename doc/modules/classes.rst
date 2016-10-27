@@ -1050,7 +1050,8 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
-
+   neighbors.LocalOutlierFactor
+	      
 .. autosummary::
    :toctree: generated/
    :template: function.rst

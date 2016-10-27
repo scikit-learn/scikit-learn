@@ -724,6 +724,31 @@ def test_leave_group_out_changing_groups():
     assert_equal(3, LeaveOneGroupOut().get_n_splits(X, y, groups))
 
 
+def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
+    X = y = groups = np.ones(0)
+    msg = ("The groups parameter contains fewer than 2 unique groups ([]). "
+           "LeaveOneGroupOut expects at least 2.")
+    assert_raise_message(ValueError, msg, next,
+                         LeaveOneGroupOut().split(X, y, groups))
+    X = y = groups = np.ones(1)
+    msg = ("The groups parameter contains fewer than 2 unique groups ([ 1.]). "
+           "LeaveOneGroupOut expects at least 2.")
+    assert_raise_message(ValueError, msg, next,
+                         LeaveOneGroupOut().split(X, y, groups))
+    X = y = groups = np.ones(1)
+    msg = ("The groups parameter contains fewer than (or equal to) n_groups "
+           "(3) numbers of unique groups ([ 1.]). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups be present")
+    assert_raise_message(ValueError, msg, next,
+                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
+    X = y = groups = np.arange(3)
+    msg = ("The groups parameter contains fewer than (or equal to) n_groups "
+           "(3) numbers of unique groups ([0 1 2]). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups be present")
+    assert_raise_message(ValueError, msg, next,
+                         LeavePGroupsOut(n_groups=3).split(X, y, groups))
+
+
 def test_train_test_split_errors():
     assert_raises(ValueError, train_test_split)
     assert_raises(ValueError, train_test_split, range(3), train_size=1.1)
