@@ -7,19 +7,39 @@ Contributing
 This project is a community effort, and everyone is welcome to
 contribute.
 
-The project is hosted on http://github.com/scikit-learn/scikit-learn
+The project is hosted on https://github.com/scikit-learn/scikit-learn
 
 Scikit-learn is somewhat :ref:`selective <selectiveness>` when it comes to
 adding new algorithms, and the best way to contribute and to help the project
 is to start working on known issues.
-See :ref:`easy_issues` to get started.
+See :ref:`new_contributors` to get started.
+
+.. topic:: **Our community, our values**
+
+    We are a community based on openness and friendly, didactic,
+    discussions.
+
+    We aspire to treat everybody equally, and value their contributions.
+
+    Decisions are made based on technical merit and consensus.
+
+    Code is not the only way to help the project. Reviewing pull
+    requests, answering questions to help others on mailing lists or
+    issues, organizing and teaching tutorials, working on the website,
+    improving the documentation, are all priceless contributions.
+
+    We abide by the principles of openness, respect, and consideration of
+    others of the Python Software Foundation:
+    https://www.python.org/psf/codeofconduct/
+
+|
 
 Submitting a bug report
 =======================
 
 In case you experience issues using this package, do not hesitate to submit a
 ticket to the
-`Bug Tracker <http://github.com/scikit-learn/scikit-learn/issues>`_. You are
+`Bug Tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
 
@@ -28,8 +48,8 @@ also welcome to post feature requests or pull requests.
 Retrieving the latest code
 ==========================
 
-We use `Git <http://git-scm.com/>`_ for version control and
-`GitHub <http://github.com/>`_ for hosting our main repository.
+We use `Git <https://git-scm.com/>`_ for version control and
+`GitHub <https://github.com/>`_ for hosting our main repository.
 
 You can check out the latest sources with the command::
 
@@ -50,7 +70,7 @@ extension in place::
 Another option is to use the ``develop`` option if you change your code a lot
 and do not want to have to reinstall every time. This basically builds the
 extension in place and creates a link to the development directory (see
-`the setuptool docs <https://pythonhosted.org/setuptools/setuptools.html#development-mode>`_)::
+`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
 
     python setup.py develop
 
@@ -76,20 +96,20 @@ Contributing code
   To avoid duplicating work, it is highly advised that you contact the
   developers on the mailing list before starting work on a non-trivial feature.
 
-  https://lists.sourceforge.net/lists/listinfo/scikit-learn-general
+  https://mail.python.org/mailman/listinfo/scikit-learn
 
 How to contribute
 -----------------
 
 The preferred way to contribute to scikit-learn is to fork the `main
-repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
 then submit a "pull request" (PR):
 
- 1. `Create an account <https://github.com/signup/free>`_ on
+ 1. `Create an account <https://github.com/join>`_ on
     GitHub if you do not already have one.
 
  2. Fork the `project repository
-    <http://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
+    <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
     account on the GitHub server.
 
@@ -128,20 +148,53 @@ visibility.
 
         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-(If any of the above seems like magic to you, then look up the
-`Git documentation <http://git-scm.com/documentation>`_ on the web.)
+If any of the above seems like magic to you, then look up the `Git documentation
+<https://git-scm.com/documentation>`_ and the `Git development workflow
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
+web.
+
+In particular, if some conflicts arise between your branch and the master
+branch, you will need to `rebase your branch on master
+<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
+Please avoid merging master branch into yours. If you did it anyway, you can fix
+it following `this example
+<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
+
+
+Contributing pull requests
+--------------------------
 
 It is recommended to check that your contribution complies with the following
 rules before submitting a pull request:
 
-    * Follow the `coding-guidelines`_ (see below).
+    * Follow the `coding-guidelines`_ (see below). To make sure that
+      your PR does not add PEP8 violations you can run
+      `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+      Unix-like system.
 
-    * When applicable, use the Validation tools and other code in the
+    * When applicable, use the validation tools and other code in the
       ``sklearn.utils`` submodule.  A list of utility routines available
       for developers can be found in the :ref:`developers-utils` page.
 
+    * If your pull request addresses an issue, please use the title to describe
+      the issue and mention the issue number in the pull request description to
+      ensure a link is created to the original issue.
+
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
+
+    * Please prefix the title of your pull request with ``[MRG]`` if the
+      contribution is complete and should be subjected to a detailed review.
+      Two core developers will review your code and change the prefix of the pull
+      request to ``[MRG + 1]`` and ``[MRG + 2]`` on approval, making it eligible
+      for merging. Incomplete contributions should be prefixed ``[WIP]`` to
+      indicate a work in progress (and changed to ``[MRG]`` when it matures).
+      WIPs may be useful to: indicate you are working on something to avoid
+      duplicated work, request broad review of functionality or API, or seek
+      collaborators. WIPs often benefit from the inclusion of a
+      `task list
+      <https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments>`_
+      in the PR description.
 
     * All other tests pass when everything is rebuilt from scratch. On
       Unix-like systems, check with (from the toplevel source folder)::
@@ -153,6 +206,9 @@ rules before submitting a pull request:
       Examples should demonstrate why the new functionality is useful in
       practice and, if possible, compare it to other methods available in
       scikit-learn.
+
+    * Documentation and high-coverage tests are necessary for enhancements
+      to be accepted.
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
@@ -204,21 +260,80 @@ and Cython optimizations.
    workflow, please pay a visit to the `Scipy Development Workflow
    <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
    and the `Astropy Workflow for Developers
-   <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
+   <http://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
-.. _easy_issues:
+.. _filing_bugs:
 
-Easy Issues
+Filing Bugs
 -----------
 
-A great way to start contributing to scikit-learn is to pick an item from the
-list of `Easy issues
-<https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
-in the issue tracker. Resolving these issues allow you to start contributing
-to the project without much prior knowledge. Your assistance in this area will
-be greatly appreciated by the more experienced developers as it helps free up
-their time to concentrate on other issues.
+We use Github issues to track all bugs and feature requests; feel free to
+open an issue if you have found a bug or wish to see a feature implemented.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   `issues <https://github.com/scikit-learn/scikit-learn/issues?q=>`_
+   or `pull requests <https://github.com/scikit-learn/scikit-learn/pulls?q=>`_.
+
+-  If you are submitting an algorithm or feature request, please verify that
+   the algorithm fulfills our
+   `new algorithm requirements
+   <http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published>`_.
+
+-  Please ensure all code snippets and error messages are formatted in
+   appropriate code blocks.
+   See `Creating and highlighting code blocks
+   <https://help.github.com/articles/creating-and-highlighting-code-blocks>`_.
+
+-  Please include your operating system type and version number, as well
+   as your Python, scikit-learn, numpy, and scipy versions. This information
+   can be found by runnning the following code snippet::
+
+     import platform; print(platform.platform())
+     import sys; print("Python", sys.version)
+     import numpy; print("NumPy", numpy.__version__)
+     import scipy; print("SciPy", scipy.__version__)
+     import sklearn; print("Scikit-Learn", sklearn.__version__)
+
+-  Please be specific about what estimators and/or functions are involved
+   and the shape of the data, as appropriate; please include a
+   `reproducible <http://stackoverflow.com/help/mcve>`_ code snippet
+   or link to a `gist <https://gist.github.com>`_. If an exception is raised,
+   please provide the traceback.
+
+.. _new_contributors:
+
+Issues for New Contributors
+---------------------------
+
+New contributors should look for the following tags when looking for issues. 
+We strongly recommend that new contributors tackle "easy" issues first: this 
+helps the contributor become familiar with the contribution workflow, and 
+for the core devs to become acquainted with the contributor; besides which, 
+we frequently underestimate how easy an issue is to solve!
+
+.. topic:: Easy Tags
+
+    A great way to start contributing to scikit-learn is to pick an item from the
+    list of `Easy issues
+    <https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
+    in the issue tracker. Resolving these issues allow you to start contributing
+    to the project without much prior knowledge. Your assistance in this area will
+    be greatly appreciated by the more experienced developers as it helps free up
+    their time to concentrate on other issues.
+
+.. topic:: Need Contributor Tags
+
+    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally, 
+    we use the Need Contributor tag to mark Pull Requests which have been abandoned
+    by their original contributor and are available for someone to pick up where the original
+    contributor left off. The list of issues with the Need Contributor tag can be found
+    `here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
+
+    Note that not all issues which need contributors will have this tag.
 
 .. _contribute_documentation:
 
@@ -237,9 +352,9 @@ and are viewable in a web browser. See the README file in the doc/ directory
 for more information.
 
 For building the documentation, you will need `sphinx
-<http://sphinx.pocoo.org/>`_,
-`matplotlib <http://matplotlib.sourceforge.net/>`_ and
-`pillow <http://pillow.readthedocs.org/en/latest/>`_.
+<http://www.sphinx-doc.org/en/stable/>`_,
+`matplotlib <http://matplotlib.org>`_ and
+`pillow <http://pillow.readthedocs.io/en/latest/>`_.
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
@@ -277,8 +392,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
         See also
         --------
-        SelectKBest: Select features based on the k highest scores.
-        SelectFpr: Select features based on a false positive rate test.
+        SelectKBest : Select features based on the k highest scores.
+        SelectFpr : Select features based on a false positive rate test.
 
     * For unwritten formatting rules, try to follow existing good works:
 
@@ -297,9 +412,9 @@ Finally, follow the formatting rules below to make it consistently good:
 Testing and improving test coverage
 ------------------------------------
 
-High-quality `unit testing <http://en.wikipedia.org/wiki/Unit_testing>`_
+High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `nose <http://nose.readthedocs.org/en/latest/>`_
+purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
@@ -313,7 +428,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <http://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+   <https://pypi.python.org/pypi/coverage>`_ package in addition to nose.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -351,7 +466,7 @@ should have (at least) one of the following tags:
 :New Feature:
     Feature requests and pull requests implementing a new feature.
 
-There are two other tags to help new contributors:
+There are three other tags to help new contributors:
 
 :Easy:
     This issue can be tackled by anyone, no experience needed.
@@ -360,6 +475,13 @@ There are two other tags to help new contributors:
 :Moderate:
     Might need some knowledge of machine learning or the package,
     but is still approachable for someone new to the project.
+
+:Needs Contributor:
+    This tag marks an issue which currently lacks a contributor or a 
+    PR that needs another contributor to take over the work. These 
+    issues can range in difficulty, and may not be approachable
+    for new contributors. Note that not all issues which need
+    contributors will have this tag.
 
 
 Other ways to contribute
@@ -392,7 +514,7 @@ the review easier so new code can be integrated in less time.
 
 Uniformly formatted code makes it easier to share code ownership. The
 scikit-learn project tries to closely follow the official Python guidelines
-detailed in `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ that
+detailed in `PEP8 <https://www.python.org/dev/peps/pep-0008>`_ that
 detail how code should be formatted and indented. Please read it and
 follow it.
 
@@ -414,11 +536,11 @@ In addition, we add the following guidelines:
 
     * **Please don't use** ``import *`` **in any case**. It is considered harmful
       by the `official Python recommendations
-      <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
+      <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
       It makes the code harder to read as the origin of symbols is no
       longer explicitly referenced, but most important, it prevents
       using a static analysis tool like `pyflakes
-      <http://www.divmod.org/trac/wiki/DivmodPyflakes>`_ to automatically
+      <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
       find bugs in scikit-learn.
 
     * Use the `numpy docstring standard
@@ -427,7 +549,7 @@ In addition, we add the following guidelines:
 
 
 A good example of code that we like can be found `here
-<https://svn.enthought.com/enthought/browser/sandbox/docs/coding_standard.py>`_.
+<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
 Input validation
 ----------------
@@ -535,8 +657,8 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         # actual implementation
         pass
 
-    @deprecated("Function 'zero_one' has been renamed to "
-                "'zero_one_loss' and will be removed in release 0.15."
+    @deprecated("Function 'zero_one' was renamed to 'zero_one_loss' "
+                "in version 0.13 and will be removed in release 0.15. "
                 "Default behavior is changed from 'normalize=False' to "
                 "'normalize=True'")
     def zero_one(y_true, y_pred, normalize=False):
@@ -547,22 +669,29 @@ use the decorator ``deprecated`` on a property.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
     @property
-    @deprecated("Attribute labels_ is deprecated and "
+    @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
 
 If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
-In following example, k is deprecated and renamed to n_clusters::
+In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
 
     def example_function(n_clusters=8, k=None):
         if k is not None:
-            warnings.warn("'k' was renamed to n_clusters and will "
-                          "be removed in 0.15.",
-                          DeprecationWarning)
+            warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
+                          "will be removed in 0.15.", DeprecationWarning)
             n_clusters = k
+
+As in these examples, the warning message should always give both the
+version in which the deprecation happened and the version in which the
+old behavior will be removed. If the deprecation happened in version
+0.x-dev, the message should say deprecation occurred in version 0.x and
+the removal will be in 0.(x+2). For example, if the deprecation happened
+in version 0.18-dev, the message should say it happened in version 0.18
+and the old behavior will be removed in version 0.20.
 
 
 .. currentmodule:: sklearn
@@ -782,9 +911,9 @@ an integer called ``n_iter``.
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
-whether it is just for you or for contributing it to sklearn, there are several
-internals of scikit-learn that you should be aware of in addition to the
-sklearn API outlined above. You can check whether your estimator
+whether it is just for you or for contributing it to scikit-learn, there are
+several internals of scikit-learn that you should be aware of in addition to
+the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
 :func:`utils.estimator_checks.check_estimator` on the class::
 
@@ -801,28 +930,46 @@ If a dependency on scikit-learn is okay for your code,
 you can prevent a lot of boilerplate code
 by deriving a class from ``BaseEstimator``
 and optionally the mixin classes in ``sklearn.base``.
-E.g., here's a custom classifier::
+E.g., below is a custom classifier. For more information on this example, see
+`scikit-learn-contrib <https://github.com/scikit-learn-contrib/project-template/blob/master/skltemplate/template.py>`_::
 
   >>> import numpy as np
   >>> from sklearn.base import BaseEstimator, ClassifierMixin
-  >>> class MajorityClassifier(BaseEstimator, ClassifierMixin):
-  ...     """Predicts the majority class of its training data."""
-  ...     def __init__(self):
-  ...         pass
+  >>> from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+  >>> from sklearn.utils.multiclass import unique_labels
+  >>> from sklearn.metrics import euclidean_distances
+  >>> class TemplateClassifier(BaseEstimator, ClassifierMixin):
+  ...
+  ...     def __init__(self, demo_param='demo'):
+  ...         self.demo_param = demo_param
   ...
   ...     def fit(self, X, y):
-  ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
-  ...                                            return_inverse=True)
-  ...         self.majority_ = np.argmax(np.bincount(indices))
+  ...
+  ...         # Check that X and y have correct shape
+  ...         X, y = check_X_y(X, y)
+  ...         # Store the classes seen during fit
+  ...         self.classes_ = unique_labels(y)
+  ...
+  ...         self.X_ = X
+  ...         self.y_ = y
+  ...         # Return the classifier
   ...         return self
   ...
   ...     def predict(self, X):
-  ...         return np.repeat(self.classes_[self.majority_], len(X))
+  ...
+  ...         # Check is fit had been called
+  ...         check_is_fitted(self, ['X_', 'y_'])
+  ...
+  ...         # Input validation
+  ...         X = check_array(X)
+  ...
+  ...         closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
+  ...         return self.y_[closest]
 
 
 get_params and set_params
 -------------------------
-All sklearn estimator have ``get_params`` and ``set_params`` functions.
+All scikit-learn estimators have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
 It must take one keyword argument, ``deep``,

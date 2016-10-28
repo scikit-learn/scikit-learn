@@ -12,13 +12,15 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.stdlib cimport calloc
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.math cimport fabs
 
 import numpy as np
 cimport numpy as np
@@ -27,6 +29,7 @@ np.import_array()
 from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
+from ._utils cimport WeightedMedianCalculator
 
 cdef class Criterion:
     """Interface for impurity criteria.
@@ -232,6 +235,7 @@ cdef class ClassificationCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = 0
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -270,11 +274,10 @@ cdef class ClassificationCriterion(Criterion):
 
     def __dealloc__(self):
         """Destructor."""
-
         free(self.n_classes)
 
     def __reduce__(self):
-        return (ClassificationCriterion,
+        return (type(self),
                 (self.n_outputs,
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
@@ -684,13 +687,16 @@ cdef class RegressionCriterion(Criterion):
 
     cdef double sq_sum_total
 
-    def __cinit__(self, SIZE_t n_outputs):
+    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
 
         Parameters
         ----------
         n_outputs: SIZE_t
             The number of targets to be predicted
+
+        n_samples: SIZE_t
+            The total number of samples to fit on
         """
 
         # Default values
@@ -704,6 +710,7 @@ cdef class RegressionCriterion(Criterion):
         self.end = 0
 
         self.n_outputs = n_outputs
+        self.n_samples = n_samples
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
         self.weighted_n_left = 0.0
@@ -728,7 +735,7 @@ cdef class RegressionCriterion(Criterion):
             raise MemoryError()
 
     def __reduce__(self):
-        return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
+        return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
                    double weighted_n_samples, SIZE_t* samples, SIZE_t start,
@@ -875,6 +882,7 @@ cdef class MSE(RegressionCriterion):
 
         MSE = var_left + var_right
     """
+
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
@@ -961,6 +969,300 @@ cdef class MSE(RegressionCriterion):
 
         impurity_left[0] /= self.n_outputs
         impurity_right[0] /= self.n_outputs
+
+cdef class MAE(RegressionCriterion):
+    """Mean absolute error impurity criterion
+
+       MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
+       value and f_i is the predicted value."""
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.node_medians)
+
+    cdef np.ndarray left_child
+    cdef np.ndarray right_child
+    cdef DOUBLE_t* node_medians
+
+    def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
+        """Initialize parameters for this criterion.
+
+        Parameters
+        ----------
+        n_outputs: SIZE_t
+            The number of targets to be predicted
+
+        n_samples: SIZE_t
+            The total number of samples to fit on
+        """
+
+        # Default values
+        self.y = NULL
+        self.y_stride = 0
+        self.sample_weight = NULL
+
+        self.samples = NULL
+        self.start = 0
+        self.pos = 0
+        self.end = 0
+
+        self.n_outputs = n_outputs
+        self.n_samples = n_samples
+        self.n_node_samples = 0
+        self.weighted_n_node_samples = 0.0
+        self.weighted_n_left = 0.0
+        self.weighted_n_right = 0.0
+
+        # Allocate accumulators. Make sure they are NULL, not uninitialized,
+        # before an exception can be raised (which triggers __dealloc__).
+        self.node_medians = NULL
+
+        # Allocate memory for the accumulators
+        safe_realloc(&self.node_medians, n_outputs)
+
+        if (self.node_medians == NULL):
+            raise MemoryError()
+
+        self.left_child = np.empty(n_outputs, dtype='object')
+        self.right_child = np.empty(n_outputs, dtype='object')
+        # initialize WeightedMedianCalculators
+        for k in range(n_outputs):
+            self.left_child[k] = WeightedMedianCalculator(n_samples)
+            self.right_child[k] = WeightedMedianCalculator(n_samples)
+
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
+        """Initialize the criterion at node samples[start:end] and
+           children samples[start:start] and samples[start:end]."""
+
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w = 1.0
+
+        # Initialize fields
+        self.y = y
+        self.y_stride = y_stride
+        self.sample_weight = sample_weight
+        self.samples = samples
+        self.start = start
+        self.end = end
+        self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
+        self.weighted_n_node_samples = 0.
+
+        cdef void** left_child
+        cdef void** right_child
+
+        left_child = <void**> self.left_child.data
+        right_child = <void**> self.right_child.data
+
+        for k in range(self.n_outputs):
+            (<WeightedMedianCalculator> left_child[k]).reset()
+            (<WeightedMedianCalculator> right_child[k]).reset()
+
+        for p in range(start, end):
+            i = samples[p]
+
+            if sample_weight != NULL:
+                w = sample_weight[i]
+
+            for k in range(self.n_outputs):
+                y_ik = y[i * y_stride + k]
+
+                # push all values to the right side,
+                # since pos = start initially anyway
+                (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
+
+            self.weighted_n_node_samples += w
+        # calculate the node medians
+        for k in range(self.n_outputs):
+            self.node_medians[k] = (<WeightedMedianCalculator> right_child[k]).get_median()
+
+        # Reset to pos=start
+        self.reset()
+
+    cdef void reset(self) nogil:
+        """Reset the criterion at pos=start."""
+
+        cdef SIZE_t i, k
+        cdef DOUBLE_t value
+        cdef DOUBLE_t weight
+
+        cdef void** left_child = <void**> self.left_child.data
+        cdef void** right_child = <void**> self.right_child.data
+
+        self.weighted_n_left = 0.0
+        self.weighted_n_right = self.weighted_n_node_samples
+        self.pos = self.start
+
+        # reset the WeightedMedianCalculators, left should have no
+        # elements and right should have all elements.
+
+        for k in range(self.n_outputs):
+            # if left has no elements, it's already reset
+            for i in range((<WeightedMedianCalculator> left_child[k]).size()):
+                # remove everything from left and put it into right
+                (<WeightedMedianCalculator> left_child[k]).pop(&value,
+                                                               &weight)
+                (<WeightedMedianCalculator> right_child[k]).push(value,
+                                                                 weight)
+
+    cdef void reverse_reset(self) nogil:
+        """Reset the criterion at pos=end."""
+
+        self.weighted_n_right = 0.0
+        self.weighted_n_left = self.weighted_n_node_samples
+        self.pos = self.end
+
+        cdef DOUBLE_t value
+        cdef DOUBLE_t weight
+        cdef void** left_child = <void**> self.left_child.data
+        cdef void** right_child = <void**> self.right_child.data
+
+        # reverse reset the WeightedMedianCalculators, right should have no
+        # elements and left should have all elements.
+        for k in range(self.n_outputs):
+            # if right has no elements, it's already reset
+            for i in range((<WeightedMedianCalculator> right_child[k]).size()):
+                # remove everything from right and put it into left
+                (<WeightedMedianCalculator> right_child[k]).pop(&value,
+                                                                &weight)
+                (<WeightedMedianCalculator> left_child[k]).push(value,
+                                                                weight)
+
+    cdef void update(self, SIZE_t new_pos) nogil:
+        """Updated statistics by moving samples[pos:new_pos] to the left."""
+
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+
+        cdef void** left_child = <void**> self.left_child.data
+        cdef void** right_child = <void**> self.right_child.data
+
+        cdef DOUBLE_t* y = self.y
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t end = self.end
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t y_ik
+
+        # Update statistics up to new_pos
+        #
+        # We are going to update right_child and left_child
+        # from the direction that require the least amount of
+        # computations, i.e. from pos to new_pos or from end to new_pos.
+
+        if (new_pos - pos) <= (end - new_pos):
+            for p in range(pos, new_pos):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = y[i * self.y_stride + k]
+                    # remove y_ik and its weight w from right and add to left
+                    (<WeightedMedianCalculator> right_child[k]).remove(y_ik, w)
+                    (<WeightedMedianCalculator> left_child[k]).push(y_ik, w)
+
+                self.weighted_n_left += w
+        else:
+            self.reverse_reset()
+
+            for p in range(end - 1, new_pos - 1, -1):
+                i = samples[p]
+
+                if sample_weight != NULL:
+                    w = sample_weight[i]
+
+                for k in range(self.n_outputs):
+                    y_ik = y[i * self.y_stride + k]
+                    # remove y_ik and its weight w from left and add to right
+                    (<WeightedMedianCalculator> left_child[k]).remove(y_ik, w)
+                    (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
+
+                self.weighted_n_left -= w
+
+        self.weighted_n_right = (self.weighted_n_node_samples -
+                                 self.weighted_n_left)
+        self.pos = new_pos
+
+    cdef void node_value(self, double* dest) nogil:
+        """Computes the node value of samples[start:end] into dest."""
+
+        cdef SIZE_t k
+        for k in range(self.n_outputs):
+            dest[k] = <double> self.node_medians[k]
+
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of
+           samples[start:end]"""
+
+        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t w_y_ik
+
+        cdef double impurity = 0.0
+
+        for k in range(self.n_outputs):
+            for p in range(self.start, self.end):
+                i = samples[p]
+
+                y_ik = y[i * self.y_stride + k]
+
+                impurity += <double> fabs((<double> y_ik) - <double> self.node_medians[k])
+        return impurity / (self.weighted_n_node_samples * self.n_outputs)
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end]).
+        """
+
+        cdef DOUBLE_t* y = self.y
+        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef SIZE_t* samples = self.samples
+
+        cdef SIZE_t start = self.start
+        cdef SIZE_t pos = self.pos
+        cdef SIZE_t end = self.end
+
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t y_ik
+        cdef DOUBLE_t median
+
+        cdef void** left_child = <void**> self.left_child.data
+        cdef void** right_child = <void**> self.right_child.data
+
+        impurity_left[0] = 0.0
+        impurity_right[0] = 0.0
+
+        for k in range(self.n_outputs):
+            median = (<WeightedMedianCalculator> left_child[k]).get_median()
+            for p in range(start, pos):
+                i = samples[p]
+
+                y_ik = y[i * self.y_stride + k]
+
+                impurity_left[0] += <double>fabs((<double> y_ik) -
+                                                 <double> median)
+        impurity_left[0] /= <double>((self.weighted_n_left) * self.n_outputs)
+
+        for k in range(self.n_outputs):
+            median = (<WeightedMedianCalculator> right_child[k]).get_median()
+            for p in range(pos, end):
+                i = samples[p]
+
+                y_ik = y[i * self.y_stride + k]
+
+                impurity_right[0] += <double>fabs((<double> y_ik) -
+                                                  <double> median)
+        impurity_right[0] /= <double>((self.weighted_n_right) *
+                                      self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):

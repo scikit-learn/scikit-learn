@@ -7,7 +7,7 @@ Semi-Supervised
 .. currentmodule:: sklearn.semi_supervised
 
 `Semi-supervised learning
-<http://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
+<https://en.wikipedia.org/wiki/Semi-supervised_learning>`_ is a situation
 in which in your training data some of the samples are not labeled. The
 semi-supervised estimators in :mod:`sklearn.semi_supervised` are able to
 make use of this additional unlabeled data to better capture the shape of
@@ -37,7 +37,7 @@ A few features available in this model:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
 constructing a similarity graph over all items in the input dataset. 
 
-.. figure:: ../auto_examples/semi_supervised/images/plot_label_propagation_structure_001.png
+.. figure:: ../auto_examples/semi_supervised/images/sphx_glr_plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
     :align: center
     :scale: 60%
@@ -84,9 +84,9 @@ which can drastically reduce running times.
 
 .. topic:: Examples
 
-  * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
-  * :ref:`example_semi_supervised_plot_label_propagation_structure.py`
-  * :ref:`example_semi_supervised_plot_label_propagation_digits_active_learning.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
 

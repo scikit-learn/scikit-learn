@@ -193,7 +193,7 @@ plt.figure(figsize=(12, 5))
 for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
     # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
     plt.subplot(1, 3, i + 1)
     Z = clf.predict(flat_grid)
 

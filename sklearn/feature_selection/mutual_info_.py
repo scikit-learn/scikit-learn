@@ -349,7 +349,7 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
 
     References
     ----------
-    .. [1] `Mutual Information <http://en.wikipedia.org/wiki/Mutual_information>`_
+    .. [1] `Mutual Information <https://en.wikipedia.org/wiki/Mutual_information>`_
            on Wikipedia.
     .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
            information". Phys. Rev. E 69, 2004.
@@ -424,7 +424,7 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
 
     References
     ----------
-    .. [1] `Mutual Information <http://en.wikipedia.org/wiki/Mutual_information>`_
+    .. [1] `Mutual Information <https://en.wikipedia.org/wiki/Mutual_information>`_
            on Wikipedia.
     .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
            information". Phys. Rev. E 69, 2004.

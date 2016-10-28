@@ -1,7 +1,7 @@
 """Testing for Gaussian process regression """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -36,17 +36,17 @@ kernels = [RBF(length_scale=1.0), fixed_kernel,
 
 
 def test_gpr_interpolation():
-    """Test the interpolating property for different kernels."""
+    # Test the interpolating property for different kernels.
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         y_pred, y_cov = gpr.predict(X, return_cov=True)
 
-        assert_true(np.allclose(y_pred, y))
-        assert_true(np.allclose(np.diag(y_cov), 0.))
+        assert_almost_equal(y_pred, y)
+        assert_almost_equal(np.diag(y_cov), 0.)
 
 
 def test_lml_improving():
-    """ Test that hyperparameter-tuning improves log-marginal likelihood. """
+    # Test that hyperparameter-tuning improves log-marginal likelihood.
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
@@ -56,7 +56,7 @@ def test_lml_improving():
 
 
 def test_lml_precomputed():
-    """ Test that lml of optimized kernel is stored correctly. """
+    # Test that lml of optimized kernel is stored correctly.
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         assert_equal(gpr.log_marginal_likelihood(gpr.kernel_.theta),
@@ -64,7 +64,7 @@ def test_lml_precomputed():
 
 
 def test_converged_to_local_maximum():
-    """ Test that we are in local maximum after hyperparameter-optimization."""
+    # Test that we are in local maximum after hyperparameter-optimization.
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
@@ -79,7 +79,7 @@ def test_converged_to_local_maximum():
 
 
 def test_solution_inside_bounds():
-    """ Test that hyperparameter-optimization remains in bounds"""
+    # Test that hyperparameter-optimization remains in bounds#
     for kernel in kernels:
         if kernel == fixed_kernel:
             continue
@@ -95,7 +95,7 @@ def test_solution_inside_bounds():
 
 
 def test_lml_gradient():
-    """ Compare analytic and numeric gradient of log marginal likelihood. """
+    # Compare analytic and numeric gradient of log marginal likelihood.
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
@@ -110,7 +110,7 @@ def test_lml_gradient():
 
 
 def test_prior():
-    """ Test that GP prior has mean 0 and identical variances."""
+    # Test that GP prior has mean 0 and identical variances.
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel)
 
@@ -125,7 +125,7 @@ def test_prior():
 
 
 def test_sample_statistics():
-    """ Test that statistics of samples drawn from GP are correct."""
+    # Test that statistics of samples drawn from GP are correct.
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
 
@@ -140,14 +140,14 @@ def test_sample_statistics():
 
 
 def test_no_optimizer():
-    """ Test that kernel parameters are unmodified when optimizer is None."""
+    # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
     assert_equal(np.exp(gpr.kernel_.theta), 1.0)
 
 
 def test_predict_cov_vs_std():
-    """ Test that predicted std.-dev. is consistent with cov's diagonal."""
+    # Test that predicted std.-dev. is consistent with cov's diagonal.
     for kernel in kernels:
         gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
         y_mean, y_cov = gpr.predict(X2, return_cov=True)
@@ -156,7 +156,7 @@ def test_predict_cov_vs_std():
 
 
 def test_anisotropic_kernel():
-    """ Test that GPR can identify meaningful anisotropic length-scales. """
+    # Test that GPR can identify meaningful anisotropic length-scales.
     # We learn a function which varies in one dimension ten-times slower
     # than in the other. The corresponding length-scales should differ by at
     # least a factor 5
@@ -171,10 +171,8 @@ def test_anisotropic_kernel():
 
 
 def test_random_starts():
-    """
-    Test that an increasing number of random-starts of GP fitting only
-    increases the log marginal likelihood of the chosen theta.
-    """
+    # Test that an increasing number of random-starts of GP fitting only
+    # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
     np.random.seed(0)
     rng = np.random.RandomState(0)
@@ -197,11 +195,10 @@ def test_random_starts():
 
 
 def test_y_normalization():
-    """ Test normalization of the target values in GP
+    # Test normalization of the target values in GP
 
-    Fitting non-normalizing GP on normalized y and fitting normalizing GP
-    on unnormalized y should yield identical results
-    """
+    # Fitting non-normalizing GP on normalized y and fitting normalizing GP
+    # on unnormalized y should yield identical results
     y_mean = y.mean(0)
     y_norm = y - y_mean
     for kernel in kernels:
@@ -226,7 +223,7 @@ def test_y_normalization():
 
 
 def test_y_multioutput():
-    """ Test that GPR can deal with multi-dimensional target values"""
+    # Test that GPR can deal with multi-dimensional target values
     y_2d = np.vstack((y, y * 2)).T
 
     # Test for fixed kernel that first dimension of 2d GP equals the output
@@ -269,7 +266,7 @@ def test_y_multioutput():
 
 
 def test_custom_optimizer():
-    """ Test that GPR can use externally defined optimizers. """
+    # Test that GPR can use externally defined optimizers.
     # Define a dummy optimizer that simply tests 50 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
@@ -294,7 +291,7 @@ def test_custom_optimizer():
 
 
 def test_duplicate_input():
-    """ Test GPR can handle two different output-values for the same input. """
+    # Test GPR can handle two different output-values for the same input.
     for kernel in kernels:
         gpr_equal_inputs = \
             GaussianProcessRegressor(kernel=kernel, alpha=1e-2)

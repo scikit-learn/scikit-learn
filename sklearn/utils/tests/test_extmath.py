@@ -17,7 +17,10 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -32,6 +35,8 @@ from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
+from sklearn.utils.extmath import stable_cumsum
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -59,8 +64,8 @@ def test_uniform_weights():
         mode, score = stats.mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis)
 
-        assert_true(np.all(mode == mode2))
-        assert_true(np.all(score == score2))
+        assert_array_equal(mode, mode2)
+        assert_array_equal(score, score2)
 
 
 def test_random_weights():
@@ -148,14 +153,23 @@ def test_norm_squared_norm():
 
 def test_row_norms():
     X = np.random.RandomState(42).randn(100, 100)
-    sq_norm = (X ** 2).sum(axis=1)
+    for dtype in (np.float32, np.float64):
+        if dtype is np.float32:
+            precision = 4
+        else:
+            precision = 5
 
-    assert_array_almost_equal(sq_norm, row_norms(X, squared=True), 5)
-    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X))
+        X = X.astype(dtype)
+        sq_norm = (X ** 2).sum(axis=1)
 
-    Xcsr = sparse.csr_matrix(X, dtype=np.float32)
-    assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True), 5)
-    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr))
+        assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
+                                  precision)
+        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
+
+        Xcsr = sparse.csr_matrix(X, dtype=dtype)
+        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
+                                  precision)
+        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
 
 
 def test_randomized_svd_low_rank_with_noise():
@@ -634,3 +648,17 @@ def test_softmax():
     exp_X = np.exp(X)
     sum_exp_X = np.sum(exp_X, axis=1).reshape((-1, 1))
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
+
+
+def test_stable_cumsum():
+    if np_version < (1, 9):
+        raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
+    assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
+    r = np.random.RandomState(0).rand(100000)
+    assert_warns(ConvergenceWarning, stable_cumsum, r, rtol=0, atol=0)
+
+    # test axis parameter
+    A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))
+    assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
+    assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
+    assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))

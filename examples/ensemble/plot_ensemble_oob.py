@@ -41,7 +41,7 @@ X, y = make_classification(n_samples=500, n_features=25,
                            random_state=RANDOM_STATE)
 
 # NOTE: Setting the `warm_start` construction parameter to `True` disables
-# support for paralellised ensembles but is necessary for tracking the OOB
+# support for parallelized ensembles but is necessary for tracking the OOB
 # error trajectory during training.
 ensemble_clfs = [
     ("RandomForestClassifier, max_features='sqrt'",

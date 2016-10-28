@@ -9,7 +9,6 @@ License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
-import sys
 
 import numpy as np
 from scipy import sparse
@@ -741,7 +740,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             labels = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array
             labels = np.copy(labels[:n_samples])
-            # Reasign cluster numbers
+            # Reassign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
 

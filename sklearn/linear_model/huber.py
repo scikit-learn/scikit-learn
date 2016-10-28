@@ -245,12 +245,15 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 parameters = np.zeros(X.shape[1] + 2)
             else:
                 parameters = np.zeros(X.shape[1] + 1)
+            # Make sure to initialize the scale parameter to a strictly
+            # positive value:
+            parameters[-1] = 1
 
         # Sigma or the scale factor should be non-negative.
         # Setting it to be zero might cause undefined bounds hence we set it
         # to a value close to zero.
         bounds = np.tile([-np.inf, np.inf], (parameters.shape[0], 1))
-        bounds[-1][0] = 1e-12
+        bounds[-1][0] = np.finfo(np.float64).eps * 10
 
         # Type Error caused in old versions of SciPy because of no
         # maxiter argument ( <= 0.9).
@@ -258,14 +261,17 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             parameters, f, dict_ = optimize.fmin_l_bfgs_b(
                 _huber_loss_and_gradient, parameters,
                 args=(X, y, self.epsilon, self.alpha, sample_weight),
-                maxiter=self.max_iter, tol=self.tol, bounds=bounds,
+                maxiter=self.max_iter, pgtol=self.tol, bounds=bounds,
                 iprint=0)
         except TypeError:
             parameters, f, dict_ = optimize.fmin_l_bfgs_b(
                 _huber_loss_and_gradient, parameters,
                 args=(X, y, self.epsilon, self.alpha, sample_weight),
                 bounds=bounds)
-
+        if dict_['warnflag'] == 2:
+            raise ValueError("HuberRegressor convergence failed:"
+                             " l-BFGS-b solver terminated with %s"
+                             % dict_['task'].decode('ascii'))
         self.n_iter_ = dict_.get('nit', None)
         self.scale_ = parameters[-1]
         if self.fit_intercept:

@@ -1,7 +1,7 @@
 # coding=utf8
 """
 Label propagation in the context of this module refers to a set of
-semisupervised classification algorithms. In the high level, these algorithms
+semi-supervised classification algorithms. At a high level, these algorithms
 work by forming a fully-connected graph between all points given and solving
 for the steady-state distribution of labels at each point.
 
@@ -22,7 +22,7 @@ Label clamping:
 
 Kernel:
   A function which projects a vector into some higher dimensional space. This
-  implementation supprots RBF and KNN kernels. Using the RBF kernel generates
+  implementation supports RBF and KNN kernels. Using the RBF kernel generates
   a dense matrix of size O(N^2). KNN kernel will generate a sparse matrix of
   size O(k*N) which will run much faster. See the documentation for SVMs for
   more info on kernels.
@@ -33,7 +33,7 @@ Examples
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
->>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
+>>> random_unlabeled_points = np.where(np.random.randint(0, 2,
 ...        size=len(iris.target)))
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
@@ -52,7 +52,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -81,9 +81,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
-        String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+    kernel : {'knn', 'rbf', callable}
+        String identifier for kernel function to use or the kernel function
+        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+        passed should take two inputs, each of shape [n_samples, n_features],
+        and return a [n_samples, n_samples] shaped weight matrix
 
     gamma : float
         Parameter for rbf kernel
@@ -104,7 +106,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
@@ -139,9 +140,15 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                                                     mode='connectivity')
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
+        elif callable(self.kernel):
+            if y is None:
+                return self.kernel(X, X)
+            else:
+                return self.kernel(X, y)
         else:
             raise ValueError("%s is not a valid kernel. Only rbf and knn"
-                             " are supported at this time" % self.kernel)
+                             " or an explicit function "
+                             " are supported at this time." % self.kernel)
 
     @abstractmethod
     def _build_graph(self):
@@ -280,9 +287,11 @@ class LabelPropagation(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
-        String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported..
+    kernel : {'knn', 'rbf', callable}
+        String identifier for kernel function to use or the kernel function
+        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+        passed should take two inputs, each of shape [n_samples, n_features],
+        and return a [n_samples, n_samples] shaped weight matrix.
 
     gamma : float
         Parameter for rbf kernel
@@ -323,7 +332,7 @@ class LabelPropagation(BaseLabelPropagation):
     >>> from sklearn.semi_supervised import LabelPropagation
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
-    >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
+    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
     ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
@@ -362,7 +371,7 @@ class LabelPropagation(BaseLabelPropagation):
 class LabelSpreading(BaseLabelPropagation):
     """LabelSpreading model for semi-supervised learning
 
-    This model is similar to the basic Label Propgation algorithm,
+    This model is similar to the basic Label Propagation algorithm,
     but uses affinity matrix based on the normalized graph Laplacian
     and soft clamping across the labels.
 
@@ -370,9 +379,11 @@ class LabelSpreading(BaseLabelPropagation):
 
     Parameters
     ----------
-    kernel : {'knn', 'rbf'}
-        String identifier for kernel function to use.
-        Only 'rbf' and 'knn' kernels are currently supported.
+    kernel : {'knn', 'rbf', callable}
+        String identifier for kernel function to use or the kernel function
+        itself. Only 'rbf' and 'knn' strings are valid inputs. The function
+        passed should take two inputs, each of shape [n_samples, n_features],
+        and return a [n_samples, n_samples] shaped weight matrix
 
     gamma : float
       parameter for rbf kernel
@@ -417,7 +428,7 @@ class LabelSpreading(BaseLabelPropagation):
     >>> from sklearn.semi_supervised import LabelSpreading
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
-    >>> random_unlabeled_points = np.where(np.random.random_integers(0, 1,
+    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
     ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1

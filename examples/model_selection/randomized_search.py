@@ -23,7 +23,6 @@ print(__doc__)
 import numpy as np
 
 from time import time
-from operator import itemgetter
 from scipy.stats import randint as sp_randint
 
 from sklearn.model_selection import GridSearchCV
@@ -40,15 +39,16 @@ clf = RandomForestClassifier(n_estimators=20)
 
 
 # Utility function to report best scores
-def report(grid_scores, n_top=3):
-    top_scores = sorted(grid_scores, key=itemgetter(1), reverse=True)[:n_top]
-    for i, score in enumerate(top_scores):
-        print("Model with rank: {0}".format(i + 1))
-        print("Mean validation score: {0:.3f} (std: {1:.3f})".format(
-              score.mean_validation_score,
-              np.std(score.cv_validation_scores)))
-        print("Parameters: {0}".format(score.parameters))
-        print("")
+def report(results, n_top=3):
+    for i in range(1, n_top + 1):
+        candidates = np.flatnonzero(results['rank_test_score'] == i)
+        for candidate in candidates:
+            print("Model with rank: {0}".format(i))
+            print("Mean validation score: {0:.3f} (std: {1:.3f})".format(
+                  results['mean_test_score'][candidate],
+                  results['std_test_score'][candidate]))
+            print("Parameters: {0}".format(results['params'][candidate]))
+            print("")
 
 
 # specify parameters and distributions to sample from
@@ -68,7 +68,7 @@ start = time()
 random_search.fit(X, y)
 print("RandomizedSearchCV took %.2f seconds for %d candidates"
       " parameter settings." % ((time() - start), n_iter_search))
-report(random_search.grid_scores_)
+report(random_search.cv_results_)
 
 # use a full grid over all parameters
 param_grid = {"max_depth": [3, None],
@@ -84,5 +84,5 @@ start = time()
 grid_search.fit(X, y)
 
 print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
-      % (time() - start, len(grid_search.grid_scores_)))
-report(grid_search.grid_scores_)
+      % (time() - start, len(grid_search.cv_results_['params'])))
+report(grid_search.cv_results_)

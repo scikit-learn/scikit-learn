@@ -15,10 +15,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+        Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
@@ -77,7 +77,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`k_neighbors` and :meth:`kneighbors_graph` methods.
+        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
     Examples
     --------
@@ -110,7 +110,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,

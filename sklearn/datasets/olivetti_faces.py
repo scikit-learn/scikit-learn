@@ -1,8 +1,8 @@
 """Modified Olivetti faces dataset.
 
-The original database was available from (now defunct)
+The original database was available from
 
-    http://www.uk.research.att.com/facedatabase.html
+    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
@@ -67,7 +67,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If True the order of the dataset is shuffled to avoid having
         images of the same person grouped.
 
-    download_if_missing: optional, True by default
+    download_if_missing : optional, True by default
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -98,7 +98,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     This dataset consists of 10 pictures each of 40 individuals. The original
     database was available from (now defunct)
 
-        http://www.uk.research.att.com/facedatabase.html
+        http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
     The version retrieved here comes in MATLAB format from the personal
     web page of Sam Roweis:

@@ -13,7 +13,7 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from ._criterion cimport Criterion
 

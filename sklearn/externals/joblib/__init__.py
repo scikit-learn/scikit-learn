@@ -115,7 +115,8 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.9.4'
+
+__version__ = '0.10.3'
 
 
 from .memory import Memory, MemorizedResult
@@ -127,3 +128,11 @@ from .numpy_pickle import load
 from .parallel import Parallel
 from .parallel import delayed
 from .parallel import cpu_count
+from .parallel import register_parallel_backend
+from .parallel import parallel_backend
+from .parallel import effective_n_jobs
+
+
+__all__ = ['Memory', 'MemorizedResult', 'PrintTime', 'Logger', 'hash', 'dump',
+           'load', 'Parallel', 'delayed', 'cpu_count', 'effective_n_jobs',
+           'register_parallel_backend', 'parallel_backend']

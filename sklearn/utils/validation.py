@@ -174,10 +174,11 @@ def check_consistent_length(*arrays):
         Objects that will be checked for consistent length.
     """
 
-    uniques = np.unique([_num_samples(X) for X in arrays if X is not None])
+    lengths = [_num_samples(X) for X in arrays if X is not None]
+    uniques = np.unique(lengths)
     if len(uniques) > 1:
-        raise ValueError("Found arrays with inconsistent numbers of samples: "
-                         "%s" % str(uniques))
+        raise ValueError("Found input variables with inconsistent numbers of"
+                         " samples: %r" % [int(l) for l in lengths])
 
 
 def indexable(*iterables):
@@ -274,7 +275,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
                 warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
-    By default, the input is converted to an at least 2nd numpy array.
+    By default, the input is converted to an at least 2D numpy array.
     If the dtype of the array is object, attempt converting to float,
     raising on failure.
 
@@ -297,6 +298,10 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
+        When order is None (default), then if copy=False, nothing is ensured
+        about the memory layout of the output array; otherwise (copy=True)
+        the memory layout of the returned array is kept as close as possible
+        to the original array.
 
     copy : boolean (default=False)
         Whether a forced copy will be triggered. If copy=False, a copy might

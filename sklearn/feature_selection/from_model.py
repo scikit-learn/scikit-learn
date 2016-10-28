@@ -10,21 +10,21 @@ from ..externals import six
 from ..utils import safe_mask, check_array, deprecated
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
+from ..utils.fixes import norm
 
 
-def _get_feature_importances(estimator):
+def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
-    if hasattr(estimator, "feature_importances_"):
-        importances = estimator.feature_importances_
+    importances = getattr(estimator, "feature_importances_", None)
 
-    elif hasattr(estimator, "coef_"):
+    if importances is None and hasattr(estimator, "coef_"):
         if estimator.coef_.ndim == 1:
             importances = np.abs(estimator.coef_)
 
         else:
-            importances = np.sum(np.abs(estimator.coef_), axis=0)
+            importances = norm(estimator.coef_, axis=0, ord=norm_order)
 
-    else:
+    elif importances is None:
         raise ValueError(
             "The underlying estimator %s has no `coef_` or "
             "`feature_importances_` attribute. Either pass a fitted estimator"
@@ -162,7 +162,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if the
         estimator has a parameter penalty set to l1, either explicitly
-        or implicitly (e.g, Lasso), the threshold is used is 1e-5.
+        or implicitly (e.g, Lasso), the threshold used is 1e-5.
         Otherwise, "mean" is used by default.
 
     prefit : bool, default False
@@ -172,6 +172,11 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         ``GridSearchCV`` and similar utilities that clone the estimator.
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
+
+    norm_order : non-zero int, inf, -inf, default 1
+        Order of the norm used to filter the vectors of coefficients below
+        ``threshold`` in the case where the ``coef_`` attribute of the
+        estimator is of dimension 2.
 
     Attributes
     ----------
@@ -183,10 +188,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
     `threshold_`: float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None, prefit=False):
+
+    def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
+        self.norm_order = norm_order
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
@@ -198,7 +205,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             raise ValueError(
                 'Either fit the model before transform or set "prefit=True"'
                 ' while passing the fitted estimator to the constructor.')
-        scores = _get_feature_importances(estimator)
+        scores = _get_feature_importances(estimator, self.norm_order)
         self.threshold_ = _calculate_threshold(estimator, scores,
                                                self.threshold)
         return scores >= self.threshold_
