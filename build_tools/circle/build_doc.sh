@@ -53,7 +53,7 @@ source activate testenv
 # Build and install scikit-learn in dev mode
 python setup.py develop
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]
+if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     MAKE_TARGET=dist
 else
