@@ -9,14 +9,10 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('_traversal',
                          sources=['_traversal.pyx'],
-                         include_dirs=[numpy.get_include()],
-                         # libraries=libraries
-                         )
+                         include_dirs=[numpy.get_include()])
     config.add_extension('_graph_tools',
                          sources=['_graph_tools.pyx'],
-                         include_dirs=[numpy.get_include()],
-                         # libraries=libraries
-                         )
+                         include_dirs=[numpy.get_include()])
 
     config.add_subpackage('tests')
 
