@@ -805,12 +805,12 @@ class Lasso(ElasticNet):
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
 
-    fit_intercept : boolean (default=True)
+    fit_intercept : bool (default=True)
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean (default=False)
+    normalize : bool (default=False)
         If ``True``, the regressors X will be normalized before regression.
         This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
@@ -820,7 +820,7 @@ class Lasso(ElasticNet):
         :class:`preprocessing.StandardScaler` before calling ``fit`` on an estimator
         with ``normalize=False``.
 
-    copy_X : boolean (default=True)
+    copy_X : bool (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
 
     precompute : True | False | array-like (default=False)
@@ -845,7 +845,7 @@ class Lasso(ElasticNet):
     positive : bool (default=False)
         When set to ``True``, forces the coefficients to be positive.
 
-    selection : str (default='cyclic')
+    selection : {'random', 'cyclic'} (default='cyclic')
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -1242,7 +1242,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like (default='auto')
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
@@ -1273,30 +1273,30 @@ class LassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         Amount of verbosity.
 
-    n_jobs : integer (default=1)
+    n_jobs : int (default=1)
         Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs.
 
     positive : bool (default=False)
         If positive, restrict regression coefficients to be positive
 
-    selection : str, default 'cyclic'
+    selection : {'random', 'cyclic'} (default='cyclic')
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance (default=None)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
 
-    fit_intercept : boolean, default True
+    fit_intercept : bool (default=True)
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean (default=False)
+    normalize : bool (default=False)
         If ``True``, the regressors X will be normalized before regression.
         This parameter is ignored when ``fit_intercept`` is set to ``False``.
         When the regressors are normalized, note that this makes the
@@ -1396,7 +1396,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If None alphas are set automatically
 
-    precompute : True | False | 'auto' | array-like
+    precompute : True | False | 'auto' | array-like (default='auto')
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
@@ -1434,18 +1434,18 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool (default=False)
         When set to ``True``, forces the coefficients to be positive.
 
-    selection : str (default='cyclic')
+    selection : {'random', 'cyclic'} (default='cyclic')
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    random_state : int, RandomState instance, or None (default)
+    random_state : int, RandomState instance (default=None)
         The seed of the pseudo random number generator that selects
         a random feature to update. Useful only when selection is set to
         'random'.
 
-    fit_intercept : boolean
+    fit_intercept : bool (default=True)
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
