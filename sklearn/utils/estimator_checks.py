@@ -450,7 +450,10 @@ def check_dict_unchanged(name, Estimator):
         if hasattr(estimator, method):
             dict_before = estimator.__dict__.copy()
             getattr(estimator, method)(X)
-            assert_dict_equal(estimator.__dict__, dict_before)
+            assert_dict_equal(estimator.__dict__, dict_before,
+                              ('Estimator changes __dict__ during'
+                               'predict, transform, decision_function'
+                               ' or predict_proba methods'))
 
 
 def check_fit2d_predict1d(name, Estimator):
