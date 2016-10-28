@@ -1310,7 +1310,7 @@ class MiniBatchKMeans(KMeans):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Coordinates of the data points to cluster
+            Training instances to cluster
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
