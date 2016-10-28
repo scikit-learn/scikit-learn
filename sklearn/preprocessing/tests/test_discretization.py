@@ -86,5 +86,17 @@ def test_categorical_invalid():
         assert_raises(ValueError, dis.fit, X)
 
 
+def test_min_max_same():
+    X = np.ones(4).reshape(-1, 1)
+    dis = KBinsDiscretizer(n_bins=2)
+    assert_raises(ValueError, dis.fit, X)
+
+
 def test_transform_1d_behavior():
-    pass  # To be determined
+    X = np.arange(4)
+    dis = KBinsDiscretizer(n_bins=2)
+    assert_raises(ValueError, dis.fit, X)
+
+    dis = KBinsDiscretizer(n_bins=2)
+    dis.fit(X.reshape(-1, 1))
+    assert_raises(ValueError, dis.transform, X)

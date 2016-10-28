@@ -8,6 +8,7 @@ from ..externals.six.moves import xrange
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_array, check_is_fitted, column_or_1d
 
+
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     """Bins continuous data into k equal width intervals.
 
@@ -27,7 +28,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     mins_ : float array, shape (n_features_,)
         Minimum value per feature in the input data.
 
-    maxes_ : float array, shape (n_features,)
+    maxes_ : float array, shape (n_features_,)
         Maximum value per feature in the input data.
 
     n_features_ : int
@@ -77,7 +78,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
            [ 2., 4., 2., 2.]])
     """
 
-
     def __init__(self, n_bins=2, categorical_features=None):
         self.n_bins = n_bins
         self.categorical_features = categorical_features
@@ -88,7 +88,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.n_features_ = None
         self.cut_points_ = None
         self.categorical_features_set_ = None
-
 
     def fit(self, X, y=None):
         """Fits the estimator.
@@ -110,8 +109,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of bins. Received {0}, expected at least 2."
                              .format(self.n_bins))
 
-        # TODO: Determine behavior for 1D input
-        X = check_array(X, dtype=float)
+        X = check_array(X, dtype=float, ensure_2d=False)
+
+        if X.ndim == 1:
+            raise ValueError("Input array must be 2D shape.")
 
         self._check_categorical_features(self.categorical_features, X.shape[1])
 
@@ -148,7 +149,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         spacing = (_max - _min) / n_bins
         return np.linspace(_min + spacing, _max - spacing, num=n_bins - 1)
 
-
     def _fit(self, X):
         """Fits the attributes of the discretizer.
         """
@@ -161,12 +161,15 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.mins_ = np.min(X, axis=0)
         self.maxes_ = np.max(X, axis=0)
 
+        if np.any(self.mins_ - self.maxes_ == 0):
+            raise ValueError("Array contained features which contained the "
+                             "same min and max values.")
+
         cut_points = [self._cut_points_from_index(i)
                       for i in xrange(n_features)]
 
-        self.cut_points_ =  np.array(cut_points).T
+        self.cut_points_ = np.array(cut_points).T
         self.n_features_ = n_features
-
 
     def transform(self, X, y=None):
         """Discretizes the data. Leaves any categorical features as is.
@@ -184,8 +187,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             a float array.
 
         """
-        check_is_fitted(self, ["mins_", "maxes_", "n_features_", "cut_points_"])
-        X = check_array(X, dtype=float)
+        check_is_fitted(self, ["mins_", "maxes_", "n_features_",
+                               "cut_points_"])
+
+        X = check_array(X, dtype=float, ensure_2d=False)
+
+        if X.ndim == 1:
+            raise ValueError("Input array must be 2D shape.")
 
         if X.shape[1] != self.n_features_:
             raise ValueError("Transformed array does not have correct number "
@@ -200,7 +208,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             return X_col
         return np.digitize(X_col, self.cut_points_[:, col_idx])
 
-
     def _transform(self, X):
         """Discretizes the continuous features into k integers.
         """
@@ -208,49 +215,3 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                        for col_idx in xrange(self.n_features_)]
 
         return np.array(discretized).T
-
-
-    def _transform_deprecated(self, X):
-        """Discretizes the continuous features into k integers.
-
-        NOTE: Not used until further notice. Under consideration for sparse case.
-
-        The process used below preserves the sparsity of the data by
-        transforming the data, and rounding the data down to the
-        nearest integer. These integers represent the bins sought.
-
-        The process is as follows.
-        1. Let X_trans = X * n_bins / (X.max() - X.min()).
-            Observe that X_trans is a dataset of width k.
-        2. epsilon = abs(X_trans.min() - ceil(X_trans.min())).
-            episilon < 1 is the distance of X.min() to ceil(X.min())
-        3. X_trans[X_trans != 0] += epsilon
-            Shifts the data. X_trans.min() is now an integer. Note this
-            operation can be done on sparse matrices.
-        4. output = floor(X_trans)
-            The output now contains integers which represent the
-            discretized values. Observe that even if we added epsilon to
-            zero values in step 3, these zeros will still be discretized
-            to zero.
-        """
-        # Rescale data
-        X_trans = X / (self.max_ - self.min_)
-        X_trans *= self.n_bins
-
-        # Shift data
-        epsilon = np.abs(X_trans.min() - np.ceil(X_trans.min()))
-        X_trans[X_trans != 0] += epsilon
-
-        # Generate output
-        discretized = np.floor(X_trans)
-
-        # Corner case arises when maximum values across each column of X
-        # get shifted to the next integer.
-        # TODO: Use numpy clip here
-        for col in discretized.T:
-            col_min = col.min()
-            col_max = col.max()
-            if col_max - col_min > self.n_bins - 1:
-                col[col == col_max] = col_max - 1
-
-        return discretized
