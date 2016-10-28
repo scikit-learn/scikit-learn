@@ -47,7 +47,7 @@ def test_gradient_descent_stops():
     sys.stdout = StringIO()
     try:
         _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=100,
+            ObjectiveSmallGradient(), np.zeros(1), 0, max_iter=100,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
             min_gain=0.0, min_grad_norm=1e-5, min_error_diff=0.0, verbose=2)
     finally:
@@ -63,7 +63,7 @@ def test_gradient_descent_stops():
     sys.stdout = StringIO()
     try:
         _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=100,
+            ObjectiveSmallGradient(), np.zeros(1), 0, max_iter=100,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
             min_gain=0.0, min_grad_norm=0.0, min_error_diff=0.2, verbose=2)
     finally:
@@ -79,7 +79,7 @@ def test_gradient_descent_stops():
     sys.stdout = StringIO()
     try:
         _, error, it = _gradient_descent(
-            flat_function, np.zeros(1), 0, n_iter=100,
+            flat_function, np.zeros(1), 0, max_iter=100,
             n_iter_without_progress=10, momentum=0.0, learning_rate=0.0,
             min_gain=0.0, min_grad_norm=0.0, min_error_diff=-1.0, verbose=2)
     finally:
@@ -95,7 +95,7 @@ def test_gradient_descent_stops():
     sys.stdout = StringIO()
     try:
         _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=11,
+            ObjectiveSmallGradient(), np.zeros(1), 0, max_iter=11,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
             min_gain=0.0, min_grad_norm=0.0, min_error_diff=0.0, verbose=2)
     finally:
@@ -254,9 +254,9 @@ def test_optimization_minimizes_kl_divergence():
     random_state = check_random_state(0)
     X, _ = make_blobs(n_features=3, random_state=random_state)
     kl_divergences = []
-    for n_iter in [200, 250, 300]:
+    for max_iter in [200, 250, 300]:
         tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                    n_iter=n_iter, random_state=0)
+                    max_iter=max_iter, random_state=0)
         tsne.fit_transform(X)
         kl_divergences.append(tsne.kl_divergence_)
     assert_less_equal(kl_divergences[1], kl_divergences[0])
@@ -297,8 +297,8 @@ def test_early_exaggeration_too_small():
 
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
-    tsne = TSNE(n_iter=199)
-    assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
+    tsne = TSNE(max_iter=199)
+    assert_raises_regexp(ValueError, "max_iter .*", tsne.fit_transform,
                          np.array([[0.0]]))
 
 
@@ -469,7 +469,7 @@ def test_no_sparse_on_barnes_hut():
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_iter=199, method='barnes_hut')
+    tsne = TSNE(max_iter=199, method='barnes_hut')
     assert_raises_regexp(TypeError, "A sparse matrix was.*",
                          tsne.fit_transform, X_csr)
 

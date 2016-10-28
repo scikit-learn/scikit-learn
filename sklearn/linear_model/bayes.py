@@ -9,6 +9,7 @@ from __future__ import print_function
 from math import log
 import numpy as np
 from scipy import linalg
+import warnings
 
 from .base import LinearModel
 from ..base import RegressorMixin
@@ -112,12 +113,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
     See examples/linear_model/plot_bayesian_ridge.py for an example.
     """
 
-    @property
     @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
-    def __init__(self, max_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
-                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                 fit_intercept=True, normalize=False, copy_X=True,
-                 verbose=False):
+    def __init__(self, n_iter=None, max_iter=300, tol=1.e-3, alpha_1=1.e-6,
+                 alpha_2=1.e-6, lambda_1=1.e-6, lambda_2=1.e-6,
+                 compute_score=False, fit_intercept=True, normalize=False,
+                 copy_X=True, verbose=False):
+        if n_iter is not None:
+            warnings.warn("'n_iter' was deprecated. Use 'max_iter' instead.")
         self.max_iter = max_iter
         self.tol = tol
         self.alpha_1 = alpha_1
@@ -328,12 +330,14 @@ class ARDRegression(LinearModel, RegressorMixin):
     See examples/linear_model/plot_ard.py for an example.
     """
 
-    @property
     @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
-    def __init__(self, max_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
-                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                 threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
-                 copy_X=True, verbose=False):
+    def __init__(self, n_iter=None, max_iter=300, tol=1.e-3, alpha_1=1.e-6,
+                 alpha_2=1.e-6, lambda_1=1.e-6, lambda_2=1.e-6,
+                 compute_score=False, threshold_lambda=1.e+4,
+                 fit_intercept=True, normalize=False, copy_X=True,
+                 verbose=False):
+        if n_iter is not None:
+            warnings.warn("'n_iter' was deprecated. Use 'max_iter' instead.")
         self.max_iter = max_iter
         self.tol = tol
         self.fit_intercept = fit_intercept

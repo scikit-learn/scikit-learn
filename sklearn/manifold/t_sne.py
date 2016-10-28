@@ -13,6 +13,7 @@ from scipy import linalg
 import scipy.sparse as sp
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
+import warnings
 from ..neighbors import BallTree
 from ..base import BaseEstimator
 from ..utils import check_array
@@ -645,11 +646,10 @@ class TSNE(BaseEstimator):
         http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
 
-    @property
     @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=1000.0, max_iter=1000,
-                 n_iter_without_progress=30, min_grad_norm=1e-7,
+                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=None,
+                 max_iter=1000, n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
         if not ((isinstance(init, string_types) and
@@ -657,6 +657,8 @@ class TSNE(BaseEstimator):
                 isinstance(init, np.ndarray)):
             msg = "'init' must be 'pca', 'random', or a numpy array"
             raise ValueError(msg)
+        if n_iter is not None:
+            warnings.warn("'n_iter' was deprecated. Use 'max_iter' instead.")
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration

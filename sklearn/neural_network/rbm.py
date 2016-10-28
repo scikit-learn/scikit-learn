@@ -11,6 +11,7 @@ import time
 
 import numpy as np
 import scipy.sparse as sp
+import warnings
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
@@ -99,10 +100,11 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         on Machine Learning (ICML) 2008
     """
 
-    @property
     @deprecated("Attribute n_iter was deprecated. Use 'max_iter' instead")
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
-                 max_iter=10, verbose=0, random_state=None):
+                 n_iter=None, max_iter=10, verbose=0, random_state=None):
+        if n_iter is not None:
+            warnings.warn("'n_iter' was deprecated. Use 'max_iter' instead.")
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
