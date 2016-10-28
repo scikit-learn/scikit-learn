@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_false
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import (
@@ -64,14 +65,22 @@ def test_huber_sample_weights():
     # Test sample_weights implementation in HuberRegressor"""
 
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=True, alpha=0.1)
+    huber = HuberRegressor(fit_intercept=True)
     huber.fit(X, y)
     huber_coef = huber.coef_
     huber_intercept = huber.intercept_
 
+    # Rescale coefs before comparing with assert_array_almost_equal to make sure
+    # that the number of decimal places used is somewhat insensitive to the
+    # amplitude of the coefficients and therefore to the scale of the data
+    # and the regularization parameter
+    scale = max(np.mean(np.abs(huber.coef_)),
+                np.mean(np.abs(huber.intercept_)))
+
     huber.fit(X, y, sample_weight=np.ones(y.shape[0]))
-    assert_array_almost_equal(huber.coef_, huber_coef)
-    assert_array_almost_equal(huber.intercept_, huber_intercept)
+    assert_array_almost_equal(huber.coef_ / scale, huber_coef / scale)
+    assert_array_almost_equal(huber.intercept_ / scale,
+                              huber_intercept / scale)
 
     X, y = make_regression_with_outliers(n_samples=5, n_features=20)
     X_new = np.vstack((X, np.vstack((X[1], X[1], X[3]))))
@@ -79,15 +88,21 @@ def test_huber_sample_weights():
     huber.fit(X_new, y_new)
     huber_coef = huber.coef_
     huber_intercept = huber.intercept_
-    huber.fit(X, y, sample_weight=[1, 3, 1, 2, 1])
-    assert_array_almost_equal(huber.coef_, huber_coef, 3)
-    assert_array_almost_equal(huber.intercept_, huber_intercept, 3)
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[1] = 3
+    sample_weight[3] = 2
+    huber.fit(X, y, sample_weight=sample_weight)
+
+    assert_array_almost_equal(huber.coef_ / scale, huber_coef / scale)
+    assert_array_almost_equal(huber.intercept_ / scale,
+                              huber_intercept / scale)
 
     # Test sparse implementation with sample weights.
     X_csr = sparse.csr_matrix(X)
-    huber_sparse = HuberRegressor(fit_intercept=True, alpha=0.1)
-    huber_sparse.fit(X_csr, y, sample_weight=[1, 3, 1, 2, 1])
-    assert_array_almost_equal(huber_sparse.coef_, huber_coef, 3)
+    huber_sparse = HuberRegressor(fit_intercept=True)
+    huber_sparse.fit(X_csr, y, sample_weight=sample_weight)
+    assert_array_almost_equal(huber_sparse.coef_ / scale,
+                              huber_coef / scale)
 
 
 def test_huber_sparse():
@@ -99,31 +114,31 @@ def test_huber_sparse():
     huber_sparse = HuberRegressor(fit_intercept=True, alpha=0.1)
     huber_sparse.fit(X_csr, y)
     assert_array_almost_equal(huber_sparse.coef_, huber.coef_)
+    assert_array_equal(huber.outliers_, huber_sparse.outliers_)
 
 
 def test_huber_scaling_invariant():
     """Test that outliers filtering is scaling independent."""
     rng = np.random.RandomState(0)
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100,
-                           epsilon=1.35)
+    huber = HuberRegressor(fit_intercept=False, alpha=0.0, max_iter=100)
     huber.fit(X, y)
     n_outliers_mask_1 = huber.outliers_
+    assert_false(np.all(n_outliers_mask_1))
 
     huber.fit(X, 2. * y)
     n_outliers_mask_2 = huber.outliers_
+    assert_array_equal(n_outliers_mask_2, n_outliers_mask_1)
 
     huber.fit(2. * X, 2. * y)
     n_outliers_mask_3 = huber.outliers_
-
-    assert_array_equal(n_outliers_mask_2, n_outliers_mask_1)
     assert_array_equal(n_outliers_mask_3, n_outliers_mask_1)
 
 
 def test_huber_and_sgd_same_results():
     """Test they should converge to same coefficients for same parameters"""
 
-    X, y = make_regression_with_outliers(n_samples=5, n_features=2)
+    X, y = make_regression_with_outliers(n_samples=10, n_features=2)
 
     # Fit once to find out the scale parameter. Scale down X and y by scale
     # so that the scale parameter is optimized to 1.0
@@ -136,7 +151,7 @@ def test_huber_and_sgd_same_results():
     assert_almost_equal(huber.scale_, 1.0, 3)
 
     sgdreg = SGDRegressor(
-        alpha=0.0, loss="huber", shuffle=True, random_state=0, n_iter=1000000,
+        alpha=0.0, loss="huber", shuffle=True, random_state=0, n_iter=10000,
         fit_intercept=False, epsilon=1.35)
     sgdreg.fit(X_scale, y_scale)
     assert_array_almost_equal(huber.coef_, sgdreg.coef_, 1)
@@ -155,9 +170,8 @@ def test_huber_warm_start():
     assert_array_almost_equal(huber_warm.coef_, huber_warm_coef, 1)
 
     # No n_iter_ in old SciPy (<=0.9)
-    # And as said above, the first iteration seems to be run anyway.
     if huber_warm.n_iter_ is not None:
-        assert_equal(1, huber_warm.n_iter_)
+        assert_equal(0, huber_warm.n_iter_)
 
 
 def test_huber_better_r2_score():

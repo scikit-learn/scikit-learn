@@ -70,14 +70,19 @@ evaluated and the best combination is retained.
 
 .. topic:: Examples:
 
-    - See :ref:`example_model_selection_grid_search_digits.py` for an example of
+    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`example_model_selection_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
       net or L2 penalty) using a :class:`pipeline.Pipeline` instance.
+
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`
+      for an example of Grid Search within a cross validation loop on the iris
+      dataset. This is the best practice for evaluating the performance of a
+      model with grid search.
 
 .. _randomized_parameter_search:
 
@@ -100,8 +105,8 @@ iterations, is specified using the ``n_iter`` parameter.
 For each parameter, either a distribution over possible values or a list of
 discrete choices (which will be sampled uniformly) can be specified::
 
-  [{'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
-    'kernel': ['rbf'], 'class_weight':['auto', None]}]
+  {'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
+    'kernel': ['rbf'], 'class_weight':['balanced', None]}
 
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
@@ -113,9 +118,12 @@ consecutive calls.
 
     .. warning::
 
-        The distributions in ``scipy.stats`` do not allow specifying a random
-        state. Instead, they use the global numpy random state, that can be seeded
-        via ``np.random.seed`` or set using ``np.random.set_state``.
+        The distributions in ``scipy.stats`` prior to version scipy 0.16
+        do not allow specifying a random state. Instead, they use the global
+        numpy random state, that can be seeded via ``np.random.seed`` or set
+        using ``np.random.set_state``. However, beginning scikit-learn 0.18,
+        the :mod:`sklearn.model_selection` module sets the random state provided
+        by the user if scipy >= 0.16 is also available.
 
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
@@ -123,7 +131,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`example_model_selection_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
@@ -201,7 +209,7 @@ Model specific cross-validation
 -------------------------------
 
 
-Some models can fit data for a range of value of some parameter almost
+Some models can fit data for a range of values of some parameter almost
 as efficiently as fitting the estimator for a single value of the
 parameter. This feature can be leveraged to perform a more efficient
 cross-validation used for model selection of this parameter.

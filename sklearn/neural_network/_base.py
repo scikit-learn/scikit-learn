@@ -2,7 +2,7 @@
 """
 
 # Author: Issam H. Laradji <issam.laradji@gmail.com>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -99,64 +99,78 @@ ACTIVATIONS = {'identity': identity, 'tanh': tanh, 'logistic': logistic,
                'relu': relu, 'softmax': softmax}
 
 
-def inplace_logistic_derivative(Z):
-    """Compute the derivative of the logistic function given output value
-    from logistic function
+def inplace_identity_derivative(Z, delta):
+    """Apply the derivative of the identity function: do nothing.
+
+    Parameters
+    ----------
+    Z : {array-like, sparse matrix}, shape (n_samples, n_features)
+        The data which was output from the identity activation function during
+        the forward pass.
+
+    delta : {array-like}, shape (n_samples, n_features)
+         The backpropagated error signal to be modified inplace.
+    """
+    # Nothing to do
+
+
+def inplace_logistic_derivative(Z, delta):
+    """Apply the derivative of the logistic sigmoid function.
 
     It exploits the fact that the derivative is a simple function of the output
-    value from logistic function
+    value from logistic function.
 
     Parameters
     ----------
     Z : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data which is output from logistic function
+        The data which was output from the logistic activation function during
+        the forward pass.
 
-    Returns
-    -------
-    Z_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
+    delta : {array-like}, shape (n_samples, n_features)
+         The backpropagated error signal to be modified inplace.
     """
-    return Z * (1 - Z)
+    delta *= Z
+    delta *= (1 - Z)
 
 
-def inplace_tanh_derivative(Z):
-    """Compute the derivative of the hyperbolic tan function given output value
-    from hyperbolic tan
+def inplace_tanh_derivative(Z, delta):
+    """Apply the derivative of the hyperbolic tanh function.
 
     It exploits the fact that the derivative is a simple function of the output
-    value from hyperbolic tan
+    value from hyperbolic tangent.
 
     Parameters
     ----------
     Z : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data which is output from hyperbolic tan function
+        The data which was output from the hyperbolic tangent activation
+        function during the forward pass.
 
-    Returns
-    -------
-    Z_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
+    delta : {array-like}, shape (n_samples, n_features)
+         The backpropagated error signal to be modified inplace.
     """
-    return 1 - (Z ** 2)
+    delta *= (1 - Z ** 2)
 
 
-def inplace_relu_derivative(Z):
-    """Compute the derivative of the rectified linear unit function given output
-    value from relu
+def inplace_relu_derivative(Z, delta):
+    """Apply the derivative of the relu function.
+
+    It exploits the fact that the derivative is a simple function of the output
+    value from rectified linear units activation function.
 
     Parameters
     ----------
     Z : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The input data which is output from some relu
+        The data which was output from the rectified linear units activation
+        function during the forward pass.
 
-    Returns
-    -------
-    Z_new : {array-like, sparse matrix}, shape (n_samples, n_features)
-        The transformed data.
+    delta : {array-like}, shape (n_samples, n_features)
+         The backpropagated error signal to be modified inplace.
     """
-    return (Z > 0).astype(Z.dtype)
+    delta[Z == 0] = 0
 
 
-DERIVATIVES = {'tanh': inplace_tanh_derivative,
+DERIVATIVES = {'identity': inplace_identity_derivative,
+               'tanh': inplace_tanh_derivative,
                'logistic': inplace_logistic_derivative,
                'relu': inplace_relu_derivative}
 

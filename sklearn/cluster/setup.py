@@ -29,6 +29,10 @@ def configuration(parent_package='', top_path=None):
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
+    config.add_extension('_k_means_elkan',
+                         sources=['_k_means_elkan.c'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
 
     config.add_extension(
         '_k_means',
@@ -40,6 +44,8 @@ def configuration(parent_package='', top_path=None):
         extra_compile_args=blas_info.pop('extra_compile_args', []),
         **blas_info
     )
+
+    config.add_subpackage('tests')
 
     return config
 

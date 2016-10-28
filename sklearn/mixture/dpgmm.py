@@ -10,27 +10,40 @@ from __future__ import print_function
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
 
+# Important note for the deprecation cleaning of 0.20 :
+# All the function and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/gmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
-from ..utils import check_random_state, check_array
-from ..utils.extmath import logsumexp, pinvh, squared_norm
+from ..utils import check_random_state, check_array, deprecated
+from ..utils.extmath import logsumexp, pinvh, squared_norm, stable_cumsum
 from ..utils.validation import check_is_fitted
 from .. import cluster
-from .gmm import GMM
+from .gmm import _GMMBase
 
 
+@deprecated("The function digamma is deprecated in 0.18 and "
+            "will be removed in 0.20. Use scipy.special.digamma instead.")
 def digamma(x):
     return _digamma(x + np.finfo(np.float32).eps)
 
 
+@deprecated("The function gammaln is deprecated in 0.18 and "
+            "will be removed in 0.20. Use scipy.special.gammaln instead.")
 def gammaln(x):
     return _gammaln(x + np.finfo(np.float32).eps)
 
 
+@deprecated("The function log_normalize is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 def log_normalize(v, axis=0):
     """Normalized probabilities from unnormalized log-probabilites"""
     v = np.rollaxis(v, axis)
@@ -43,6 +56,8 @@ def log_normalize(v, axis=0):
     return np.swapaxes(v, 0, axis)
 
 
+@deprecated("The function wishart_log_det is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 def wishart_log_det(a, b, detB, n_features):
     """Expected value of the log of the determinant of a Wishart
 
@@ -53,6 +68,8 @@ def wishart_log_det(a, b, detB, n_features):
     return l + detB
 
 
+@deprecated("The function wishart_logz is deprecated in 0.18 and "
+            "will be removed in 0.20.")
 def wishart_logz(v, s, dets, n_features):
     "The logarithm of the normalization constant for the wishart distribution"
     z = 0.
@@ -106,7 +123,7 @@ def _bound_state_log_lik(X, initial_bound, precs, means, covariance_type):
     return bound
 
 
-class DPGMM(GMM):
+class _DPGMMBase(_GMMBase):
     """Variational Inference for the Infinite Gaussian Mixture Model.
 
     DPGMM stands for Dirichlet Process Gaussian Mixture Model, and it
@@ -198,16 +215,16 @@ class DPGMM(GMM):
         algorithm, better for situations where there might be too little
         data to get a good estimate of the covariance matrix.
     """
-
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
                  random_state=None, tol=1e-3, verbose=0, min_covar=None,
                  n_iter=10, params='wmc', init_params='wmc'):
         self.alpha = alpha
-        super(DPGMM, self).__init__(n_components, covariance_type,
-                                    random_state=random_state,
-                                    tol=tol, min_covar=min_covar,
-                                    n_iter=n_iter, params=params,
-                                    init_params=init_params, verbose=verbose)
+        super(_DPGMMBase, self).__init__(n_components, covariance_type,
+                                         random_state=random_state,
+                                         tol=tol, min_covar=min_covar,
+                                         n_iter=n_iter, params=params,
+                                         init_params=init_params,
+                                         verbose=verbose)
 
     def _get_precisions(self):
         """Return precisions as a full matrix."""
@@ -245,7 +262,7 @@ class DPGMM(GMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -445,7 +462,7 @@ class DPGMM(GMM):
         dg1 = digamma(self.gamma_.T[1]) - dg12
         dg2 = digamma(self.gamma_.T[2]) - dg12
 
-        cz = np.cumsum(z[:, ::-1], axis=-1)[:, -2::-1]
+        cz = stable_cumsum(z[:, ::-1], axis=-1)[:, -2::-1]
         logprior = np.sum(cz * dg2[:-1]) + np.sum(z * dg1)
         del cz  # Save memory
         z_non_zeros = z[z > np.finfo(np.float32).eps]
@@ -606,7 +623,28 @@ class DPGMM(GMM):
         return z
 
 
-class VBGMM(DPGMM):
+@deprecated("The `DPGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type='dirichlet_process'` "
+            "instead. DPGMM is deprecated in 0.18 and will be "
+            "removed in 0.20.")
+class DPGMM(_DPGMMBase):
+    def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
+                 random_state=None, tol=1e-3, verbose=0, min_covar=None,
+                 n_iter=10, params='wmc', init_params='wmc'):
+        super(DPGMM, self).__init__(
+            n_components=n_components, covariance_type=covariance_type,
+            alpha=alpha, random_state=random_state, tol=tol, verbose=verbose,
+            min_covar=min_covar, n_iter=n_iter, params=params,
+            init_params=init_params)
+
+
+@deprecated("The `VBGMM` class is not working correctly and it's better "
+            "to use `sklearn.mixture.BayesianGaussianMixture` class with "
+            "parameter `weight_concentration_prior_type="
+            "'dirichlet_distribution'` instead. "
+            "VBGMM is deprecated in 0.18 and will be removed in 0.20.")
+class VBGMM(_DPGMMBase):
     """Variational Inference for the Gaussian Mixture Model
 
     Variational inference for a Gaussian mixture model probability
@@ -698,7 +736,36 @@ class VBGMM(DPGMM):
             n_components, covariance_type, random_state=random_state,
             tol=tol, verbose=verbose, min_covar=min_covar,
             n_iter=n_iter, params=params, init_params=init_params)
-        self.alpha = float(alpha) / n_components
+        self.alpha = alpha
+
+    def _fit(self, X, y=None):
+        """Estimate model parameters with the variational algorithm.
+
+        For a full derivation and description of the algorithm see
+        doc/modules/dp-derivation.rst
+        or
+        http://scikit-learn.org/stable/modules/dp-derivation.html
+
+        A initialization step is performed before entering the EM
+        algorithm. If you want to avoid this step, set the keyword
+        argument init_params to the empty string '' when creating
+        the object. Likewise, if you just would like to do an
+        initialization, set n_iter=0.
+
+        Parameters
+        ----------
+        X : array_like, shape (n, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        responsibilities : array, shape (n_samples, n_components)
+            Posterior probabilities of each mixture component for each
+            observation.
+        """
+        self.alpha_ = float(self.alpha) / self.n_components
+        return super(VBGMM, self)._fit(X, y)
 
     def score_samples(self, X):
         """Return the likelihood of the data under the model.
@@ -720,7 +787,7 @@ class VBGMM(DPGMM):
         -------
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -745,10 +812,10 @@ class VBGMM(DPGMM):
 
     def _update_concentration(self, z):
         for i in range(self.n_components):
-            self.gamma_[i] = self.alpha + np.sum(z.T[i])
+            self.gamma_[i] = self.alpha_ + np.sum(z.T[i])
 
     def _initialize_gamma(self):
-        self.gamma_ = self.alpha * np.ones(self.n_components)
+        self.gamma_ = self.alpha_ * np.ones(self.n_components)
 
     def _bound_proportions(self, z):
         logprior = 0.
@@ -762,10 +829,10 @@ class VBGMM(DPGMM):
     def _bound_concentration(self):
         logprior = 0.
         logprior = gammaln(np.sum(self.gamma_)) - gammaln(self.n_components
-                                                          * self.alpha)
-        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha))
+                                                          * self.alpha_)
+        logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha_))
         sg = digamma(np.sum(self.gamma_))
-        logprior += np.sum((self.gamma_ - self.alpha)
+        logprior += np.sum((self.gamma_ - self.alpha_)
                            * (digamma(self.gamma_) - sg))
         return logprior
 

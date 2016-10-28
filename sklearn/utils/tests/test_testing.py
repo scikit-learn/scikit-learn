@@ -2,9 +2,8 @@ import warnings
 import unittest
 import sys
 
-from nose.tools import assert_raises
-
 from sklearn.utils.testing import (
+    assert_raises,
     _assert_less,
     _assert_greater,
     assert_less_equal,
@@ -13,7 +12,8 @@ from sklearn.utils.testing import (
     assert_no_warnings,
     assert_equal,
     set_random_state,
-    assert_raise_message)
+    assert_raise_message,
+    ignore_warnings)
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -94,6 +94,98 @@ def test_assert_raise_message():
     assert_raises(AssertionError,
                   assert_raise_message, (ValueError, AttributeError),
                   "test", _no_raise)
+
+
+def test_ignore_warning():
+    # This check that ignore_warning decorateur and context manager are working
+    # as expected
+    def _warning_function():
+        warnings.warn("deprecation warning", DeprecationWarning)
+
+    def _multiple_warning_function():
+        warnings.warn("deprecation warning", DeprecationWarning)
+        warnings.warn("deprecation warning")
+
+    # Check the function directly
+    assert_no_warnings(ignore_warnings(_warning_function))
+    assert_no_warnings(ignore_warnings(_warning_function,
+                                       category=DeprecationWarning))
+    assert_warns(DeprecationWarning, ignore_warnings(_warning_function,
+                                                     category=UserWarning))
+    assert_warns(UserWarning,
+                 ignore_warnings(_multiple_warning_function,
+                                 category=DeprecationWarning))
+    assert_warns(DeprecationWarning,
+                 ignore_warnings(_multiple_warning_function,
+                                 category=UserWarning))
+    assert_no_warnings(ignore_warnings(_warning_function,
+                                       category=(DeprecationWarning,
+                                                 UserWarning)))
+
+    # Check the decorator
+    @ignore_warnings
+    def decorator_no_warning():
+        _warning_function()
+        _multiple_warning_function()
+
+    @ignore_warnings(category=(DeprecationWarning, UserWarning))
+    def decorator_no_warning_multiple():
+        _multiple_warning_function()
+
+    @ignore_warnings(category=DeprecationWarning)
+    def decorator_no_deprecation_warning():
+        _warning_function()
+
+    @ignore_warnings(category=UserWarning)
+    def decorator_no_user_warning():
+        _warning_function()
+
+    @ignore_warnings(category=DeprecationWarning)
+    def decorator_no_deprecation_multiple_warning():
+        _multiple_warning_function()
+
+    @ignore_warnings(category=UserWarning)
+    def decorator_no_user_multiple_warning():
+        _multiple_warning_function()
+
+    assert_no_warnings(decorator_no_warning)
+    assert_no_warnings(decorator_no_warning_multiple)
+    assert_no_warnings(decorator_no_deprecation_warning)
+    assert_warns(DeprecationWarning, decorator_no_user_warning)
+    assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
+    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
+
+    # Check the context manager
+    def context_manager_no_warning():
+        with ignore_warnings():
+            _warning_function()
+
+    def context_manager_no_warning_multiple():
+        with ignore_warnings(category=(DeprecationWarning, UserWarning)):
+            _multiple_warning_function()
+
+    def context_manager_no_deprecation_warning():
+        with ignore_warnings(category=DeprecationWarning):
+            _warning_function()
+
+    def context_manager_no_user_warning():
+        with ignore_warnings(category=UserWarning):
+            _warning_function()
+
+    def context_manager_no_deprecation_multiple_warning():
+        with ignore_warnings(category=DeprecationWarning):
+            _multiple_warning_function()
+
+    def context_manager_no_user_multiple_warning():
+        with ignore_warnings(category=UserWarning):
+            _multiple_warning_function()
+
+    assert_no_warnings(context_manager_no_warning)
+    assert_no_warnings(context_manager_no_warning_multiple)
+    assert_no_warnings(context_manager_no_deprecation_warning)
+    assert_warns(DeprecationWarning, context_manager_no_user_warning)
+    assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
+    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
 
 
 # This class is inspired from numpy 1.7 with an alteration to check

@@ -50,8 +50,7 @@ def get_func_code(func):
             line_no = 1
             if source_file.startswith('<doctest '):
                 source_file, line_no = re.match(
-                            '\<doctest (.*\.rst)\[(.*)\]\>',
-                            source_file).groups()
+                    '\<doctest (.*\.rst)\[(.*)\]\>', source_file).groups()
                 line_no = int(line_no)
                 source_file = '<doctest %s>' % source_file
             return source_code, source_file, line_no
@@ -312,7 +311,7 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
                              "function %s"
                              % (item,
                                 _signature_str(name, arg_spec))
-            )
+                             )
     # XXX: Return a sorted list of pairs?
     return arg_dict
 
@@ -352,4 +351,4 @@ def format_call(func, args, kwargs, object_name="Memory"):
                                           path, signature)
     return msg
     # XXX: Not using logging framework
-    #self.debug(msg)
+    # self.debug(msg)

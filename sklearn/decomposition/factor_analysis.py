@@ -17,7 +17,7 @@ Algorithm 21.1
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Denis A. Engemann <d.engemann@fz-juelich.de>
 
-# Licence: BSD3
+# License: BSD3
 
 import warnings
 from math import sqrt, log

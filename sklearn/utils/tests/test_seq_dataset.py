@@ -3,13 +3,13 @@
 # License: BSD 3 clause
 
 import numpy as np
+from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
 from sklearn.utils.seq_dataset import ArrayDataset, CSRDataset
 from sklearn.datasets import load_iris
 
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal
+from sklearn.utils.testing import assert_equal
 
 iris = load_iris()
 X = iris.data.astype(np.float64)

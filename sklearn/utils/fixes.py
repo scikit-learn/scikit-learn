@@ -67,6 +67,7 @@ except ImportError:
 
 
 # little danse to see if np.copy has an 'order' keyword argument
+# Supported since numpy 1.7.0
 if 'order' in signature(np.copy).parameters:
     def safe_copy(X):
         # Copy, but keep the order
@@ -107,7 +108,7 @@ except TypeError:
 try:
     np.array(5).astype(float, copy=False)
 except TypeError:
-    # Compat where astype accepted no copy argument
+    # Compat where astype accepted no copy argument (numpy < 1.7.0)
     def astype(array, dtype, copy=True):
         if not copy and array.dtype == dtype:
             return array
@@ -193,6 +194,15 @@ except ImportError:
     def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         return np.argsort(a, axis=axis, order=order)
 
+try:
+    from numpy import partition
+except ImportError:
+    warnings.warn('Using `sort` instead of partition.'
+                  'Upgrade numpy to 1.8 for better performace on large number'
+                  'of clusters')
+    def partition(a, kth, axis=-1, kind='introselect', order=None):
+        return np.sort(a, axis=axis, order=order)
+
 
 try:
     from itertools import combinations_with_replacement
@@ -216,49 +226,6 @@ except ImportError:
                 return
             indices[i:] = [indices[i] + 1] * (r - i)
             yield tuple(pool[i] for i in indices)
-
-
-try:
-    from numpy import isclose
-except ImportError:
-    def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
-        """
-        Returns a boolean array where two arrays are element-wise equal within
-        a tolerance.
-
-        This function was added to numpy v1.7.0, and the version you are
-        running has been backported from numpy v1.8.1. See its documentation
-        for more details.
-        """
-        def within_tol(x, y, atol, rtol):
-            with np.errstate(invalid='ignore'):
-                result = np.less_equal(abs(x - y), atol + rtol * abs(y))
-            if np.isscalar(a) and np.isscalar(b):
-                result = bool(result)
-            return result
-
-        x = np.array(a, copy=False, subok=True, ndmin=1)
-        y = np.array(b, copy=False, subok=True, ndmin=1)
-        xfin = np.isfinite(x)
-        yfin = np.isfinite(y)
-        if all(xfin) and all(yfin):
-            return within_tol(x, y, atol, rtol)
-        else:
-            finite = xfin & yfin
-            cond = np.zeros_like(finite, subok=True)
-            # Since we're using boolean indexing, x & y must be the same shape.
-            # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
-            # lib.stride_tricks, though, so we can't import it here.
-            x = x * np.ones_like(cond)
-            y = y * np.ones_like(cond)
-            # Avoid subtraction with infinite/nan values...
-            cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
-            # Check for equality of infinite values...
-            cond[~finite] = (x[~finite] == y[~finite])
-            if equal_nan:
-                # Make NaN == NaN
-                cond[np.isnan(x) & np.isnan(y)] = True
-            return cond
 
 
 if np_version < (1, 7):
@@ -398,3 +365,87 @@ if np_version < (1, 8, 1):
         return bool(np.asarray(a1 == a2).all())
 else:
     from numpy import array_equal
+
+if sp_version < (0, 13, 0):
+    def rankdata(a, method='average'):
+        if method not in ('average', 'min', 'max', 'dense', 'ordinal'):
+            raise ValueError('unknown method "{0}"'.format(method))
+
+        arr = np.ravel(np.asarray(a))
+        algo = 'mergesort' if method == 'ordinal' else 'quicksort'
+        sorter = np.argsort(arr, kind=algo)
+
+        inv = np.empty(sorter.size, dtype=np.intp)
+        inv[sorter] = np.arange(sorter.size, dtype=np.intp)
+
+        if method == 'ordinal':
+            return inv + 1
+
+        arr = arr[sorter]
+        obs = np.r_[True, arr[1:] != arr[:-1]]
+        dense = obs.cumsum()[inv]
+
+        if method == 'dense':
+            return dense
+
+        # cumulative counts of each unique value
+        count = np.r_[np.nonzero(obs)[0], len(obs)]
+
+        if method == 'max':
+            return count[dense]
+
+        if method == 'min':
+            return count[dense - 1] + 1
+
+        # average method
+        return .5 * (count[dense] + count[dense - 1] + 1)
+else:
+    from scipy.stats import rankdata
+
+
+if np_version < (1, 12, 0):
+    class MaskedArray(np.ma.MaskedArray):
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
+        # This fix is needed to make our model_selection.GridSearchCV
+        # picklable as the ``cv_results_`` param uses MaskedArray
+        def __getstate__(self):
+            """Return the internal state of the masked array, for pickling
+            purposes.
+
+            """
+            cf = 'CF'[self.flags.fnc]
+            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
+                                 self._fill_value)
+else:
+    from numpy.ma import MaskedArray    # noqa
+
+if 'axis' not in signature(np.linalg.norm).parameters:
+
+    def norm(X, ord=None, axis=None):
+        """
+        Handles the axis parameter for the norm function
+        in old versions of numpy (useless for numpy >= 1.8).
+        """
+
+        if axis is None or X.ndim == 1:
+            result = np.linalg.norm(X, ord=ord)
+            return result
+
+        if axis not in (0, 1):
+            raise NotImplementedError("""
+            The fix that adds axis parameter to the old numpy
+            norm only works for 1D or 2D arrays.
+            """)
+
+        if axis == 0:
+            X = X.T
+
+        result = np.zeros(X.shape[0])
+        for i in range(len(result)):
+            result[i] = np.linalg.norm(X[i], ord=ord)
+
+        return result
+
+else:
+    norm = np.linalg.norm

@@ -23,10 +23,11 @@ import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
 
+from ..utils import assert_all_finite
 from ..utils import check_consistent_length
 from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import isclose
+from ..utils.extmath import stable_cumsum
 from ..utils.fixes import bincount
 from ..utils.fixes import array_equal
 from ..utils.stats import rankdata
@@ -155,7 +156,7 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/wiki/Average_precision>`_
+           <https://en.wikipedia.org/wiki/Average_precision>`_
 
     See also
     --------
@@ -227,7 +228,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
     See also
     --------
@@ -270,7 +271,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_score : array, shape = [n_samples]
         Estimated probabilities or decision function
 
-    pos_label : int, optional (default=None)
+    pos_label : int or str, default=None
         The label of the positive class
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -296,6 +297,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     check_consistent_length(y_true, y_score)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
 
@@ -326,16 +330,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
-    # We need to use isclose to avoid spurious repeated thresholds
-    # stemming from floating point roundoff errors.
-    distinct_value_indices = np.where(np.logical_not(isclose(
-        np.diff(y_score), 0)))[0]
+    distinct_value_indices = np.where(np.diff(y_score))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
 
     # accumulate the true positives with decreasing threshold
-    tps = (y_true * weight).cumsum()[threshold_idxs]
+    tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
-        fps = weight.cumsum()[threshold_idxs] - tps
+        fps = stable_cumsum(weight)[threshold_idxs] - tps
     else:
         fps = 1 + threshold_idxs - tps
     return fps, tps, y_score[threshold_idxs]
@@ -370,7 +371,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     probas_pred : array, shape = [n_samples]
         Estimated probabilities or decision function.
 
-    pos_label : int, optional (default=None)
+    pos_label : int or str, default=None
         The label of the positive class
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -440,7 +441,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    pos_label : int
+    pos_label : int or str, default=None
         Label considered as positive and others are considered negative.
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -482,7 +483,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     References
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
-            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+            <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
 
     Examples

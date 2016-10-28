@@ -163,7 +163,8 @@ def _chisquare(f_obs, f_exp):
     chisq = f_obs
     chisq -= f_exp
     chisq **= 2
-    chisq /= f_exp
+    with np.errstate(invalid="ignore"):
+        chisq /= f_exp
     chisq = chisq.sum(axis=0)
     return chisq, special.chdtrc(k - 1, chisq)
 
@@ -252,9 +253,9 @@ def _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total):
 
     # the feature score is averaged over classes
     return (get_t1(fc_prob, c_prob, f_prob) +
-              get_t2(fc_prob, c_prob, f_prob) +
-              get_t3(c_prob, f_prob, c_count, fc_count, total) +
-              get_t4(c_prob, f_prob, f_count, fc_count, total)).mean(axis=0)
+            get_t2(fc_prob, c_prob, f_prob) +
+            get_t3(c_prob, f_prob, c_count, fc_count, total) +
+            get_t4(c_prob, f_prob, f_count, fc_count, total)).mean(axis=0)
 
 
 def info_gain(X, y):
@@ -263,9 +264,9 @@ def info_gain(X, y):
     The score can be used to weight features by informativeness or select the
     most informative features for training and evaluating a classifier.
 
-    IG measures the number of bits of information obtained about the presence or
-    absence of a class by knowing the presence or absence of the feature. IG of
-    a feature is thus local to each class. This implementation outputs a
+    IG measures the number of bits of information obtained about the presence
+    or absence of a class by knowing the presence or absence of the feature. IG
+    of a feature is thus local to each class. This implementation outputs a
     global IG score, by averaging the feature's scores over all classes.
 
     The IG-based feature selection is commonly used for text classification (
@@ -332,8 +333,8 @@ def info_gain(X, y):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob,
-                            total)
+        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob,
+                            f_prob, total)
 
     return np.asarray(scores).reshape(-1), []
 
@@ -345,13 +346,13 @@ def info_gain_ratio(X, y):
     most informative features for training and evaluating a classifier.
 
     Information Gain measures the number of bits of information obtained about
-    the presence or absence of a class by knowing the presence or absence of the
-    feature. Information Gain Ratio aims to overcome one disadvantage of IG
+    the presence or absence of a class by knowing the presence or absence of
+    the feature. Information Gain Ratio aims to overcome one disadvantage of IG
     which is the fact that IG grows not only with the increase of dependence
-    between f and c, but also with the increase of the entropy of f. That is why
-    features with low entropy receive smaller IG weights although they may be
-    strongly correlated with a class. IGR removes this factor by normalizing IG
-    by the entropy of the class.
+    between f and c, but also with the increase of the entropy of f. That is
+    why features with low entropy receive smaller IG weights although they may
+    be strongly correlated with a class. IGR removes this factor by normalizing
+    IG by the entropy of the class.
 
     Parameters
     ----------
@@ -401,8 +402,8 @@ def info_gain_ratio(X, y):
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob,
-                            total)
+        scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob,
+                            f_prob, total)
         scores = scores / (get_t(f_prob) + get_t(1 - f_prob))
 
     return np.asarray(scores).reshape(-1), []
@@ -500,7 +501,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'])
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -538,6 +539,8 @@ class SelectPercentile(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -568,7 +571,8 @@ class SelectPercentile(_BaseFilter):
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
@@ -611,6 +615,8 @@ class SelectKBest(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     k : int or "all", optional, default=10
         Number of top features to select.
@@ -638,11 +644,12 @@ class SelectKBest(_BaseFilter):
     igr: Information Gain Ratio of features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continious target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, k=10):
@@ -685,6 +692,8 @@ class SelectFpr(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest p-value for features to be kept.
@@ -706,11 +715,13 @@ class SelectFpr(_BaseFilter):
     igr: Information Gain Ratio of features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -736,6 +747,8 @@ class SelectFdr(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
@@ -751,7 +764,7 @@ class SelectFdr(_BaseFilter):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/False_discovery_rate
+    https://en.wikipedia.org/wiki/False_discovery_rate
 
     See also
     --------
@@ -762,11 +775,13 @@ class SelectFdr(_BaseFilter):
     igr: Information Gain Ratio of features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a contnuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -778,8 +793,8 @@ class SelectFdr(_BaseFilter):
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
-        selected = sv[sv <= float(self.alpha) / n_features
-                      * np.arange(n_features)]
+        selected = sv[sv <= float(self.alpha) / n_features *
+                      np.arange(1, n_features + 1)]
         if selected.size == 0:
             return np.zeros_like(self.pvalues_, dtype=bool)
         return self.pvalues_ <= selected.max()
@@ -795,6 +810,8 @@ class SelectFwe(_BaseFilter):
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
+        Default is f_classif (see below "See also"). The default function only
+        works with classification tasks.
 
     alpha : float, optional
         The highest uncorrected p-value for features to keep.
@@ -812,11 +829,13 @@ class SelectFwe(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+        mode.
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
@@ -870,7 +889,8 @@ class GenericUnivariateSelect(_BaseFilter):
     igr: Information Gain Ratio of features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+        scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.

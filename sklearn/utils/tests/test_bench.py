@@ -2,7 +2,7 @@
 import datetime
 
 from sklearn.utils.bench import total_seconds
-from nose.tools import assert_equal
+from sklearn.utils.testing import assert_equal
 
 
 def test_total_seconds():

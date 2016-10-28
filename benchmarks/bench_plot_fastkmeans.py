@@ -23,7 +23,7 @@ def compute_bench(samples_range, features_range):
             print('Iteration %03d of %03d' % (it, max_it))
             print('==============================')
             print()
-            data = nr.random_integers(-50, 50, (n_samples, n_features))
+            data = nr.randint(-50, 51, (n_samples, n_features))
 
             print('K-Means')
             tstart = time()

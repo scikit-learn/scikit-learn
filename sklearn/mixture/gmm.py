@@ -9,13 +9,19 @@ of Gaussian Mixture Models.
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Bertrand Thirion <bertrand.thirion@inria.fr>
 
-import warnings
+# Important note for the deprecation cleaning of 0.20 :
+# All the functions and classes of this file have been deprecated in 0.18.
+# When you remove this file please also remove the related files
+# - 'sklearn/mixture/dpgmm.py'
+# - 'sklearn/mixture/test_dpgmm.py'
+# - 'sklearn/mixture/test_gmm.py'
+
 import numpy as np
 from scipy import linalg
 from time import time
 
 from ..base import BaseEstimator
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state, check_array, deprecated
 from ..utils.extmath import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
@@ -24,7 +30,8 @@ from sklearn.externals.six.moves import zip
 
 EPS = np.finfo(float).eps
 
-
+@deprecated("The function log_multivariate_normal_density is deprecated in 0.18"
+            " and will be removed in 0.20.")
 def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
     """Compute the log probability under a multivariate Gaussian distribution.
 
@@ -65,6 +72,9 @@ def log_multivariate_normal_density(X, means, covars, covariance_type='diag'):
         X, means, covars)
 
 
+@deprecated("The function sample_gaussian is deprecated in 0.18"
+            " and will be removed in 0.20."
+            " Use numpy.random.multivariate_normal instead.")
 def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
                     random_state=None):
     """Generate random samples from a Gaussian distribution.
@@ -74,7 +84,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     mean : array_like, shape (n_features,)
         Mean of the distribution.
 
-    covar : array_like, optional
+    covar : array_like
         Covariance of the distribution. The shape depends on `covariance_type`:
             scalar if 'spherical',
             (n_features) if 'diag',
@@ -89,9 +99,17 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
 
     Returns
     -------
-    X : array, shape (n_features, n_samples)
-        Randomly generated sample
+    X : array
+        Randomly generated sample. The shape depends on `n_samples`:
+        (n_features,) if `1`
+        (n_features, n_samples) otherwise
     """
+    _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None)
+
+
+def _sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
+                     random_state=None):
     rng = check_random_state(random_state)
     n_dim = len(mean)
     rand = rng.randn(n_dim, n_samples)
@@ -112,7 +130,7 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     return (rand.T + mean).T
 
 
-class GMM(BaseEstimator):
+class _GMMBase(BaseEstimator):
     """Gaussian Mixture Model.
 
     Representation of a Gaussian mixture model probability distribution.
@@ -413,7 +431,7 @@ class GMM(BaseEstimator):
                     cv = self.covars_[comp][0]
                 else:
                     cv = self.covars_[comp]
-                X[comp_in_X] = sample_gaussian(
+                X[comp_in_X] = _sample_gaussian(
                     self.means_[comp], cv, self.covariance_type,
                     num_comp_in_X, random_state=random_state).T
         return X
@@ -649,6 +667,19 @@ class GMM(BaseEstimator):
         return - 2 * self.score(X).sum() + 2 * self._n_parameters()
 
 
+@deprecated("The class GMM is deprecated in 0.18 and will be "
+            " removed in 0.20. Use class GaussianMixture instead.")
+class GMM(_GMMBase):
+    def __init__(self, n_components=1, covariance_type='diag',
+                 random_state=None, tol=1e-3, min_covar=1e-3,
+                 n_iter=100, n_init=1, params='wmc', init_params='wmc',
+                 verbose=0):
+        super(GMM, self).__init__(
+            n_components=n_components, covariance_type=covariance_type,
+            random_state=random_state, tol=tol, min_covar=min_covar,
+            n_iter=n_iter, n_init=n_init, params=params,
+            init_params=init_params, verbose=verbose)
+
 #########################################################################
 # some helper routines
 #########################################################################
@@ -669,7 +700,7 @@ def _log_multivariate_normal_density_spherical(X, means, covars):
     cv = covars.copy()
     if covars.ndim == 1:
         cv = cv[:, np.newaxis]
-    if covars.shape[1] == 1:
+    if cv.shape[1] == 1:
         cv = np.tile(cv, (1, X.shape[-1]))
     return _log_multivariate_normal_density_diag(X, means, cv)
 
@@ -744,6 +775,8 @@ def _validate_covars(covars, covariance_type, n_components):
                          "'spherical', 'tied', 'diag', 'full'")
 
 
+@deprecated("The functon distribute_covar_matrix_to_match_covariance_type"
+            "is deprecated in 0.18 and will be removed in 0.20.")
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):
     """Create all the covariance matrices from a given template."""

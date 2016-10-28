@@ -305,7 +305,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
 
-    gamma : float
+    gamma : float, default=1.0
         Scaling factor of RBF, polynomial, exponential chi^2 and
         sigmoid affinity kernel. Ignored for
         ``affinity='nearest_neighbors'``.

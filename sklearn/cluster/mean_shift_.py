@@ -167,7 +167,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     Notes
     -----
-    See examples/cluster/plot_meanshift.py for an example.
+    See examples/cluster/plot_mean_shift.py for an example.
 
     """
 
@@ -348,8 +348,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Scalability:
 
     Because this implementation uses a flat kernel and
-    a Ball Tree to look up members of each kernel, the complexity will is
-    to O(T*n*log(n)) in lower dimensions, with n the number of samples
+    a Ball Tree to look up members of each kernel, the complexity will tend
+    towards O(T*n*log(n)) in lower dimensions, with n the number of samples
     and T the number of points. In higher dimensions the complexity will
     tend towards O(T*n^2).
 

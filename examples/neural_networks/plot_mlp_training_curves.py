@@ -8,6 +8,9 @@ learning strategies, including SGD and Adam. Because of time-constraints, we
 use several small datasets, for which L-BFGS might be more suitable. The
 general trend shown in these examples seems to carry over to larger datasets,
 however.
+
+Note that those results can be highly dependent on the value of
+``learning_rate_init``.
 """
 
 print(__doc__)
@@ -17,19 +20,19 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn import datasets
 
 # different learning rate schedules and momentum parameters
-params = [{'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
+params = [{'solver': 'sgd', 'learning_rate': 'constant', 'momentum': 0,
            'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
            'nesterovs_momentum': False, 'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'constant', 'momentum': .9,
            'nesterovs_momentum': True, 'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': 0,
            'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
            'nesterovs_momentum': True, 'learning_rate_init': 0.2},
-          {'algorithm': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
+          {'solver': 'sgd', 'learning_rate': 'invscaling', 'momentum': .9,
            'nesterovs_momentum': False, 'learning_rate_init': 0.2},
-          {'algorithm': 'adam'}]
+          {'solver': 'adam', 'learning_rate_init': 0.01}]
 
 labels = ["constant learning-rate", "constant with momentum",
           "constant with Nesterov's momentum",

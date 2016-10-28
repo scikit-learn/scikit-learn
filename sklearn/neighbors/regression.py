@@ -29,7 +29,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+        Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     weights : str or callable
         weight function used in prediction.  Possible values:
@@ -112,7 +112,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
        but different labels, the results will depend on the ordering of the
        training data.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5, weights='uniform',
@@ -250,7 +250,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, radius=1.0, weights='uniform',

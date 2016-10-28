@@ -27,6 +27,8 @@ def configuration(parent_package="", top_path=None):
                                        blas_info.pop('include_dirs', [])],
                          extra_compile_args=eca, **blas_info)
 
+    config.add_subpackage('tests')
+
     return config
 
 if __name__ == "__main__":
