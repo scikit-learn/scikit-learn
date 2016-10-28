@@ -481,7 +481,7 @@ class Pipeline(_BasePipeline):
         return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X, y=None, **score_params):
+    def score(self, X, y=None, sample_weight=None):
         """Apply transforms, and score with the final estimator
 
         Parameters
@@ -494,8 +494,9 @@ class Pipeline(_BasePipeline):
             Targets used for scoring. Must fulfill label requirements for all
             steps of the pipeline.
 
-        **score_params : dict of string -> object
-            Parameters passed to the ``score`` method of the final estimator.
+        sample_weight : array-like, default=None
+            If not None, this argument is passed as ``sample_weight`` keyword
+            argument to the ``score`` method of the final estimator.
 
         Returns
         -------
@@ -505,6 +506,9 @@ class Pipeline(_BasePipeline):
         for name, transform in self.steps[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
+        score_params = {}
+        if sample_weight is not None:
+            score_params['sample_weight'] = sample_weight
         return self.steps[-1][-1].score(Xt, y, **score_params)
 
     @property

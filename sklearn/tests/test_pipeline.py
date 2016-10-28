@@ -225,18 +225,28 @@ def test_pipeline_fit_params():
     )
 
 
-def test_pipeline_score_params():
-    # Pipeline should pass score parameters
+def test_pipeline_sample_weight_supported():
+    # Pipeline should pass sample_weight
     X = np.array([[1, 2]])
     pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
     pipe.fit(X, y=None)
     assert_equal(pipe.score(X), 3)
     assert_equal(pipe.score(X, y=None), 3)
+    assert_equal(pipe.score(X, y=None, sample_weight=None), 3)
     assert_equal(pipe.score(X, sample_weight=np.array([2, 3])), 8)
+
+
+def test_pipeline_sample_weight_unsupported():
+    # When sample_weight is None it shouldn't be passed
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())])
+    pipe.fit(X, y=None)
+    assert_equal(pipe.score(X), 3)
+    assert_equal(pipe.score(X, sample_weight=None), 3)
     assert_raise_message(
         TypeError,
-        "score() got an unexpected keyword argument 'foo'",
-        pipe.score, X, foo='bar'
+        "score() got an unexpected keyword argument 'sample_weight'",
+        pipe.score, X, sample_weight=np.array([2, 3])
     )
 
 
