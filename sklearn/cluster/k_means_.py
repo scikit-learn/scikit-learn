@@ -1309,7 +1309,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster
         """
         random_state = check_random_state(self.random_state)
