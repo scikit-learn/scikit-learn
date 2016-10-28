@@ -874,6 +874,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Numerical matrix of training samples to cluster. Each row
+            will represent a single training sample, a point in space of
+            'n_features' dimensions.
         """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
@@ -1308,8 +1311,10 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Coordinates of the data points to cluster
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Numerical matrix of training samples to cluster. Each row
+            will represent a single training sample, a point in space of
+            'n_features' dimensions.
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
