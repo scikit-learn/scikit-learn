@@ -12,7 +12,7 @@ samples of the dataset.
 
 The main theoretical result behind the efficiency of random projection is the
 `Johnson-Lindenstrauss lemma (quoting Wikipedia)
-<http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
+<https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
 
   In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional
@@ -41,8 +41,9 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, NotFittedError
-from .utils import DataDimensionalityWarning
+from .utils.validation import check_array
+from .exceptions import DataDimensionalityWarning
+from .exceptions import NotFittedError
 
 
 __all__ = ["SparseRandomProjection",
@@ -109,7 +110,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
     .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
            "An elementary proof of the Johnson-Lindenstrauss Lemma."
@@ -245,7 +246,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            http://www.cs.ucsc.edu/~optas/papers/jl.pdf
@@ -580,10 +581,10 @@ class SparseRandomProjection(BaseRandomProjection):
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,

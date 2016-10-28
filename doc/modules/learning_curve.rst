@@ -4,7 +4,7 @@
 Validation curves: plotting scores to evaluate models
 =====================================================
 
-.. currentmodule:: sklearn.learning_curve
+.. currentmodule:: sklearn.model_selection
 
 Every estimator has its advantages and drawbacks. Its generalization error
 can be decomposed in terms of bias, variance and noise. The **bias** of an
@@ -21,7 +21,7 @@ the second estimator approximates it almost perfectly and the last estimator
 approximates the training data perfectly but does not fit the true function
 very well, i.e. it is very sensitive to varying training data (high variance).
 
-.. figure:: ../auto_examples/model_selection/images/plot_underfitting_overfitting_001.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_underfitting_overfitting_001.png
    :target: ../auto_examples/model_selection/plot_underfitting_overfitting.html
    :align: center
    :scale: 50%
@@ -29,7 +29,7 @@ very well, i.e. it is very sensitive to varying training data (high variance).
 Bias and variance are inherent properties of estimators and we usually have to
 select learning algorithms and hyperparameters so that both bias and variance
 are as low as possible (see `Bias-variance dilemma
-<http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_). Another way to reduce
+<https://en.wikipedia.org/wiki/Bias-variance_dilemma>`_). Another way to reduce
 the variance of a model is to use more training data. However, you should only
 collect more training data if the true function is too complex to be
 approximated by an estimator with a lower variance.
@@ -41,9 +41,9 @@ this reason, it is often helpful to use the tools described below.
 
 .. topic:: Examples:
 
-   * :ref:`example_model_selection_plot_underfitting_overfitting.py`
-   * :ref:`example_model_selection_plot_validation_curve.py`
-   * :ref:`example_model_selection_plot_learning_curve.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_underfitting_overfitting.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
+   * :ref:`sphx_glr_auto_examples_model_selection_plot_learning_curve.py`
 
 
 .. _validation_curve:
@@ -69,7 +69,7 @@ values.
 The function :func:`validation_curve` can help in this case::
 
   >>> import numpy as np
-  >>> from sklearn.learning_curve import validation_curve
+  >>> from sklearn.model_selection import validation_curve
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.linear_model import Ridge
 
@@ -98,7 +98,7 @@ training score and a high validation score is usually not possible. All three
 cases can be found in the plot below where we vary the parameter
 :math:`\gamma` of an SVM on the digits dataset.
 
-.. figure:: ../auto_examples/model_selection/images/plot_validation_curve_001.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
    :target: ../auto_examples/model_selection/plot_validation_curve.html
    :align: center
    :scale: 50%
@@ -118,7 +118,7 @@ size of the training set, we will not benefit much from more training data.
 In the following plot you can see an example: naive Bayes roughly converges
 to a low score.
 
-.. figure:: ../auto_examples/model_selection/images/plot_learning_curve_001.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_learning_curve_001.png
    :target: ../auto_examples/model_selection/plot_learning_curve.html
    :align: center
    :scale: 50%
@@ -130,7 +130,7 @@ the maximum number of training samples, adding more training samples will
 most likely increase generalization. In the following plot you can see that
 the SVM could benefit from more training examples.
 
-.. figure:: ../auto_examples/model_selection/images/plot_learning_curve_002.png
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_learning_curve_002.png
    :target: ../auto_examples/model_selection/plot_learning_curve.html
    :align: center
    :scale: 50%
@@ -140,7 +140,7 @@ that are required to plot such a learning curve (number of samples
 that have been used, the average scores on the training sets and the
 average scores on the validation sets)::
 
-  >>> from sklearn.learning_curve import learning_curve
+  >>> from sklearn.model_selection import learning_curve
   >>> from sklearn.svm import SVC
 
   >>> train_sizes, train_scores, valid_scores = learning_curve(

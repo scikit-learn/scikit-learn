@@ -107,7 +107,7 @@ def test_ball_tree_query_radius(n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind = bt.query_radius(query_pt, r + eps)[0]
+        ind = bt.query_radius([query_pt], r + eps)[0]
         i = np.where(rad <= r + eps)[0]
 
         ind.sort()
@@ -126,7 +126,7 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
     rad = np.sqrt(((X - query_pt) ** 2).sum(1))
 
     for r in np.linspace(rad[0], rad[-1], 100):
-        ind, dist = bt.query_radius(query_pt, r + eps, return_distance=True)
+        ind, dist = bt.query_radius([query_pt], r + eps, return_distance=True)
 
         ind = ind[0]
         dist = dist[0]

@@ -8,12 +8,13 @@ from itertools import product
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
-from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
-from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_true, assert_false, assert_equal
+from sklearn.utils.testing import assert_raises, assert_raises_regexp
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame
@@ -25,12 +26,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 from sklearn.datasets import make_blobs
 from sklearn.utils.validation import (
-    NotFittedError,
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
-    DataConversionWarning,
 )
+
+from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
 
@@ -83,13 +85,13 @@ def test_memmap():
     asflt = lambda x: as_float_array(x, copy=False)
 
     with NamedTemporaryFile(prefix='sklearn-test') as tmp:
-        M = np.memmap(tmp, shape=100, dtype=np.float32)
+        M = np.memmap(tmp, shape=(10, 10), dtype=np.float32)
         M[:] = 0
 
         for f in (check_array, np.asarray, asflt):
             X = f(M)
             X[:] = 1
-            assert_array_equal(X.ravel(), M)
+            assert_array_equal(X.ravel(), M.ravel())
             X[:] = 0
 
 
@@ -112,6 +114,7 @@ def test_ordering():
     assert_false(X.data.flags['C_CONTIGUOUS'])
 
 
+@ignore_warnings
 def test_check_array():
     # accept_sparse == None
     # raise error on sparse inputs
@@ -119,6 +122,7 @@ def test_check_array():
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
     # ensure_2d
+    assert_warns(DeprecationWarning, check_array, [0, 1, 2])
     X_array = check_array([0, 1, 2])
     assert_equal(X_array.ndim, 2)
     X_array = check_array([0, 1, 2], ensure_2d=False)
@@ -232,6 +236,16 @@ def test_check_array_pandas_dtype_object_conversion():
     assert_equal(check_array(X_df, ensure_2d=False).dtype.kind, "f")
 
 
+def test_check_array_on_mock_dataframe():
+    arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
+    mock_df = MockDataFrame(arr)
+    checked_arr = check_array(mock_df)
+    assert_equal(checked_arr.dtype,
+                 arr.dtype)
+    checked_arr = check_array(mock_df, dtype=np.float32)
+    assert_equal(checked_arr.dtype, np.dtype(np.float32))
+
+
 def test_check_array_dtype_stability():
     # test that lists with ints don't get converted to floats
     X = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -313,7 +327,7 @@ def test_check_array_dtype_warning():
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
-    assert_raise_message(ValueError, msg, check_array, [])
+    assert_raise_message(ValueError, msg, check_array, [[]])
 
     # If considered a 1D collection when ensure_2d=False, then the minimum
     # number of samples will break:
@@ -326,7 +340,8 @@ def test_check_array_min_samples_and_features_messages():
 
     # But this works if the input data is forced to look like a 2 array with
     # one sample and one feature:
-    X_checked = check_array(42, ensure_2d=True)
+    X_checked = assert_warns(DeprecationWarning, check_array, [42],
+                             ensure_2d=True)
     assert_array_equal(np.array([[42]]), X_checked)
 
     # Simulate a model that would need at least 2 samples to be well defined

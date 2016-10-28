@@ -9,11 +9,13 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.validation import NotFittedError
+from sklearn.utils.testing import assert_raise_message
+from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet, \
     EllipticEnvelope
+from sklearn.covariance import fast_mcd
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -38,6 +40,19 @@ def test_mcd():
 
     # 1D data set
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
+
+
+def test_fast_mcd_on_invalid_input():
+    X = np.arange(100)
+    assert_raise_message(ValueError, 'fast_mcd expects at least 2 samples',
+                         fast_mcd, X)
+
+
+def test_mcd_class_on_invalid_input():
+    X = np.arange(100)
+    mcd = MinCovDet()
+    assert_raise_message(ValueError, 'MinCovDet expects at least 2 samples',
+                         mcd.fit, X)
 
 
 def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,

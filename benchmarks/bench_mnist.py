@@ -9,19 +9,21 @@ and 784 features. Here, we consider the task of predicting
 covertype dataset, the feature space is homogenous.
 
 Example of output :
-
     [..]
+
     Classification performance:
     ===========================
-    Classifier               train-time   test-time   error-rat
+    Classifier               train-time   test-time   error-rate
     ------------------------------------------------------------
-    Nystroem-SVM                105.07s       0.91s       0.0227
-    ExtraTrees                   48.20s       1.22s       0.0288
-    RandomForest                 47.17s       1.21s       0.0304
-    SampledRBF-SVM              140.45s       0.84s       0.0486
-    CART                         22.84s       0.16s       0.1214
-    dummy                         0.01s       0.02s       0.8973
-
+    MLP_adam                     53.46s       0.11s       0.0224
+    Nystroem-SVM                112.97s       0.92s       0.0228
+    MultilayerPerceptron         24.33s       0.14s       0.0287
+    ExtraTrees                   42.99s       0.57s       0.0294
+    RandomForest                 42.70s       0.49s       0.0318
+    SampledRBF-SVM              135.81s       0.56s       0.0486
+    LinearRegression-SAG         16.67s       0.06s       0.0824
+    CART                         20.69s       0.02s       0.1219
+    dummy                         0.00s       0.01s       0.8973
 """
 from __future__ import division, print_function
 
@@ -47,6 +49,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
+from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
@@ -58,7 +62,7 @@ memory = Memory(os.path.join(get_data_home(), 'mnist_benchmark_data'),
 def load_data(dtype=np.float32, order='F'):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
-    ## Load dataset
+    # Load dataset
     print("Loading dataset...")
     data = fetch_mldata('MNIST original')
     X = check_array(data['data'], dtype=dtype, order=order)
@@ -67,7 +71,7 @@ def load_data(dtype=np.float32, order='F'):
     # Normalize features
     X = X / 255
 
-    ## Create train-test split (as [Joachims, 2006])
+    # Create train-test split (as [Joachims, 2006])
     print("Creating train-test split...")
     n_train = 60000
     X_train = X[:n_train]
@@ -83,10 +87,19 @@ ESTIMATORS = {
     'CART': DecisionTreeClassifier(),
     'ExtraTrees': ExtraTreesClassifier(n_estimators=100),
     'RandomForest': RandomForestClassifier(n_estimators=100),
-    'Nystroem-SVM':
-    make_pipeline(Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
-    'SampledRBF-SVM':
-    make_pipeline(RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100))
+    'Nystroem-SVM': make_pipeline(
+        Nystroem(gamma=0.015, n_components=1000), LinearSVC(C=100)),
+    'SampledRBF-SVM': make_pipeline(
+        RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
+    'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4),
+    'MultilayerPerceptron': MLPClassifier(
+        hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
+        algorithm='sgd', learning_rate_init=0.2, momentum=0.9, verbose=1,
+        tol=1e-4, random_state=1),
+    'MLP-adam': MLPClassifier(
+        hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
+        algorithm='adam', learning_rate_init=0.001, verbose=1,
+        tol=1e-4, random_state=1)
 }
 
 
@@ -120,7 +133,7 @@ if __name__ == "__main__":
     print("%s %d (size=%dMB)" % ("number of train samples:".ljust(25),
                                  X_train.shape[0], int(X_train.nbytes / 1e6)))
     print("%s %d (size=%dMB)" % ("number of test samples:".ljust(25),
-                                  X_test.shape[0], int(X_test.nbytes / 1e6)))
+                                 X_test.shape[0], int(X_test.nbytes / 1e6)))
 
     print()
     print("Training Classifiers")

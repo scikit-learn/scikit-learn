@@ -19,6 +19,7 @@ Who is using scikit-learn?
     <div class="logo">
 
 .. image:: images/spotify.png
+    :width: 120pt
     :target: http://www.spotify.com
 
 .. raw:: html
@@ -49,7 +50,8 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
   <div class="logo">
 
 .. image:: images/inria.png
-   :target: http://www.inria.fr
+    :width: 120pt
+    :target: http://www.inria.fr
 
 .. raw:: html
 
@@ -62,7 +64,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 At INRIA, we use scikit-learn to support leading-edge basic research in many
 teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
 <http://lear.inrialpes.fr/>`_ for computer vision, `Visages
-<https://www.irisa.fr/visages/index>`_ for medical image analysis, `Privatics
+<https://team.inria.fr/visages/>`_ for medical image analysis, `Privatics
 <https://team.inria.fr/privatics>`_ for security. The project is a fantastic
 tool to address difficult applications of machine learing in an academic
 environment as it is performant and versatile, but all easy-to-use and well
@@ -80,7 +82,44 @@ Gaël Varoquaux, research at Parietal
    </span>
 
 
-`Evernote <http://evernote.com>`_
+`betaworks <https://betaworks.com>`_
+------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/betaworks.png
+    :width: 120pt
+    :target: https://betaworks.com
+
+.. raw:: html
+
+  </div>
+
+Betaworks is a NYC-based startup studio that builds new products, grows
+companies, and invests in others. Over the past 8 years we’ve launched a
+handful of social data analytics-driven services, such as Bitly, Chartbeat,
+digg and Scale Model. Consistently the betaworks data science team uses
+Scikit-learn for a variety of tasks. From exploratory analysis, to product
+development, it is an essential part of our toolkit. Recent uses are included
+in `digg’s new video recommender system
+<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3#.g5kk2u89v>`_,
+and Poncho’s `dynamic heuristic subspace clustering
+<http://data.betaworks.com/a-data-driven-approach-to-verbalize-weather-forecasts-at-scale/>`_. 
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Gilad Lotan, Chief Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
+`Evernote <https://evernote.com>`_
 ----------------------------------
 
 .. raw:: html
@@ -88,7 +127,8 @@ Gaël Varoquaux, research at Parietal
   <div class="logo">
 
 .. image:: images/evernote.png
-   :target: https://evernote.com
+    :width: 120pt
+    :target: https://evernote.com
 
 .. raw:: html
 
@@ -121,7 +161,8 @@ Mark Ayzenshtat, VP, Augmented Intelligence
   <div class="logo">
 
 .. image:: images/telecomparistech.jpg
-   :target: https://www.telecom-paristech.fr
+    :width: 120pt
+    :target: https://www.telecom-paristech.fr
 
 .. raw:: html
 
@@ -145,7 +186,42 @@ Alexandre Gramfort, Assistant Professor
    </span>
 
 
-`AWeber <http://aweber.com/>`_
+`Booking.com <http://booking.com>`_
+-------------------------------------
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/booking.png
+    :width: 120pt
+    :target: http://www.booking.com
+
+.. raw:: html
+
+  </div>
+
+At Booking.com, we use machine learning algorithms for many different
+applications, such as recommending hotels and destinations to our customers,
+detecting fraudulent reservations, or scheduling our customer service agents.
+Scikit-learn is one of the tools we use when implementing standard algorithms
+for prediction tasks. Its API and documentations are excellent and make it easy
+to use. The scikit-learn developers do a great job of incorporating state of
+the art implementations and new algorithms into the package. Thus, scikit-learn
+provides convenient access to a wide spectrum of algorithms, and allows us to
+readily find the right tool for the right job.
+
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Melanie Mueller, Data Scientist
+
+.. raw:: html
+
+   </span>
+
+`AWeber <http://www.aweber.com>`_
 ------------------------------------------
 
 .. raw:: html
@@ -153,7 +229,8 @@ Alexandre Gramfort, Assistant Professor
   <div class="logo">
 
 .. image:: images/aweber.png
-   :target: http://aweber.com/
+    :width: 120pt
+    :target: http://www.aweber.com
 
 .. raw:: html
 
@@ -183,7 +260,7 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
    </span>
 
-`Yhat <http://yhathq.com/>`_
+`Yhat <https://www.yhat.com>`_
 ------------------------------------------
 
 .. raw:: html
@@ -191,7 +268,8 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
   <div class="logo">
 
 .. image:: images/yhat.png
-   :target: http://yhathq.com/
+    :width: 120pt
+    :target: https://www.yhat.com
 
 .. raw:: html
 
@@ -215,15 +293,16 @@ Greg Lamp, Co-founder Yhat
 
    </span>
 
-`Rangespan <https://www.rangespan.com>`_
-------------------------------------------
+`Rangespan <http://www.rangespan.com>`_
+----------------------------------------
 
 .. raw:: html
 
   <div class="logo">
 
 .. image:: images/rangespan.png
-   :target: https://www.rangespan.com
+    :width: 120pt
+    :target: http://www.rangespan.com
 
 .. raw:: html
 
@@ -255,7 +334,8 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
   <div class="logo">
 
 .. image:: images/birchbox.jpg
-   :target: https://www.birchbox.com
+    :width: 120pt
+    :target: https://www.birchbox.com
 
 .. raw:: html
 
@@ -289,7 +369,8 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
   <div class="logo">
 
 .. image:: images/bestofmedia-logo.png
-   :target: http://www.bestofmedia.com
+    :width: 120pt
+    :target: http://www.bestofmedia.com
 
 .. raw:: html
 
@@ -313,15 +394,16 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
 
    </span>
 
-`Change.org <http://www.change.org>`_
---------------------------------------------------
+`Change.org <https://www.change.org>`_
+--------------------------------------
 
 .. raw:: html
 
   <div class="logo">
 
 .. image:: images/change-logo.png
-   :target: http://www.change.org
+    :width: 120pt
+    :target: https://www.change.org
 
 .. raw:: html
 
@@ -351,7 +433,8 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
   <div class="logo">
 
 .. image:: images/phimeca.png
-   :target: http://www.phimeca.com/?lang=en
+    :width: 120pt
+    :target: http://www.phimeca.com/?lang=en
 
 .. raw:: html
 
@@ -385,7 +468,8 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
   <div class="logo">
 
 .. image:: images/howaboutwe.png
-   :target: http://www.howaboutwe.com/
+    :width: 120pt
+    :target: http://www.howaboutwe.com/
 
 .. raw:: html
 
@@ -411,15 +495,16 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
    </span>
 
 
-`PeerIndex <http://www.peerindex.com/>`_
-----------------------------------------
+`PeerIndex <https://www.brandwatch.com/peerindex-and-brandwatch>`_
+------------------------------------------------------------------
 
 .. raw:: html
 
   <div class="logo">
 
 .. image:: images/peerindex.png
-   :target: http://www.peerindex.com/
+    :width: 120pt
+    :target: https://www.brandwatch.com/peerindex-and-brandwatch
 
 .. raw:: html
 
@@ -446,7 +531,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
    </span>
 
 
-`DataRobot <http://www.datarobot.com>`_
+`DataRobot <https://www.datarobot.com>`_
 ----------------------------------------
 
 .. raw:: html
@@ -454,7 +539,8 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
     <div class="logo">
 
 .. image:: images/datarobot.png
-    :target: http://www.datarobot.com
+    :width: 120pt
+    :target: https://www.datarobot.com
 
 .. raw:: html
 
@@ -481,6 +567,7 @@ Jeremy Achin, CEO & Co-founder DataRobot Inc.
     <div class="logo">
 
 .. image:: images/okcupid.png
+    :width: 120pt
     :target: https://www.okcupid.com
 
 .. raw:: html
@@ -504,15 +591,16 @@ David Koh - Senior Data Scientist at OkCupid
    </span>
    
 
-`Lovely <https://www.livelovely.com/>`_
------------------------------------------
+`Lovely <https://livelovely.com/>`_
+-----------------------------------
 
 .. raw:: html
 
     <div class="logo">
 
 .. image:: images/lovely.png
-    :target: https://www.livelovely.com
+    :width: 120pt
+    :target: https://livelovely.com
 
 .. raw:: html
 
@@ -546,6 +634,7 @@ Simon Frid - Data Scientist, Lead at Lovely
     <div class="logo">
 
 .. image:: images/datapublica.png
+    :width: 120pt
     :target: http://www.data-publica.com/
 
 .. raw:: html
@@ -578,7 +667,8 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
    <div class="logo">
 
 .. image:: images/machinalis.png
-   :target: http://www.machinalis.com
+    :width: 120pt
+    :target: http://www.machinalis.com
 
 .. raw:: html
 
@@ -611,7 +701,8 @@ Rafael Carrascosa, Lead developer
    <div class="logo">
 
 .. image:: images/solido_logo.png
-   :target: http://www.solidodesign.com
+    :width: 120pt
+    :target: http://www.solidodesign.com
 
 .. raw:: html
 
@@ -648,7 +739,8 @@ Trent McConaghy, founder, Solido Design Automation Inc.
    <div class="logo">
 
 .. image:: images/infonea.jpg
-   :target: http://www.infonea.com/en
+    :width: 120pt
+    :target: http://www.infonea.com/en
 
 .. raw:: html
 
@@ -673,4 +765,72 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
   </span>
 
 
+`Dataiku <http://www.dataiku.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/dataiku_logo.png
+    :width: 120pt
+    :target: http://www.dataiku.com
+
+.. raw:: html
+
+   </div>
+
+Our software, Data Science Studio (DSS), enables users to create data services 
+that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with 
+Machine Learning. Our Machine Learning module integrates 
+many scikit-learn algorithms. The scikit-learn library is a perfect integration 
+with DSS because it offers algorithms for virtually all business cases. Our goal 
+is to offer a transparent and flexible tool that makes it easier to optimize 
+time consuming aspects of building a data service, preparing data, and training 
+machine learning algorithms on all types of data.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Florian Douetteau, CEO, Dataiku
+
+.. raw:: html
+
+  </span>
+
+`Otto Group <https://ottogroup.com/>`_
+-----------------------------------------
+
+.. raw:: html
+
+   <div class="logo">
+
+.. image:: images/ottogroup_logo.png
+    :width: 120pt
+    :target: https://ottogroup.com
+
+.. raw:: html
+
+   </div>
+
+Here at Otto Group, one of global Big Five B2C online retailers, we are using
+scikit-learn in all aspects of our daily work from data exploration to development
+of machine learning application to the productive deployment of those services.
+It helps us to tackle machine learning problems ranging from e-commerce to logistics.
+It consistent APIs enabled us to build the `Palladium REST-API framework
+<https://github.com/ottogroup/palladium/>`_ around it and continuously deliver
+scikit-learn based services.
+
+
+.. raw:: html
+
+  <span class="testimonial-author">
+
+Christian Rammig, Head of Data Science, Otto Group
+
+.. raw:: html
+
+  </span>
 

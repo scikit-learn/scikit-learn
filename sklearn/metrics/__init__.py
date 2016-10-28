@@ -15,6 +15,7 @@ from .ranking import roc_curve
 
 from .classification import accuracy_score
 from .classification import classification_report
+from .classification import cohen_kappa_score
 from .classification import confusion_matrix
 from .classification import f1_score
 from .classification import fbeta_score
@@ -38,8 +39,10 @@ from .cluster import homogeneity_completeness_v_measure
 from .cluster import homogeneity_score
 from .cluster import mutual_info_score
 from .cluster import normalized_mutual_info_score
+from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
+from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 
 from .pairwise import euclidean_distances

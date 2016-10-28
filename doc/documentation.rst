@@ -2,7 +2,7 @@
 
   <div class="container-index">
 
-Documentation of scikit-learn 0.17.dev0
+Documentation of scikit-learn 0.19.dev0
 =======================================
 
 .. raw:: html
@@ -28,9 +28,10 @@ Documentation of scikit-learn 0.17.dev0
                 <!-- doc versions -->
                     <h2>Other Versions</h2>
                     <ul>
-                        <li>scikit-learn 0.17 (development)</li>
-                        <li><a href="http://scikit-learn.org/stable/documentation.html">scikit-learn 0.16 (stable)</a></li>
-                        <li><a href="http://scikit-learn.org/0.15/documentation.html">scikit-learn 0.15</a></li>
+                        <li>scikit-learn 0.19 (development)</li>
+                        <li><a href="http://scikit-learn.org/stable/documentation.html">scikit-learn 0.18 (stable)</a></li>
+                        <li><a href="http://scikit-learn.org/0.17/documentation.html">scikit-learn 0.17</a></li>
+                        <li><a href="http://scikit-learn.org/0.16/documentation.html">scikit-learn 0.16</a></li>
                     </ul>
 
                 </div>
@@ -63,7 +64,7 @@ Documentation of scikit-learn 0.17.dev0
           <!-- row -->
             <div class="row-fluid">
                 <div class="span4 box">
-                    <h2><a href="developers/index.html">Contributing</a></h2>
+                    <h2><a href="developers/index.html">Development</a></h2>
                             <blockquote>Information on how to contribute. This also
                             contains useful information for advanced users, for example
                             how to build their own estimators.

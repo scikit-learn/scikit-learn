@@ -53,7 +53,7 @@ import numpy as np
 
 from sklearn.datasets import fetch_covtype, get_data_home
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -72,14 +72,14 @@ memory = Memory(os.path.join(get_data_home(), 'covertype_benchmark_data'),
 def load_data(dtype=np.float32, order='C', random_state=13):
     """Load the data, then cache and memmap the train/test split"""
     ######################################################################
-    ## Load dataset
+    # Load dataset
     print("Loading dataset...")
     data = fetch_covtype(download_if_missing=True, shuffle=True,
                          random_state=random_state)
     X = check_array(data['data'], dtype=dtype, order=order)
     y = (data['target'] != 1).astype(np.int)
 
-    ## Create train-test split (as [Joachims, 2006])
+    # Create train-test split (as [Joachims, 2006])
     print("Creating train-test split...")
     n_train = 522911
     X_train = X[:n_train]
@@ -87,7 +87,7 @@ def load_data(dtype=np.float32, order='C', random_state=13):
     X_test = X[n_train:]
     y_test = y[n_train:]
 
-    ## Standardize first 10 features (the numerical ones)
+    # Standardize first 10 features (the numerical ones)
     mean = X_train.mean(axis=0)
     std = X_train.std(axis=0)
     mean[10:] = 0.0
@@ -105,7 +105,8 @@ ESTIMATORS = {
     'SGD': SGDClassifier(alpha=0.001, n_iter=2),
     'GaussianNB': GaussianNB(),
     'liblinear': LinearSVC(loss="l2", penalty="l2", C=1000, dual=False,
-                           tol=1e-3)
+                           tol=1e-3),
+    'SAG': LogisticRegression(solver='sag', max_iter=2, C=1000)
 }
 
 

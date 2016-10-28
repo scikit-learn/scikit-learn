@@ -1,21 +1,39 @@
 """Base classes for all estimators."""
+
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
 import copy
-import inspect
 import warnings
 
 import numpy as np
 from scipy import sparse
 from .externals import six
+from .utils.fixes import signature
+from .utils.deprecation import deprecated
+from .exceptions import ChangedBehaviorWarning as _ChangedBehaviorWarning
+from . import __version__
 
 
-class ChangedBehaviorWarning(UserWarning):
+@deprecated("ChangedBehaviorWarning has been moved into the sklearn.exceptions"
+            " module. It will not be available here from version 0.19")
+class ChangedBehaviorWarning(_ChangedBehaviorWarning):
     pass
 
 
 ##############################################################################
+def _first_and_last_element(arr):
+    """Returns first and last element of numpy array or sparse matrix."""
+    if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
+        # numpy array or sparse matrix with .data attribute
+        data = arr.data if sparse.issparse(arr) else arr
+        return data.flat[0], data.flat[-1]
+    else:
+        # Sparse matrices without .data attribute. Only dok_matrix at
+        # the time of writing, in this case indexing is fast
+        return arr[0, 0], arr[-1, -1]
+
+
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
@@ -56,6 +74,9 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
+        if param1 is param2:
+            # this should always happen
+            continue
         if isinstance(param1, np.ndarray):
             # For most ndarrays, we do not test for complete equality
             if not isinstance(param2, type(param1)):
@@ -68,9 +89,8 @@ def clone(estimator, safe=True):
                 equality_test = (
                     param1.shape == param2.shape
                     and param1.dtype == param2.dtype
-                    # We have to use '.flat' for 2D arrays
-                    and param1.flat[0] == param2.flat[0]
-                    and param1.flat[-1] == param2.flat[-1]
+                    and (_first_and_last_element(param1) ==
+                         _first_and_last_element(param2))
                 )
             else:
                 equality_test = np.all(param1 == param2)
@@ -87,19 +107,20 @@ def clone(estimator, safe=True):
             else:
                 equality_test = (
                     param1.__class__ == param2.__class__
-                    and param1.data[0] == param2.data[0]
-                    and param1.data[-1] == param2.data[-1]
+                    and (_first_and_last_element(param1) ==
+                         _first_and_last_element(param2))
                     and param1.nnz == param2.nnz
                     and param1.shape == param2.shape
                 )
         else:
-            new_obj_val = new_object_params[name]
-            params_set_val = params_set[name]
-            # The following construct is required to check equality on special
-            # singletons such as np.nan that are not equal to them-selves:
-            equality_test = (new_obj_val == params_set_val or
-                             new_obj_val is params_set_val)
-        if not equality_test:
+            # fall back on standard equality
+            equality_test = param1 == param2
+        if equality_test:
+            warnings.warn("Estimator %s modifies parameters in __init__."
+                          " This behavior is deprecated as of 0.18 and "
+                          "support for this behavior will be removed in 0.20."
+                          % type(estimator).__name__, DeprecationWarning)
+        else:
             raise RuntimeError('Cannot clone object %s, as the constructor '
                                'does not seem to set parameter %s' %
                                (estimator, name))
@@ -181,26 +202,27 @@ class BaseEstimator(object):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        args, varargs, kw, default = inspect.getargspec(init)
-        if varargs is not None:
-            raise RuntimeError("scikit-learn estimators should always "
-                               "specify their parameters in the signature"
-                               " of their __init__ (no varargs)."
-                               " %s doesn't follow this convention."
-                               % (cls, ))
-        # Remove 'self'
-        # XXX: This is going to fail if the init is a staticmethod, but
-        # who would do this?
-        args.pop(0)
-        args.sort()
-        return args
+        init_signature = signature(init)
+        # Consider the constructor parameters excluding 'self'
+        parameters = [p for p in init_signature.parameters.values()
+                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        for p in parameters:
+            if p.kind == p.VAR_POSITIONAL:
+                raise RuntimeError("scikit-learn estimators should always "
+                                   "specify their parameters in the signature"
+                                   " of their __init__ (no varargs)."
+                                   " %s with constructor %s doesn't "
+                                   " follow this convention."
+                                   % (cls, init_signature))
+        # Extract and sort argument names excluding 'self'
+        return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -236,7 +258,7 @@ class BaseEstimator(object):
         """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The former have parameters of the form
+        (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
 
@@ -254,7 +276,7 @@ class BaseEstimator(object):
                 # nested objects case
                 name, sub_name = split
                 if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. ' 
+                    raise ValueError('Invalid parameter %s for estimator %s. '
                                      'Check the list of available parameters '
                                      'with `estimator.get_params().keys()`.' %
                                      (name, self))
@@ -274,6 +296,24 @@ class BaseEstimator(object):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
+
+    def __getstate__(self):
+        if type(self).__module__.startswith('sklearn.'):
+            return dict(self.__dict__.items(), _sklearn_version=__version__)
+        else:
+            return dict(self.__dict__.items())
+
+    def __setstate__(self, state):
+        if type(self).__module__.startswith('sklearn.'):
+            pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            if pickle_version != __version__:
+                warnings.warn(
+                    "Trying to unpickle estimator {0} from version {1} when "
+                    "using version {2}. This might lead to breaking code or "
+                    "invalid results. Use at your own risk.".format(
+                        self.__class__.__name__, pickle_version, __version__),
+                    UserWarning)
+        self.__dict__.update(state)
 
 
 ###############################################################################
@@ -343,7 +383,8 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight)
+        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+                        multioutput='variance_weighted')
 
 
 ###############################################################################
@@ -454,6 +495,24 @@ class TransformerMixin(object):
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
+
+
+class DensityMixin(object):
+    """Mixin class for all density estimators in scikit-learn."""
+    _estimator_type = "DensityEstimator"
+
+    def score(self, X, y=None):
+        """Returns the score of the model on the data X
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+
+        Returns
+        -------
+        score: float
+        """
+        pass
 
 
 ###############################################################################

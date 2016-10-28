@@ -27,13 +27,13 @@ def test_algorithms():
 
     Xa = svd_a.fit_transform(X)[:, :6]
     Xr = svd_r.fit_transform(X)[:, :6]
-    assert_array_almost_equal(Xa, Xr)
+    assert_array_almost_equal(Xa, Xr, decimal=5)
 
     comp_a = np.abs(svd_a.components_)
     comp_r = np.abs(svd_r.components_)
     # All elements are equal, but some elements are more equal than others.
     assert_array_almost_equal(comp_a[:9], comp_r[:9])
-    assert_array_almost_equal(comp_a[9:], comp_r[9:], decimal=3)
+    assert_array_almost_equal(comp_a[9:], comp_r[9:], decimal=2)
 
 
 def test_attributes():
@@ -45,7 +45,7 @@ def test_attributes():
 
 def test_too_many_components():
     for algorithm in ["arpack", "randomized"]:
-        for n_components in (n_features, n_features+1):
+        for n_components in (n_features, n_features + 1):
             tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
             assert_raises(ValueError, tsvd.fit, X)
 
@@ -64,7 +64,7 @@ def test_inverse_transform():
     for algo in ("arpack", "randomized"):
         # We need a lot of components for the reconstruction to be "almost
         # equal" in all positions. XXX Test means or sums instead?
-        tsvd = TruncatedSVD(n_components=52, random_state=42)
+        tsvd = TruncatedSVD(n_components=52, random_state=42, algorithm=algo)
         Xt = tsvd.fit_transform(X)
         Xinv = tsvd.inverse_transform(Xt)
         assert_array_almost_equal(Xinv, Xdense, decimal=1)
@@ -150,7 +150,7 @@ def test_explained_variance():
     # Compare sparse vs. dense
     for svd_sparse, svd_dense in svds_sparse_v_dense:
         assert_array_almost_equal(svd_sparse.explained_variance_ratio_,
-                svd_dense.explained_variance_ratio_)
+                                  svd_dense.explained_variance_ratio_)
 
     # Test that explained_variance is correct
     for svd, transformed in svds_trans:

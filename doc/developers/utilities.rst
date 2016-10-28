@@ -93,7 +93,7 @@ Efficient Linear Algebra & Array Operations
   by directly calling the BLAS
   ``nrm2`` function.  This is more stable than ``scipy.linalg.norm``.  See
   `Fabian's blog post
-  <http://fseoane.net/blog/2011/computing-the-vector-norm/>`_ for a discussion.
+  <http://fa.bianp.net/blog/2011/computing-the-vector-norm>`_ for a discussion.
 
 - :func:`extmath.fast_logdet`: efficiently compute the log of the determinant
   of a matrix.
@@ -187,11 +187,6 @@ Backports
   (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
-
-- :func:`fixes.isclose`
-  (backported from ``numpy.isclose`` in numpy 1.8.1).
-  In versions before 1.7, this function was not available in
-  numpy. Used in ``sklearn.metrics``.
 
 
 ARPACK
@@ -293,5 +288,5 @@ Warnings and Exceptions
 
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
-- :class:`ConvergenceWarning`: Custom warning to catch convergence problems.
-  Used in ``sklearn.covariance.graph_lasso``.
+- :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
+  convergence problems. Used in ``sklearn.covariance.graph_lasso``.

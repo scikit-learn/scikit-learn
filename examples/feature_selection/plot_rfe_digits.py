@@ -8,7 +8,7 @@ a digit classification task.
 
 .. note::
 
-    See also :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`
+    See also :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
 
 """
 print(__doc__)
@@ -30,7 +30,7 @@ rfe.fit(X, y)
 ranking = rfe.ranking_.reshape(digits.images[0].shape)
 
 # Plot pixel ranking
-plt.matshow(ranking)
+plt.matshow(ranking, cmap=plt.cm.Blues)
 plt.colorbar()
 plt.title("Ranking of pixels with RFE")
 plt.show()

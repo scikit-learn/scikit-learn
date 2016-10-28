@@ -8,31 +8,23 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raise_message
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-
-from sklearn.multiclass import fit_ovr
-from sklearn.multiclass import fit_ovo
-from sklearn.multiclass import fit_ecoc
-from sklearn.multiclass import predict_ovr
-from sklearn.multiclass import predict_ovo
-from sklearn.multiclass import predict_ecoc
-from sklearn.multiclass import predict_proba_ovr
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-
-from sklearn.preprocessing import LabelBinarizer
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
@@ -50,10 +42,6 @@ def test_ovr_exceptions():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ovr.predict, [])
 
-    with ignore_warnings():
-        assert_raises(ValueError, predict_ovr, [LinearSVC(), MultinomialNB()],
-                      LabelBinarizer(), [])
-
     # Fail on multioutput data
     assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
@@ -61,6 +49,13 @@ def test_ovr_exceptions():
     assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
                   np.array([[1, 0], [0, 1]]),
                   np.array([[1.5, 2.4], [3.1, 0.8]]))
+
+
+def test_check_classification_targets():
+    # Test that check_classification_target return correct type. #5782
+    y = np.array([0.0, 1.1, 2.0, 3.0])
+    msg = type_of_target(y)
+    assert_raise_message(ValueError, msg, check_classification_targets, y)
 
 
 def test_ovr_fit_predict():
@@ -76,6 +71,33 @@ def test_ovr_fit_predict():
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
+    assert_greater(np.mean(iris.target == pred), 0.65)
+
+
+def test_ovr_partial_fit():
+    # Test if partial_fit is working as intented
+    X, y = shuffle(iris.data, iris.target, random_state=0)
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:100], y[:100], np.unique(y))
+    ovr.partial_fit(X[100:], y[100:])
+    pred = ovr.predict(X)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(X, y).predict(X)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred), 0.65)
+
+    # Test when mini batches doesn't have all classes
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
+    ovr.partial_fit(iris.data[60:], iris.target[60:])
+    pred = ovr.predict(iris.data)
+    ovr2 = OneVsRestClassifier(MultinomialNB())
+    pred2 = ovr2.fit(iris.data, iris.target).predict(iris.data)
+
+    assert_almost_equal(pred, pred2)
+    assert_equal(len(ovr.estimators_), len(np.unique(iris.target)))
     assert_greater(np.mean(iris.target == pred), 0.65)
 
 
@@ -107,7 +129,6 @@ def test_ovr_fit_predict_sparse():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=True,
-                                                       return_indicator=True,
                                                        random_state=0)
 
         X_train, Y_train = X[:80], Y[:80]
@@ -230,35 +251,19 @@ def test_ovr_binary():
         conduct_test(base_clf, test_predict_proba=True)
 
 
-@ignore_warnings
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = [["spam", "eggs"], ["spam"], ["ham", "eggs", "spam"],
-         ["ham", "eggs"], ["ham"]]
-    # y = [[1, 2], [1], [0, 1, 2], [0, 2], [0]]
-    Y = np.array([[0, 1, 1],
+    y = np.array([[0, 1, 1],
                   [0, 1, 0],
                   [1, 1, 1],
                   [1, 0, 1],
                   [1, 0, 0]])
 
-    classes = set("ham eggs spam".split())
-
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
-        # test input as lists of tuples
-        clf = assert_warns(DeprecationWarning,
-                           OneVsRestClassifier(base_clf).fit,
-                           X, y)
-        assert_equal(set(clf.classes_), classes)
-        y_pred = clf.predict([[0, 4, 4]])[0]
-        assert_equal(set(y_pred), set(["spam", "eggs"]))
-        assert_true(clf.multilabel_)
-
-        # test input as label indicator matrix
-        clf = OneVsRestClassifier(base_clf).fit(X, Y)
+        clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
@@ -280,7 +285,6 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -305,7 +309,6 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
-                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test = X[80:]
@@ -357,7 +360,6 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
-                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
@@ -435,8 +437,9 @@ def test_ovo_fit_on_list():
     # same output as predict from an array
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     prediction_from_array = ovo.fit(iris.data, iris.target).predict(iris.data)
-    prediction_from_list = ovo.fit(iris.data,
-                                   list(iris.target)).predict(iris.data)
+    iris_data_list = [list(a) for a in iris.data]
+    prediction_from_list = ovo.fit(iris_data_list,
+                                   list(iris.target)).predict(iris_data_list)
     assert_array_equal(prediction_from_array, prediction_from_list)
 
 
@@ -450,6 +453,33 @@ def test_ovo_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     ovo.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
+
+
+def test_ovo_partial_fit_predict():
+    X, y = shuffle(iris.data, iris.target)
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(X[:100], y[:100], np.unique(y))
+    ovo1.partial_fit(X[100:], y[100:])
+    pred1 = ovo1.predict(X)
+
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    ovo2.fit(X, y)
+    pred2 = ovo2.predict(X)
+    assert_equal(len(ovo1.estimators_), n_classes * (n_classes - 1) / 2)
+    assert_greater(np.mean(y == pred1), 0.65)
+    assert_almost_equal(pred1, pred2)
+
+    # Test when mini-batches don't have all target classes
+    ovo1 = OneVsOneClassifier(MultinomialNB())
+    ovo1.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
+    ovo1.partial_fit(iris.data[60:], iris.target[60:])
+    pred1 = ovo1.predict(iris.data)
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    pred2 = ovo2.fit(iris.data, iris.target).predict(iris.data)
+
+    assert_almost_equal(pred1, pred2)
+    assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
+    assert_greater(np.mean(iris.target == pred1), 0.65)
 
 
 def test_ovo_decision_function():
@@ -577,42 +607,45 @@ def test_ecoc_gridsearch():
     assert_true(best_C in Cs)
 
 
-@ignore_warnings
-def test_deprecated():
-    base_estimator = DecisionTreeClassifier(random_state=0)
-    X, Y = iris.data, iris.target
-    X_train, Y_train = X[:80], Y[:80]
-    X_test = X[80:]
+def test_pairwise_indices():
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    X, y = iris.data, iris.target
 
-    all_metas = [
-        (OneVsRestClassifier, fit_ovr, predict_ovr, predict_proba_ovr),
-        (OneVsOneClassifier, fit_ovo, predict_ovo, None),
-        (OutputCodeClassifier, fit_ecoc, predict_ecoc, None),
-    ]
+    ovr_false = OneVsOneClassifier(clf_precomputed)
+    linear_kernel = np.dot(X, X.T)
+    ovr_false.fit(linear_kernel, y)
 
-    for MetaEst, fit_func, predict_func, proba_func in all_metas:
-        try:
-            meta_est = MetaEst(base_estimator,
-                               random_state=0).fit(X_train, Y_train)
+    n_estimators = len(ovr_false.estimators_)
+    precomputed_indices = ovr_false.pairwise_indices_
 
-            fitted_return = fit_func(base_estimator, X_train, Y_train,
-                                     random_state=0)
-        except TypeError:
-            meta_est = MetaEst(base_estimator).fit(X_train, Y_train)
-            fitted_return = fit_func(base_estimator, X_train, Y_train)
+    for idx in precomputed_indices:
+        assert_equal(idx.shape[0] * n_estimators / (n_estimators - 1),
+                     linear_kernel.shape[0])
 
-        if len(fitted_return) == 2:
-            estimators_, classes_or_lb = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb,
-                                             X_test),
-                                meta_est.predict(X_test))
-            if proba_func is not None:
-                assert_almost_equal(proba_func(estimators_, X_test,
-                                               is_multilabel=False),
-                                    meta_est.predict_proba(X_test))
 
-        else:
-            estimators_, classes_or_lb, codebook = fitted_return
-            assert_almost_equal(predict_func(estimators_, classes_or_lb,
-                                             codebook, X_test),
-                                meta_est.predict(X_test))
+def test_pairwise_attribute():
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_notprecomputed = svm.SVC()
+
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        ovr_false = MultiClassClassifier(clf_notprecomputed)
+        assert_false(ovr_false._pairwise)
+
+        ovr_true = MultiClassClassifier(clf_precomputed)
+        assert_true(ovr_true._pairwise)
+
+
+def test_pairwise_cross_val_score():
+    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_notprecomputed = svm.SVC(kernel='linear')
+
+    X, y = iris.data, iris.target
+
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        ovr_false = MultiClassClassifier(clf_notprecomputed)
+        ovr_true = MultiClassClassifier(clf_precomputed)
+
+        linear_kernel = np.dot(X, X.T)
+        score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
+        score_linear = cross_val_score(ovr_false, X, y)
+        assert_array_equal(score_precomputed, score_linear)

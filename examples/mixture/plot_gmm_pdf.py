@@ -1,7 +1,7 @@
 """
-=============================================
-Density Estimation for a mixture of Gaussians
-=============================================
+=========================================
+Density Estimation for a Gaussian mixture
+=========================================
 
 Plot the density estimation of a mixture of two Gaussians. Data is
 generated from two Gaussians with different centers and covariance
@@ -29,15 +29,15 @@ stretched_gaussian = np.dot(np.random.randn(n_samples, 2), C)
 X_train = np.vstack([shifted_gaussian, stretched_gaussian])
 
 # fit a Gaussian Mixture Model with two components
-clf = mixture.GMM(n_components=2, covariance_type='full')
+clf = mixture.GaussianMixture(n_components=2, covariance_type='full')
 clf.fit(X_train)
 
 # display predicted scores by the model as a contour plot
-x = np.linspace(-20.0, 30.0)
-y = np.linspace(-20.0, 40.0)
+x = np.linspace(-20., 30.)
+y = np.linspace(-20., 40.)
 X, Y = np.meshgrid(x, y)
 XX = np.array([X.ravel(), Y.ravel()]).T
-Z = -clf.score_samples(XX)[0]
+Z = -clf.score_samples(XX)
 Z = Z.reshape(X.shape)
 
 CS = plt.contour(X, Y, Z, norm=LogNorm(vmin=1.0, vmax=1000.0),

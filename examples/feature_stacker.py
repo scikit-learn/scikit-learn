@@ -20,7 +20,7 @@ dataset and is only used to illustrate the usage of FeatureUnion.
 # License: BSD 3 clause
 
 from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
@@ -30,7 +30,7 @@ iris = load_iris()
 
 X, y = iris.data, iris.target
 
-# This dataset is way to high-dimensional. Better do PCA:
+# This dataset is way too high-dimensional. Better do PCA:
 pca = PCA(n_components=2)
 
 # Maybe some original features where good, too?

@@ -16,12 +16,12 @@ from scipy import linalg
 from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
 
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import check_cv, cross_val_score
+from ..model_selection import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 
@@ -205,7 +205,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         d_gap = np.inf
         for i in range(max_iter):
             for idx in range(n_features):
-                sub_covariance = covariance_[indices != idx].T[indices != idx]
+                sub_covariance = np.ascontiguousarray(
+                    covariance_[indices != idx].T[indices != idx])
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
                     if mode == 'cd':
@@ -334,7 +335,11 @@ class GraphLasso(EmpiricalCovariance):
         self.store_precision = True
 
     def fit(self, X, y=None):
-        X = check_array(X)
+
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
+                        estimator=self)
+
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -460,11 +465,21 @@ class GraphLassoCV(GraphLasso):
         The number of times the grid is refined. Not used if explicit
         values of alphas are passed.
 
-    cv : cross-validation generator, optional
-        see sklearn.cross_validation module. If None is passed, defaults to
-        a 3-fold strategy
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
 
-    tol: positive float, optional
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+    tol : positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
 
@@ -474,7 +489,7 @@ class GraphLassoCV(GraphLasso):
         for a given column update, not of the overall parameter estimate. Only
         used for mode='cd'.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations.
 
     mode: {'cd', 'lars'}
@@ -483,10 +498,10 @@ class GraphLassoCV(GraphLasso):
         than number of samples. Elsewhere prefer cd which is more numerically
         stable.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         number of jobs to run in parallel (default 1).
 
-    verbose: boolean, optional
+    verbose : boolean, optional
         If verbose is True, the objective function and duality gap are
         printed at each iteration.
 
@@ -557,7 +572,8 @@ class GraphLassoCV(GraphLasso):
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
         """
-        X = check_array(X)
+        # Covariance does not make sense for a single feature
+        X = check_array(X, ensure_min_features=2, estimator=self)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -565,7 +581,7 @@ class GraphLassoCV(GraphLasso):
         emp_cov = empirical_covariance(
             X, assume_centered=self.assume_centered)
 
-        cv = check_cv(self.cv, X, y, classifier=False)
+        cv = check_cv(self.cv, y, classifier=False)
 
         # List of (alpha, scores, covs)
         path = list()
@@ -597,14 +613,13 @@ class GraphLassoCV(GraphLasso):
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
                     verbose=self.verbose
-                )(
-                    delayed(graph_lasso_path)(
-                        X[train], alphas=alphas,
-                        X_test=X[test], mode=self.mode,
-                        tol=self.tol, enet_tol=self.enet_tol,
-                        max_iter=int(.1 * self.max_iter),
-                        verbose=inner_verbose)
-                    for train, test in cv)
+                )(delayed(graph_lasso_path)(X[train], alphas=alphas,
+                                            X_test=X[test], mode=self.mode,
+                                            tol=self.tol,
+                                            enet_tol=self.enet_tol,
+                                            max_iter=int(.1 * self.max_iter),
+                                            verbose=inner_verbose)
+                  for train, test in cv.split(X, y))
 
             # Little danse to transform the list in what we need
             covs, _, scores = zip(*this_path)

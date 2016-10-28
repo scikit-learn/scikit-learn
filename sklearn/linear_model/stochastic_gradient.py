@@ -5,13 +5,13 @@
 """Classification and regression using Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
-import scipy.sparse as sp
 
 from abc import ABCMeta, abstractmethod
 
 from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
+from .base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import (check_array, check_random_state, check_X_y,
@@ -23,7 +23,6 @@ from ..externals import six
 
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils.fixes import astype
-from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
@@ -40,12 +39,8 @@ LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
 
 PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
-SPARSE_INTERCEPT_DECAY = 0.01
-"""For sparse data intercept updates are scaled by this decay factor to avoid
-intercept oscillation."""
-
 DEFAULT_EPSILON = 0.1
-"""Default value of ``epsilon`` parameter. """
+# Default value of ``epsilon`` parameter.
 
 
 class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
@@ -106,6 +101,10 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.learning_rate in ("constant", "invscaling"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
+        if self.learning_rate == "optimal" and self.alpha == 0:
+            raise ValueError("alpha must be > 0 since "
+                             "learning_rate is 'optimal'. alpha is used "
+                             "to compute the optimal learning rate.")
 
         # raises ValueError if not registered
         self._get_penalty_type(self.penalty)
@@ -161,7 +160,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             if coef_init is not None:
                 coef_init = np.asarray(coef_init, order="C")
                 if coef_init.shape != (n_classes, n_features):
-                    raise ValueError("Provided ``coef_`` does not match dataset. ")
+                    raise ValueError("Provided ``coef_`` does not match "
+                                     "dataset. ")
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
@@ -214,21 +214,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                                                order="C")
 
 
-def _make_dataset(X, y_i, sample_weight):
-    """Create ``Dataset`` abstraction for sparse and dense inputs.
-
-    This also returns the ``intercept_decay`` which is different
-    for sparse datasets.
-    """
-    if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
-        intercept_decay = SPARSE_INTERCEPT_DECAY
-    else:
-        dataset = ArrayDataset(X, y_i, sample_weight)
-        intercept_decay = 1.0
-    return dataset, intercept_decay
-
-
 def _prepare_fit_binary(est, y, i):
     """Initialization for fit_binary.
 
@@ -272,7 +257,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     y_i, coef, intercept, average_coef, average_intercept = \
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
+    dataset, intercept_decay = make_dataset(X, y_i, sample_weight)
 
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
@@ -374,8 +359,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            raise ValueError("Number of features %d does not match previous "
+                             "data %d." % (n_features, self.coef_.shape[-1]))
 
         self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
@@ -482,7 +467,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.intercept_ = self.average_intercept_
             else:
                 self.coef_ = self.standard_coef_
-                self.standard_intercept_ = np.atleast_1d(intercept)
+                self.standard_intercept_ = np.atleast_1d(self.intercept_)
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -514,8 +499,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         """
         if self.class_weight in ['balanced', 'auto']:
             raise ValueError("class_weight '{0}' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight('{0}', classes, y). "
+                             "partial_fit. In order to use 'balanced' weights,"
+                             " use compute_class_weight('{0}', classes, y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
@@ -526,7 +511,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                  classes=classes, sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def fit(self, X, y, coef_init=None, intercept_init=None, sample_weight=None):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters
@@ -547,7 +533,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             Weights applied to individual samples.
             If not provided, uniform weights are assumed. These weights will
             be multiplied with class_weight (passed through the
-            contructor) if class_weight is specified
+            constructor) if class_weight is specified
 
         Returns
         -------
@@ -607,6 +593,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
+        Also used to compute learning_rate when set to 'optimal'.
 
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
@@ -648,9 +635,11 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     learning_rate : string, optional
         The learning rate schedule:
-        constant: eta = eta0
-        optimal: eta = 1.0 / (t + t0) [default]
-        invscaling: eta = eta0 / pow(t, power_t)
+
+        - 'constant': eta = eta0
+        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
+        - 'invscaling': eta = eta0 / pow(t, power_t)
+
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double
@@ -679,7 +668,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So average=10 will begin averaging after seeing 10 samples.
+        average. So ``average=10`` will begin averaging after seeing 10
+        samples.
 
     Attributes
     ----------
@@ -744,7 +734,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         Elkan.
 
         Binary probability estimates for loss="modified_huber" are given by
-        (clip(decision_function(X), -1, 1) + 1) / 2.
+        (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
+        it is necessary to perform proper probability calibration by wrapping
+        the classifier with
+        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
@@ -884,8 +877,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self._allocate_parameter_mem(1, n_features,
                                          coef_init, intercept_init)
         elif n_features != self.coef_.shape[-1]:
-            raise ValueError("Number of features %d does not match previous data %d."
-                             % (n_features, self.coef_.shape[-1]))
+            raise ValueError("Number of features %d does not match previous "
+                             "data %d." % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and self.average_coef_ is None:
             self.average_coef_ = np.zeros(n_features,
                                           dtype=np.float64,
@@ -1030,7 +1023,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit_regressor(self, X, y, alpha, C, loss, learning_rate,
                        sample_weight, n_iter):
-        dataset, intercept_decay = _make_dataset(X, y, sample_weight)
+        dataset, intercept_decay = make_dataset(X, y, sample_weight)
 
         loss_function = self._get_loss_function(loss)
         penalty_type = self._get_penalty_type(self.penalty)
@@ -1139,6 +1132,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     alpha : float
         Constant that multiplies the regularization term. Defaults to 0.0001
+        Also used to compute learning_rate when set to 'optimal'.
 
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
@@ -1174,10 +1168,13 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         and the correct label are ignored if they are less than this threshold.
 
     learning_rate : string, optional
-        The learning rate:
-        constant: eta = eta0
-        optimal: eta = 1.0/(alpha * t)
-        invscaling: eta = eta0 / pow(t, power_t) [default]
+        The learning rate schedule:
+
+        - 'constant': eta = eta0
+        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
+        - 'invscaling': eta = eta0 / pow(t, power_t)
+
+        where t0 is chosen by a heuristic proposed by Leon Bottou.
 
     eta0 : double, optional
         The initial learning rate [default 0.01].
@@ -1193,7 +1190,8 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
-        average. So ``average=10 will`` begin averaging after seeing 10 samples.
+        average. So ``average=10`` will begin averaging after seeing 10
+        samples.
 
     Attributes
     ----------

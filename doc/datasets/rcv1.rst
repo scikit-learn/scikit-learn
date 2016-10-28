@@ -32,19 +32,19 @@ The target values are stored in a scipy CSR sparse matrix, with 804414 samples a
 Each sample can be identified by its ID, ranging (with gaps) from 2286 to 810596::
 
     >>> rcv1.sample_id[:3]
-    array([2286, 2287, 2288], dtype=int32)
+    array([2286, 2287, 2288], dtype=uint32)
 
 ``target_names``:
-The target values are the topics of each sample. Each sample belongs to at least one topic, and to up to 17 topics. 
+The target values are the topics of each sample. Each sample belongs to at least one topic, and to up to 17 topics.
 There are 103 topics, each represented by a string. Their corpus frequencies span five orders of magnitude, from 5 occurrences for 'GMIL', to 381327 for 'CCAT'::
 
     >>> rcv1.target_names[:3].tolist()  # doctest: +SKIP
     ['E11', 'ECAT', 'M11']
 
-The dataset will be downloaded from the `dataset's homepage`_ if necessary.
+The dataset will be downloaded from the `rcv1 homepage`_ if necessary.
 The compressed size is about 656 MB.
 
-.. _dataset's homepage: http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
+.. _rcv1 homepage: http://jmlr.csail.mit.edu/papers/volume5/lewis04a/
 
 
 .. topic:: References

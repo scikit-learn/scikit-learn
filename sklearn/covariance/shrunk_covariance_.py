@@ -108,8 +108,8 @@ class ShrunkCovariance(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
-        EmpiricalCovariance.__init__(self, store_precision=store_precision,
-                                     assume_centered=assume_centered)
+        super(ShrunkCovariance, self).__init__(store_precision=store_precision,
+                                               assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
@@ -194,9 +194,12 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
                       "You may want to reshape your data array")
     n_samples, n_features = X.shape
 
-    # optionaly center data
+    # optionally center data
     if not assume_centered:
         X = X - X.mean(0)
+
+    # A non-blocked version of the computation is present in the tests
+    # in tests/test_covariance.py
 
     # number of blocks to split the covariance matrix into
     n_splits = int(n_features / block_size)
@@ -232,6 +235,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta = delta_ - 2. * mu * emp_cov_trace.sum() + n_features * mu ** 2
     delta /= n_features
     # get final beta as the min between beta and delta
+    # We do this to prevent shrinking more than "1", which whould invert
+    # the value of covariances
     beta = min(beta, delta)
     # finally get shrinkage
     shrinkage = 0 if beta == 0 else beta / delta
@@ -362,8 +367,8 @@ class LedoitWolf(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
-        EmpiricalCovariance.__init__(self, store_precision=store_precision,
-                                     assume_centered=assume_centered)
+        super(LedoitWolf, self).__init__(store_precision=store_precision,
+                                         assume_centered=assume_centered)
         self.block_size = block_size
 
     def fit(self, X, y=None):
@@ -436,7 +441,7 @@ def oas(X, assume_centered=False):
     The formula we used to implement the OAS
     does not correspond to the one given in the article. It has been taken
     from the MATLAB program available from the author's webpage
-    (https://tbayes.eecs.umich.edu/yilun/covestimation).
+    (http://tbayes.eecs.umich.edu/yilun/covestimation).
 
     """
     X = np.asarray(X)
@@ -480,7 +485,11 @@ class OAS(EmpiricalCovariance):
 
     The formula used here does not correspond to the one given in the
     article. It has been taken from the Matlab program available from the
-    authors' webpage (https://tbayes.eecs.umich.edu/yilun/covestimation).
+    authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
+    In the original article, formula (23) states that 2/p is multiplied by 
+    Trace(cov*cov) in both the numerator and denominator, this operation is omitted
+    in the author's MATLAB program because for a large p, the value of 2/p is so 
+    small that it doesn't affect the value of the estimator. 
 
     Parameters
     ----------

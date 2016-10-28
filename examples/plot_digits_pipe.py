@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 from sklearn import linear_model, decomposition, datasets
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 logistic = linear_model.LogisticRegression()
 

@@ -8,12 +8,14 @@ This module defines export functions for decision trees.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Trevor Stephens <trev.stephens@gmail.com>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
+import warnings
 
 from ..externals import six
 
+from . import _criterion
 from . import _tree
 
 
@@ -59,7 +61,13 @@ def _color_brew(n):
     return color_list
 
 
-def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
+class Sentinel(object):
+    def __repr__():
+        return '"tree.dot"'
+SENTINEL = Sentinel()
+
+
+def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
@@ -83,8 +91,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, optional (default="tree.dot")
-        Handle or name of the output file.
+    out_file : file object or string, optional (default='tree.dot')
+        Handle or name of the output file. If ``None``, the result is
+        returned as a string. This will the default from version 0.20.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -132,6 +141,14 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
         When set to ``False``, ignore special characters for PostScript
         compatibility.
 
+    Returns
+    -------
+    dot_data : string
+        String representation of the input tree in GraphViz dot format.
+        Only returned if ``out_file`` is None.
+
+        .. versionadded:: 0.18
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -151,13 +168,17 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
             # Classification tree
             color = list(colors['rgb'][np.argmax(value)])
             sorted_values = sorted(value, reverse=True)
-            alpha = int(255 * (sorted_values[0] - sorted_values[1]) /
-                        (1 - sorted_values[1]))
+            if len(sorted_values) == 1:
+                alpha = 0
+            else:
+                alpha = int(np.round(255 * (sorted_values[0] - sorted_values[1]) /
+                                           (1 - sorted_values[1]), 0))
         else:
             # Regression tree or multi-output
             color = list(colors['rgb'][0])
-            alpha = int(255 * ((value - colors['bounds'][0]) /
-                               (colors['bounds'][1] - colors['bounds'][0])))
+            alpha = int(np.round(255 * ((value - colors['bounds'][0]) /
+                                        (colors['bounds'][1] -
+                                         colors['bounds'][0])), 0))
 
         # Return html color code in #RRGGBBAA format
         color.append(alpha)
@@ -169,7 +190,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
     def node_to_str(tree, node_id, criterion):
         # Generate the node content string
-
         if tree.n_outputs == 1:
             value = tree.value[node_id][0, :]
         else:
@@ -208,7 +228,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
 
         # Write impurity
         if impurity:
-            if not isinstance(criterion, six.string_types):
+            if isinstance(criterion, _criterion.FriedmanMSE):
+                criterion = "friedman_mse"
+            elif not isinstance(criterion, six.string_types):
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
@@ -307,7 +329,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                         # Find max and min impurities for multi-output
                         colors['bounds'] = (np.min(-tree.impurity),
                                             np.max(-tree.impurity))
-                    elif tree.n_classes[0] == 1:
+                    elif tree.n_classes[0] == 1 and len(np.unique(tree.value)) != 1:
                         # Find max and min values in leaf nodes for regression
                         colors['bounds'] = (np.min(tree.value),
                                             np.max(tree.value))
@@ -356,13 +378,24 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
     own_file = False
+    return_string = False
     try:
+        if out_file == SENTINEL:
+            warnings.warn("out_file can be set to None starting from 0.18. "
+                          "This will be the default in 0.20.",
+                          DeprecationWarning)
+            out_file = "tree.dot"
+
         if isinstance(out_file, six.string_types):
             if six.PY3:
                 out_file = open(out_file, "w", encoding="utf-8")
             else:
                 out_file = open(out_file, "wb")
             own_file = True
+
+        if out_file is None:
+            return_string = True
+            out_file = six.StringIO()
 
         # The depth of each node for plotting with 'leaf' option
         ranks = {'leaves': []}
@@ -405,6 +438,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", max_depth=None,
                 out_file.write("{rank=same ; " +
                                "; ".join(r for r in ranks[rank]) + "} ;\n")
         out_file.write("}")
+
+        if return_string:
+            return out_file.getvalue()
 
     finally:
         if own_file:

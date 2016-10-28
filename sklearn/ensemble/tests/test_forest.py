@@ -10,10 +10,14 @@ Testing for the forest module (sklearn.ensemble.forest).
 
 import pickle
 from collections import defaultdict
+from itertools import combinations
 from itertools import product
 
 import numpy as np
-from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
+from scipy.misc import comb
+from scipy.sparse import csr_matrix
+from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -25,6 +29,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -33,11 +38,13 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
+from sklearn.utils.fixes import bincount
 from sklearn.utils.validation import check_random_state
 
 from sklearn.tree.tree import SPARSE_SPLITTERS
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -59,6 +66,10 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
+
+# also make a hastie_10_2 dataset
+hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+hastie_X = hastie_X.astype(np.float32)
 
 FOREST_CLASSIFIERS = {
     "ExtraTreesClassifier": ExtraTreesClassifier,
@@ -132,10 +143,11 @@ def check_boston_criterion(name, criterion):
     # Check consistency on dataset boston house prices.
     ForestRegressor = FOREST_REGRESSORS[name]
 
-    clf = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
+    clf = ForestRegressor(n_estimators=5, criterion=criterion,
+                          random_state=1)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
-    assert_greater(score, 0.95, "Failed with max_features=None, criterion %s "
+    assert_greater(score, 0.94, "Failed with max_features=None, criterion %s "
                                 "and score = %f" % (criterion, score))
 
     clf = ForestRegressor(n_estimators=5, criterion=criterion,
@@ -147,7 +159,7 @@ def check_boston_criterion(name, criterion):
 
 
 def test_boston():
-    for name, criterion in product(FOREST_REGRESSORS, ("mse", )):
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", "mae", "friedman_mse")):
         yield check_boston_criterion, name, criterion
 
 
@@ -185,44 +197,148 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importances(name, X, y):
-    # Check variable importances.
+def check_importances(name, criterion, X, y):
+    ForestEstimator = FOREST_ESTIMATORS[name]
 
-    ForestClassifier = FOREST_CLASSIFIERS[name]
-    for n_jobs in [1, 2]:
-        clf = ForestClassifier(n_estimators=10, n_jobs=n_jobs)
-        clf.fit(X, y)
-        importances = clf.feature_importances_
-        n_important = np.sum(importances > 0.1)
-        assert_equal(importances.shape[0], 10)
-        assert_equal(n_important, 3)
+    est = ForestEstimator(n_estimators=20, criterion=criterion,
+                          random_state=0)
+    est.fit(X, y)
+    importances = est.feature_importances_
+    n_important = np.sum(importances > 0.1)
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
 
-        X_new = clf.transform(X, threshold="mean")
-        assert_less(0 < X_new.shape[1], X.shape[1])
+    # XXX: Remove this test in 0.19 after transform support to estimators
+    # is removed.
+    X_new = assert_warns(
+        DeprecationWarning, est.transform, X, threshold="mean")
+    assert_less(0 < X_new.shape[1], X.shape[1])
 
-        # Check with sample weights
-        sample_weight = np.ones(y.shape)
-        sample_weight[y == 1] *= 100
+    # Check with parallel
+    importances = est.feature_importances_
+    est.set_params(n_jobs=2)
+    importances_parrallel = est.feature_importances_
+    assert_array_almost_equal(importances, importances_parrallel)
 
-        clf = ForestClassifier(n_estimators=50, n_jobs=n_jobs, random_state=0)
-        clf.fit(X, y, sample_weight=sample_weight)
-        importances = clf.feature_importances_
-        assert_true(np.all(importances >= 0.0))
+    # Check with sample weights
+    sample_weight = check_random_state(0).randint(1, 10, len(X))
+    est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+    est.fit(X, y, sample_weight=sample_weight)
+    importances = est.feature_importances_
+    assert_true(np.all(importances >= 0.0))
 
-        clf = ForestClassifier(n_estimators=50, n_jobs=n_jobs, random_state=0)
-        clf.fit(X, y, sample_weight=3 * sample_weight)
-        importances_bis = clf.feature_importances_
-        assert_almost_equal(importances, importances_bis)
+    for scale in [0.5, 10, 100]:
+        est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+        est.fit(X, y, sample_weight=scale * sample_weight)
+        importances_bis = est.feature_importances_
+        assert_less(np.abs(importances - importances_bis).mean(), 0.001)
 
 
+@skip_if_32bit
 def test_importances():
-    X, y = datasets.make_classification(n_samples=1000, n_features=10,
+    X, y = datasets.make_classification(n_samples=500, n_features=10,
                                         n_informative=3, n_redundant=0,
                                         n_repeated=0, shuffle=False,
                                         random_state=0)
 
-    for name in FOREST_CLASSIFIERS:
-        yield check_importances, name, X, y
+    for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
+        yield check_importances, name, criterion, X, y
+
+    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
+        yield check_importances, name, criterion, X, y
+
+
+def test_importances_asymptotic():
+    # Check whether variable importances of totally randomized trees
+    # converge towards their theoretical values (See Louppe et al,
+    # Understanding variable importances in forests of randomized trees, 2013).
+
+    def binomial(k, n):
+        return 0 if k < 0 or k > n else comb(int(n), int(k), exact=True)
+
+    def entropy(samples):
+        n_samples = len(samples)
+        entropy = 0.
+
+        for count in bincount(samples):
+            p = 1. * count / n_samples
+            if p > 0:
+                entropy -= p * np.log2(p)
+
+        return entropy
+
+    def mdi_importance(X_m, X, y):
+        n_samples, n_features = X.shape
+
+        features = list(range(n_features))
+        features.pop(X_m)
+        values = [np.unique(X[:, i]) for i in range(n_features)]
+
+        imp = 0.
+
+        for k in range(n_features):
+            # Weight of each B of size k
+            coef = 1. / (binomial(k, n_features) * (n_features - k))
+
+            # For all B of size k
+            for B in combinations(features, k):
+                # For all values B=b
+                for b in product(*[values[B[j]] for j in range(k)]):
+                    mask_b = np.ones(n_samples, dtype=np.bool)
+
+                    for j in range(k):
+                        mask_b &= X[:, B[j]] == b[j]
+
+                    X_, y_ = X[mask_b, :], y[mask_b]
+                    n_samples_b = len(X_)
+
+                    if n_samples_b > 0:
+                        children = []
+
+                        for xi in values[X_m]:
+                            mask_xi = X_[:, X_m] == xi
+                            children.append(y_[mask_xi])
+
+                        imp += (coef
+                                * (1. * n_samples_b / n_samples)  # P(B=b)
+                                * (entropy(y_) -
+                                   sum([entropy(c) * len(c) / n_samples_b
+                                        for c in children])))
+
+        return imp
+
+    data = np.array([[0, 0, 1, 0, 0, 1, 0, 1],
+                     [1, 0, 1, 1, 1, 0, 1, 2],
+                     [1, 0, 1, 1, 0, 1, 1, 3],
+                     [0, 1, 1, 1, 0, 1, 0, 4],
+                     [1, 1, 0, 1, 0, 1, 1, 5],
+                     [1, 1, 0, 1, 1, 1, 1, 6],
+                     [1, 0, 1, 0, 0, 1, 0, 7],
+                     [1, 1, 1, 1, 1, 1, 1, 8],
+                     [1, 1, 1, 1, 0, 1, 1, 9],
+                     [1, 1, 1, 0, 1, 1, 1, 0]])
+
+    X, y = np.array(data[:, :7], dtype=np.bool), data[:, 7]
+    n_features = X.shape[1]
+
+    # Compute true importances
+    true_importances = np.zeros(n_features)
+
+    for i in range(n_features):
+        true_importances[i] = mdi_importance(i, X, y)
+
+    # Estimate importances with totally randomized trees
+    clf = ExtraTreesClassifier(n_estimators=500,
+                               max_features=1,
+                               criterion="entropy",
+                               random_state=0).fit(X, y)
+
+    importances = sum(tree.tree_.compute_feature_importances(normalize=False)
+                      for tree in clf.estimators_) / clf.n_estimators
+
+    # Check correctness
+    assert_almost_equal(entropy(y), sum(importances))
+    assert_less(np.abs(true_importances - importances).mean(), 0.01)
 
 
 def check_unfitted_feature_importances(name):
@@ -238,6 +354,7 @@ def test_unfitted_feature_importances():
 def check_oob_score(name, X, y, n_estimators=20):
     # Check that oob prediction is a good estimation of the generalization
     # error.
+
     # Proper behavior
     est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
                                   n_estimators=n_estimators, bootstrap=True)
@@ -449,6 +566,8 @@ def test_random_trees_dense_equal():
     assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
 
 
+# Ignore warnings from switching to more power iterations in randomized_svd
+@ignore_warnings
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
@@ -474,8 +593,7 @@ def test_random_hasher():
 
 
 def test_random_hasher_sparse_data():
-    X, y = datasets.make_multilabel_classification(return_indicator=True,
-                                                   random_state=0)
+    X, y = datasets.make_multilabel_classification(random_state=0)
     hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X_transformed = hasher.fit_transform(X)
     X_transformed_sparse = hasher.fit_transform(csc_matrix(X))
@@ -554,50 +672,99 @@ def test_distribution():
     assert_equal(len(uniques), 8)
 
 
-def check_max_leaf_nodes_max_depth(name, X, y):
+def check_max_leaf_nodes_max_depth(name):
+    X, y = hastie_X, hastie_y
+
     # Test precedence of max_leaf_nodes over max_depth.
     ForestEstimator = FOREST_ESTIMATORS[name]
     est = ForestEstimator(max_depth=1, max_leaf_nodes=4,
-                          n_estimators=1).fit(X, y)
+                          n_estimators=1, random_state=0).fit(X, y)
     assert_greater(est.estimators_[0].tree_.max_depth, 1)
 
-    est = ForestEstimator(max_depth=1, n_estimators=1).fit(X, y)
+    est = ForestEstimator(max_depth=1, n_estimators=1,
+                          random_state=0).fit(X, y)
     assert_equal(est.estimators_[0].tree_.max_depth, 1)
 
 
 def test_max_leaf_nodes_max_depth():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     for name in FOREST_ESTIMATORS:
-        yield check_max_leaf_nodes_max_depth, name, X, y
+        yield check_max_leaf_nodes_max_depth, name
 
 
-def check_min_samples_leaf(name, X, y):
+def check_min_samples_split(name):
+    X, y = hastie_X, hastie_y
+    ForestEstimator = FOREST_ESTIMATORS[name]
+
+    # test boundary value
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=-1).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=0).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_split=1.1).fit, X, y)
+
+    est = ForestEstimator(min_samples_split=10, n_estimators=1, random_state=0)
+    est.fit(X, y)
+    node_idx = est.estimators_[0].tree_.children_left != -1
+    node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
+
+    assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
+                   "Failed with {0}".format(name))
+
+    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est.fit(X, y)
+    node_idx = est.estimators_[0].tree_.children_left != -1
+    node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
+
+    assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
+                   "Failed with {0}".format(name))
+
+
+def test_min_samples_split():
+    for name in FOREST_ESTIMATORS:
+        yield check_min_samples_split, name
+
+
+def check_min_samples_leaf(name):
+    X, y = hastie_X, hastie_y
+
     # Test if leaves contain more than leaf_count training examples
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
-    # by setting max_leaf_nodes
-    for max_leaf_nodes in (None, 1000):
-        est = ForestEstimator(min_samples_leaf=5,
-                              max_leaf_nodes=max_leaf_nodes,
-                              random_state=0)
-        est.fit(X, y)
-        out = est.estimators_[0].tree_.apply(X)
-        node_counts = np.bincount(out)
-        # drop inner nodes
-        leaf_count = node_counts[node_counts != 0]
-        assert_greater(np.min(leaf_count), 4,
-                       "Failed with {0}".format(name))
+    # test boundary value
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=-1).fit, X, y)
+    assert_raises(ValueError,
+                  ForestEstimator(min_samples_leaf=0).fit, X, y)
+
+    est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
+    est.fit(X, y)
+    out = est.estimators_[0].tree_.apply(X)
+    node_counts = bincount(out)
+    # drop inner nodes
+    leaf_count = node_counts[node_counts != 0]
+    assert_greater(np.min(leaf_count), 4,
+                   "Failed with {0}".format(name))
+
+    est = ForestEstimator(min_samples_leaf=0.25, n_estimators=1,
+                          random_state=0)
+    est.fit(X, y)
+    out = est.estimators_[0].tree_.apply(X)
+    node_counts = np.bincount(out)
+    # drop inner nodes
+    leaf_count = node_counts[node_counts != 0]
+    assert_greater(np.min(leaf_count), len(X) * 0.25 - 1,
+                   "Failed with {0}".format(name))
 
 
 def test_min_samples_leaf():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    X = X.astype(np.float32)
     for name in FOREST_ESTIMATORS:
-        yield check_min_samples_leaf, name, X, y
+        yield check_min_samples_leaf, name
 
 
-def check_min_weight_fraction_leaf(name, X, y):
+def check_min_weight_fraction_leaf(name):
+    X, y = hastie_X, hastie_y
+
     # Test if leaves contain at least min_weight_fraction_leaf of the
     # training set
     ForestEstimator = FOREST_ESTIMATORS[name]
@@ -607,32 +774,28 @@ def check_min_weight_fraction_leaf(name, X, y):
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
     # by setting max_leaf_nodes
-    for max_leaf_nodes in (None, 1000):
-        for frac in np.linspace(0, 0.5, 6):
-            est = ForestEstimator(min_weight_fraction_leaf=frac,
-                                  max_leaf_nodes=max_leaf_nodes,
-                                  random_state=0)
-            if isinstance(est, (RandomForestClassifier,
-                                RandomForestRegressor)):
-                est.bootstrap = False
-            est.fit(X, y, sample_weight=weights)
-            out = est.estimators_[0].tree_.apply(X)
-            node_weights = np.bincount(out, weights=weights)
-            # drop inner nodes
-            leaf_weights = node_weights[node_weights != 0]
-            assert_greater_equal(
-                np.min(leaf_weights),
-                total_weight * est.min_weight_fraction_leaf,
-                "Failed with {0} "
-                "min_weight_fraction_leaf={1}".format(
-                    name, est.min_weight_fraction_leaf))
+    for frac in np.linspace(0, 0.5, 6):
+        est = ForestEstimator(min_weight_fraction_leaf=frac, n_estimators=1,
+                              random_state=0)
+        if "RandomForest" in name:
+            est.bootstrap = False
+
+        est.fit(X, y, sample_weight=weights)
+        out = est.estimators_[0].tree_.apply(X)
+        node_weights = bincount(out, weights=weights)
+        # drop inner nodes
+        leaf_weights = node_weights[node_weights != 0]
+        assert_greater_equal(
+            np.min(leaf_weights),
+            total_weight * est.min_weight_fraction_leaf,
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
+                name, est.min_weight_fraction_leaf))
 
 
 def test_min_weight_fraction_leaf():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    X = X.astype(np.float32)
     for name in FOREST_ESTIMATORS:
-        yield check_min_weight_fraction_leaf, name, X, y
+        yield check_min_weight_fraction_leaf, name
 
 
 def check_sparse_input(name, X, X_sparse, y):
@@ -662,9 +825,8 @@ def check_sparse_input(name, X, X_sparse, y):
 
 
 def test_sparse_input():
-    X, y = datasets.make_multilabel_classification(return_indicator=True,
-                                                   random_state=0,
-                                                   n_samples=40)
+    X, y = datasets.make_multilabel_classification(random_state=0,
+                                                   n_samples=50)
 
     for name, sparse_matrix in product(FOREST_ESTIMATORS,
                                        (csr_matrix, csc_matrix, coo_matrix)):
@@ -726,9 +888,11 @@ def test_memory_layout():
         yield check_memory_layout, name, dtype
 
 
+@ignore_warnings
 def check_1d_input(name, X, X_2d, y):
     ForestEstimator = FOREST_ESTIMATORS[name]
-    assert_raises(ValueError, ForestEstimator(random_state=0).fit, X, y)
+    assert_raises(ValueError, ForestEstimator(n_estimators=1,
+                                              random_state=0).fit, X, y)
 
     est = ForestEstimator(random_state=0)
     est.fit(X_2d, y)
@@ -737,8 +901,9 @@ def check_1d_input(name, X, X_2d, y):
         assert_raises(ValueError, est.predict, X)
 
 
+@ignore_warnings
 def test_1d_input():
-    X = iris.data[:, 0].ravel()
+    X = iris.data[:, 0]
     X_2d = iris.data[:, 0].reshape((-1, 1))
     y = iris.target
 
@@ -848,7 +1013,7 @@ def test_class_weight_errors():
 def check_warm_start(name, random_state=42):
     # Test if fitting incrementally with warm start gives a forest of the
     # right size and the same results as a normal fit.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf_ws = None
     for n_estimators in [5, 10]:
@@ -879,7 +1044,7 @@ def test_warm_start():
 
 def check_warm_start_clear(name):
     # Test if fit clears state and grows a new forest when warm_start==False.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
                           random_state=1)
@@ -901,7 +1066,7 @@ def test_warm_start_clear():
 
 def check_warm_start_smaller_n_estimators(name):
     # Test if warm start second fit with smaller n_estimators raises error.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=1, warm_start=True)
     clf.fit(X, y)
@@ -917,7 +1082,7 @@ def test_warm_start_smaller_n_estimators():
 def check_warm_start_equal_n_estimators(name):
     # Test if warm start with equal n_estimators does nothing and returns the
     # same forest and raises a warning.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     clf = ForestEstimator(n_estimators=5, max_depth=3, warm_start=True,
                           random_state=1)
@@ -942,7 +1107,7 @@ def test_warm_start_equal_n_estimators():
 
 def check_warm_start_oob(name):
     # Test that the warm start computes oob score when asked.
-    X, y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
+    X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
     # Use 15 estimators to avoid 'some inputs do not have OOB scores' warning.
     clf = ForestEstimator(n_estimators=15, max_depth=3, warm_start=False,
@@ -979,11 +1144,41 @@ def test_warm_start_oob():
         yield check_warm_start_oob, name
 
 
-def test_dtype_convert():
-    classifier = RandomForestClassifier()
-    CLASSES = 15
-    X = np.eye(CLASSES)
-    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+def test_dtype_convert(n_classes=15):
+    classifier = RandomForestClassifier(random_state=0, bootstrap=False)
+
+    X = np.eye(n_classes)
+    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:n_classes]]
 
     result = classifier.fit(X, y).predict(X)
+    assert_array_equal(classifier.classes_, y)
     assert_array_equal(result, y)
+
+
+def check_decision_path(name):
+    X, y = hastie_X, hastie_y
+    n_samples = X.shape[0]
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    est = ForestEstimator(n_estimators=5, max_depth=1, warm_start=False,
+                          random_state=1)
+    est.fit(X, y)
+    indicator, n_nodes_ptr = est.decision_path(X)
+
+    assert_equal(indicator.shape[1], n_nodes_ptr[-1])
+    assert_equal(indicator.shape[0], n_samples)
+    assert_array_equal(np.diff(n_nodes_ptr),
+                       [e.tree_.node_count for e in est.estimators_])
+
+    # Assert that leaves index are correct
+    leaves = est.apply(X)
+    for est_id in range(leaves.shape[1]):
+        leave_indicator = [indicator[i, n_nodes_ptr[est_id] + j]
+                           for i, j in enumerate(leaves[:, est_id])]
+        assert_array_almost_equal(leave_indicator, np.ones(shape=n_samples))
+
+
+def test_decision_path():
+    for name in FOREST_CLASSIFIERS:
+        yield check_decision_path, name
+    for name in FOREST_REGRESSORS:
+        yield check_decision_path, name

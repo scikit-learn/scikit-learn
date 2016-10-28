@@ -66,7 +66,7 @@ specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
 samples and features are drawn with or without replacement. When using a subset
-of the available samples the generalization error can be estimated with the
+of the available samples the generalization accuracy can be estimated with the
 out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
 :class:`KNeighborsClassifier` base estimators, each built on random subsets of
@@ -79,7 +79,7 @@ snippet below illustrates how to instantiate a bagging ensemble of
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_bias_variance.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_bias_variance.py`
 
 .. topic:: References
 
@@ -156,7 +156,7 @@ picked as the splitting rule. This usually allows to reduce the variance
 of the model a bit more, at the expense of a slightly greater increase
 in bias::
 
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.datasets import make_blobs
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import ExtraTreesClassifier
@@ -165,25 +165,25 @@ in bias::
     >>> X, y = make_blobs(n_samples=10000, n_features=10, centers=100,
     ...     random_state=0)
 
-    >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=1,
+    >>> clf = DecisionTreeClassifier(max_depth=None, min_samples_split=2,
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.97...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
-    ...     min_samples_split=1, random_state=0)
+    ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.999...
 
     >>> clf = ExtraTreesClassifier(n_estimators=10, max_depth=None,
-    ...     min_samples_split=1, random_state=0)
+    ...     min_samples_split=2, random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean() > 0.999
     True
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_iris_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_iris_001.png
     :target: ../auto_examples/ensemble/plot_forest_iris.html
     :align: center
     :scale: 75%
@@ -204,12 +204,12 @@ classification tasks (where ``n_features`` is the number of features
 in the data). Good results are often achieved when setting ``max_depth=None``
 in combination with ``min_samples_split=1`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
-might result in models that consume a lot of ram. The best parameter values
+might result in models that consume a lot of RAM. The best parameter values
 should always be cross-validated. In addition, note that in random forests,
 bootstrap samples are used by default (``bootstrap=True``)
 while the default strategy for extra-trees is to use the whole dataset
 (``bootstrap=False``).
-When using bootstrap sampling the generalization error can be estimated
+When using bootstrap sampling the generalization accuracy can be estimated
 on the left out or out-of-bag samples. This can be enabled by
 setting ``oob_score=True``.
 
@@ -229,9 +229,9 @@ amount of time (e.g., on large datasets).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_forest_iris.py`
- * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -250,9 +250,9 @@ Feature importance evaluation
 The relative rank (i.e. depth) of a feature used as a decision node in a
 tree can be used to assess the relative importance of that feature with
 respect to the predictability of the target variable. Features used at
-the top of the tree are used contribute to the final prediction decision
-of a larger fraction of the input samples. The **expected fraction of
-the samples** they contribute to can thus be used as an estimate of the
+the top of the tree contribute to the final prediction decision of a 
+larger fraction of the input samples. The **expected fraction of the 
+samples** they contribute to can thus be used as an estimate of the
 **relative importance of the features**.
 
 By **averaging** those expected activity rates over several randomized
@@ -263,7 +263,7 @@ The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
 a :class:`ExtraTreesClassifier` model.
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_importances_faces_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_forest_importances_faces_001.png
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
@@ -276,8 +276,8 @@ to the prediction function.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_importances.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
 .. _random_trees_embedding:
 
@@ -301,10 +301,13 @@ the transformation performs an implicit, non-parametric density estimation.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_random_forest_embedding.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_random_forest_embedding.py`
 
- * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+ * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py` compares non-linear
    dimensionality reduction techniques on handwritten digits.
+
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_feature_transformation.py` compares
+   supervised and unsupervised tree based feature transformations.
 
 .. seealso::
 
@@ -339,7 +342,7 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF]_.
 
-.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_adaboost_hastie_10_2_001.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
    :align: center
    :scale: 75
@@ -357,7 +360,7 @@ Usage
 The following example shows how to fit an AdaBoost classifier with 100 weak
 learners::
 
-    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import AdaBoostClassifier
 
@@ -378,18 +381,18 @@ decision trees).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py` compares the
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_hastie_10_2.py` compares the
    classification error of a decision stump, decision tree, and a boosted
    decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
 
- * :ref:`example_ensemble_plot_adaboost_multiclass.py` shows the performance
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py` shows the performance
    of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
 
- * :ref:`example_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
    and decision function values for a non-linearly separable two-class problem
    using AdaBoost-SAMME.
 
- * :ref:`example_ensemble_plot_adaboost_regression.py` demonstrates regression
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py` demonstrates regression
    with the AdaBoost.R2 algorithm.
 
 .. topic:: References
@@ -411,7 +414,7 @@ decision trees).
 Gradient Tree Boosting
 ======================
 
-`Gradient Tree Boosting <http://en.wikipedia.org/wiki/Gradient_boosting>`_
+`Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Regression Trees (GBRT) is a generalization
 of boosting to arbitrary
 differentiable loss functions. GBRT is an accurate and effective
@@ -461,7 +464,7 @@ The number of weak learners (i.e. regression trees) is controlled by the paramet
 .. note::
 
    Classification with more than 2 classes requires the induction
-   of ``n_classes`` regression trees at each at each iteration,
+   of ``n_classes`` regression trees at each iteration,
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
@@ -503,15 +506,15 @@ to determine the optimal number of trees (i.e. ``n_estimators``) by early stoppi
 The plot on the right shows the feature importances which can be obtained via
 the ``feature_importances_`` property.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
 
 .. _gradient_boosting_warm_start:
 
@@ -640,7 +643,7 @@ the parameter ``loss``:
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals
-      (see :ref:`example_ensemble_plot_gradient_boosting_quantile.py`).
+      (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
 
   * Classification
 
@@ -676,7 +679,7 @@ the contribution of each weak learner by a factor :math:`\nu`:
     F_m(x) = F_{m-1}(x) + \nu \gamma_m h_m(x)
 
 The parameter :math:`\nu` is also called the **learning rate** because
-it scales the step length the the gradient descent procedure; it can
+it scales the step length the gradient descent procedure; it can
 be set via the ``learning_rate`` parameter.
 
 The parameter ``learning_rate`` strongly interacts with the parameter
@@ -704,7 +707,7 @@ outperforms no-shrinkage. Subsampling with shrinkage can further increase
 the accuracy of the model. Subsampling without shrinkage, on the other hand,
 does poorly.
 
-.. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regularization_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regularization_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regularization.html
    :align: center
    :scale: 75
@@ -730,9 +733,9 @@ is too time consuming.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
- * :ref:`example_ensemble_plot_ensemble_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
 
 Interpretation
 --------------
@@ -776,7 +779,7 @@ accessed via the ``feature_importances_`` property::
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
 .. currentmodule:: sklearn.ensemble.partial_dependence
 
@@ -798,7 +801,7 @@ usually chosen among the most important features.
 The Figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset:
 
-.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_partial_dependence_001.png
    :target: ../auto_examples/ensemble/plot_partial_dependence.html
    :align: center
    :scale: 70
@@ -888,7 +891,7 @@ averaged.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py`
 
 
 .. topic:: References
@@ -945,7 +948,7 @@ Usage
 The following example shows how to fit the majority rule classifier::
 
    >>> from sklearn import datasets
-   >>> from sklearn import cross_validation
+   >>> from sklearn.model_selection import cross_val_score
    >>> from sklearn.linear_model import LogisticRegression
    >>> from sklearn.naive_bayes import GaussianNB
    >>> from sklearn.ensemble import RandomForestClassifier
@@ -961,7 +964,7 @@ The following example shows how to fit the majority rule classifier::
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
 
    >>> for clf, label in zip([clf1, clf2, clf3, eclf], ['Logistic Regression', 'Random Forest', 'naive Bayes', 'Ensemble']):
-   ...     scores = cross_validation.cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+   ...     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
    ...     print("Accuracy: %0.2f (+/- %0.2f) [%s]" % (scores.mean(), scores.std(), label))
    Accuracy: 0.90 (+/- 0.05) [Logistic Regression]
    Accuracy: 0.93 (+/- 0.05) [Random Forest]
@@ -994,7 +997,7 @@ classifier        class 1       class 2         class 3
 classifier 1	  w1 * 0.2      w1 * 0.5        w1 * 0.3
 classifier 2	  w2 * 0.6      w2 * 0.3        w2 * 0.1
 classifier 3      w3 * 0.3      w3 * 0.4        w3 * 0.3
-weighted average  0.37	        0.4             0.3
+weighted average  0.37	        0.4             0.23
 ================  ==========    ==========      ==========
 
 Here, the predicted class label is 2, since it has the
@@ -1027,7 +1030,7 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
    >>> clf3 = clf3.fit(X,y)
    >>> eclf = eclf.fit(X,y)
 
-.. figure:: ../auto_examples/ensemble/images/plot_voting_decision_regions_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
     :align: center
     :scale: 75%
@@ -1038,7 +1041,7 @@ Using the `VotingClassifier` with `GridSearch`
 The `VotingClassifier` can also be used together with `GridSearch` in order
 to tune the hyperparameters of the individual estimators::
 
-   >>> from sklearn.grid_search import GridSearchCV
+   >>> from sklearn.model_selection import GridSearchCV
    >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()

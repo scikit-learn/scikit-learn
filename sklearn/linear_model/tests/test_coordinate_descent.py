@@ -16,14 +16,19 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import TempMemmap
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.utils import check_array
 
 
 def check_warnings():
@@ -164,10 +169,10 @@ def test_lasso_cv():
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
     assert_true(np.abs(
-        np.searchsorted(clf.alphas_[::-1], lars.alpha_)
-        - np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
+        np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
+        np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
     # check that they also give a similar MSE
-    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
+    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
     np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
                                    clf.mse_path_[5].mean(), significant=2)
 
@@ -202,7 +207,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     alphas = [5., 1., .5]
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
-    # to compute the the same path
+    # to compute the same path
     alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
     coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
                                                coef_path_lars[:, ::-1])
@@ -232,7 +237,7 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have seleted an elastic-net
+    # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
@@ -244,7 +249,7 @@ def test_enet_path():
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
-    # Non-sparse ground truth: we should have seleted an elastic-net
+    # Non-sparse ground truth: we should have selected an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
@@ -388,6 +393,29 @@ def test_multi_task_lasso_and_enet():
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
+def test_lasso_readonly_data():
+    X = np.array([[-1], [0], [1]])
+    Y = np.array([-1, 0, 1])   # just a straight line
+    T = np.array([[2], [3], [4]])  # test sample
+    with TempMemmap((X, Y)) as (X, Y):
+        clf = Lasso(alpha=0.5)
+        clf.fit(X, Y)
+        pred = clf.predict(T)
+        assert_array_almost_equal(clf.coef_, [.25])
+        assert_array_almost_equal(pred, [0.5, 0.75, 1.])
+        assert_almost_equal(clf.dual_gap_, 0)
+
+
+def test_multi_task_lasso_readonly_data():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    with TempMemmap((X, Y)) as (X, Y):
+        Y = np.c_[y, y]
+        clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
+        assert_true(0 < clf.dual_gap_ < 1e-5)
+        assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+
 def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
@@ -412,29 +440,29 @@ def test_multioutput_enetcv_error():
 
 
 def test_multitask_enet_and_lasso_cv():
-    X, y, _, _ = build_dataset(n_features=100, n_targets=3)
+    X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
     clf = MultiTaskLassoCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=100,
+    clf = MultiTaskElasticNetCV(n_alphas=10, eps=1e-3, max_iter=100,
                                 l1_ratio=[0.3, 0.5], tol=1e-3)
     clf.fit(X, y)
     assert_equal(0.5, clf.l1_ratio_)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
     assert_equal((3, ), clf.intercept_.shape)
-    assert_equal((2, 50, 3), clf.mse_path_.shape)
-    assert_equal((2, 50), clf.alphas_.shape)
+    assert_equal((2, 10, 3), clf.mse_path_.shape)
+    assert_equal((2, 10), clf.alphas_.shape)
 
     X, y, _, _ = build_dataset(n_targets=3)
-    clf = MultiTaskLassoCV(n_alphas=50, eps=1e-3, max_iter=100, tol=1e-3)
+    clf = MultiTaskLassoCV(n_alphas=10, eps=1e-3, max_iter=100, tol=1e-3)
     clf.fit(X, y)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
     assert_equal((3, ), clf.intercept_.shape)
-    assert_equal((50, 3), clf.mse_path_.shape)
-    assert_equal(50, len(clf.alphas_))
+    assert_equal((10, 3), clf.mse_path_.shape)
+    assert_equal(10, len(clf.alphas_))
 
 
 def test_1d_multioutput_enet_and_multitask_enet_cv():
@@ -483,7 +511,12 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        assert_raises(ValueError, clf.fit, X, y)
+        assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
+                            "array-like.*Got 'invalid'", clf.fit, X, y)
+
+    # Precompute = 'auto' is not supported for ElasticNet
+    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
+                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
 
 
 def test_warm_start_convergence():
@@ -577,16 +610,6 @@ def test_random_descent():
     assert_raises(ValueError, clf_random.fit, X, y)
 
 
-def test_deprection_precompute_enet():
-    # Test that setting precompute="auto" gives a Deprecation Warning.
-
-    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
-    clf = ElasticNet(precompute="auto")
-    assert_warns(DeprecationWarning, clf.fit, X, y)
-    clf = Lasso(precompute="auto")
-    assert_warns(DeprecationWarning, clf.fit, X, y)
-
-
 def test_enet_path_positive():
     # Test that the coefs returned by positive=True in enet_path are positive
 
@@ -604,3 +627,121 @@ def test_sparse_dense_descent_paths():
         _, coefs, _ = path(X, y, fit_intercept=False)
         _, sparse_coefs, _ = path(csr, y, fit_intercept=False)
         assert_array_almost_equal(coefs, sparse_coefs)
+
+
+def test_check_input_false():
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    X = check_array(X, order='F', dtype='float64')
+    y = check_array(X, order='F', dtype='float64')
+    clf = ElasticNet(selection='cyclic', tol=1e-8)
+    # Check that no error is raised if data is provided in the right format
+    clf.fit(X, y, check_input=False)
+    X = check_array(X, order='F', dtype='float32')
+    clf.fit(X, y, check_input=True)
+    # Check that an error is raised if data is provided in the wrong dtype,
+    # because of check bypassing
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+    # With no input checking, providing X in C order should result in false
+    # computation
+    X = check_array(X, order='C', dtype='float64')
+    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+
+def test_overrided_gram_matrix():
+    X, y, _, _ = build_dataset(n_samples=20, n_features=10)
+    Gram = X.T.dot(X)
+    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram,
+                     fit_intercept=True)
+    assert_warns_message(UserWarning,
+                         "Gram matrix was provided but X was centered"
+                         " to fit intercept, "
+                         "or X was normalized : recomputing Gram matrix.",
+                         clf.fit, X, y)
+
+
+def test_lasso_non_float_y():
+    X = [[0, 0], [1, 1], [-1, -1]]
+    y = [0, 1, 2]
+    y_float = [0.0, 1.0, 2.0]
+
+    for model in [ElasticNet, Lasso]:
+        clf = model(fit_intercept=False)
+        clf.fit(X, y)
+        clf_float = model(fit_intercept=False)
+        clf_float.fit(X, y_float)
+        assert_array_equal(clf.coef_, clf_float.coef_)
+
+
+def test_enet_float_precision():
+    # Generate dataset
+    X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
+    # Here we have a small number of iterations, and thus the
+    # ElasticNet might not converge. This is to speed up tests
+
+    for normalize in [True, False]:
+        for fit_intercept in [True, False]:
+            coef = {}
+            intercept = {}
+            for dtype in [np.float64, np.float32]:
+                clf = ElasticNet(alpha=0.5, max_iter=100, precompute=False,
+                                 fit_intercept=fit_intercept,
+                                 normalize=normalize)
+
+                X = dtype(X)
+                y = dtype(y)
+                ignore_warnings(clf.fit)(X, y)
+
+                coef[dtype] = clf.coef_
+                intercept[dtype] = clf.intercept_
+
+                assert_equal(clf.coef_.dtype, dtype)
+
+                # test precompute Gram array
+                Gram = X.T.dot(X)
+                clf_precompute = ElasticNet(alpha=0.5, max_iter=100,
+                                            precompute=Gram,
+                                            fit_intercept=fit_intercept,
+                                            normalize=normalize)
+                ignore_warnings(clf_precompute.fit)(X, y)
+                assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
+                assert_array_almost_equal(clf.intercept_,
+                                          clf_precompute.intercept_)
+
+            assert_array_almost_equal(coef[np.float32], coef[np.float64],
+                                      decimal=4)
+            assert_array_almost_equal(intercept[np.float32],
+                                      intercept[np.float64],
+                                      decimal=4)
+
+
+def test_enet_l1_ratio():
+    # Test that an error message is raised if an estimator that
+    # uses _alpha_grid is called with l1_ratio=0
+    msg = ("Automatic alpha grid generation is not supported for l1_ratio=0. "
+           "Please supply a grid by providing your estimator with the "
+           "appropriate `alphas=` argument.")
+    X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
+    y = np.array([12, 10, 11, 21, 5])
+
+    assert_raise_message(ValueError, msg, ElasticNetCV(
+        l1_ratio=0, random_state=42).fit, X, y)
+    assert_raise_message(ValueError, msg, MultiTaskElasticNetCV(
+        l1_ratio=0, random_state=42).fit, X, y[:, None])
+
+    # Test that l1_ratio=0 is allowed if we supply a grid manually
+    alphas = [0.1, 10]
+    estkwds = {'alphas': alphas, 'random_state': 42}
+    est_desired = ElasticNetCV(l1_ratio=0.00001, **estkwds)
+    est = ElasticNetCV(l1_ratio=0, **estkwds)
+    with ignore_warnings():
+        est_desired.fit(X, y)
+        est.fit(X, y)
+    assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+    est_desired = MultiTaskElasticNetCV(l1_ratio=0.00001, **estkwds)
+    est = MultiTaskElasticNetCV(l1_ratio=0, **estkwds)
+    with ignore_warnings():
+        est.fit(X, y[:, None])
+        est_desired.fit(X, y[:, None])
+    assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)

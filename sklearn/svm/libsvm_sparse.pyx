@@ -2,7 +2,7 @@ import warnings
 import  numpy as np
 cimport numpy as np
 from scipy import sparse
-from ..utils import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 
 cdef extern from *:
     ctypedef char* const_char_p "const char*"
@@ -398,7 +398,7 @@ def libsvm_sparse_decision_function(
                         T_indices.shape, T_indices.data,
                         T_indptr.shape, T_indptr.data,
                         model, dec_values.data, n_class) < 0:
-        raise MemoryError("We've run out of of memory")
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
     free_model(model)

@@ -1,7 +1,7 @@
 # Optimized inner loop of load_svmlight_file.
 #
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
@@ -27,9 +27,10 @@ cdef bytes COLON = u':'.encode('ascii')
 @cython.wraparound(False)
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id):
-    cdef array.array data, indices, indptr, query
+    cdef array.array data, indices, indptr
     cdef bytes line
-    cdef char *hash_ptr, *line_cstr
+    cdef char *hash_ptr
+    cdef char *line_cstr
     cdef int idx, prev_idx
     cdef Py_ssize_t i
     cdef bytes qid_prefix = b('qid')
@@ -44,7 +45,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         data = array.array("d")
     indices = array.array("i")
     indptr = array.array("i", [0])
-    query = array.array("i")
+    query = np.arange(0, dtype=np.int64)
 
     if multilabel:
         labels = []
@@ -79,8 +80,8 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
         if n_features and features[0].startswith(qid_prefix):
             _, value = features[0].split(COLON, 1)
             if query_id:
-                array.resize_smart(query, len(query) + 1)
-                query[len(query) - 1] = int(value)
+                query.resize(len(query) + 1)
+                query[len(query) - 1] = np.int64(value)
             features.pop(0)
             n_features -= 1
 

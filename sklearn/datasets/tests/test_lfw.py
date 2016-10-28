@@ -1,4 +1,4 @@
-"""This test for the LFW require medium-size data dowloading and processing
+"""This test for the LFW require medium-size data downloading and processing
 
 If the data has not been already downloaded by running the examples,
 the tests won't run (skipped).
@@ -131,7 +131,7 @@ def test_load_fake_lfw_people():
                                   min_faces_per_person=3, download_if_missing=False)
 
     # The data is croped around the center as a rectangular bounding box
-    # arounthe the face. Colors are converted to gray levels:
+    # around the face. Colors are converted to gray levels:
     assert_equal(lfw_people.images.shape, (10, 62, 47))
     assert_equal(lfw_people.data.shape, (10, 2914))
 
@@ -178,7 +178,7 @@ def test_load_fake_lfw_pairs():
     lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA, download_if_missing=False)
 
     # The data is croped around the center as a rectangular bounding box
-    # arounthe the face. Colors are converted to gray levels:
+    # around the face. Colors are converted to gray levels:
     assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 62, 47))
 
     # the target is whether the person is the same or not

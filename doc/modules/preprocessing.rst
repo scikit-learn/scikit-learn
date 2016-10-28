@@ -16,7 +16,7 @@ Standardization, or mean removal and variance scaling
 =====================================================
 
 **Standardization** of datasets is a **common requirement for many
-machine learning estimators** implemented in the scikit; they might behave
+machine learning estimators** implemented in scikit-learn; they might behave
 badly if the individual features do not more or less look like standard
 normally distributed data: Gaussian with **zero mean and unit variance**.
 
@@ -30,7 +30,7 @@ a learning algorithm (such as the RBF kernel of Support Vector
 Machines or the l1 and l2 regularizers of linear models) assume that
 all features are centered around zero and have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
-that others, it might dominate the objective function and make the
+than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
 
 
@@ -78,7 +78,7 @@ This class is hence suitable for use in the early steps of a
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
 
-  >>> scaler.std_                                       # doctest: +ELLIPSIS
+  >>> scaler.scale_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
   >>> scaler.transform(X)                               # doctest: +ELLIPSIS
@@ -187,7 +187,7 @@ sparse inputs, especially if features are on different scales.
 :class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
 for scaling sparse data, and are the recommended way to go about this.
 However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
-matrices  as input, as long as ``with_centering=False`` is explicitly passed
+matrices  as input, as long as ``with_mean=False`` is explicitly passed
 to the constructor. Otherwise a ``ValueError`` will be raised as
 silently centering would break the sparsity and would often crash the
 execution by allocating excessive amounts of memory unintentionally.
@@ -259,7 +259,7 @@ such as the dot-product or any other kernel to quantify the similarity
 of any pair of samples.
 
 This assumption is the base of the `Vector Space Model
-<http://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
+<https://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
 classification and clustering contexts.
 
 The function :func:`normalize` provides a quick and easy way to perform this
@@ -322,7 +322,7 @@ Feature binarization
 features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
-<http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
+<https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
 this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
@@ -398,7 +398,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
          handle_unknown='error', n_values='auto', sparse=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
@@ -410,6 +410,18 @@ dataset.
 Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
+
+Note that, if there is a possibilty that the training data might have missing categorical
+features, one has to explicitly set ``n_values``. For example,
+
+    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
+    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
+    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
+           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
+    >>> enc.transform([[1, 0, 0]]).toarray()
+    array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
@@ -466,7 +478,7 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`example_missing_values.py`
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_missing_values.py`
 
 .. _polynomial_features:
 
@@ -484,9 +496,9 @@ Often it's useful to add complexity to the model by considering nonlinear featur
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[ 1,  0,  1,  0,  0,  1],
-           [ 1,  2,  3,  4,  6,  9],
-           [ 1,  4,  5, 16, 20, 25]])
+    array([[  1.,   0.,   1.,   0.,   0.,   1.],
+           [  1.,   2.,   3.,   4.,   6.,   9.],
+           [  1.,   4.,   5.,  16.,  20.,  25.]])
 
 The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
@@ -499,12 +511,34 @@ In some cases, only interaction terms among features are required, and it can be
            [6, 7, 8]])
     >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
     >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[  1,   0,   1,   2,   0,   0,   2,   0],
-           [  1,   3,   4,   5,  12,  15,  20,  60],
-           [  1,   6,   7,   8,  42,  48,  56, 336]])
+    array([[   1.,    0.,    1.,    2.,    0.,    0.,    2.,    0.],
+           [   1.,    3.,    4.,    5.,   12.,   15.,   20.,   60.],
+           [   1.,    6.,    7.,    8.,   42.,   48.,   56.,  336.]])
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitily in `kernel methods <http://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitily in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`example_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+
+.. _function_transformer:
+
+Custom transformers
+===================
+
+Often, you will want to convert an existing Python function into a transformer
+to assist in data cleaning or processing. You can implement a transformer from
+an arbitrary function with :class:`FunctionTransformer`. For example, to build
+a transformer that applies a log transformation in a pipeline, do::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import FunctionTransformer
+    >>> transformer = FunctionTransformer(np.log1p)
+    >>> X = np.array([[0, 1], [2, 3]])
+    >>> transformer.transform(X)
+    array([[ 0.        ,  0.69314718],
+           [ 1.09861229,  1.38629436]])
+
+For a full code example that demonstrates using a :class:`FunctionTransformer`
+to do custom feature selection,
+see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`

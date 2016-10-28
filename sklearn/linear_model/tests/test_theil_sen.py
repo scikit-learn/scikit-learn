@@ -15,25 +15,26 @@ from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal, assert_warns
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
-from nose.tools import raises, assert_almost_equal
-from sklearn.utils import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
 from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
-from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import (
+        assert_almost_equal, assert_greater, assert_less, raises,
+)
 
 
 @contextmanager
 def no_stdout_stderr():
     old_stdout = sys.stdout
     old_stderr = sys.stderr
-    sys.stdout = open(os.devnull, 'w')
-    sys.stderr = open(os.devnull, 'w')
-    yield
-    sys.stdout.flush()
-    sys.stderr.flush()
-    sys.stdout = old_stdout
-    sys.stderr = old_stderr
+    with open(os.devnull, 'w') as devnull:
+        sys.stdout = devnull
+        sys.stderr = devnull
+        yield
+        devnull.flush()
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
 
 
 def gen_toy_problem_1d(intercept=True):
@@ -198,7 +199,7 @@ def test_theil_sen_2d():
 
 def test_calc_breakdown_point():
     bp = _breakdown_point(1e10, 2)
-    assert_less(np.abs(bp - 1 + 1/(np.sqrt(2))), 1.e-6)
+    assert_less(np.abs(bp - 1 + 1 / (np.sqrt(2))), 1.e-6)
 
 
 @raises(ValueError)

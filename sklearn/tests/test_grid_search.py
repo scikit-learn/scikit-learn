@@ -8,6 +8,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import pickle
+import warnings
 import sys
 
 import numpy as np
@@ -33,9 +34,6 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler,
-                                 ChangedBehaviorWarning)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -44,7 +42,17 @@ from sklearn.neighbors import KernelDensity
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
+from sklearn.linear_model import Ridge
+
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.exceptions import FitFailedWarning
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
+                                     ParameterGrid, ParameterSampler)
+    from sklearn.cross_validation import KFold, StratifiedKFold
+
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -429,6 +437,7 @@ class BrokenClassifier(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+@ignore_warnings
 def test_refit():
     # Regression test for bug in refitting
     # Simulates re-fitting a broken estimator; this used to break with
@@ -629,8 +638,7 @@ def test_pickle():
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 
-    X, y = make_multilabel_classification(return_indicator=True,
-                                          random_state=0)
+    X, y = make_multilabel_classification(random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
     cv = KFold(y.shape[0], random_state=0)
@@ -778,3 +786,20 @@ def test_parameters_sampler_replacement():
     sampler = ParameterSampler(params_distribution, n_iter=7)
     samples = list(sampler)
     assert_equal(len(samples), 7)
+
+
+def test_classes__property():
+    # Test that classes_ property matches best_esimator_.classes_
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    Cs = [.1, 1, 10]
+
+    grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
+    grid_search.fit(X, y)
+    assert_array_equal(grid_search.best_estimator_.classes_,
+                       grid_search.classes_)
+
+    # Test that regressors do not have a classes_ attribute
+    grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
+    grid_search.fit(X, y)
+    assert_false(hasattr(grid_search, 'classes_'))

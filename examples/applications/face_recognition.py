@@ -10,10 +10,11 @@ The dataset used in this example is a preprocessed excerpt of the
 
 .. _LFW: http://vis-www.cs.umass.edu/lfw/
 
-Expected results for the top 5 most represented people in the dataset::
+Expected results for the top 5 most represented people in the dataset:
 
+================== ============ ======= ========== =======
                    precision    recall  f1-score   support
-
+================== ============ ======= ========== =======
      Ariel Sharon       0.67      0.92      0.77        13
      Colin Powell       0.75      0.78      0.76        60
   Donald Rumsfeld       0.78      0.67      0.72        27
@@ -23,6 +24,7 @@ Gerhard Schroeder       0.76      0.76      0.76        25
        Tony Blair       0.81      0.69      0.75        36
 
       avg / total       0.80      0.80      0.80       322
+================== ============ ======= ========== =======
 
 """
 from __future__ import print_function
@@ -31,12 +33,12 @@ from time import time
 import logging
 import matplotlib.pyplot as plt
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import fetch_lfw_people
-from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 
 
@@ -86,7 +88,8 @@ n_components = 150
 print("Extracting the top %d eigenfaces from %d faces"
       % (n_components, X_train.shape[0]))
 t0 = time()
-pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X_train)
+pca = PCA(n_components=n_components, svd_solver='randomized',
+          whiten=True).fit(X_train)
 print("done in %0.3fs" % (time() - t0))
 
 eigenfaces = pca.components_.reshape((n_components, h, w))

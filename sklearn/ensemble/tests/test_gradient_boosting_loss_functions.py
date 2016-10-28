@@ -7,9 +7,8 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
-from nose.tools import assert_raises
-
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_raises
 from sklearn.ensemble.gradient_boosting import BinomialDeviance
 from sklearn.ensemble.gradient_boosting import LogOddsEstimator
 from sklearn.ensemble.gradient_boosting import LeastSquaresError
@@ -113,30 +112,30 @@ def test_sample_weight_init_estimators():
 
 
 def test_weighted_percentile():
-    y = np.empty(102, dtype=np.float)
+    y = np.empty(102, dtype=np.float64)
     y[:50] = 0
     y[-51:] = 2
     y[-1] = 100000
     y[50] = 1
-    sw = np.ones(102, dtype=np.float)
+    sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
     assert score == 1
 
 
 def test_weighted_percentile_equal():
-    y = np.empty(102, dtype=np.float)
+    y = np.empty(102, dtype=np.float64)
     y.fill(0.0)
-    sw = np.ones(102, dtype=np.float)
+    sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
     assert score == 0
 
 
 def test_weighted_percentile_zero_weight():
-    y = np.empty(102, dtype=np.float)
+    y = np.empty(102, dtype=np.float64)
     y.fill(1.0)
-    sw = np.ones(102, dtype=np.float)
+    sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
     score = _weighted_percentile(y, sw, 50)
     assert score == 1.0

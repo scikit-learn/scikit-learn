@@ -49,6 +49,28 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    class_weight : dict, {class_label: weight} or "balanced" or None, optional
+        Preset for the class_weight fit parameter.
+
+        Weights associated with classes. If not given, all classes
+        are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
+
+        .. versionadded:: 0.17
+           parameter *class_weight* to automatically weight samples.
+
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the ``coef_`` attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
+
+        .. versionadded:: 0.19
+           parameter *average* to use weights averaging in SGD
+
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -71,19 +93,22 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True,
-                 n_iter=5, shuffle=True, verbose=0, loss="hinge",
-                 n_jobs=1, random_state=None, warm_start=False):
-        BaseSGDClassifier.__init__(self,
-                                   penalty=None,
-                                   fit_intercept=fit_intercept,
-                                   n_iter=n_iter,
-                                   shuffle=shuffle,
-                                   verbose=verbose,
-                                   random_state=random_state,
-                                   eta0=1.0,
-                                   warm_start=warm_start,
-                                   n_jobs=n_jobs)
+
+    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
+                 verbose=0, loss="hinge", n_jobs=1, random_state=None,
+                 warm_start=False, class_weight=None, average=False):
+        super(PassiveAggressiveClassifier, self).__init__(
+            penalty=None,
+            fit_intercept=fit_intercept,
+            n_iter=n_iter,
+            shuffle=shuffle,
+            verbose=verbose,
+            random_state=random_state,
+            eta0=1.0,
+            warm_start=warm_start,
+            class_weight=class_weight,
+            average=average,
+            n_jobs=n_jobs)
         self.C = C
         self.loss = loss
 
@@ -110,6 +135,16 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         -------
         self : returns an instance of self.
         """
+        if self.class_weight == 'balanced':
+            raise ValueError("class_weight 'balanced' is not supported for "
+                             "partial_fit. For 'balanced' weights, use "
+                             "`sklearn.utils.compute_class_weight` with "
+                             "`class_weight='balanced'`. In place of y you "
+                             "can use a large enough subset of the full "
+                             "training set target to properly estimate the "
+                             "class frequency distributions. Pass the "
+                             "resulting weights as the class_weight "
+                             "parameter.")
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="hinge", learning_rate=lr, n_iter=1,
@@ -186,6 +221,15 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the ``coef_`` attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
+
+        .. versionadded:: 0.19
+           parameter *average* to use weights averaging in SGD
+
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -209,19 +253,20 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     """
     def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
                  verbose=0, loss="epsilon_insensitive",
-                 epsilon=DEFAULT_EPSILON, random_state=None, class_weight=None,
-                 warm_start=False):
-        BaseSGDRegressor.__init__(self,
-                                  penalty=None,
-                                  l1_ratio=0,
-                                  epsilon=epsilon,
-                                  eta0=1.0,
-                                  fit_intercept=fit_intercept,
-                                  n_iter=n_iter,
-                                  shuffle=shuffle,
-                                  verbose=verbose,
-                                  random_state=random_state,
-                                  warm_start=warm_start)
+                 epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
+                 average=False):
+        super(PassiveAggressiveRegressor, self).__init__(
+            penalty=None,
+            l1_ratio=0,
+            epsilon=epsilon,
+            eta0=1.0,
+            fit_intercept=fit_intercept,
+            n_iter=n_iter,
+            shuffle=shuffle,
+            verbose=verbose,
+            random_state=random_state,
+            warm_start=warm_start,
+            average=average)
         self.C = C
         self.loss = loss
 

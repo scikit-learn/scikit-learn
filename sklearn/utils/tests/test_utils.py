@@ -7,7 +7,8 @@ from itertools import chain
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
-                                   SkipTest, assert_raises_regex)
+                                   SkipTest, assert_raises_regex,
+                                   assert_greater_equal)
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
@@ -18,7 +19,9 @@ from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
 from sklearn.utils.extmath import pinvh
+from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils.graph import graph_laplacian
 
 
 def test_make_rng():
@@ -36,11 +39,6 @@ def test_make_rng():
     assert_true(check_random_state(43).randint(100) != rng_42.randint(100))
 
     assert_raises(ValueError, check_random_state, "some invalid seed")
-
-
-def test_resample_noarg():
-    # Border case not worth mentioning in doctests
-    assert_true(resample() is None)
 
 
 def test_deprecated():
@@ -80,11 +78,17 @@ def test_deprecated():
         assert_true("deprecated" in str(w[0].message).lower())
 
 
-def test_resample_value_errors():
+def test_resample():
+    # Border case not worth mentioning in doctests
+    assert_true(resample() is None)
+
     # Check that invalid arguments yield ValueError
     assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1], n_samples=3)
+    assert_raises(ValueError, resample, [0, 1], [0, 1],
+                  replace=False, n_samples=3)
     assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    # Issue:6581, n_samples can be more when replace is True (default).
+    assert_equal(len(resample([1, 2], n_samples=5)), 5)
 
 
 def test_safe_mask():
@@ -124,6 +128,26 @@ def test_pinvh_simple_complex():
     a = np.dot(a, a.conj().T)
     a_pinv = pinvh(a)
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
+
+
+def test_arpack_eigsh_initialization():
+    # Non-regression test that shows null-space computation is better with
+    # initialization of eigsh from [-1,1] instead of [0,1]
+    random_state = check_random_state(42)
+
+    A = random_state.rand(50, 50)
+    A = np.dot(A.T, A)  # create s.p.d. matrix
+    A = graph_laplacian(A) + 1e-7 * np.identity(A.shape[0])
+    k = 5
+
+    # Test if eigsh is working correctly
+    # New initialization [-1,1] (as in original ARPACK)
+    # Was [0,1] before, with which this test could fail
+    v0 = random_state.uniform(-1,1, A.shape[0])
+    w, _ = eigsh(A, k=k, sigma=0.0, v0=v0)
+
+    # Eigenvalues of s.p.d. matrix should be nonnegative, w[0] is smallest
+    assert_greater_equal(w[0], 0)
 
 
 def test_column_or_1d():

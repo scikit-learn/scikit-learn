@@ -17,6 +17,8 @@ import numpy as np
 import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
+from ..exceptions import ConvergenceWarning
+
 
 class _LineSearchError(RuntimeError):
     pass
@@ -158,14 +160,14 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     """
     x0 = np.asarray(x0).flatten()
     xk = x0
-    k = 1
+    k = 0
 
     if line_search:
         old_fval = func(x0, *args)
         old_old_fval = None
 
     # Outer loop: our Newton iteration
-    while k <= maxiter:
+    while k < maxiter:
         # Compute a search direction pk by applying the CG method to
         #  del2 f(xk) p = - fgrad f(xk) starting from 0.
         fgrad, fhess_p = grad_hess(xk, *args)
@@ -196,7 +198,7 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
         xk = xk + alphak * xsupi        # upcast if necessary
         k += 1
 
-    if warn and k > maxiter:
+    if warn and k >= maxiter:
         warnings.warn("newton-cg failed to converge. Increase the "
-                      "number of iterations.")
-    return xk
+                      "number of iterations.", ConvergenceWarning)
+    return xk, k

@@ -11,10 +11,11 @@ cimport liblinear
 np.import_array()
 
 
-def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
+def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
                bint is_sparse, int solver_type, double eps, double bias,
                double C, np.ndarray[np.float64_t, ndim=1] class_weight,
-               int max_iter, unsigned random_seed, double epsilon):
+               int max_iter, unsigned random_seed, double epsilon,
+               np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight):
     cdef parameter *param
     cdef problem *problem
     cdef model *model
@@ -28,13 +29,14 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indices).data,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).shape,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).data,
-                Y.data, (<np.int32_t>X.shape[1]), bias)
+                Y.data, (<np.int32_t>X.shape[1]), bias,
+                sample_weight.data)
     else:
         problem = set_problem(
                 (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).data,
                 Y.data,
                 (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).shape,
-                bias)
+                bias, sample_weight.data)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.intc)

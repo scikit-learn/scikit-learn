@@ -21,7 +21,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.grid_search import GridSearchCV, ParameterGrid
+from sklearn.model_selection import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
@@ -29,7 +29,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 
@@ -111,26 +111,27 @@ def test_sparse_classification():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
+            for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
+                # Trained on sparse format
+                sparse_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    random_state=1,
+                    **params
+                ).fit(X_train_sparse, y_train)
+                sparse_results = getattr(sparse_classifier, f)(X_test_sparse)
 
-            # Trained on sparse format
-            sparse_classifier = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
-
-            # Trained on dense format
-            dense_results = BaggingClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                **params
-            ).fit(X_train, y_train).predict(X_test)
+                # Trained on dense format
+                dense_classifier = BaggingClassifier(
+                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    random_state=1,
+                    **params
+                ).fit(X_train, y_train)
+                dense_results = getattr(dense_classifier, f)(X_test)
+                assert_array_equal(sparse_results, dense_results)
 
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
 
 
@@ -217,7 +218,7 @@ def test_sparse_regression():
 
 
 def test_bootstrap_samples():
-    # Test that bootstraping samples generate non-perfect base estimators.
+    # Test that bootstrapping samples generate non-perfect base estimators.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -245,7 +246,7 @@ def test_bootstrap_samples():
 
 
 def test_bootstrap_features():
-    # Test that bootstraping features may generate dupplicate features.
+    # Test that bootstrapping features may generate duplicate features.
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -438,7 +439,7 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -448,7 +449,7 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
-    ensemble = BaggingClassifier(SVC(),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
@@ -552,6 +553,8 @@ def test_bagging_with_pipeline():
                                                 DecisionTreeClassifier()),
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
+    assert_true(isinstance(estimator[0].steps[-1][1].random_state,
+                           int))
 
 
 class DummyZeroEstimator(BaseEstimator):
@@ -662,3 +665,61 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     assert_raises(AttributeError, getattr, clf, "oob_score_")
+
+
+def test_oob_score_consistency():
+    # Make sure OOB scores are identical when random_state, estimator, and 
+    # training data are fixed and fitting is done twice
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,
+                                max_features=0.5, oob_score=True,
+                                random_state=1)
+    assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
+
+
+def test_estimators_samples():
+    # Check that format of estimators_samples_ is correct and that results
+    # generated at fit time can be identically reproduced at a later time
+    # using data saved in object attributes.
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(LogisticRegression(), max_samples=0.5,
+                                max_features=0.5, random_state=1,
+                                bootstrap=False)
+    bagging.fit(X, y)
+
+    # Get relevant attributes
+    estimators_samples = bagging.estimators_samples_
+    estimators_features = bagging.estimators_features_
+    estimators = bagging.estimators_
+
+    # Test for correct formatting
+    assert_equal(len(estimators_samples), len(estimators))
+    assert_equal(len(estimators_samples[0]), len(X))
+    assert_equal(estimators_samples[0].dtype.kind, 'b')
+
+    # Re-fit single estimator to test for consistent sampling
+    estimator_index = 0
+    estimator_samples = estimators_samples[estimator_index]
+    estimator_features = estimators_features[estimator_index]
+    estimator = estimators[estimator_index]
+
+    X_train = (X[estimator_samples])[:, estimator_features]
+    y_train = y[estimator_samples]
+
+    orig_coefs = estimator.coef_
+    estimator.fit(X_train, y_train)
+    new_coefs = estimator.coef_
+
+    assert_array_almost_equal(orig_coefs, new_coefs)
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples and original max_samples are identical
+    # when valid integer max_samples supplied by user
+    max_samples = 100
+    X, y = make_hastie_10_2(n_samples=2*max_samples, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(),
+                                max_samples=max_samples,
+                                max_features=0.5, random_state=1)
+    bagging.fit(X, y)
+    assert_equal(bagging._max_samples, max_samples)

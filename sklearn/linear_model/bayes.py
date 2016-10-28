@@ -65,6 +65,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -81,8 +88,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
     alpha_ : float
        estimated precision of the noise.
 
-    lambda_ : array, shape = (n_features)
-       estimated precisions of the weights.
+    lambda_ : float
+       estimated precision of the weights.
 
     scores_ : float
         if computed, value of the objective function (to be maximized)
@@ -135,11 +142,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self : returns an instance of self.
         """
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
-        X, y, X_mean, y_mean, X_std = self._center_data(
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
 
-        ### Initialization of the values of the parameters
+        # Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
         lambda_ = 1.
 
@@ -156,10 +163,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
         U, S, Vh = linalg.svd(X, full_matrices=False)
         eigen_vals_ = S ** 2
 
-        ### Convergence loop of the bayesian ridge regression
+        # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
-            ### Compute mu and sigma
+            # Compute mu and sigma
             # sigma_ = lambda_ / alpha_ * np.eye(n_features) + np.dot(X.T, X)
             # coef_ = sigma_^-1 * XT * y
             if n_samples > n_features:
@@ -178,28 +185,28 @@ class BayesianRidge(LinearModel, RegressorMixin):
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
                     logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
 
-            ### Update alpha and lambda
+            # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            gamma_ = (np.sum((alpha_ * eigen_vals_)
-                      / (lambda_ + alpha_ * eigen_vals_)))
-            lambda_ = ((gamma_ + 2 * lambda_1)
-                       / (np.sum(coef_ ** 2) + 2 * lambda_2))
-            alpha_ = ((n_samples - gamma_ + 2 * alpha_1)
-                      / (rmse_ + 2 * alpha_2))
+            gamma_ = (np.sum((alpha_ * eigen_vals_) /
+                      (lambda_ + alpha_ * eigen_vals_)))
+            lambda_ = ((gamma_ + 2 * lambda_1) /
+                       (np.sum(coef_ ** 2) + 2 * lambda_2))
+            alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
+                      (rmse_ + 2 * alpha_2))
 
-            ### Compute the objective function
+            # Compute the objective function
             if self.compute_score:
                 s = lambda_1 * log(lambda_) - lambda_2 * lambda_
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-                s += 0.5 * (n_features * log(lambda_)
-                            + n_samples * log(alpha_)
-                            - alpha_ * rmse_
-                            - (lambda_ * np.sum(coef_ ** 2))
-                            - logdet_sigma_
-                            - n_samples * log(2 * np.pi))
+                s += 0.5 * (n_features * log(lambda_) +
+                            n_samples * log(alpha_) -
+                            alpha_ * rmse_ -
+                            (lambda_ * np.sum(coef_ ** 2)) -
+                            logdet_sigma_ -
+                            n_samples * log(2 * np.pi))
                 self.scores_.append(s)
 
-            ### Check for convergence
+            # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
                     print("Convergence after ", str(iter_), " iterations")
@@ -210,7 +217,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.lambda_ = lambda_
         self.coef_ = coef_
 
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
 
@@ -269,6 +276,13 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
+        This parameter is ignored when `fit_intercept` is set to False.
+        When the regressors are normalized, note that this makes the
+        hyperparameters learnt more robust and almost independent of the number
+        of samples. The same property is not valid for standardized data.
+        However, if you wish to standardize, please use
+        `preprocessing.StandardScaler` before calling `fit` on an estimator
+        with `normalize=False`.
 
     copy_X : boolean, optional, default True.
         If True, X will be copied; else, it may be overwritten.
@@ -351,10 +365,10 @@ class ARDRegression(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(
+        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
 
-        ### Launch the convergence loop
+        # Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
 
         lambda_1 = self.lambda_1
@@ -363,51 +377,51 @@ class ARDRegression(LinearModel, RegressorMixin):
         alpha_2 = self.alpha_2
         verbose = self.verbose
 
-        ### Initialization of the values of the parameters
+        # Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
         lambda_ = np.ones(n_features)
 
         self.scores_ = list()
         coef_old_ = None
 
-        ### Iterative procedure of ARDRegression
+        # Iterative procedure of ARDRegression
         for iter_ in range(self.n_iter):
-            ### Compute mu and sigma (using Woodbury matrix identity)
+            # Compute mu and sigma (using Woodbury matrix identity)
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *
                            np.reshape(1. / lambda_[keep_lambda], [1, -1]),
                            X[:, keep_lambda].T))
-            sigma_ = np.dot(sigma_, X[:, keep_lambda]
-                            * np.reshape(1. / lambda_[keep_lambda], [1, -1]))
-            sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1])
-                              * X[:, keep_lambda].T, sigma_)
+            sigma_ = np.dot(sigma_, X[:, keep_lambda] *
+                            np.reshape(1. / lambda_[keep_lambda], [1, -1]))
+            sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
+                              X[:, keep_lambda].T, sigma_)
             sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
             coef_[keep_lambda] = alpha_ * np.dot(
                 sigma_, np.dot(X[:, keep_lambda].T, y))
 
-            ### Update alpha and lambda
+            # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = 1. - lambda_[keep_lambda] * np.diag(sigma_)
-            lambda_[keep_lambda] = ((gamma_ + 2. * lambda_1)
-                                    / ((coef_[keep_lambda]) ** 2
-                                       + 2. * lambda_2))
-            alpha_ = ((n_samples - gamma_.sum() + 2. * alpha_1)
-                      / (rmse_ + 2. * alpha_2))
+            lambda_[keep_lambda] = ((gamma_ + 2. * lambda_1) /
+                                    ((coef_[keep_lambda]) ** 2 +
+                                     2. * lambda_2))
+            alpha_ = ((n_samples - gamma_.sum() + 2. * alpha_1) /
+                      (rmse_ + 2. * alpha_2))
 
-            ### Prune the weights with a precision over a threshold
+            # Prune the weights with a precision over a threshold
             keep_lambda = lambda_ < self.threshold_lambda
             coef_[~keep_lambda] = 0
 
-            ### Compute the objective function
+            # Compute the objective function
             if self.compute_score:
                 s = (lambda_1 * np.log(lambda_) - lambda_2 * lambda_).sum()
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-                s += 0.5 * (fast_logdet(sigma_) + n_samples * log(alpha_)
-                                                + np.sum(np.log(lambda_)))
+                s += 0.5 * (fast_logdet(sigma_) + n_samples * log(alpha_) +
+                                                np.sum(np.log(lambda_)))
                 s -= 0.5 * (alpha_ * rmse_ + (lambda_ * coef_ ** 2).sum())
                 self.scores_.append(s)
 
-            ### Check for convergence
+            # Check for convergence
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
                     print("Converged after %s iterations" % iter_)
@@ -418,5 +432,5 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_offset, y_offset, X_scale)
         return self

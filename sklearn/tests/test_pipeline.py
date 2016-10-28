@@ -5,21 +5,25 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.externals.six.moves import zip
-from sklearn.utils.testing import assert_raises, assert_raises_regex, assert_raise_message
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_dict_equal
 
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
+from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
@@ -35,7 +39,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class IncorrectT(object):
+class NoFit(object):
     """Small class to test parameter dispatching.
     """
 
@@ -44,7 +48,7 @@ class IncorrectT(object):
         self.b = b
 
 
-class T(IncorrectT):
+class NoTrans(NoFit):
 
     def fit(self, X, y):
         return self
@@ -57,19 +61,54 @@ class T(IncorrectT):
         return self
 
 
-class TransfT(T):
-
+class NoInvTransf(NoTrans):
     def transform(self, X, y=None):
         return X
 
 
-class FitParamT(object):
+class Transf(NoInvTransf):
+    def transform(self, X, y=None):
+        return X
+
+    def inverse_transform(self, X):
+        return X
+
+
+class TransfFitParams(Transf):
+
+    def fit(self, X, y, **fit_params):
+        self.fit_params = fit_params
+        return self
+
+
+class Mult(BaseEstimator):
+    def __init__(self, mult=1):
+        self.mult = mult
+
+    def fit(self, X, y):
+        return self
+
+    def transform(self, X):
+        return np.asarray(X) * self.mult
+
+    def inverse_transform(self, X):
+        return np.asarray(X) / self.mult
+
+    def predict(self, X):
+        return (np.asarray(X) * self.mult).sum(axis=1)
+
+    predict_proba = predict_log_proba = decision_function = predict
+
+    def score(self, X, y=None):
+        return np.sum(X)
+
+
+class FitParamT(BaseEstimator):
     """Mock classifier
     """
 
     def __init__(self):
         self.successful = False
-        pass
 
     def fit(self, X, y, should_succeed=False):
         self.successful = should_succeed
@@ -77,20 +116,26 @@ class FitParamT(object):
     def predict(self, X):
         return self.successful
 
+    def fit_predict(self, X, y, should_succeed=False):
+        self.fit(X, y, should_succeed=should_succeed)
+        return self.predict(X)
+
 
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(TypeError, Pipeline, [('svc', IncorrectT)])
+    assert_raises_regex(TypeError,
+                        'Last step of Pipeline should implement fit. '
+                        '.*NoFit.*',
+                        Pipeline, [('clf', NoFit())])
     # Smoke test with only an estimator
-    clf = T()
+    clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
     assert_equal(pipe.get_params(deep=True),
                  dict(svc__a=None, svc__b=None, svc=clf,
-                     **pipe.get_params(deep=False)
-                     ))
+                      **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -104,8 +149,12 @@ def test_pipeline_init():
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
-    # Check that we can't use the same stage name twice
-    assert_raises(ValueError, Pipeline, [('svc', SVC()), ('svc', SVC())])
+    # Check that we can't instantiate with non-transformers on the way
+    # Note that NoTrans implements fit, but not transform
+    assert_raises_regex(TypeError,
+                        'All intermediate steps should be transformers'
+                        '.*\\bNoTrans\\b.*',
+                        Pipeline, [('t', NoTrans()), ('svc', clf)])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -123,13 +172,13 @@ def test_pipeline_init():
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
     params2 = pipe2.get_params(deep=True)
-    
+
     for x in pipe.get_params(deep=False):
         params.pop(x)
-    
+
     for x in pipe2.get_params(deep=False):
         params2.pop(x)
-    
+
     # Remove estimators that where copied
     params.pop('svc')
     params.pop('anova')
@@ -156,7 +205,7 @@ def test_pipeline_methods_anova():
 
 def test_pipeline_fit_params():
     # Test that the pipeline can take fit parameters
-    pipe = Pipeline([('transf', TransfT()), ('clf', FitParamT())])
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
     pipe.fit(X=None, y=None, clf__should_succeed=True)
     # classifier should return True
     assert_true(pipe.predict(None))
@@ -193,7 +242,7 @@ def test_pipeline_methods_pca_svm():
     y = iris.target
     # Test with PCA + SVC
     clf = SVC(probability=True, random_state=0)
-    pca = PCA(n_components='mle', whiten=True)
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
@@ -210,8 +259,8 @@ def test_pipeline_methods_preprocessing_svm():
     n_samples = X.shape[0]
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
-    pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC(probability=True, random_state=0)
+    pca = PCA(n_components=2, svd_solver='randomized', whiten=True)
+    clf = SVC(probability=True, random_state=0, decision_function_shape='ovr')
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
@@ -240,13 +289,20 @@ def test_fit_predict_on_pipeline():
     iris = load_iris()
     scaler = StandardScaler()
     km = KMeans(random_state=0)
+    # As pipeline doesn't clone estimators on construction,
+    # it must have its own estimators
+    scaler_for_pipeline = StandardScaler()
+    km_for_pipeline = KMeans(random_state=0)
 
     # first compute the transform and clustering step separately
     scaled = scaler.fit_transform(iris.data)
     separate_pred = km.fit_predict(scaled)
 
     # use a pipeline to do the transform and clustering in one step
-    pipe = Pipeline([('scaler', scaler), ('Kmeans', km)])
+    pipe = Pipeline([
+        ('scaler', scaler_for_pipeline),
+        ('Kmeans', km_for_pipeline)
+    ])
     pipeline_pred = pipe.fit_predict(iris.data)
 
     assert_array_almost_equal(pipeline_pred, separate_pred)
@@ -256,11 +312,24 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     # tests that a pipeline does not have fit_predict method when final
     # step of pipeline does not have fit_predict defined
     scaler = StandardScaler()
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     pipe = Pipeline([('scaler', scaler), ('pca', pca)])
     assert_raises_regex(AttributeError,
                         "'PCA' object has no attribute 'fit_predict'",
                         getattr, pipe, 'fit_predict')
+
+
+def test_fit_predict_with_intermediate_fit_params():
+    # tests that Pipeline passes fit_params to intermediate steps
+    # when fit_predict is invoked
+    pipe = Pipeline([('transf', TransfFitParams()), ('clf', FitParamT())])
+    pipe.fit_predict(X=None,
+                     y=None,
+                     transf__should_get_this=True,
+                     clf__should_succeed=True)
+    assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
+    assert_true(pipe.named_steps['clf'].successful)
+    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
 
 
 def test_feature_union():
@@ -293,17 +362,24 @@ def test_feature_union():
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
 
     # test it works with transformers missing fit_transform
-    fs = FeatureUnion([("mock", TransfT()), ("svd", svd), ("select", select)])
+    fs = FeatureUnion([("mock", Transf()), ("svd", svd), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
 
+    # test error if some elements do not support transform
+    assert_raises_regex(TypeError,
+                        'All estimators should implement fit and '
+                        'transform.*\\bNoTrans\\b',
+                        FeatureUnion,
+                        [("transform", Transf()), ("no_transform", NoTrans())])
+
 
 def test_make_union():
-    pca = PCA()
-    mock = TransfT()
+    pca = PCA(svd_solver='full')
+    mock = Transf()
     fu = make_union(pca, mock)
     names, transformers = zip(*fu.transformer_list)
-    assert_equal(names, ("pca", "transft"))
+    assert_equal(names, ("pca", "transf"))
     assert_equal(transformers, (pca, mock))
 
 
@@ -312,7 +388,7 @@ def test_pipeline_transform():
     # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
-    pca = PCA(n_components=2)
+    pca = PCA(n_components=2, svd_solver='full')
     pipeline = Pipeline([('pca', pca)])
 
     # test transform and fit_transform:
@@ -332,28 +408,149 @@ def test_pipeline_fit_transform():
     iris = load_iris()
     X = iris.data
     y = iris.target
-    transft = TransfT()
-    pipeline = Pipeline([('mock', transft)])
+    transf = Transf()
+    pipeline = Pipeline([('mock', transf)])
 
     # test fit_transform:
     X_trans = pipeline.fit_transform(X, y)
-    X_trans2 = transft.fit(X, y).transform(X)
+    X_trans2 = transf.fit(X, y).transform(X)
     assert_array_almost_equal(X_trans, X_trans2)
 
 
-def test_make_pipeline():
-    t1 = TransfT()
-    t2 = TransfT()
+def test_set_pipeline_steps():
+    transf1 = Transf()
+    transf2 = Transf()
+    pipeline = Pipeline([('mock', transf1)])
+    assert_true(pipeline.named_steps['mock'] is transf1)
 
+    # Directly setting attr
+    pipeline.steps = [('mock2', transf2)]
+    assert_true('mock' not in pipeline.named_steps)
+    assert_true(pipeline.named_steps['mock2'] is transf2)
+    assert_equal([('mock2', transf2)], pipeline.steps)
+
+    # Using set_params
+    pipeline.set_params(steps=[('mock', transf1)])
+    assert_equal([('mock', transf1)], pipeline.steps)
+
+    # Using set_params to replace single step
+    pipeline.set_params(mock=transf2)
+    assert_equal([('mock', transf2)], pipeline.steps)
+
+    # With invalid data
+    pipeline.set_params(steps=[('junk', ())])
+    assert_raises(TypeError, pipeline.fit, [[1]], [1])
+    assert_raises(TypeError, pipeline.fit_transform, [[1]], [1])
+
+
+def test_set_pipeline_step_none():
+    # Test setting Pipeline steps to None
+    X = np.array([[1]])
+    y = np.array([1])
+    mult2 = Mult(mult=2)
+    mult3 = Mult(mult=3)
+    mult5 = Mult(mult=5)
+
+    def make():
+        return Pipeline([('m2', mult2), ('m3', mult3), ('last', mult5)])
+
+    pipeline = make()
+
+    exp = 2 * 3 * 5
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
+    pipeline.set_params(m3=None)
+    exp = 2 * 5
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    assert_dict_equal(pipeline.get_params(deep=True),
+                      {'steps': pipeline.steps,
+                       'm2': mult2,
+                       'm3': None,
+                       'last': mult5,
+                       'm2__mult': 2,
+                       'last__mult': 5,
+                       })
+
+    pipeline.set_params(m2=None)
+    exp = 5
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
+    # for other methods, ensure no AttributeErrors on None:
+    other_methods = ['predict_proba', 'predict_log_proba',
+                     'decision_function', 'transform', 'score']
+    for method in other_methods:
+        getattr(pipeline, method)(X)
+
+    pipeline.set_params(m2=mult2)
+    exp = 2 * 5
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
+    pipeline = make()
+    pipeline.set_params(last=None)
+    # mult2 and mult3 are active
+    exp = 6
+    assert_array_equal([[exp]], pipeline.fit(X, y).transform(X))
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    assert_raise_message(AttributeError,
+                         "'NoneType' object has no attribute 'predict'",
+                         getattr, pipeline, 'predict')
+
+    # Check None step at construction time
+    exp = 2 * 5
+    pipeline = Pipeline([('m2', mult2), ('m3', None), ('last', mult5)])
+    assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    assert_array_equal([exp], pipeline.fit(X).predict(X))
+    assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
+
+def test_pipeline_ducktyping():
+    pipeline = make_pipeline(Mult(5))
+    pipeline.predict
+    pipeline.transform
+    pipeline.inverse_transform
+
+    pipeline = make_pipeline(Transf())
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    pipeline.inverse_transform
+
+    pipeline = make_pipeline(None)
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    pipeline.inverse_transform
+
+    pipeline = make_pipeline(Transf(), NoInvTransf())
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    assert_false(hasattr(pipeline, 'inverse_transform'))
+
+    pipeline = make_pipeline(NoInvTransf(), Transf())
+    assert_false(hasattr(pipeline, 'predict'))
+    pipeline.transform
+    assert_false(hasattr(pipeline, 'inverse_transform'))
+
+
+def test_make_pipeline():
+    t1 = Transf()
+    t2 = Transf()
     pipe = make_pipeline(t1, t2)
     assert_true(isinstance(pipe, Pipeline))
-    assert_equal(pipe.steps[0][0], "transft-1")
-    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[0][0], "transf-1")
+    assert_equal(pipe.steps[1][0], "transf-2")
 
     pipe = make_pipeline(t1, t2, FitParamT())
     assert_true(isinstance(pipe, Pipeline))
-    assert_equal(pipe.steps[0][0], "transft-1")
-    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[0][0], "transf-1")
+    assert_equal(pipe.steps[1][0], "transf-2")
     assert_equal(pipe.steps[2][0], "fitparamt")
 
 
@@ -362,7 +559,7 @@ def test_feature_union_weights():
     iris = load_iris()
     X = iris.data
     y = iris.target
-    pca = RandomizedPCA(n_components=2, random_state=0)
+    pca = PCA(n_components=2, svd_solver='randomized', random_state=0)
     select = SelectKBest(k=1)
     # test using fit followed by transform
     fs = FeatureUnion([("pca", pca), ("select", select)],
@@ -374,7 +571,7 @@ def test_feature_union_weights():
                       transformer_weights={"pca": 10})
     X_fit_transformed = fs.fit_transform(X, y)
     # test it works with transformers missing fit_transform
-    fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)],
+    fs = FeatureUnion([("mock", Transf()), ("pca", pca), ("select", select)],
                       transformer_weights={"mock": 10})
     X_fit_transformed_wo_method = fs.fit_transform(X, y)
     # check against expected result
@@ -446,6 +643,11 @@ def test_feature_union_feature_names():
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
 
+    ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
+    assert_raise_message(AttributeError,
+                         'Transformer tr1 (type Transf) does not provide '
+                         'get_feature_names', ft.get_feature_names)
+
 
 def test_classes_property():
     iris = load_iris()
@@ -460,3 +662,99 @@ def test_classes_property():
     assert_raises(AttributeError, getattr, clf, "classes_")
     clf.fit(X, y)
     assert_array_equal(clf.classes_, np.unique(y))
+
+
+def test_X1d_inverse_transform():
+    transformer = Transf()
+    pipeline = make_pipeline(transformer)
+    X = np.ones(10)
+    msg = "1d X will not be reshaped in pipeline.inverse_transform"
+    assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
+
+
+def test_set_feature_union_steps():
+    mult2 = Mult(2)
+    mult2.get_feature_names = lambda: ['x2']
+    mult3 = Mult(3)
+    mult3.get_feature_names = lambda: ['x3']
+    mult5 = Mult(5)
+    mult5.get_feature_names = lambda: ['x5']
+
+    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
+    assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
+    assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
+
+    # Directly setting attr
+    ft.transformer_list = [('m5', mult5)]
+    assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
+    assert_equal(['m5__x5'], ft.get_feature_names())
+
+    # Using set_params
+    ft.set_params(transformer_list=[('mock', mult3)])
+    assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
+    assert_equal(['mock__x3'], ft.get_feature_names())
+
+    # Using set_params to replace single step
+    ft.set_params(mock=mult5)
+    assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
+    assert_equal(['mock__x5'], ft.get_feature_names())
+
+
+def test_set_feature_union_step_none():
+    mult2 = Mult(2)
+    mult2.get_feature_names = lambda: ['x2']
+    mult3 = Mult(3)
+    mult3.get_feature_names = lambda: ['x3']
+    X = np.asarray([[1]])
+
+    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
+    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[2, 3]], ft.fit_transform(X))
+    assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
+
+    ft.set_params(m2=None)
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_equal(['m3__x3'], ft.get_feature_names())
+
+    ft.set_params(m3=None)
+    assert_array_equal([[]], ft.fit(X).transform(X))
+    assert_array_equal([[]], ft.fit_transform(X))
+    assert_equal([], ft.get_feature_names())
+
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+
+
+def test_step_name_validation():
+    bad_steps1 = [('a__q', Mult(2)), ('b', Mult(3))]
+    bad_steps2 = [('a', Mult(2)), ('a', Mult(3))]
+    for cls, param in [(Pipeline, 'steps'),
+                       (FeatureUnion, 'transformer_list')]:
+        # we validate in construction (despite scikit-learn convention)
+        bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
+        for bad_steps, message in [
+            (bad_steps1, "Step names must not contain __: got ['a__q']"),
+            (bad_steps2, "Names provided are not unique: ['a', 'a']"),
+            (bad_steps3, "Step names conflict with constructor "
+                         "arguments: ['%s']" % param),
+        ]:
+            # three ways to make invalid:
+            # - construction
+            assert_raise_message(ValueError, message, cls,
+                                 **{param: bad_steps})
+
+            # - setattr
+            est = cls(**{param: [('a', Mult(1))]})
+            setattr(est, param, bad_steps)
+            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+            assert_raise_message(ValueError, message, est.fit_transform,
+                                 [[1]], [1])
+
+            # - set_params
+            est = cls(**{param: [('a', Mult(1))]})
+            est.set_params(**{param: bad_steps})
+            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
+            assert_raise_message(ValueError, message, est.fit_transform,
+                                 [[1]], [1])
