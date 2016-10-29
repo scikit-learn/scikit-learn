@@ -618,6 +618,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 class GridSearchCV(BaseSearchCV):
     """Exhaustive search over specified parameter values for an estimator.
 
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :class:`sklearn.model_selection.GridSearchCV` instead.
+
     Important members are fit, predict.
 
     GridSearchCV implements a "fit" and a "score" method.
