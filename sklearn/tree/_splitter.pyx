@@ -763,7 +763,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
-        cdef SIZE_t p
+        cdef SIZE_t p, q
         cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
@@ -777,6 +777,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
+        cdef bint is_categorical
+        cdef UINT64_t split_seed
 
         _init_split(&best, end)
 
@@ -851,30 +853,45 @@ cdef class RandomSplitter(BaseDenseSplitter):
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
 
-                    # Draw a random threshold
-                    current.split_value.threshold = rand_uniform(
-                        min_feature_value, max_feature_value, random_state)
-
-                    if current.split_value.threshold == max_feature_value:
-                        current.split_value.threshold = min_feature_value
-
-                    # Partition
-                    partition_end = end
-                    p = start
-                    while p < partition_end:
-                        current_feature_value = Xf[p]
-                        if current_feature_value <= current.split_value.threshold:
-                            p += 1
+                    # Repeat split & partition if split is trivial, up to 60 times
+                    # (Can only happen with categorical features)
+                    for q in range(60):
+                        # Construct a random split
+                        is_categorical = self.n_categories[current.feature] > 0
+                        if is_categorical:
+                            split_seed = rand_int(0, <UINT32_t>RAND_R_MAX + 1,
+                                                  random_state)
+                            current.split_value.cat_split = (split_seed << 32) | 1
                         else:
-                            partition_end -= 1
+                            current.split_value.threshold = rand_uniform(
+                                min_feature_value, max_feature_value, random_state)
+                            if current.split_value.threshold == max_feature_value:
+                                current.split_value.threshold = min_feature_value
 
-                            Xf[p] = Xf[partition_end]
-                            Xf[partition_end] = current_feature_value
+                        # Partition
+                        setup_cat_cache(self.cat_cache, current.split_value.cat_split,
+                                        self.n_categories[current.feature])
+                        partition_end = end
+                        p = start
+                        while p < partition_end:
+                            current_feature_value = Xf[p]
+                            if goes_left(current_feature_value, current.split_value,
+                                         self.n_categories[current.feature], self.cat_cache):
+                                p += 1
+                            else:
+                                partition_end -= 1
 
-                            samples[partition_end], samples[p] = (
-                                samples[p], samples[partition_end])
+                                Xf[p] = Xf[partition_end]
+                                Xf[partition_end] = current_feature_value
 
-                    current.pos = partition_end
+                                samples[partition_end], samples[p] = (
+                                    samples[p], samples[partition_end])
+
+                        current.pos = partition_end
+
+                        # Break early if the split is non-trivial
+                        if current.pos != start and current.pos != end:
+                            break
 
                     # Reject if min_samples_leaf is not guaranteed
                     if (((current.pos - start) < min_samples_leaf) or
@@ -899,12 +916,16 @@ cdef class RandomSplitter(BaseDenseSplitter):
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
         feature_stride = X_feature_stride * best.feature
         if best.pos < end:
+            setup_cat_cache(self.cat_cache, best.split_value.cat_split,
+                            self.n_categories[best.feature])
             if current.feature != best.feature:
                 partition_end = end
                 p = start
 
                 while p < partition_end:
-                    if X[X_sample_stride * samples[p] + feature_stride] <= best.split_value.threshold:
+                    if goes_left(X[X_sample_stride * samples[p] + feature_stride],
+                                 best.split_value, self.n_categories[best.feature],
+                                 self.cat_cache):
                         p += 1
 
                     else:
