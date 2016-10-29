@@ -90,6 +90,20 @@ Bug fixes
 Version 0.18.1
 ==============
 
+Enhancements
+.........
+   - Improved ``sample_without_replacement`` speed by utilizing
+     numpy.random.permutation for most cases. As a result,
+     samples may differ in this release for a fixed random state.
+     Affected estimators:
+      - :class:`ensemble.BaggingClassifier`
+      - :class:`ensemble.BaggingRegressor`
+      - :class:`linear_model.RANSACRegressor`
+      - :class:`model_selection.RandomizedSearchCV`
+      - :class:`random_projection.SparseRandomProjection`
+     This also affects the :meth:`datasets.make_classification`
+     method.
+
 Bug fixes
 .........
 
