@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -x
 set -e
 
@@ -17,7 +18,8 @@ fi
 sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
-    install dvipng texlive-latex-base texlive-latex-extra
+    install dvipng texlive-latex-base texlive-latex-extra \
+    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -51,5 +53,11 @@ source activate testenv
 # Build and install scikit-learn in dev mode
 python setup.py develop
 
+if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+then
+    MAKE_TARGET=dist
+else
+    MAKE_TARGET=html
+fi
 # The pipefail is requested to propagate exit code
-set -o pipefail && cd doc && make html 2>&1 | tee ~/log.txt
+set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
