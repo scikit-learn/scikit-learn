@@ -136,13 +136,13 @@ class Pipeline(_BasePipeline):
     Pipeline(steps=[...])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
-    0.77...
+    0.829...
     >>> # getting the selected features chosen by anova_filter
     >>> anova_svm.named_steps['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
-    array([ True,  True,  True, False, False,  True, False,  True,  True, True,
-           False, False,  True, False,  True, False, False, False, False,
-           True], dtype=bool)
+    array([False, False,  True,  True, False, False, True,  True, False,
+           True,  False,  True,  True, False, True,  False, True, True,
+           False, False], dtype=bool)
     """
 
     # BaseEstimator interface

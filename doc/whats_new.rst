@@ -22,6 +22,12 @@ New features
 Enhancements
 ............
 
+   - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
+     now uses significantly less memory when assigning data points to their
+     nearest cluster center.
+     (`#7721 <https://github.com/scikit-learn/scikit-learn/pull/7721>`_)
+     By `Jon Crall`_.
+
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
      that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
      <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
@@ -83,6 +89,20 @@ Bug fixes
 
 Version 0.18.1
 ==============
+
+Enhancements
+.........
+   - Improved ``sample_without_replacement`` speed by utilizing
+     numpy.random.permutation for most cases. As a result,
+     samples may differ in this release for a fixed random state.
+     Affected estimators:
+      - :class:`ensemble.BaggingClassifier`
+      - :class:`ensemble.BaggingRegressor`
+      - :class:`linear_model.RANSACRegressor`
+      - :class:`model_selection.RandomizedSearchCV`
+      - :class:`random_projection.SparseRandomProjection`
+     This also affects the :meth:`datasets.make_classification`
+     method.
 
 Bug fixes
 .........
