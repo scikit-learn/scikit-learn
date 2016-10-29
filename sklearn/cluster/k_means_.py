@@ -875,6 +875,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Coordinates of training data points to cluster
         """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
