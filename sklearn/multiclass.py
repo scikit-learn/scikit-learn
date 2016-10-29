@@ -244,26 +244,31 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         if _check_partial_fit_first_call(self, classes):
-            if (not hasattr(self.estimator, "partial_fit")):
+            if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError("Base estimator {0}, doesn't have partial_fit"
                                  "method".format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
 
-        # A sparse LabelBinarizer, with sparse_output=True, has been shown to
-        # outperform or match a dense label binarizer in all cases and has also
-        # resulted in less or equal memory consumption in the fit_ovr function
-        # overall.
-        self.label_binarizer_ = LabelBinarizer(sparse_output=True)
-        Y = self.label_binarizer_.fit_transform(y)
+            # A sparse LabelBinarizer, with sparse_output=True, has been shown to
+            # outperform or match a dense label binarizer in all cases and has also
+            # resulted in less or equal memory consumption in the fit_ovr function
+            # overall.
+            self.label_binarizer_ = LabelBinarizer(sparse_output=True)
+            self.label_binarizer_.fit(self.classes_)
+
+        if not set(self.classes_).issuperset(y):
+            raise ValueError("Mini-batch contains {0} while classes " +
+                             "must be subset of {1}".format(np.unique(y),
+                                                            self.classes_))
+
+        Y = self.label_binarizer_.transform(y)
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(
-            _partial_fit_binary)(self.estimators_[i],
-                                 X, next(columns) if self.classes_[i] in
-                                 self.label_binarizer_.classes_ else
-                                 np.zeros((1, len(y))))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_binary)(self.estimators_[i], X,
+                                         next(columns))
             for i in range(self.n_classes_))
 
         return self
