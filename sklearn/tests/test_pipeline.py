@@ -120,6 +120,11 @@ class FitParamT(BaseEstimator):
         self.fit(X, y, should_succeed=should_succeed)
         return self.predict(X)
 
+    def score(self, X, y=None, sample_weight=None):
+        if sample_weight is not None:
+            X = X * sample_weight
+        return np.sum(X)
+
 
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
@@ -212,6 +217,37 @@ def test_pipeline_fit_params():
     # and transformer params should not be changed
     assert_true(pipe.named_steps['transf'].a is None)
     assert_true(pipe.named_steps['transf'].b is None)
+    # invalid parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        "fit() got an unexpected keyword argument 'bad'",
+        pipe.fit, None, None, clf__bad=True
+    )
+
+
+def test_pipeline_sample_weight_supported():
+    # Pipeline should pass sample_weight
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
+    pipe.fit(X, y=None)
+    assert_equal(pipe.score(X), 3)
+    assert_equal(pipe.score(X, y=None), 3)
+    assert_equal(pipe.score(X, y=None, sample_weight=None), 3)
+    assert_equal(pipe.score(X, sample_weight=np.array([2, 3])), 8)
+
+
+def test_pipeline_sample_weight_unsupported():
+    # When sample_weight is None it shouldn't be passed
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())])
+    pipe.fit(X, y=None)
+    assert_equal(pipe.score(X), 3)
+    assert_equal(pipe.score(X, sample_weight=None), 3)
+    assert_raise_message(
+        TypeError,
+        "score() got an unexpected keyword argument 'sample_weight'",
+        pipe.score, X, sample_weight=np.array([2, 3])
+    )
 
 
 def test_pipeline_raise_set_params_error():
