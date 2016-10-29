@@ -43,6 +43,8 @@ Bug fixes
      (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
      By `Ibraim Ganiev`_.
 
+
+
    - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
      parameters were not being utilised by :class:`manifold.TSNE`.
      :issue:`6497` by `Sebastian Säger`_
@@ -58,6 +60,20 @@ Bug fixes
      <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
      by `Mohammed Affan`_
 
+Enhancements
+.............
+
+   - Improved ``sample_without_replacement`` speed by utilizing
+     numpy.random.permutation for most cases. As a result,
+     samples may differ in this release for a fixed random state.
+     Affected estimators:
+      - :class:`ensemble.BaggingClassifier`
+      - :class:`ensemble.BaggingRegressor`
+      - :class:`linear_model.RANSACRegressor`
+      - :class:`model_selection.RandomizedSearchCV`
+      - :class:`random_projection.SparseRandomProjection`
+     This also affects the :meth:`datasets.make_classification`
+     method.
 
 API changes summary
 -------------------
