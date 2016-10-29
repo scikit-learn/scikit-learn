@@ -22,7 +22,8 @@ from sklearn.metrics import recall_score
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
-                                  Perceptron, LogisticRegression, SGDClassifier)
+                                  Perceptron, LogisticRegression,
+                                  SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline

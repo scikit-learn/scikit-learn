@@ -245,15 +245,15 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
-                raise ValueError("Base estimator {0}, doesn't have partial_fit"
-                                 "method".format(self.estimator))
+                raise ValueError("Base estimator {0}, doesn't have "
+                                 "partial_fit method".format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
 
-            # A sparse LabelBinarizer, with sparse_output=True, has been shown to
-            # outperform or match a dense label binarizer in all cases and has also
-            # resulted in less or equal memory consumption in the fit_ovr function
-            # overall.
+            # A sparse LabelBinarizer, with sparse_output=True, has been
+            # shown to outperform or match a dense label binarizer in all
+            # cases and has also resulted in less or equal memory consumption
+            # in the fit_ovr function overall.
             self.label_binarizer_ = LabelBinarizer(sparse_output=True)
             self.label_binarizer_.fit(self.classes_)
 
