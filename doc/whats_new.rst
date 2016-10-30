@@ -25,7 +25,7 @@ Enhancements
    - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
      :class:`decomposition.TruncatedSVD` now expose the singular values
      from the underlying SVD. They are stored in the attribute
-     `singular_values_`, like in :class:`decomposition.IncrementalPCA`.
+     ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
 
    - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
      now uses significantly less memory when assigning data points to their
