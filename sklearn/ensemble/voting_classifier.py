@@ -12,6 +12,7 @@ classification estimators.
 # License: BSD 3 clause
 
 import numpy as np
+import warnings
 
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
@@ -61,6 +62,12 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         The number of jobs to run in parallel for ``fit``.
         If -1, then the number of jobs is set to the number of cores.
 
+    flatten_transform : bool, optional (default=False)
+        Affects shape of transform output only when voting='soft'
+        If voting='soft' and flatten_transform=True, transform method returns
+        matrix with shape [n_samples, n_classifiers * n_classes] instead of
+        [n_classifiers, n_samples, n_classes].
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -100,12 +107,14 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
+    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
+                 flatten_transform=False):
         self.estimators = estimators
         self.named_estimators = dict(estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
+        self.flatten_transform = flatten_transform
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -151,6 +160,10 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                 if not has_fit_parameter(step, 'sample_weight'):
                     raise ValueError('Underlying estimator \'%s\' does not support'
                                      ' sample weights.' % name)
+
+        if not self.flatten_transform and self.voting is 'soft':
+            warnings.warn("'flatten_transform' default value will be changed to True"
+                          "in 0.21.", DeprecationWarning)
 
         self.le_ = LabelEncoder()
         self.le_.fit(y)
@@ -238,8 +251,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'`:
+        If `voting='soft'` and `flatten_transform=False`:
           array-like = [n_classifiers, n_samples, n_classes]
+            Class probabilities calculated by each classifier.
+        If `voting='soft'` and `flatten_transform=True`:
+          array-like = [n_samples, n_classifiers * n_classes]
             Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_samples, n_classifiers]
@@ -247,7 +263,11 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         check_is_fitted(self, 'estimators_')
         if self.voting == 'soft':
-            return self._collect_probas(X)
+            probas = self._collect_probas(X)
+            if not self.flatten_transform:
+                return probas
+            else:
+                return np.hstack(probas)
         else:
             return self._predict(X)
 
