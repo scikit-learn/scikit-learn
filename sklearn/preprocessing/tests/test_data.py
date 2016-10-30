@@ -1319,7 +1319,7 @@ def test_normalize():
     for X in (X_sparse,):
         for return_norm in (True,):
             for norm in ('l1', 'l2'):
-                X_norm, norms = normalize(X, norm=norm, 
+                X_norm, norms = normalize(X, norm=norm,
                                           return_norm=return_norm)
                 assert_equal(norms, NotImplemented)
 
