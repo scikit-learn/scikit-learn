@@ -1477,7 +1477,7 @@ class PredefinedSplit(BaseCrossValidator):
 class _CVIterableWrapper(BaseCrossValidator):
     """Wrapper class for old style cv objects and iterables."""
     def __init__(self, cv):
-        self.cv = cv
+        self.cv = list(cv)
 
     def get_n_splits(self, X=None, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
