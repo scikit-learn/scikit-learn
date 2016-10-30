@@ -45,11 +45,11 @@ Installation
 Dependencies
 ~~~~~~~~~~~~
 
-Scikit-learn requires::
+scikit-learn requires:
 
-- Python (>= 2.6 or >= 3.3),
-- NumPy (>= 1.6.1),
-- SciPy (>= 0.9).
+- Python (>= 2.6 or >= 3.3)
+- NumPy (>= 1.6.1)
+- SciPy (>= 0.9)
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -78,7 +78,7 @@ Development
 
 We welcome new contributors of all experience levels. The scikit-learn
 community goals are to be helpful, welcoming, and effective. The
-`Development Guide <http://scikit-learn.org/stable/developers/index.html>`_ 
+`Development Guide <http://scikit-learn.org/stable/developers/index.html>`_
 has detailed information about contributing code, documentation, tests, and
 more. We've included some basic information in this README.
 
@@ -108,13 +108,13 @@ Testing
 After installation, you can launch the test suite from outside the
 source directory (you will need to have the ``nose`` package installed)::
 
-   $ nosetests -v sklearn
+    nosetests -v sklearn
 
 Under Windows, it is recommended to use the following command (adjust the path
 to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
 interact with tests that use ``multiprocessing``::
 
-   C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
+    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
 
 See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.
@@ -130,7 +130,7 @@ full Contributing page to make sure your code complies
 with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
 
-Project history
+Project History
 ---------------
 
 The project was started in 2007 by David Cournapeau as a Google Summer
@@ -139,7 +139,7 @@ the AUTHORS.rst file for a complete list of contributors.
 
 The project is currently maintained by a team of volunteers.
 
-**Note** `scikit-learn` was previously referred to as `scikits.learn`.
+**Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 
 
 Help and Support
