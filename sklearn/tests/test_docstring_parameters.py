@@ -9,6 +9,18 @@ import sklearn
 
 
 def get_name(func):
+    """
+    Returns name of a function
+
+    Parameters
+    ----------
+    func : Python function
+
+    Returns
+    -------
+    name : Function name with complete namespace
+
+    """
     parts = []
     module = inspect.getmodule(func)
     if module:
@@ -20,6 +32,9 @@ def get_name(func):
 
 
 def get_all_modules():
+    """
+    Returns all module names of sklearn as an array
+    """
     modules = []
     for importer, modname, ispkg in walk_packages(sklearn.__path__, prefix='sklearn.'):
         if ispkg:
@@ -28,6 +43,19 @@ def get_all_modules():
 
 
 def check_parameters_match(func, doc=None):
+    """
+    Checks docstring for given function
+
+    Parameters
+    ----------
+    func : Function for which docstring is to be checked
+    doc : (Optional) As returned from numpydoc docscrape
+
+    Returns
+    -------
+    incorrect : Array of error strings
+
+    """
     incorrect = []
     name_ = get_name(func)
 
@@ -53,7 +81,7 @@ def check_parameters_match(func, doc=None):
 
     if len(param_names) != len(args):
         mismatch = str(sorted(list(set(args) ^ set(param_names))))
-        incorrect += ['For function "' + name_ + '" arg mismatch: ' + mismatch]
+        incorrect += [name_ + ' arg mismatch: ' + mismatch]
     else:
         args.sort()
         param_names.sort()
@@ -65,7 +93,9 @@ def check_parameters_match(func, doc=None):
 
 
 def test_docstring_parameters():
-    """Test module docstring formatting"""
+    """
+    Test module docstring formatting
+    """
     public_modules = get_all_modules()
     incorrect = []
 
@@ -96,7 +126,7 @@ def test_docstring_parameters():
                 method = getattr(cls, method_name)
                 incorrect += check_parameters_match(method)
 
-            # check for _call__ method of class
+            # check for __call__ method of class
             if hasattr(cls, '__call__'):
                 incorrect += check_parameters_match(cls.__call__)
 
