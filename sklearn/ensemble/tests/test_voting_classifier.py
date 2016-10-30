@@ -259,6 +259,7 @@ def test_sample_weight():
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
 
+
 def test_transform():
     """Check trqansform method of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)

@@ -161,10 +161,6 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
                     raise ValueError('Underlying estimator \'%s\' does not support'
                                      ' sample weights.' % name)
 
-        if not self.flatten_transform and self.voting is 'soft':
-            warnings.warn("'flatten_transform' default value will be changed to True"
-                          "in 0.21.", DeprecationWarning)
-
         self.le_ = LabelEncoder()
         self.le_.fit(y)
         self.classes_ = self.le_.classes_
@@ -265,6 +261,8 @@ class VotingClassifier(BaseEstimator, ClassifierMixin, TransformerMixin):
         if self.voting == 'soft':
             probas = self._collect_probas(X)
             if not self.flatten_transform:
+                warnings.warn("'flatten_transform' default value will be"
+                              " changed to True in 0.21.", DeprecationWarning)
                 return probas
             else:
                 return np.hstack(probas)
