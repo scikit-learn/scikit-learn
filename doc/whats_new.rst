@@ -65,6 +65,10 @@ Enhancements
    - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
      to enable selection of the norm order when ``coef_`` is more than 1D
 
+   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
+     (`#7723 <https://github.com/scikit-learn/scikit-learn/pull/7723>`_)
+     by `Mikhail Korobov`_.
+
 Bug fixes
 .........
 
@@ -361,7 +365,7 @@ Trees and ensembles
      by dynamically generating attribute ``estimators_samples_`` only when it is
      needed. By `David Staub`_.
 
-   - Added ``n_jobs`` and ``sample_weights`` parameters for
+   - Added ``n_jobs`` and ``sample_weight`` parameters for
      :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
      :issue:`5805` by `Ibraim Ganiev`_.
 
@@ -371,7 +375,7 @@ Linear, kernelized and related models
      available in the multinomial case. :issue:`5251` by `Tom Dupre la Tour`_.
 
    - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
-     :class:`svm.LinearSVR` now support ``sample_weights``.
+     :class:`svm.LinearSVR` now support ``sample_weight``.
      By `Imaculate`_.
 
    - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
@@ -887,7 +891,7 @@ Enhancements
    - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
      as implemented in the ``mean_shift`` function. By `Martino Sorbaro`_.
 
-   - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
+   - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weight``.
      By `Jan Hendrik Metzen`_.
 
    - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
@@ -4680,7 +4684,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
-.. _Mikhail Korobov: http://kmike.ru/pages/about/
+.. _Mikhail Korobov: https://github.com/kmike
 
 .. _Kyle Kastner: http://kastnerkyle.github.io
 
