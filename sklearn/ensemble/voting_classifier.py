@@ -283,6 +283,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if self.voting == 'soft':
             probas = self._collect_probas(X)
             if not self.flatten_transform:
+                warnings.warn("'flatten_transform' default value will be"
+                              " changed to True in 0.21.", DeprecationWarning)
                 return probas
             else:
                 return np.hstack(probas)
