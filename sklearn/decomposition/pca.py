@@ -191,23 +191,28 @@ class PCA(_BasePCA):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Principal axes in feature space, representing the directions of
         maximum variance in the data. The components are sorted by
         ``explained_variance_``.
 
-    explained_variance_ : array, [n_components]
+    explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
 
         .. versionadded:: 0.18
 
-    explained_variance_ratio_ : array, [n_components]
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
         If ``n_components`` is not set then all components are stored and the
         sum of explained variances is equal to 1.0.
 
-    mean_ : array, [n_features]
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
+
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
         Equal to `X.mean(axis=1)`.
@@ -255,22 +260,28 @@ class PCA(_BasePCA):
     >>> pca.fit(X)
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...  0.54980...]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='full', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...  0.54980...]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
     PCA(copy=True, iterated_power='auto', n_components=1, random_state=None,
       svd_solver='arpack', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...]
 
     See also
     --------
@@ -397,6 +408,7 @@ class PCA(_BasePCA):
         explained_variance_ = (S ** 2) / n_samples
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
+        singular_values_ = S.copy()  # Store the singular values.
 
         # Postprocess the number of components required
         if n_components == 'mle':
@@ -421,6 +433,7 @@ class PCA(_BasePCA):
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = \
             explained_variance_ratio_[:n_components]
+        self.singular_values_ = singular_values_[:n_components]
 
         return U, S, V
 
@@ -475,6 +488,7 @@ class PCA(_BasePCA):
         total_var = np.var(X, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
+        self.singular_values_ = S.copy()  # Store the singular values.
         if self.n_components_ < n_features:
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
@@ -532,9 +546,11 @@ class PCA(_BasePCA):
         return np.mean(self.score_samples(X))
 
 
-@deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in 0.20. "
+@deprecated("RandomizedPCA was deprecated in 0.18 and will be removed in "
+            "0.20. "
             "Use PCA(svd_solver='randomized') instead. The new implementation "
-            "DOES NOT store whiten ``components_``. Apply transform to get them.")
+            "DOES NOT store whiten ``components_``. Apply transform to get "
+            "them.")
 class RandomizedPCA(BaseEstimator, TransformerMixin):
     """Principal component analysis (PCA) using randomized SVD
 
@@ -561,8 +577,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         .. versionchanged:: 0.18
 
     whiten : bool, optional
-        When True (False by default) the `components_` vectors are multiplied by
-        the square root of (n_samples) and divided by the singular values to
+        When True (False by default) the `components_` vectors are multiplied
+        by the square root of (n_samples) and divided by the singular values to
         ensure uncorrelated outputs with unit component-wise variances.
 
         Whitening will remove some information from the transformed signal
@@ -576,15 +592,20 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Components with maximum variance.
 
-    explained_variance_ratio_ : array, [n_components]
+    explained_variance_ratio_ : array, shape (n_components,)
         Percentage of variance explained by each of the selected components.
-        k is not set then all components are stored and the sum of explained
-        variances is equal to 1.0
+        If k is not set then all components are stored and the sum of explained
+        variances is equal to 1.0.
 
-    mean_ : array, [n_features]
+    singular_values_ : array, shape (n_components,)
+        The singular values corresponding to each of the selected components.
+        The singular values are equal to the 2-norms of the ``n_components``
+        variables in the lower-dimensional space.
+
+    mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
     Examples
@@ -596,8 +617,10 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     RandomizedPCA(copy=True, iterated_power=2, n_components=2,
            random_state=None, whiten=False)
-    >>> print(pca.explained_variance_ratio_) # doctest: +ELLIPSIS
+    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
+    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    [ 6.30061...  0.54980...]
 
     See also
     --------
@@ -675,6 +698,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
         full_var = np.var(X, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
+        self.singular_values_ = S  # Store the singular values.
 
         if self.whiten:
             self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
