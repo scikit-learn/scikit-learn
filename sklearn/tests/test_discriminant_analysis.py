@@ -329,7 +329,7 @@ def test_deprecated_lda_qda_deprecation():
         return sklearn.lda
 
     lda = assert_warns(DeprecationWarning, import_lda_module)
-    assert lda.LDA is LinearDiscriminantAnalysis
+    assert isinstance(lda.LDA(), LinearDiscriminantAnalysis)
 
     def import_qda_module():
         import sklearn.qda
@@ -339,7 +339,7 @@ def test_deprecated_lda_qda_deprecation():
         return sklearn.qda
 
     qda = assert_warns(DeprecationWarning, import_qda_module)
-    assert qda.QDA is QuadraticDiscriminantAnalysis
+    assert isinstance(qda.QDA(), QuadraticDiscriminantAnalysis)
 
 
 def test_covariance():
