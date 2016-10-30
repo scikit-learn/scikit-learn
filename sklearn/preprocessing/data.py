@@ -1346,6 +1346,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         X = X.T
 
     if sparse.issparse(X):
+        norms = NotImplemented
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
