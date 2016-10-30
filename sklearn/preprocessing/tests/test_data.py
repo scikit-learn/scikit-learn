@@ -1318,14 +1318,14 @@ def test_normalize():
     # test return_norm for sparse matrix with norm l1/l2
     for X in (X_sparse,):
         for return_norm in (True,):
-            for norm in ('l1','l2'):
-                X_norm, norms = normalize(X, norm=norm, return_norm=return_norm)
-                assert_equal(norms,NotImplemented)
+            for norm in ('l1', 'l2'):
+                X_norm, norms = normalize(X, norm=norm, 
+                                             return_norm=return_norm)
+                assert_equal(norms, NotImplemented)
 
 
 
 
-        
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
