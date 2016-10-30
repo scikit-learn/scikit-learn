@@ -210,7 +210,7 @@ def test_gridsearch():
     grid.fit(iris.data, iris.target)
 
 
-def test_parallel_predict():
+def test_parallel_fit():
     """Check parallel backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
@@ -258,3 +258,22 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
+
+def test_transform():
+    """Check trqansform method of VotingClassifier on toy dataset."""
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = GaussianNB()
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    eclf1 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft').fit(X, y)
+    eclf2 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft',
+        flatten_transform=True).fit(X, y)
+
+    assert_array_equal(eclf1.transform(X).shape, (3, 4, 2))
+    assert_array_equal(eclf2.transform(X).shape, (4, 6))
