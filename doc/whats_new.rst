@@ -69,6 +69,11 @@ Enhancements
      (`#7723 <https://github.com/scikit-learn/scikit-learn/pull/7723>`_)
      by `Mikhail Korobov`_.
 
+   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+     to change output shape of `transform` method to 2 dimensional.
+     (`#7794 <https://github.com/scikit-learn/scikit-learn/pull/7794>`_)
+     by `Ibraim Ganiev`_.
+
 Bug fixes
 .........
 
