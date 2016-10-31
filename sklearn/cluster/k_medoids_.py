@@ -31,9 +31,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
         What distance metric to use.
 
     init : {'random', 'heuristic'}, optional, default: 'heuristic'
-        Specify medoid initialization method. Random randomly selects n_clusters
-        elements from the dataset, while heuristic picks n_clusters first data
-        points that have the smallest sum distance to every other point.
+        Specify medoid initialization method. Random randomly selects
+        n_clusters elements from the dataset, while heuristic picks n_clusters
+        first data points that have the smallest sum distance to every other
+        point.
 
     max_iter : int, optional, default : 300
         Specify the maximum number of iterations when fitting.
@@ -149,7 +150,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             cluster_ics = self._get_cluster_ics(distances, medoid_ics)
 
             # Update medoids with the new cluster indices
-            self._update_medoid_ics_in_place(distances, cluster_ics, medoid_ics)
+            self._update_medoid_ics_in_place(distances, cluster_ics,
+                                             medoid_ics)
 
         # Expose labels_ which are the assignments of
         # the training data to clusters
@@ -200,13 +202,13 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
             # Cost is the sum of the distance from the cluster
             # members to the medoid.
             curr_cost = np.sum(distances[medoid_ics[cluster_idx],
-                                 cluster_ics == cluster_idx])
+                                         cluster_ics == cluster_idx])
 
             # Extract the distance matrix between the data points
             # inside the cluster_idx
             in_cluster_distances = distances[cluster_ics == cluster_idx, :]
-            in_cluster_distances = in_cluster_distances[:,
-                                   cluster_ics == cluster_idx]
+            in_cluster_distances = (
+                in_cluster_distances[:, cluster_ics == cluster_idx])
 
             # Calculate all costs there exists between all
             # the data points in the cluster_idx
@@ -272,7 +274,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         # Apply distance metric wrt. cluster centers (medoids)
         distances = pairwise_distances(X, Y=self.cluster_centers_,
-                               metric=self.distance_metric)
+                                       metric=self.distance_metric)
 
         # Assign data points to clusters based on
         # which cluster assignment yields
