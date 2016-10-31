@@ -57,7 +57,7 @@ def fetch_tu_darmstadt(data_home=None):
     --------
     Load the 'tu-darmstadt' dataset:
 
-    >>> from sklearn.datasets.tudarmstadt import fetch_tu_darmstadt
+    >>> from tudarmstadt import fetch_tu_darmstadt
     >>> import tempfile
     >>> test_data_home = tempfile.mkdtemp()
     >>> im_list, labels = fetch_tu_darmstadt(data_home=test_data_home)
