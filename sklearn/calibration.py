@@ -178,9 +178,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     this_estimator, method=self.method)
                 if sample_weight is not None:
                     calibrated_classifier.fit(X[test], y[test],
+                                              np.unique(y[train]),
                                               sample_weight[test])
                 else:
-                    calibrated_classifier.fit(X[test], y[test])
+                    calibrated_classifier.fit(X[test], y[test],
+                                              np.unique(y[train]))
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
         return self
@@ -289,7 +291,7 @@ class _CalibratedClassifier(object):
 
         return df, idx_pos_class
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, classes=None, sample_weight=None):
         """Calibrate the fitted model
 
         Parameters
@@ -300,6 +302,10 @@ class _CalibratedClassifier(object):
         y : array-like, shape (n_samples,)
             Target values.
 
+        classes : array-like, shape (n_classes,)
+            Contains unique classes used to fit the base estimator.
+            if None, then classes is extracted from the given target values.
+
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
@@ -309,7 +315,11 @@ class _CalibratedClassifier(object):
             Returns an instance of self.
         """
         lb = LabelBinarizer()
-        Y = lb.fit_transform(y)
+        if classes is None:
+            lb.fit(y)
+        else:
+            lb.fit(classes)
+        Y = lb.transform(y)
         self.classes_ = lb.classes_
 
         df, idx_pos_class = self._preproc(X)
