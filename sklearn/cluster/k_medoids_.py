@@ -20,6 +20,8 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     """
     k-medoids class.
 
+    Read more in the :ref:`User Guide <k_medoids>`.
+
     Parameters
     ----------
     n_clusters : int, optional, default: 8
@@ -49,6 +51,26 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     inertia_ : float
         Sum of distances of samples to their closest cluster center.
+
+
+    Examples
+    --------
+
+    >>> from sklearn.cluster import KMedoids
+    >>> import numpy as np
+
+    >>> X = np.asarray([[1, 2], [1, 4], [1, 0],
+    ...                 [4, 2], [4, 4], [4, 0]])
+    >>> kmedoids = KMedoids(n_clusters=2, random_state=0).fit(X)
+    >>> kmedoids.labels_
+    array([0, 0, 0, 1, 1, 1], dtype=int32)
+    >>> kmedoids.predict([[0,0], [4,4]])
+    array([0, 1], dtype=int32)
+    >>> kmedoids.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
+    >>> kmedoids.inertia_
+    8.0
     """
 
     def __init__(self, n_clusters=8, distance_metric='euclidean',

@@ -59,8 +59,10 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
 
         model.fit(Xnaive)
 
+        assert_array_equal(model.cluster_centers_,
+                           [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         assert_array_equal(model.labels_, [0, 1, 2])
-        assert_array_equal(model.inertia_, 0.0)
+        assert_equal(model.inertia_, 0.0)
 
 
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
@@ -70,9 +72,9 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
 
     refModel.fit(Xiris)
 
-    avg_dist_to_closest_centroid = \
-        np.sum(np.min(euclidean_distances(Xiris, Y=refModel.cluster_centers_),
-                      axis=1)) / Xiris.shape[0]
+    avg_dist_to_closest_centroid = np.sum(
+        np.min(euclidean_distances(Xiris, Y=refModel.cluster_centers_), axis=1)
+    ) / Xiris.shape[0]
 
     for init in ['random', 'heuristic']:
         for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
