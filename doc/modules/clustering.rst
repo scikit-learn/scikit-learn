@@ -290,20 +290,61 @@ small, as shown in the example and cited reference.
 K-Medoids
 =========
 
-:class:`KMedoids` is similar to :class:`KMeans` with some exceptions. First, instead of using the mean of each cluster as the cluster center, :class:`KMedoids` uses that data point as the cluster center (also known as the medoid) whose sum-of-distances to all cluster members is the smallest. Second, the distance metric used by :class:`KMedoids` can be freely chosen, whereas with :class:`KMeans` it is fixed to Euclidean distance.
+
+:class:`KMedoids` is related to the :class:`KMeans` algorithm. While
+:class:`KMeans` tries to minimize the within cluster sum-of-squares,
+:class:`KMedoids` tries to minimize the sum-of-distances between points labeled
+as the medoids of the cluster an all points assigned to that cluster.
+Furthermore, the distance metric used by :class:`KMedoids` can be freely chosen
+while :class:`KMeans` uses a fixed Euclidean distance.
+
+:class:`KMedoids` can be more robust to noise and outliers than :class:`KMeans`
+as e.g. it will choose one of the cluster members as the medoid while
+:class:`KMeans` will move the center of the cluster towards the outlier which
+might in turn move other points away from the cluster centre.
+
+Please note that K-Medoids is different from the K-Medians algorithm as it
+always chooses a point from the dataset as the cluster centre. K-Medians might
+choose a point which is not in the original dataset. For example, given the
+vectors (0,1), (1,0) and (2,2), the Manhattan-distance median is (1,1),
+which does not exist in the original data, and thus cannot be a medoid.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits with various distance metrics.
+ * :ref:`example_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits
+ with various distance metrics.
 
 **Algorithm description:**
-:class:`KMedoids` fitting algorithms have different variants, one of them being Partitioning Around Medoids, or PAM. Currently Scikit-Learn only supports PAM, but other variants may be introduced if need be. PAM algorithm is:
+:class:`KMedoids` fitting algorithms have different variants, one of them being
+Partitioning Around Medoids (PAM). Currently Scikit-Learn only supports PAM.
+The PAM algorithm uses a greedy search, which may fail to find the global
+optimum. It consists of two alternating steps commonly called the Assignment
+and Update steps (BUILD and SWAP in Kaufmann, Rousseeuw).
 
-* Randomly assign samples to clusters
-* Continue while the medoids keep changing or maximum number of iterations, 
-  *max_iter*, is reached
-* Assign new medoids in each cluster
-* Assign samples to clusters with the closest medoids
+PAM works as follows:
+* Initialize: Select ``n_clusters`` from the dataset as the medoids using either
+  a heuristic or random approach (configurable using the ``init`` parameter).
+* Assignment step: assign each element from the dataset to the closest medoid.
+* Update step: For each medoid :math:`m_i` and each data point :math:`x_j`
+  associated to :math:`m_i` swap :math:`m_i` and :math:`o_i` and compute the
+  total cost. Select the medoid :math:`o_i` with the lowest cost.
+* Repease the assignment and update step while the medoids keep changing or
+  maximum number of iterations ``max_iter`` is reached
+
+Total cost is defined as the sum-of-distances from the cluster medoids to the
+medoid.
+
+The complexity of K-Medoids is :math:`O(N^2 k T)` where :math:`N` is the number
+of samples, :math:`T` is the number of iterations and :math:`k` is the number of
+clusters. This makes it more suitable for smaller datasets in comparison to
+:class:`KMeans` which is log-times faster: :math:`O(N k T)`.
+
+.. topic:: References:
+
+ * "Clustering by means of Medoids'"
+   Kaufman, L. and Rousseeuw, P.J.,
+   Statistical Data Analysis Based on the L1–Norm and Related Methods, edited
+   by Y. Dodge, North-Holland, 405–416. 1987
 
 .. _affinity_propagation:
 
