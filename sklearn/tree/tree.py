@@ -11,6 +11,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Ritwik Gupta <ritwikg2004@live.com>
 #
 # License: BSD 3 clause
 
@@ -218,27 +219,23 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got %s"
-                                 % self.min_samples_leaf)
+                                 "or in (0, 0.5], got {0}".format(self.min_samples_leaf))
             min_samples_leaf = self.min_samples_leaf
         else:  # float
             if not 0. < self.min_samples_leaf <= 0.5:
                 raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got %s"
-                                 % self.min_samples_leaf)
+                                 "or in (0, 0.5], got {0}".format(self.min_samples_leaf))
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
                 raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1], got %s"
-                                 % self.min_samples_split)
+                                 "or in (0, 1], got {0}".format(self.min_samples_split))
             min_samples_split = self.min_samples_split
         else:  # float
             if not 0. < self.min_samples_split <= 1.:
                 raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1], got %s"
-                                 % self.min_samples_split)
+                                 "or in (0, 1], got {0}".format(self.min_samples_split))
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
@@ -272,8 +269,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features_ = max_features
 
         if len(y) != n_samples:
-            raise ValueError("Number of labels=%d does not match "
-                             "number of samples=%d" % (len(y), n_samples))
+            raise ValueError("Number of labels={0} does not match "
+                             "number of samples={1}".format(len(y), n_samples))
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
@@ -282,7 +279,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("max_features must be in (0, n_features]")
         if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
             raise ValueError("max_leaf_nodes must be integral number but was "
-                             "%r" % max_leaf_nodes)
+                             "{0}".format(max_leaf_nodes))
         if -1 < max_leaf_nodes < 2:
             raise ValueError(("max_leaf_nodes {0} must be either smaller than "
                               "0 or larger than 1").format(max_leaf_nodes))
@@ -294,12 +291,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                     sample_weight, dtype=DOUBLE)
             if len(sample_weight.shape) > 1:
                 raise ValueError("Sample weights array has more "
-                                 "than one dimension: %d" %
-                                 len(sample_weight.shape))
+                                 "than one dimension: {0}".format(len(sample_weight.shape)))
             if len(sample_weight) != n_samples:
-                raise ValueError("Number of weights=%d does not match "
-                                 "number of samples=%d" %
-                                 (len(sample_weight), n_samples))
+                raise ValueError("Number of weights={0} does not match "
+                                 "number of samples={1}".format(len(sample_weight), n_samples))
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
