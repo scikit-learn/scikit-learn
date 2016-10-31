@@ -36,7 +36,7 @@ class IsolationForest(BaseBagging):
     length from the root node to the terminating node.
 
     This path length, averaged over a forest of such random trees, is a
-    measure of abnormality and our decision function.
+    measure of normality and our decision function.
 
     Random partitioning produces noticeably shorter paths for anomalies.
     Hence, when a forest of random trees collectively produce shorter path
