@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+
 |Travis|_ |AppVeyor|_ |Coveralls|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
@@ -161,5 +162,6 @@ Communication
 - Website: http://scikit-learn.org
 
 Citation
-~~~~~~~~~~~~~
+~~~~~~~~
+
 If you use scikit-learn in a scientific publication, we would appreciate citations: http://scikit-learn.org/stable/about.html#citing-scikit-learn
