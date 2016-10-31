@@ -219,23 +219,27 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got {0}".format(self.min_samples_leaf))
+                                 "or in (0, 0.5], got {0}"
+                                 .format(self.min_samples_leaf))
             min_samples_leaf = self.min_samples_leaf
         else:  # float
             if not 0. < self.min_samples_leaf <= 0.5:
                 raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got {0}".format(self.min_samples_leaf))
+                                 "or in (0, 0.5], got {0}"
+                                 .format(self.min_samples_leaf))
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
                 raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1], got {0}".format(self.min_samples_split))
+                                 "or in (0, 1], got {0}"
+                                 .format(self.min_samples_split))
             min_samples_split = self.min_samples_split
         else:  # float
             if not 0. < self.min_samples_split <= 1.:
                 raise ValueError("min_samples_split must be at least 2 "
-                                 "or in (0, 1], got {0}".format(self.min_samples_split))
+                                 "or in (0, 1], got {0}"
+                                 .format(self.min_samples_split))
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
@@ -291,10 +295,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                     sample_weight, dtype=DOUBLE)
             if len(sample_weight.shape) > 1:
                 raise ValueError("Sample weights array has more "
-                                 "than one dimension: {0}".format(len(sample_weight.shape)))
+                                 "than one dimension: {0}"
+                                 .format(len(sample_weight.shape)))
             if len(sample_weight) != n_samples:
                 raise ValueError("Number of weights={0} does not match "
-                                 "number of samples={1}".format(len(sample_weight), n_samples))
+                                 "number of samples={1}"
+                                 .format(len(sample_weight), n_samples))
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
