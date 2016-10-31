@@ -1,10 +1,14 @@
+import warnings
+
 import scipy.sparse as sp
 import numpy as np
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_raises_regex, assert_true
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils.testing import (assert_raises_regex, assert_true,
+                                   assert_warns_message, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.ensemble import AdaBoostClassifier
@@ -92,9 +96,13 @@ def test_check_estimator():
         sys.stdout = old_stdout
     assert_true(msg in string_buffer.getvalue())
 
-    # doesn't error on actual estimator
-    check_estimator(AdaBoostClassifier)
-    check_estimator(MultiTaskElasticNet)
+    with ignore_warnings(category=ConvergenceWarning):
+        # doesn't error on actual estimator
+        check_estimator(AdaBoostClassifier)
+        check_estimator(MultiTaskElasticNet)
+
+    assert_warns_message(ConvergenceWarning, 'Objective did not converge',
+                         check_estimator, MultiTaskElasticNet)
 
 
 def test_check_estimators_unfitted():
