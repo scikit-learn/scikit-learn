@@ -83,7 +83,8 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
 
             model = KMedoids(n_clusters=3,
                              distance_metric=distance_metric,
-                             init=init)
+                             init=init,
+                             random_state=rng)
             model.fit(Xiris)
 
             distances = PAIRWISE_DISTANCE_FUNCTIONS[distance_metric](Xiris)

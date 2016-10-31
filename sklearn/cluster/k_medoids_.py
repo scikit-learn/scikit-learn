@@ -64,9 +64,9 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
     ...                 [4, 2], [4, 4], [4, 0]])
     >>> kmedoids = KMedoids(n_clusters=2, random_state=0).fit(X)
     >>> kmedoids.labels_
-    array([0, 0, 0, 1, 1, 1], dtype=int32)
+    array([0, 0, 0, 1, 1, 1])
     >>> kmedoids.predict([[0,0], [4,4]])
-    array([0, 1], dtype=int32)
+    array([0, 1])
     >>> kmedoids.cluster_centers_
     array([[1, 2],
            [4, 2]])

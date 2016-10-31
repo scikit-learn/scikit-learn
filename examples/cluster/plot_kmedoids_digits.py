@@ -39,8 +39,9 @@ plt.clf()
 
 plt.suptitle("Plugging different distance functions to K-Medoids", fontsize=14)
 
-all_distance_metrics = PAIRWISE_DISTANCE_FUNCTIONS.values()
-valid_distance_metrics = [d for d in all_distance_metrics if d is not None]
+all_distance_metrics = PAIRWISE_DISTANCE_FUNCTIONS.keys()
+valid_distance_metrics = [d for d in all_distance_metrics if d
+                          is not 'precomputed']
 
 plot_rows = int(np.ceil(len(valid_distance_metrics) / 2.0))
 plot_cols = 2
