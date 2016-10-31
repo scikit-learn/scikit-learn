@@ -175,14 +175,13 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method)
+                    this_estimator, method=self.method,
+                    classes=np.unique(y[train]))
                 if sample_weight is not None:
                     calibrated_classifier.fit(X[test], y[test],
-                                              sample_weight[test],
-                                              np.unique(y[train]))
+                                              sample_weight[test])
                 else:
-                    calibrated_classifier.fit(X[test], y[test],
-                                              classes=np.unique(y[train]))
+                    calibrated_classifier.fit(X[test], y[test])
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
         return self
@@ -255,6 +254,11 @@ class _CalibratedClassifier(object):
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
 
+    classes : array-like, shape (n_classes,)
+            Contains unique classes used to fit the base estimator.
+            if None, then classes is extracted from the given target values
+            in fit().
+
     References
     ----------
     .. [1] Obtaining calibrated probability estimates from decision trees
@@ -269,9 +273,10 @@ class _CalibratedClassifier(object):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid'):
+    def __init__(self, base_estimator, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
+        self.classes = classes
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -291,7 +296,7 @@ class _CalibratedClassifier(object):
 
         return df, idx_pos_class
 
-    def fit(self, X, y, sample_weight=None, classes=None):
+    def fit(self, X, y, sample_weight=None):
         """Calibrate the fitted model
 
         Parameters
@@ -305,20 +310,18 @@ class _CalibratedClassifier(object):
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
 
-        classes : array-like, shape (n_classes,)
-            Contains unique classes used to fit the base estimator.
-            if None, then classes is extracted from the given target values.
-
         Returns
         -------
         self : object
             Returns an instance of self.
         """
+
         lb = LabelBinarizer()
-        if classes is None:
+        if self.classes is None:
             lb.fit(y)
         else:
-            lb.fit(classes)
+            lb.fit(self.classes)
+
         Y = lb.transform(y)
         self.classes_ = lb.classes_
 

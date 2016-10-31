@@ -3,6 +3,7 @@
 
 import numpy as np
 from scipy import sparse
+from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
@@ -159,6 +160,7 @@ def test_calibration_multiclass():
         def softmax(y_pred):
             e = np.exp(-y_pred)
             return e / e.sum(axis=1).reshape(-1, 1)
+
         uncalibrated_log_loss = \
             log_loss(y_test, softmax(clf.decision_function(X_test)))
         calibrated_log_loss = log_loss(y_test, probas)
@@ -275,3 +277,17 @@ def test_calibration_nan_imputer():
     clf_c = CalibratedClassifierCV(clf, cv=2, method='isotonic')
     clf_c.fit(X, y)
     clf_c.predict(X)
+
+
+def test_calibration_prob_sum():
+    """Test that sum of probabilities is 1"""
+    num_classes = 2
+    X, y = make_classification(n_samples=100, n_features=20,
+                               n_informative=18, n_redundant=2,
+                               n_classes=num_classes)
+    clf = LinearSVC(C=1.0)
+    clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    clf_prob.fit(X, y)
+
+    probs = clf_prob.predict_proba(X)
+    assert_array_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
