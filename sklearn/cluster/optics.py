@@ -123,18 +123,30 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
         if len(n_pr) > 0:
             dists = pairwise_distances(X,
                                        setofobjects.get_arrays()[0][[n_pr]],
-                                       setofobjects.metric, n_jobs=1)
-            rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
+                                       setofobjects.metric, n_jobs=1).ravel()
 
-            new_reach = sp.minimum(setofobjects.reachability_[n_pr],
+            # Fix for neighbors not being returned sorted, as in comment
+            # at top of this function alludes to...
+            # i.e., issues with rdists being tied... if the smallest rdists
+            # are tied, the point index with the smallest distance needs to
+            # be returned
+
+            # stablesortidx = dists.argsort()
+            # dists = dists[stablesortidx]
+            # n_pr = n_pr[stablesortidx]
+            c = np.rec.fromarrays([dists, n_pr])
+            c.sort()
+            # c.f0 is dists, c.f1 is n_pr
+            rdists = sp.maximum(c.f0, setofobjects.core_dists_[point_index])
+            new_reach = sp.minimum(setofobjects.reachability_[c.f1],
                                    rdists)
-            setofobjects.reachability_[n_pr] = new_reach
+            setofobjects.reachability_[c.f1] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop ##
         if n_pr.size > 0:
             # Define return order based on reachability distance ###
-            return n_pr[sp.argmin(setofobjects.reachability_[n_pr])]
+            return c.f1[sp.argmin(setofobjects.reachability_[c.f1])]
         else:
             return point_index
 

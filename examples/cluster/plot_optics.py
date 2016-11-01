@@ -41,7 +41,7 @@ plt.title("Raw Data")
 ##############################################################################
 # Compute OPTICS
 
-clust = OPTICS(eps=30.3, min_samples=10, metric='minkowski')
+clust = OPTICS(eps=30.3, min_samples=9, metric='minkowski')
 
 # Run the fit
 clust.fit(X)
