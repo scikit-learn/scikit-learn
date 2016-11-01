@@ -1401,9 +1401,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         target_names = ['%s' % l for l in labels]
     else:
         if(len(target_names) != len(labels)):
-            raise ValueError('labels has '+str(len(labels))+
-                ' elements while target_names has '+
-                str(len(target_names))+' elements.')
+            raise ValueError('labels has '+str(len(labels)) + 
+                            ' elements while target_names has ' + 
+                            str(len(target_names)) + ' elements.')
 
     name_width = max(len(cn) for cn in target_names)
     width = max(name_width, len(last_line_heading), digits)
