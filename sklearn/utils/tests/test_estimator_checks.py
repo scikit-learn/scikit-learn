@@ -91,9 +91,7 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     # check that estimator state does not change
     # at transform/predict/predict_proba time
-    msg = ('Estimator changes __dict__ during'
-           'predict, transform, decision_function'
-           ' or predict_proba methods')
+    msg = 'Estimator changes __dict__ during predict'
     assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
 
     # check for sparse matrix input handling
