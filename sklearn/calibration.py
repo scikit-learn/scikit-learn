@@ -176,7 +176,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
                 calibrated_classifier = _CalibratedClassifier(
                     this_estimator, method=self.method,
-                    classes=np.unique(y[train]))
+                    classes=self.classes_)
                 if sample_weight is not None:
                     calibrated_classifier.fit(X[test], y[test],
                                               sample_weight[test])

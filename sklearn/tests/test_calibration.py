@@ -280,14 +280,26 @@ def test_calibration_nan_imputer():
 
 
 def test_calibration_prob_sum():
-    """Test that sum of probabilities is 1"""
+    # Test that sum of probabilities is 1. A non-regression test for
+    # issue #7796
     num_classes = 2
-    X, y = make_classification(n_samples=100, n_features=20,
-                               n_informative=18, n_redundant=2,
+    X, y = make_classification(n_samples=10, n_features=5,
                                n_classes=num_classes)
     clf = LinearSVC(C=1.0)
     clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
     clf_prob.fit(X, y)
 
     probs = clf_prob.predict_proba(X)
-    assert_array_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+
+    # Test to check calibration works fine when train set in a test-train
+    # split does not contain all classes
+    # Since this test uses LOO, at each iteration train set will not contain a
+    # class label
+    X = np.random.randn(10, 5)
+    y = np.arange(10)
+    clf = LinearSVC(C=1.0)
+    clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    clf_prob.fit(X, y)
+    probs = clf_prob.predict_proba(X)
+    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
