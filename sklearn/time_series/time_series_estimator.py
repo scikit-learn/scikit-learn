@@ -5,10 +5,10 @@ Author: Mark Hamilton, mhamilton723@gmail.com
 """
 
 import numpy as np
-import pandas as pd
+#import pandas as pd
 from sklearn.base import BaseEstimator, RegressorMixin, clone
 import warnings
-
+from sklearn.utils.validation import check_array,check_consistent_length
 
 class TimeSeriesEstimator(BaseEstimator):
     """
@@ -39,7 +39,7 @@ class TimeSeriesEstimator(BaseEstimator):
         converts a dataset into an autocorrelation dataset with number of previous time steps = n_prev
         returns a an X dataset of shape (samples, timesteps, features) and a Y dataset of shape (samples,features)
         """
-        is_pandas = isinstance(dataX, pd.DataFrame)
+        #is_pandas = isinstance(dataX, pd.DataFrame)
 
         if dataY is not None:
             # assert (type(dataX) is type(dataY)) TODO find way to still perform this check
@@ -47,18 +47,18 @@ class TimeSeriesEstimator(BaseEstimator):
 
         dlistX, dlistY = [], []
         for i in range(len(dataX) - n_prev + 1 - n_ahead):
-            if is_pandas:
-                dlistX.append(dataX.iloc[i:i + n_prev].as_matrix())
-                if dataY is not None:
-                    dlistY.append(dataY.iloc[i + n_prev - 1 + n_ahead].as_matrix())
-                else:
-                    dlistY.append(dataX.iloc[i + n_prev - 1 + n_ahead].as_matrix())
+            #if is_pandas:
+            #    dlistX.append(dataX.iloc[i:i + n_prev].as_matrix())
+            #    if dataY is not None:
+            #        dlistY.append(dataY.iloc[i + n_prev - 1 + n_ahead].as_matrix())
+             #   else:
+             #       dlistY.append(dataX.iloc[i + n_prev - 1 + n_ahead].as_matrix())
+            #else:
+            dlistX.append(dataX[i:i + n_prev])
+            if dataY is not None:
+                dlistY.append(dataY[i + n_prev - 1 + n_ahead])
             else:
-                dlistX.append(dataX[i:i + n_prev])
-                if dataY is not None:
-                    dlistY.append(dataY[i + n_prev - 1 + n_ahead])
-                else:
-                    dlistY.append(dataX[i + n_prev - 1 + n_ahead])
+                dlistY.append(dataX[i + n_prev - 1 + n_ahead])
 
         darrX = np.array(dlistX)
         darrY = np.array(dlistY)
@@ -97,6 +97,11 @@ class TimeSeriesEstimator(BaseEstimator):
         :param Y:
         :return:
         '''
+
+        X = check_array(X, ensure_min_samples=self.n_ahead+self.n_prev)
+        Y = check_array(Y, ensure_min_samples=self.n_ahead+self.n_prev)
+        check_consistent_length(X, Y)
+
         X_wind, Y_data = self._window_dataset(self.n_prev, X, Y, self.n_ahead)
         X_data = self._unravel_window_data(X_wind)
         return X_data, Y_data
@@ -155,9 +160,9 @@ class TimeSeriesRegressor(TimeSeriesEstimator, RegressorMixin):
             self._is_autocor and self.n_ahead == 1):  # TODO generalize and add exponential weighting on older predictions
             raise ValueError("Need to be an auto-correlation predictor with n_ahead=1")
 
-        is_pandas = isinstance(X, pd.DataFrame) or isinstance(X, pd.Series)
-        if is_pandas:
-            X = X.as_matrix()
+        #is_pandas = isinstance(X, pd.DataFrame) or isinstance(X, pd.Series)
+        #if is_pandas:
+        #    X = X.as_matrix()
 
         outs = []
         for i in range(n_paths):
@@ -185,7 +190,7 @@ def time_series_split(X, test_size=.2, number=False, output_numpy=True):
     :param output_numpy:
     :return:
     """
-    is_pandas = isinstance(X, pd.DataFrame) or isinstance(X, pd.Series)
+    #is_pandas = isinstance(X, pd.DataFrame) or isinstance(X, pd.Series)
     if test_size <= 1 and not number:
         ntrn = int(len(X) * (1 - test_size))
     elif test_size > 1 and number:
@@ -193,17 +198,17 @@ def time_series_split(X, test_size=.2, number=False, output_numpy=True):
     else:
         raise ValueError("test_size: (frac or Int) and number:(True or False) should be set correctly")
 
-    if is_pandas:
-        X_train = X.iloc[0:ntrn]
-        X_test = X.iloc[ntrn:]
-    else:
-        X_train = X[0:ntrn]
-        X_test = X[ntrn:]
+    #if is_pandas:
+    #    X_train = X.iloc[0:ntrn]
+    #    X_test = X.iloc[ntrn:]
+    #else:
+    X_train = X[0:ntrn]
+    X_test = X[ntrn:]
 
-    if output_numpy and is_pandas:
-        return X_train.as_matrix(), X_test.as_matrix()
-    else:
-        return X_train, X_test
+    #if output_numpy and is_pandas:
+    #    return X_train.as_matrix(), X_test.as_matrix()
+    #else:
+    return X_train, X_test
 
 
 def time_series_cv(n, n_folds, test_size=.2):
