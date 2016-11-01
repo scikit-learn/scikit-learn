@@ -728,7 +728,7 @@ def test_classification_report_labels_target_names_unequal_length():
     target_names = ['class 0', 'class 1', 'class 2']
 
     assert_warns_message(UserWarning,
-                         "labels size does not match size of target_names",
+                         "labels size, 2, does not match size of target_names, 3",
                          classification_report,
                          y_true, y_pred, target_names=target_names)
 
