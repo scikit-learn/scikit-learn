@@ -79,15 +79,19 @@ def check_parameters_match(func, doc=None):
     param_names = [name.split(':')[0].strip('` ') for name in param_names]
     param_names = [name for name in param_names if '*' not in name]
 
-    if len(param_names) != len(args):
-        mismatch = str(sorted(list(set(args) ^ set(param_names))))
-        incorrect += [name_ + ' arg mismatch: ' + mismatch]
-    else:
-        args.sort()
-        param_names.sort()
-        for n1, n2 in zip(param_names, args):
-            if n1 != n2:
-                incorrect += [name_ + ' ' + n1 + ' != ' + n2]
+    # parameters that are present in docstring but not in signature
+    sign_missing_params = sorted(list(set(param_names) - set(args)))
+    if len(sign_missing_params):
+        incorrect += [name_ +
+            ' => params present in docstring but not in signature: ' +
+            ', '.join(sign_missing_params)]
+
+    # parameters that are present in signature but not in docstring
+    doc_missing_params = sorted(list(set(args) - set(param_names)))
+    if len(doc_missing_params):
+        incorrect += [name_ +
+            ' => params present in signature but not in docstring: ' +
+            ', '.join(doc_missing_params)]
 
     return incorrect
 
