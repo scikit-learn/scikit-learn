@@ -1956,3 +1956,128 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         return _transform_selected(X, self._transform,
                                    self.categorical_features, copy=True)
+
+
+
+class CountFeaturizer(BaseEstimator, TransformerMixin):
+
+    """
+    Adds in a new feature column containing the number of occurences of 
+    each row in the given data set.
+
+    Formally, for each data point X_i in the dataset X, it will add in 
+    a new feature count_X_i to the end of X_i where count_X_i is the number of 
+    occurences of X_i in the dataset X given the equality indicator
+    'inclusion'
+
+    This preprocessing step is useful when the number of occurences
+    of a particular piece of data is helpful in computing the prediction. 
+
+    Parameters
+    ----------
+    data : list or numpy.ndarray, default=None
+        The data which requires this preprocessing step 
+
+    inclusion : list, numpy.ndarray, or string (only 'all'), default='all'
+        The inclusion criteria for counting
+        - 'all' (default): Every feature is taken into consideration when
+        counting how many of each row is in the dataset 
+        - array of indicators: numpy.ndarray or list of values where 0 means
+        to not take the feature into consideration and 1 means to take the
+        feature into consideration
+        Note: Anything with a boolean value that evaluates to False is a fine
+        substitute for 0 and anything with a boolean value that evaluates to 
+        True is a fine substitute for 1, but 0 and 1 are good guidelines  
+
+    Examples
+    --------
+    Given a dataset with two features and four samples, we let the transformer
+    find the number of occurences of each data point in the dataset 
+
+    >>> from sklearn.preprocessing import CountFeaturizer
+    >>> data = [[1, 1], [1, 1], [3, 1], [0, 0]]
+    >>> cf = CountFeaturizer(data)
+    >>> cf.transform()
+    array([[ 1.,  1.,  2.],
+       [ 1.,  1.,  2.],
+       [ 3.,  1.,  1.],
+       [ 0.,  0.,  1.]])
+    >>> cf.fit(data, inclusion=[0, 1])
+    >>> cf.transform()
+    array([[ 1.,  1.,  3.],
+       [ 1.,  1.,  3.],
+       [ 3.,  1.,  3.],
+       [ 0.,  0.,  1.]])
+
+    Notice how on the second fit, we set the inclusion to [0, 1]
+    which made it only count the number of instances of the second feature 
+
+    See also
+    --------
+    WIP, I will make the documentation afterwards 
+    """
+    def __init__(self, data=None, inclusion='all'):
+        if data != None:
+            self.fit(data, inclusion=inclusion)
+
+    def fit(self, data, inclusion='all'):
+        """
+        Sets the value of data and inclusion for the CountFeaturizer
+        """
+        def valid_data_type(self, type_check):
+            return type(type_check) == np.ndarray or type(type_check) == list 
+
+        if data == None:
+            raise ValueError("Data is None")
+
+        if not self.valid_data_type(data):
+            raise ValueError("Only supports lists / numpy arrays (data)")
+
+        if len(data) == 0:
+            raise ValueError("Data is empty")
+
+        num_features = len(data[0])
+
+        if inclusion != 'all':
+            if not self.valid_data_type(inclusion):
+                raise ValueError("Only supports lists / numpy arrays (inclusion)")
+            elif len(inclusion) != num_features:
+                raise ValueError("Inclusion/feature mismatch")
+
+        self.data = np.array(data)
+        self.inclusion = inclusion
+
+    def transform(self):
+        """
+        Transforms the inputted data with the new 'count' feature (column)
+        and returns it 
+        The data set returned from the transformation will always be a 
+        numpy.ndarray 
+        """
+        def extract_tuple(data_row):
+            if self.inclusion == 'all':
+                return tuple(data_row)
+            else:
+                num_features = len(data_row)
+                return tuple([data_row[i] \
+                    for i in xrange(num_features) if self.inclusion[i]])
+
+        # caching is faster but memory intensive
+        cache = {}
+        for data_i in self.data:
+            data_i_tuple = extract_tuple(data_i)
+            if data_i_tuple not in cache:
+                cache[data_i_tuple] = 1
+            else:
+                cache[data_i_tuple] += 1
+        len_data = len(self.data)
+        num_features = len(self.data[0])
+        transformed = np.zeros((len_data, num_features + 1))
+        transformed[:, :-1] = self.data 
+        for i in xrange(len_data):
+            data_i_tuple = extract_tuple(self.data[i])
+            transformed[i, num_features] = cache[data_i_tuple] 
+        self.data = transformed
+        return self.data 
+
+
