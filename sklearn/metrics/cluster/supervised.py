@@ -73,8 +73,6 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
 
         .. versionadded:: 0.18
 
-        .. versionadded:: 0.18
-
     Returns
     -------
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
