@@ -1037,7 +1037,8 @@ class OneClassSVM(BaseLibSVM):
         return self
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Component of the samples in the direction perpendicular to the separating
+        hyperplane.
 
         Parameters
         ----------
