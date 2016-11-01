@@ -3,6 +3,11 @@ sudo: false
 
 language: python
 
+before_install:
+  # Let's use this to pass messages to our build system
+  # [ci recythonize] will force recythonizing of all cython files
+  - "export TRAVIS_COMMIT_MSG=\"$(git log --format=%B --no-merges -n 1)\""
+
 # Pre-install packages for the ubuntu distribution
 cache:
   apt: true
