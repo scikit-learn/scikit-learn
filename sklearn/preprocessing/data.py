@@ -2024,13 +2024,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         Sets the value of data and inclusion for the CountFeaturizer
         """
-        def valid_data_type(self, type_check):
+        def valid_data_type(type_check):
             return type(type_check) == np.ndarray or type(type_check) == list 
 
         if data == None:
             raise ValueError("Data is None")
 
-        if not self.valid_data_type(data):
+        if not valid_data_type(data):
             raise ValueError("Only supports lists / numpy arrays (data)")
 
         if len(data) == 0:
@@ -2039,7 +2039,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         num_features = len(data[0])
 
         if inclusion != 'all':
-            if not self.valid_data_type(inclusion):
+            if not valid_data_type(inclusion):
                 raise ValueError("Only supports lists / numpy arrays (inclusion)")
             elif len(inclusion) != num_features:
                 raise ValueError("Inclusion/feature mismatch")
