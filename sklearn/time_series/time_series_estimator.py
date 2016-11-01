@@ -1,6 +1,13 @@
+"""
+Time series estimator Class
+
+Author: Mark Hamilton, mhamilton723@gmail.com
+"""
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, RegressorMixin, clone
+import warnings
 
 
 class TimeSeriesEstimator(BaseEstimator):
@@ -8,7 +15,7 @@ class TimeSeriesEstimator(BaseEstimator):
     Base Class for Time Series Estimators
     """
 
-    def __init__(self, base_estimator, n_prev=3, n_ahead=1, parallel_models=False, **base_params):
+    def __init__(self, base_estimator, n_prev=1, n_ahead=1, parallel_models=False, **base_params):
         self.base_estimator = base_estimator.set_params(**base_params)
         self.parallel_models = parallel_models
         self.n_prev = n_prev
@@ -111,7 +118,6 @@ class TimeSeriesEstimator(BaseEstimator):
         return self
 
 
-
 class TimeSeriesRegressor(TimeSeriesEstimator, RegressorMixin):
     """
     A wrapper object for any scikit learn regressor. This object is designed to turn any regressor
@@ -136,7 +142,7 @@ class TimeSeriesRegressor(TimeSeriesEstimator, RegressorMixin):
         else:
             return self.base_estimator.predict(X_new)
 
-    def forecast(self, X, n_steps):
+    def forecast(self, X, n_steps, noise=0, n_paths=1, combine=None):
         '''
         Forecast using a training dataset, n_steps into the future
         This is acchomplished by feeding the output data back into the regressor
@@ -145,33 +151,47 @@ class TimeSeriesRegressor(TimeSeriesEstimator, RegressorMixin):
         :param n_steps:
         :return:
         '''
-        if not (self._is_autocor and self.n_ahead == 1): #TODO generalize and add exponential weighting on older predictions
+        if not (
+            self._is_autocor and self.n_ahead == 1):  # TODO generalize and add exponential weighting on older predictions
             raise ValueError("Need to be an auto-correlation predictor with n_ahead=1")
 
         is_pandas = isinstance(X, pd.DataFrame) or isinstance(X, pd.Series)
         if is_pandas:
-            X=X.as_matrix()
+            X = X.as_matrix()
 
-        out = np.empty((n_steps, X.shape[1]))
-        previous = X[-self.n_prev:]
-        for i in range(n_steps):
-            next_step = self.predict(np.array([previous.ravel()]), preprocessed=True)
-            out[i, :] = next_step
-            previous = np.vstack((previous[1:], next_step))
+        outs = []
+        for i in range(n_paths):
+            out = np.empty((n_steps, X.shape[1]))
+            previous = X[-self.n_prev:]
+            for i in range(n_steps):
+                next_step = self.predict(np.array([previous.ravel()]), preprocessed=True)
+                out[i, :] = next_step + next_step * np.random.randn(*next_step.shape) * noise
+                previous = np.vstack((previous[1:], next_step))
+            outs.append(out)
 
-        return out
+        if combine == 'mean' and n_paths > 1:
+            return np.array(outs).mean(axis=0)
+        elif n_paths > 1:
+            return np.array(outs)
+        else:
+            return out
 
 
-def time_series_split(X, test_size=.2, output_numpy=True):
-    '''
+def time_series_split(X, test_size=.2, number=False, output_numpy=True):
+    """
     Splits a dataset according to the time the data was taken
     :param X:
     :param test_size:
     :param output_numpy:
     :return:
-    '''
+    """
     is_pandas = isinstance(X, pd.DataFrame) or isinstance(X, pd.Series)
-    ntrn = int(len(X) * (1 - test_size))
+    if test_size <= 1 and not number:
+        ntrn = int(len(X) * (1 - test_size))
+    elif test_size > 1 and number:
+        ntrn = int(len(X) - test_size)
+    else:
+        raise ValueError("test_size: (frac or Int) and number:(True or False) should be set correctly")
 
     if is_pandas:
         X_train = X.iloc[0:ntrn]
@@ -204,7 +224,7 @@ def time_series_cv(n, n_folds, test_size=.2):
     return out
 
 
-def cascade_cv(n, n_folds, data_size=.8, test_size=.15):
+def cascade_cv(n, n_folds, data_size=.8, test_size=.15, number=False):
     '''
     Splits the dataset into n_folds of overlapping but temporally contiguous data.
     :param n: the size of the dataset
@@ -213,13 +233,23 @@ def cascade_cv(n, n_folds, data_size=.8, test_size=.15):
     :param test_size: the relative size of each testing dataset
     :return:
     '''
-    out = []
+    pairs = []
     shift = int(round((1 - data_size) * n / float(n_folds)))
     if shift < 4:
-        raise (UserWarning("Small Shift warning: Consider less folds, or a smaller data size"))
+        warnings.warn("Small Shift warning: Consider less folds, or a smaller data size")
     for i in range(n_folds):
         start = shift * i
         end = min(start + int(data_size * n), n)
-        ntrn = int((end - start) * (1 - test_size))
-        out.append((list(range(start, start + ntrn)), list(range(start + ntrn, end))))
-    return out
+
+        if test_size <= 1 and not number:
+            #ntrn = int(n * (1 - test_size))
+            ntrn = int((end - start) * (1 - test_size))
+        elif test_size > 1 and number:
+            ntrn = int((end - start) - test_size)
+            if ntrn < 0:
+                raise ValueError("test size is too large, negative number of training examples")
+        else:
+            raise ValueError("test_size: (frac or Int) and number:(True or False) should be set correctly")
+
+        pairs.append((list(range(start, start + ntrn)), list(range(start + ntrn, end))))
+    return pairs
