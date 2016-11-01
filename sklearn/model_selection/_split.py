@@ -1498,7 +1498,7 @@ class _CVIterableWrapper(BaseCrossValidator):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        return len(self.cv)  # Both iterables and old-cv objects support len
+        return len(self.cv)
 
     def split(self, X=None, y=None, groups=None):
         """Generate indices to split data into training and test set.
