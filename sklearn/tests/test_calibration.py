@@ -303,5 +303,4 @@ def test_calibration_prob_sum():
     clf_prob.fit(X, y)
     probs = clf_prob.predict_proba(X)
     n_classes = len(y)
-    assert_array_almost_equal(probs, np.full((X.shape[0], n_classes),
-                                             1/n_classes))
+    assert_array_almost_equal(probs, 1/n_classes)
