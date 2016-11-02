@@ -302,4 +302,6 @@ def test_calibration_prob_sum():
     clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
     clf_prob.fit(X, y)
     probs = clf_prob.predict_proba(X)
-    assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
+    n_classes = len(y)
+    assert_array_almost_equal(probs, np.full((X.shape[0], n_classes),
+                                             1/n_classes))

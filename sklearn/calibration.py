@@ -14,9 +14,10 @@ from math import log
 import numpy as np
 
 from scipy.optimize import fmin_bfgs
+from sklearn.preprocessing import LabelEncoder
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
-from .preprocessing import LabelBinarizer
+from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted
 from .utils.fixes import signature
@@ -50,7 +51,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach. It is not advised to use isotonic calibration
-        with too few calibration samples ``(<<1000)`` since it tends to overfit.
+        with too few calibration samples ``(<<1000)`` since it tends to
+        overfit.
         Use sigmoids (Platt's calibration) in this case.
 
     cv : integer, cross-validation generator, iterable or "prefit", optional
@@ -64,7 +66,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` 
-        is neither binary nor multiclass, :class:`sklearn.model_selection.KFold` 
+        is neither binary nor multiclass,
+        :class:`sklearn.model_selection.KFold`
         is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -97,6 +100,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
+
     def __init__(self, base_estimator=None, method='sigmoid', cv=3):
         self.base_estimator = base_estimator
         self.method = method
@@ -124,15 +128,16 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
                          force_all_finite=False)
         X, y = indexable(X, y)
-        lb = LabelBinarizer().fit(y)
-        self.classes_ = lb.classes_
+        le = LabelBinarizer().fit(y)
+        self.classes_ = le.classes_
 
         # Check that each cross-validation fold can have at least one
         # example per class
         n_folds = self.cv if isinstance(self.cv, int) \
             else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
         if n_folds and \
-           np.any([np.sum(y == class_) < n_folds for class_ in self.classes_]):
+                np.any([np.sum(y == class_) < n_folds for class_ in
+                        self.classes_]):
             raise ValueError("Requesting %d-fold cross-validation but provided"
                              " less than %d examples for at least one class."
                              % (n_folds, n_folds))
@@ -158,7 +163,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             fit_parameters = signature(base_estimator.fit).parameters
             estimator_name = type(base_estimator).__name__
             if (sample_weight is not None
-                    and "sample_weight" not in fit_parameters):
+                and "sample_weight" not in fit_parameters):
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
@@ -273,6 +278,7 @@ class _CalibratedClassifier(object):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
+
     def __init__(self, base_estimator, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
@@ -292,7 +298,11 @@ class _CalibratedClassifier(object):
             raise RuntimeError('classifier has no decision_function or '
                                'predict_proba method.')
 
-        idx_pos_class = np.arange(df.shape[1])
+        if hasattr(self.base_estimator, "classes_"):
+            idx_pos_class = self.label_encoder_. \
+                transform(self.base_estimator.classes_)
+        else:
+            idx_pos_class = np.arange(df.shape[1])
 
         return df, idx_pos_class
 
@@ -316,14 +326,14 @@ class _CalibratedClassifier(object):
             Returns an instance of self.
         """
 
-        lb = LabelBinarizer()
+        self.label_encoder_ = LabelEncoder()
         if self.classes is None:
-            lb.fit(y)
+            self.label_encoder_.fit(y)
         else:
-            lb.fit(self.classes)
+            self.label_encoder_.fit(self.classes)
 
-        Y = lb.transform(y)
-        self.classes_ = lb.classes_
+        self.classes_ = self.label_encoder_.classes_
+        Y = label_binarize(y, self.classes_)
 
         df, idx_pos_class = self._preproc(X)
         self.calibrators_ = []
@@ -460,6 +470,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
     b_ : float
         The intercept.
     """
+
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
