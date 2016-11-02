@@ -309,7 +309,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                       shape=(n_samples, len(self.estimators_)))
             return self.label_binarizer_.inverse_transform(indicator)
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method(['_first_estimator', 'estimator'])
     def predict_proba(self, X):
         """Probability estimates.
 
@@ -348,7 +348,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
-    @if_delegate_has_method('estimator')
+    @if_delegate_has_method(['_first_estimator', 'estimator'])
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. This can only be used with estimators which implement the
@@ -398,6 +398,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
+
+    @property
+    def _first_estimator(self):
+        return self.estimators_[0]
 
 
 def _fit_ovo_binary(estimator, X, y, i, j):

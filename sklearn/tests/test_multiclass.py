@@ -326,6 +326,14 @@ def test_ovr_multilabel_predict_proba():
         assert_false(hasattr(decision_only, 'predict_proba'))
         assert_true(hasattr(decision_only, 'decision_function'))
 
+        # Estimator which can get predict_proba enabled after fitting
+        gs = GridSearchCV(svm.SVC(probability=False),
+                          param_grid={'probability': [True]})
+        proba_after_fit = OneVsRestClassifier(gs)
+        assert_false(hasattr(proba_after_fit, 'predict_proba'))
+        proba_after_fit.fit(X_train, Y_train)
+        assert_true(hasattr(proba_after_fit, 'predict_proba'))
+
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
 
