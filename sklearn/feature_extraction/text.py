@@ -270,16 +270,16 @@ class VectorizerMixin(object):
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
-            process_token = self.build_token_processor()
-
-            def word_analyzer(doc):
-                toks = process_token(tokenize(preprocess(self.decode(doc))))
-                return self._word_ngrams([tok for tok in toks if tok],
-                                         stop_words)
-            return word_analyzer
-
-            return lambda doc: self._word_ngrams(
-                tokenize(preprocess(self.decode(doc))), stop_words)
+            if self.token_processor is not None:
+                def word_analyzer(doc):
+                    toks = self.token_processor(
+                        tokenize(preprocess(self.decode(doc))))
+                    return self._word_ngrams([tok for tok in toks if tok],
+                                             stop_words)
+                return word_analyzer
+            else:
+                return lambda doc: self._word_ngrams(
+                    tokenize(preprocess(self.decode(doc))), stop_words)
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
