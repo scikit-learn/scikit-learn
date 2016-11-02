@@ -985,17 +985,17 @@ def test_ovr_decision_function():
     # Test if the prediction is the same as y
     assert_array_equal(y_pred, y_test)
 
-    deci_vals = clf.decision_function(x_test)
+    deci_val = clf.decision_function(x_test)
 
     # Assert that the predicted class has the maximum value
-    assert_array_equal(np.argmax(deci_vals, axis=1), y_pred)
+    assert_array_equal(np.argmax(deci_val, axis=1), y_pred)
 
     # Get decision value at test points for the predicted class
-    pred_class_deci_vals = deci_vals[range(8), y_pred].reshape((4, 2))
+    pred_class_deci_val = deci_val[range(8), y_pred].reshape((4, 2))
 
-    # Assert pred_class_deci_vals > 0 here
-    assert_greater(np.min(pred_class_deci_vals), 0.0)
+    # Assert pred_class_deci_val > 0 here
+    assert_greater(np.min(pred_class_deci_val), 0.0)
 
     # Test if the first point has lower decision value on every quadrant
     # compared to the second point
-    assert_true(np.all(pred_class_deci_vals[:, 0] < pred_class_deci_vals[:, 1]))
+    assert_true(np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1]))
