@@ -39,7 +39,7 @@ def get_blas_info():
     return cblas_libs, blas_info
 
 
-def tweak_extensions_to_build_from_c_and_cpp_files(extensions):
+def build_from_c_and_cpp_files(extensions):
     """Modify the extensions to build from the .c and .cpp files.
 
     This is useful for releases, this way cython is not required to
@@ -59,12 +59,12 @@ def tweak_extensions_to_build_from_c_and_cpp_files(extensions):
         extension.sources = sources
 
 
-def tweak_extensions(top_path, config):
-    """Tweaks between release and development mode."""
+def maybe_cythonize_extensions(top_path, config):
+    """Tweaks for building extensions between release and development mode."""
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
     if is_release:
-        tweak_extensions_to_build_from_c_and_cpp_files(config.ext_modules)
+        build_from_c_and_cpp_files(config.ext_modules)
     else:
         message = ('Please install cython with a version >= 0.23'
                    ' in order to build a scikit-learn development version.')
