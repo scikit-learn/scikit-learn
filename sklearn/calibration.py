@@ -51,8 +51,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach. It is not advised to use isotonic calibration
-        with too few calibration samples ``(<<1000)`` since it tends to
-        overfit.
+        with too few calibration samples ``(<<1000)`` since it tends to overfit.
         Use sigmoids (Platt's calibration) in this case.
 
     cv : integer, cross-validation generator, iterable or "prefit", optional
@@ -66,8 +65,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` 
-        is neither binary nor multiclass,
-        :class:`sklearn.model_selection.KFold`
+        is neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
         is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -100,7 +98,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-
     def __init__(self, base_estimator=None, method='sigmoid', cv=3):
         self.base_estimator = base_estimator
         self.method = method
@@ -163,7 +160,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             fit_parameters = signature(base_estimator.fit).parameters
             estimator_name = type(base_estimator).__name__
             if (sample_weight is not None
-                and "sample_weight" not in fit_parameters):
+                    and "sample_weight" not in fit_parameters):
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
@@ -278,7 +275,6 @@ class _CalibratedClassifier(object):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-
     def __init__(self, base_estimator, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
@@ -299,7 +295,7 @@ class _CalibratedClassifier(object):
                                'predict_proba method.')
 
         if hasattr(self.base_estimator, "classes_"):
-            idx_pos_class = self.label_encoder_. \
+            idx_pos_class = self.label_encoder_.\
                 transform(self.base_estimator.classes_)
         else:
             idx_pos_class = np.arange(df.shape[1])
@@ -470,7 +466,6 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
     b_ : float
         The intercept.
     """
-
     def fit(self, X, y, sample_weight=None):
         """Fit the model using X, y as training data.
 
