@@ -50,7 +50,7 @@ from .utils.validation import check_X_y
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
-from .utils.metaestimators import _safe_split
+from .utils.metaestimators import _safe_split, if_delegate_has_method
 
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
@@ -309,6 +309,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                       shape=(n_samples, len(self.estimators_)))
             return self.label_binarizer_.inverse_transform(indicator)
 
+    @if_delegate_has_method('estimator')
     def predict_proba(self, X):
         """Probability estimates.
 
@@ -347,6 +348,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Y /= np.sum(Y, axis=1)[:, np.newaxis]
         return Y
 
+    @if_delegate_has_method('estimator')
     def decision_function(self, X):
         """Returns the distance of each sample from the decision boundary for
         each class. This can only be used with estimators which implement the
@@ -361,9 +363,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         T : array-like, shape = [n_samples, n_classes]
         """
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimators_[0], "decision_function"):
-            raise AttributeError(
-                "Base estimator doesn't have a decision_function attribute.")
         return np.array([est.decision_function(X).ravel()
                          for est in self.estimators_]).T
 

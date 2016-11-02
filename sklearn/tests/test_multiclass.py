@@ -314,14 +314,17 @@ def test_ovr_multilabel_predict_proba():
         X_test = X[80:]
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
-        # decision function only estimator. Fails in current implementation.
+        # Decision function only estimator.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
-        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+        assert not hasattr(decision_only, 'predict_proba')
+        assert hasattr(decision_only, 'decision_function')
 
         # Estimator with predict_proba disabled, depending on parameters.
         decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        assert not hasattr(decision_only, 'predict_proba')
         decision_only.fit(X_train, Y_train)
-        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+        assert not hasattr(decision_only, 'predict_proba')
+        assert hasattr(decision_only, 'decision_function')
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
@@ -339,9 +342,10 @@ def test_ovr_single_label_predict_proba():
     X_test = X[80:]
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
-    # decision function only estimator. Fails in current implementation.
+    # Decision function only estimator.
     decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
-    assert_raises(AttributeError, decision_only.predict_proba, X_test)
+    assert not hasattr(decision_only, 'predict_proba')
+    assert hasattr(decision_only, 'decision_function')
 
     Y_pred = clf.predict(X_test)
     Y_proba = clf.predict_proba(X_test)
