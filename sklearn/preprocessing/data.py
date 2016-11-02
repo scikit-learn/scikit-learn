@@ -2091,7 +2091,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             for i in xrange(len_data):
                 data_i_tuple = self._extract_tuple(X[i])
                 transformed[i, num_features] = self.count_cache[data_i_tuple]
-                return transformed 
+            return transformed 
         else:
             return numpy.array([])
 
