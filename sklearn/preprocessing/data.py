@@ -1325,6 +1325,22 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
     return_norm : boolean, default False
         whether to return the computed norms
 
+    Returns
+    -------
+    X : {array-like, sparse matrix}, shape [n_samples, n_features]
+        Normalized input X.
+
+    norms :
+        NotImplemented
+        Currently not implemented for sparse matrix X with norm 'l1' or 'l2'.
+
+        array, shape X.data.shape
+        an array of nnz element of X replaced by the maximum element along
+        given axis in input X for sparse matrix X with norm 'max'.
+
+        array, length n_samples (n_features if axis=0)
+        an array of norms along given axis for dense matrix X.
+
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
