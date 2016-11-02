@@ -406,11 +406,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         Type of the matrix returned by fit_transform() or transform().
 
     non_negative : boolean or 'total', optional, default=False
-        When True or False, an alternating sign is added to the counts as to
-        approximately conserve the inner product in the hashed space.
-        When True, an absolute value is additionally applied to the result
-        prior to returning it.
-        When 'total' all counts are positive which disables collision handling.
+        When False, an alternating sign is added to the features as to
+        approximately conserve the inner product in the hashed space even for
+        small n_features in a similar approach to the sparse random projection.
+        When True, the behaviour is identical to the one with (False) with an
+        additional absolute value applied to the result prior to returning it.
+        This significantly reduces the inner product preservation property and
+        is deprecated as of 0.19.
+        When 'total' all counts are positive and for small n_features values
+        the inner product will not be preserved in the hashed space.
 
     See also
     --------

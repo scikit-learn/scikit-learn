@@ -15,7 +15,7 @@ np.import_array()
 
 @cython.boundscheck(False)
 @cython.cdivision(True)
-def transform(raw_X, Py_ssize_t n_features, dtype, char alternate_sign):
+def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign):
     """Guts of FeatureHasher.transform.
 
     Returns
@@ -63,7 +63,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype, char alternate_sign):
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
-            if alternate_sign: # counter the effect of hash collision (issue #7513)
+            if alternate_sign:  # improve inner product preservation
+                                # in the hashed space (issue #7513)
                 value *= (h >= 0) * 2 - 1
             values[size] = value
             size += 1
