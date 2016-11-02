@@ -30,7 +30,7 @@ env:
       COVERAGE=true
     # This environment tests the oldest supported anaconda env
     - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
+      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.23"
     # This environment tests the newest supported anaconda env
     # It also runs tests requiring Pandas.
     - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"

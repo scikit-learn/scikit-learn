@@ -53,16 +53,24 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION numpy scipy \
-            cython=$CYTHON_VERSION libgfortran mkl flake8 \
+            # cython=$CYTHON_VERSION
+            libgfortran mkl flake8 \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip nose \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION cython=$CYTHON_VERSION \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            # cython=$CYTHON_VERSION
             libgfortran nomkl \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
+
+    # Temporary work around for Python 2.6 because cython >= 0.23 is
+    # required for building scikit-learn but python 2.6 and cython
+    # 0.23 are not compatible in conda. Remove the next line and
+    # install cython via conda when Python 2.6 support is removed.
+    pip install cython==$CYTHON_VERSION
 
     # Install nose-timer via pip
     pip install nose-timer
