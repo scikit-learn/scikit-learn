@@ -1960,6 +1960,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
 
 class CountFeaturizer(BaseEstimator, TransformerMixin):
+
     """
     Adds in a new feature column containing the number of occurences of 
     each row in the given data set.
@@ -2013,76 +2014,76 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    WIP, I will make the documentation afterwards 
+    WIP, I will make the documentation .rst afterwards 
     """
+    def __init__(self, inclusion='all'):  
+        if inclusion != 'all' and not _valid_data_type(inclusion):
+            raise ValueError("Only supports lists / numpy arrays (inclusion)")
+        self.inclusion = inclusion 
+        self.count_cache = {}
 
-    def fit(self, X, y=None, inclusion='all'):
+    def _valid_data_type(type_check):
         """
-        Sets the value of data and inclusion for the CountFeaturizer
+        Defines the data types that are compatible with CountFeaturizer
+        Currently, only Python lists and numpy arrays are accepted
         """
-        def valid_data_type(type_check):
-            return type(type_check) == np.ndarray or type(type_check) == list 
+        return type(type_check) == np.ndarray or type(type_check) == list 
 
-        if X == None:
-            raise ValueError("Data is None")
+    def _extract_tuple(data_row):
+        if self.inclusion == 'all':
+            return tuple(data_row)
+        else:
+            num_features = len(data_row)
+            return tuple([data_row[i] \
+                for i in xrange(num_features) if self.inclusion[i]])
 
-        if not valid_data_type(X):
-            raise ValueError("Only supports lists / numpy arrays (data)")
+    def fit(self, X, y=None):
+        """
+        Sets the value of count_cache which holds the counts of each data point
+        """
+            
+        if not _valid_data_type(X):
+            raise ValueError("Only supports lists / numpy arrays (fit)")
+        if len(X) > 0:
+            num_features = len(X[0])
 
-        if len(X) == 0:
-            raise ValueError("Data is empty")
-
-        num_features = len(X[0])
-
-        if inclusion != 'all':
-            if not valid_data_type(inclusion):
-                raise ValueError("Only supports lists / numpy arrays (inclusion)")
-            elif len(inclusion) != num_features:
-                raise ValueError("Inclusion/feature mismatch")
-
-        self.X = np.array(X)
-        self.inclusion = inclusion
+            if self.inclusion != 'all' and len(self.inclusion) != num_features:
+                # there must be one value of inclusion for each feature
+                raise ValueError("Inclusion/feature must be 1 to 1")
+            self.count_cache = {} 
+            for data_i in X:
+                data_i_tuple = _extract_tuple(data_i)
+                if data_i_tuple not in self.count_cache:
+                    self.count_cache[data_i_tuple] = 1
+                else:
+                    self.count_cache[data_i_tuple] += 1
+        else:
+            self.count_cache = {}
         return self
 
-    def transform(self):
+    def transform(self, X):
         """
         Transforms the inputted data with the new 'count' feature (column)
         and returns it 
         The data set returned from the transformation will always be a 
         numpy.ndarray 
         """
-        def extract_tuple(data_row):
-            if self.inclusion == 'all':
-                return tuple(data_row)
-            else:
-                num_features = len(data_row)
-                return tuple([data_row[i] \
-                    for i in xrange(num_features) if self.inclusion[i]])
+        if not _valid_data_type(X):
+            raise ValueError("Only supports lists / numpy arrays (transform)")
+        len_data = len(X)
+        if len_data > 0:
+            num_features = len(X[0])
 
-        # caching is faster but memory intensive
-        cache = {}
-        for data_i in self.X:
-            data_i_tuple = extract_tuple(data_i)
-            if data_i_tuple not in cache:
-                cache[data_i_tuple] = 1
-            else:
-                cache[data_i_tuple] += 1
-        len_data = len(self.X)
-        num_features = len(self.X[0])
-        transformed = np.zeros((len_data, num_features + 1))
-        transformed[:, :-1] = self.X 
-        for i in xrange(len_data):
-            data_i_tuple = extract_tuple(self.X[i])
-            transformed[i, num_features] = cache[data_i_tuple] 
-        self.X = transformed
-        return self.X 
-
-    def fit_transform(self, X, y=None):
-        """Fit CountFeaturizer to X, then transform X.
-
-        Equivalent to self.fit(X).transform(), but more convenient 
-        See fit for the parameters, transform for the return value.
-        """
-        return self.fit(X).transform()
+            if self.inclusion != 'all' and \
+                len(self.inclusion) != num_features:
+                raise ValueError("Inclusion/feature must be 1 to 1")
+            transformed = np.zeros((len_data, num_features + 1))
+            transformed[:, :-1] = X 
+            for i in xrange(len_data):
+                data_i_tuple = _extract_tuple(X[i])
+                transformed[i, num_features] = self.count_cache[data_i_tuple]
+                return transformed 
+        else:
+            return numpy.array([])
 
 
