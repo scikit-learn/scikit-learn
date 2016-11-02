@@ -1905,7 +1905,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
 
 class CountFeaturizer(BaseEstimator, TransformerMixin):
-
     """
     Adds in a new feature column containing the number of occurences of 
     each row in the given data set.
@@ -1961,9 +1960,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     --------
     WIP, I will make the documentation afterwards 
     """
-    def __init__(self, data=None, inclusion='all'):
-        if data != None:
-            self.fit(data, inclusion=inclusion)
 
     def fit(self, X, y=None, inclusion='all'):
         """
