@@ -972,7 +972,7 @@ def test_ovr_decision_function():
         test_base_points * [1, 1],    # Q1
         test_base_points * [-1, 1],   # Q2
         test_base_points * [-1, -1],  # Q3
-        test_base_points * [1, -1],   # Q4
+        test_base_points * [1, -1]    # Q4
         ))
 
     y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
