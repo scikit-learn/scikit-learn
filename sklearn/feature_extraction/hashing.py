@@ -88,11 +88,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if non_negative not in [True, False, 'total']:
             raise ValueError("Invalid value for non_negative must be one of"
                              " True, False, 'total'.")
-        if non_negative in ['total', True]:
+        if non_negative is True:
             warnings.warn("the option non_negative=True has been deprecated"
-                          " in 0.19. As of 0.21 non_negative='total' would be"
-                          " renamed to non_negative=True.",
-                          DeprecationWarning)
+                          " in 0.19. From version 0.21, non_negative=True"
+                          " will be interpreted as"
+                          " non_negative='total'.", DeprecationWarning)
 
         self.dtype = dtype
         self.input_type = input_type
