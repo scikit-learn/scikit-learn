@@ -163,8 +163,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
-        if self.non_negative is True:  # if non_negative == 'total', X>0 anyway
-                                       # this is deprecated as of 0.19
-                                       # and should be removed in 0.21
+
+        if self.non_negative in [True, 'total']:
             np.abs(X.data, X.data)
         return X
