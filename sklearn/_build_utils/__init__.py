@@ -10,6 +10,8 @@ import os
 
 DEFAULT_ROOT = 'sklearn'
 
+from distutils.version import LooseVersion
+
 from numpy.distutils.system_info import get_info
 
 
@@ -64,9 +66,17 @@ def tweak_extensions(top_path, config):
     if is_release:
         tweak_extensions_to_build_from_c_and_cpp_files(config.ext_modules)
     else:
+        message = ('Please install cython with a version >= 0.23'
+                   ' in order to build a scikit-learn development version.')
         try:
+            import Cython
+            if LooseVersion(Cython.__version__) < '0.23':
+                message += ' Your version of Cython was {0}.'.format(
+                    Cython.__version__)
+                raise ValueError(message)
             from Cython.Build import cythonize
-        except ImportError:
-            raise ValueError('Please install cython in order '
-                             'to build a scikit-learn development version')
+        except ImportError as exc:
+            exc.args += (message,)
+            raise
+
         config.ext_modules = cythonize(config.ext_modules)
