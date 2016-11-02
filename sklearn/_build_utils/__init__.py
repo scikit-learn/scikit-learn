@@ -8,11 +8,11 @@ from __future__ import division, print_function, absolute_import
 
 import os
 
-DEFAULT_ROOT = 'sklearn'
-
 from distutils.version import LooseVersion
 
 from numpy.distutils.system_info import get_info
+
+DEFAULT_ROOT = 'sklearn'
 
 
 def get_blas_info():
