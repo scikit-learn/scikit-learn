@@ -68,12 +68,12 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
 def test_kmedoids_iris_with_all_pairwise_distance_functions():
     Xiris = load_iris()['data']
 
-    refModel = KMeans(n_clusters=3)
+    ref_model = KMeans(n_clusters=3)
 
-    refModel.fit(Xiris)
+    ref_model.fit(Xiris)
 
-    avg_dist_to_closest_centroid = np.sum(
-        np.min(euclidean_distances(Xiris, Y=refModel.cluster_centers_), axis=1)
+    avg_dist_to_closest_centroid = np.sum(np.min(
+        euclidean_distances(Xiris, Y=ref_model.cluster_centers_), axis=1)
     ) / Xiris.shape[0]
 
     for init in ['random', 'heuristic']:
@@ -128,3 +128,17 @@ def test_kmedoids_fit_transform():
     Xt2 = model.transform(X)
 
     assert_array_equal(Xt1, Xt2)
+
+
+def test_outlier_robustness():
+    kmeans = KMeans(n_clusters=2, random_state=rng)
+    kmedoids = KMedoids(n_clusters=2, random_state=rng)
+
+    X = [[-11, 0], [-10, 0], [-9, 0],
+         [0, 0], [1, 0], [2, 0], [1000, 0]]
+
+    kmeans.fit(X)
+    kmedoids.fit(X)
+
+    assert_array_equal(kmeans.labels_, [0, 0, 0, 0, 0, 0, 1])
+    assert_array_equal(kmedoids.labels_, [0, 0, 0, 1, 1, 1, 1])
