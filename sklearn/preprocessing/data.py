@@ -2031,15 +2031,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         return type(type_check) == np.ndarray or type(type_check) == list 
 
-    @staticmethod
-    def _valid_X(X):
-        """
-        Ensures that X is valid and can be processed by CountFeaturizer
-        """
-        if not CountFeaturizer._valid_data_type(X):
-            raise ValueError("X must be of compatible type with CountFeaturizer")
-        return len(X) > 0
-
     def _extract_tuple(self, data_row):
         """
         Extracts the values of the data_row[inclusion] into an ordered tuple
@@ -2057,20 +2048,18 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Sets the value of count_cache which holds the counts of each data point
         """
         
-        if CountFeaturizer._valid_X(X):
-            num_features = len(X[0])
-            if self.inclusion != 'all' and len(self.inclusion) != num_features:
-                # there must be one value of inclusion for each feature
-                raise ValueError("Inclusion/feature must be 1 to 1")
-            self.count_cache = {} 
-            for data_i in X:
-                data_i_tuple = self._extract_tuple(data_i)
-                if data_i_tuple not in self.count_cache:
-                    self.count_cache[data_i_tuple] = 1
-                else:
-                    self.count_cache[data_i_tuple] += 1
-        else:
-            self.count_cache = {}
+        X = check_array(X, dtype=None, force_all_finite=False)
+        num_features = len(X[0])
+        if self.inclusion != 'all' and len(self.inclusion) != num_features:
+            # there must be one value of inclusion for each feature
+            raise ValueError("Inclusion/feature must be 1 to 1")
+        self.count_cache = {} 
+        for data_i in X:
+            data_i_tuple = self._extract_tuple(data_i)
+            if data_i_tuple not in self.count_cache:
+                self.count_cache[data_i_tuple] = 1
+            else:
+                self.count_cache[data_i_tuple] += 1
         return self
 
     def transform(self, X):
@@ -2080,19 +2069,18 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         The data set returned from the transformation will always be a 
         numpy.ndarray 
         """
-        if CountFeaturizer._valid_X(X):
-            len_data = len(X)
-            num_features = len(X[0])
-            if self.inclusion != 'all' and \
-                len(self.inclusion) != num_features:
-                raise ValueError("Inclusion/feature must be 1 to 1")
-            transformed = np.zeros((len_data, num_features + 1))
-            transformed[:, :-1] = X 
-            for i in xrange(len_data):
-                data_i_tuple = self._extract_tuple(X[i])
-                transformed[i, num_features] = self.count_cache[data_i_tuple]
-            return transformed 
-        else:
-            return numpy.array([])
+
+        X = check_array(X, dtype=None, force_all_finite=False)
+        len_data = len(X)
+        num_features = len(X[0])
+        if self.inclusion != 'all' and \
+            len(self.inclusion) != num_features:
+            raise ValueError("Inclusion/feature must be 1 to 1")
+        transformed = np.zeros((len_data, num_features + 1))
+        transformed[:, :-1] = X 
+        for i in xrange(len_data):
+            data_i_tuple = self._extract_tuple(X[i])
+            transformed[i, num_features] = self.count_cache[data_i_tuple]
+        return transformed 
 
 
