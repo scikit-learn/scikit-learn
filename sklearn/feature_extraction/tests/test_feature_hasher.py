@@ -109,15 +109,15 @@ def test_hasher_zeros():
 
 
 def test_hasher_non_negative():
-    raw_X = [["foo", "bar", "baz"]]
+    X = [["foo", "bar", "baz"]]
 
-    X = FeatureHasher(non_negative=False,
-                      input_type='string').fit_transform(raw_X)
-    assert_true((X.data > 0).any() and (X.data < 0).any())
-    X = FeatureHasher(non_negative=True,
-                      input_type='string').fit_transform(raw_X)
-    assert_true((X.data >= 0).all())  # zeros are acceptable
-    X = FeatureHasher(non_negative='total',
-                      input_type='string').fit_transform(raw_X)
-    assert_true((X.data > 0).all())  # strictly positive counts
+    Xt = FeatureHasher(non_negative=False,
+                      input_type='string').fit_transform(X)
+    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
+    Xt = FeatureHasher(non_negative=True,
+                      input_type='string').fit_transform(X)
+    assert_true((Xt.data >= 0).all())  # zeros are acceptable
+    Xt = FeatureHasher(non_negative='total',
+                      input_type='string').fit_transform(X)
+    assert_true((Xt.data > 0).all())  # strictly positive counts
     assert_raises(ValueError, FeatureHasher, non_negative=None)
