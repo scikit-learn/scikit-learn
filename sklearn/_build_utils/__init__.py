@@ -13,6 +13,7 @@ from distutils.version import LooseVersion
 from numpy.distutils.system_info import get_info
 
 DEFAULT_ROOT = 'sklearn'
+CYTHON_MIN_VERSION = '0.23'
 
 
 def get_blas_info():
@@ -66,11 +67,12 @@ def maybe_cythonize_extensions(top_path, config):
     if is_release:
         build_from_c_and_cpp_files(config.ext_modules)
     else:
-        message = ('Please install cython with a version >= 0.23'
-                   ' in order to build a scikit-learn development version.')
+        message = ('Please install cython with a version >= {0} in order '
+                   'to build a scikit-learn development version.').format(
+                       CYTHON_MIN_VERSION)
         try:
             import Cython
-            if LooseVersion(Cython.__version__) < '0.23':
+            if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
                 message += ' Your version of Cython was {0}.'.format(
                     Cython.__version__)
                 raise ValueError(message)
