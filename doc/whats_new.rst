@@ -103,7 +103,7 @@ Bug fixes
      by `Mohammed Affan`_
 
    - Fixed setting parameters when calling ``fit`` multiple times on
-     :ref:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
+     :class:`feature_selection.SelectFromModel`. :issue:`7756` by `Andreas Müller`_
 
 
 API changes summary
