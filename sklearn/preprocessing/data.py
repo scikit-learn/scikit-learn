@@ -2020,23 +2020,23 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         if data != None:
             self.fit(data, inclusion=inclusion)
 
-    def fit(self, data, inclusion='all'):
+    def fit(self, X, y=None, inclusion='all'):
         """
         Sets the value of data and inclusion for the CountFeaturizer
         """
         def valid_data_type(type_check):
             return type(type_check) == np.ndarray or type(type_check) == list 
 
-        if data == None:
+        if X == None:
             raise ValueError("Data is None")
 
-        if not valid_data_type(data):
+        if not valid_data_type(X):
             raise ValueError("Only supports lists / numpy arrays (data)")
 
-        if len(data) == 0:
+        if len(X) == 0:
             raise ValueError("Data is empty")
 
-        num_features = len(data[0])
+        num_features = len(X[0])
 
         if inclusion != 'all':
             if not valid_data_type(inclusion):
@@ -2044,8 +2044,9 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             elif len(inclusion) != num_features:
                 raise ValueError("Inclusion/feature mismatch")
 
-        self.data = np.array(data)
+        self.X = np.array(X)
         self.inclusion = inclusion
+        return self
 
     def transform(self):
         """
@@ -2064,20 +2065,28 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
         # caching is faster but memory intensive
         cache = {}
-        for data_i in self.data:
+        for data_i in self.X:
             data_i_tuple = extract_tuple(data_i)
             if data_i_tuple not in cache:
                 cache[data_i_tuple] = 1
             else:
                 cache[data_i_tuple] += 1
-        len_data = len(self.data)
-        num_features = len(self.data[0])
+        len_data = len(self.X)
+        num_features = len(self.X[0])
         transformed = np.zeros((len_data, num_features + 1))
-        transformed[:, :-1] = self.data 
+        transformed[:, :-1] = self.X 
         for i in xrange(len_data):
-            data_i_tuple = extract_tuple(self.data[i])
+            data_i_tuple = extract_tuple(self.X[i])
             transformed[i, num_features] = cache[data_i_tuple] 
-        self.data = transformed
-        return self.data 
+        self.X = transformed
+        return self.X 
+
+    def fit_transform(self, X, y=None):
+        """Fit CountFeaturizer to X, then transform X.
+
+        Equivalent to self.fit(X).transform(), but more convenient 
+        See fit for the parameters, transform for the return value.
+        """
+        return self.fit(X).transform()
 
 
