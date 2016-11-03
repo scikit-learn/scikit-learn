@@ -214,7 +214,7 @@ DBSCAN with Levenshtein distances::
     array([[0],
            [1],
            [2]])
-    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2)  # doctest: +SKIP
+    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2, algorithm='brute')  # doctest: +SKIP
     ([0, 1], array([ 0,  0, -1]))
 
 (This uses the third-party edit distance package ``leven``.)
