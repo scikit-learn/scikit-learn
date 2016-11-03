@@ -1302,18 +1302,18 @@ def test_normalize():
     for X in (X_dense, X_sparse):
         for dtype in (np.float32, np.float64):
             for norm in ('l1', 'l2'):
-                    X = X.astype(dtype)
-                    X_norm = normalize(X, norm=norm)
-                    assert_equal(X_norm.dtype, dtype)
+                X = X.astype(dtype)
+                X_norm = normalize(X, norm=norm)
+                assert_equal(X_norm.dtype, dtype)
 
-                    X_norm = toarray(X_norm)
-                    if norm == 'l1':
-                        row_sums = np.abs(X_norm).sum(axis=1)
-                    else:
-                        X_norm_squared = X_norm**2
-                        row_sums = X_norm_squared.sum(axis=1)
+                X_norm = toarray(X_norm)
+                if norm == 'l1':
+                    row_sums = np.abs(X_norm).sum(axis=1)
+                else:
+                    X_norm_squared = X_norm**2
+                    row_sums = X_norm_squared.sum(axis=1)
 
-                    assert_array_almost_equal(row_sums, ones)
+                assert_array_almost_equal(row_sums, ones)
 
     # test return_norm
     X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
