@@ -906,17 +906,18 @@ def train_test_split_list_input():
     y2 = np.hstack((np.ones(4), np.zeros(3)))
     y3 = y2.tolist()
 
-    X_train1, X_test1, y_train1, y_test1 = train_test_split(X, y1, stratify=y1,
-                                                            random_state=0)
-    X_train2, X_test2, y_train2, y_test2 = train_test_split(X, y2, stratify=y2,
-                                                            random_state=0)
-    X_train3, X_test3, y_train3, y_test3 = train_test_split(X, y3, stratify=y3,
-                                                            random_state=0)
+    for stratify in ((y1, y2, y3), (None, None, None)):
+        X_train1, X_test1, y_train1, y_test1 = train_test_split(
+            X, y1, stratify=stratify[0], random_state=0)
+        X_train2, X_test2, y_train2, y_test2 = train_test_split(
+            X, y2, stratify=stratify[1], random_state=0)
+        X_train3, X_test3, y_train3, y_test3 = train_test_split(
+            X, y3, stratify=stratify[2], random_state=0)
 
-    np.testing.assert_equal(X_train1, X_train2)
-    np.testing.assert_equal(y_train2, y_train3)
-    np.testing.assert_equal(X_test1, X_test3)
-    np.testing.assert_equal(y_test3, y_test2)
+        np.testing.assert_equal(X_train1, X_train2)
+        np.testing.assert_equal(y_train2, y_train3)
+        np.testing.assert_equal(X_test1, X_test3)
+        np.testing.assert_equal(y_test3, y_test2)
 
 
 def test_shufflesplit_errors():
