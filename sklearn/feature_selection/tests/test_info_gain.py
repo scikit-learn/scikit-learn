@@ -17,7 +17,7 @@ X = [[2, 1, 2],
      [9, 1, 1],
      [6, 1, 2],
      [0, 1, 2]]
-y = [0, 1, 2, 2]
+y = [0, 1, 2, 3]
 
 
 def mk_info_gain(k):
@@ -25,7 +25,7 @@ def mk_info_gain(k):
     return SelectKBest(info_gain, k=k)
 
 
-def test_info_gain():
+def test_info_gain_csr():
     # Test IG feature extraction
 
     Xsp = csr_matrix(X, dtype=np.float)
@@ -48,11 +48,21 @@ def test_info_gain_coo():
     # if we got here without an exception, we're safe
 
 
+def test_info_gain_dense():
+    # Check IG works with a dense matrix
+
+    Xden = np.array(X)
+    scores = mk_info_gain(k=2).fit(Xden, y)
+    assert_equal(sorted(scores.get_support(indices=True)), [0, 2])
+
+    Xtrans = scores.transform(Xden)
+    assert_equal(Xtrans.shape, [Xden.shape[0], 2])
+
+    Xtrans2 = mk_info_gain(k=2).fit_transform(Xden, y)
+    assert_equal(Xtrans, Xtrans2)
+
+
 def test_info_gain_negative():
     # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     assert_raises(ValueError, info_gain, csr_matrix(X), y)
-
-
-def test_ig_nonsparse_matrix():
-    assert_raises(ValueError, mk_info_gain(k=2).fit, X, y)

@@ -229,33 +229,67 @@ def chi2(X, y):
 
 
 def _info_gain(fc_count, c_count, f_count, fc_prob, c_prob, f_prob, total):
-    def get_t1(fc_prob, c_prob, f_prob):
+    def get_c_f_cell(fc_prob, c_prob, f_prob):
         t = np.log2(fc_prob/(c_prob * f_prob))
         t[~np.isfinite(t)] = 0
         return np.multiply(fc_prob, t)
 
-    def get_t2(fc_prob, c_prob, f_prob):
+    def get_nc_nf_cell(fc_prob, c_prob, f_prob):
         t = np.log2((1-f_prob-c_prob+fc_prob)/((1-c_prob)*(1-f_prob)))
         t[~np.isfinite(t)] = 0
         return np.multiply((1-f_prob-c_prob+fc_prob), t)
 
-    def get_t3(c_prob, f_prob, c_count, fc_count, total):
+    def get_c_nf_cell(c_prob, f_prob, c_count, fc_count, total):
         nfc = (c_count - fc_count)/total
         t = np.log2(nfc/(c_prob*(1-f_prob)))
         t[~np.isfinite(t)] = 0
         return np.multiply(nfc, t)
 
-    def get_t4(c_prob, f_prob, f_count, fc_count, total):
+    def get_nc_f_cell(c_prob, f_prob, f_count, fc_count, total):
         fnc = (f_count - fc_count)/total
         t = np.log2(fnc/((1-c_prob)*f_prob))
         t[~np.isfinite(t)] = 0
         return np.multiply(fnc, t)
 
     # the feature score is averaged over classes
-    return (get_t1(fc_prob, c_prob, f_prob) +
-            get_t2(fc_prob, c_prob, f_prob) +
-            get_t3(c_prob, f_prob, c_count, fc_count, total) +
-            get_t4(c_prob, f_prob, f_count, fc_count, total)).mean(axis=0)
+    return (get_c_f_cell(fc_prob, c_prob, f_prob) +
+            get_nc_nf_cell(fc_prob, c_prob, f_prob) +
+            get_c_nf_cell(c_prob, f_prob, c_count, fc_count, total) +
+            get_nc_f_cell(c_prob, f_prob, f_count, fc_count, total)).mean(
+            axis=0)
+
+
+def get_feature_class_counts(X, y):
+    """Count feature, class, joint and total frequencies
+    """
+    X = check_array(X, accept_sparse=['csr', 'coo'])
+    if np.any((X.data if issparse(X) else X) < 0):
+        raise ValueError("Input X must be non-negative.")
+
+    Y = LabelBinarizer().fit_transform(y)
+    if Y.shape[1] == 1:
+        Y = np.append(1 - Y, Y, axis=1)
+
+    # counts
+
+    fc_count = safe_sparse_dot(Y.T, X)          # n_classes * n_features
+    total = fc_count.sum(axis=0).reshape(1, -1).sum()
+    f_count = X.sum(axis=0).reshape(1, -1)
+    if issparse(X):
+        c_count = (X.sum(axis=1).reshape(1, -1) * Y).T
+    else:
+        c_count = (X.sum(axis=1) * Y.T).sum(axis=1).reshape(-1, 1)
+
+    return f_count, c_count, fc_count, total
+
+
+def get_feature_class_probs(f_count, c_count, fc_count, total):
+    """Get feature, class, joint probabilities
+    """
+    f_prob = f_count / f_count.sum()
+    c_prob = c_count / c_count.sum()
+    fc_prob = fc_count / total
+    return f_prob, c_prob, fc_prob
 
 
 def info_gain(X, y):
@@ -268,6 +302,11 @@ def info_gain(X, y):
     or absence of a class by knowing the presence or absence of the feature. IG
     of a feature is thus local to each class. This implementation outputs a
     global IG score, by averaging the feature's scores over all classes.
+
+    \begin{equation}
+    IG(f,c) = \sum_{d \in \{c, \overline{c} \}} \sum_{g \in
+        \{f, \overline{f} \}} p(g,d) log\frac{p(g,d)}{p(g)p(d)}
+    \end{equation}
 
     The IG-based feature selection is commonly used for text classification (
     e.g. [2] and [3]).
@@ -307,29 +346,10 @@ def info_gain(X, y):
 
     """
 
-    X = check_array(X, accept_sparse=['csr', 'coo'])
-    if np.any((X.data if issparse(X) else X) < 0):
-        raise ValueError("Input X must be non-negative.")
+    f_count, c_count, fc_count, total = get_feature_class_counts(X, y)
 
-    if not isinstance(X, csr_matrix) and not isinstance(X, coo_matrix):
-        raise ValueError("Input X must be a sparse matrix.")
-
-    Y = LabelBinarizer().fit_transform(y)
-    if Y.shape[1] == 1:
-        Y = np.append(1 - Y, Y, axis=1)
-
-    # counts
-
-    fc_count = safe_sparse_dot(Y.T, X)          # n_classes * n_features
-    total = fc_count.sum(axis=0).reshape(1, -1).sum()
-    f_count = X.sum(axis=0).reshape(1, -1)
-    c_count = (X.sum(axis=1).reshape(1, -1) * Y).T
-
-    # probs
-
-    f_prob = f_count / f_count.sum()
-    c_prob = c_count / c_count.sum()
-    fc_prob = fc_count / total
+    f_prob, c_prob, fc_prob = get_feature_class_probs(f_count, c_count,
+                                                      fc_count, total)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -349,10 +369,15 @@ def info_gain_ratio(X, y):
     the presence or absence of a class by knowing the presence or absence of
     the feature. Information Gain Ratio aims to overcome one disadvantage of IG
     which is the fact that IG grows not only with the increase of dependence
-    between f and c, but also with the increase of the entropy of f. That is
-    why features with low entropy receive smaller IG weights although they may
-    be strongly correlated with a class. IGR removes this factor by normalizing
-    IG by the entropy of the class.
+    between `f` and `c`, but also with the increase of the entropy of `f`. That
+    is why features with low entropy receive smaller IG weights although they
+    may be strongly correlated with a class. IGR removes this factor by
+    normalizing IG by the entropy of the class:
+
+    \begin{equation}
+    GR(f,c) = \frac{IG(f,c)}{-\sum_{d \in \{c, \overline{c} \}}p(d)log
+    p(d)}
+    \end{equation}
 
     Parameters
     ----------
@@ -371,40 +396,21 @@ def info_gain_ratio(X, y):
     * info_gain : Information Gain
     """
 
-    def get_t(f_prob):
+    def get_entropy(f_prob):
         t = np.log2(f_prob)
         t[~np.isfinite(t)] = 0
         return np.multiply(-f_prob, t)
 
-    X = check_array(X, accept_sparse=['csr', 'coo'])
-    if np.any((X.data if issparse(X) else X) < 0):
-        raise ValueError("Input X must be non-negative.")
+    f_count, c_count, fc_count, total = get_feature_class_counts(X, y)
 
-    if not isinstance(X, csr_matrix) and not isinstance(X, coo_matrix):
-        raise ValueError("Input X must be a sparse matrix.")
-
-    Y = LabelBinarizer().fit_transform(y)
-    if Y.shape[1] == 1:
-        Y = np.append(1 - Y, Y, axis=1)
-
-    # counts
-
-    fc_count = safe_sparse_dot(Y.T, X)          # n_classes * n_features
-    total = fc_count.sum(axis=0).reshape(1, -1).sum()
-    f_count = X.sum(axis=0).reshape(1, -1)
-    c_count = (X.sum(axis=1).reshape(1, -1) * Y).T
-
-    # probs
-
-    f_prob = f_count / f_count.sum()
-    c_prob = c_count / c_count.sum()
-    fc_prob = fc_count / total
+    f_prob, c_prob, fc_prob = get_feature_class_probs(f_count, c_count,
+                                                      fc_count, total)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         scores = _info_gain(fc_count, c_count, f_count, fc_prob, c_prob,
                             f_prob, total)
-        scores = scores / (get_t(f_prob) + get_t(1 - f_prob))
+        scores = scores / (get_entropy(f_prob) + get_entropy(1 - f_prob))
 
     return np.asarray(scores).reshape(-1), []
 
