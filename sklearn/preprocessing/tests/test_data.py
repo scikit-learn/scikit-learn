@@ -1651,3 +1651,37 @@ def test_fit_cold_start():
         # with a different shape, this may break the scaler unless the internal
         # state is reset
         scaler.fit_transform(X_2d)
+
+def test_count_featurizer_ft_standard():
+    # test count featurizer fit-transform on a very standard data
+    cf_standard = CountFeaturizer()
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    assert_array_equal( \
+        cf.fit_transform(X), \
+        np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
+
+def test_count_featurizer_ft_standard_inclusion():
+    # test count featurizer fit-transform on a very standard data
+    # with different inclusion parameters
+    
+    cf_inclusion_1 = CountFeaturizer(inclusion=[1, 0, 0])
+    cf_inclusion_2 = CountFeaturizer(inclusion=[0, 0, 0])
+    cf_inclusion_3 = CountFeaturizer(inclusion=[1, 1, 1])
+    cf_inclusion_4 = CountFeaturizer(inclusion=[1, 1, 0])
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 3], [1, 0, 5], [1, 1, 5]])
+    assert_array_equal( \
+        cf_inclusion_1.fit_transform(X), \
+        np.array([[0, 2, 1, 1], [1, 0, 3, 3], [1, 0, 2, 3], [1, 0, 2, 3]]))
+
+    assert_array_equal( \
+        cf_inclusion_2.fit_transform(X), \
+        np.array([[0, 2, 1, 4], [1, 0, 3, 4], [1, 0, 2, 4], [1, 0, 2, 4]]))
+
+    assert_array_equal( \
+        cf_inclusion_3.fit_transform(X), \
+        np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
+
+    assert_array_equal( \
+        cf_inclusion_4.fit_transform(X2), \
+        np.array([[0, 2, 1, 2], [0, 2, 3, 2], [1, 0, 5, 1], [1, 1, 5, 1]]))
