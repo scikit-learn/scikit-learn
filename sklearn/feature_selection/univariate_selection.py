@@ -564,8 +564,9 @@ class SelectPercentile(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    ig: Information Gain of features for classification tasks.
-    igr: Information Gain Ratio of features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
     SelectKBest: Select features based on the k highest scores.
@@ -641,8 +642,9 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    ig: Information Gain of features for classification tasks.
-    igr: Information Gain Ratio of features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continious target.
     SelectPercentile: Select features based on percentile of highest scores.
@@ -712,8 +714,9 @@ class SelectFpr(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    ig: Information Gain of features for classification tasks.
-    igr: Information Gain Ratio of features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest
@@ -772,8 +775,9 @@ class SelectFdr(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    ig: Information Gain of features for classification tasks.
-    igr: Information Gain Ratio of features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a contnuous target.
     SelectPercentile: Select features based on percentile of the highest
@@ -886,8 +890,9 @@ class GenericUnivariateSelect(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     mutual_info_classif: Mutual information for a discrete target.
     chi2: Chi-squared stats of non-negative features for classification tasks.
-    ig: Information Gain of features for classification tasks.
-    igr: Information Gain Ratio of features for classification tasks.
+    info_gain: Information Gain of features for classification tasks.
+    info_gain_ratio: Information Gain Ratio of features for classification
+        tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
     SelectPercentile: Select features based on percentile of the highest
