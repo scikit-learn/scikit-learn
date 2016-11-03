@@ -41,8 +41,7 @@ from ._k_means_elkan import k_means_elkan
 ###############################################################################
 # Initialization heuristic
 
-def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None,
-            check_inputs=True):
+def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -66,9 +65,6 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None,
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
-    check_inputs : boolean (default=True)
-        Whether to check if inputs are finite and floats.
-
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
@@ -91,14 +87,13 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None,
         n_local_trials = 2 + int(np.log(n_clusters))
 
     # Do type checks before the critical loop
-    if check_inputs:
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
-                        warn_on_dtype=False, estimator='kmeans++',
-                        force_all_finite=True)
-        x_squared_norms = check_array(x_squared_norms, dtype=FLOAT_DTYPES,
-                                      warn_on_dtype=False,
-                                      estimator='kmeans++',
-                                      force_all_finite=True)
+    X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
+                    warn_on_dtype=False, estimator='kmeans++',
+                    force_all_finite=True)
+    x_squared_norms = check_array(x_squared_norms, dtype=FLOAT_DTYPES,
+                                  warn_on_dtype=False,
+                                  estimator='kmeans++',
+                                  force_all_finite=True)
 
     centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
@@ -637,7 +632,7 @@ def _labels_inertia(X, x_squared_norms, centers,
 
 
 def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
-                    init_size=None, check_inputs=True):
+                    init_size=None):
     """Compute the initial centroids
 
     Parameters
@@ -697,8 +692,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if isinstance(init, string_types) and init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
-                          x_squared_norms=x_squared_norms,
-                          check_inputs=check_inputs)
+                          x_squared_norms=x_squared_norms)
     elif isinstance(init, string_types) and init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
@@ -1399,7 +1393,7 @@ class MiniBatchKMeans(KMeans):
                 X, self.n_clusters, self.init,
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
-                init_size=init_size, check_inputs=False)
+                init_size=init_size)
 
             # Compute the label assignment on the init dataset
             batch_inertia, centers_squared_diff = _mini_batch_step(
