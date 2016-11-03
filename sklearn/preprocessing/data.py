@@ -2020,12 +2020,23 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     --------
     WIP, I will make the documentation .rst afterwards 
     """
-    def __init__(self, inclusion='all'):  
-        if inclusion != 'all' and \
-            not CountFeaturizer._valid_data_type(inclusion):
-            raise ValueError("Only supports lists / numpy arrays (inclusion)")
+    def __init__(self, inclusion='all', removal_policy=None):  
+        # removal policy currently not implemented, but the method
+        # signatures are set 
+        CountFeaturizer._check_params(inclusion=inclusion, \
+            removal_policy=removal_policy)
         self.inclusion = inclusion 
+        self.removal_policy = removal_policy
         self.count_cache = {}
+
+    @staticmethod
+    def _check_params(inclusion=None, removal_policy=None):
+        if inclusion != None and inclusion != 'all' and \
+            not CountFeaturizer._valid_data_type(inclusion):
+            raise ValueError("Invalid parameters to inclusion")
+        if removal_policy != None and removal_policy != 'inclusion' and \
+            not CountFeaturizer._valid_data_type(removal_policy):
+            raise ValueError("Invalid parameters to removal_policy")
 
     @staticmethod
     def _valid_data_type(type_check):
@@ -2034,6 +2045,25 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Currently, only Python lists and numpy arrays are accepted
         """
         return type(type_check) == np.ndarray or type(type_check) == list 
+
+    @staticmethod
+    def _check_well_formed(X):
+        """
+        Ensures that X is well formed, meaning that every single row of X must 
+        have the same number of elements 
+        [[1, 2], [3, 4]] is "well formed"
+        but [[1], [3, 5, 7]] is not "well formed"
+        Assumes that check_array(X) has already been called 
+        """
+        # This is a temporary method but I am unsure whether there already
+        # exists something similar in the utils.validation.py
+        # There did not seem to be anything I could use to check well-formed
+        # in utils.validation.check_array() 
+
+        num_columns = len(X[0])
+        for i in xrange(1, X):
+            if len(X[i]) != num_columns:
+                raise ValueError("Malformed input array X")
 
     def _extract_tuple(self, data_row):
         """
@@ -2051,8 +2081,10 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         Sets the value of count_cache which holds the counts of each data point
         """
-        
-        X = check_array(X)
+        # We do not want to enforce type constraints because we want our input
+        # to be able to have categorical variables such as strings 
+        X = check_array(X, dtype=None, force_all_finite=False)
+        CountFeaturizer._check_well_formed(X)
         num_features = len(X[0])
         if self.inclusion != 'all' and len(self.inclusion) != num_features:
             # there must be one value of inclusion for each feature
@@ -2075,8 +2107,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         if not self.count_cache:
             raise ValueError("Transformer must be fit() before transform()")
-
-        X = check_array(X)
+        X = check_array(X, dtype=None, force_all_finite=False)
+        CountFeaturizer._check_well_formed(X)
         len_data = len(X)
         num_features = len(X[0])
         

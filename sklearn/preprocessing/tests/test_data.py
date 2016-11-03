@@ -1655,10 +1655,10 @@ def test_fit_cold_start():
 
 def test_count_featurizer_ft_standard():
     # test count featurizer fit-transform on a very standard data
-    cf_standard = CountFeaturizer()
+    cf_1 = CountFeaturizer()
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
     assert_array_equal( \
-        cf.fit_transform(X), \
+        cf_1.fit_transform(X), \
         np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
 
 def test_count_featurizer_ft_standard_inclusion():
