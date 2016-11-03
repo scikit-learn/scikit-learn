@@ -10,7 +10,7 @@ import numpy as np
 import warnings
 
 from scipy import special, stats
-from scipy.sparse import issparse, csr_matrix, coo_matrix
+from scipy.sparse import issparse, csr_matrix
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
@@ -322,10 +322,6 @@ def info_gain(X, y):
     Returns
     -------
     scores : array, shape = (n_features,)
-
-    Notes:
-    ------
-    * X must be a sparse matrix (csr_matrix or coo_matrix).
 
     See also:
     ---------
