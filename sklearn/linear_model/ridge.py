@@ -957,6 +957,8 @@ class _RidgeGCV(LinearModel):
         """
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
+        if sample_weight:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
         n_samples, n_features = X.shape
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
