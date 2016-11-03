@@ -661,10 +661,6 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
-    check_input : boolean (default=True)
-        Whether to check if inputs are finite and floats
-        if init is `kmeans++`.
-
     Returns
     -------
     centers: array, shape(k, n_features)
