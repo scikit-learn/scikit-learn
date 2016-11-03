@@ -145,8 +145,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         # Convert data
         X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
                          y_numeric=True)
-        
-        if sample_weight:
+        if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
 
         K = self._get_kernel(X)
