@@ -121,6 +121,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
+        return self
 
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
