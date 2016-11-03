@@ -2028,6 +2028,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         self.inclusion = inclusion 
         self.removal_policy = removal_policy
         self.count_cache = {}
+        self.num_features = 0
 
     @staticmethod
     def _check_params(inclusion=None, removal_policy=None):
@@ -2065,6 +2066,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             if len(X[i]) != num_columns:
                 raise ValueError("Malformed input array X")
 
+    @staticmethod
+    def _check_array(X):
+        """
+        Gets the allowed types for elements of X 
+        """
+        return check_array(X, dtype=[int, float, tuple, str])
+
     def _extract_tuple(self, data_row):
         """
         Extracts the values of the data_row[inclusion] into an ordered tuple
@@ -2083,10 +2091,11 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         # We do not want to enforce type constraints because we want our input
         # to be able to have categorical variables such as strings 
-        X = check_array(X, dtype=None, force_all_finite=False)
+        X = CountFeaturizer._check_array(X)
         CountFeaturizer._check_well_formed(X)
-        num_features = len(X[0])
-        if self.inclusion != 'all' and len(self.inclusion) != num_features:
+        self.num_features = len(X[0])
+        if self.inclusion != 'all' and \
+            len(self.inclusion) != self.num_features:
             # there must be one value of inclusion for each feature
             raise ValueError("Inclusion/feature must be 1 to 1")
         self.count_cache = {} 
@@ -2107,11 +2116,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         if not self.count_cache:
             raise ValueError("Transformer must be fit() before transform()")
-        X = check_array(X, dtype=None, force_all_finite=False)
+        X = CountFeaturizer._check_array(X)
         CountFeaturizer._check_well_formed(X)
         len_data = len(X)
         num_features = len(X[0])
-        
+        if self.num_features != num_features:
+            raise ValueError("transform() must have same number of" + \
+                " features as it was fitted with")
         if self.inclusion != 'all' and \
             len(self.inclusion) != num_features:
             raise ValueError("Inclusion/feature must be 1 to 1")
