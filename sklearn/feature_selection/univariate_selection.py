@@ -368,11 +368,10 @@ def info_gain_ratio(X, y):
     between `f` and `c`, but also with the increase of the entropy of `f`. That
     is why features with low entropy receive smaller IG weights although they
     may be strongly correlated with a class. IGR removes this factor by
-    normalizing IG by the entropy of the class:
+    normalizing IG by the entropy of the feature:
 
     \begin{equation}
-    GR(f,c) = \frac{IG(f,c)}{-\sum_{d \in \{c, \overline{c} \}}p(d)log
-    p(d)}
+    GR(f,c) = \frac{IG(f,c)}{-\sum_{g \in \{f, \overline{f} \}}p(g) log p(g)}
     \end{equation}
 
     Parameters
