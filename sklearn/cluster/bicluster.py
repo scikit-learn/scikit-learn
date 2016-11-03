@@ -117,14 +117,11 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        Returns
-        -------
-        self : object
-            Returns the instance itself.
         """
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
-        return self._fit(X)
+        self._fit(X)
+        return self
 
     def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
@@ -295,7 +292,6 @@ class SpectralCoclustering(BaseSpectral):
                                for c in range(self.n_clusters))
         self.columns_ = np.vstack(self.column_labels_ == c
                                   for c in range(self.n_clusters))
-        return self
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -480,7 +476,6 @@ class SpectralBiclustering(BaseSpectral):
         self.columns_ = np.vstack(self.column_labels_ == label
                                   for _ in range(n_row_clusters)
                                   for label in range(n_col_clusters))
-        return self
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise
