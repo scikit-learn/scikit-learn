@@ -107,7 +107,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
         centers[0, np.newaxis], X, Y_norm_squared=x_squared_norms,
-        squared=True, check_inputs=False)
+        squared=True, check_input=False)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -121,7 +121,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True,
-            check_inputs=False,
+            check_input=False,
         )
 
         # Decide which candidate is the best
@@ -568,7 +568,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
     # memory blowup in the case of a large number of samples and clusters.
     labels, mindist = pairwise_distances_argmin_min(
         X=X, Y=centers, metric='euclidean',
-        metric_kwargs={'squared': True, 'check_inputs': False})
+        metric_kwargs={'squared': True, 'check_input': False})
     # cython k-means code assumes int32 inputs
     labels = labels.astype(np.int32)
     if n_samples == distances.shape[0]:
@@ -661,7 +661,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
-    check_inputs : boolean (default=True)
+    check_input : boolean (default=True)
         Whether to check if inputs are finite and floats
         if init is `kmeans++`.
 
