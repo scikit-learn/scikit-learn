@@ -5,12 +5,13 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_raises_regex, assert_true
+from sklearn.utils.testing import SkipTest, all_estimators
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
-
+from sklearn.utils.validation import has_fit_parameter
 
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
@@ -126,3 +127,26 @@ def test_check_estimators_unfitted():
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
+
+def test_common():
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("Pandas not found")
+    X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+    y = pd.Series([1, 1, 1, 2, 2, 2])
+    weights = pd.Series([1] * 6)
+    for estimator_name, Estimator in all_estimators():
+        estimator = Estimator()
+        if has_fit_parameter(estimator, "sample_weight"):
+            try:
+                # default solver liblinear doesn't support this parameter
+                if estimator_name is "LogisticRegression":
+                    Estimator(solver="lbfgs").fit(X, y, sample_weight=weights)
+                else:
+                    estimator.fit(X, y, sample_weight=weights)
+            except:
+                raise ValueError("Estimator {0} raises error if "
+                                 "'sample_weight' parameter is type "
+                                 "pandas.Series.".format(estimator_name))
+
