@@ -2048,7 +2048,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Sets the value of count_cache which holds the counts of each data point
         """
         
-        X = check_array(X, dtype=None, force_all_finite=False)
+        X = check_array(X)
         num_features = len(X[0])
         if self.inclusion != 'all' and len(self.inclusion) != num_features:
             # there must be one value of inclusion for each feature
@@ -2070,7 +2070,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         numpy.ndarray 
         """
 
-        X = check_array(X, dtype=None, force_all_finite=False)
+        X = check_array(X)
         len_data = len(X)
         num_features = len(X[0])
         if self.inclusion != 'all' and \
