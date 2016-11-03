@@ -19,8 +19,7 @@ Bug fixes
    - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
-     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
-     `Peng Meng`_.
+     :issue:`7490` by `Peng Meng`_.
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs. :issue:`6282` by `Jake Vanderplas`_.
@@ -40,9 +39,7 @@ Bug fixes
      `Jake VanderPlas`_.
 
    - Tree splitting criterion classes' cloning/pickling is now memory safe
-     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
-     By `Ibraim Ganiev`_.
-
+     :issue:`7680` by `Ibraim Ganiev`_.
 
 
    - Fix issue where ``min_grad_norm`` and ``n_iter_without_progress``
@@ -51,13 +48,11 @@ Bug fixes
 
    - Attribute ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
-     with SVD and Eigen solver are now of the same length. (`#7632
-     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
-     By `JPFrancoia`_
+     with SVD and Eigen solver are now of the same length. :issue:`7632`
+     by `JPFrancoia`_
 
    - Fixes issue in :ref:`univariate_feature_selection` where score 
-     functions were not accepting multi-label targets.(`#7676
-     <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
+     functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
 Enhancements
@@ -83,9 +78,7 @@ Linear, kernelized and related models
    - Length of `explained_variance_ratio` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
-     of min(n_components, n_classes - 1). (`#7632
-     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
-     By `JPFrancoia`_
+     of min(n_components, n_classes - 1). :issue:`7632` by `JPFrancoia`_
 
 
 .. _changes_0_18:
