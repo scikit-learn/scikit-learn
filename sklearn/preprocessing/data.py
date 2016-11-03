@@ -2069,10 +2069,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         The data set returned from the transformation will always be a 
         numpy.ndarray 
         """
+        if not self.count_cache:
+            raise ValueError("Transformer must be fit() before transform()")
 
         X = check_array(X)
         len_data = len(X)
         num_features = len(X[0])
+        
         if self.inclusion != 'all' and \
             len(self.inclusion) != num_features:
             raise ValueError("Inclusion/feature must be 1 to 1")
