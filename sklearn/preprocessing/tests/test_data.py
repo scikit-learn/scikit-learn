@@ -39,6 +39,7 @@ from sklearn.preprocessing.data import KernelCenterer
 from sklearn.preprocessing.data import Normalizer
 from sklearn.preprocessing.data import normalize
 from sklearn.preprocessing.data import OneHotEncoder
+from sklearn.preprocessing.data import CountFeaturizer
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler

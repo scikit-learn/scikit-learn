@@ -1996,18 +1996,22 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import CountFeaturizer
     >>> data = [[1, 1], [1, 1], [3, 1], [0, 0]]
-    >>> cf = CountFeaturizer(data)
-    >>> cf.transform()
+    >>> cf = CountFeaturizer()
+    >>> cf.fit_transform(data)
     array([[ 1.,  1.,  2.],
-       [ 1.,  1.,  2.],
-       [ 3.,  1.,  1.],
-       [ 0.,  0.,  1.]])
-    >>> cf.fit(data, inclusion=[0, 1])
-    >>> cf.transform()
+        [ 1.,  1.,  2.],
+        [ 3.,  1.,  1.],
+        [ 0.,  0.,  1.]])
+    >>> cf = CountFeaturizer(inclusion=[0, 1])
+    >>> cf.fit_transform(data)
     array([[ 1.,  1.,  3.],
-       [ 1.,  1.,  3.],
-       [ 3.,  1.,  3.],
-       [ 0.,  0.,  1.]])
+        [ 1.,  1.,  3.],
+        [ 3.,  1.,  3.],
+        [ 0.,  0.,  1.]])
+    >>> data_2 = [[1, 1]]
+    >>> cf = CountFeaturizer()
+    >>> cf.fit(data).transform(data_2)
+    array([[ 1.,  1.,  2.]])
 
     Notice how on the second fit, we set the inclusion to [0, 1]
     which made it only count the number of instances of the second feature 
