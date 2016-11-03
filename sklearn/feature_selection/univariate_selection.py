@@ -10,7 +10,7 @@ import numpy as np
 import warnings
 
 from scipy import special, stats
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
