@@ -2006,7 +2006,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         # in utils.validation.check_array() 
 
         num_columns = len(X[0])
-        for i in xrange(1, X):
+        for i in xrange(1, len(X)):
             if len(X[i]) != num_columns:
                 raise ValueError("Malformed input array X")
 
