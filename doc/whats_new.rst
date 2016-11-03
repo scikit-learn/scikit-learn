@@ -16,8 +16,9 @@ Changelog
 New features
 ............
 
-   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly detection based
-     on nearest neighbors. By `Nicolas Goix`_ and `Alexandre Gramfort`_.
+   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
+     detection based on nearest neighbors.
+     :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
 Enhancements
 ............
@@ -29,14 +30,11 @@ Enhancements
 
    - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
      now uses significantly less memory when assigning data points to their
-     nearest cluster center.
-     (`#7721 <https://github.com/scikit-learn/scikit-learn/pull/7721>`_)
-     By `Jon Crall`_.
+     nearest cluster center. :issue:`7721` by `Jon Crall`_.
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
-     that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
-     <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
-     Batula`_ and `Dylan Werner-Meier`_.
+     that matches the ``classes_`` attribute of ``best_estimator_``.
+     :issue:`7661` by `Alyssa Batula`_ and `Dylan Werner-Meier`_.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -59,15 +57,13 @@ Enhancements
    - Added ``shuffle`` and ``random_state`` parameters to shuffle training
      data before taking prefixes of it based on training sizes in
      :func:`model_selection.learning_curve`.
-     (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
-     `Narine Kokhlikyan`_.
+     :issue:`7506` by `Narine Kokhlikyan`_.
 
    - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
      to enable selection of the norm order when ``coef_`` is more than 1D
 
    - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
-     (`#7723 <https://github.com/scikit-learn/scikit-learn/pull/7723>`_)
-     by `Mikhail Korobov`_.
+     :issue:`7723` by `Mikhail Korobov`_.
 
 Bug fixes
 .........
@@ -75,8 +71,7 @@ Bug fixes
    - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
-     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
-     `Peng Meng`_.
+     :issue:`7490` by `Peng Meng`_.
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs. :issue:`6282` by `Jake Vanderplas`_.
@@ -91,8 +86,7 @@ Bug fixes
      `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
 
    - Tree splitting criterion classes' cloning/pickling is now memory safe
-     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
-     By `Ibraim Ganiev`_.
+     :issue:`7680` by `Ibraim Ganiev`_.
 
 .. _changes_0_18_1:
 
@@ -125,13 +119,11 @@ Bug fixes
 
    - Attribute ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
-     with SVD and Eigen solver are now of the same length. (`#7632
-     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
-     By `JPFrancoia`_
+     with SVD and Eigen solver are now of the same length. :issue:`7632`
+     by `JPFrancoia`_
 
    - Fixes issue in :ref:`univariate_feature_selection` where score 
-     functions were not accepting multi-label targets.(`#7676
-     <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
+     functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
 
@@ -143,9 +135,7 @@ Linear, kernelized and related models
    - Length of `explained_variance_ratio` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
-     of min(n_components, n_classes - 1). (`#7632
-     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
-     By `JPFrancoia`_
+     of min(n_components, n_classes - 1). :issue:`7632` by `JPFrancoia`_
 
 
 .. _changes_0_18:
