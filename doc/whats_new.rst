@@ -322,7 +322,7 @@ Model selection and evaluation
    - The cross-validation iterators are replaced by cross-validation splitters
      available from :mod:`sklearn.model_selection`, allowing for nested
      cross-validation. See :ref:`model_selection_changes` for more information.
-     :issue:`4294` by :user:`Raghav R V<raghavrv>`.
+     :issue:`4294` by `Raghav R V`_.
 
 Enhancements
 ............
@@ -436,7 +436,7 @@ Model evaluation and meta-estimators
    - The new ``cv_results_`` attribute of :class:`model_selection.GridSearchCV`
      (and :class:`model_selection.RandomizedSearchCV`) can be easily imported
      into pandas as a ``DataFrame``. Ref :ref:`model_selection_changes` for
-     more information. :issue:`6697` by :user:`Raghav R V<raghavrv>`.
+     more information. :issue:`6697` by `Raghav R V`_.
 
    - Generalization of :func:`model_selection.cross_val_predict`.
      One can pass method names such as `predict_proba` to be used in the cross
@@ -446,7 +446,7 @@ Model evaluation and meta-estimators
    - The training scores and time taken for training followed by scoring for
      each search candidate are now available at the ``cv_results_`` dict.
      See :ref:`model_selection_changes` for more information.
-     :issue:`7325` by :user:`Eugene Chen<eyc88>` and :user:`Raghav R V<raghavrv>`.
+     :issue:`7325` by :user:`Eugene Chen<eyc88>` and `Raghav R V`_.
 
 Metrics
 
@@ -460,7 +460,7 @@ Metrics
      :issue:`7419` by :user:`Gregory Stupp<stuppie>` and `Joel Nothman`_.
 
    - Add ``sample_weight`` parameter to :func:`metrics.matthews_corrcoef`.
-     By :user:`Jatin Shah<jatinshah>` and :user:`Raghav R V<raghavrv>`.
+     By :user:`Jatin Shah<jatinshah>` and `Raghav R V`_.
 
    - Speed up :func:`metrics.silhouette_score` by using vectorized operations.
      By `Manoj Kumar`_.
@@ -592,7 +592,7 @@ Model evaluation and meta-estimators
     - Fixed bug in :class:`model_selection.StratifiedShuffleSplit`
       where train and test sample could overlap in some edge cases,
       see :issue:`6121` for
-      more details. By :user:`Loic Esteve<lesteve>`.
+      more details. By `Loic Esteve`_.
 
     - Fix in :class:`sklearn.model_selection.StratifiedShuffleSplit` to
       return splits of size ``train_size`` and ``test_size`` in all cases
@@ -644,7 +644,7 @@ Miscellaneous
 
     - Fix a bug where some formats of ``scipy.sparse`` matrix, and estimators
       with them as parameters, could not be passed to :func:`base.clone`.
-      By :user:`Loic Esteve<lesteve>`.
+      By `Loic Esteve`_.
 
     - :func:`datasets.load_svmlight_file` now is able to read long int QID values.
       :issue:`7101` by :user:`Ibraim Ganiev<olologin>`.
@@ -690,13 +690,13 @@ Model evaluation and meta-estimators
      :mod:`sklearn.learning_curve` have been deprecated and the classes and
      functions have been reorganized into the :mod:`sklearn.model_selection`
      module. Ref :ref:`model_selection_changes` for more information.
-     :issue:`4294` by :user:`Raghav R V<raghavrv>`.
+     :issue:`4294` by `Raghav R V`_.
 
    - The ``grid_scores_`` attribute of :class:`model_selection.GridSearchCV`
      and :class:`model_selection.RandomizedSearchCV` is deprecated in favor of
      the attribute ``cv_results_``.
      Ref :ref:`model_selection_changes` for more information.
-     :issue:`6697` by :user:`Raghav R V<raghavrv>`.
+     :issue:`6697` by `Raghav R V`_.
 
    - The parameters ``n_iter`` or ``n_folds`` in old CV splitters are replaced
      by the new parameter ``n_splits`` since it can provide a consistent
@@ -717,7 +717,7 @@ Model evaluation and meta-estimators
      :class:`model_selection.LeavePGroupsOut` is renamed to
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
-     :issue:`6660` by :user:`Raghav R V<raghavrv>`.
+     :issue:`6660` by `Raghav R V`_.
 
 Code Contributors
 -----------------
@@ -962,7 +962,7 @@ Enhancements
      parallelism when many very short tasks are executed in parallel, for
      instance by the :class:`grid_search.GridSearchCV` meta-estimator
      with ``n_jobs > 1`` used with a large grid of parameters on a small
-     dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and :user:`Loic Esteve<lesteve>`.
+     dataset. By `Vlad Niculae`_, `Olivier Grisel`_ and `Loic Esteve`_.
 
    - For more details about changes in joblib 0.9.3 see the release notes:
      https://github.com/joblib/joblib/blob/master/CHANGES.rst#release-093
@@ -1082,7 +1082,7 @@ Bug fixes
       (:issue:`5431`)
 
     - Fix in :class:`cluster.KMeans` cluster reassignment for sparse input by
-      :user:`Lars Buitinck<larsmans>`.
+      `Lars Buitinck`_.
 
     - Fixed a bug in :class:`lda.LDA` that could cause asymmetric covariance
       matrices when using shrinkage. By `Martin Billinger`_.
@@ -1112,7 +1112,7 @@ Bug fixes
 
     - Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
       with a large number of features and fewer samples. (:issue:`4478`)
-      By `Andreas Müller`_, :user:`Loic Esteve<lesteve>` and :user:`Giorgio Patrini<giorgiop>`.
+      By `Andreas Müller`_, `Loic Esteve`_ and :user:`Giorgio Patrini<giorgiop>`.
 
     - Fixed bug in :class:`cross_decomposition.PLS` that yielded unstable and
       platform dependent output, and failed on `fit_transform`.
@@ -1427,7 +1427,7 @@ Enhancements
      By `Manoj Kumar`_
 
    - Add support for sample weights in scorer objects.  Metrics with sample
-     weight support will automatically benefit from it. By :user:`Noel Dawe<ndawe>` and
+     weight support will automatically benefit from it. By `Noel Dawe`_ and
      `Vlad Niculae`_.
 
    - Added ``newton-cg`` and `lbfgs` solver support in
@@ -1460,7 +1460,7 @@ Enhancements
      :class:`linear_model.LogisticRegression` to implement a Logistic
      Regression solver that minimizes the cross-entropy or multinomial loss
      instead of the default One-vs-Rest setting. Supports `lbfgs` and
-     `newton-cg` solvers. By :user:`Lars Buitinck<larsmans>` and `Manoj Kumar`_. Solver option
+     `newton-cg` solvers. By `Lars Buitinck`_ and `Manoj Kumar`_. Solver option
      `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
@@ -1496,7 +1496,7 @@ Enhancements
      in their constructor. By `Manoj Kumar`_.
 
    - Added decision function for :class:`multiclass.OneVsOneClassifier`
-     By :user:`Raghav R V<raghavrv>` and :user:`Kyle Beauchamp<kyleabeauchamp>`.
+     By `Raghav R V`_ and :user:`Kyle Beauchamp<kyleabeauchamp>`.
 
    - :func:`neighbors.kneighbors_graph` and :func:`radius_neighbors_graph`
      support non-Euclidean metrics. By `Manoj Kumar`_
@@ -1510,7 +1510,7 @@ Enhancements
    - :class:`cluster.DBSCAN` now supports sparse input and sample weights and
      has been optimized: the inner loop has been rewritten in Cython and
      radius neighbors queries are now computed in batch. By `Joel Nothman`_
-     and :user:`Lars Buitinck<larsmans>`.
+     and `Lars Buitinck`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
      frequency for :class:`ensemble.RandomForestClassifier`,
@@ -1712,7 +1712,7 @@ API changes summary
       now returns two probabilities per sample in the multiclass case; this
       is consistent with other estimators and with the method's documentation,
       but previous versions accidentally returned only the positive
-      probability. Fixed by Will Lamond and :user:`Lars Buitinck<larsmans>`.
+      probability. Fixed by Will Lamond and `Lars Buitinck`_.
 
     - Change default value of precompute in :class:`ElasticNet` and :class:`Lasso`
       to False. Setting precompute to "auto" was found to be slower when
@@ -1743,7 +1743,7 @@ API changes summary
 
     - From now onwards, all estimators will uniformly raise ``NotFittedError``
       (:class:`utils.validation.NotFittedError`), when any of the ``predict``
-      like methods are called before the model is fit. By :user:`Raghav R V<raghavrv>`.
+      like methods are called before the model is fit. By `Raghav R V`_.
 
     - Input data validation was refactored for more consistent input
       validation. The ``check_arrays`` function was replaced by ``check_array``
@@ -1847,7 +1847,7 @@ Bug fixes
   - The ``transform`` of :class:`discriminant_analysis.LinearDiscriminantAnalysis`
     now projects the input on the most discriminant directions. By Martin Billinger.
 
-  - Fixed potential overflow in ``_tree.safe_realloc`` by :user:`Lars Buitinck<larsmans>`.
+  - Fixed potential overflow in ``_tree.safe_realloc`` by `Lars Buitinck`_.
 
   - Performance optimization in :class:`isotonic.IsotonicRegression`.
     By Robert Bradshaw.
@@ -1855,7 +1855,7 @@ Bug fixes
   - ``nose`` is non-longer a runtime dependency to import ``sklearn``, only for
     running the tests. By `Joel Nothman`_.
 
-  - Many documentation and website fixes by `Joel Nothman`_, :user:`Lars Buitinck<larsmans>`
+  - Many documentation and website fixes by `Joel Nothman`_, `Lars Buitinck`_
     :user:`Matt Pico<MattpSoftware>`, and others.
 
 .. _changes_0_15_1:
@@ -1939,7 +1939,7 @@ New features
      the user guide for details and examples. By `Gilles Louppe`_.
 
    - New unsupervised feature selection algorithm
-     :class:`feature_selection.VarianceThreshold`, by :user:`Lars Buitinck<larsmans>`.
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
 
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
@@ -1949,7 +1949,7 @@ New features
      ward strategies, by  :user:`Nelle Varoquaux<nellev>` and `Gael Varoquaux`_.
 
    - Shorthand constructors :func:`pipeline.make_pipeline` and
-     :func:`pipeline.make_union` were added by :user:`Lars Buitinck<larsmans>`.
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
 
    - Shuffle option for :class:`cross_validation.StratifiedKFold`.
      By :user:`Jeffrey Blackburne<jblackburne>`.
@@ -2032,7 +2032,7 @@ Enhancements
 
    - Add ``min_weight_fraction_leaf`` pre-pruning parameter to tree-based
      methods: the minimum weighted fraction of the input samples required to be
-     at a leaf node. By :user:`Noel Dawe<ndawe>`.
+     at a leaf node. By `Noel Dawe`_.
 
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
@@ -2049,7 +2049,7 @@ Enhancements
 
    - The training algorithm for :class:`decomposition.NMF` is faster for
      sparse matrices and has much lower memory complexity, meaning it will
-     scale up gracefully to large datasets. By :user:`Lars Buitinck<larsmans>`.
+     scale up gracefully to large datasets. By `Lars Buitinck`_.
 
    - Added svd_method option with default value to "randomized" to
      :class:`decomposition.FactorAnalysis` to save memory and
@@ -2069,7 +2069,7 @@ Enhancements
      by `Robert Layton`_ and `Joel Nothman`_.
 
    - Norm computations optimized for NumPy 1.6 and later versions by
-     :user:`Lars Buitinck<larsmans>`. In particular, the k-means algorithm no longer
+     `Lars Buitinck`_. In particular, the k-means algorithm no longer
      needs a temporary data structure the size of its input.
 
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
@@ -2089,7 +2089,7 @@ Enhancements
 
    - Speed and memory usage improvements to the SGD algorithm for linear
      models: it now uses threads, not separate processes, when ``n_jobs>1``.
-     By :user:`Lars Buitinck<larsmans>`.
+     By `Lars Buitinck`_.
 
    - Grid search and cross validation allow NaNs in the input arrays so that
      preprocessors such as :class:`preprocessing.Imputer
@@ -2114,7 +2114,7 @@ Enhancements
      :func:`metrics.mean_squared_error`,
      :func:`metrics.mean_absolute_error`,
      :func:`metrics.r2_score`.
-     By :user:`Noel Dawe<ndawe>`.
+     By `Noel Dawe`_.
 
    - Speed up of the sample generator
      :func:`datasets.make_multilabel_classification`. By `Joel Nothman`_.
@@ -2128,7 +2128,7 @@ Documentation improvements
      Original tutorial created by several authors including
      `Olivier Grisel`_, Lars Buitinck and many others.
      Tutorial integration into the scikit-learn documentation
-     by :user:`Jaques Grobler<jaquesgrobler>`
+     by `Jaques Grobler`_
 
    - Added :ref:`Computational Performance <computational_performance>`
      documentation. Discussion and examples of prediction latency / throughput
@@ -2450,7 +2450,7 @@ Changelog
      consumption in all tree-based estimators. By `Gilles Louppe`_.
 
    - Added :class:`ensemble.AdaBoostClassifier` and
-     :class:`ensemble.AdaBoostRegressor`, by :user:`Noel Dawe<ndawe>`  and
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
@@ -2468,7 +2468,7 @@ Changelog
    - Added :ref:`Restricted Boltzmann Machines<rbm>`
      (:class:`neural_network.BernoulliRBM`). By `Yann Dauphin`_.
 
-   - Python 3 support by :user:`Justin Vincent<justinvf>`, :user:`Lars Buitinck<larsmans>`,
+   - Python 3 support by :user:`Justin Vincent<justinvf>`, `Lars Buitinck`_,
      :user:`Subhodeep Moitra<smoitra87>` and `Olivier Grisel`_. All tests now pass under
      Python 3.3.
 
@@ -2483,13 +2483,13 @@ Changelog
      `Machine Learning Cheat Sheet (for scikit-learn)
      <http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html>`_
      to the documentation. See :ref:`Choosing the right estimator <ml_map>`.
-     By :user:`Jaques Grobler<jaquesgrobler>`.
+     By `Jaques Grobler`_.
 
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
      See :ref:`scoring_parameter` for details. By `Andreas Müller`_
-     and :user:`Lars Buitinck<larsmans>`.
+     and `Lars Buitinck`_.
      Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
      deprecated.
 
@@ -2543,7 +2543,7 @@ Changelog
      by `Arnaud Joly`_.
 
    - Added :func:`metrics.log_loss` that computes log loss, aka cross-entropy
-     loss. By Jochen Wersdörfer and :user:`Lars Buitinck<larsmans>`.
+     loss. By Jochen Wersdörfer and `Lars Buitinck`_.
 
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
@@ -2561,7 +2561,7 @@ Changelog
    - The new estimator :class:`sklearn.decomposition.TruncatedSVD`
      performs dimensionality reduction using SVD on sparse matrices,
      and can be used for latent semantic analysis (LSA).
-     By :user:`Lars Buitinck<larsmans>`.
+     By `Lars Buitinck`_.
 
    - Added self-contained example of out-of-core learning on text data
      :ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`.
@@ -2574,7 +2574,7 @@ Changelog
 
    - :class:`sklearn.cluster.KMeans` now fits several orders of magnitude
      faster on sparse data (the speedup depends on the sparsity). By
-     :user:`Lars Buitinck<larsmans>`.
+     `Lars Buitinck`_.
 
    - Reduce memory footprint of FastICA by :user:`Denis Engemann<dengemann>` and
      `Alexandre Gramfort`_.
@@ -2590,7 +2590,7 @@ Changelog
      By `Peter Prettenhofer`_.
 
    - Most metrics now support string labels for multiclass classification
-     by `Arnaud Joly`_ and :user:`Lars Buitinck<larsmans>`.
+     by `Arnaud Joly`_ and `Lars Buitinck`_.
 
    - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
      and `Vlad Niculae`_.
@@ -2661,7 +2661,7 @@ API changes summary
      :class:`linear_model.enet_path` can return its results in the same
      format as that of :class:`linear_model.lars_path`. This is done by
      setting the ``return_models`` parameter to ``False``. By
-     :user:`Jaques Grobler<jaquesgrobler>` and `Alexandre Gramfort`_
+     `Jaques Grobler`_ and `Alexandre Gramfort`_
 
    - :class:`grid_search.IterGrid` was renamed to
      :class:`grid_search.ParameterGrid`.
@@ -2835,7 +2835,7 @@ Changelog
     - Fixed a bug in the reassignment of small clusters in the :class:`cluster.MiniBatchKMeans`
       by `Gael Varoquaux`_.
 
-    - Fixed default value of ``gamma`` in :class:`decomposition.KernelPCA` by :user:`Lars Buitinck<larsmans>`.
+    - Fixed default value of ``gamma`` in :class:`decomposition.KernelPCA` by `Lars Buitinck`_.
 
     - Updated joblib to ``0.7.0d`` by `Gael Varoquaux`_.
 
@@ -2848,7 +2848,7 @@ Changelog
 People
 ------
 List of contributors for release 0.13.1 by number of commits.
- * 16  :user:`Lars Buitinck<larsmans>`
+ * 16  `Lars Buitinck`_
  * 12  `Andreas Müller`_
  *  8  `Gael Varoquaux`_
  *  5  Robert Marchman
@@ -2886,7 +2886,7 @@ New Estimator Classes
 
    - :class:`feature_extraction.FeatureHasher`, a transformer implementing the
      "hashing trick" for fast, low-memory feature extraction from string fields
-     by :user:`Lars Buitinck<larsmans>` and :class:`feature_extraction.text.HashingVectorizer`
+     by `Lars Buitinck`_ and :class:`feature_extraction.text.HashingVectorizer`
      for text documents by `Olivier Grisel`_  See :ref:`feature_hashing` and
      :ref:`hashing_vectorizer` for the documentation and sample usage.
 
@@ -2937,7 +2937,7 @@ Changelog
      Kyle Beauchamp.
 
    - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
-     support sample weighting, by :user:`Noel Dawe<ndawe>`  and `Gilles Louppe`_.
+     support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
 
    - Speedup improvement when using bootstrap samples in forests of randomized
      trees, by `Peter Prettenhofer`_  and `Gilles Louppe`_.
@@ -2948,7 +2948,7 @@ Changelog
      example.
 
    - The table of contents on the website has now been made expandable by
-     :user:`Jaques Grobler<jaquesgrobler>`.
+     `Jaques Grobler`_.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
@@ -2960,7 +2960,7 @@ Changelog
      previously.
 
    - Ridge regression and ridge classification fitting with ``sparse_cg`` solver
-     no longer has quadratic memory complexity, by :user:`Lars Buitinck<larsmans>` and
+     no longer has quadratic memory complexity, by `Lars Buitinck`_ and
      `Fabian Pedregosa`_.
 
    - Ridge regression and ridge classification now support a new fast solver
@@ -3142,12 +3142,12 @@ List of contributors for release 0.13 by number of commits.
  * 137  `Peter Prettenhofer`_
  * 131  `Gael Varoquaux`_
  * 117  `Mathieu Blondel`_
- * 108  :user:`Lars Buitinck<larsmans>`
+ * 108  `Lars Buitinck`_
  * 106  Wei Li
  * 101  `Olivier Grisel`_
  *  65  `Vlad Niculae`_
  *  54  `Gilles Louppe`_
- *  40  :user:`Jaques Grobler<jaquesgrobler>`
+ *  40  `Jaques Grobler`_
  *  38  `Alexandre Gramfort`_
  *  30  `Rob Zinkov`_
  *  19  Aymeric Masurelle
@@ -3228,7 +3228,7 @@ Changelog
 
  - Proper behavior with fortran-ordered NumPy arrays by `Gael Varoquaux`_
 
- - Make GridSearchCV work with non-CSR sparse matrix by :user:`Lars Buitinck<larsmans>`
+ - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
@@ -3246,7 +3246,7 @@ People
  *  14  `Peter Prettenhofer`_
  *  12  `Gael Varoquaux`_
  *  10  `Andreas Müller`_
- *   5  :user:`Lars Buitinck<larsmans>`
+ *   5  `Lars Buitinck`_
  *   3  :user:`Virgile Fritsch<VirgileFritsch>`
  *   1  `Alexandre Gramfort`_
  *   1  `Gilles Louppe`_
@@ -3286,7 +3286,7 @@ Changelog
    - Added :ref:`multidimensional_scaling`, by Nelle Varoquaux.
 
    - SVMlight file format loader now detects compressed (gzip/bzip2) files and
-     decompresses them on the fly, by :user:`Lars Buitinck<larsmans>`.
+     decompresses them on the fly, by `Lars Buitinck`_.
 
    - SVMlight file format serializer now preserves double precision floating
      point values, by `Olivier Grisel`_.
@@ -3404,9 +3404,9 @@ People
  *  60  `Mathieu Blondel`_
  *  57  `Alexandre Gramfort`_
  *  52  `Vlad Niculae`_
- *  45  :user:`Lars Buitinck<larsmans>`
+ *  45  `Lars Buitinck`_
  *  44  Nelle Varoquaux
- *  37  :user:`Jaques Grobler<jaquesgrobler>`
+ *  37  `Jaques Grobler`_
  *  30  Alexis Mignon
  *  30  Immanuel Bayer
  *  27  `Olivier Grisel`_
@@ -3465,7 +3465,7 @@ Highlights
      and `Scott White`_ .
 
    - Simple dict-based feature loader with support for categorical variables
-     (:class:`feature_extraction.DictVectorizer`) by :user:`Lars Buitinck<larsmans>`.
+     (:class:`feature_extraction.DictVectorizer`) by `Lars Buitinck`_.
 
    - Added Matthews correlation coefficient (:func:`metrics.matthews_corrcoef`)
      and added macro and micro average options to
@@ -3505,7 +3505,7 @@ Other changes
      warm_start to the :ref:`sgd` module by `Mathieu Blondel`_.
 
    - Dense and sparse implementations of :ref:`svm` classes and
-     :class:`linear_model.LogisticRegression` merged by :user:`Lars Buitinck<larsmans>`.
+     :class:`linear_model.LogisticRegression` merged by `Lars Buitinck`_.
 
    - Regressors can now be used as base estimator in the :ref:`multiclass`
      module by `Mathieu Blondel`_.
@@ -3640,8 +3640,8 @@ People
    * 129  `Olivier Grisel`_
    * 114  `Mathieu Blondel`_
    * 103  Clay Woolam
-   *  96  :user:`Lars Buitinck<larsmans>`
-   *  88  :user:`Jaques Grobler<jaquesgrobler>`
+   *  96  `Lars Buitinck`_
+   *  88  `Jaques Grobler`_
    *  82  `Alexandre Gramfort`_
    *  50  `Bertrand Thirion`_
    *  42  `Robert Layton`_
@@ -3754,7 +3754,7 @@ Changelog
      (:func:`sklearn.datasets.fetch_20newsgroups_vectorized`) by
      `Mathieu Blondel`_.
 
-   - :ref:`multiclass` by :user:`Lars Buitinck<larsmans>`.
+   - :ref:`multiclass` by `Lars Buitinck`_.
 
    - Utilities for fast computation of mean and variance for sparse matrices
      by `Mathieu Blondel`_.
@@ -3842,7 +3842,7 @@ The following people contributed to scikit-learn since last release:
    * 220  `Gilles Louppe`_
    * 183  `Brian Holt`_
    * 166  `Gael Varoquaux`_
-   * 144  :user:`Lars Buitinck<larsmans>`
+   * 144  `Lars Buitinck`_
    *  73  `Vlad Niculae`_
    *  65  `Peter Prettenhofer`_
    *  64  `Fabian Pedregosa`_
@@ -3933,7 +3933,7 @@ Changelog
      and Python version thanks to :user:`Jean Kossaifi<JeanKossaifi>`.
 
    - :ref:`Loader for libsvm/svmlight format <libsvm_loader>` by
-     `Mathieu Blondel`_ and :user:`Lars Buitinck<larsmans>`
+     `Mathieu Blondel`_ and `Lars Buitinck`_
 
    - Documentation improvements: thumbnails in
      :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
@@ -3942,12 +3942,12 @@ Changelog
      performance) by `Fabian Pedregosa`_.
 
    - Added :ref:`multinomial_naive_bayes` and :ref:`bernoulli_naive_bayes`
-     by :user:`Lars Buitinck<larsmans>`
+     by `Lars Buitinck`_
 
    - Text feature extraction optimizations by Lars Buitinck
 
    - Chi-Square feature selection
-     (:func:`feature_selection.univariate_selection.chi2`) by :user:`Lars Buitinck<larsmans>`.
+     (:func:`feature_selection.univariate_selection.chi2`) by `Lars Buitinck`_.
 
    - :ref:`sample_generators` module refactoring by `Gilles Louppe`_
 
@@ -4074,7 +4074,7 @@ People
 
    - 387  `Vlad Niculae`_
    - 320  `Olivier Grisel`_
-   - 192  :user:`Lars Buitinck<larsmans>`
+   - 192  `Lars Buitinck`_
    - 179  `Gael Varoquaux`_
    - 168  `Fabian Pedregosa`_ (`INRIA`_, `Parietal Team`_)
    - 127  `Jake Vanderplas`_
@@ -4694,3 +4694,15 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Brian McFee: https://bmcfee.github.io
 
 .. _Valentin Stolbunov: http://www.vstolbunov.com
+
+.. _Jaques Grobler: https://github.com/jaquesgrobler
+
+.. _Lars Buitinck: https://github.com/larsmans
+
+.. _Loic Esteve: https://github.com/lesteve
+
+.. _Noel Dawe: https://github.com/ndawe
+
+.. _Raghav R V: https://github.com/raghavrv
+
+
