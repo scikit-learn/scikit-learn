@@ -2136,7 +2136,7 @@ Documentation improvements
      Original tutorial created by several authors including
      `Olivier Grisel`_, Lars Buitinck and many others.
      Tutorial integration into the scikit-learn documentation
-     by :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>`
+     by :user:`Jaques Grobler<jaquesgrobler>`
 
    - Added :ref:`Computational Performance <computational_performance>`
      documentation. Discussion and examples of prediction latency / throughput
@@ -2491,7 +2491,7 @@ Changelog
      `Machine Learning Cheat Sheet (for scikit-learn)
      <http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html>`_
      to the documentation. See :ref:`Choosing the right estimator <ml_map>`.
-     By :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>`.
+     By :user:`Jaques Grobler<jaquesgrobler>`.
 
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
@@ -2669,7 +2669,7 @@ API changes summary
      :class:`linear_model.enet_path` can return its results in the same
      format as that of :class:`linear_model.lars_path`. This is done by
      setting the ``return_models`` parameter to ``False``. By
-     :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>` and `Alexandre Gramfort`_
+     :user:`Jaques Grobler<jaquesgrobler>` and `Alexandre Gramfort`_
 
    - :class:`grid_search.IterGrid` was renamed to
      :class:`grid_search.ParameterGrid`.
@@ -2956,7 +2956,7 @@ Changelog
      example.
 
    - The table of contents on the website has now been made expandable by
-     :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>`.
+     :user:`Jaques Grobler<jaquesgrobler>`.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
@@ -3155,7 +3155,7 @@ List of contributors for release 0.13 by number of commits.
  * 101  `Olivier Grisel`_
  *  65  `Vlad Niculae`_
  *  54  `Gilles Louppe`_
- *  40  :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>`
+ *  40  :user:`Jaques Grobler<jaquesgrobler>`
  *  38  `Alexandre Gramfort`_
  *  30  `Rob Zinkov`_
  *  19  Aymeric Masurelle
@@ -3414,7 +3414,7 @@ People
  *  52  `Vlad Niculae`_
  *  45  :user:`Lars Buitinck<larsmans>`
  *  44  Nelle Varoquaux
- *  37  :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>`
+ *  37  :user:`Jaques Grobler<jaquesgrobler>`
  *  30  Alexis Mignon
  *  30  Immanuel Bayer
  *  27  `Olivier Grisel`_
@@ -3649,7 +3649,7 @@ People
    * 114  `Mathieu Blondel`_
    * 103  Clay Woolam
    *  96  :user:`Lars Buitinck<larsmans>`
-   *  88  :user:`Jaques Grobler<jaquesgrobler/scikit-learn/wiki/Jaques-Grobler>`
+   *  88  :user:`Jaques Grobler<jaquesgrobler>`
    *  82  `Alexandre Gramfort`_
    *  50  `Bertrand Thirion`_
    *  42  `Robert Layton`_
