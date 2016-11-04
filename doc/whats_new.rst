@@ -136,8 +136,8 @@ Linear, kernelized and related models
    - Length of `explained_variance_ratio` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
-     of min(n_components, n_classes - 1). :issue:`7632` by 
-     :user:`JPFrancoia<JPFrancoia>`
+     of min(n_components, n_classes - 1). :issue:`7632`
+     by :user:`JPFrancoia<JPFrancoia>`
 
 
 .. _changes_0_18:

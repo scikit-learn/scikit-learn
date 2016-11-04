@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 try:
     from docutils import nodes, utils
+    from sphinx.util.nodes import split_explicit_title
 except ImportError:
     # Load lazily so that test-sphinxext does not require docutils dependency
     pass
