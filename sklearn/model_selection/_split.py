@@ -84,6 +84,13 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
 
         test : ndarray
             The testing set indices for that split.
+
+        Note
+        ----
+
+        Multiple calls to the ``split`` method will not return identical
+        training or testing sets if ``random_state`` parameter exists and is
+        not explicitly set to an integer value.
         """
         X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
@@ -309,6 +316,13 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         test : ndarray
             The testing set indices for that split.
+
+        Note
+        ----
+
+        Multiple calls to the ``split`` method will not return identical
+        training or testing sets if ``random_state`` parameter exists and is
+        not explicitly set to an integer value.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -632,6 +646,13 @@ class StratifiedKFold(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
+
+        Note
+        ----
+
+        Multiple calls to the ``split`` method will not return identical
+        training or testing sets unless ``random_state`` is set to an integer
+        value.
         """
         return super(StratifiedKFold, self).split(X, y, groups)
 
@@ -709,6 +730,13 @@ class TimeSeriesSplit(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
+
+        Note
+        ----
+
+        Multiple calls to the ``split`` method will not return identical
+        training or testing sets unless ``random_state`` is set to an integer
+        value.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -938,6 +966,13 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
         test : ndarray
             The testing set indices for that split.
+
+        Note
+        ----
+
+        Multiple calls to the ``split`` method will not return identical
+        training or testing sets unless ``random_state`` is set to an integer
+        value.
         """
         X, y, groups = indexable(X, y, groups)
         for train, test in self._iter_indices(X, y, groups):
@@ -1304,6 +1339,13 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         test : ndarray
             The testing set indices for that split.
+
+        Note
+        ----
+
+        Multiple calls to the ``split`` method will not return identical
+        training or testing sets unless ``random_state`` is set to an integer
+        value.
         """
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
