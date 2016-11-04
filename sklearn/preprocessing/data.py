@@ -1994,20 +1994,20 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     Given a dataset with two features and four samples, we let the transformer
     find the number of occurences of each data point in the dataset 
 
-    >>> from sklearn.preprocessing import CountFeaturizer
+    >>> from sklearn.preprocessing.data import CountFeaturizer
     >>> data = [[1, 1], [1, 1], [3, 1], [0, 0]]
     >>> cf = CountFeaturizer()
     >>> cf.fit_transform(data)
     array([[ 1.,  1.,  2.],
-        [ 1.,  1.,  2.],
-        [ 3.,  1.,  1.],
-        [ 0.,  0.,  1.]])
+         [ 1.,  1.,  2.],
+         [ 3.,  1.,  1.],
+         [ 0.,  0.,  1.]])
     >>> cf = CountFeaturizer(inclusion=[0, 1])
     >>> cf.fit_transform(data)
     array([[ 1.,  1.,  3.],
-        [ 1.,  1.,  3.],
-        [ 3.,  1.,  3.],
-        [ 0.,  0.,  1.]])
+         [ 1.,  1.,  3.],
+         [ 3.,  1.,  3.],
+         [ 0.,  0.,  1.]])
     >>> data_2 = [[1, 1]]
     >>> cf = CountFeaturizer()
     >>> cf.fit(data).transform(data_2)
