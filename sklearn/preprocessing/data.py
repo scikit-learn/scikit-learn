@@ -2062,7 +2062,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         # in utils.validation.check_array() 
 
         num_columns = len(X[0])
-        for i in xrange(1, len(X)):
+        for i in range(1, len(X)):
             if len(X[i]) != num_columns:
                 raise ValueError("Malformed input array X")
 
@@ -2076,7 +2076,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         else:
             num_features = len(data_row)
             return tuple([data_row[i] \
-                for i in xrange(num_features) if self.inclusion[i]])
+                for i in range(num_features) if self.inclusion[i]])
 
     def fit(self, X, y=None):
         """
@@ -2121,7 +2121,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             raise ValueError("Inclusion/feature must be 1 to 1")
         transformed = np.zeros((len_data, num_features + 1))
         transformed[:, :-1] = X 
-        for i in xrange(len_data):
+        for i in range(len_data):
             data_i_tuple = self._extract_tuple(X[i])
             if data_i_tuple in self.count_cache:
                 transformed[i, num_features] = self.count_cache[data_i_tuple]
