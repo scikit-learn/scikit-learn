@@ -748,8 +748,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. Splits are also 
-            ignored if they would result in any single class carrying a 
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
             negative weight in either child node.
 
         check_input : boolean, (default=True)
@@ -768,9 +768,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             Returns self.
         """
 
-        super(DecisionTreeClassifier,self).fit(
-            X, y, 
-            sample_weight=sample_weight, 
+        super(DecisionTreeClassifier, self).fit(
+            X, y,
+            sample_weight=sample_weight,
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
@@ -1058,9 +1058,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             Returns self.
         """
 
-        super(DecisionTreeRegressor,self).fit(
-            X, y, 
-            sample_weight=sample_weight, 
+        super(DecisionTreeRegressor, self).fit(
+            X, y,
+            sample_weight=sample_weight,
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
