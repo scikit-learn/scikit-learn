@@ -1315,7 +1315,7 @@ def test_normalize():
 
                 assert_array_almost_equal(row_sums, ones)
 
-    # test return_norm
+    # Test return_norm
     X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
     for norm in ('l1', 'l2', 'max'):
         _, norms = normalize(X_dense, norm=norm,
