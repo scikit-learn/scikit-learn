@@ -1175,11 +1175,29 @@ def test_grid_search_cv_splits_consistency():
                        cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
 
+    # Give generator as a cv parameter
+    gs3 = GridSearchCV(LinearSVC(random_state=0),
+                       param_grid={'C': [0.1, 0.2, 0.3]},
+                       cv=KFold(n_splits=n_splits, shuffle=True,
+                                random_state=0).split(X, y))
+    gs3.fit(X, y)
+
+    gs4 = GridSearchCV(LinearSVC(random_state=0),
+                       param_grid={'C': [0.1, 0.2, 0.3]},
+                       cv=KFold(n_splits=n_splits, shuffle=True,
+                                random_state=0))
+    gs4.fit(X, y)
+
+
     def _pop_time_keys(cv_results):
         for key in ('mean_fit_time', 'std_fit_time',
                     'mean_score_time', 'std_score_time'):
             cv_results.pop(key)
         return cv_results
+
+    # Check if generators as supported as cv and that the splits are consistent
+    np.testing.assert_equal(_pop_time_keys(gs3.cv_results_),
+                            _pop_time_keys(gs4.cv_results_))
 
     # OneTimeSplitter is a non-re-entrant cv where split can be called only
     # once if ``cv.split`` is called once per param setting in GridSearchCV.fit
