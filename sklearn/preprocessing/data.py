@@ -2071,7 +2071,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         Gets the allowed types for elements of X 
         """
-        return check_array(X, dtype=[int, float, tuple, str])
+        # return check_array(X, dtype=[int, float, tuple, str])
+        return check_array(X)
 
     def _extract_tuple(self, data_row):
         """
