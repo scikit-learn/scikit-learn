@@ -769,7 +769,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         """
 
         super(DecisionTreeClassifier,self).fit(
-            X, y, sample_weight, check_input, X_idx_sorted)
+            X, y, 
+            sample_weight=sample_weight, 
+            check_input=check_input,
+            X_idx_sorted=X_idx_sorted)
         return self
 
 
@@ -1056,7 +1059,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         """
 
         super(DecisionTreeRegressor,self).fit(
-            X, y, sample_weight, check_input, X_idx_sorted)
+            X, y, 
+            sample_weight=sample_weight, 
+            check_input=check_input,
+            X_idx_sorted=X_idx_sorted)
         return self
 
 
