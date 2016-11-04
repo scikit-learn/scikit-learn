@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, assert_raises_regex
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
@@ -123,10 +123,14 @@ def test_ovr_partial_fit_exceptions():
     # It should raise ValueError
     y1 = [5] + y[7:-1]
     assert_raises(ValueError, ovr.partial_fit, X=X[7:], y=y1)
+    assert_raises_regex(ValueError, "Mini-batch contains \[.+\] while classes"
+                                    " must be subset of \[.+\]",
+                        ovr.partial_fit, X=X[7:], y=y1)
 
 
 def test_ovr_ovo_regressor():
-    # test that ovr and ovo work on regressors which don't have a decision_function
+    # test that ovr and ovo work on regressors which don't have a decision_
+    # function
     ovr = OneVsRestClassifier(DecisionTreeRegressor())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ovr.estimators_), n_classes)

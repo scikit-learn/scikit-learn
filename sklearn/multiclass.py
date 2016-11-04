@@ -245,8 +245,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
-                raise ValueError("Base estimator {0}, doesn't have "
-                                 "partial_fit method".format(self.estimator))
+                raise ValueError(("Base estimator {0}, doesn't have "
+                                 "partial_fit method").format(self.estimator))
             self.estimators_ = [clone(self.estimator) for _ in range
                                 (self.n_classes_)]
 
@@ -258,9 +258,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             self.label_binarizer_.fit(self.classes_)
 
         if not set(self.classes_).issuperset(y):
-            raise ValueError("Mini-batch contains {0} while classes " +
-                             "must be subset of {1}".format(np.unique(y),
-                                                            self.classes_))
+            raise ValueError(("Mini-batch contains {0} while classes " +
+                             "must be subset of {1}").format(np.unique(y),
+                                                             self.classes_))
 
         Y = self.label_binarizer_.transform(y)
         Y = Y.tocsc()
