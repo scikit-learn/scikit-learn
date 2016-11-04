@@ -731,6 +731,48 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             min_impurity_split=min_impurity_split,
             presort=presort)
 
+    def fit(self, X, y, sample_weight=None, check_input=True,
+            X_idx_sorted=None):
+        """Build a decision tree classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (class labels).
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also 
+            ignored if they would result in any single class carrying a 
+            negative weight in either child node.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
+            Don't use this parameter unless you know what to do.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(DecisionTreeClassifier,self).fit(
+            X, y, sample_weight, check_input, X_idx_sorted)
+        return self
+
+
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
 
@@ -976,6 +1018,46 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             random_state=random_state,
             min_impurity_split=min_impurity_split,
             presort=presort)
+
+    def fit(self, X, y, sample_weight=None, check_input=True,
+            X_idx_sorted=None):
+        """Build a decision tree regressor from the training set (X, y).
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (real numbers). Use ``dtype=np.float64`` and
+            ``order='C'`` for maximum efficiency.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
+            Don't use this parameter unless you know what to do.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(DecisionTreeRegressor,self).fit(
+            X, y, sample_weight, check_input, X_idx_sorted)
+        return self
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
