@@ -13,6 +13,7 @@ from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
 from sklearn.utils.validation import has_fit_parameter
 
+
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
 
