@@ -367,7 +367,7 @@ Trees and ensembles
 Linear, kernelized and related models
 
    - In :class:`linear_model.LogisticRegression`, the SAG solver is now
-     available in the multinomial case. :issue:`5251` by :user:`Tom Dupre la Tour<TomDLT>`.
+     available in the multinomial case. :issue:`5251` by `Tom Dupre la Tour`_.
 
    - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
      :class:`svm.LinearSVR` now support ``sample_weight``.
@@ -538,7 +538,7 @@ Linear, kernelized and related models
 
     - Fix bug in :class:`linear_model.LogisticRegressionCV` where
       ``solver='liblinear'`` did not accept ``class_weights='balanced``.
-      (:issue:`6817`). By :user:`Tom Dupre la Tour<TomDLT>`.
+      (:issue:`6817`). By `Tom Dupre la Tour`_.
 
     - Fix bug in :class:`neighbors.RadiusNeighborsClassifier` where an error
       occurred when there were outliers being labelled and a weight function
@@ -621,7 +621,7 @@ Metrics
 
     - :func:`metrics.pairwise.pairwise_distances` now converts arrays to
       boolean arrays when required in ``scipy.spatial.distance``.
-      :issue:`5460` by :user:`Tom Dupre la Tour<TomDLT>`.
+      :issue:`5460` by `Tom Dupre la Tour`_.
 
     - Fix sparse input support in :func:`metrics.silhouette_score` as well as
       example examples/text/document_clustering.py. By :user:`YenChen Lin<yenchenlin>`.
@@ -864,7 +864,7 @@ New features
    - The new solver ``sag`` implements a Stochastic Average Gradient descent
      and is available in both :class:`linear_model.LogisticRegression` and
      :class:`linear_model.Ridge`. This solver is very efficient for large
-     datasets. By :user:`Danny Sullivan<dsullivan7>` and :user:`Tom Dupre la Tour<TomDLT>`.
+     datasets. By :user:`Danny Sullivan<dsullivan7>` and `Tom Dupre la Tour`_.
      (:issue:`4738`)
 
    - The new solver ``cd`` implements a Coordinate Descent in
@@ -875,7 +875,7 @@ New features
      ``eta``, ``beta`` and ``nls_max_iter``. New parameters ``alpha`` and
      ``l1_ratio`` control L1 and L2 regularization, and ``shuffle`` adds a
      shuffling step in the ``cd`` solver.
-     By :user:`Tom Dupre la Tour<TomDLT>` and `Mathieu Blondel`_.
+     By `Tom Dupre la Tour`_ and `Mathieu Blondel`_.
 
 Enhancements
 ............
@@ -917,7 +917,7 @@ Enhancements
 
    - Improved speed of ``newton-cg`` solver in
      :class:`linear_model.LogisticRegression`, by avoiding loss computation.
-     By `Mathieu Blondel`_ and :user:`Tom Dupre la Tour<TomDLT>`.
+     By `Mathieu Blondel`_ and `Tom Dupre la Tour`_.
 
    - The ``class_weight="auto"`` heuristic in classifiers supporting
      ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
@@ -951,7 +951,7 @@ Enhancements
      By Chih-Wei Chang.
 
    - RCV1 dataset loader (:func:`sklearn.datasets.fetch_rcv1`).
-     By :user:`Tom Dupre la Tour<TomDLT>`.
+     By `Tom Dupre la Tour`_.
 
    - The "Wisconsin Breast Cancer" classical two-class classification dataset
      is now included in scikit-learn, available with
@@ -1009,12 +1009,12 @@ Enhancements
      the stopping criterion. By Santi Villalba. (:issue:`5186`)
 
    - Added optional parameter ``random_state`` in :class:`linear_model.Ridge`
-     , to set the seed of the pseudo random generator used in ``sag`` solver. By :user:`Tom Dupre la Tour<TomDLT>`.
+     , to set the seed of the pseudo random generator used in ``sag`` solver. By `Tom Dupre la Tour`_.
 
    - Added optional parameter ``warm_start`` in
      :class:`linear_model.LogisticRegression`. If set to True, the solvers
      ``lbfgs``, ``newton-cg`` and ``sag`` will be initialized with the
-     coefficients computed in the previous fit. By :user:`Tom Dupre la Tour<TomDLT>`.
+     coefficients computed in the previous fit. By `Tom Dupre la Tour`_.
 
    - Added ``sample_weight`` support to :class:`linear_model.LogisticRegression` for
      the ``lbfgs``, ``newton-cg``, and ``sag`` solvers. By `Valentin Stolbunov`_.
@@ -1108,7 +1108,7 @@ Bug fixes
     - Fixed temporarily :class:`linear_model.Ridge`, which was incorrect
       when fitting the intercept in the case of sparse data. The fix
       automatically changes the solver to 'sag' in this case.
-      :issue:`5360` by :user:`Tom Dupre la Tour<TomDLT>`.
+      :issue:`5360` by `Tom Dupre la Tour`_.
 
     - Fixed a performance bug in :class:`decomposition.RandomizedPCA` on data
       with a large number of features and fewer samples. (:issue:`4478`)
@@ -1148,7 +1148,7 @@ Bug fixes
     - Fixed a bug in :class:`linear_model.LogisticRegression` and
       :class:`linear_model.LogisticRegressionCV` when using
       ``class_weight='balanced'```or ``class_weight='auto'``.
-      By :user:`Tom Dupre la Tour<TomDLT>`.
+      By `Tom Dupre la Tour`_.
 
     - Fixed bug :issue:`5495` when
       doing OVR(SVC(decision_function_shape="ovr")). Fixed by :user:`Elvis Dohmatob<dohmatob>`.
@@ -1946,7 +1946,7 @@ New features
 
    - Added :class:`cluster.AgglomerativeClustering` for hierarchical
      agglomerative clustering with average linkage, complete linkage and
-     ward strategies, by  :user:`Nelle Varoquaux<nellev>` and `Gael Varoquaux`_.
+     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
 
    - Shorthand constructors :func:`pipeline.make_pipeline` and
      :func:`pipeline.make_union` were added by `Lars Buitinck`_.
@@ -2536,7 +2536,7 @@ Changelog
      now supports percentage values. By `Gilles Louppe`_.
 
    - Performance improvements in :class:`isotonic.IsotonicRegression` by
-     :user:`Nelle Varoquaux<nellev>`.
+     `Nelle Varoquaux`_.
 
    - :func:`metrics.accuracy_score` has an option normalize to return
      the fraction or the number of correctly classified sample
@@ -2628,7 +2628,7 @@ Changelog
      :class:`sklearn.naive_bayes.BernoulliNB` by adding the ``partial_fit``
      method by `Olivier Grisel`_.
 
-   - New website design and navigation by `Gilles Louppe`_, :user:`Nelle Varoquaux<nellev>`,
+   - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
      Vincent Michel and `Andreas Müller`_.
 
    - Improved documentation on :ref:`multi-class, multi-label and multi-output
@@ -2858,7 +2858,7 @@ List of contributors for release 0.13.1 by number of commits.
  *  1  Diego Molla
  *  1  `Gilles Louppe`_
  *  1  `Mathieu Blondel`_
- *  1  :user:`Nelle Varoquaux<nellev>`
+ *  1  `Nelle Varoquaux`_
  *  1  Rafael Cunha de Almeida
  *  1  Rolando Espinoza La fuente
  *  1  `Vlad Niculae`_
@@ -2925,7 +2925,7 @@ New Estimator Classes
      Li. See :ref:`spectral_embedding` in the user guide.
 
    - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
-     and :user:`Nelle Varoquaux<nellev>`,
+     and `Nelle Varoquaux`_,
 
 
 Changelog
@@ -4705,4 +4705,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Raghav R V: https://github.com/raghavrv
 
+.. _Tom Dupre la Tour: https://github.com/TomDLT
+
+.. _Nelle Varoquaux: https://github.com/nellev
 
