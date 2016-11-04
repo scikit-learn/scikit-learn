@@ -2066,14 +2066,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             if len(X[i]) != num_columns:
                 raise ValueError("Malformed input array X")
 
-    @staticmethod
-    def _check_array(X):
-        """
-        Gets the allowed types for elements of X 
-        """
-        # return check_array(X, dtype=[int, float, tuple, str])
-        return check_array(X)
-
     def _extract_tuple(self, data_row):
         """
         Extracts the values of the data_row[inclusion] into an ordered tuple
@@ -2092,7 +2084,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         # We do not want to enforce type constraints because we want our input
         # to be able to have categorical variables such as strings 
-        X = CountFeaturizer._check_array(X)
+        X = check_array(X)
         CountFeaturizer._check_well_formed(X)
         self.num_features = len(X[0])
         if self.inclusion != 'all' and \
@@ -2117,7 +2109,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         """
         if not self.count_cache:
             raise ValueError("Transformer must be fit() before transform()")
-        X = CountFeaturizer._check_array(X)
+        X = check_array(X)
         CountFeaturizer._check_well_formed(X)
         len_data = len(X)
         num_features = len(X[0])
