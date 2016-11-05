@@ -1627,7 +1627,6 @@ def test_one_hot_encoder_unknown_transform():
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
 
-
 def test_fit_cold_start():
     X = iris.data
     X_2d = X[:, :2]
@@ -1676,3 +1675,4 @@ def test_count_featurizer_ft_standard_inclusion():
     assert_array_equal( \
         cf_inclusion_4.fit_transform(X2), \
         np.array([[0, 2, 1, 2], [0, 2, 3, 2], [1, 0, 5, 1], [1, 1, 5, 1]]))
+
