@@ -2002,15 +2002,15 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     >>> cf = CountFeaturizer()
     >>> cf.fit_transform(data)
     array([[ 1.,  1.,  2.],
-       [ 1.,  1.,  2.],
-       [ 3.,  1.,  1.],
-       [ 0.,  0.,  1.]])
+    [ 1.,  1.,  2.],
+    [ 3.,  1.,  1.],
+    [ 0.,  0.,  1.]])
     >>> cf = CountFeaturizer(inclusion=[1])
     >>> cf.fit_transform(data)
     array([[ 1.,  1.,  3.],
-       [ 1.,  1.,  3.],
-       [ 3.,  1.,  3.],
-       [ 0.,  0.,  1.]])
+    [ 1.,  1.,  3.],
+    [ 3.,  1.,  3.],
+    [ 0.,  0.,  1.]])
     >>> data_2 = [[1, 1]]
     >>> cf = CountFeaturizer()
     >>> cf.fit(data).transform(data_2)
@@ -2030,9 +2030,11 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             removal_policy=removal_policy)
         if type(inclusion) == str:
             self.inclusion = inclusion
+        elif inclusion == None:
+            self.inclusion = np.array([]) 
         else:
             self.inclusion = np.array(inclusion) 
-        if type(removal_policy) == str:
+        if removal_policy == None or type(removal_policy) == str:
             self.removal_policy = removal_policy
         else:
             self.removal_policy = np.array(removal_policy)
