@@ -90,10 +90,11 @@ Bug fixes
      `#6497 <https://github.com/scikit-learn/scikit-learn/pull/6497>`_
      by `Sebastian Säger`_
 
-   - Fix bug svm's decision values when `decision_function_shape` is
-     `'ovr'` :class:`svm.SVC`.
-     `#7724 <https://github.com/scikit-learn/scikit-learn/pull/7724>`_
-     by `Bing Tian Dai`_
+   - Fix bug for svm's decision values when ``decision_function_shape``
+     is ``ovr`` in :class:`svm.SVC`.
+     :class:`svm.SVC`'s decision_function was incorrect from versions
+     0.17.0 through 0.18.0.
+     :issue:`7724` by `Bing Tian Dai`.
 
 .. _changes_0_18:
 
