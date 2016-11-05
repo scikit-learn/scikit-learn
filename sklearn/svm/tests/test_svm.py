@@ -952,46 +952,38 @@ def test_decision_function_shape_two_class():
 
 
 def test_ovr_decision_function():
-    train_base_points = np.array([[1, 1]])
-
-    # For all the quadrants (classes)
-    X = np.vstack((
-        train_base_points * [1, 1],    # Q1
-        train_base_points * [-1, 1],   # Q2
-        train_base_points * [-1, -1],  # Q3
-        train_base_points * [1, -1]    # Q4
-        ))
-
-    Y = [0, 1, 2, 3]
+    # One point from each quadrant represents one class
+    X_train = np.array([[1, 1], [-1, 1], [-1, -1], [1, -1]])
+    y_train = [0, 1, 2, 3]
 
     # First point is closer to the decision boundaries than the second point
-    test_base_points = np.array([[5, 5], [10, 10]])
+    base_points = np.array([[5, 5], [10, 10]])
 
     # For all the quadrants (classes)
     X_test = np.vstack((
-        test_base_points * [1, 1],    # Q1
-        test_base_points * [-1, 1],   # Q2
-        test_base_points * [-1, -1],  # Q3
-        test_base_points * [1, -1]    # Q4
+        base_points * [1, 1],    # Q1
+        base_points * [-1, 1],   # Q2
+        base_points * [-1, -1],  # Q3
+        base_points * [1, -1]    # Q4
         ))
 
-    Y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
+    y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
 
     clf = svm.SVC(kernel='linear', decision_function_shape='ovr')
-    clf.fit(X, Y)
+    clf.fit(X_train, y_train)
 
-    Y_pred = clf.predict(X_test)
+    y_pred = clf.predict(X_test)
 
     # Test if the prediction is the same as y
-    assert_array_equal(Y_pred, Y_test)
+    assert_array_equal(y_pred, y_test)
 
     deci_val = clf.decision_function(X_test)
 
     # Assert that the predicted class has the maximum value
-    assert_array_equal(np.argmax(deci_val, axis=1), Y_pred)
+    assert_array_equal(np.argmax(deci_val, axis=1), y_pred)
 
     # Get decision value at test points for the predicted class
-    pred_class_deci_val = deci_val[range(8), Y_pred].reshape((4, 2))
+    pred_class_deci_val = deci_val[range(8), y_pred].reshape((4, 2))
 
     # Assert pred_class_deci_val > 0 here
     assert_greater(np.min(pred_class_deci_val), 0.0)
