@@ -1016,14 +1016,6 @@ class NMF(BaseEstimator, TransformerMixin):
         H : array-like, shape (n_components, n_features)
             If init='custom', it is used as initial guess for the solution.
 
-        Attributes
-        ----------
-        components_ : array-like, shape (n_components, n_features)
-            Factorization matrix, sometimes called 'dictionary'.
-
-        n_iter_ : int
-            Actual number of iterations for the transform.
-
         Returns
         -------
         W: array, shape (n_samples, n_components)
@@ -1061,14 +1053,6 @@ class NMF(BaseEstimator, TransformerMixin):
         X: {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
-        Attributes
-        ----------
-        components_ : array-like, shape (n_components, n_features)
-            Factorization matrix, sometimes called 'dictionary'.
-
-        n_iter_ : int
-            Actual number of iterations for the transform.
-
         Returns
         -------
         self
@@ -1083,11 +1067,6 @@ class NMF(BaseEstimator, TransformerMixin):
         ----------
         X: {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be transformed by the model
-
-        Attributes
-        ----------
-        n_iter_ : int
-            Actual number of iterations for the transform.
 
         Returns
         -------
@@ -1106,7 +1085,6 @@ class NMF(BaseEstimator, TransformerMixin):
             nls_max_iter=self.nls_max_iter, sparseness=self.sparseness,
             beta=self.beta, eta=self.eta)
 
-        self.n_iter_ = n_iter_
         return W
 
     def inverse_transform(self, W):
