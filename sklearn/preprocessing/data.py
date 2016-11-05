@@ -2039,6 +2039,10 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         else:
             self.removal_policy = np.array(removal_policy)
         self.count_cache = {}
+
+        # the num_feature variable acts as a way to ensure that the number of 
+        # columns of X going into fit() is the same as the number of columns
+        # of X going into transform()
         self.num_features = 0
 
     @staticmethod
@@ -2092,15 +2096,37 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
             return tuple([data_row[i] \
                 for i in range(num_features) if (i in self.inclusion)])
 
+    def _final_num_features(self, cols_X):
+        """
+        Given the number of columns of X, uses the number of elements in 
+        'inclusion' and 'removal_policy' to calclulate the number of 
+        features in the output of transform()
+        """
+        if type(self.removal_policy) == str \
+            and self.removal_policy == 'inclusion':
+            if type(self.inclusion) == str and \
+                self.inclusion == 'all':
+                return 1
+            else:
+                return num_features - inclusion.size + 1
+        elif self.removal_policy != None:
+            return num_features - removal_policy + 1
+        return cols_X + 1
+
+
     def fit(self, X, y=None):
         """
         Sets the value of count_cache which holds the counts of each data point
         """
-        # We do not want to enforce type constraints because we want our input
-        # to be able to have categorical variables such as strings 
         X = check_array(X)
         CountFeaturizer._check_well_formed(X)
-        self.num_features = len(X[0])
+        cols_X = len(X[0])
+        if self._final_num_features(cols_X) <= 0:
+            # the removal_policy and inclusion were set such that the output
+            # array of transform() is expected to have 0 or a negative
+            # number of columns 
+            raise ValueError("inclusion or removal_policy incompatible")
+        self.num_features = cols_X
         self.count_cache = {} 
         for data_i in X:
             data_i_tuple = self._extract_tuple(data_i)
@@ -2126,8 +2152,19 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         if self.num_features != num_features:
             raise ValueError("transform() must have same number of" + \
                 " features as it was fitted with")
-        transformed = np.zeros((len_data, num_features + 1))
-        transformed[:, :-1] = X 
+        num_features_transform = self._final_num_features(num_features)
+        if type(self.removal_policy) == str \
+            and self.removal_policy == 'inclusion':
+            if type(self.inclusion) == str and \
+                self.inclusion == 'all':
+                removal_policy_list = range(num_features)
+            else:
+                removal_policy_list = self.inclusion
+        elif self.removal_policy == None:
+            removal_policy_list = []
+        transformed = np.zeros((len_data, num_features_transform))
+        transformed[:, :-1] = \
+            X[:, list(set(range(num_features)) - set(removal_policy_list))]
         for i in range(len_data):
             data_i_tuple = self._extract_tuple(X[i])
             if data_i_tuple in self.count_cache:
