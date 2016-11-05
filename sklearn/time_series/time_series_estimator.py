@@ -165,7 +165,7 @@ class TimeSeriesRegressor(TimeSeriesEstimator, RegressorMixin):
         #if is_pandas:
         #    X = X.as_matrix()
 
-        outs = [] 
+        outs = []
         for i in range(n_paths):
             out = np.empty((n_steps, X.shape[1]))
             previous = X[-self.n_prev:]
