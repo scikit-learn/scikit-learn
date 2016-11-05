@@ -129,7 +129,10 @@ def test_check_estimators_unfitted():
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
 
+
 def test_common():
+    # check that the fit function of an estimator will accept
+    # a 'sample_weight' parameter of type pandas.Series
     try:
         import pandas as pd
     except ImportError:
@@ -150,4 +153,3 @@ def test_common():
                 raise ValueError("Estimator {0} raises error if "
                                  "'sample_weight' parameter is type "
                                  "pandas.Series.".format(estimator_name))
-
