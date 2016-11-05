@@ -1975,19 +1975,22 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    data : list or numpy.ndarray, default=None
-        The data which requires this preprocessing step 
-
-    inclusion : list, numpy.ndarray, or string (only 'all'), default='all'
+    inclusion: set, list, numpy.ndarray, or string (only 'all'), default='all'
         The inclusion criteria for counting
         - 'all' (default): Every feature is taken into consideration when
-        counting how many of each row is in the dataset 
-        - array of indicators: numpy.ndarray or list of values where 0 means
-        to not take the feature into consideration and 1 means to take the
-        feature into consideration
-        Note: Anything with a boolean value that evaluates to False is a fine
-        substitute for 0 and anything with a boolean value that evaluates to 
-        True is a fine substitute for 1, but 0 and 1 are good guidelines  
+        counting how many of each row is in the dataset.
+        - collection of indices: A collection of values where if the index v is in
+        'inclusion', then the vth feature will be put into the equality checks when
+        counting how often each row occurs.
+
+    removal_policy: set, list, numpy.ndarray, or None, default=None 
+        - None (default): No features are removed on transformation.
+        - 'inclusion': Every feature counted will be removed and replaced with 
+        the count feature. This is equivalent to having the 'inclusion' and
+        'removal_policy' parameter being set to the exact same collection.
+        - collection of indices: For each index v in 'removal_policy', the vth 
+        feature will be removed in the transformation (and be replaced with
+        the new count feature).
 
     Examples
     --------
@@ -2002,7 +2005,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
        [ 1.,  1.,  2.],
        [ 3.,  1.,  1.],
        [ 0.,  0.,  1.]])
-    >>> cf = CountFeaturizer(inclusion=[0, 1])
+    >>> cf = CountFeaturizer(inclusion=[1])
     >>> cf.fit_transform(data)
     array([[ 1.,  1.,  3.],
        [ 1.,  1.,  3.],
@@ -2025,19 +2028,27 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         # signatures are set 
         CountFeaturizer._check_params(inclusion=inclusion, \
             removal_policy=removal_policy)
-        self.inclusion = inclusion 
-        self.removal_policy = removal_policy
+        if type(inclusion) == str:
+            self.inclusion = inclusion
+        else:
+            self.inclusion = np.array(inclusion) 
+        if type(removal_policy) == str:
+            self.removal_policy = removal_policy
+        else:
+            self.removal_policy = np.array(removal_policy)
         self.count_cache = {}
         self.num_features = 0
 
     @staticmethod
     def _check_params(inclusion=None, removal_policy=None):
-        if inclusion != None and inclusion != 'all' and \
-            not CountFeaturizer._valid_data_type(inclusion):
-            raise ValueError("Invalid parameters to inclusion")
+
+        if inclusion != None and inclusion != 'all':
+            if not CountFeaturizer._valid_data_type(inclusion):
+                raise ValueError("Illegal data type in inclusion")
+
         if removal_policy != None and removal_policy != 'inclusion' and \
             not CountFeaturizer._valid_data_type(removal_policy):
-            raise ValueError("Invalid parameters to removal_policy")
+            raise ValueError("Illegal data type in removal_policy")
 
     @staticmethod
     def _valid_data_type(type_check):
@@ -2045,7 +2056,8 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Defines the data types that are compatible with CountFeaturizer
         Currently, only Python lists and numpy arrays are accepted
         """
-        return type(type_check) == np.ndarray or type(type_check) == list 
+        return type(type_check) == np.ndarray or type(type_check) == list \
+            or type(type_check) == set 
 
     @staticmethod
     def _check_well_formed(X):
@@ -2071,12 +2083,12 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         Extracts the values of the data_row[inclusion] into an ordered tuple
         for use as a dictionary key 
         """
-        if self.inclusion == 'all':
+        if type(self.inclusion) == str and self.inclusion == 'all':
             return tuple(data_row)
         else:
             num_features = len(data_row)
             return tuple([data_row[i] \
-                for i in range(num_features) if self.inclusion[i]])
+                for i in range(num_features) if (i in self.inclusion)])
 
     def fit(self, X, y=None):
         """
@@ -2087,10 +2099,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         X = check_array(X)
         CountFeaturizer._check_well_formed(X)
         self.num_features = len(X[0])
-        if self.inclusion != 'all' and \
-            len(self.inclusion) != self.num_features:
-            # there must be one value of inclusion for each feature
-            raise ValueError("Inclusion/feature must be 1 to 1")
         self.count_cache = {} 
         for data_i in X:
             data_i_tuple = self._extract_tuple(data_i)
@@ -2116,9 +2124,6 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
         if self.num_features != num_features:
             raise ValueError("transform() must have same number of" + \
                 " features as it was fitted with")
-        if self.inclusion != 'all' and \
-            len(self.inclusion) != num_features:
-            raise ValueError("Inclusion/feature must be 1 to 1")
         transformed = np.zeros((len_data, num_features + 1))
         transformed[:, :-1] = X 
         for i in range(len_data):

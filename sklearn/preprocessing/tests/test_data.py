@@ -1665,10 +1665,10 @@ def test_count_featurizer_ft_standard_inclusion():
     # test count featurizer fit-transform on a very standard data
     # with different inclusion parameters
     
-    cf_inclusion_1 = CountFeaturizer(inclusion=[1, 0, 0])
-    cf_inclusion_2 = CountFeaturizer(inclusion=[0, 0, 0])
-    cf_inclusion_3 = CountFeaturizer(inclusion=[1, 1, 1])
-    cf_inclusion_4 = CountFeaturizer(inclusion=[1, 1, 0])
+    cf_inclusion_1 = CountFeaturizer(inclusion=[0])
+    cf_inclusion_2 = CountFeaturizer(inclusion=[])
+    cf_inclusion_3 = CountFeaturizer(inclusion=[0, 1, 2])
+    cf_inclusion_4 = CountFeaturizer(inclusion=[0, 1])
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
     X2 = np.array([[0, 2, 1], [0, 2, 3], [1, 0, 5], [1, 1, 5]])
     assert_array_equal( \
