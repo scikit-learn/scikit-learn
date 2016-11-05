@@ -90,19 +90,10 @@ def test_ovr_partial_fit():
     assert_greater(np.mean(y == pred), 0.65)
 
     # Test when mini batches doesn't have all classes
-    # with MultinomialNB
+    # with SGDClassifier
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
-    ovr = OneVsRestClassifier(MultinomialNB())
-    ovr.partial_fit(X[:7], y[:7], np.unique(y))
-    ovr.partial_fit(X[7:], y[7:])
-    pred = ovr.predict(X)
-    ovr1 = OneVsRestClassifier(MultinomialNB())
-    pred1 = ovr1.fit(X, y).predict(X)
-    assert_equal(np.mean(pred == y), np.mean(pred1 == y))
 
-    # Test when mini batches doesn't have all classes
-    # with SGDClassifier
     ovr = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
                                             random_state=0))
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
@@ -122,7 +113,6 @@ def test_ovr_partial_fit_exceptions():
     # A new class value which was not in the first call of partial_fit
     # It should raise ValueError
     y1 = [5] + y[7:-1]
-    assert_raises(ValueError, ovr.partial_fit, X=X[7:], y=y1)
     assert_raises_regex(ValueError, "Mini-batch contains \[.+\] while classes"
                                     " must be subset of \[.+\]",
                         ovr.partial_fit, X=X[7:], y=y1)

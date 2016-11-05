@@ -257,7 +257,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             self.label_binarizer_ = LabelBinarizer(sparse_output=True)
             self.label_binarizer_.fit(self.classes_)
 
-        if not set(self.classes_).issuperset(y):
+        if np.setdiff1d(y, self.classes_):
             raise ValueError(("Mini-batch contains {0} while classes " +
                              "must be subset of {1}").format(np.unique(y),
                                                              self.classes_))
