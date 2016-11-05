@@ -101,7 +101,7 @@ class TimeSeriesEstimator(BaseEstimator):
 
         X = check_array(X, ensure_min_samples=self.n_ahead+self.n_prev)
         if Y is not None:
-            Y = check_array(Y, ensure_min_samples=self.n_ahead+self.n_prev)
+            Y = check_array(Y, ensure_2d=False, ensure_min_samples=self.n_ahead+self.n_prev)
             check_consistent_length(X, Y)
 
         X_wind, Y_data = self._window_dataset(self.n_prev, X, Y, self.n_ahead)
