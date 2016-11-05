@@ -952,7 +952,7 @@ def test_decision_function_shape_two_class():
 
 
 def test_ovr_decision_function():
-    train_base_points = np.array([[1, 2], [2, 1]])
+    train_base_points = np.array([[1, 1]])
 
     # For all the quadrants (classes)
     X = np.vstack((
@@ -962,7 +962,7 @@ def test_ovr_decision_function():
         train_base_points * [1, -1]    # Q4
         ))
 
-    Y = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
+    Y = [0, 1, 2, 3]
 
     # First point is closer to the decision boundaries than the second point
     test_base_points = np.array([[5, 5], [10, 10]])
