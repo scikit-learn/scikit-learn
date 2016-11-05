@@ -16,16 +16,25 @@ Changelog
 New features
 ............
 
-   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly detection based
-     on nearest neighbors. By `Nicolas Goix`_ and `Alexandre Gramfort`_.
+   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
+     detection based on nearest neighbors.
+     :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
 
 Enhancements
 ............
 
+   - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
+     :class:`decomposition.TruncatedSVD` now expose the singular values
+     from the underlying SVD. They are stored in the attribute
+     ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
+
+   - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
+     now uses significantly less memory when assigning data points to their
+     nearest cluster center. :issue:`7721` by `Jon Crall`_.
+
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
-     that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
-     <https://github.com/scikit-learn/scikit-learn/pull/7661>`_) by `Alyssa
-     Batula`_ and `Dylan Werner-Meier`_.
+     that matches the ``classes_`` attribute of ``best_estimator_``.
+     :issue:`7661` by `Alyssa Batula`_ and `Dylan Werner-Meier`_.
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -48,20 +57,25 @@ Enhancements
    - Added ``shuffle`` and ``random_state`` parameters to shuffle training
      data before taking prefixes of it based on training sizes in
      :func:`model_selection.learning_curve`.
-     (`#7506` <https://github.com/scikit-learn/scikit-learn/pull/7506>_) by
-     `Narine Kokhlikyan`_.
+     :issue:`7506` by `Narine Kokhlikyan`_.
 
    - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
      to enable selection of the norm order when ``coef_`` is more than 1D
 
+   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
+     :issue:`7723` by `Mikhail Korobov`_.
+
+   - ``check_estimator`` now attempts to ensure that methods transform, predict, etc.
+     do not set attributes on the estimator.
+     :issue:`7533` by `Ekaterina Krivich`_.
+
 Bug fixes
 .........
 
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
-     (`#7490 <https://github.com/scikit-learn/scikit-learn/pull/7490>`_) by
-     `Peng Meng`_.
+     :issue:`7490` by `Peng Meng`_.
 
    - :class:`sklearn.manifold.LocallyLinearEmbedding` now correctly handles
      integer inputs. :issue:`6282` by `Jake Vanderplas`_.
@@ -76,13 +90,32 @@ Bug fixes
      `n_features > n_samples`. :issue:`6178` by `Bertrand Thirion`_
 
    - Tree splitting criterion classes' cloning/pickling is now memory safe
-     (`#7680 <https://github.com/scikit-learn/scikit-learn/pull/7680>`_).
-     By `Ibraim Ganiev`_.
+     :issue:`7680` by `Ibraim Ganiev`_.
+
+   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
+     attribute in `transform()`. :issue:`7553` by `Ekaterina Krivich`_.
 
 .. _changes_0_18_1:
 
 Version 0.18.1
 ==============
+
+Changelog
+---------
+
+Enhancements
+.........
+   - Improved ``sample_without_replacement`` speed by utilizing
+     numpy.random.permutation for most cases. As a result,
+     samples may differ in this release for a fixed random state.
+     Affected estimators:
+      - :class:`ensemble.BaggingClassifier`
+      - :class:`ensemble.BaggingRegressor`
+      - :class:`linear_model.RANSACRegressor`
+      - :class:`model_selection.RandomizedSearchCV`
+      - :class:`random_projection.SparseRandomProjection`
+     This also affects the :meth:`datasets.make_classification`
+     method.
 
 Bug fixes
 .........
@@ -93,13 +126,11 @@ Bug fixes
 
    - Attribute ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
-     with SVD and Eigen solver are now of the same length. (`#7632
-     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
-     By `JPFrancoia`_
+     with SVD and Eigen solver are now of the same length. :issue:`7632`
+     by `JPFrancoia`_
 
    - Fixes issue in :ref:`univariate_feature_selection` where score 
-     functions were not accepting multi-label targets.(`#7676
-     <https://github.com/scikit-learn/scikit-learn/pull/7676>`_)
+     functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
 
@@ -111,9 +142,7 @@ Linear, kernelized and related models
    - Length of `explained_variance_ratio` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
-     of min(n_components, n_classes - 1). (`#7632
-     <https://github.com/scikit-learn/scikit-learn/pull/7632>`_).
-     By `JPFrancoia`_
+     of min(n_components, n_classes - 1). :issue:`7632` by `JPFrancoia`_
 
 
 .. _changes_0_18:
@@ -336,7 +365,7 @@ Trees and ensembles
      by dynamically generating attribute ``estimators_samples_`` only when it is
      needed. By `David Staub`_.
 
-   - Added ``n_jobs`` and ``sample_weights`` parameters for
+   - Added ``n_jobs`` and ``sample_weight`` parameters for
      :class:`ensemble.VotingClassifier` to fit underlying estimators in parallel.
      :issue:`5805` by `Ibraim Ganiev`_.
 
@@ -346,7 +375,7 @@ Linear, kernelized and related models
      available in the multinomial case. :issue:`5251` by `Tom Dupre la Tour`_.
 
    - :class:`linear_model.RANSACRegressor`, :class:`svm.LinearSVC` and
-     :class:`svm.LinearSVR` now support ``sample_weights``.
+     :class:`svm.LinearSVR` now support ``sample_weight``.
      By `Imaculate`_.
 
    - Add parameter ``loss`` to :class:`linear_model.RANSACRegressor` to measure the
@@ -862,7 +891,7 @@ Enhancements
    - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
      as implemented in the ``mean_shift`` function. By `Martino Sorbaro`_.
 
-   - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weights``.
+   - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weight``.
      By `Jan Hendrik Metzen`_.
 
    - :class:`dummy.DummyClassifier` now supports a prior fitting strategy.
@@ -4655,7 +4684,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
-.. _Mikhail Korobov: http://kmike.ru/pages/about/
+.. _Mikhail Korobov: https://github.com/kmike
 
 .. _Kyle Kastner: http://kastnerkyle.github.io
 

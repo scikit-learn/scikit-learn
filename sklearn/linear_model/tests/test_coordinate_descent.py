@@ -9,6 +9,7 @@ from scipy import interpolate, sparse
 from copy import deepcopy
 
 from sklearn.datasets import load_boston
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -391,6 +392,9 @@ def test_multi_task_lasso_and_enet():
     clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
     assert_true(0 < clf.dual_gap_ < 1e-5)
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
+    assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
 
 
 def test_lasso_readonly_data():
