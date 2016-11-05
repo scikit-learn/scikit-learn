@@ -30,6 +30,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_dict_equal
 
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -230,6 +231,7 @@ def _yield_all_checks(name, Estimator):
     yield check_fit1d_1feature
     yield check_fit1d_1sample
     yield check_get_params_invariance
+    yield check_dict_unchanged
 
 
 def check_estimator(Estimator):
@@ -409,6 +411,49 @@ def check_dtype_object(name, Estimator):
 
 
 @ignore_warnings
+def check_dict_unchanged(name, Estimator):
+    # this estimator raises
+    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
+    # while a minimum of 1 is required.
+    # error
+    if name in ['SpectralCoclustering']:
+        return
+    rnd = np.random.RandomState(0)
+    if name in ['RANSACRegressor']:
+        X = 3 * rnd.uniform(size=(20, 3))
+    else:
+        X = 2 * rnd.uniform(size=(20, 3))
+
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_testing_parameters(estimator)
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    if hasattr(estimator, "n_best"):
+        estimator.n_best = 1
+
+    set_random_state(estimator, 1)
+
+    # should be just `estimator.fit(X, y)`
+    # after merging #6141
+    if name in ['SpectralBiclustering']:
+        estimator.fit(X)
+    else:
+        estimator.fit(X, y)
+    for method in ["predict", "transform", "decision_function",
+                   "predict_proba"]:
+        if hasattr(estimator, method):
+            dict_before = estimator.__dict__.copy()
+            getattr(estimator, method)(X)
+            assert_dict_equal(estimator.__dict__, dict_before,
+                              'Estimator changes __dict__ during %s' % method)
+
+
 def check_fit2d_predict1d(name, Estimator):
     # check by fitting a 2d array and prediting with a 1d array
     rnd = np.random.RandomState(0)
