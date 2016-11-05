@@ -9,13 +9,14 @@ import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin, clone
 import warnings
 from sklearn.utils.validation import check_array,check_consistent_length
+from sklearn.linear_model import LinearRegression
 
 class TimeSeriesEstimator(BaseEstimator):
     """
     Base Class for Time Series Estimators
     """
 
-    def __init__(self, base_estimator, n_prev=1, n_ahead=1, parallel_models=False, **base_params):
+    def __init__(self, base_estimator=LinearRegression(), n_prev=1, n_ahead=1, parallel_models=False, **base_params):
         self.base_estimator = base_estimator.set_params(**base_params)
         self.parallel_models = parallel_models
         self.n_prev = n_prev
