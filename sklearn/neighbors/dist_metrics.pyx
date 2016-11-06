@@ -45,7 +45,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 
 
 # some handy constants
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin, acos, M_PI
 cdef DTYPE_t INF = np.inf
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
@@ -86,6 +86,9 @@ METRIC_MAPPING = {'euclidean': EuclideanDistance,
                   'sokalmichener': SokalMichenerDistance,
                   'sokalsneath': SokalSneathDistance,
                   'haversine': HaversineDistance,
+                  'cosine': ArccosDistance,
+                  'arccos': ArccosDistance,
+                  'angular': ArccosDistance,
                   'pyfunc': PyFuncDistance}
 
 
@@ -135,6 +138,7 @@ cdef class DistanceMetric:
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(w * |x - y|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
+    "angular"       ArccosDistance        -         ``arccos(dot(x, y) / (|x| * |y|)) / PI``
     ==============  ====================  ========  ===============================
 
     **Metrics intended for two-dimensional vector spaces:**  Note that the haversine
@@ -1047,6 +1051,22 @@ cdef class HaversineDistance(DistanceMetric):
 #            norm1 += x1[j] * x1[j]
 #            norm2 += x2[j] * x2[j]
 #        return 1.0 - d / sqrt(norm1 * norm2)
+
+#------------------------------------------------------------
+# Arccos Distance
+#  D(x, y) = arccos(dot(x, y) / (|x| * |y|)) / PI
+# This is the metric version of cosine distance, i.e. the metric
+# most suitable when you wish to use cosine distance.
+
+cdef class ArccosDistance(DistanceMetric):
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) nogil except -1:
+        cdef DTYPE_t d = 0, norm1 = 0, norm2 = 0
+        cdef np.intp_t j
+        for j in range(size):
+            d += x1[j] * x2[j]
+            norm1 += x1[j] * x1[j]
+            norm2 += x2[j] * x2[j]
+        return acos(1.0 - d / sqrt(norm1 * norm2)) / M_PI
 
 
 #------------------------------------------------------------
