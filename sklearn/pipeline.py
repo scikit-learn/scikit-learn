@@ -821,7 +821,7 @@ def make_union(*transformers, **kwargs):
                              ('truncatedsvd',
                               TruncatedSVD(algorithm='randomized',
                               n_components=2, n_iter=5,
-                              random_state=None, tol=0.0))],
+                              random_state=None, tol=0.0, whiten=False))],
            transformer_weights=None)
     """
     n_jobs = kwargs.pop('n_jobs', 1)

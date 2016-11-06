@@ -7,7 +7,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_raises, assert_greater,
-                                   assert_array_less)
+                                   assert_array_less, assert_allclose)
 
 
 # Make an X that looks somewhat like a small tf-idf matrix.
@@ -220,3 +220,41 @@ def test_singular_values():
     rpca.fit(X_hat_rpca)
     assert_array_almost_equal(apca.singular_values_, [3.142, 2.718, 1.0], 14)
     assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)
+
+
+def test_svd_whiten():
+    tsvd = TruncatedSVD(n_components=52, random_state=42, whiten=True)
+    Xt = tsvd.fit_transform(X)
+    Xt_2 = tsvd.transform(X)
+    assert_allclose(Xt, Xt_2, atol=1e-1)
+    Xinv = tsvd.inverse_transform(Xt)
+    assert_array_almost_equal(Xinv, Xdense, decimal=1)
+
+
+def test_lsi():
+    # Verification of the Latent Semantic Indexing example from
+    # Grossman, Frieder (2004) Information Retrieval, Algorithms and Heuristics
+    # http://www1.se.cuhk.edu.hk/~seem5680/lecture/LSI-Eg.pdf
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    documents = ["Shipment of gold damaged in aa fire.",
+                 "Delivery of silver arrived in aa silver truck.",
+                 "Shipment of gold arrived in aa truck."]
+    query = "gold silver truck"
+    n_components = 2
+    # Expected similarity scores between the documents and the query,
+    scores_ref = [-0.0541, 0.9910, 0.4478]
+    # expected query vector projected into the SVD space.
+    q_proj_ref = [[0.2140, 0.1821]]
+
+    vect = CountVectorizer()
+    vect.fit(documents)
+    X = vect.transform(documents)
+    q = vect.transform([query])
+    svd = TruncatedSVD(n_components=n_components, whiten=True)
+    svd.fit(X)
+    X_proj = svd.transform(X)
+    q_proj = svd.transform(q)
+    scores = cosine_similarity(X_proj, q_proj)[:, 0]
+    assert_array_almost_equal(q_proj, q_proj_ref, decimal=2)
+    assert_array_almost_equal(scores, scores_ref, decimal=2)

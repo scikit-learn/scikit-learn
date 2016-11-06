@@ -50,6 +50,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
 
+    whiten : bool, default = False
+        When True, the components_ are divided by the singular values.
+
     n_iter : int, optional (default 5)
         Number of iterations for randomized SVD solver. Not used by ARPACK.
         The default is larger than the default in `randomized_svd` to handle
@@ -89,7 +92,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
-            random_state=42, tol=0.0)
+          random_state=42, tol=0.0, whiten=False)
     >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
     [ 0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
     >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
@@ -117,9 +120,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
-                 random_state=None, tol=0.):
+                 whiten=False, random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
+        self.whiten = whiten
         self.n_iter = n_iter
         self.random_state = random_state
         self.tol = tol
@@ -175,10 +179,14 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
-        self.components_ = VT
+        if self.whiten:
+            self.components_ = VT / Sigma[:, None]
+            X_transformed = U
+        else:
+            self.components_ = VT
+            X_transformed = U * Sigma
 
         # Calculate explained variance & explained variance ratio
-        X_transformed = U * Sigma
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
             _, full_var = mean_variance_axis(X, axis=0)
@@ -222,4 +230,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             Note that this is always a dense array.
         """
         X = check_array(X)
-        return np.dot(X, self.components_)
+        if self.whiten:
+            return np.dot(X,
+                          self.components_*self.singular_values_[:, None]**2)
+        else:
+            return np.dot(X, self.components_)
