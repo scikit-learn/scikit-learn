@@ -94,7 +94,7 @@ Bug fixes
      is ``ovr`` in :class:`svm.SVC`.
      :class:`svm.SVC`'s decision_function was incorrect from versions
      0.17.0 through 0.18.0.
-     :issue:`7724` by `Bing Tian Dai`.
+     :issue:`7724` by `Bing Tian Dai`_.
 
 .. _changes_0_18:
 
