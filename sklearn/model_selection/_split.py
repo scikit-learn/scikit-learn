@@ -87,7 +87,6 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
 
         Note
         ----
-
         Multiple calls to the ``split`` method will not return identical
         training or testing sets if ``random_state`` parameter exists and is
         not explicitly set to an integer value.
@@ -319,7 +318,6 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         Note
         ----
-
         Multiple calls to the ``split`` method will not return identical
         training or testing sets if ``random_state`` parameter exists and is
         not explicitly set to an integer value.
@@ -649,10 +647,9 @@ class StratifiedKFold(_BaseKFold):
 
         Note
         ----
-
         Multiple calls to the ``split`` method will not return identical
         training or testing sets unless ``random_state`` is set to an integer
-        value.
+        value, if ``shuffle=True``.
         """
         return super(StratifiedKFold, self).split(X, y, groups)
 
@@ -733,10 +730,9 @@ class TimeSeriesSplit(_BaseKFold):
 
         Note
         ----
-
         Multiple calls to the ``split`` method will not return identical
         training or testing sets unless ``random_state`` is set to an integer
-        value.
+        value, if ``shuffle=True``.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -969,7 +965,6 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
         Note
         ----
-
         Multiple calls to the ``split`` method will not return identical
         training or testing sets unless ``random_state`` is set to an integer
         value.
@@ -1342,7 +1337,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         Note
         ----
-
         Multiple calls to the ``split`` method will not return identical
         training or testing sets unless ``random_state`` is set to an integer
         value.
