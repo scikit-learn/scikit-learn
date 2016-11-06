@@ -1,15 +1,14 @@
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics import OPTICS
 from sklearn.utils.testing import assert_equal, assert_greater_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from .common import generate_clustered_data
 import numpy as np
 
 
 def test_optics():
-    '''
-    Tests the optics clustering method and all functions inside it
-    'auto' mode
-    '''
+    # Tests the optics clustering method and all functions inside it
+    # 'auto' mode
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
@@ -23,9 +22,7 @@ def test_optics():
 
 
 def test_filter():
-    '''
-    Tests the filter function.
-    '''
+    # Tests the filter function.
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
@@ -48,10 +45,8 @@ def test_filter():
 
 
 def test_optics2():
-    '''
-    Tests the optics clustering method and all functions inside it
-    'dbscan' mode
-    '''
+    # Tests the optics clustering method and all functions inside it
+    # 'dbscan' mode
 
     # Compute OPTICS
     X = [[1, 1]]
@@ -69,18 +64,15 @@ def test_optics2():
 
 
 def test_empty_extract():
-    '''
-    Test extract where fit() has not yet been run.
-    '''
+    # Test extract where fit() has not yet been run.
 
     clust = OPTICS(eps=0.3, min_samples=10)
     assert clust.extract(0.01, clustering='auto') is None
 
 
 def test_bad_extract():
-    '''
-    Test an extraction of eps too close to original eps
-    '''
+    # Test an extraction of eps too close to original eps
+
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
@@ -94,9 +86,8 @@ def test_bad_extract():
 
 
 def test_close_extract():
-    '''
-    Test extract where extraction eps is close to scaled epsPrime
-    '''
+    # Test extract where extraction eps is close to scaled epsPrime
+
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
@@ -135,3 +126,30 @@ def test_auto_extract_hier():
     clust.extract(0.0, 'auto')
 
     assert_equal(len(set(clust.labels_)), 6)
+
+
+def test_reach_dists():
+    # Tests against known extraction array
+
+    np.random.seed(0)
+    n_points_per_cluster = 250
+
+    X = np.empty((0, 2))
+    X = np.r_[X, [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)]
+    # eps not used for 'auto' extract
+    X = np.r_[X, [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
+    X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
+
+    # Compute OPTICS
+
+    clust = OPTICS(eps=30.3, min_samples=10, metric='minkowski')
+
+    # Run the fit
+    clust.fit(X)
+
+    # Test the result
+    reach_true = np.load('./reach_values.npy')
+    assert_array_almost_equal(clust.reachability_, reach_true)

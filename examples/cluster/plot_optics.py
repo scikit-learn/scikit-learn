@@ -6,7 +6,8 @@ Demo of OPTICS clustering algorithm
 Finds core samples of high density and expands clusters from them.
 """
 
-# Authors: Shane Grigsby (2016), Amy X. Zhang (2012)
+# Authors: Shane Grigsby <refuge@rocktalus.com>
+#          Amy X. Zhang <axz@mit.edu>
 # License: BSD 3 clause
 
 

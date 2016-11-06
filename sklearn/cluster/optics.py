@@ -4,9 +4,9 @@
 These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
 
-Authors: Shane Grigsby <refuge@rocktalus.com>,  Amy X. Zhang <axz@mit.edu>
+Authors: Shane Grigsby <refuge@rocktalus.com>
+         Amy X. Zhang <axz@mit.edu>
 License: BSD 3 clause
-Dates: May 2013 (implemented), Sept 2015 (Benchmarked), Aug 2016 (updated)
 """
 
 # Imports #
@@ -14,12 +14,12 @@ Dates: May 2013 (implemented), Sept 2015 (Benchmarked), Aug 2016 (updated)
 import scipy as sp
 import numpy as np
 from ..utils import check_array
-from sklearn.neighbors import BallTree
-from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.metrics.pairwise import pairwise_distances
+from ..neighbors import BallTree
+from ..base import BaseEstimator, ClusterMixin
+from ..metrics.pairwise import pairwise_distances
 
 
-class setOfObjects(BallTree):
+class SetOfObjects(BallTree):
 
     """Build balltree data structure with processing index from given data
     in preparation for OPTICS Algorithm
@@ -30,7 +30,7 @@ class setOfObjects(BallTree):
 
     def __init__(self, data_points, metric, **kwargs):
 
-        super(setOfObjects, self).__init__(data_points,
+        super(SetOfObjects, self).__init__(data_points,
                                            metric=metric, **kwargs)
 
         self._n = len(self.data)
@@ -47,21 +47,18 @@ class setOfObjects(BallTree):
         self.ordering_ = []
 
 
-def _prep_optics(self, epsilon, min_samples):
+def _prep_optics(self, min_samples):
     """Prep data set for main OPTICS loop
 
     Parameters
     ----------
-    epsilon: float or int
-        Determines maximum object size that can be extracted.
-        Smaller epsilons reduce run time
     min_samples: int
         The minimum number of samples in a neighborhood to be
         considered a core point
 
     Returns
     -------
-    Modified setOfObjects tree structure"""
+    Modified SetOfObjects tree structure"""
 
     self.core_dists_[:] = self.query(self.get_arrays()[0],
                                      k=min_samples)[0][:, -1]
@@ -74,7 +71,7 @@ def _build_optics(setofobjects, epsilon):
 
     Parameters
     ----------
-    SetofObjects: Instantiated and prepped instance of 'setOfObjects' class
+    SetofObjects: Instantiated and prepped instance of 'SetOfObjects' class
     epsilon: float or int
         Determines maximum object size that can be extracted. Smaller
         epsilons reduce run time. This should be equal to epsilon
@@ -229,8 +226,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
             print("min_samples used for clustering")
             return
 
-        self.tree = setOfObjects(X, self.metric)
-        _prep_optics(self.tree, self.eps * 5.0, self.min_samples)
+        self.tree = SetOfObjects(X, self.metric)
+        _prep_optics(self.tree, self.min_samples)
         _build_optics(self.tree, self.eps * 5.0)
         self._index = self.tree._index[:]
         self.reachability_ = self.tree.reachability_[:]
@@ -238,13 +235,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self._cluster_id = self.tree._cluster_id[:]
         self._is_core = self.tree._is_core[:]
         self.ordering_ = self.tree.ordering_[:]
-        # _extractDBSCAN(self, self.eps)  # extraction needs to be < eps
         self.extract_auto()
         self.labels_ = self._cluster_id[:]
         self.core_sample_indices_ = self._index[self._is_core[:]]
         self.n_clusters = max(self._cluster_id)
         self.processed = True
-        return self  # self.core_sample_indices_, self.labels_
+        return self
 
     def filter(self, X, distance_threshold, index_type='bool'):
         """Density based filter function
@@ -262,18 +258,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Either boolean or indexed array of core / not core points
         """
         if self.processed is False:
-            # epsilon has no impact on this method; set to zero
-            # to speed up _nneighbors query in _prep_optics
+            # epsilon has no impact on this method
             X = check_array(X)
-            self.tree = setOfObjects(X, self.metric)
-            _prep_optics(self.tree, 0, self.min_samples)
+            self.tree = SetOfObjects(X, self.metric)
+            _prep_optics(self.tree, self.min_samples)
         filtered_pts_bool = self.tree.core_dists_[:] < distance_threshold
         if index_type == 'bool':
             return filtered_pts_bool
         elif index_type == 'idx':
             return self.tree._index[filtered_pts_bool]
-        # elif index_type is not ('idx' or 'bool'):
-        #     print(index_type + ' is not a valid index type.')
 
     def extract(self, epsilon_prime, clustering='auto', **kwargs):
         """Performs Automatic or DBSCAN equivalent extraction for an
@@ -300,7 +293,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             else:
                 if clustering == 'dbscan':
                     self.eps_prime = epsilon_prime
-                    _extractDBSCAN(self, epsilon_prime)
+                    _extract_DBSCAN(self, epsilon_prime)
                 elif clustering == 'auto':
                     self.extract_auto(**kwargs)
                 # else:
@@ -363,14 +356,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Extraction wrapper
         RPlot = self.reachability_[self.ordering_].tolist()
         RPoints = self.ordering_
-        rootNode = _automatic_cluster(RPlot, RPoints,
-                                      maxima_ratio,
-                                      rejection_ratio,
-                                      similarity_threshold,
-                                      significant_min,
-                                      min_cluster_size_ratio,
-                                      min_maxima_ratio)
-        leaves = _get_leaves(rootNode, [])
+        root_node = _automatic_cluster(RPlot, RPoints,
+                                       maxima_ratio,
+                                       rejection_ratio,
+                                       similarity_threshold,
+                                       significant_min,
+                                       min_cluster_size_ratio,
+                                       min_maxima_ratio)
+        leaves = _get_leaves(root_node, [])
         # Start cluster id's at 1
         clustid = 1
         # Start all points as non-core noise
@@ -400,50 +393,45 @@ def _automatic_cluster(RPlot, RPoints,
     if min_cluster_size < 5:
         min_cluster_size = 5
 
-    nghsize = int(min_maxima_ratio*len(RPoints))
+    neighborhood_size = int(min_maxima_ratio*len(RPoints))
 
     # Again, should this check < min_samples, should the parameter be public?
-    if nghsize < min_neighborhood_size:
-        nghsize = min_neighborhood_size
+    if neighborhood_size < min_neighborhood_size:
+        neighborhood_size = min_neighborhood_size
 
-    localMaximaPoints = _find_local_maxima(RPlot, RPoints, nghsize)
+    local_maxima_points = _find_local_maxima(RPlot, RPoints, neighborhood_size)
 
-    rootNode = TreeNode(RPoints, 0, len(RPoints), None)
-    _cluster_tree(rootNode, None, localMaximaPoints,
+    root_node = TreeNode(RPoints, 0, len(RPoints), None)
+    _cluster_tree(root_node, None, local_maxima_points,
                   RPlot, RPoints, min_cluster_size,
                   maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min)
 
-    return rootNode
+    return root_node
 
 
 class TreeNode(object):
     # automatic cluster helper classes and functions
-    def __init__(self, points, start, end, parentNode):
+    def __init__(self, points, start, end, parent_node):
         self.points = points
         self.start = start
         self.end = end
-        self.parentNode = parentNode
+        self.parent_node = parent_node
         self.children = []
-        self.splitpoint = -1
+        self.split_point = -1
 
-#    def __str__(self):
-#        return "start: %d, end %d, split: %d" % (self.start,
-#                                                 self.end,
-#                                                 self.splitpoint)
+    def assign_split_point(self, split_point):
+        self.split_point = split_point
 
-    def assignSplitPoint(self, splitpoint):
-        self.splitpoint = splitpoint
-
-    def addChild(self, child):
+    def add_child(self, child):
         self.children.append(child)
 
 
-def _is_local_maxima(index, RPlot, RPoints, nghsize):
+def _is_local_maxima(index, RPlot, RPoints, neighborhood_size):
     # 0 = point at index is not local maxima
     # 1 = point at index is local maxima
 
-    for i in range(1, nghsize+1):
+    for i in range(1, neighborhood_size+1):
         # process objects to the right of index
         if index + i < len(RPlot):
             if (RPlot[index] < RPlot[index+i]):
@@ -457,60 +445,61 @@ def _is_local_maxima(index, RPlot, RPoints, nghsize):
     return 1
 
 
-def _find_local_maxima(RPlot, RPoints, nghsize):
+def _find_local_maxima(RPlot, RPoints, neighborhood_size):
 
-    localMaximaPoints = {}
+    local_maxima_points = {}
 
     # 1st and last points on Reachability Plot are not taken
     # as local maxima points
     for i in range(1, len(RPoints)-1):
         # if the point is a local maxima on the reachability plot with
-        # regard to nghsize, insert it into priority queue and maxima list
+        # regard to neighborhood_size, insert it into priority queue and
+        # maxima list
         if (RPlot[i] > RPlot[i-1] and RPlot[i] >= RPlot[i+1] and
-                _is_local_maxima(i, RPlot, RPoints, nghsize) == 1):
-            localMaximaPoints[i] = RPlot[i]
+                _is_local_maxima(i, RPlot, RPoints, neighborhood_size) == 1):
+            local_maxima_points[i] = RPlot[i]
 
-    return sorted(localMaximaPoints,
-                  key=localMaximaPoints.__getitem__,
+    return sorted(local_maxima_points,
+                  key=local_maxima_points.__getitem__,
                   reverse=True)
 
 
-def _cluster_tree(node, parentNode, localMaximaPoints,
+def _cluster_tree(node, parent_node, local_maxima_points,
                   RPlot, RPoints, min_cluster_size,
                   maxima_ratio, rejection_ratio,
                   similarity_threshold, significant_min):
     # node is a node or the root of the tree in the first call
-    # parentNode is parent node of N or None if node is root of the tree
-    # localMaximaPoints is list of local maxima points sorted in
+    # parent_node is parent node of N or None if node is root of the tree
+    # local_maxima_points is list of local maxima points sorted in
     # descending order of reachability
-    if len(localMaximaPoints) == 0:
-        return  # parentNode is a leaf
+    if len(local_maxima_points) == 0:
+        return  # parent_node is a leaf
 
     # take largest local maximum as possible separation between clusters
-    s = localMaximaPoints[0]
-    node.assignSplitPoint(s)
-    localMaximaPoints = localMaximaPoints[1:]
+    s = local_maxima_points[0]
+    node.assign_split_point(s)
+    local_maxima_points = local_maxima_points[1:]
 
     # create two new nodes and add to list of nodes
-    Node1 = TreeNode(RPoints[node.start:s], node.start, s, node)
-    Node2 = TreeNode(RPoints[s+1:node.end], s+1, node.end, node)
-    LocalMax1 = []
-    LocalMax2 = []
+    node_1 = TreeNode(RPoints[node.start:s], node.start, s, node)
+    node_2 = TreeNode(RPoints[s+1:node.end], s+1, node.end, node)
+    local_max_1 = []
+    local_max_2 = []
 
-    for i in localMaximaPoints:
+    for i in local_maxima_points:
         if i < s:
-            LocalMax1.append(i)
+            local_max_1.append(i)
         if i > s:
-            LocalMax2.append(i)
+            local_max_2.append(i)
 
-    Nodelist = []
-    Nodelist.append((Node1, LocalMax1))
-    Nodelist.append((Node2, LocalMax2))
+    node_list = []
+    node_list.append((node_1, local_max_1))
+    node_list.append((node_2, local_max_2))
 
     if RPlot[s] < significant_min:
-        node.assignSplitPoint(-1)
-        # if splitpoint is not significant, ignore this split and continue
-        _cluster_tree(node, parentNode, localMaximaPoints,
+        node.assign_split_point(-1)
+        # if split_point is not significant, ignore this split and continue
+        _cluster_tree(node, parent_node, local_maxima_points,
                       RPlot, RPoints, min_cluster_size,
                       maxima_ratio, rejection_ratio,
                       similarity_threshold, significant_min)
@@ -518,50 +507,51 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
 
     # only check a certain ratio of points in the child
     # nodes formed to the left and right of the maxima
-    checkRatio = .8
-    checkValue1 = int(np.round(checkRatio*len(Node1.points)))
-    checkValue2 = int(np.round(checkRatio*len(Node2.points)))
-    if checkValue2 == 0:
-        checkValue2 = 1
-    avgReachValue1 = float(np.average(RPlot[(Node1.end -
-                                             checkValue1):Node1.end]))
-    avgReachValue2 = float(np.average(RPlot[Node2.start:(Node2.start +
-                                                         checkValue2)]))
+    # ...should check_ratio be a user settable parameter?
+    check_ratio = .8
+    check_value_1 = int(np.round(check_ratio*len(node_1.points)))
+    check_value_2 = int(np.round(check_ratio*len(node_2.points)))
+    if check_value_2 == 0:
+        check_value_2 = 1
+    avg_reach_value_1 = float(np.average(RPlot[(node_1.end -
+                                                check_value_1):node_1.end]))
+    avg_reach_value_2 = float(np.average(RPlot[node_2.start:(node_2.start +
+                                                             check_value_2)]))
 
-    if (float(avgReachValue1 / float(RPlot[s])) >
-        maxima_ratio or float(avgReachValue2 /
+    if (float(avg_reach_value_1 / float(RPlot[s])) >
+        maxima_ratio or float(avg_reach_value_2 /
                               float(RPlot[s])) > maxima_ratio):
 
-        if float(avgReachValue1 / float(RPlot[s])) < rejection_ratio:
+        if float(avg_reach_value_1 / float(RPlot[s])) < rejection_ratio:
             # reject node 2
-            Nodelist.remove((Node2, LocalMax2))
-        if float(avgReachValue2 / float(RPlot[s])) < rejection_ratio:
+            node_list.remove((node_2, local_max_2))
+        if float(avg_reach_value_2 / float(RPlot[s])) < rejection_ratio:
             # reject node 1
-            Nodelist.remove((Node1, LocalMax1))
-        if (float(avgReachValue1 / float(RPlot[s])) >=
-            rejection_ratio and float(avgReachValue2 /
+            node_list.remove((node_1, local_max_1))
+        if (float(avg_reach_value_1 / float(RPlot[s])) >=
+            rejection_ratio and float(avg_reach_value_2 /
                                       float(RPlot[s])) >= rejection_ratio):
-            node.assignSplitPoint(-1)
-            # since splitpoint is not significant,
+            node.assign_split_point(-1)
+            # since split_point is not significant,
             # ignore this split and continue (reject both child nodes)
-            _cluster_tree(node, parentNode, localMaximaPoints,
+            _cluster_tree(node, parent_node, local_maxima_points,
                           RPlot, RPoints, min_cluster_size,
                           maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
             return
 
     # remove clusters that are too small
-    if (len(Node1.points) < min_cluster_size and
-            Nodelist.count((Node1, LocalMax1)) > 0):
+    if (len(node_1.points) < min_cluster_size and
+            node_list.count((node_1, local_max_1)) > 0):
         # cluster 1 is too small
-        Nodelist.remove((Node1, LocalMax1))
-    if (len(Node2.points) < min_cluster_size and
-            Nodelist.count((Node2, LocalMax1)) > 0):
+        node_list.remove((node_1, local_max_1))
+    if (len(node_2.points) < min_cluster_size and
+            node_list.count((node_2, local_max_1)) > 0):
         # cluster 2 is too small
-        Nodelist.remove((Node2, LocalMax2))
-    if len(Nodelist) == 0:
-        # parentNode will be a leaf
-        node.assignSplitPoint(-1)
+        node_list.remove((node_2, local_max_2))
+    if len(node_list) == 0:
+        # parent_node will be a leaf
+        node.assign_split_point(-1)
         return
 
     '''
@@ -573,28 +563,24 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
     reachability values of the parent node
     A lower value for the similarity threshold means less levels in the tree.
     '''
-    bypassNode = 0
-    if parentNode is not None:
+    bypass_node = 0
+    if parent_node is not None:
         if (float(float(node.end-node.start) /
-                  float(parentNode.end-parentNode.start)) >
+                  float(parent_node.end-parent_node.start)) >
                 similarity_threshold):
 
-            # sumRP = np.average(RPlot[node.start:node.end])
-            # sumParent = np.average(RPlot[parentNode.start:parentNode.end])
-            # if float(float(sumRP) / float(sumParent)) > similarity_threshold:
+            parent_node.children.remove(node)
+            bypass_node = 1
 
-            parentNode.children.remove(node)
-            bypassNode = 1
-
-    for nl in Nodelist:
-        if bypassNode == 1:
-            parentNode.addChild(nl[0])
-            _cluster_tree(nl[0], parentNode, nl[1], RPlot, RPoints,
+    for nl in node_list:
+        if bypass_node == 1:
+            parent_node.add_child(nl[0])
+            _cluster_tree(nl[0], parent_node, nl[1], RPlot, RPoints,
                           min_cluster_size, maxima_ratio,
                           rejection_ratio,
                           similarity_threshold, significant_min)
         else:
-            node.addChild(nl[0])
+            node.add_child(nl[0])
             _cluster_tree(nl[0], node, nl[1], RPlot, RPoints, min_cluster_size,
                           maxima_ratio, rejection_ratio,
                           similarity_threshold, significant_min)
@@ -602,7 +588,7 @@ def _cluster_tree(node, parentNode, localMaximaPoints,
 
 def _get_leaves(node, arr):
     if node is not None:
-        if node.splitpoint == -1:
+        if node.split_point == -1:
             arr.append(node)
         for n in node.children:
             _get_leaves(n, arr)
@@ -614,7 +600,7 @@ def _get_leaves(node, arr):
 # Important: Epsilon prime should be less than epsilon used in OPTICS #
 
 
-def _extractDBSCAN(setofobjects, epsilon_prime):
+def _extract_DBSCAN(setofobjects, epsilon_prime):
 
     # Start Cluster_id at zero, incremented to '1' for first cluster
     cluster_id = 0
