@@ -4887,4 +4887,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Peng Meng: https://github.com/mpjlu
 
-.. _Bing Tian Dai: https://github.com/btdai
+.. _Bing-Tian Dai: https://github.com/btdai
