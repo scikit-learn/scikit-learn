@@ -257,7 +257,7 @@ class _CalibratedClassifier(object):
         corresponds to Platt's method or 'isotonic' which is a
         non-parametric approach based on isotonic regression.
 
-    classes : array-like, shape (n_classes,)
+    classes : array-like, shape (n_classes,), optional
             Contains unique classes used to fit the base estimator.
             if None, then classes is extracted from the given target values
             in fit().

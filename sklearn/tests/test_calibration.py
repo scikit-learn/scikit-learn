@@ -300,5 +300,7 @@ def test_calibration_less_classes():
 
     for i, calibrated_classifier in \
             enumerate(cal_clf.calibrated_classifiers_):
-        assert_array_equal(calibrated_classifier.predict_proba(X)[:, i],
-                           np.zeros(len(y)))
+        proba = calibrated_classifier.predict_proba(X)
+        assert_array_equal(proba[:, i], np.zeros(len(y)))
+        assert_equal(np.all(np.hstack([proba[:, :i],
+                                       proba[:, i + 1:]])), True)
