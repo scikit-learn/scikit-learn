@@ -816,7 +816,7 @@ class GridSearchCV(BaseSearchCV):
         For instance the below given table
 
         +------------+-----------+------------+-----------------+---+---------+
-        |param_kernel|param_gamma|param_degree|split0_test_score|...| rank... |
+        |param_kernel|param_gamma|param_degree|split0_test_score|...|rank_t...|
         +============+===========+============+=================+===+=========+
         |  'poly'    |     --    |      2     |        0.8      |...|    2    |
         +------------+-----------+------------+-----------------+---+---------+
