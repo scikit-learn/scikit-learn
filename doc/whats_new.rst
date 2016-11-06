@@ -133,10 +133,10 @@ Bug fixes
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
-   - Fixes issue in :func:`multiclass.OneVsRestClassifier.partial_fit` of
+   - Fixes issue in ``partial_fit`` method of
      :class:`multiclass.OneVsRestClassifier` when number of classes used in
-     :func:`multiclass.OneVsRestClassifier.partial_fit` was less than the
-     total number of classes in the data. :issue:`7786` by `Srivatsan Ramesh`_
+     ``partial_fit`` was less than the total number of classes in the
+     data. :issue:`7786` by `Srivatsan Ramesh`_
 
 
 API changes summary
