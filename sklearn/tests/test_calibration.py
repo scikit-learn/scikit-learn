@@ -16,7 +16,6 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
-from sklearn.linear_model import Ridge
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
 from sklearn.metrics import brier_score_loss, log_loss
@@ -88,12 +87,6 @@ def test_calibration():
                 assert_greater(brier_score_loss(y_test, prob_pos_clf),
                                brier_score_loss((y_test + 1) % 2,
                                                 prob_pos_pc_clf_relabeled))
-
-        # check that calibration can also deal with regressors that have
-        # a decision_function
-        clf_base_regressor = CalibratedClassifierCV(Ridge())
-        clf_base_regressor.fit(X_train, y_train)
-        clf_base_regressor.predict(X_test)
 
         # Check failure cases:
         # only "isotonic" and "sigmoid" should be accepted as methods
@@ -293,6 +286,8 @@ def test_calibration_prob_sum():
     probs = clf_prob.predict_proba(X)
     assert_array_almost_equal(probs.sum(axis=1), np.ones(probs.shape[0]))
 
+
+def test_calibration_less_classes():
     # Test to check calibration works fine when train set in a test-train
     # split does not contain all classes
     # Since this test uses LOO, at each iteration train set will not contain a
@@ -300,8 +295,10 @@ def test_calibration_prob_sum():
     X = np.random.randn(10, 5)
     y = np.arange(10)
     clf = LinearSVC(C=1.0)
-    clf_prob = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
-    clf_prob.fit(X, y)
-    probs = clf_prob.predict_proba(X)
-    n_classes = len(y)
-    assert_array_almost_equal(probs, 1/n_classes)
+    cal_clf = CalibratedClassifierCV(clf, method="sigmoid", cv=LeaveOneOut())
+    cal_clf.fit(X, y)
+
+    for i, calibrated_classifier in \
+            enumerate(cal_clf.calibrated_classifiers_):
+        assert_array_equal(calibrated_classifier.predict_proba(X)[:, i],
+                           np.zeros(len(y)))

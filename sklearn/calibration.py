@@ -295,11 +295,8 @@ class _CalibratedClassifier(object):
             raise RuntimeError('classifier has no decision_function or '
                                'predict_proba method.')
 
-        if hasattr(self.base_estimator, "classes_"):
-            idx_pos_class = self.label_encoder_.\
-                transform(self.base_estimator.classes_)
-        else:
-            idx_pos_class = np.arange(df.shape[1])
+        idx_pos_class = self.label_encoder_.\
+            transform(self.base_estimator.classes_)
 
         return df, idx_pos_class
 
