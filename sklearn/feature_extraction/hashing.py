@@ -62,7 +62,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         When True, an absolute value is applied to the features matrix prior to
         returning it. When used in conjunction with alternate_sign=True, this
         significantly reduces the inner product preservation property.
-        This option is deprecated as of 0.19.
+        .. deprecated:: 0.19
+            This option will be removed in 0.21.
 
 
     Examples
