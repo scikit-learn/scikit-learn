@@ -54,16 +54,16 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-    non_negative : boolean or 'total', optional, default False
-        When False, an alternating sign is added to the features as to
+    alternate_sign : boolean, optional, default True
+        When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
-        small n_features in a similar approach to the sparse random projection.
-        When True, the behaviour is identical to the one with (False) with an
-        additional absolute value applied to the result prior to returning it.
-        This significantly reduces the inner product preservation property and
-        is deprecated as of 0.19.
-        When 'total' all counts are positive and for small n_features values
-        the inner product will not be preserved in the hashed space.
+        small n_features. This approach is similar to sparse random projection.
+    non_negative : boolean, optional, default False
+        When True, an absolute value is applied to the features matrix prior to
+        returning it. When used in conjunction with alternate_sign=True, this
+        significantly reduces the inner product preservation property.
+        This option is deprecated as of 0.19.
+
 
     Examples
     --------
@@ -83,20 +83,17 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, non_negative=False):
+                 dtype=np.float64, alternate_sign=True, non_negative=False):
         self._validate_params(n_features, input_type)
-        if non_negative not in [True, False, 'total']:
-            raise ValueError("Invalid value for non_negative must be one of"
-                             " True, False, 'total'.")
-        if non_negative is True:
+        if non_negative:
             warnings.warn("the option non_negative=True has been deprecated"
-                          " in 0.19. From version 0.21, non_negative=True"
-                          " will be interpreted as"
-                          " non_negative='total'.", DeprecationWarning)
+                          " in 0.19 and will be removed"
+                          " in version 0.21.", DeprecationWarning)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
+        self.alternate_sign = alternate_sign
         self.non_negative = non_negative
 
     @staticmethod
@@ -154,7 +151,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
             _hashing.transform(raw_X, self.n_features, self.dtype,
-                               self.non_negative != 'total')
+                               self.alternate_sign)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
@@ -164,6 +161,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
 
-        if self.non_negative in [True, 'total']:
+        if self.non_negative:
             np.abs(X.data, X.data)
         return X

@@ -29,7 +29,6 @@ from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
-from ..utils import deprecated
 from ..utils.fixes import frombuffer_empty, bincount
 from ..utils.validation import check_is_fitted
 
@@ -405,16 +404,16 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    non_negative : boolean or 'total', optional, default=False
-        When False, an alternating sign is added to the features as to
+    alternate_sign : boolean, optional, default True
+        When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
-        small n_features in a similar approach to the sparse random projection.
-        When True, the behaviour is identical to the one with (False) with an
-        additional absolute value applied to the result prior to returning it.
-        This significantly reduces the inner product preservation property and
-        is deprecated as of 0.19.
-        When 'total' all counts are positive and for small n_features values
-        the inner product will not be preserved in the hashed space.
+        small n_features. This approach is similar to sparse random projection.
+
+    non_negative : boolean, optional, default False
+        When True, an absolute value is applied to the features matrix prior to
+        returning it. When used in conjunction with alternate_sign=True, this
+        significantly reduces the inner product preservation property.
+        This option is deprecated as of 0.19.
 
     See also
     --------
@@ -426,8 +425,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
-                 binary=False, norm='l2', non_negative=False,
-                 dtype=np.float64):
+                 binary=False, norm='l2', alternate_sign=True,
+                 non_negative=False, dtype=np.float64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -442,6 +441,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.ngram_range = ngram_range
         self.binary = binary
         self.norm = norm
+        self.alternate_sign = alternate_sign
         self.non_negative = non_negative
         self.dtype = dtype
 
@@ -502,6 +502,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
+                             alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
 

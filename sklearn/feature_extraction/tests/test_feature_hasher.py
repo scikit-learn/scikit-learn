@@ -112,18 +112,22 @@ def test_hasher_non_negative():
     X = [["foo", "bar", "baz", "investigation need", "records"]]
     # last two tokens produce a hash collision that sums as 0
 
-    Xt = FeatureHasher(non_negative=False,
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False, 
                        input_type='string').fit_transform(X)
     assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
     # check that we have a collision that produces a 0 count
     assert_true(len(Xt.data) < len(X[0]))
     assert_true((Xt.data == 0.).any())
 
-    Xt = FeatureHasher(non_negative=True,
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
                        input_type='string').fit_transform(X)
     assert_true((Xt.data >= 0).all())   # all counts are positive
     assert_true((Xt.data == 0.).any())  # we still have a collision
-    Xt = FeatureHasher(non_negative='total',
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
                        input_type='string').fit_transform(X)
     assert_true((Xt.data > 0).all())    # strictly positive counts
-    assert_raises(ValueError, FeatureHasher, non_negative=None)
+    Xt_2 = FeatureHasher(alternate_sign=False, non_negative=False,
+                         input_type='string').fit_transform(X)
+    # With initially positive features, the non_negative option should
+    # have no impact when alternate_sign=False
+    assert_equal(Xt.data, Xt_2.data)
