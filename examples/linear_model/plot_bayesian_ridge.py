@@ -93,7 +93,7 @@ y = np.dot(X, w) + noise
 clf_1d = BayesianRidge(compute_score=True)
 clf_1d.fit(X, y)
 
-X_range = np.arange(-3, 3, 0.1)[:, np.newaxis]
+X_range = np.arange(-30, 30, 1)[:, np.newaxis]
 y_range = np.dot(X_range, w)
 y_mean, y_std = clf_1d.predict(X_range, predict_std=True)
 plt.figure(figsize=(6, 5))
