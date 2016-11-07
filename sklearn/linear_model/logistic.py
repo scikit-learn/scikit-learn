@@ -1613,7 +1613,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             class_weight = compute_class_weight(class_weight,
                                                 np.arange(len(self.classes_)),
                                                 y)
-            class_weight = dict(zip(enumerate(class_weight)))
+            class_weight = dict(enumerate(class_weight))
 
         path_func = delayed(_log_reg_scoring_path)
 
