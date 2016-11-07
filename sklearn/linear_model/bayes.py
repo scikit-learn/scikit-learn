@@ -233,6 +233,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
         predictive distribution, also its standard deviation can be returned.
 
         See: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
+        Slide 15, titled "Predictive Distribution"
+        Russ's beta is our self.beta_
+        Russ's alpha is our self.lambda_
 
         Parameters
         ----------
@@ -478,6 +481,14 @@ class ARDRegression(LinearModel, RegressorMixin):
     def predict(self, X, predict_std=False):
         """Predict using the linear model. In addition to the mean of the
         predictive distribution, also its standard deviation can be returned.
+
+        See: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
+        Slide 15, titled "Predictive Distribution"
+        Russ's beta is our self.beta_
+        Russ's alpha is our self.lambda_
+        ARD is only a little different: only dimensions/features for which
+        self.lambda_ < self.threshold_lambda are kept and the rest are 
+        discarded.
 
         Parameters
         ----------
