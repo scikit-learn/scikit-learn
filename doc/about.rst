@@ -96,10 +96,10 @@ Environment also funds several students to work on the project part-time.
    :target: http://cds.nyu.edu/mooresloan/
 
 `Télécom Paristech <http://www.telecom-paristech.com>`_ funds Manoj Kumar (2014),
-Tom Dupré la Tour (2015), Thierry Guillemot (2016) and Raghav R V (2016) to
+Tom Dupré la Tour (2015), Raghav R V (2015-2016) and Thierry Guillemot (2016) to
 work on scikit-learn.
 
-.. image:: _static/img/telecom.png
+.. image:: themes/scikit-learn/static/img/telecom.png
    :width: 100pt
    :align: center
    :target: http://www.telecom-paristech.fr/
@@ -189,7 +189,7 @@ The 2013 Paris international sprint
     <div style="text-align: center; margin: -7px 0 -10px 0;">
 
 
-.. |telecom| image:: _static/img/telecom.png
+.. |telecom| image:: themes/scikit-learn/static/img/telecom.png
    :width: 120pt
    :target: http://www.telecom-paristech.fr/
 
