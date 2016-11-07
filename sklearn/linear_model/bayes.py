@@ -244,7 +244,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         y_mean : array, shape = (n_samples,)
             Mean of predictive distribution of query points.
             
-        y_std : array, shaoe = (n_samples,)
+        y_std : array, shape = (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
