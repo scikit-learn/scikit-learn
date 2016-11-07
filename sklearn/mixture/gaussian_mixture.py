@@ -727,7 +727,7 @@ class GaussianMixture(BaseMixture):
         Returns
         -------
         bic: float
-            The greater the better.
+            The lower the better.
         """
         return (-2 * self.score(X) * X.shape[0] +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -737,11 +737,11 @@ class GaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array of shape(n_samples, n_dimensions)
+        X : array of shape (n_samples, n_dimensions)
 
         Returns
         -------
         aic: float
-            The greater the better.
+            The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()
