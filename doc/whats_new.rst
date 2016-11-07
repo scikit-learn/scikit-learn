@@ -46,6 +46,12 @@ Bug fixes
      parameters were not being utilised by :class:`manifold.TSNE`.
      :issue:`6497` by `Sebastian Säger`_
 
+   - Fix bug for svm's decision values when ``decision_function_shape``
+     is ``ovr`` in :class:`svm.SVC`.
+     :class:`svm.SVC`'s decision_function was incorrect from versions
+     0.17.0 through 0.18.0.
+     :issue:`7724` by `Bing Tian Dai`_
+
    - Attribute ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
      with SVD and Eigen solver are now of the same length. :issue:`7632`
@@ -85,7 +91,6 @@ Linear, kernelized and related models
      :class:`discriminant_analysis.LinearDiscriminantAnalysis`
      changed for both Eigen and SVD solvers. The attribute has now a length
      of min(n_components, n_classes - 1). :issue:`7632` by `JPFrancoia`_
-
 
 .. _changes_0_18:
 
@@ -4817,6 +4822,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Narine Kokhlikyan: https://github.com/NarineK
 
 .. _Peng Meng: https://github.com/mpjlu
+
+.. _Bing Tian Dai: https://github.com/btdai
 
 .. _Dylan Werner-Meier: https://github.com/unautre
 
