@@ -889,6 +889,10 @@ def test_cv_iterable_wrapper():
             np.array(list(kf_randomized_iter_wrapped.split(X, y))))
     except AssertionError:
         pass
+    else:
+        raise AssertionError("The splits for data are same for randomized "
+                             "and non-randomized versions of kfold iter "
+                             "wrapped by _CVIterableWrapper")
 
 
 def test_group_kfold():
