@@ -49,7 +49,7 @@ Enhancements
 
    - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
      fewer constraints: they must take two 1d-arrays and return a float.
-     :issue:`6288` by `Jake VanderPlas`_.
+     :issue:`6288` by `Jake Vanderplas`_.
 
    - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
      now support sparse input for prediction.
@@ -747,7 +747,7 @@ Lemaitre, Gustav Mörtberg, halwai, Harizo Rajaona, Harry Mavroforakis,
 hashcode55, hdmetor, Henry Lin, Hobson Lane, Hugo Bowne-Anderson,
 Igor Andriushchenko, Imaculate, Inki Hwang, Isaac Sijaranamual,
 Ishank Gulati, Issam Laradji, Iver Jordal, jackmartin, Jacob Schreiber, Jake
-VanderPlas, James Fiedler, James Routley, Jan Zikes, Janna Brettingen, jarfa, Jason
+Vanderplas, James Fiedler, James Routley, Jan Zikes, Janna Brettingen, jarfa, Jason
 Laska, jblackburne, jeff levesque, Jeffrey Blackburne, Jeffrey04, Jeremy Hintz,
 jeremynixon, Jeroen, Jessica Yung, Jill-Jênn Vie, Jimmy Jia, Jiyuan Qian, Joel
 Nothman, johannah, John, John Boersma, John Kirkham, John Moeller,
@@ -1269,7 +1269,7 @@ Sutherland, edson duarte, Eduardo Caro, Eric Larson, Eric Martin, Erich
 Schubert, Fernando Carrillo, Frank C. Eckert, Frank Zalkow, Gael Varoquaux,
 Ganiev Ibraim, Gilles Louppe, Giorgio Patrini, giorgiop, Graham Clenaghan,
 Gryllos Prokopis, gwulfs, Henry Lin, Hsuan-Tien Lin, Immanuel Bayer, Ishank
-Gulati, Jack Martin, Jacob Schreiber, Jaidev Deshpande, Jake VanderPlas, Jan
+Gulati, Jack Martin, Jacob Schreiber, Jaidev Deshpande, Jake Vanderplas, Jan
 Hendrik Metzen, Jean Kossaifi, Jeffrey04, Jeremy, jfraj, Jiali Mei,
 Joe Jevnik, Joel Nothman, John Kirkham, John Wittenauer, Joseph, Joshua Loyal,
 Jungkook Park, KamalakerDadi, Kashif Rasul, Keith Goodman, Kian Ho, Konstantin
@@ -1807,7 +1807,7 @@ Pedregosa, Florian Wilhelm, floydsoft, Félix-Antoine Fortin, Gael Varoquaux,
 Garrett-R, Gilles Louppe, gpassino, gwulfs, Hampus Bengtsson, Hamzeh Alsalhi,
 Hanna Wallach, Harry Mavroforakis, Hasil Sharma, Helder, Herve Bredin,
 Hsiang-Fu Yu, Hugues SALAMIN, Ian Gilmore, Ilambharathi Kanniah, Imran Haque,
-isms, Jake VanderPlas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
+isms, Jake Vanderplas, Jan Dlabal, Jan Hendrik Metzen, Jatin Shah, Javier López
 Peña, jdcaballero, Jean Kossaifi, Jeff Hammerbacher, Joel Nothman, Jonathan
 Helmus, Joseph, Kaicheng Zhang, Kevin Markham, Kyle Beauchamp, Kyle Kastner,
 Lagacherie Matthieu, Lars Buitinck, Laurent Direr, leepei, Loic Esteve, Luis
@@ -1844,7 +1844,8 @@ Bug fixes
     stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
 
   - Fixed the build under Windows when scikit-learn is built with MSVC while
-    NumPy is built with MinGW. By `Olivier Grisel`_ and Federico Vaggi.
+    NumPy is built with MinGW. By `Olivier Grisel`_ and :user:`Federico
+    Vaggi<FedericoV>`.
 
   - Fixed an array index overflow bug in the coordinate descent solver. By
     `Gael Varoquaux`_.
@@ -1955,7 +1956,7 @@ New features
      :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
 
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
-     fitting of regression models. By Johannes Schönberger.
+     fitting of regression models. By :user:`Johannes Schönberger<ahojnnes>`.
 
    - Added :class:`cluster.AgglomerativeClustering` for hierarchical
      agglomerative clustering with average linkage, complete linkage and
@@ -2304,7 +2305,7 @@ List of contributors for release 0.15 by number of commits.
 *  21	Maheshakya Wijewardena
 *  21	Brooke Osborn
 *  21	Hamzeh Alsalhi
-*  21	Jake VanderPlas
+*  21	Jake Vanderplas
 *  21	Philippe Gervais
 *  19	Bala Subrahmanyam Varanasi
 *  12	Ronald Phlypo
@@ -2751,7 +2752,7 @@ List of contributors for release 0.14 by number of commits.
  * 102  Noel Dawe
  *  99  Kemal Eren
  *  79  Joel Nothman
- *  75  Jake VanderPlas
+ *  75  Jake Vanderplas
  *  73  Nelle Varoquaux
  *  71  Vlad Niculae
  *  65  Peter Prettenhofer
@@ -4405,7 +4406,7 @@ People that made this release possible preceded by number of commits:
 
    * 33  Vincent Dubourg
 
-   * 21  `Ron Weiss <http://www.ee.columbia.edu/~ronw/>`_
+   * 21  `Ron Weiss`_
 
    * 9  Bertrand Thirion
 
@@ -4721,3 +4722,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Tom Dupre la Tour: https://github.com/TomDLT
 
 .. _Nelle Varoquaux: https://github.com/nellev
+
+.. _Ron Weiss: http://www.ee.columbia.edu/~ronw
