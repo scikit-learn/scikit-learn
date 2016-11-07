@@ -1558,6 +1558,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                          order="C")
         check_classification_targets(y)
 
+        class_weight = self.class_weight
         if class_weight and not(isinstance(class_weight, dict) or
                                 class_weight in ['balanced', 'auto']):
             # 'auto' is deprecated and will be removed in 0.19
@@ -1567,8 +1568,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # Encode for string labels
         label_encoder = LabelEncoder().fit(y)
         y = label_encoder.transform(y)
-
-        class_weight = self.class_weight
         if isinstance(class_weight, dict):
             class_weight = dict((label_encoder.transform([cls])[0], v)
                                 for cls, v in class_weight.items())
