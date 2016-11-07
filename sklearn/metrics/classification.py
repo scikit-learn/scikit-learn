@@ -431,10 +431,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
             score = pred_and_true / pred_or_true
 
-            # If there is no label, it results in a Nan instead, we set
-            # the jaccard to 1: lim_{x->0} x/x = 1
-            # Note with py2.6 and np 1.3: we can't check safely for nan.
-            score[pred_or_true == 0.0] = 1.0
+            score[np.isnan(score)] = 1.0
     else:
         score = y_true == y_pred
 

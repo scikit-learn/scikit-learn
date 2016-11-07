@@ -16,7 +16,7 @@ from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
 from sklearn.ensemble.base import _set_random_states
 from sklearn.linear_model import Perceptron
-from sklearn.externals.odict import OrderedDict
+from collections import OrderedDict
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectFromModel
