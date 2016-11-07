@@ -282,7 +282,8 @@ Other estimators
 
    - New :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
      replace former mixture models, employing faster inference
-     for sounder results. :issue:`7295` by :user:`Wei Xue<xuewei4d>` and :user:`Thierry Guillemot<tguillemot>`.
+     for sounder results. :issue:`7295` by :user:`Wei Xue<xuewei4d>` and 
+     :user:`Thierry Guillemot<tguillemot>`.
 
    - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
      and it is available calling with parameter ``svd_solver='randomized'``.
@@ -404,7 +405,8 @@ Decomposition, manifold learning and clustering
    - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
      with ``np.float32`` and ``np.float64`` input data without converting it.
      This allows to reduce the memory consumption by using ``np.float32``.
-     :issue:`6846` by :user:`Sebastian Säger<ssaeger>` and :user:`YenChen Lin<yenchenlin>`.
+     :issue:`6846` by :user:`Sebastian Säger<ssaeger>` and 
+     :user:`YenChen Lin<yenchenlin>`.
 
 Preprocessing and feature selection
 
@@ -412,7 +414,8 @@ Preprocessing and feature selection
      :issue:`5929` by :user:`Konstantin Podshumok<podshumok>`.
 
    - :class:`feature_extraction.FeatureHasher` now accepts string values.
-     :issue:`6173` by :user:`Ryad Zenine<ryadzenine>` and :user:`Devashish Deshpande<dsquareindia>`.
+     :issue:`6173` by :user:`Ryad Zenine<ryadzenine>` and 
+     :user:`Devashish Deshpande<dsquareindia>`.
 
    - Keyword arguments can now be supplied to ``func`` in
      :class:`preprocessing.FunctionTransformer` by means of the ``kw_args``
@@ -425,7 +428,8 @@ Preprocessing and feature selection
 Model evaluation and meta-estimators
 
    - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
-     now support ``partial_fit``. By :user:`Asish Panda<kaichogami>` and :user:`Philipp Dowling<phdowling>`.
+     now support ``partial_fit``. By :user:`Asish Panda<kaichogami>` and 
+     :user:`Philipp Dowling<phdowling>`.
 
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
      and :class:`pipeline.FeatureUnion` components using the ``set_params``
@@ -452,7 +456,8 @@ Metrics
 
    - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
-     :issue:`7239` by :user:`Hong Guangguo<hongguangguo>` with help from :user:`Mads Jensen<indianajensen>` and :user:`Nelson Liu<nelson-liu>`.
+     :issue:`7239` by :user:`Hong Guangguo<hongguangguo>` with help from 
+     :user:`Mads Jensen<indianajensen>` and :user:`Nelson Liu<nelson-liu>`.
 
    - Support sparse contingency matrices in cluster evaluation
      (:mod:`metrics.cluster.supervised`) to scale to a large number of
@@ -571,7 +576,8 @@ Decomposition, manifold learning and clustering
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By :user:`Peter Fischer<yanlend>`.
+      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By 
+      :user:`Peter Fischer<yanlend>`.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver
       of :class:`discriminant_analysis.LinearDiscriminantAnalysis` now returns
@@ -853,8 +859,8 @@ New features
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
      :class:`cross_validation.ShuffleSplit`, except that the folds are
-     conditioned on a label array. By `Brian McFee`_, :user:`Jean Kossaifi<JeanKossaifi>` and
-     `Gilles Louppe`_.
+     conditioned on a label array. By `Brian McFee`_, :user:`Jean 
+     Kossaifi<JeanKossaifi>` and `Gilles Louppe`_.
 
    - :class:`decomposition.LatentDirichletAllocation` implements the Latent
      Dirichlet Allocation topic model with online  variational
@@ -884,7 +890,8 @@ Enhancements
      (:issue:`4025`)
 
    - :class:`cluster.mean_shift_.MeanShift` now supports parallel execution,
-     as implemented in the ``mean_shift`` function. By :user:`Martino Sorbaro<martinosorb>`.
+     as implemented in the ``mean_shift`` function. By :user:`Martino
+     Sorbaro<martinosorb>`.
 
    - :class:`naive_bayes.GaussianNB` now supports fitting with ``sample_weight``.
      By `Jan Hendrik Metzen`_.
@@ -942,7 +949,8 @@ Enhancements
      By `Trevor Stephens`_.
 
    - Provide an option for sparse output from
-     :func:`sklearn.metrics.pairwise.cosine_similarity`. By :user:`Jaidev Deshpande<jaidevd>`.
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By 
+     :user:`Jaidev Deshpande<jaidevd>`.
 
    - Add :func:`minmax_scale` to provide a function interface for
      :class:`MinMaxScaler`. By :user:`Thomas Unterthiner<untom>`.
@@ -989,7 +997,8 @@ Enhancements
      regressors and gradient boosting estimators by computing a proxy
      of the impurity improvement during the tree growth. The proxy quantity is
      such that the split that maximizes this value also maximizes the impurity
-     improvement. By `Arnaud Joly`_, :user:`Jacob Schreiber<jmschrei>` and `Gilles Louppe`_.
+     improvement. By `Arnaud Joly`_, :user:`Jacob Schreiber<jmschrei>`
+     and `Gilles Louppe`_.
 
    - Speed up tree based methods by reducing the number of computations needed
      when computing the impurity measure taking into account linear
@@ -1151,7 +1160,8 @@ Bug fixes
       By `Tom Dupre la Tour`_.
 
     - Fixed bug :issue:`5495` when
-      doing OVR(SVC(decision_function_shape="ovr")). Fixed by :user:`Elvis Dohmatob<dohmatob>`.
+      doing OVR(SVC(decision_function_shape="ovr")). Fixed by 
+      :user:`Elvis Dohmatob<dohmatob>`.
 
 
 API changes summary
@@ -1196,7 +1206,8 @@ API changes summary
       which are below a certain threshold value instead.
 
     - :class:`cluster.KMeans` re-runs cluster-assignments in case of non-convergence,
-      to ensure consistency of ``predict(X)`` and ``labels_``. By :user:`Vighnesh Birodkar<vighneshbirodkar>`.
+      to ensure consistency of ``predict(X)`` and ``labels_``. By
+      :user:`Vighnesh Birodkar<vighneshbirodkar>`.
 
     - Classifier and Regressor models are now tagged as such using the
       ``_estimator_type`` attribute.
@@ -1464,7 +1475,8 @@ Enhancements
      `newton-cg` by Simon Wu.
 
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
-     single pass, when giving the option ``sort=False``. By :user:`Dan Blanchard<dan-blanchard>`.
+     single pass, when giving the option ``sort=False``. By :user:`Dan
+     Blanchard<dan-blanchard>`.
 
    - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
      configured to work with estimators that may fail and raise errors on
@@ -1825,7 +1837,8 @@ Bug fixes
 ---------
 
   - Fixed handling of the ``p`` parameter of the Minkowski distance that was
-    previously ignored in nearest neighbors models. By :user:`Nikolay Mayorov<nmayorov>`.
+    previously ignored in nearest neighbors models. By :user:`Nikolay
+    Mayorov<nmayorov>`.
 
   - Fixed duplicated alphas in :class:`linear_model.LassoLars` with early
     stopping on 32 bit Python. By `Olivier Grisel`_ and `Fabian Pedregosa`_.
@@ -4708,4 +4721,3 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Tom Dupre la Tour: https://github.com/TomDLT
 
 .. _Nelle Varoquaux: https://github.com/nellev
-
