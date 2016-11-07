@@ -75,6 +75,7 @@ full-time. It also hosts coding sprints and other events.
 .. image:: images/inria-logo.jpg
    :width: 200pt
    :align: center
+   :target: https://www.inria.fr
 
 `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
 funded one year for a developer to work on the project full-time
@@ -83,6 +84,7 @@ funded one year for a developer to work on the project full-time
 .. image:: images/cds-logo.png
    :width: 200pt
    :align: center
+   :target: http://www.datascience-paris-saclay.fr
 
 `NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
 funds Andreas Mueller (2014-2015) to work on this project. The Moore-Sloan Data Science
@@ -91,6 +93,16 @@ Environment also funds several students to work on the project part-time.
 .. image:: images/nyu_short_color.png
    :width: 200pt
    :align: center
+   :target: http://cds.nyu.edu/mooresloan/
+
+`Telecom Paristech <http://www.telecom-paristech.com>`_ funds Manoj Kumar (2014),
+Tom Dupré la Tour (2015), Thierry Guillemot (2016) and Raghav R V (2016) to
+work on scikit-learn.
+
+.. image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
+   :width: 100pt
+   :align: center
+   :target: http://www.telecom-paristech.fr/
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
@@ -226,4 +238,3 @@ Infrastructure support
 - We would also like to thank `Shining Panda
   <http://shiningpanda.com/>`_ for free CPU time on their Continuous
   Integration server.
-
