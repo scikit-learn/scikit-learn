@@ -1611,10 +1611,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # compute the class weights for the entire dataset y
         if class_weight in ("auto", "balanced"):
-            all_encoded_labels = np.arange(len(self.classes_))
             class_weight = compute_class_weight(class_weight,
-                                                all_encoded_labels, y)
-            class_weight = dict(zip(all_encoded_labels, class_weight))
+                                                np.arange(len(self.classes_)),
+                                                y)
+            class_weight = dict(zip(enumerate(class_weight)))
 
         path_func = delayed(_log_reg_scoring_path)
 
