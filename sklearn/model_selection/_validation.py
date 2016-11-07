@@ -1,4 +1,3 @@
-
 """
 The :mod:`sklearn.model_selection._validation` module includes classes and
 functions to validate the model.
@@ -129,6 +128,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    cv_iter = list(cv.split(X, y, groups))
     scorer = check_scoring(estimator, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -137,7 +137,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
                                               train, test, verbose, None,
                                               fit_params)
-                      for train, test in cv.split(X, y, groups))
+                      for train, test in cv_iter)
     return np.array(scores)[:, 0]
 
 
@@ -265,7 +265,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     if verbose > 2:
         msg += ", score=%f" % test_score
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(score_time))
+        total_time = score_time + fit_time
+        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_score, test_score] if return_train_score else [test_score]
@@ -384,6 +385,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    cv_iter = list(cv.split(X, y, groups))
 
     # Ensure the estimator has implemented the passed decision function
     if not callable(getattr(estimator, method)):
@@ -396,7 +398,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
         clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, groups))
+        for train, test in cv_iter)
 
     # Concatenate the predictions
     predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
@@ -750,9 +752,8 @@ def learning_curve(estimator, X, y, groups=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    cv_iter = cv.split(X, y, groups)
     # Make a list since we will be iterating multiple times over the folds
-    cv_iter = list(cv_iter)
+    cv_iter = list(cv.split(X, y, groups))
     scorer = check_scoring(estimator, scoring=scoring)
 
     n_max_training_samples = len(cv_iter[0][0])
@@ -775,9 +776,8 @@ def learning_curve(estimator, X, y, groups=None,
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train,
-            test, train_sizes_abs, scorer, verbose)
-            for train, test in cv_iter)
+            clone(estimator), X, y, classes, train, test, train_sizes_abs,
+            scorer, verbose) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -961,6 +961,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
+    cv_iter = list(cv.split(X, y, groups))
 
     scorer = check_scoring(estimator, scoring=scoring)
 
@@ -969,7 +970,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
-        for train, test in cv.split(X, y, groups) for v in param_range)
+        for train, test in cv_iter for v in param_range)
 
     out = np.asarray(out)
     n_params = len(param_range)

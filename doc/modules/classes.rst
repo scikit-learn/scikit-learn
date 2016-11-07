@@ -186,6 +186,7 @@ Splitter Functions
    :template: function.rst
 
    model_selection.train_test_split
+   model_selection.check_cv
 
 Hyper-parameter optimizers
 --------------------------
@@ -200,6 +201,13 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   model_selection.fit_grid_point
 
 Model validation
 ----------------
@@ -315,7 +323,6 @@ Samples generator
    decomposition.PCA
    decomposition.IncrementalPCA
    decomposition.ProjectedGradientNMF
-   decomposition.RandomizedPCA
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
@@ -560,7 +567,6 @@ From text
 
   gaussian_process.GaussianProcessRegressor
   gaussian_process.GaussianProcessClassifier
-  gaussian_process.GaussianProcess
 
 Kernels:
 
@@ -1050,7 +1056,8 @@ See the :ref:`metrics` section of the user guide for further details.
    neighbors.LSHForest
    neighbors.DistanceMetric
    neighbors.KernelDensity
-
+   neighbors.LocalOutlierFactor
+	      
 .. autosummary::
    :toctree: generated/
    :template: function.rst
@@ -1348,3 +1355,67 @@ Low-level methods
    utils.estimator_checks.check_estimator
    utils.resample
    utils.shuffle
+
+
+Recently deprecated
+===================
+
+To be removed in 0.19
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   lda.LDA
+   qda.QDA
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   datasets.load_lfw_pairs
+   datasets.load_lfw_people
+
+
+To be removed in 0.20
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.GridSearchCV
+   grid_search.RandomizedSearchCV
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePOut
+   cross_validation.KFold
+   cross_validation.LabelKFold
+   cross_validation.LeaveOneLabelOut
+   cross_validation.LeavePLabelOut
+   cross_validation.LabelShuffleSplit
+   cross_validation.StratifiedKFold
+   cross_validation.ShuffleSplit
+   cross_validation.StratifiedShuffleSplit
+   cross_validation.PredefinedSplit
+   decomposition.RandomizedPCA
+   gaussian_process.GaussianProcess
+   mixture.GMM
+   mixture.DPGMM
+   mixture.VBGMM
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   grid_search.fit_grid_point
+   learning_curve.learning_curve
+   learning_curve.validation_curve
+   cross_validation.cross_val_predict
+   cross_validation.cross_val_score
+   cross_validation.check_cv
+   cross_validation.permutation_test_score
+   cross_validation.train_test_split

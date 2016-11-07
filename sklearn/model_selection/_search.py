@@ -550,6 +550,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
 
+        cv_iter = list(cv.split(X, y, groups))
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
@@ -561,7 +562,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   return_times=True, return_parameters=True,
                                   error_score=self.error_score)
           for parameters in parameter_iterable
-          for train, test in cv.split(X, y, groups))
+          for train, test in cv_iter)
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:

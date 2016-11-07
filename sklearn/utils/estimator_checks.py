@@ -30,6 +30,7 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_dict_equal
 
 
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -132,6 +133,8 @@ def _yield_classifier_checks(name, Classifier):
     if 'class_weight' in Classifier().get_params().keys():
         yield check_class_weight_classifiers
 
+    yield check_non_transformer_estimators_n_iter
+
 
 @ignore_warnings(category=DeprecationWarning)
 def check_supervised_y_no_nan(name, Estimator):
@@ -172,6 +175,7 @@ def _yield_regressor_checks(name, Regressor):
     if name != "GaussianProcessRegressor":
         # Test if NotFittedError is raised
         yield check_estimators_unfitted
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_transformer_checks(name, Transformer):
@@ -186,6 +190,13 @@ def _yield_transformer_checks(name, Transformer):
         # basic tests
         yield check_transformer_general
         yield check_transformers_unfitted
+    # Dependent on external solvers and hence accessing the iter
+    # param is non-trivial.
+    external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
+                       'RandomizedLasso', 'LogisticRegressionCV']
+    if name not in external_solver:
+        yield check_transformer_n_iter
+
 
 
 def _yield_clustering_checks(name, Clusterer):
@@ -195,6 +206,7 @@ def _yield_clustering_checks(name, Clusterer):
         # let's not test that here.
         yield check_clustering
         yield check_estimators_partial_fit_n_features
+    yield check_non_transformer_estimators_n_iter
 
 
 def _yield_all_checks(name, Estimator):
@@ -218,6 +230,8 @@ def _yield_all_checks(name, Estimator):
     yield check_fit2d_1feature
     yield check_fit1d_1feature
     yield check_fit1d_1sample
+    yield check_get_params_invariance
+    yield check_dict_unchanged
 
 
 def check_estimator(Estimator):
@@ -397,6 +411,49 @@ def check_dtype_object(name, Estimator):
 
 
 @ignore_warnings
+def check_dict_unchanged(name, Estimator):
+    # this estimator raises
+    # ValueError: Found array with 0 feature(s) (shape=(23, 0))
+    # while a minimum of 1 is required.
+    # error
+    if name in ['SpectralCoclustering']:
+        return
+    rnd = np.random.RandomState(0)
+    if name in ['RANSACRegressor']:
+        X = 3 * rnd.uniform(size=(20, 3))
+    else:
+        X = 2 * rnd.uniform(size=(20, 3))
+
+    y = X[:, 0].astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
+    estimator = Estimator()
+    set_testing_parameters(estimator)
+    if hasattr(estimator, "n_components"):
+        estimator.n_components = 1
+
+    if hasattr(estimator, "n_clusters"):
+        estimator.n_clusters = 1
+
+    if hasattr(estimator, "n_best"):
+        estimator.n_best = 1
+
+    set_random_state(estimator, 1)
+
+    # should be just `estimator.fit(X, y)`
+    # after merging #6141
+    if name in ['SpectralBiclustering']:
+        estimator.fit(X)
+    else:
+        estimator.fit(X, y)
+    for method in ["predict", "transform", "decision_function",
+                   "predict_proba"]:
+        if hasattr(estimator, method):
+            dict_before = estimator.__dict__.copy()
+            getattr(estimator, method)(X)
+            assert_dict_equal(estimator.__dict__, dict_before,
+                              'Estimator changes __dict__ during %s' % method)
+
+
 def check_fit2d_predict1d(name, Estimator):
     # check by fitting a 2d array and prediting with a 1d array
     rnd = np.random.RandomState(0)
@@ -1477,51 +1534,73 @@ def multioutput_estimator_convert_y_2d(name, y):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_non_transformer_estimators_n_iter(name, estimator,
-                                            multi_output=False):
-    # Check if all iterative solvers, run for more than one iteration
+def check_non_transformer_estimators_n_iter(name, Estimator):
+    # Test that estimators that are not transformers with a parameter
+    # max_iter, return the attribute of n_iter_ at least 1.
 
-    iris = load_iris()
-    X, y_ = iris.data, iris.target
+    # These models are dependent on external solvers like
+    # libsvm and accessing the iter parameter is non-trivial.
+    not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
+                            'RidgeClassifier', 'SVC', 'RandomizedLasso',
+                            'LogisticRegressionCV', 'LinearSVC',
+                            'LogisticRegression']
 
-    if multi_output:
-        y_ = np.reshape(y_, (-1, 1))
+    # Tested in test_transformer_n_iter
+    not_run_check_n_iter += CROSS_DECOMPOSITION
+    if name in not_run_check_n_iter:
+        return
 
-    set_random_state(estimator, 0)
-    if name == 'AffinityPropagation':
-        estimator.fit(X)
+    # LassoLars stops early for the default alpha=1.0 the iris dataset.
+    if name == 'LassoLars':
+        estimator = Estimator(alpha=0.)
     else:
-        estimator.fit(X, y_)
+        estimator = Estimator()
+    if hasattr(estimator, 'max_iter'):
+        iris = load_iris()
+        X, y_ = iris.data, iris.target
+        y_ = multioutput_estimator_convert_y_2d(name, y_)
 
-    # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
-    # which doesn't return a n_iter for old versions of SciPy.
-    if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
-        assert_greater_equal(estimator.n_iter_, 1)
+        set_random_state(estimator, 0)
+        if name == 'AffinityPropagation':
+            estimator.fit(X)
+        else:
+            estimator.fit(X, y_)
+
+        # HuberRegressor depends on scipy.optimize.fmin_l_bfgs_b
+        # which doesn't return a n_iter for old versions of SciPy.
+        if not (name == 'HuberRegressor' and estimator.n_iter_ is None):
+            assert_greater_equal(estimator.n_iter_, 1)
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_transformer_n_iter(name, estimator):
-    if name in CROSS_DECOMPOSITION:
-        # Check using default data
-        X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [2., 5., 4.]]
-        y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
+def check_transformer_n_iter(name, Estimator):
+    # Test that transformers with a parameter max_iter, return the
+    # attribute of n_iter_ at least 1.
+    estimator = Estimator()
+    if hasattr(estimator, "max_iter"):
+        if name in CROSS_DECOMPOSITION:
+            # Check using default data
+            X = [[0., 0., 1.], [1., 0., 0.], [2., 2., 2.], [2., 5., 4.]]
+            y_ = [[0.1, -0.2], [0.9, 1.1], [0.1, -0.5], [0.3, -0.2]]
 
-    else:
-        X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-                           random_state=0, n_features=2, cluster_std=0.1)
-        X -= X.min() - 0.1
-    set_random_state(estimator, 0)
-    estimator.fit(X, y_)
+        else:
+            X, y_ = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                               random_state=0, n_features=2, cluster_std=0.1)
+            X -= X.min() - 0.1
+        set_random_state(estimator, 0)
+        estimator.fit(X, y_)
 
-    # These return a n_iter per component.
-    if name in CROSS_DECOMPOSITION:
-        for iter_ in estimator.n_iter_:
-            assert_greater_equal(iter_, 1)
-    else:
-        assert_greater_equal(estimator.n_iter_, 1)
+        # These return a n_iter per component.
+        if name in CROSS_DECOMPOSITION:
+            for iter_ in estimator.n_iter_:
+                assert_greater_equal(iter_, 1)
+        else:
+            assert_greater_equal(estimator.n_iter_, 1)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def check_get_params_invariance(name, estimator):
+    # Checks if get_params(deep=False) is a subset of get_params(deep=True)
     class T(BaseEstimator):
         """Mock classifier
         """
