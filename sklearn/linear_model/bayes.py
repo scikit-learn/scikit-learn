@@ -487,7 +487,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         Russ's beta is our self.beta_
         Russ's alpha is our self.lambda_
         ARD is only a little different: only dimensions/features for which
-        self.lambda_ < self.threshold_lambda are kept and the rest are 
+        self.lambda_ < self.threshold_lambda are kept and the rest are
         discarded.
 
         Parameters
