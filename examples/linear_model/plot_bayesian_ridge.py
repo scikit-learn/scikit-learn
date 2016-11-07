@@ -78,3 +78,30 @@ plt.plot(clf.scores_, color='navy', linewidth=lw)
 plt.ylabel("Score")
 plt.xlabel("Iterations")
 plt.show()
+
+###############################################################################
+# Plot predictions with standard deviation
+n_samples, n_features = 50, 1
+X = np.random.randn(n_samples, n_features)  # Create Gaussian data
+w = [-1]
+# Create noise with a precision alpha of 50.
+alpha_ = 50.
+noise = stats.norm.rvs(loc=0, scale=1. / np.sqrt(alpha_), size=n_samples)
+# Create the target
+y = np.dot(X, w) + noise
+# fit model
+clf_1d = BayesianRidge(compute_score=True)
+clf_1d.fit(X, y)
+
+X_range = np.arange(-3, 3, 0.1)[:, np.newaxis]
+y_range = np.dot(X_range, w)
+y_mean, y_std = clf_1d.predict(X_range, predict_std=True)
+plt.figure(figsize=(6, 5))
+plt.title("Test predictions and standard deviations")
+plt.plot(X_range, y_range, color='gold', linewidth=lw, label='Ground truth')
+plt.errorbar(X_range, y_mean, y_std, color='navy',
+             label='Predictions and Uncertainties')
+plt.ylabel("Feature")
+plt.xlabel("Output")
+plt.legend(loc="upper right")
+plt.show()
