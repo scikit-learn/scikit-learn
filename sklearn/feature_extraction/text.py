@@ -608,9 +608,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    max_features : int or None, default=None
-        If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+    max_features : float in range [0.0, 1.0] or int, default=1.0
+        Build a vocabulary that only consider the top max_features ordered
+        by term frequency across the corpus.
+        If float the parameter represents a proportion of the features, integer
+        absolute counts.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -659,7 +661,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
-                 max_df=1.0, min_df=1, max_features=None,
+                 max_df=1.0, min_df=1, max_features=1.0,
                  vocabulary=None, binary=False, dtype=np.int64):
         self.input = input
         self.encoding = encoding
@@ -676,12 +678,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if max_df < 0 or min_df < 0:
             raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
-        if max_features is not None:
-            if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
-                raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features)
+        if max_features < 0:
+            raise ValueError("negative value for max_features")
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
@@ -844,7 +842,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if not self.fixed_vocabulary_:
             X = self._sort_features(X, vocabulary)
 
-            n_doc = X.shape[0]
+            n_doc, n_features = X.shape
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
                              else max_df * n_doc)
@@ -854,10 +852,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
+            max_features_count = (max_features
+                                  if isinstance(max_features, numbers.Integral)
+                                  else max_features * n_features)
             X, self.stop_words_ = self._limit_features(X, vocabulary,
                                                        max_doc_count,
                                                        min_doc_count,
-                                                       max_features)
+                                                       max_features_count)
 
             self.vocabulary_ = vocabulary
 
@@ -1188,9 +1189,11 @@ class TfidfVectorizer(CountVectorizer):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    max_features : int or None, default=None
-        If not None, build a vocabulary that only consider the top
-        max_features ordered by term frequency across the corpus.
+    max_features : float in range [0.0, 1.0] or int, default=1.0
+        Build a vocabulary that only consider the top max_features ordered
+        by term frequency across the corpus.
+        If float the parameter represents a proportion of the features, integer
+        absolute counts.
 
         This parameter is ignored if vocabulary is not None.
 
@@ -1261,7 +1264,7 @@ class TfidfVectorizer(CountVectorizer):
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False,
+                 max_features=1.0, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
 
