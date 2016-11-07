@@ -30,7 +30,7 @@ Enhancements
 
    - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
      now uses significantly less memory when assigning data points to their
-     nearest cluster center. :issue:`7721` by `Jon Crall`_.
+     nearest cluster center. :issue:`7721` by :user:`Jon Crall<Erotemic>`.
 
    - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`
      that matches the ``classes_`` attribute of ``best_estimator_``. (`#7661
@@ -68,7 +68,7 @@ Enhancements
 
    - ``check_estimator`` now attempts to ensure that methods transform, predict, etc.
      do not set attributes on the estimator.
-     :issue:`7533` by `Ekaterina Krivich`_.
+     :issue:`7533` by :user:`Ekaterina Krivich<kiote>`.
 
 Bug fixes
 .........
@@ -94,7 +94,8 @@ Bug fixes
      :issue:`7680` by :user:`Ibraim Ganiev<olologin>`.
 
    - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
-     attribute in `transform()`. :issue:`7553` by `Ekaterina Krivich`_.
+     attribute in `transform()`. :issue:`7553` by :user:`Ekaterina
+     Krivich<kiote>`.
 
 .. _changes_0_18_1:
 
