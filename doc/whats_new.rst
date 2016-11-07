@@ -4886,12 +4886,10 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Peng Meng: https://github.com/mpjlu
 
-<<<<<<< HEAD
 .. _Bing Tian Dai: https://github.com/btdai
-=======
+
 .. _Dylan Werner-Meier: https://github.com/unautre
 
 .. _Alyssa Batula: https://github.com/abatula
 
 .. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
->>>>>>> 2e4b58914ad7d3afb8a7eb8df6c8e65512120439
