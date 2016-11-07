@@ -1557,23 +1557,30 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
                          order="C")
         check_classification_targets(y)
-        if self.solver == 'sag':
-            max_squared_sum = row_norms(X, squared=True).max()
-        else:
-            max_squared_sum = None
+
+        if class_weight and not(isinstance(class_weight, dict) or
+                                class_weight in ['balanced', 'auto']):
+            # 'auto' is deprecated and will be removed in 0.19
+            raise ValueError("class_weight provided should be a "
+                             "dict or 'balanced'")
 
         # Encode for string labels
         label_encoder = LabelEncoder().fit(y)
         y = label_encoder.transform(y)
-        self.classes_ = label_encoder.classes_
-
-        encoded_labels = label_encoder.transform(label_encoder.classes_)
-        classes = self.classes_  # The original class labels
 
         class_weight = self.class_weight
         if isinstance(class_weight, dict):
             class_weight = dict((label_encoder.transform([cls])[0], v)
                                 for cls, v in class_weight.items())
+
+        # The original class labels
+        classes = self.classes_ = label_encoder.classes_
+        encoded_labels = label_encoder.transform(label_encoder.classes_)
+
+        if self.solver == 'sag':
+            max_squared_sum = row_norms(X, squared=True).max()
+        else:
+            max_squared_sum = None
 
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
@@ -1585,7 +1592,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         if n_classes < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
-                             " class: %r" % self.classes_[0])
+                             " class: %r" % classes[0])
 
         if n_classes == 2:
             # OvR in case of binary problems is as good as fitting
@@ -1601,12 +1608,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         else:
             iter_encoded_labels = encoded_labels
             iter_classes = classes
-
-        if class_weight and not(isinstance(class_weight, dict) or
-                                class_weight in ['balanced', 'auto']):
-            # 'auto' is deprecated and will be removed in 0.19
-            raise ValueError("class_weight provided should be a "
-                             "dict or 'balanced'")
 
         # compute the class weights for the entire dataset y
         if class_weight in ("auto", "balanced"):
