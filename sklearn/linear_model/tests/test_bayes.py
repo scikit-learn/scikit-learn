@@ -67,20 +67,20 @@ def test_predict_std_bayesian():
     noise_mult = 0.1
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
-    f = lambda X: (np.dot(X, w) + b)
-    f_noise = lambda X: f(X) + np.random.randn(X.shape[0])*noise_mult
-    
+    def f(X): return np.dot(X, w) + b
+    def f_noise(X): return f(X) + np.random.randn(X.shape[0])*noise_mult
+
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
     y = f_noise(X)
-    
+
     m1 = BayesianRidge()
     m1.fit(X, y)
-    X_test = np.random.random((n_test,d))
+    X_test = np.random.random((n_test, d))
     y_mean, y_std = m1.predict(X_test, predict_std=True)
     assert_array_almost_equal(y_std, 0.1, decimal=1)
-    
-    
+
+
 def test_predict_std_ard():
     # generate some 1-d data with noise
     d = 5
@@ -90,15 +90,15 @@ def test_predict_std_ard():
     noise_mult = 0.1
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
-    f = lambda X: (np.dot(X, w) + b)
-    f_noise = lambda X: f(X) + np.random.randn(X.shape[0])*noise_mult
-    
+    def f(X): return np.dot(X, w) + b
+    def f_noise(X): return f(X) + np.random.randn(X.shape[0])*noise_mult
+
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
     y = f_noise(X)
-    
+
     m1 = ARDRegression()
     m1.fit(X, y)
-    X_test = np.random.random((n_test,d))
+    X_test = np.random.random((n_test, d))
     y_mean, y_std = m1.predict(X_test, predict_std=True)
     assert_array_almost_equal(y_std, 0.1, decimal=1)
