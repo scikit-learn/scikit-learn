@@ -95,7 +95,7 @@ clf_1d.fit(X, y)
 
 X_range = np.arange(-30, 30, 1)[:, np.newaxis]
 y_range = np.dot(X_range, w)
-y_mean, y_std = clf_1d.predict(X_range, predict_std=True)
+y_mean, y_std = clf_1d.predict(X_range, return_std=True)
 plt.figure(figsize=(6, 5))
 plt.title("Test predictions and standard deviations")
 plt.plot(X_range, y_range, color='gold', linewidth=lw, label='Ground truth')
