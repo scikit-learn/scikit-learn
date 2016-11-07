@@ -929,7 +929,7 @@ Enhancements
    - The ``class_weight="auto"`` heuristic in classifiers supporting
      ``class_weight`` was deprecated and replaced by the ``class_weight="balanced"``
      option, which has a simpler formula and interpretation.
-     By Hanna Wallach and `Andreas Müller`_.
+     By `Hanna Wallach`_ and `Andreas Müller`_.
 
    - Add ``class_weight`` parameter to automatically weight samples by class
      frequency for :class:`linear_model.PassiveAgressiveClassifier`. By
@@ -1685,7 +1685,7 @@ Bug fixes
       in GMM. By :user:`Alexis Mignon<AlexisMignon>`.
 
     - Fixed a error in the computation of conditional probabilities in
-      :class:`naive_bayes.BernoulliNB`. By Hanna Wallach.
+      :class:`naive_bayes.BernoulliNB`. By `Hanna Wallach`_.
 
     - Make the method ``radius_neighbors`` of
       :class:`neighbors.NearestNeighbors` return the samples lying on the
