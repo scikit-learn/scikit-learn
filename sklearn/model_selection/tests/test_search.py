@@ -7,6 +7,7 @@ from sklearn.externals.joblib._compat import PY3_OR_LATER
 from itertools import chain, product
 import pickle
 import sys
+from types import GeneratorType
 
 import numpy as np
 import scipy.sparse as sp
@@ -1174,6 +1175,10 @@ def test_grid_search_cv_splits_consistency():
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
+
+    assert_true(isinstance(KFold(n_splits=n_splits,
+                                 shuffle=True, random_state=0).split(X, y),
+                           GeneratorType))
 
     # Give generator as a cv parameter
     gs3 = GridSearchCV(LinearSVC(random_state=0),
