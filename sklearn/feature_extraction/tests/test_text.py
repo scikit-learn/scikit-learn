@@ -562,25 +562,32 @@ def test_count_vectorizer_max_features():
 
     cv_1 = CountVectorizer(max_features=1)
     cv_3 = CountVectorizer(max_features=3)
-    cv_None = CountVectorizer(max_features=None)
+    cv_all = CountVectorizer(max_features=1.0)
+    cv_half = CountVectorizer(max_features=0.5)
 
     counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
-    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_all = cv_all.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_half = cv_half.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
 
     features_1 = cv_1.get_feature_names()
     features_3 = cv_3.get_feature_names()
-    features_None = cv_None.get_feature_names()
+    features_all = cv_all.get_feature_names()
+    features_half = cv_half.get_feature_names()
 
     # The most common feature is "the", with frequency 7.
     assert_equal(7, counts_1.max())
     assert_equal(7, counts_3.max())
-    assert_equal(7, counts_None.max())
+    assert_equal(7, counts_all.max())
+    assert_equal(7, counts_half.max())
 
     # The most common feature should be the same
     assert_equal("the", features_1[np.argmax(counts_1)])
     assert_equal("the", features_3[np.argmax(counts_3)])
-    assert_equal("the", features_None[np.argmax(counts_None)])
+    assert_equal("the", features_all[np.argmax(counts_all)])
+
+    # The features for a maximum of 50% or a value of 3 should be the same
+    assert_equal(features_3, features_half)
 
 
 def test_vectorizer_max_df():
