@@ -144,6 +144,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
+        self.X_offset = X_offset
+        self.X_scale = X_scale
         n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
@@ -216,9 +218,44 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.alpha_ = alpha_
         self.lambda_ = lambda_
         self.coef_ = coef_
+        self.S_N = (1. / alpha_) * np.dot(Vh.T, 
+                             Vh / (eigen_vals_ + lambda_ / alpha_)[:, None])
 
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
+        
+    def predict(self, X, predict_std=True):
+        """Predict using the linear model. In addition to the mean of the 
+        predictive distribution, also its standard deviation can be returned.
+
+        See: http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf
+
+    
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
+
+        predict_std : boolean, optional
+            Whether to return the standard deviation of posterior prediction.
+
+        Returns
+        -------
+        y_mean : array, shape = (n_samples,)
+            Mean of predictive distribution of query points.
+            
+        y_std : array, shaoe = (n_samples,)
+            Standard deviation of predictive distribution of query points.
+        """
+        y_mean = self._decision_function(X)
+        if predict_std is False:
+            return y_mean
+        else:
+            if self.normalize:
+                X = (X - self.X_offset) / self.X_scale
+            sigmas_squared_data = (np.dot(X, self.S_N ) * X).sum(axis=1)
+            y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
+            return y_mean, y_std
 
 
 ###############################################################################
