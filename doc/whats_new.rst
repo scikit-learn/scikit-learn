@@ -1380,7 +1380,7 @@ New features
      sample sizes than :class:`svm.SVR` with linear kernel. By
      `Fabian Pedregosa`_ and Qiang Luo.
 
-   - Incremental fit for :class:`GaussianNB  <naive_bayes.GaussianNB>`.
+   - Incremental fit for :class:`GaussianNB <naive_bayes.GaussianNB>`.
 
    - Added ``sample_weight`` support to :class:`dummy.DummyClassifier` and
      :class:`dummy.DummyRegressor`. By `Arnaud Joly`_.
