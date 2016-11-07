@@ -66,10 +66,14 @@ Enhancements
    - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
      :issue:`7723` by :user:`Mikhail Korobov<kmike>`.
 
+   - ``check_estimator`` now attempts to ensure that methods transform, predict, etc.
+     do not set attributes on the estimator.
+     :issue:`7533` by `Ekaterina Krivich`_.
+
 Bug fixes
 .........
 
-   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not 
+   - Fix a bug where :class:`sklearn.feature_selection.SelectFdr` did not
      exactly implement Benjamini-Hochberg procedure. It formerly may have
      selected fewer features than it should.
      :issue:`7490` by :user:`Peng Meng<mpjlu>`.
@@ -88,6 +92,9 @@ Bug fixes
 
    - Tree splitting criterion classes' cloning/pickling is now memory safe
      :issue:`7680` by :user:`Ibraim Ganiev<olologin>`.
+
+   - Fixed a bug where :class:`decomposition.NMF` sets its ``n_iters_``
+     attribute in `transform()`. :issue:`7553` by `Ekaterina Krivich`_.
 
 .. _changes_0_18_1:
 
@@ -126,6 +133,11 @@ Bug fixes
    - Fixes issue in :ref:`univariate_feature_selection` where score 
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
+
+   - Fixes issue in ``partial_fit`` method of
+     :class:`multiclass.OneVsRestClassifier` when number of classes used in
+     ``partial_fit`` was less than the total number of classes in the
+     data. :issue:`7786` by `Srivatsan Ramesh`_
 
 
 API changes summary
@@ -4709,3 +4721,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Nelle Varoquaux: https://github.com/nellev
 
+.. _Alyssa Batula: https://github.com/abatula
+
+.. _Srivatsan Ramesh: https://github.com/srivatsan-ramesh
