@@ -228,7 +228,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
-    def predict(self, X, predict_std=False):
+    def predict(self, X, return_std=False):
         """Predict using the linear model. In addition to the mean of the
         predictive distribution, also its standard deviation can be returned.
 
@@ -242,7 +242,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
 
-        predict_std : boolean, optional
+        return_std : boolean, optional
             Whether to return the standard deviation of posterior prediction.
 
         Returns
@@ -254,7 +254,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
-        if predict_std is False:
+        if return_std is False:
             return y_mean
         else:
             if self.normalize:
@@ -478,7 +478,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
-    def predict(self, X, predict_std=False):
+    def predict(self, X, return_std=False):
         """Predict using the linear model. In addition to the mean of the
         predictive distribution, also its standard deviation can be returned.
 
@@ -495,7 +495,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
 
-        predict_std : boolean, optional
+        return_std : boolean, optional
             Whether to return the standard deviation of posterior prediction.
 
         Returns
@@ -507,7 +507,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
-        if predict_std is False:
+        if return_std is False:
             return y_mean
         else:
             if self.normalize:
