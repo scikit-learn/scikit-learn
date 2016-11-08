@@ -59,7 +59,12 @@ def test_toy_ard_object():
 
 
 def test_return_std_bayesian():
-    # generate some 1-d data with noise
+    def f(X): 
+        return np.dot(X, w) + b
+
+    def f_noise(X): 
+        return f(X) + np.random.randn(X.shape[0])*noise_mult
+
     d = 5
     n_train = 50
     n_test = 10
@@ -67,9 +72,6 @@ def test_return_std_bayesian():
     noise_mult = 0.1
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
-    def f(X): return np.dot(X, w) + b
-
-    def f_noise(X): return f(X) + np.random.randn(X.shape[0])*noise_mult
 
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
@@ -83,7 +85,12 @@ def test_return_std_bayesian():
 
 
 def test_return_std_ard():
-    # generate some 1-d data with noise
+    def f(X): 
+        return np.dot(X, w) + b
+
+    def f_noise(X): 
+        return f(X) + np.random.randn(X.shape[0])*noise_mult
+
     d = 5
     n_train = 50
     n_test = 10
@@ -91,9 +98,6 @@ def test_return_std_ard():
     noise_mult = 0.1
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
-    def f(X): return np.dot(X, w) + b
-
-    def f_noise(X): return f(X) + np.random.randn(X.shape[0])*noise_mult
 
     X = np.random.random((n_train, d))
     X_test = np.random.random((n_test, d))
