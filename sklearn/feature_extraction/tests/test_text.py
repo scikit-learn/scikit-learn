@@ -589,6 +589,11 @@ def test_count_vectorizer_max_features():
     assert_equal("the", features_3[np.argmax(counts_3)])
     assert_equal("the", features_all[np.argmax(counts_all)])
 
+    # Check if top 1 feature is a subset of top 50% features which should
+    # be a subset of all the features.
+    assert_less(set(features_1), set(features_half))
+    assert_less(set(features_3), set(features_None))
+
     # The features for a maximum of 50% or a value of 3 should be the same
     assert_equal(features_3, features_half)
 
