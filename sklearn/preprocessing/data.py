@@ -2000,13 +2000,13 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing.data import CountFeaturizer
     >>> data = [[1, 1], [1, 1], [3, 1], [0, 0]]
     >>> cf = CountFeaturizer()
-    >>> cf.fit_transform(data)
+    >>> cf.fit_transform(data)      # doctest: +NORMALIZE_WHITESPACE
     array([[ 1.,  1.,  2.],
            [ 1.,  1.,  2.],
            [ 3.,  1.,  1.],
            [ 0.,  0.,  1.]])
-    >>> cf = CountFeaturizer(inclusion=[1])
-    >>> cf.fit_transform(data)
+    >>> cf = CountFeaturizer(inclusion=[1]) 
+    >>> cf.fit_transform(data)      # doctest: +NORMALIZE_WHITESPACE
     array([[ 1.,  1.,  3.],
            [ 1.,  1.,  3.],
            [ 3.,  1.,  3.],
@@ -2015,7 +2015,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     >>> cf = CountFeaturizer()
     >>> cf.fit(data).transform(data_2)
     array([[ 1.,  1.,  2.]])
-    # doctest: +NORMALIZE_WHITESPACE
+
 
     Notice how on the second fit, we set the inclusion to [0, 1]
     which made it only count the number of instances of the second feature 
