@@ -88,6 +88,7 @@ def f(x, noise_amount):
     noise = np.random.normal(0, 1, len(x))
     return y + noise_amount * noise
 
+
 degree = 10
 X = np.linspace(0, 10, 100)
 y = f(X, noise_amount=1)
