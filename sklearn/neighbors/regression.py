@@ -104,6 +104,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     -----
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+    The regressor inherits attributes from `NeighborsBase`.
 
     .. warning::
 
@@ -249,6 +250,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     -----
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
+    The regressor inherits attributes from `NeighborsBase`.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
