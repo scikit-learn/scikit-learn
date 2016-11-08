@@ -66,6 +66,12 @@ Bug fixes
      ``partial_fit`` was less than the total number of classes in the
      data. :issue:`7786` by `Srivatsan Ramesh`_
 
+   - Fixes issue in :class:`calibration.CalibratedClassifierCV` where
+     the sum of probabilities of each class for a data was not 1, and
+     ``CalibratedClassifierCV`` now handles the case where the training set
+     has less number of classes than the total data. :issue:`7799` by
+     `Srivatsan Ramesh`_
+
 
 Enhancements
 .............
