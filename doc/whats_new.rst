@@ -126,6 +126,12 @@ Bug fixes
      parameters were not being utilised by :class:`manifold.TSNE`.
      :issue:`6497` by :user:`Sebastian Säger <ssaeger>`
 
+   - Fix bug for svm's decision values when ``decision_function_shape``
+     is ``ovr`` in :class:`svm.SVC`.
+     :class:`svm.SVC`'s decision_function was incorrect from versions
+     0.17.0 through 0.18.0.
+     :issue:`7724` by `Bing Tian Dai`_
+
    - Attribute ``explained_variance_ratio`` of
      :class:`discriminant_analysis.LinearDiscriminantAnalysis` calculated
      with SVD and Eigen solver are now of the same length. :issue:`7632`
@@ -140,6 +146,12 @@ Bug fixes
      ``partial_fit`` was less than the total number of classes in the
      data. :issue:`7786` by `Srivatsan Ramesh`_
 
+   - Fixes issue in :class:`calibration.CalibratedClassifierCV` where
+     the sum of probabilities of each class for a data was not 1, and
+     ``CalibratedClassifierCV`` now handles the case where the training set
+     has less number of classes than the total data. :issue:`7799` by
+     `Srivatsan Ramesh`_
+
 
 API changes summary
 -------------------
@@ -151,7 +163,6 @@ Linear, kernelized and related models
      changed for both Eigen and SVD solvers. The attribute has now a length
      of min(n_components, n_classes - 1). :issue:`7632`
      by :user:`JPFrancoia <JPFrancoia>`
-
 
 .. _changes_0_18:
 
@@ -4735,6 +4746,10 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Tom Dupre la Tour: https://github.com/TomDLT
 
 .. _Nelle Varoquaux: https://github.com/nellev
+
+.. _Bing Tian Dai: https://github.com/btdai
+
+.. _Dylan Werner-Meier: https://github.com/unautre
 
 .. _Alyssa Batula: https://github.com/abatula
 
