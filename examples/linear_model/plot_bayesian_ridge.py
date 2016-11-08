@@ -79,6 +79,7 @@ plt.plot(clf.scores_, color='navy', linewidth=lw)
 plt.ylabel("Score")
 plt.xlabel("Iterations")
 
+
 # Plotting some predictions for polynomial regression
 def f(x, noise_amount):
     y = np.sqrt(x) * np.sin(x)
