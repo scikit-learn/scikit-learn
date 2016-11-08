@@ -31,8 +31,8 @@ Enhancements
      <https://github.com/scikit-learn/scikit-learn/pull/4939>`_) by `Andrea
      Esuli`_.
 
-   - Add ``sample_weight`` parameter to `metrics.cohen_kappa_score`. By Victor
-     Poughon.
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score` by
+     Victor Poughon.
 
 Bug fixes
 .........
