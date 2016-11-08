@@ -678,7 +678,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if max_df < 0 or min_df < 0:
             raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
-        if max_features < 0:
+        if max_features is not None and max_features < 0:
             raise ValueError("negative value for max_features")
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
@@ -852,13 +852,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
-            max_features_count = (max_features
-                                  if isinstance(max_features, numbers.Integral)
-                                  else int(max_features * n_features))
+            max_features = (max_features
+                            if (isinstance(max_features, numbers.Integral)
+                                or max_features is None)
+                            else int(max_features * n_features))
             X, self.stop_words_ = self._limit_features(X, vocabulary,
                                                        max_doc_count,
                                                        min_doc_count,
-                                                       max_features_count)
+                                                       max_features)
 
             self.vocabulary_ = vocabulary
 

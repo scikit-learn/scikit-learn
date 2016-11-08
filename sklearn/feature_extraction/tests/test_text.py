@@ -564,16 +564,19 @@ def test_count_vectorizer_max_features():
     cv_3 = CountVectorizer(max_features=3)
     cv_all = CountVectorizer(max_features=1.0)
     cv_half = CountVectorizer(max_features=0.5)
+    cv_None = CountVectorizer(max_features=None)
 
     counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_all = cv_all.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_half = cv_half.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
 
     features_1 = cv_1.get_feature_names()
     features_3 = cv_3.get_feature_names()
     features_all = cv_all.get_feature_names()
     features_half = cv_half.get_feature_names()
+    features_None = cv_None.get_feature_names()
 
     # The most common feature is "the", with frequency 7.
     assert_equal(7, counts_1.max())
@@ -588,6 +591,9 @@ def test_count_vectorizer_max_features():
 
     # The features for a maximum of 50% or a value of 3 should be the same
     assert_equal(features_3, features_half)
+
+    # The previous default None should be equal to the new default 1.0
+    assert_equal(features_all, features_None)
 
 
 def test_vectorizer_max_df():
