@@ -30,20 +30,18 @@ class OutlierDetectionMixin(object):
         of outliers in the data set.
 
     raw_decision : bool
-        Whether or not to consider raw (negative) Mahalanobis distances as the
-        decision function. Otherwise returns `[-(dist)**(1/3) + thres**(1/3)]`.
+        Whether or not to consider raw negated Mahalanobis distances as the
+        decision function. Otherwise returns `[-dist**(1/3) + thres**(1/3)]`.
         Must be False` (default) for compatibility with the others outlier
         detection tools.
+
+        .. versionadded:: 0.19
 
     Notes
     -----
     Outlier detection from covariance estimation may break or not
     perform well in high-dimensional settings. In particular, one will
     always take care to work with ``n_samples > n_features ** 2``.
-
-    The `raw_decision` kwarg now returns the negative Mahalanobis distance as a
-    more appropriate penalty function. The depricated `decision_function` kwarg
-    `raw_values` still returns a postive distance.
 
     """
     def __init__(self, contamination=0.1, raw_decision=False):
@@ -58,9 +56,13 @@ class OutlierDetectionMixin(object):
         X : array-like, shape (n_samples, n_features)
 
         raw_values : bool
-            (Deprecated) Whether or not to consider raw (positive) Mahalanobis
+            Whether or not to consider raw positive Mahalanobis
             distances as the decision function. Must be False (default) for
             compatibility with the others outlier detection tools.
+
+            .. depricated:: 0.19
+                set self.raw_decision to return the negated distance values
+                instead
 
         Returns
         -------
