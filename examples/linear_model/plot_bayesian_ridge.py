@@ -51,7 +51,7 @@ ols = LinearRegression()
 ols.fit(X, y)
 
 ###############################################################################
-# Plot true weights, estimated weights, histogram of the weights, and 
+# Plot true weights, estimated weights, histogram of the weights, and
 # predictions with standard deviations
 lw = 2
 plt.figure(figsize=(6, 5))
@@ -81,7 +81,6 @@ plt.xlabel("Iterations")
 
 # Plotting some predictions for polynomial regression
 def f(x, noise_amount):
-    """ function to approximate by polynomial interpolation"""
     y = np.sqrt(x) * np.sin(x)
     noise = np.random.normal(0, 1, len(x))
     return y + noise_amount * noise
@@ -97,8 +96,8 @@ y_plot = f(X_plot, noise_amount=0)
 y_mean, y_std = clf_poly.predict(np.vander(X_plot, degree), return_std=True)
 plt.figure(figsize=(6, 5))
 plt.errorbar(X_plot, y_mean, y_std, color='navy',
-        label="Polynomial Bayesian Ridge Regression", linewidth=lw)
-plt.plot(X_plot, y_plot, color='gold', linewidth=lw, 
+             label="Polynomial Bayesian Ridge Regression", linewidth=lw)
+plt.plot(X_plot, y_plot, color='gold', linewidth=lw,
          label="Ground Truth")
 plt.ylabel("Output y")
 plt.xlabel("Feature X")

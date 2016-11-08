@@ -59,10 +59,10 @@ def test_toy_ard_object():
 
 
 def test_return_std_bayesian():
-    def f(X): 
+    def f(X):
         return np.dot(X, w) + b
 
-    def f_noise(X): 
+    def f_noise(X):
         return f(X) + np.random.randn(X.shape[0])*noise_mult
 
     d = 5
@@ -85,10 +85,10 @@ def test_return_std_bayesian():
 
 
 def test_return_std_ard():
-    def f(X): 
+    def f(X):
         return np.dot(X, w) + b
 
-    def f_noise(X): 
+    def f_noise(X):
         return f(X) + np.random.randn(X.shape[0])*noise_mult
 
     d = 5
