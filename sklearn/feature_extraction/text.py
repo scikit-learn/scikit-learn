@@ -852,8 +852,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
-            if (not isinstance(max_features, numbers.Integral)
-                    and max_features is not None):
+            if (not isinstance(max_features, numbers.Integral) and
+                    max_features is not None):
                 max_features = int(max_features * n_features)
             X, self.stop_words_ = self._limit_features(X, vocabulary,
                                                        max_doc_count,
