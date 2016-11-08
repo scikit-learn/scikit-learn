@@ -332,8 +332,8 @@ application of Occam's razor: *prefer simpler models*.
        random_state=None, screening=10, selection='cyclic', tol=0.0001,
        warm_start=False)
     >>> print(regr.coef_)
-    [   0.         -212.46650399  517.14001096  313.76519735 -160.26237609
-       -0.         -187.93163859   68.63080432  508.5729856    71.84684669]
+    [   0.         -212.4615439   517.14942464  313.76767275 -160.36000547
+       -0.         -187.8051221    68.75996676  508.58796057   71.84608071]
 
 .. topic:: **Different algorithms for the same problem**
 
