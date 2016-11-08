@@ -8,8 +8,6 @@ coordinate descent.
 
 The coefficients can be forced to be positive.
 """
-print(__doc__)
-
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
@@ -19,6 +17,9 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
+from scipy import sparse
+
+print(__doc__)
 
 diabetes = datasets.load_diabetes()
 X = diabetes.data
@@ -26,7 +27,6 @@ y = diabetes.target
 
 X /= X.std(axis=0)  # Standardize data (easier to set the l1_ratio parameter)
 
-from scipy import sparse
 X = sparse.csr_matrix(X)
 
 # Compute paths

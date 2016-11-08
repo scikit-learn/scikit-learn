@@ -389,7 +389,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     References
     ----------
     H. Zou, T. Hastie (2005). "Regularization and Variable Selection via the
-    Elastic Net". Journal of the Royal Statistical Society, Series B: 301–320.
+    Elastic Net". Journal of the Royal Statistical Societyn Series B: 301-320.
 
     J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
     Generalized Linear Models via Coordinate Descent"
@@ -653,7 +653,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     References
     ----------
     H. Zou, T. Hastie (2005). "Regularization and Variable Selection via the
-    Elastic Net". Journal of the Royal Statistical Society, Series B: 301–320.
+    Elastic Net". Journal of the Royal Statistical Society, Series B: 301-320.
 
     J. Friedman, T. Hastie, R. Tibshirani (2010) "Regularization Paths for
     Generalized Linear Models via Coordinate Descent"
