@@ -743,7 +743,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             to a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels).
+            The target values (class labels) as integers or strings.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
