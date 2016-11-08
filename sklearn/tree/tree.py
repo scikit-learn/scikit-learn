@@ -116,42 +116,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
-        """Build a decision tree from the training set (X, y).
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels in classification, real numbers in
-            regression). In the regression case, use ``dtype=np.float64`` and
-            ``order='C'`` for maximum efficiency.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        check_input : boolean, (default=True)
-            Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
-            The indexes of the sorted training input samples. If many tree
-            are grown on the same dataset, this allows the ordering to be
-            cached between trees. If None, the data will be sorted here.
-            Don't use this parameter unless you know what to do.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
 
         random_state = check_random_state(self.random_state)
         if check_input:
