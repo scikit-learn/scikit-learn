@@ -2015,6 +2015,7 @@ class CountFeaturizer(BaseEstimator, TransformerMixin):
     >>> cf = CountFeaturizer()
     >>> cf.fit(data).transform(data_2)
     array([[ 1.,  1.,  2.]])
+    # doctest: +NORMALIZE_WHITESPACE
 
     Notice how on the second fit, we set the inclusion to [0, 1]
     which made it only count the number of instances of the second feature 
